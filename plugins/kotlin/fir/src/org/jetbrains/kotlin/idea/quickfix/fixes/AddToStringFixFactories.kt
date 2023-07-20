@@ -9,9 +9,9 @@ import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.idea.quickfix.AddToStringFix
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtProperty
 
 object AddToStringFixFactories {
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.getFixes(element: PsiElement?, expectedType: KtType, actualType: KtType): List<AddToStringFix> {
         if (element !is KtExpression) return emptyList()
         return buildList {
@@ -41,6 +41,6 @@ object AddToStringFixFactories {
     }
 
     val initializerTypeMismatch = diagnosticFixFactory(KtFirDiagnostic.InitializerTypeMismatch::class) { diagnostic ->
-        getFixes(diagnostic.psi.initializer, diagnostic.expectedType, diagnostic.actualType)
+        getFixes((diagnostic.psi as? KtProperty)?.initializer, diagnostic.expectedType, diagnostic.actualType)
     }
 }

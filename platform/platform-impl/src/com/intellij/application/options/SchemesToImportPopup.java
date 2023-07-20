@@ -40,7 +40,7 @@ public abstract class SchemesToImportPopup<T> {
   private void showList(JList list, Runnable selectAction) {
     JBPopupFactory.getInstance().createListPopupBuilder(list).
       setTitle(IdeBundle.message("popup.title.import.scheme")).
-      setItemChoosenCallback(selectAction).
+      setItemChosenCallback(selectAction).
       createPopup().
       showInCenterOf(myParent);
   }

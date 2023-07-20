@@ -41,10 +41,6 @@ public class RedundantMethodOverrideInspectionTest extends LightJavaInspectionTe
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
-  public void testGuardedAndParenthesizedPatterns() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_17_PREVIEW, this::doTest);
-  }
-
   public void testForEachPatterns() {
     IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_20_PREVIEW, this::doTest);
   }

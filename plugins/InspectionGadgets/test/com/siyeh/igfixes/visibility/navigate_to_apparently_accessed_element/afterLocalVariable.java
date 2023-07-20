@@ -16,7 +16,7 @@ class Bar {
   }
 
   void foo() {
-    String <caret>name = "name";
+    String <caret><selection>name</selection> = "name";
     new Foo() {{
       System.out.println(name);
     }};

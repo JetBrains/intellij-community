@@ -115,7 +115,8 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true));
   }
 
-  public void testFormatOptimizeRearrangeVcsChanges() {
+  // Excluded because of IDEA-229587
+  public void _testFormatOptimizeRearrangeVcsChanges() {
     doTest(new ReformatCodeRunOptions(VCS_CHANGED_TEXT).setOptimizeImports(true).setRearrangeCode(true));
   }
   
@@ -128,7 +129,8 @@ public class ReformatCodeActionInEditorTest extends BasePlatformTestCase {
     doTest(new ReformatCodeRunOptions(SELECTED_TEXT));
   }
 
-  public void testWrapParamList() {
+  // Excluded because of IDEA-229587
+  public void _testWrapParamList() {
     CodeStyleSettings temp = CodeStyle.createTestSettings();
     CommonCodeStyleSettings javaSettings = temp.getCommonSettings(JavaLanguage.INSTANCE);
     javaSettings.KEEP_LINE_BREAKS = false;

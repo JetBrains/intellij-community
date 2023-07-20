@@ -3,7 +3,9 @@ package org.jetbrains.plugins.notebooks.ui.visualization
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
+import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.jetbrains.plugins.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import java.awt.Color
@@ -86,5 +88,14 @@ fun paintCaretRow(editor: EditorImpl, g: Graphics, lines: IntRange) {
         editor.lineHeight
       )
     }
+  }
+}
+
+fun installNotebookEditorView(editor: Editor) {
+  if (editor is EditorEx) {
+    editor.gutterComponentEx.setLineNumberConverter(object : LineNumberConverter {
+      override fun convert(editor: Editor, lineNumber: Int): Int? = null
+      override fun getMaxLineNumber(editor: Editor): Int? = null
+    })
   }
 }

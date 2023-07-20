@@ -3,15 +3,15 @@
 <p>Reports cases in Python 2 when a class has no <code>__init__</code> method, neither its parent
   classes.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class Book():
     pass
-</pre>
+</code></pre>
 <p>The quick-fix adds the <code>__init__</code> method:</p>
-<pre style="font-family: monospace">
+<pre><code>
 class Book():
     def __init__(self):
         pass
-</pre>
+</code></pre>
 </body>
 </html>

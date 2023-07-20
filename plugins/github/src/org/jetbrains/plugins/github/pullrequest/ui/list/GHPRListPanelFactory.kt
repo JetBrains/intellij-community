@@ -57,7 +57,7 @@ internal class GHPRListPanelFactory(private val project: Project,
     val actionManager = ActionManager.getInstance()
 
     val historyModel = GHPRSearchHistoryModel(project.service<GHPRListPersistentSearchHistory>())
-    val searchVm = GHPRSearchPanelViewModel(scope, repositoryDataService, historyModel, securityService.currentUser)
+    val searchVm = GHPRSearchPanelViewModel(scope, project, repositoryDataService, historyModel, securityService.currentUser)
     scope.launch {
       searchVm.searchState.collectLatest {
         listLoader.searchQuery = it.toQuery()
@@ -106,14 +106,11 @@ internal class GHPRListPanelFactory(private val project: Project,
     )
 
     return JBUI.Panels.simplePanel(progressStripe).addToTop(controlsPanel).andTransparent().also {
+      val listController = GHPRListControllerImpl(repositoryDataService, listLoader)
       DataManager.registerDataProvider(it) { dataId ->
         when {
-          GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> {
-            GHPRListControllerImpl(repositoryDataService, listLoader)
-          }
-          GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> {
-            if (list.isSelectionEmpty) null else list.selectedValue
-          }
+          GHPRActionKeys.PULL_REQUESTS_LIST_CONTROLLER.`is`(dataId) -> listController
+          GHPRActionKeys.SELECTED_PULL_REQUEST.`is`(dataId) -> if (list.isSelectionEmpty) null else list.selectedValue
           else -> null
         }
       }

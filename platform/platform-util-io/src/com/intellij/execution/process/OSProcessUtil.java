@@ -140,14 +140,6 @@ public final class OSProcessUtil {
     return (int)process.pid();
   }
 
-  /**
-   * @deprecated use {@link #getProcessID(Process)}
-   */
-  @Deprecated(forRemoval = true)
-  public static int getProcessID(@NotNull Process process, Boolean disableWinp) {
-    return (int)process.pid();
-  }
-
   public static int getCurrentProcessId() {
     return (int)ProcessHandle.current().pid();
   }

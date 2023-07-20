@@ -20,6 +20,7 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
   @Nullable private String type;
   private boolean inherited;
   private boolean isTest;
+  private boolean isJvmTest;
 
   @PropertyMapping({"owner", "name", "linkedExternalProjectPath", "description"})
   public TaskData(@NotNull ProjectSystemId owner,
@@ -80,6 +81,14 @@ public final class TaskData extends AbstractExternalEntityData implements Extern
 
   public void setTest(boolean test) {
     isTest = test;
+  }
+
+  public boolean isJvmTest() {
+    return isJvmTest;
+  }
+
+  public void setJvmTest(boolean test) {
+    isJvmTest = test;
   }
 
   @Override

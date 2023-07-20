@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -26,28 +26,23 @@ import javax.swing.*;
 import java.util.*;
 
 public final class GlobalSearchScopesCore {
-  @NotNull
-  public static GlobalSearchScope projectProductionScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope projectProductionScope(@NotNull Project project) {
     return new ProductionScopeFilter(project);
   }
 
-  @NotNull
-  public static GlobalSearchScope projectTestScope(@NotNull Project project) {
+  public static @NotNull GlobalSearchScope projectTestScope(@NotNull Project project) {
     return new TestScopeFilter(project);
   }
 
-  @NotNull
-  public static GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
+  public static @NotNull GlobalSearchScope directoryScope(@NotNull PsiDirectory directory, final boolean withSubdirectories) {
     return new DirectoryScope(directory, withSubdirectories);
   }
 
-  @NotNull
-  public static GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
+  public static @NotNull GlobalSearchScope directoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
     return new DirectoryScope(project, directory, withSubdirectories);
   }
 
-  @NotNull
-  public static GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, VirtualFile @NotNull ... directories) {
+  public static @NotNull GlobalSearchScope directoriesScope(@NotNull Project project, boolean withSubdirectories, VirtualFile @NotNull ... directories) {
     Set<VirtualFile> dirSet = ContainerUtil.newHashSet(directories);
     if (dirSet.isEmpty()) {
       return GlobalSearchScope.EMPTY_SCOPE;
@@ -90,15 +85,13 @@ public final class GlobalSearchScopesCore {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return mySet.getPresentableName();
     }
 
-    @NotNull
     @Override
-    public Icon getIcon() {
+    public @NotNull Icon getIcon() {
       return mySet.getIcon();
     }
 
@@ -156,7 +149,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+    public boolean isSearchInModuleContent(final @NotNull Module aModule, final boolean testSources) {
       return !testSources;
     }
 
@@ -165,15 +158,13 @@ public final class GlobalSearchScopesCore {
       return false;
     }
 
-    @NotNull
     @Override
-    public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+    public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return ModuleManager.getInstance(Objects.requireNonNull(getProject())).getUnloadedModuleDescriptions();
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return getProjectProductionFilesScopeName();
     }
   }
@@ -194,7 +185,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public boolean isSearchInModuleContent(@NotNull final Module aModule, final boolean testSources) {
+    public boolean isSearchInModuleContent(final @NotNull Module aModule, final boolean testSources) {
       return testSources;
     }
 
@@ -203,9 +194,8 @@ public final class GlobalSearchScopesCore {
       return false;
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return getProjectTestFilesScopeName();
     }
   }
@@ -231,8 +221,7 @@ public final class GlobalSearchScopesCore {
       return ContainerUtil.createMaybeSingletonSet(ModelBranch.getFileBranch(myDirectory));
     }
 
-    @NotNull
-    public VirtualFile getDirectory() {
+    public @NotNull VirtualFile getDirectory() {
       return myDirectory;
     }
 
@@ -273,9 +262,8 @@ public final class GlobalSearchScopesCore {
              myWithSubdirectories == ((DirectoryScope)obj).myWithSubdirectories;
     }
 
-    @NotNull
     @Override
-    public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+    public @NotNull GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (equals(scope)) return this;
       if (scope instanceof DirectoryScope other) {
         if (containsScope(other)) return this;
@@ -291,17 +279,15 @@ public final class GlobalSearchScopesCore {
       return myWithSubdirectories ? contains(other.myDirectory) : equals(other);
     }
 
-    @NotNull
-    private static Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
+    private static @NotNull Set<VirtualFile> union(boolean addDir1, @NotNull VirtualFile dir1, boolean addDir2, @NotNull VirtualFile dir2) {
       if (addDir1 && addDir2) return ContainerUtil.newHashSet(dir1, dir2);
       if (addDir1) return Collections.singleton(dir1);
       if (addDir2) return Collections.singleton(dir2);
       return Collections.emptySet();
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       return AnalysisBundle.message("display.name.directory.0", myDirectory.getName());
     }
   }
@@ -358,9 +344,8 @@ public final class GlobalSearchScopesCore {
              myDirectoriesWithSubdirectories.equals(((DirectoriesScope)obj).myDirectoriesWithSubdirectories);
     }
 
-    @NotNull
     @Override
-    public GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
+    public @NotNull GlobalSearchScope uniteWith(@NotNull GlobalSearchScope scope) {
       if (equals(scope)) {
         return this;
       }
@@ -402,9 +387,8 @@ public final class GlobalSearchScopesCore {
       return super.uniteWith(scope);
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       if (myDirectories.size() + myDirectoriesWithSubdirectories.size() == 1) {
         Set<? extends VirtualFile> dirs = myDirectories.size() == 1 ? myDirectories : myDirectoriesWithSubdirectories;
         VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(dirs));

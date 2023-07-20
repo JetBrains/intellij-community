@@ -168,10 +168,13 @@ internal object OpenLessonActivities {
       val project = params.projectWhereToStartLesson
       val lessonToOpen = params.lesson
       try {
+        val langSupport = LangManager.getInstance().getLangSupport() ?: error("No lang support for lesson: ${lessonToOpen.id}")
         if (withCleanup) {
-          LangManager.getInstance().getLangSupport()?.cleanupBeforeLessons(project)
+          langSupport.cleanupBeforeLessons(project)
         }
         lessonToOpen.prepare(project)
+        val root = ProjectUtils.getProjectRoot(langSupport)
+        VfsUtil.markDirtyAndRefresh(false, true, true, root)
       }
       catch (e: LessonPreparationException) {
         thisLogger().warn("Error occurred when preparing the lesson ${lessonToOpen.id}", e)

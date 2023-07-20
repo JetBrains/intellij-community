@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.Application;
@@ -8,11 +8,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.*;
 
@@ -32,15 +29,19 @@ import java.util.concurrent.*;
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
  */
 public class TMHIntegrationTest extends LightPlatformTestCase {
-  private static final String EDT_ASSERTION_MESSAGE = "Access is allowed from Event Dispatch Thread (EDT) only";
-  private static final String READ_ACCESS_ASSERTION_MESSAGE = "Read access is allowed from inside read-action (or EDT) only";
-  private static final String WRITE_ACCESS_ASSERTION_MESSAGE = "Write access is allowed inside write-action only";
-  private static final String NON_READ_ACCESS_ASSERTION_MESSAGE = "Read access is not allowed";
+  private ExecutorService mySingleThreadExecutor;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    mySingleThreadExecutor = Executors.newSingleThreadExecutor(r -> new Thread(r, "Testing thread"));
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    mySingleThreadExecutor.shutdownNow();
+    super.tearDown();
   }
 
   public void testEdtActionOnEdt() {
@@ -48,9 +49,8 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testEdtActionInBackground() {
-    Throwable exception = getExecutionException(startInBackground(() -> runEdtAction()));
-    assertNotNull(exception);
-    assertUserMessageContains(exception, EDT_ASSERTION_MESSAGE);
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_UNDER_EDT, ()-> throwExecutionExceptionCauseFromBackground(
+      () -> runEdtAction()));
   }
 
   public void testBackgroundActionOnEdt() {
@@ -58,20 +58,21 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
     assertThrows(RuntimeException.class, ()->runBackgroundAction());
   }
 
-  public void testBackgroundActionInBackground() {
-    assertNull(getExecutionException(startInBackground(() -> runBackgroundAction())));
+  public void testBackgroundActionInBackground() throws Throwable {
+    throwExecutionExceptionCauseFromBackground(() -> runBackgroundAction());
   }
 
   public void testReadActionOnEdt() {
     runReadAction();
   }
 
-  public void testReadActionInBackgroundWithReadLock() {
-    assertNull(getExecutionException(startInBackground(() -> ReadAction.run(() -> runReadAction()))));
+  public void testReadActionInBackgroundWithReadLock() throws Throwable {
+    throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runReadAction()));
   }
 
   public void testReadActionInBackground() {
-    assertThrows(Throwable.class, READ_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runReadAction())));
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_INSIDE_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+      () -> runReadAction()));
   }
 
   public void testWriteActionOnEdtWithWriteLock() {
@@ -79,45 +80,46 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testWriteActionOnEdt() {
-    assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> runWriteAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> runWriteAction());
   }
 
   public void testWriteActionInBackground() {
-    assertThrows(Throwable.class, WRITE_ACCESS_ASSERTION_MESSAGE, () -> waitResult(startInBackground(() -> runWriteAction())));
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+      () -> runWriteAction()));
   }
 
-  public void _testNonReadActionOnEdt() {
-    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE, () -> runNonReadAction());
+  public void testNonReadActionOnEdt() {
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_NOT_EXECUTE_INSIDE_READ_ACTION, () -> runNonReadAction());
   }
 
-  public void _testNonReadActionInBackground() {
-    assertNull(getExecutionException(startInBackground(() -> runNonReadAction())));
+  public void testNonReadActionInBackground() throws Throwable {
+    throwExecutionExceptionCauseFromBackground(() -> runNonReadAction());
   }
 
-  public void _testNonReadActionInBackgroundWithReadLock() {
-    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE,
-                 () -> waitResult(startInBackground(() -> ReadAction.run(() -> runNonReadAction()))));
+  public void testNonReadActionInBackgroundWithReadLock() {
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_NOT_EXECUTE_INSIDE_READ_ACTION,
+                 () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runNonReadAction())));
   }
 
-  public void _testNonReadActionInBackgroundWithWriteLock() {
-    assertThrows(Throwable.class, NON_READ_ACCESS_ASSERTION_MESSAGE,
-                 () -> waitResult(startInBackground(() -> WriteAction.run(() -> runNonReadAction()))));
+  public void testNonReadActionInBackgroundWithWriteLock() {
+    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_UNDER_EDT,
+                 () -> throwExecutionExceptionCauseFromBackground(() -> WriteAction.run(() -> runNonReadAction())));
   }
 
-  public void testEdtActionInBackgroundNoAssertion() throws ExecutionException {
-    waitResult(startInBackground(() -> runEdtActionNoAssertion()));
+  public void testEdtActionInBackgroundNoAssertion() throws Throwable {
+    throwExecutionExceptionCauseFromBackground(() -> runEdtActionNoAssertion());
   }
 
   public void testBackgroundActionOnEdtNoAssertion() {
     runBackgroundActionNoAssertion();
   }
 
-  public void testReadActionInBackgroundNoAssertion() throws ExecutionException {
-    waitResult(startInBackground(() -> runReadActionNoAssertion()));
+  public void testReadActionInBackgroundNoAssertion() throws Throwable {
+    throwExecutionExceptionCauseFromBackground(() -> runReadActionNoAssertion());
   }
 
-  public void testWriteActionInBackgroundNoAssertion() throws ExecutionException {
-    waitResult(startInBackground(() -> runWriteActionNoAssertion()));
+  public void testWriteActionInBackgroundNoAssertion() throws Throwable {
+    throwExecutionExceptionCauseFromBackground(() -> runWriteActionNoAssertion());
   }
 
   @RequiresEdt
@@ -147,34 +149,19 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   @RequiresWriteLock(generateAssertion = false)
   private static void runWriteActionNoAssertion() {}
 
-  private static @NotNull Future<?> startInBackground(@NotNull Runnable runnable) {
-    return Executors.newSingleThreadExecutor(r -> new Thread(r, "Testing thread")).submit(runnable);
-  }
-
-  private static @Nullable Throwable getExecutionException(@NotNull Future<?> future) {
+  private void throwExecutionExceptionCauseFromBackground(@NotNull Runnable action) throws Throwable {
     try {
-      waitResult(future);
-      return null;
+      Future<?> future = mySingleThreadExecutor.submit(action);
+      try {
+        future.get(10, TimeUnit.MINUTES);
+      }
+      catch (InterruptedException | TimeoutException e) {
+        e.printStackTrace();
+        fail("Background computation didn't finish as expected");
+      }
     }
     catch (ExecutionException e) {
-      return e.getCause();
+      throw e.getCause();
     }
-  }
-
-  private static void waitResult(@NotNull Future<?> future) throws ExecutionException {
-    try {
-      future.get(10, TimeUnit.MINUTES);
-    }
-    catch (InterruptedException | TimeoutException e) {
-      e.printStackTrace();
-      fail("Background computation didn't finish as expected");
-    }
-  }
-
-  @SuppressWarnings("SameParameterValue")
-  private static void assertUserMessageContains(@NotNull Throwable exception, @NotNull String message) {
-    String userMessage = ObjectUtils.doIfCast(exception, RuntimeExceptionWithAttachments.class, e -> e.getUserMessage());
-    assertNotNull(ExceptionUtil.getMessage(exception), userMessage);
-    assertTrue(userMessage.contains(message));
   }
 }

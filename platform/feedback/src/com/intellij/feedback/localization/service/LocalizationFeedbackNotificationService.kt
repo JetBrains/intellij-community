@@ -4,7 +4,6 @@ package com.intellij.feedback.localization.service
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
 import com.intellij.feedback.localization.bundle.LocalizationFeedbackBundle
 import com.intellij.feedback.localization.dialog.LocalizationFeedbackDialog
-import com.intellij.feedback.productivityMetric.bundle.ProductivityFeedbackBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.components.Service
@@ -12,8 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.PlatformUtils
-import com.intellij.util.application
 
 @Service(Service.Level.APP)
 class LocalizationFeedbackNotificationService {

@@ -233,7 +233,7 @@ public final class VcsTestUtil {
 
   @NotNull
   public static List<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
-    return ContainerUtil.map2List(relPaths, s -> {
+    return ContainerUtil.map(relPaths, s -> {
       try {
         return FileUtil.toSystemIndependentName((new File(project.getBasePath() + "/" + s).getCanonicalPath()));
       }

@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.impl.EditorImpl
 import org.assertj.core.api.Assertions.assertThat
 
 class CodeCellLinesChecker(private val description: String,
                            private val editorGetter: () -> EditorImpl) : (CodeCellLinesChecker.() -> Unit) -> Unit {
-  private var markers: MutableList<NotebookCellLines.Marker>? = null
+  private var markers: MutableList<NotebookCellLinesLexer.Marker>? = null
   private var intervals: MutableList<NotebookCellLines.Interval>? = null
   private var markersStartOffset: Int = 0
   private var markersStartOrdinal: Int = 0
@@ -17,9 +18,10 @@ class CodeCellLinesChecker(private val description: String,
       markers = mutableListOf()
     }
 
-    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int) {
+    fun marker(cellType: NotebookCellLines.CellType, offset: Int, length: Int, language: Language? = null) {
       markers!!.add(
-        NotebookCellLines.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length))
+        NotebookCellLinesLexer.Marker(ordinal = markers!!.size + markersStartOrdinal, type = cellType, offset = offset, length = length,
+                                      language = language))
     }
   }
 
@@ -31,8 +33,20 @@ class CodeCellLinesChecker(private val description: String,
   }
 
   class IntervalsSetter(private val list: MutableList<NotebookCellLines.Interval>, private val startOrdinal: Int) {
-    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, markers: NotebookCellLines.MarkersAtLines) {
-      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers)
+    fun interval(cellType: NotebookCellLines.CellType,
+                 lines: IntRange,
+                 markers: NotebookCellLines.MarkersAtLines,
+                 language: Language) {
+      list += NotebookCellLines.Interval(list.size + startOrdinal, cellType, lines, markers, language)
+    }
+
+    fun interval(cellType: NotebookCellLines.CellType, lines: IntRange, language: Language) {
+      val markers =
+        if (cellType == NotebookCellLines.CellType.RAW && lines.first == 0)
+          NotebookCellLines.MarkersAtLines.NO
+        else
+          NotebookCellLines.MarkersAtLines.TOP
+      interval(cellType, lines, markers, language)
     }
   }
 

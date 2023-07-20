@@ -11,9 +11,18 @@ import java.awt.event.KeyEvent;
 public class RadioUpDownListener extends KeyAdapter {
   private final JRadioButton[] myRadioButtons;
 
-  public RadioUpDownListener(final JRadioButton... radioButtons) {
+  private RadioUpDownListener(final JRadioButton... radioButtons) {
     myRadioButtons = radioButtons;
-    for (JRadioButton radioButton : radioButtons) {
+  }
+
+  public static RadioUpDownListener installOn(final JRadioButton... radioButtons) {
+    RadioUpDownListener listener = new RadioUpDownListener(radioButtons);
+    listener.setupListeners();
+    return listener;
+  }
+
+  private void setupListeners() {
+    for (JRadioButton radioButton : myRadioButtons) {
       radioButton.addKeyListener(this);
     }
   }

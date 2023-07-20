@@ -10,5 +10,8 @@ class Test {
         while ((((((a = b)))))) ;
         do {
         } while ((((a) ^= (b))));
+
+        int i = 1;
+        System.out.println(i = i + 1);
     }
 }

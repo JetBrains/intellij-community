@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -14,6 +14,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
@@ -123,6 +125,14 @@ public final class CustomMethodHandlers {
               toValue((args, memState, factory, method) -> OPTIONAL_VALUE.asDfType(memState.getDfType(args.myArguments[0]))))
     .register(instanceCall(JAVA_UTIL_CALENDAR, "get").parameterTypes("int"),
               toValue((args, memState, factory, method) -> calendarGet(args, memState, factory)))
+    .register(anyOf(instanceCall(JAVA_TIME_LOCAL_DATE, "get", "getLong").parameterTypes("java.time.temporal.TemporalField"),
+                    instanceCall(JAVA_TIME_LOCAL_TIME, "get", "getLong").parameterTypes("java.time.temporal.TemporalField"),
+                    instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "get", "getLong").parameterTypes("java.time.temporal.TemporalField"),
+                    instanceCall(JAVA_TIME_OFFSET_TIME, "get", "getLong").parameterTypes("java.time.temporal.TemporalField"),
+                    instanceCall(JAVA_TIME_OFFSET_DATE_TIME, "get", "getLong").parameterTypes("java.time.temporal.TemporalField"),
+                    instanceCall(JAVA_TIME_ZONED_DATE_TIME, "get", "getLong").parameterTypes("java.time.temporal.TemporalField")
+              ),
+              toValue((args, memState, factory, method) -> chronoGet(args, memState, method)))
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
               toValue((args, memState, factory, method) -> skip(args.myArguments, memState)))
@@ -393,6 +403,42 @@ public final class CustomMethodHandlers {
     return isLong ? longRange(range.abs(LongRangeType.INT64)) : intRange(range.abs(LongRangeType.INT32));
   }
 
+
+  private static @NotNull DfType chronoGet(DfaCallArguments arguments, DfaMemoryState state, PsiMethod method) {
+    DfaValue[] myArguments = arguments.myArguments;
+    if (myArguments.length != 1 || myArguments[0] == null) {
+      return DfType.TOP;
+    }
+    DfType myArgument = state.getDfType(myArguments[0]);
+    PsiEnumConstant enumConstant = myArgument.getConstantOfType(PsiEnumConstant.class);
+    if (enumConstant == null) {
+      return DfType.TOP;
+    }
+    PsiType enumType = enumConstant.getType();
+    if (!enumType.equalsToText("java.time.temporal.ChronoField")) {
+      return DfType.TOP;
+    }
+    PsiClass containingClass = method.getContainingClass();
+    if (containingClass == null) {
+      return DfType.TOP;
+    }
+    ChronoField myChronoField = ChronoUtil.getChronoField(enumConstant.getName());
+    if (myChronoField == null || !ChronoUtil.isAnyGetSupported(method, myChronoField)) {
+      return DfType.TOP;
+    }
+    LongRangeSet range = LongRangeSet.range(myChronoField.range().getMinimum(), myChronoField.range().getMaximum());
+    String methodName = method.getName();
+    if ("get".equals(methodName)) {
+      return intRange(range);
+    }
+    else if ("getLong".equals(methodName)) {
+      return longRange(range);
+    }
+    else {
+      return DfType.TOP;
+    }
+  }
+
   private static @NotNull DfType calendarGet(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory) {
     if (arguments.myArguments.length != 1) return DfType.TOP;
     Integer val = state.getDfType(arguments.myArguments[0]).getConstantOfType(Integer.class);
@@ -454,7 +500,7 @@ public final class CustomMethodHandlers {
         return referenceConstant(qualifierType, classType);
       }
     }
-    return DfType.TOP;
+    return INSTANTIABLE_CLASS.asDfType(TRUE);
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -41,8 +41,7 @@ public interface SelectionModel {
   /**
    * @return    object that encapsulates information about visual position of selected text start if any
    */
-  @Nullable
-  default VisualPosition getSelectionStartPosition() {
+  default @Nullable VisualPosition getSelectionStartPosition() {
     return getEditor().getCaretModel().getCurrentCaret().getSelectionStartPosition();
   }
 
@@ -59,8 +58,7 @@ public interface SelectionModel {
   /**
    * @return    object that encapsulates information about visual position of selected text end if any;
    */
-  @Nullable
-  default VisualPosition getSelectionEndPosition() {
+  default @Nullable VisualPosition getSelectionEndPosition() {
     return getEditor().getCaretModel().getCurrentCaret().getSelectionEndPosition();
   }
 
@@ -69,8 +67,7 @@ public interface SelectionModel {
    *
    * @return the selected text, or {@code null} if there is currently no selection.
    */
-  @Nullable
-  default @NlsSafe String getSelectedText() {
+  default @Nullable @NlsSafe String getSelectedText() {
     return getSelectedText(false);
   }
 
@@ -78,8 +75,7 @@ public interface SelectionModel {
    * If {@code allCarets} is {@code true}, returns the concatenation of selections for all carets, or {@code null} if there
    * are no selections. If {@code allCarets} is {@code false}, works just like {@link #getSelectedText}.
    */
-  @Nullable
-  default @NlsSafe String getSelectedText(boolean allCarets) {
+  default @Nullable @NlsSafe String getSelectedText(boolean allCarets) {
     if (allCarets && getEditor().getCaretModel().supportsMultipleCarets()) {
       final StringBuilder buf = new StringBuilder();
       String separator = "";
@@ -113,8 +109,7 @@ public interface SelectionModel {
   /**
    * @return    object that encapsulates information about visual position from which the user started to extend the selection if any
    */
-  @Nullable
-  default VisualPosition getLeadSelectionPosition() {
+  default @Nullable VisualPosition getLeadSelectionPosition() {
     return getEditor().getCaretModel().getCurrentCaret().getLeadSelectionPosition();
   }
 

@@ -40,10 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionAction implements Iconable, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(DefineParamsDefaultValueAction.class);
@@ -114,7 +111,7 @@ public class DefineParamsDefaultValueAction extends PsiElementBaseIntentionActio
 
     Runnable runnable = () -> {
       final PsiMethod prototype = (PsiMethod)containingClass.addBefore(methodPrototype, method);
-      CommonJavaRefactoringUtil.fixJavadocsForParams(prototype, ContainerUtil.set(prototype.getParameterList().getParameters()));
+      CommonJavaRefactoringUtil.fixJavadocsForParams(prototype, Set.of(prototype.getParameterList().getParameters()));
 
 
       PsiCodeBlock body = prototype.getBody();

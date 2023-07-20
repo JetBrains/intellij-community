@@ -4,34 +4,39 @@ package org.jetbrains.plugins.gitlab.api.request
 import com.intellij.collaboration.api.data.asParameters
 import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
 import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+import com.intellij.collaboration.api.graphql.loadResponse
+import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.page.ApiPageUtil
 import com.intellij.collaboration.api.page.foldToList
-import org.jetbrains.plugins.gitlab.api.GitLabApi
-import org.jetbrains.plugins.gitlab.api.GitLabGQLQueries
-import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
+import com.intellij.collaboration.util.resolveRelative
+import kotlinx.coroutines.flow.map
+import org.jetbrains.plugins.gitlab.api.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabLabelDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabMemberDTO
+import org.jetbrains.plugins.gitlab.api.dto.GitLabUserRestDTO
+import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
+import java.net.URI
+import java.net.http.HttpResponse
 
-suspend fun GitLabApi.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
+suspend fun GitLabApi.GraphQL.loadAllProjectLabels(project: GitLabProjectCoordinates): List<GitLabLabelDTO> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters() + mapOf(
       "fullPath" to project.projectPath.fullPath()
     )
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectLabels, parameters)
-    loadGQLResponse(request, LabelConnection::class.java, "project", "labels").body()
-  }.foldToList()
+    val request = gitLabQuery(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS, parameters)
+    withErrorStats(project.serverPath, GitLabGQLQuery.GET_PROJECT_LABELS) {
+      loadResponse<LabelConnection>(request, "project", "labels").body()
+    }
+  }.map { it.nodes }.foldToList()
 
-suspend fun GitLabApi.getAllProjectMembers(project: GitLabProjectCoordinates): List<GitLabMemberDTO> =
-  ApiPageUtil.createGQLPagesFlow { page ->
-    val parameters = page.asParameters() + mapOf(
-      "fullPath" to project.projectPath.fullPath()
-    )
-    val request = gqlQuery(project.serverPath.gqlApiUri, GitLabGQLQueries.getProjectMembers, parameters)
-    loadGQLResponse(request, ProjectMembersConnection::class.java, "project", "projectMembers").body()
-  }.foldToList()
+fun getProjectUsersURI(project: GitLabProjectCoordinates) = project.restApiUri.resolveRelative("users")
+
+suspend fun GitLabApi.Rest.getProjectUsers(serverPath: GitLabServerPath, uri: URI): HttpResponse<out List<GitLabUserRestDTO>> {
+  val request = request(uri).GET().build()
+  return withErrorStats(serverPath, GitLabApiRequestName.REST_GET_PROJECT_USERS) {
+    loadJsonList(request)
+  }
+}
 
 private class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
   : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
-
-private class ProjectMembersConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMemberDTO>)
-  : GraphQLConnectionDTO<GitLabMemberDTO>(pageInfo, nodes)

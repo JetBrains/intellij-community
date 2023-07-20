@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -27,6 +28,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * This instance is created at the highlighting start and discarded when the highlighting is finished.
@@ -53,4 +56,12 @@ public interface HighlightingSession {
   ProperTextRange getVisibleRange();
 
   boolean isEssentialHighlightingOnly();
+
+  /**
+   * @return true if the daemon-cancel event (see {@link DaemonCodeAnalyzer.DaemonListener#daemonCancelEventOccurred(String)}) happened
+   * since the {@link HighlightingSession} creation.
+   */
+  boolean isCanceled();
+
+  void updateFileLevelHighlights(@NotNull List<? extends HighlightInfo> highlights, int group, boolean cleanOldHighlights);
 }

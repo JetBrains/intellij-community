@@ -32,7 +32,7 @@ inline fun JsonGenerator.array(fieldName: String? = null, writer: () -> Unit) {
 
 open class IntelliJPrettyPrinter : DefaultPrettyPrinter() {
   companion object {
-    @JvmField val UNIX_LINE_FEED_INSTANCE = DefaultIndenter("  ", "\n")
+    @JvmField val UNIX_LINE_FEED_INSTANCE: DefaultIndenter = DefaultIndenter("  ", "\n")
   }
 
   init {

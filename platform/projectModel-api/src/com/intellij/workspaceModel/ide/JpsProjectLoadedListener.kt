@@ -10,6 +10,6 @@ interface JpsProjectLoadedListener : EventListener {
 
   companion object {
     @Topic.ProjectLevel
-    val LOADED = Topic(JpsProjectLoadedListener::class.java, Topic.BroadcastDirection.NONE, true)
+    val LOADED: Topic<JpsProjectLoadedListener> = Topic(JpsProjectLoadedListener::class.java, Topic.BroadcastDirection.NONE, true)
   }
 }

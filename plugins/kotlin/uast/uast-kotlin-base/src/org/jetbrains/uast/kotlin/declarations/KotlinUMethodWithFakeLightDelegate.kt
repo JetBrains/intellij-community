@@ -7,17 +7,17 @@ import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
+import org.jetbrains.uast.kotlin.psi.UastFakeSourceLightMethod
 
 @ApiStatus.Internal
 class KotlinUMethodWithFakeLightDelegate(
     val original: KtFunction,
-    fakePsi: UastFakeLightMethod,
+    fakePsi: UastFakeSourceLightMethod,
     givenParent: UElement?
 ) : KotlinUMethod(fakePsi, original, givenParent) {
 
     constructor(original: KtFunction, containingLightClass: PsiClass, givenParent: UElement?)
-            : this(original, UastFakeLightMethod(original, containingLightClass), givenParent)
+            : this(original, UastFakeSourceLightMethod(original, containingLightClass), givenParent)
 
     override val uAnnotations: List<UAnnotation> by lz {
         original.annotationEntries.map {
@@ -33,8 +33,7 @@ class KotlinUMethodWithFakeLightDelegate(
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
         other as KotlinUMethodWithFakeLightDelegate
-        if (original != other.original) return false
-        return true
+        return original == other.original
     }
 
     override fun hashCode(): Int = original.hashCode()

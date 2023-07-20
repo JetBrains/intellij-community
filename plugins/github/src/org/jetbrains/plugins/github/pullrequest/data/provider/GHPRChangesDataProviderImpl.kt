@@ -25,12 +25,15 @@ class GHPRChangesDataProviderImpl(private val changesService: GHPRChangesService
     detailsData.addDetailsLoadedListener(this) {
       val details = detailsData.loadedDetails ?: return@addDetailsLoadedListener
 
-      if (lastKnownBaseSha != null && lastKnownBaseSha != details.baseRefOid &&
-          lastKnownHeadSha != null && lastKnownHeadSha != details.headRefOid) {
+      if (details.baseRefOid != lastKnownBaseSha || details.headRefOid != lastKnownHeadSha) {
+        lastKnownBaseSha = details.baseRefOid
+        lastKnownHeadSha = details.headRefOid
         reloadChanges()
       }
-      lastKnownBaseSha = details.baseRefOid
-      lastKnownHeadSha = details.headRefOid
+      else {
+        lastKnownBaseSha = details.baseRefOid
+        lastKnownHeadSha = details.headRefOid
+      }
     }
   }
 

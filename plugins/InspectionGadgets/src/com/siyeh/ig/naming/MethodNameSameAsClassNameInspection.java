@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignature;
@@ -25,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,23 +35,23 @@ import java.util.List;
 import java.util.Set;
 
 public class MethodNameSameAsClassNameInspection extends BaseInspection {
-  private static final Set<String> MODIFIERS_ALLOWED_ON_CONSTRUCTORS = ContainerUtil.set(
+  private static final Set<String> MODIFIERS_ALLOWED_ON_CONSTRUCTORS = Set.of(
     // JLS 8.8.3
     PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PRIVATE
   );
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final Boolean onTheFly = (Boolean)infos[0];
     final Boolean canBeConvertedToConstructor = (Boolean)infos[1];
-    List<InspectionGadgetsFix> fixes = new ArrayList<>();
+    List<LocalQuickFix> fixes = new ArrayList<>();
     if (onTheFly) {
       fixes.add(new RenameFix());
     }
     if (canBeConvertedToConstructor) {
       fixes.add(new MethodNameSameAsClassNameFix());
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -71,7 +72,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
   }
 
   private static class MethodNameSameAsClassNameFix
-    extends InspectionGadgetsFix {
+    extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -80,8 +81,7 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiMethod method = ObjectUtils.tryCast(element.getParent(), PsiMethod.class);
       if (method == null) return;
       final PsiTypeElement returnTypeElement = method.getReturnTypeElement();

@@ -100,6 +100,7 @@ fun <T> TargetEnvironmentFunction<out Iterable<T>>.andThenJoinToString(separator
                                                                        transform: ((T) -> CharSequence)? = null): TargetEnvironmentFunction<String> =
   AndThenJoinToStringTargetEnvironmentFunction(function = this, separator = separator, transform = transform)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Do not use strings for local path",
             ReplaceWith("getTargetEnvironmentForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> = getTargetEnvironmentValueForLocalPath(
@@ -109,6 +110,7 @@ fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: St
  * Consider using [targetPath] function, which does not throw an exception if [localPath] cannot be mapped to a target path during the
  * resolution against [TargetEnvironment].
  */
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use the overloaded method that takes no `TargetEnvironmentRequest` as a receiver",
             ReplaceWith("getTargetEnvironmentValueForLocalPath(localPath)"))
 fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: Path): TargetEnvironmentFunction<String> {
@@ -116,6 +118,7 @@ fun TargetEnvironmentRequest.getTargetEnvironmentValueForLocalPath(localPath: Pa
   return TraceableTargetEnvironmentFunction { targetEnvironment -> targetEnvironment.resolveLocalPath(localPath) }
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Do not use strings for local path",
             ReplaceWith("getTargetEnvironmentValueForLocalPath(Paths.get(localPath))", "java.nio.file.Paths"))
 fun getTargetEnvironmentValueForLocalPath(localPath: String): TargetEnvironmentFunction<String> =

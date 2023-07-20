@@ -1357,16 +1357,13 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     for (MethodContract c : contracts) {
       ThreeState applies = contractApplies(call, c);
       switch (applies) {
-        case NO:
-          break;
-        case UNSURE:
-          unsureContracts.add(c);
-          break;
-        case YES:
+        case NO -> { }
+        case UNSURE -> unsureContracts.add(c);
+        case YES -> {
           if (unsureContracts.isEmpty() && contractReturnValue.isSuperValueOf(c.getReturnValue())) {
             return fromSingleContract(history, call, method, c);
           }
-          break;
+        }
       }
     }
     if (unsureContracts.size() == 1) {

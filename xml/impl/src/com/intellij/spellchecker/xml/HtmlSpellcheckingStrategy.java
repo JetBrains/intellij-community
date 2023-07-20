@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class HtmlSpellcheckingStrategy extends XmlSpellcheckingStrategy {
-
   private final Tokenizer<? extends PsiElement> myDocumentTextTokenizer = createDocumentTextTokenizer();
 
   @NotNull

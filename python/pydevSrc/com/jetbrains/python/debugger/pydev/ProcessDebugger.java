@@ -10,6 +10,7 @@ import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
+import com.jetbrains.python.debugger.pydev.tables.TableCommandParameters;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,8 @@ public interface ProcessDebugger {
   void consoleExec(String threadId, String frameId, String expression, PyDebugCallback<String> callback);
 
   @Nullable
-  String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType) throws PyDebuggerException;
+  String execTableCommand(String threadId, String frameId, String command, TableCommandType commandType,
+                          TableCommandParameters tableCommandParameters) throws PyDebuggerException;
 
   enum GROUP_TYPE {
     DEFAULT,

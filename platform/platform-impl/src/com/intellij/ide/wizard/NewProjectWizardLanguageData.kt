@@ -3,7 +3,9 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use instead LanguageNewProjectWizardData")
 interface NewProjectWizardLanguageData : NewProjectWizardBaseData {
 
@@ -12,11 +14,11 @@ interface NewProjectWizardLanguageData : NewProjectWizardBaseData {
   val language: String
 
   companion object {
-    val KEY = Key.create<NewProjectWizardLanguageData>(NewProjectWizardLanguageData::class.java.name)
+    val KEY: Key<NewProjectWizardLanguageData> = Key.create(NewProjectWizardLanguageData::class.java.name)
 
     private val NewProjectWizardStep.languageData get() = data.getUserData(KEY)!!
 
-    val NewProjectWizardStep.languageProperty get() = languageData.languageProperty
-    val NewProjectWizardStep.language get() = languageData.language
+    val NewProjectWizardStep.languageProperty: GraphProperty<String> get() = languageData.languageProperty
+    val NewProjectWizardStep.language: String get() = languageData.language
   }
 }

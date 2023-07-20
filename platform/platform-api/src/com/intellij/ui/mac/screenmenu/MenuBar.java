@@ -7,6 +7,7 @@ import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.util.Arrays;
 
+@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
 public final class MenuBar extends Menu {
   static private long[] ourLastMenubarPeers = null;
   private Window myFrame;
@@ -36,7 +37,7 @@ public final class MenuBar extends Menu {
 
   @Override
   synchronized void refillImpl(boolean onAppKit) {
-    if (myCachedPeers != null) {
+    if (myCachedPeers != null && myFrame.isActive()) {
       ourLastMenubarPeers = myCachedPeers;
       nativeRefill(0, myCachedPeers, onAppKit);
     }

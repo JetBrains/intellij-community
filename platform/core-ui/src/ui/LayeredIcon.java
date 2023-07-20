@@ -7,6 +7,8 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.DarkIconProvider;
+import com.intellij.ui.icons.IconReplacer;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBCachingScalableIcon;

@@ -20,14 +20,13 @@ import com.intellij.execution.junit.JUnitExternalLibraryDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class JUnitExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final Set<String> JUNIT4_ANNOTATIONS = ContainerUtil.set(
+  private static final Set<String> JUNIT4_ANNOTATIONS = Set.of(
     "Test", "Ignore", "RunWith", "Before", "BeforeClass", "After", "AfterClass"
   );
   @Nullable

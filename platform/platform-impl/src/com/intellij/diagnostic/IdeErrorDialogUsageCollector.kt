@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 
 class IdeErrorDialogUsageCollector : CounterUsagesCollector() {
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
 
@@ -17,15 +17,15 @@ class IdeErrorDialogUsageCollector : CounterUsagesCollector() {
     private val REPORT_AND_CLEAR_ALL = GROUP.registerEvent("report.and.clear.all")
 
     @JvmStatic
-    fun logClearAll() = CLEAR_ALL.log()
+    fun logClearAll(): Unit = CLEAR_ALL.log()
 
     @JvmStatic
-    fun logReport() = REPORT.log()
+    fun logReport(): Unit = REPORT.log()
 
     @JvmStatic
-    fun logReportAll() = REPORT_ALL.log()
+    fun logReportAll(): Unit = REPORT_ALL.log()
 
     @JvmStatic
-    fun logReportAndClearAll() = REPORT_AND_CLEAR_ALL.log()
+    fun logReportAndClearAll(): Unit = REPORT_AND_CLEAR_ALL.log()
   }
 }

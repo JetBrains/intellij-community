@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -26,15 +26,13 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
     return null;
   }
 
-  @Nullable
   @Override
-  public PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement) {
+  public @Nullable PsiLanguageInjectionHost getInjectionHost(@NotNull PsiElement injectedElement) {
     return null;
   }
 
-  @NotNull
   @Override
-  public TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
+  public @NotNull TextRange injectedToHost(@NotNull PsiElement injectedContext, @NotNull TextRange injectedTextRange) {
     return injectedTextRange;
   }
 
@@ -53,15 +51,13 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
 
   }
 
-  @NotNull
   @Override
-  public String getUnescapedText(@NotNull PsiElement injectedNode) {
+  public @NotNull String getUnescapedText(@NotNull PsiElement injectedNode) {
     return injectedNode.getText();
   }
 
-  @NotNull
   @Override
-  public List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
+  public @NotNull List<TextRange> intersectWithAllEditableFragments(@NotNull PsiFile injectedPsi, @NotNull TextRange rangeToEdit) {
     return Collections.singletonList(rangeToEdit);
   }
 
@@ -70,15 +66,18 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
     return false;
   }
 
-  @Nullable
   @Override
-  public PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
+  public boolean isInjectedViewProvider(@NotNull FileViewProvider viewProvider) {
+    return false;
+  }
+
+  @Override
+  public @Nullable PsiElement findInjectedElementAt(@NotNull PsiFile hostFile, int hostDocumentOffset) {
     return null;
   }
 
-  @Nullable
   @Override
-  public List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host) {
+  public @Nullable List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host) {
     return null;
   }
 
@@ -92,9 +91,8 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
     return element.getContainingFile();
   }
 
-  @NotNull
   @Override
-  public List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
+  public @NotNull List<DocumentWindow> getCachedInjectedDocumentsInRange(@NotNull PsiFile hostPsiFile, @NotNull TextRange range) {
     return Collections.emptyList();
   }
 
@@ -111,9 +109,8 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
 
   }
 
-  @NotNull
   @Override
-  public List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window) {
+  public @NotNull List<TextRange> getNonEditableFragments(@NotNull DocumentWindow window) {
     return Collections.emptyList();
   }
 
@@ -122,9 +119,8 @@ public class CoreInjectedLanguageManager extends InjectedLanguageManager {
     return false;
   }
 
-  @NotNull
   @Override
-  public DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
+  public @NotNull DocumentWindow freezeWindow(@NotNull DocumentWindow document) {
     return document;
   }
 }

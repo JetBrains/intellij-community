@@ -5,7 +5,7 @@ Reports usage of <code>VirtualFile.getChildren()</code> inside recursive methods
   This may cause endless loops when iterating over cyclic symlinks.
   Use <code>VfsUtilCore.visitChildrenRecursively()</code> instead.
 </p>
-<pre><code>
+<pre><code lang="java">
 void processDirectory(VirtualFile dir) {
   for (VirtualFile file : dir.getChildren()) { // bad
     if (!file.isDirectory()) {
@@ -17,7 +17,7 @@ void processDirectory(VirtualFile dir) {
 }
 </code>
 </pre>
-<pre><code>
+<pre><code lang="java">
 void processDirectory(VirtualFile dir) {
   VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor&lt;Void>() { // good
     @Override

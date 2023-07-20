@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
 import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
-import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
+import com.intellij.codeInsight.navigation.getPsiElementPopup
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.EditSourceUtil
 import com.intellij.idea.ActionsBundle
@@ -78,10 +78,11 @@ class GotoSuperActionHandler : PresentableCodeInsightActionHandler {
         } else {
             val message = getTitle(descriptor!!)
             val superDeclarationsArray = PsiUtilCore.toPsiElementArray(allDeclarations)
-            val popup = if (descriptor is ClassDescriptor)
-                NavigationUtil.getPsiElementPopup(superDeclarationsArray, message)
-            else
-                NavigationUtil.getPsiElementPopup(superDeclarationsArray, KtFunctionPsiElementCellRenderer(), message)
+            val popup = if (descriptor is ClassDescriptor) {
+                getPsiElementPopup(elements = superDeclarationsArray, title = message)
+            } else {
+                getPsiElementPopup(elements = superDeclarationsArray, renderer = KtFunctionPsiElementCellRenderer(), title = message)
+            }
 
             popup.showInBestPositionFor(editor)
         }

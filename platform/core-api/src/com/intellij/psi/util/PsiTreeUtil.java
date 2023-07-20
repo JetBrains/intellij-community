@@ -274,12 +274,14 @@ public class PsiTreeUtil {
   }
 
   /** See {@link #findChildrenOfAnyType(PsiElement, boolean, Class[])}. */
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     return findChildrenOfAnyType(element, true, aClass);
   }
 
   /** See {@link #findChildrenOfAnyType(PsiElement, boolean, Class[])}. */
   @SafeVarargs
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable PsiElement element,
                                                                                     @NotNull Class<? extends T> @NotNull ... classes) {
     return findChildrenOfAnyType(element, true, classes);
@@ -295,6 +297,7 @@ public class PsiTreeUtil {
    * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
    */
   @SafeVarargs
+  @Unmodifiable
   public static @NotNull <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable PsiElement element,
                                                                                     boolean strict,
                                                                                     @NotNull Class<? extends T> @NotNull ... classes) {

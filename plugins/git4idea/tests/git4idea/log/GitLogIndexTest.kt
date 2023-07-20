@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.log
 
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.Executor.*
@@ -8,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
 import com.intellij.util.Consumer
 import com.intellij.vcs.log.VcsCommitMetadata
+import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.*
 import com.intellij.vcs.log.impl.HashImpl
@@ -18,19 +20,13 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.*
 import junit.framework.TestCase
 
-class GitLogIndexTest : GitSingleRepoTest() {
-  //companion object {
-  //  init {
-  //    System.setProperty("vcs.log.sqlite", "true")
-  //  }
-  //}
-
+abstract class GitLogIndexTest(val useSqlite: Boolean) : GitSingleRepoTest() {
   private val defaultUser = VcsUserImpl(USER_NAME, USER_EMAIL)
 
   private lateinit var disposable: Disposable
   private lateinit var index: VcsLogPersistentIndex
   private val dataGetter: IndexDataGetter
-    get() = index.dataGetter!!
+    get() = index.dataGetter
   private val storage: VcsLogStorage
     get() = dataGetter.logStorage
 
@@ -40,7 +36,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
     disposable = Disposer.newDisposable()
     Disposer.register(testRootDisposable, disposable)
 
-    index = setUpIndex(myProject, repo.root, logProvider, disposable)
+    index = setUpIndex(myProject, repo.root, logProvider, useSqlite, disposable)
   }
 
   override fun tearDown() {
@@ -80,6 +76,28 @@ class GitLogIndexTest : GitSingleRepoTest() {
     val actualMetadata = IndexedDetails(dataGetter, storage, getCommitIndex(commitHash), 0L)
 
     TestCase.assertEquals(expectedMetadata.presentation(), actualMetadata.presentation())
+  }
+
+  @IgnoreJUnit3
+  fun `test forward index with batch api`() {
+    val file = "file.txt"
+    tac(file)
+    for (i in 0 until 5) {
+      repo.appendAndCommit(file, "new content ${i}\n")
+    }
+
+    val commits = indexAll()
+
+    val collector = CollectConsumer<VcsCommitMetadata>()
+    logProvider.readMetadata(repo.root, commits.map { getCommitHash(it) }, collector)
+    val expectedPresentation = collector.result.joinToString("\n\n") { it.presentation() }
+
+    val actualMetadata = IndexedDetails.createMetadata(commits.toSet(), dataGetter, storage,
+                                                       project.getService(VcsLogObjectsFactory::class.java))
+    val actualPresentation = commits.map { actualMetadata[it] }.joinToString("\n\n") { it?.presentation() ?: "NOT LOADED" }
+
+
+    TestCase.assertEquals(expectedPresentation, actualPresentation)
   }
 
   fun `test text filter`() {
@@ -275,6 +293,10 @@ class GitLogIndexTest : GitSingleRepoTest() {
     return storage.getCommitIndex(HashImpl.build(hash), repo.root)
   }
 
+  private fun getCommitHash(commit: Int): String {
+    return storage.getCommitId(commit)!!.hash.asString()
+  }
+
   private fun indexAll(): Set<Int> {
     val commits = readCommits(repo.root)
     index.index(repo.root, commits)
@@ -297,3 +319,6 @@ class GitLogIndexTest : GitSingleRepoTest() {
            "$subject\n$fullMessage"
   }
 }
+
+class GitLogPhmIndexTest : GitLogIndexTest(useSqlite = false)
+class GitLogSqliteIndexTest : GitLogIndexTest(useSqlite = true)

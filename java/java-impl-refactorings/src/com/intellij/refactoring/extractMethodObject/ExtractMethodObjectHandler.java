@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,12 +45,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
-    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<>() {
-      @Override
-      public void pass(final PsiElement[] selectedValue) {
-        invokeOnElements(project, editor, file, selectedValue);
-      }
-    });
+    ExtractMethodHandler.selectAndPass(project, editor, file, selectedValue-> invokeOnElements(project, editor, file, selectedValue));
   }
 
   @Override

@@ -52,6 +52,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
   private final RawCommandLineEditor myUniqueIdField;
   private final RawCommandLineEditor myTagsField;
   private final ComboBox<String> myChangeLists;
+  private final ClassEditorField myClassField;
 
   public JUnitTestKindFragment(Project project, ConfigurationModuleSelector moduleSelector) {
     super("junit.test.kind", null, null, new JPanel(new GridBagLayout()), 90, null, null, configuration -> true);
@@ -88,7 +89,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
     BrowseModuleValueActionListener<?>[] browsers = JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
     JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitConfigurable.createClassVisibilityChecker((JUnitConfigurable.TestClassBrowser)browsers[CLASS]);
-    EditorTextField classField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
+    myClassField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
     EditorTextFieldWithBrowseButton methodField = new EditorTextFieldWithBrowseButton(project, true,
                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
@@ -96,7 +97,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     myHints.put(myTypeChooser, JUnitBundle.message("test.kind.hint"));
     setupField(ALL_IN_PACKAGE, packageField, packageField.getChildComponent().getDocument(), browsers[ALL_IN_PACKAGE],
                JUnitBundle.message("test.package.hint"));
-    setupField(CLASS, classField, classField.getDocument(), null, JUnitBundle.message("test.class.hint"));
+    setupField(CLASS, myClassField, myClassField.getDocument(), null, JUnitBundle.message("test.class.hint"));
     ((MethodBrowser)browsers[METHOD]).installCompletion(methodField.getChildComponent());
     setupField(METHOD, methodField, methodField.getChildComponent().getDocument(), browsers[METHOD],
                JUnitBundle.message("test.method.hint"));
@@ -203,7 +204,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     s.getPersistentData().setUniqueIds(JUnitConfigurable.setArrayFromText(myUniqueIdField.getText()));
     s.getPersistentData().setTags(myTagsField.getText());
     s.getPersistentData().setChangeList(myChangeLists.getItem());
-    myModel.apply(myModuleSelector.getModule(), s);
+    myModel.apply(myModuleSelector.getModule(), s, myClassField);
     validate(s);
   }
 }

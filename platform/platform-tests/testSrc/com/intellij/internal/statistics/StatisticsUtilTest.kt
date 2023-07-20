@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistics
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.internal.statistic.utils.StatisticsUtil.getCurrentHourInUTC
 import com.intellij.internal.statistic.utils.StatisticsUtil.getNextPowerOfTwo
+import com.intellij.internal.statistic.utils.StatisticsUtil.getTimestampDateInUTC
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToHighestDigit
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo
 import com.intellij.internal.statistic.utils.StatisticsUtil.roundToUpperBound
@@ -269,6 +270,58 @@ class StatisticsUtilTest : LightPlatformTestCase() {
     TestCase.assertEquals("00062910", getCurrentHourInUTC(getCalendarByDate(2000, Calendar.JUNE, 29, 10)))
     TestCase.assertEquals("00062910", getCurrentHourInUTC(getCalendarByDate(1900, Calendar.JUNE, 29, 10)))
     TestCase.assertEquals("00062910", getCurrentHourInUTC(getCalendarByDate(1999, Calendar.JUNE, 29, 10)))
+  }
+
+  @Test
+  fun `test timestamp date in UTC`() {
+    val dateInUTC = getTimestampDateInUTC(System.currentTimeMillis())
+    TestCase.assertNotNull(dateInUTC)
+    TestCase.assertEquals(6, dateInUTC.length)
+  }
+
+  @Test
+  fun `test timestamp in UTC from unix time`() {
+    TestCase.assertEquals("210218", getTimestampDateInUTC(1613689500000))
+    TestCase.assertEquals("201020", getTimestampDateInUTC(1603238200000))
+    TestCase.assertEquals("201019", getTimestampDateInUTC(1603132200000))
+  }
+
+  @Test
+  fun `test custom timestamp in UTC`() {
+    TestCase.assertEquals("200117", getTimestampDateInUTC(getCalendarByDate(2020, Calendar.JANUARY, 17, 10).timeInMillis))
+    TestCase.assertEquals("190812", getTimestampDateInUTC(getCalendarByDate(2019, Calendar.AUGUST, 12, 10).timeInMillis))
+    TestCase.assertEquals("210530", getTimestampDateInUTC(getCalendarByDate(2021, Calendar.MAY, 30, 10).timeInMillis))
+    TestCase.assertEquals("180904", getTimestampDateInUTC(getCalendarByDate(2018, Calendar.SEPTEMBER, 4, 10).timeInMillis))
+    TestCase.assertEquals("000701", getTimestampDateInUTC(getCalendarByDate(2000, Calendar.JULY, 1, 10).timeInMillis))
+    TestCase.assertEquals("990209", getTimestampDateInUTC(getCalendarByDate(2099, Calendar.FEBRUARY, 9, 10).timeInMillis))
+  }
+
+  @Test
+  fun `test custom timestamp from CET in UTC`() {
+    val cet = ZoneOffset.ofHours(1)
+    TestCase.assertEquals("200117", getTimestampDateInUTC(getCalendarByDate(2020, Calendar.JANUARY, 17, 10, cet).timeInMillis))
+    TestCase.assertEquals("190812", getTimestampDateInUTC(getCalendarByDate(2019, Calendar.AUGUST, 12, 10, cet).timeInMillis))
+    TestCase.assertEquals("210530", getTimestampDateInUTC(getCalendarByDate(2021, Calendar.MAY, 30, 10, cet).timeInMillis))
+    TestCase.assertEquals("180904", getTimestampDateInUTC(getCalendarByDate(2018, Calendar.SEPTEMBER, 4, 10, cet).timeInMillis))
+    TestCase.assertEquals("000701", getTimestampDateInUTC(getCalendarByDate(2000, Calendar.JULY, 1, 10, cet).timeInMillis))
+    TestCase.assertEquals("990209", getTimestampDateInUTC(getCalendarByDate(2099, Calendar.FEBRUARY, 9, 10, cet).timeInMillis))
+  }
+
+  @Test
+  fun `test custom timestamp from different time zones in UTC`() {
+    TestCase.assertEquals("200117", getTimestampDateInUTC(getCalendarByDate(2020, Calendar.JANUARY, 17, 10, ZoneOffset.ofHours(1)).timeInMillis))
+    TestCase.assertEquals("200117", getTimestampDateInUTC(getCalendarByDate(2020, Calendar.JANUARY, 17, 10, ZoneOffset.ofHours(-1)).timeInMillis))
+    TestCase.assertEquals("200117", getTimestampDateInUTC(getCalendarByDate(2020, Calendar.JANUARY, 17, 10, ZoneOffset.ofHours(5)).timeInMillis))
+    TestCase.assertEquals("200117", getTimestampDateInUTC(getCalendarByDate(2020, Calendar.JANUARY, 17, 10, ZoneOffset.ofHours(-8)).timeInMillis))
+  }
+
+  @Test
+  fun `test timestamp out of range in UTC`() {
+    TestCase.assertEquals("990629", getTimestampDateInUTC(getCalendarByDate(2100, Calendar.JUNE, 29, 10).timeInMillis))
+    TestCase.assertEquals("990629", getTimestampDateInUTC(getCalendarByDate(2235, Calendar.JUNE, 29, 10).timeInMillis))
+    TestCase.assertEquals("000629", getTimestampDateInUTC(getCalendarByDate(2000, Calendar.JUNE, 29, 10).timeInMillis))
+    TestCase.assertEquals("000629", getTimestampDateInUTC(getCalendarByDate(1900, Calendar.JUNE, 29, 10).timeInMillis))
+    TestCase.assertEquals("000629", getTimestampDateInUTC(getCalendarByDate(1999, Calendar.JUNE, 29, 10).timeInMillis))
   }
 
   @Test

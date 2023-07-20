@@ -134,8 +134,7 @@ public final class MacKeymapUtil {
     if (isNativeShortcutSymbolsDisabled()) {
       return replacement;
     }
-    Font font = StartupUiUtil.getLabelFont();
-    return font == null || font.canDisplayUpTo(value) == -1 ? value : replacement;
+    return StartupUiUtil.getLabelFont().canDisplayUpTo(value) == -1 ? value : replacement;
   }
 
   private static boolean isNativeShortcutSymbolsDisabled() {

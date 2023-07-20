@@ -71,8 +71,8 @@ class KeyBindingsParsedData(majorVersion: Int, val scheme: String, userShortcuts
   private val parsedKeyBindings = mutableListOf<KeyBinding>()
 
   companion object {
-    const val globalScope = "Global"
-    const val key = "Environment_KeyBindings"
+    const val globalScope: String = "Global"
+    const val key: String = "Environment_KeyBindings"
     private val logger = logger<KeyBindingsParsedData>()
   }
 
@@ -142,5 +142,5 @@ class KeyBindingsParsedData(majorVersion: Int, val scheme: String, userShortcuts
     }
   }
 
-  fun convertToSettingsFormat() = parsedKeyBindings
+  fun convertToSettingsFormat(): MutableList<KeyBinding> = parsedKeyBindings
 }

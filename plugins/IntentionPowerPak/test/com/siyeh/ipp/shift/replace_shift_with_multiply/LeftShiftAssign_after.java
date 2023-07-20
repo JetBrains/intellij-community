@@ -1,5 +1,5 @@
 class Test {
   void test(int foo) {
-      foo *= 4096<caret>;
+      foo *= 409<caret>6;
   }
 }

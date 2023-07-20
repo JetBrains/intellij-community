@@ -22,6 +22,7 @@ import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInser
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.reposearch.DependencySearchService;
+import org.jetbrains.idea.reposearch.PoisonedRepositoryArtifactData;
 import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 import org.jetbrains.idea.reposearch.SearchParameters;
 
@@ -34,7 +35,7 @@ import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIE
 import static org.jetbrains.concurrency.Promise.State.PENDING;
 
 public abstract class MavenCoordinateCompletionContributor extends CompletionContributor {
-  
+
   public static final Key<String> MAVEN_COORDINATE_COMPLETION_PREFIX_KEY = Key.create("MAVEN_COORDINATE_COMPLETION_PREFIX_KEY");
 
   private final String myTagId;
@@ -76,6 +77,7 @@ public abstract class MavenCoordinateCompletionContributor extends CompletionCon
       if (item instanceof MavenRepositoryArtifactInfo) {
         fillResult(coordinates, result, (MavenRepositoryArtifactInfo)item, completionPrefix);
       }
+      if (item == PoisonedRepositoryArtifactData.INSTANCE) break;
     }
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.openapi.Disposable
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
-import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.ui.StatusText
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -37,6 +36,7 @@ import git4idea.i18n.GitBundle
 import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
 import java.util.*
+import java.util.function.Consumer
 import javax.swing.JComponent
 
 internal class GitCompareBranchesUi(internal val project: Project,

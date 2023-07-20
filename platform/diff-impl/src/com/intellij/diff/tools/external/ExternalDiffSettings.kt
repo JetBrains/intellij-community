@@ -3,11 +3,13 @@ package com.intellij.diff.tools.external
 
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.*
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PathUtilRt
 import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
 @State(name = "ExternalDiffSettings", storages = [Storage(DiffUtil.DIFF_CONFIG)], category = SettingsCategory.TOOLS)
@@ -55,9 +57,9 @@ class ExternalDiffSettings : BaseState(), PersistentStateComponent<ExternalDiffS
     }
   }
 
-  enum class ExternalToolGroup(val groupName: String) {
-    DIFF_TOOL("Diff tool"),
-    MERGE_TOOL("Merge tool")
+  enum class ExternalToolGroup(val groupName: @Nls String) {
+    DIFF_TOOL(DiffBundle.message("diff.tool")),
+    MERGE_TOOL(DiffBundle.message("merge.tool"))
   }
 
   data class ExternalTool(

@@ -51,20 +51,23 @@ public class BackspaceAction extends TextComponentEditorAction implements Latenc
         editor.getCaretModel().moveCaretRelatively(columnShift, 0, false, false, true);
       }
       else {
-        EditorModificationUtil.scrollToCaret(editor);
         editor.getSelectionModel().removeSelection();
 
-        FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
-        if (region != null && region.shouldNeverExpand()) {
-          document.deleteString(region.getStartOffset(), region.getEndOffset());
-          editor.getCaretModel().moveToOffset(region.getStartOffset());
-        }
-        else {
-          int prevOffset = DocumentUtil.getPreviousCodePointOffset(document, offset);
-          if (prevOffset >= 0) {
-            document.deleteString(prevOffset, offset);
+        Runnable runnable = () -> {
+          FoldRegion region = editor.getFoldingModel().getCollapsedRegionAtOffset(offset - 1);
+          if (region != null && region.shouldNeverExpand()) {
+            document.deleteString(region.getStartOffset(), region.getEndOffset());
+            editor.getCaretModel().moveToOffset(region.getStartOffset());
           }
-        }
+          else {
+            int prevOffset = DocumentUtil.getPreviousCodePointOffset(document, offset);
+            if (prevOffset >= 0) {
+              document.deleteString(prevOffset, offset);
+            }
+          }
+          EditorModificationUtilEx.scrollToCaret(editor);
+        };
+        EditorUtil.runWithAnimationDisabled(editor, runnable);
       }
     }
     else if(lineNumber > 0) {

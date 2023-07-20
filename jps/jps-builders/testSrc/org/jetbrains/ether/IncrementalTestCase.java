@@ -62,10 +62,6 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
     return workDir;
   }
 
-  protected String getUrl(String pathRelativeToProjectRoot) {
-    return JpsPathUtil.pathToUrl(getAbsolutePath(pathRelativeToProjectRoot));
-  }
-
   @Override
   public String getAbsolutePath(final String pathRelativeToProjectRoot) {
     return FileUtil.toSystemIndependentName(workDir.getAbsolutePath()) + "/" + pathRelativeToProjectRoot;

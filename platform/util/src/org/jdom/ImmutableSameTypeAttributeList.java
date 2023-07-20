@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
@@ -72,9 +72,8 @@ final class ImmutableSameTypeAttributeList implements List<Attribute> {
     return -1;
   }
 
-  @NotNull
   @Override
-  public Iterator<Attribute> iterator() {
+  public @NotNull Iterator<Attribute> iterator() {
     if (isEmpty()) return Collections.emptyIterator();
     return new Iterator<Attribute>() {
       int i;
@@ -96,9 +95,8 @@ final class ImmutableSameTypeAttributeList implements List<Attribute> {
     };
   }
 
-  @NotNull
   @Override
-  public List<Attribute> subList(int fromIndex, int toIndex) {
+  public @NotNull List<Attribute> subList(int fromIndex, int toIndex) {
     return toList().subList(fromIndex, toIndex);
   }
 
@@ -221,15 +219,13 @@ final class ImmutableSameTypeAttributeList implements List<Attribute> {
     throw ImmutableElement.immutableError(this);
   }
 
-  @NotNull
   @Override
-  public ListIterator<Attribute> listIterator() {
+  public @NotNull ListIterator<Attribute> listIterator() {
     throw ImmutableElement.immutableError(this);
   }
 
-  @NotNull
   @Override
-  public ListIterator<Attribute> listIterator(int index) {
+  public @NotNull ListIterator<Attribute> listIterator(int index) {
     throw ImmutableElement.immutableError(this);
   }
 

@@ -16,9 +16,11 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -27,7 +29,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.Nls;
@@ -51,7 +52,7 @@ public class DivideByZeroInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     if (infos.length > 0 && infos[0] instanceof PsiBinaryExpression binOp) {
       if (binOp.getOperationTokenType().equals(JavaTokenType.DIV) && isZero(binOp.getLOperand())) {
         PsiType type = binOp.getType();
@@ -113,10 +114,10 @@ public class DivideByZeroInspection extends BaseInspection {
     return val != null && val.doubleValue() == 0.0;
   }
 
-  private static class ReplaceWithNaNFix extends InspectionGadgetsFix {
+  private static class ReplaceWithNaNFix extends PsiUpdateModCommandQuickFix {
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiBinaryExpression division = PsiTreeUtil.getNonStrictParentOfType(descriptor.getStartElement(), PsiBinaryExpression.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      PsiBinaryExpression division = PsiTreeUtil.getNonStrictParentOfType(startElement, PsiBinaryExpression.class);
       if (division == null) return;
       PsiType type = division.getType();
       if (!(type instanceof PsiPrimitiveType)) return;

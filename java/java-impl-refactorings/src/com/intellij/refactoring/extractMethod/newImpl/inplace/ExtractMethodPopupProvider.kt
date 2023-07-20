@@ -6,10 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.RightGap
-import com.intellij.ui.dsl.builder.panel
-import javax.swing.JComponent
+import com.intellij.ui.dsl.builder.*
+import com.intellij.util.ui.UIUtil
+import javax.swing.JCheckBox
 import javax.swing.JPanel
 import javax.swing.LayoutFocusTraversalPolicy
 
@@ -48,36 +47,25 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
   }
 
   private fun createPanel(): DialogPanel {
-    var hasFocusedElement = false
-    fun Cell<JComponent>.setFocusIfEmpty() {
-      if (! hasFocusedElement) {
-        hasFocusedElement = true
-        focused()
-      }
-    }
     val panel = panel {
       if (annotate != null) {
         row {
           checkBox(JavaRefactoringBundle.message("extract.method.checkbox.annotate"))
-            .applyToComponent {
-              isSelected = annotate ?: false
-              addActionListener {
-                annotate = isSelected
-                changeListener.invoke()
-              }
-            }.setFocusIfEmpty()
+            .selected(annotate ?: false)
+            .onChanged { component ->
+              annotate = component.isSelected
+              changeListener.invoke()
+            }
         }
       }
       if (makeStatic != null) {
         row {
           checkBox(makeStaticLabel)
-            .applyToComponent {
-              isSelected = makeStatic ?: false
-              addActionListener {
-                makeStatic = isSelected
-                changeListener.invoke()
-              }
-            }.setFocusIfEmpty()
+            .selected(makeStatic ?: false)
+            .onChanged { component ->
+              makeStatic = component.isSelected
+              changeListener.invoke()
+            }
         }
       }
       row {
@@ -88,6 +76,7 @@ class ExtractMethodPopupProvider(val annotateDefault: Boolean? = null,
     }
     panel.isFocusCycleRoot = true
     panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
+    panel.preferredFocusedComponent = UIUtil.findComponentOfType(panel, JCheckBox::class.java)
 
     DumbAwareAction.create {
       showDialogAction(it)

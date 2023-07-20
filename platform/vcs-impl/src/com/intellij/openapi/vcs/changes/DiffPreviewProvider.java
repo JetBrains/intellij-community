@@ -26,18 +26,6 @@ public interface DiffPreviewProvider {
   @NotNull
   Object getOwner();
 
-  /**
-   * @deprecated Implement {@link #getEditorTabName(DiffRequestProcessor)}
-   */
-  @Deprecated(forRemoval = true)
   @NlsContexts.TabTitle
-  default String getEditorTabName() {
-    throw new UnsupportedOperationException("Not implemented");
-  }
-
-
-  @NlsContexts.TabTitle
-  default String getEditorTabName(@Nullable DiffRequestProcessor processor) {
-    return getEditorTabName();
-  }
+  String getEditorTabName(@Nullable DiffRequestProcessor processor);
 }

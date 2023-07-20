@@ -18,7 +18,7 @@ class ScaledIconPresentation(
   private val metricsStorage: InlayTextMetricsStorage,
   val isSmall: Boolean,
   icon: Icon, private val component: Component) : BasePresentation() {
-  var icon = icon
+  var icon: Icon = icon
   set(value) {
     field = value
     fireContentChanged()

@@ -23,11 +23,11 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
+public class ReplaceMultiplyWithShiftIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -35,7 +35,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       final PsiBinaryExpression exp = (PsiBinaryExpression)element;
       final PsiJavaToken sign = exp.getOperationSign();

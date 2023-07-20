@@ -47,7 +47,7 @@ def _get_df_variable_repr(data_frame):
 
     # The string provided is used for column name completion
     # by JupyterVarsFrameExecutor.parseFrameVars
-    return '{} {}'.format(data_frame.columns.tolist(), ' '.join(data_preview))
+    return '{} {}'.format(list(data_frame.columns), ' '.join(data_preview))
 
 
 def _trim_string_repr_if_needed(value, do_trim=True, max_length=MAX_REPR_LENGTH):
@@ -165,6 +165,11 @@ if IS_PY3K:
             result = _get_external_collection_repr(x)
             if result is not None:
                 return result
+
+            # if `__str__` method is overridden then return str(x)
+            if x.__str__ != object.__str__:
+                return str(x)
+
             return super().repr_instance(x, level)
 
 

@@ -78,7 +78,7 @@ public interface DockContainer {
     default void contentAdded(@SuppressWarnings("unused") @NotNull Object key) {
     }
 
-    default void contentRemoved(Object key) {
+    default void contentRemoved(@NotNull Object key) {
     }
   }
 }

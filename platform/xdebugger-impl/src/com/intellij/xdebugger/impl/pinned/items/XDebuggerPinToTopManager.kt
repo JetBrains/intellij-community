@@ -29,7 +29,7 @@ open class XDebuggerPinToTopManager {
     private var myPinnedMembers = HashSet<PinnedItemInfo>()
     private val myPinToTopIconAlarm = Alarm()
 
-    val pinToTopComparator : Comparator<XValueNodeImpl> = Comparator.comparing<XValueNodeImpl, Boolean> { !isItemPinned(it) }
+    val pinToTopComparator : Comparator<XValueNodeImpl> = Comparator.comparing { !isItemPinned(it) }
     val compoundComparator = pinToTopComparator.then(XValueNodeImpl.COMPARATOR)
 
     fun isEnabled() : Boolean {

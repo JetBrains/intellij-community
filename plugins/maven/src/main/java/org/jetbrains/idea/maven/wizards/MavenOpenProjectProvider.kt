@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil.confirmLinkingUntrustedProject
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
@@ -40,4 +41,16 @@ class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
       }
     }
   }
+
+  override suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    LOG.debug("Link Maven project '$projectFile' to existing project ${project.name}")
+
+    val projectRoot = if (projectFile.isDirectory) projectFile else projectFile.parent
+
+    if (ExternalSystemTrustedProjectDialog.confirmLinkingUntrustedProjectAsync(project, systemId, projectRoot.toNioPath())) {
+      val asyncBuilder = MavenProjectAsyncBuilder()
+      asyncBuilder.commit(project, projectFile, null)
+    }
+  }
+
 }

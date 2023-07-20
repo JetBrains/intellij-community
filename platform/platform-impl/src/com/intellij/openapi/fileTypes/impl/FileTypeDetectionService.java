@@ -29,11 +29,13 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.containers.ConcurrentPackedBitsArray;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.xmlb.Constants;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,8 +79,7 @@ final class FileTypeDetectionService implements Disposable {
   private final AtomicLong elapsedAutoDetect = new AtomicLong();
 
   private boolean RE_DETECT_ASYNC = !ApplicationManager.getApplication().isUnitTestMode();
-  private final Executor reDetectExecutor =
-    AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
+  private final Executor reDetectExecutor;
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
   private volatile FileAttribute autoDetectedAttribute;
@@ -89,7 +90,7 @@ final class FileTypeDetectionService implements Disposable {
   private volatile boolean myCanUseCachedDetectedFileType = true;
   private final FileTypeManagerImpl myFileTypeManager;
 
-  FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager) {
+  FileTypeDetectionService(@NotNull FileTypeManagerImpl fileTypeManager, @NotNull CoroutineScope coroutineScope) {
     myFileTypeManager = fileTypeManager;
 
     fileTypeChangedCount = new AtomicInteger(AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE.getVersion());
@@ -104,6 +105,7 @@ final class FileTypeDetectionService implements Disposable {
     if (!Objects.equals(prevDetectors, getDetectorsString())) {
       onDetectorsChange();
     }
+    reDetectExecutor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("FileTypeManager Redetect", coroutineScope);
   }
 
   @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -296,8 +298,8 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private static @NotNull List<String> getDetectorsString() {
-    ExtensionPointImpl<FileTypeRegistry.FileTypeDetector> ep =
-      (ExtensionPointImpl<FileTypeRegistry.FileTypeDetector>)FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint();
+    ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector> ep =
+      (ExtensionPointImpl<FileTypeRegistry.@NotNull FileTypeDetector>)FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint();
     int size = ep.size();
     if (size == 0) {
       return Collections.emptyList();
@@ -365,11 +367,15 @@ final class FileTypeDetectionService implements Disposable {
     int flags = BitUtil.set(0, AUTO_DETECTED_AS_TEXT_MASK, wasAutodetectedAsText);
     flags = BitUtil.set(flags, AUTO_DETECTED_AS_BINARY_MASK, wasAutodetectedAsBinary);
     if (file instanceof VirtualFileWithId) {
-      writeFlagsToCache(file, flags);
       int id = ((VirtualFileWithId)file).getId();
       flags = BitUtil.set(flags, AUTO_DETECT_WAS_RUN_MASK, true);
       flags = BitUtil.set(flags, ATTRIBUTES_WERE_LOADED_MASK, true);
-      packedFlags.set(id, flags);
+
+      long oldFlags = packedFlags.get(id);
+      if (oldFlags != flags) {
+        packedFlags.set(id, flags);
+        writeFlagsToCache(file, flags);
+      }
 
       if (wasAutodetectedAsText || wasAutodetectedAsBinary) {
         file.putUserData(DETECTED_FROM_CONTENT_FILE_TYPE_KEY, null);
@@ -592,8 +598,8 @@ final class FileTypeDetectionService implements Disposable {
       }
     }
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug(file + "; type=" + fileType.getDescription() + "; " + counterAutoDetect);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace(file + "; type=" + fileType.getDescription() + "; " + counterAutoDetect);
     }
 
     // do not treat DetectedByContentFileType as a simple PlainTextFileType to give it a chance to re-detect itself later
@@ -730,12 +736,7 @@ final class FileTypeDetectionService implements Disposable {
 
   @TestOnly
   void drainReDetectQueue() {
-    try {
-      ((BoundedTaskExecutor)reDetectExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
-    }
-    catch (Exception e) {
-      throw new RuntimeException(e);
-    }
+    ((CoroutineDispatcherBackedExecutor)reDetectExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
   }
 
   @TestOnly

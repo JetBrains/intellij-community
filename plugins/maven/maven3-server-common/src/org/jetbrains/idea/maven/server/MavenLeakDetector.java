@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.server;
 
 import com.intellij.util.ReflectionUtilRt;
 
-import java.rmi.RemoteException;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -35,11 +34,11 @@ public class MavenLeakDetector {
     markedHooks.putAll(getShutdownHooks());
   }
 
-  public void check() throws RemoteException {
+  public void check() {
     checkShutdownHooks();
   }
 
-  private void checkShutdownHooks() throws RemoteException {
+  private void checkShutdownHooks() {
     IdentityHashMap<Thread, Thread> checkedHooks = new IdentityHashMap<Thread, Thread>(getShutdownHooks());
     for (Thread t : markedHooks.values()) {
       checkedHooks.remove(t);
@@ -49,9 +48,9 @@ public class MavenLeakDetector {
     }
   }
 
-  private static void removeHook(Thread thread) throws RemoteException {
+  private static void removeHook(Thread thread) {
     Runtime.getRuntime().removeShutdownHook(thread);
-    Maven3ServerGlobals.getLogger().print(String.format("ShutdownHook[%s] was removed to avoid memory leak", thread));
+    MavenServerGlobals.getLogger().print(String.format("ShutdownHook[%s] was removed to avoid memory leak", thread));
   }
 
   private static Map<Thread, Thread> getShutdownHooks() {

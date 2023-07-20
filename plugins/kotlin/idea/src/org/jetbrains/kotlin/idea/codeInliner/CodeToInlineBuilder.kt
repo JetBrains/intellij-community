@@ -6,13 +6,12 @@ import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.builtins.isExtensionFunctionType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.base.psi.copied
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.codeInliner.CommentHolder.CommentNode.Companion.mergeComments
 import org.jetbrains.kotlin.idea.core.asExpression
-import org.jetbrains.kotlin.idea.base.psi.copied
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.intentions.InsertExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.SpecifyExplicitLambdaSignatureIntention
@@ -40,10 +39,10 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitReceiver
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.typeUtil.unCapture
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.utils.sure
-import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
 class CodeToInlineBuilder(
     private val targetCallable: CallableDescriptor,
@@ -207,7 +206,7 @@ class CodeToInlineBuilder(
         }
 
         if (!needToAddParameterTypes(lambdaExpr, resolutionFacade)) return
-        SpecifyExplicitLambdaSignatureIntention.applyWithParameters(lambdaExpr, parameters)
+        SpecifyExplicitLambdaSignatureIntention.Holder.applyWithParameters(lambdaExpr, parameters)
     }
 
     private fun needToAddParameterTypes(

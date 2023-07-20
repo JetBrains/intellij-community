@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,13 +28,6 @@ public class CoreLocalVirtualFile extends VirtualFile {
   @Deprecated
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
     this(fileSystem, ioFile.toPath());
-  }
-
-  /** @deprecated please use {@link #CoreLocalVirtualFile(CoreLocalFileSystem, Path, boolean)} instead */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
-    this(fileSystem, ioFile.toPath(), isDirectory);
   }
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file) {

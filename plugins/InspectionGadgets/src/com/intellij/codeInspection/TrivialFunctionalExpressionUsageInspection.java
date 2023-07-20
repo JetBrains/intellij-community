@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.BlockUtils;
@@ -19,6 +19,7 @@ import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,52 +34,25 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
 
       @Override
       public void visitMethodReferenceExpression(final @NotNull PsiMethodReferenceExpression expression) {
-        doCheckMethodCallOnFunctionalExpression(expression, call -> expression.resolve() != null);
+        Problem problem = doCheckMethodCallOnFunctionalExpression(expression, call -> expression.resolve() != null);
+        if (problem != null) {
+          problem.register(holder);
+        }
       }
 
       @Override
       public void visitLambdaExpression(final @NotNull PsiLambdaExpression expression) {
-        final PsiElement body = expression.getBody();
-        if (body == null) return;
-
-        Predicate<PsiMethodCallExpression> checkBody = call -> {
-          final PsiElement callParent = call.getParent();
-
-          if (!(body instanceof PsiCodeBlock)) {
-            return callParent instanceof PsiStatement || callParent instanceof PsiLocalVariable || expression.isValueCompatible();
-          }
-
-          PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
-          if (statements.length == 1) {
-            return callParent instanceof PsiStatement
-                   || callParent instanceof PsiLocalVariable
-                   || statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
-          }
-
-          final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
-          if (returnStatements.length > 1) {
-            return false;
-          }
-
-          if (returnStatements.length == 1) {
-            if (!(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement)) {
-              return false;
-            }
-          }
-
-          return CodeBlockSurrounder.canSurround(call);
-        };
-        Predicate<PsiMethodCallExpression> checkWrites = call ->
-          !ContainerUtil.exists(expression.getParameterList().getParameters(), parameter -> VariableAccessUtils.variableIsAssigned(parameter, body));
-
-        doCheckMethodCallOnFunctionalExpression(expression, checkBody.and(checkWrites));
+        Problem problem = doCheckLambda(expression);
+        if (problem != null) {
+          problem.register(holder);
+        }
       }
 
       @Override
       public void visitAnonymousClass(final @NotNull PsiAnonymousClass aClass) {
         if (AnonymousCanBeLambdaInspection.canBeConvertedToLambda(aClass, false, Collections.emptySet())) {
           final PsiNewExpression newExpression = ObjectUtils.tryCast(aClass.getParent(), PsiNewExpression.class);
-          doCheckMethodCallOnFunctionalExpression(call -> {
+          Problem problem = doCheckMethodCallOnFunctionalExpression(call -> {
             final PsiMethod method = aClass.getMethods()[0];
             final PsiCodeBlock body = method.getBody();
             final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements(body);
@@ -89,44 +63,98 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
             return callParent instanceof PsiStatement ||
                    callParent instanceof PsiLocalVariable;
           }, newExpression, aClass.getBaseClassType(), new ReplaceAnonymousWithLambdaBodyFix());
-        }
-      }
-
-      private void doCheckMethodCallOnFunctionalExpression(PsiElement expression,
-                                                           Predicate<? super PsiMethodCallExpression> elementContainerPredicate) {
-        final PsiTypeCastExpression parent =
-          ObjectUtils.tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiTypeCastExpression.class);
-        if (parent != null) {
-          final PsiType interfaceType = parent.getType();
-          doCheckMethodCallOnFunctionalExpression(elementContainerPredicate, parent, interfaceType,
-                                                  expression instanceof PsiLambdaExpression ? new ReplaceWithLambdaBodyFix()
-                                                                                             : new ReplaceWithMethodReferenceFix());
-        }
-      }
-
-      private void doCheckMethodCallOnFunctionalExpression(Predicate<? super PsiMethodCallExpression> elementContainerPredicate,
-                                                           PsiExpression qualifier,
-                                                           PsiType interfaceType,
-                                                           LocalQuickFix fix) {
-        final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(qualifier);
-        if (call == null) return;
-
-        final PsiMethod method = call.resolveMethod();
-        final PsiElement referenceNameElement = call.getMethodExpression().getReferenceNameElement();
-        boolean suitableMethod = method != null &&
-                                 referenceNameElement != null &&
-                                 !method.isVarArgs() &&
-                                 call.getArgumentList().getExpressionCount() == method.getParameterList().getParametersCount() &&
-                                 elementContainerPredicate.test(call);
-        if (!suitableMethod) return;
-        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
-        if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
-          holder.registerProblem(referenceNameElement,
-                                 InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"),
-                                 fix);
+          if (problem != null) {
+            problem.register(holder);
+          }
         }
       }
     };
+  }
+  
+  public static void simplifyAllLambdas(@NotNull PsiElement context) {
+    List<@NotNull Problem> problems = SyntaxTraverser.psiTraverser(context)
+      .filter(PsiLambdaExpression.class)
+      .filterMap(TrivialFunctionalExpressionUsageInspection::doCheckLambda)
+      .toList();
+    for (Problem problem : problems) {
+      if (!problem.place().isValid()) continue;
+      problem.fix().apply(problem.place());
+    }
+  }
+
+  @Nullable
+  private static Problem doCheckLambda(@NotNull PsiLambdaExpression expression) {
+    final PsiElement body = expression.getBody();
+    if (body == null) return null;
+
+    Predicate<PsiMethodCallExpression> checkBody = call -> {
+      final PsiElement callParent = call.getParent();
+
+      if (!(body instanceof PsiCodeBlock)) {
+        return callParent instanceof PsiStatement || callParent instanceof PsiLocalVariable || expression.isValueCompatible();
+      }
+
+      PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
+      if (statements.length == 1) {
+        return callParent instanceof PsiStatement
+               || callParent instanceof PsiLocalVariable
+               || statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
+      }
+
+      final PsiReturnStatement[] returnStatements = PsiUtil.findReturnStatements((PsiCodeBlock)body);
+      if (returnStatements.length > 1) {
+        return false;
+      }
+
+      if (returnStatements.length == 1) {
+        if (!(ArrayUtil.getLastElement(statements) instanceof PsiReturnStatement)) {
+          return false;
+        }
+      }
+
+      return CodeBlockSurrounder.canSurround(call);
+    };
+    Predicate<PsiMethodCallExpression> checkWrites = call ->
+      !ContainerUtil.exists(expression.getParameterList().getParameters(), parameter -> VariableAccessUtils.variableIsAssigned(parameter, body));
+
+    return doCheckMethodCallOnFunctionalExpression(expression, checkBody.and(checkWrites));
+  }
+
+  private static @Nullable Problem doCheckMethodCallOnFunctionalExpression(@NotNull PsiElement expression,
+                                                                           @NotNull Predicate<? super PsiMethodCallExpression> elementContainerPredicate) {
+    if (!(PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiTypeCastExpression parent)) return null;
+    final PsiType interfaceType = parent.getType();
+    return doCheckMethodCallOnFunctionalExpression(elementContainerPredicate, parent, interfaceType,
+                                                   expression instanceof PsiLambdaExpression ? new ReplaceWithLambdaBodyFix()
+                                                                                             : new ReplaceWithMethodReferenceFix());
+  }
+
+  private static @Nullable Problem doCheckMethodCallOnFunctionalExpression(@NotNull Predicate<? super PsiMethodCallExpression> elementContainerPredicate,
+                                                                           PsiExpression qualifier,
+                                                                           PsiType interfaceType,
+                                                                           @NotNull ReplaceFix fix) {
+    final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(qualifier);
+    if (call == null) return null;
+
+    final PsiMethod method = call.resolveMethod();
+    final PsiElement referenceNameElement = call.getMethodExpression().getReferenceNameElement();
+    boolean suitableMethod = method != null &&
+                             referenceNameElement != null &&
+                             !method.isVarArgs() &&
+                             call.getArgumentList().getExpressionCount() == method.getParameterList().getParametersCount() &&
+                             elementContainerPredicate.test(call);
+    if (!suitableMethod) return null;
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
+    if (method == interfaceMethod || interfaceMethod != null && MethodSignatureUtil.isSuperMethod(interfaceMethod, method)) {
+      return new Problem(referenceNameElement, fix);
+    }
+    return null;
+  }
+
+  private record Problem(@NotNull PsiElement place, @NotNull ReplaceFix fix) {
+    void register(@NotNull ProblemsHolder holder) {
+      holder.registerProblem(place, InspectionGadgetsBundle.message("inspection.trivial.functional.expression.usage.description"), fix);
+    }
   }
 
   private static void replaceWithLambdaBody(PsiLambdaExpression lambda) {
@@ -213,14 +241,10 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
       PsiElement anchor = result.getAnchor();
       statement = ObjectUtils.tryCast(statements[statements.length - 1], PsiReturnStatement.class);
       PsiElement gParent = anchor.getParent();
-      if (hasNameConflict(statements, anchor, element)) {
-        gParent.addBefore(JavaPsiFacade.getElementFactory(element.getProject()).createStatementFromText(ct.text(body), anchor), anchor);
-      }
-      else {
-        for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
-          if (child != statement && !(child instanceof PsiJavaToken)) {
-            gParent.addBefore(ct.markUnchanged(child), anchor);
-          }
+      solveNameConflicts(statements, anchor, element);
+      for (PsiElement child = body.getFirstChild(); child != null; child = child.getNextSibling()) {
+        if (child != statement && !(child instanceof PsiJavaToken)) {
+          gParent.addBefore(ct.markUnchanged(child), anchor);
         }
       }
     }
@@ -238,15 +262,24 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     }
   }
   
-  private static boolean hasNameConflict(PsiStatement[] statements, PsiElement anchor, PsiLambdaExpression lambda) {
+  private static void solveNameConflicts(PsiStatement[] statements, @NotNull PsiElement anchor, @NotNull PsiLambdaExpression lambda) {
     Predicate<PsiVariable> allowedVar = variable -> PsiTreeUtil.isAncestor(lambda, variable, true);
-    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(anchor.getProject());
-    return StreamEx.of(statements).select(PsiDeclarationStatement.class)
+    Project project = anchor.getProject();
+    JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
+    StreamEx.of(statements).select(PsiDeclarationStatement.class)
       .flatArray(PsiDeclarationStatement::getDeclaredElements)
-      .select(PsiNamedElement.class)
-      .map(PsiNamedElement::getName)
-      .nonNull()
-      .anyMatch(name -> !name.equals(manager.suggestUniqueVariableName(name, anchor, allowedVar)));
+      .select(PsiVariable.class)
+      .forEach(e -> {
+        PsiIdentifier identifier = e.getNameIdentifier();
+        if (identifier == null) return;
+        String name = identifier.getText();
+        String newName = manager.suggestUniqueVariableName(name, anchor, allowedVar);
+        if (!name.equals(newName)) {
+          List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(e, anchor);
+          refs.forEach(ref -> ref.handleElementRename(newName));
+          identifier.replace(JavaPsiFacade.getElementFactory(project).createIdentifier(newName));
+        }
+      });
   }
 
   private static void inlineCallArguments(PsiMethodCallExpression callExpression,
@@ -342,7 +375,10 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement psiElement = descriptor.getPsiElement();
+      apply(descriptor.getPsiElement());
+    }
+
+    void apply(@NotNull PsiElement psiElement) {
       final PsiMethodCallExpression callExpression = PsiTreeUtil.getParentOfType(psiElement, PsiMethodCallExpression.class);
       if (callExpression != null) {
         fixExpression(callExpression, PsiUtil.skipParenthesizedExprDown(callExpression.getMethodExpression().getQualifierExpression()));

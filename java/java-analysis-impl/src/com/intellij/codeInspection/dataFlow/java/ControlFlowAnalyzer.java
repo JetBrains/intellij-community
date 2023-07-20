@@ -165,11 +165,11 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     return myCurrentFlow.getStartOffset(element);
   }
 
-  private void startElement(PsiElement element) {
+  private void startElement(@NotNull PsiElement element) {
     myCurrentFlow.startElement(element);
   }
 
-  private void finishElement(PsiElement element) {
+  private void finishElement(@NotNull PsiElement element) {
     myCurrentFlow.finishElement(element);
     if (element instanceof PsiField || (element instanceof PsiStatement && !(element instanceof PsiReturnStatement) &&
         !(element instanceof PsiSwitchLabeledRuleStatement))) {

@@ -7,17 +7,17 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class AsyncExecutionServiceImpl extends AsyncExecutionService {
-  private static long ourWriteActionCounter;
+  private static final AtomicLong ourWriteActionCounter = new AtomicLong();
 
   public AsyncExecutionServiceImpl() {
     Application app = ApplicationManager.getApplication();
     app.addApplicationListener(new ApplicationListener() {
       @Override
       public void writeActionStarted(@NotNull Object action) {
-        //noinspection AssignmentToStaticFieldFromInstanceMethod
-        ourWriteActionCounter++;
+        ourWriteActionCounter.incrementAndGet();
       }
     }, app);
   }
@@ -53,6 +53,6 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
   @ApiStatus.Internal
   public static long getWriteActionCounter() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return ourWriteActionCounter;
+    return ourWriteActionCounter.get();
   }
 }

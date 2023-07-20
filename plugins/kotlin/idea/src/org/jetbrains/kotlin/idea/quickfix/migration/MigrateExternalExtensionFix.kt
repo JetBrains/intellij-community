@@ -12,11 +12,11 @@ import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 import org.jetbrains.kotlin.idea.intentions.declarations.ConvertMemberToExtensionIntention
 import org.jetbrains.kotlin.idea.project.builtIns
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.js.PredefinedAnnotation
@@ -61,7 +61,7 @@ class MigrateExternalExtensionFix(declaration: KtNamedDeclaration) : KotlinQuick
                 convertNativeAnnotationToJsName(memberDeclaration, annotations)
                 annotations.nativeAnnotation.delete()
             } else {
-                val externalDeclaration = ConvertMemberToExtensionIntention.convert(memberDeclaration)
+                val externalDeclaration = ConvertMemberToExtensionIntention.Holder.convert(memberDeclaration)
                 runWriteAction {
                     fixExtensionMemberDeclaration(externalDeclaration, null) // editor is null as we are not going to open any live templates
                 }

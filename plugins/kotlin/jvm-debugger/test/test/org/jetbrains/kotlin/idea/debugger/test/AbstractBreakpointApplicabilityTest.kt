@@ -36,8 +36,8 @@ abstract class AbstractBreakpointApplicabilityTest : KotlinLightCodeInsightFixtu
 
     private fun checkLine(file: KtFile, line: Int, checker: BreakpointChecker): String {
         val lineText = file.getLine(line)
-        val expectedBreakpointTypes = lineText.substringAfterLast(COMMENT).trim().split(",").map { it.trim() }.toSortedSet()
-        val actualBreakpointTypes = checker.check(file, line).map { it.prefix }.distinct().toSortedSet()
+        val expectedBreakpointTypes = lineText.substringAfterLast(COMMENT).trim().split(",").map { it.trim() }.sorted()
+        val actualBreakpointTypes = checker.check(file, line).map { it.prefix }.sorted()
 
         return if (expectedBreakpointTypes != actualBreakpointTypes) {
             val lineWithoutComments = lineText.substringBeforeLast(COMMENT).trimEnd()

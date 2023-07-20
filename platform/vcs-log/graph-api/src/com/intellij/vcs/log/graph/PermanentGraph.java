@@ -15,13 +15,13 @@
  */
 package com.intellij.vcs.log.graph;
 
-import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * PermanentGraph is created once per repository, and forever until the log is refreshed. <br/>
@@ -57,7 +57,7 @@ public interface PermanentGraph<Id> {
   Set<Id> getContainingBranches(@NotNull Id commit);
 
   @NotNull
-  Condition<Id> getContainedInBranchCondition(@NotNull Collection<? extends Id> currentBranchHead);
+  Predicate<Id> getContainedInBranchCondition(@NotNull Collection<? extends Id> currentBranchHead);
 
   enum SortType {
     Normal("Off", "Sort commits topologically and by date"), // NON-NLS

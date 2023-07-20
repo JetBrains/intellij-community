@@ -6,7 +6,7 @@ internal val INF: Nothing? = null
 internal fun <T : Comparable<T>> range(vararg ranges: Pair<T?, T?>) =
   Ranges.valueOf(ranges.toList())
 
-internal class Ranges<T : Comparable<T>> private constructor(
+class Ranges<T : Comparable<T>> private constructor(
   private val ranges: List<Range<T>>
 ) {
 

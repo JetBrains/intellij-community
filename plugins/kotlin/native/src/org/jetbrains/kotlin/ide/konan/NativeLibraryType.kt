@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.platform.konan.NativePlatforms
 import javax.swing.Icon
 import javax.swing.JComponent
 
-object NativeLibraryType : LibraryType<DummyLibraryProperties>(KotlinNativeLibraryKind) {
+internal class NativeLibraryType : LibraryType<DummyLibraryProperties>(KotlinNativeLibraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>): Nothing? = null
     override fun getCreateActionName(): Nothing? = null
     override fun createNewLibrary(parentComponent: JComponent, contextDirectory: VirtualFile?, project: Project): Nothing? = null

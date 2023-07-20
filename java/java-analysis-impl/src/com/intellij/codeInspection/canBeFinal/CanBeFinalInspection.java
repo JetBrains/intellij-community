@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -173,8 +174,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     return SHORT_NAME;
   }
 
-  private static class AcceptSuggested implements LocalQuickFix {
-    @SafeFieldForPreview
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     private final RefManager myManager;
 
     AcceptSuggested(final RefManager manager) {
@@ -188,8 +188,7 @@ public class CanBeFinalInspection extends GlobalJavaBatchInspectionTool {
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiModifierListOwner psiElement = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
       if (psiElement != null) {
         RefJavaElement refElement = (RefJavaElement)(myManager != null ? myManager.getReference(psiElement) : null);

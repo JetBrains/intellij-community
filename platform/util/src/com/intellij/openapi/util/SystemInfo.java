@@ -13,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Provides information about operating system, system-wide settings, and Java Runtime.
@@ -27,10 +28,7 @@ public final class SystemInfo {
 
   private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
-    if (rtVersion != null && Character.isDigit(rtVersion.charAt(0))) {
-      return rtVersion;
-    }
-    return fallback;
+    return rtVersion != null && Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
   }
 
   public static final boolean isWindows = SystemInfoRt.isWindows;
@@ -66,7 +64,7 @@ public final class SystemInfo {
     // https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION
     if (isXWindow) {
       isWayland = System.getenv("WAYLAND_DISPLAY") != null;
-      String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
+      @SuppressWarnings("SpellCheckingInspection") String desktop = System.getenv("XDG_CURRENT_DESKTOP"), gdmSession = System.getenv("GDMSESSION");
       isGNOME = desktop != null && desktop.contains("GNOME") || gdmSession != null && gdmSession.contains("gnome");
       isKDE = !isGNOME && (desktop != null && desktop.contains("KDE") || System.getenv("KDE_FULL_SESSION") != null);
       isXfce = !isGNOME && !isKDE && (desktop != null && desktop.contains("XFCE"));
@@ -84,15 +82,14 @@ public final class SystemInfo {
 
   public static final boolean isFileSystemCaseSensitive = SystemInfoRt.isFileSystemCaseSensitive;
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgOpen = PathExecLazyValue.create("xdg-open");
+  private static final Supplier<Boolean> ourHasXdgOpen = isXWindow ? PathExecLazyValue.create("xdg-open") : () -> false;
   public static boolean hasXdgOpen() {
-    return isXWindow && ourHasXdgOpen.getValue();
+    return ourHasXdgOpen.get();
   }
 
-  private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
-
+  private static final Supplier<Boolean> ourHasXdgMime = isXWindow ? PathExecLazyValue.create("xdg-mime") : () -> false;
   public static boolean hasXdgMime() {
-    return isXWindow && ourHasXdgMime.getValue();
+    return ourHasXdgMime.get();
   }
 
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
@@ -105,16 +102,12 @@ public final class SystemInfo {
    * See <a href="https://www.gaijin.at/en/infos/windows-version-numbers">list of builds</a>.
    * There is also <a href="https://en.wikipedia.org/wiki/Windows_10_version_history">Wikipedia article</a>.
    * And <a href="https://en.wikipedia.org/wiki/Windows_11_version_history">another one for Windows 11</a>.
-   *
+   * <p>
    * ReleaseID (1903, 2004 e.t.c.) is marketing term which is not a number since 20H2 while build numbers
-   * grow since NT 3.1 (see the first link) and this trend is unlikely to change
-   *
+   * grow since NT 3.1 (see the first link) and this trend is unlikely to change.
    */
   public static @Nullable Long getWinBuildNumber() {
-    if (!isWin10OrNewer) {
-      return null;
-    }
-    return WinBuildVersionKt.getWinBuildNumber();
+    return isWin10OrNewer ? WinBuildVersionKt.getWinBuildNumber() : null;
   }
 
   public static @NotNull String getMacOSMajorVersion() {
@@ -186,6 +179,7 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(int major) {
     return JavaVersion.current().feature >= major;
   }
@@ -193,6 +187,7 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(int major, int minor, int update) {
     return JavaVersion.current().compareTo(JavaVersion.compose(major, minor, update, 0, false)) >= 0;
   }
@@ -200,6 +195,7 @@ public final class SystemInfo {
   /** @deprecated please use {@link Runtime#version()} (in the platform) or {@link JavaVersion} (in utils) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval
+  @SuppressWarnings("Since15")
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }

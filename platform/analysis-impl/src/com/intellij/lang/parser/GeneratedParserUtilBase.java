@@ -751,9 +751,7 @@ public class GeneratedParserUtilBase {
   private static PsiBuilderImpl.ProductionMarker getLatestExtensibleDoneMarker(@NotNull PsiBuilder builder) {
     Builder b = (Builder)builder;
     PsiBuilderImpl.ProductionMarker marker = ContainerUtil.getLastItem(b.getProductions());
-    if (marker == null) return null;
-    PsiBuilder delegate = b.getDelegate();
-    if (delegate instanceof PsiBuilderImpl delegateImpl && delegateImpl.isCollapsed(marker)) return null;
+    if (marker == null || ((PsiBuilderImpl)b.getDelegate()).isCollapsed(marker)) return null;
     return marker.getTokenType() != null && marker instanceof PsiBuilder.Marker ? marker : null;
   }
 

@@ -65,9 +65,7 @@ class StringInlayActionPayload(val text: String) : InlayActionPayload {
 
     other as StringInlayActionPayload
 
-    if (text != other.text) return false
-
-    return true
+    return text == other.text
   }
 
   override fun hashCode(): Int {
@@ -86,9 +84,7 @@ class PsiPointerInlayActionPayload(val pointer: SmartPsiElementPointer<*>) : Inl
 
     other as PsiPointerInlayActionPayload
 
-    if (pointer != other.pointer) return false
-
-    return true
+    return pointer == other.pointer
   }
 
   override fun hashCode(): Int {

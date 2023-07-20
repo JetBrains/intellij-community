@@ -10,7 +10,7 @@ interface B {
 
 class C : A, B {
     override fun foo(j: Int) {
-        super.fo<caret>
+        super<>.fo<caret>
     }
 }
 

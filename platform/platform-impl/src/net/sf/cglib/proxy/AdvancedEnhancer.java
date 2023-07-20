@@ -784,10 +784,10 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
   private void emitNewInstanceCallback(ClassEmitter ce) {
     CodeEmitter e = ce.begin_method(Constants.ACC_PUBLIC, SINGLE_NEW_INSTANCE, null);
     switch (callbackTypes.length) {
-      case 0:
+      case 0 -> {
         // TODO: make sure Callback is null
-        break;
-      case 1:
+      }
+      case 1 -> {
         // for now just make a new array; TODO: optimize
         e.push(1);
         e.newarray(CALLBACK);
@@ -796,9 +796,8 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
         e.load_arg(0);
         e.aastore();
         e.invoke_static_this(SET_THREAD_CALLBACKS);
-        break;
-      default:
-        e.throw_exception(ILLEGAL_STATE_EXCEPTION, "More than one callback object required");
+      }
+      default -> e.throw_exception(ILLEGAL_STATE_EXCEPTION, "More than one callback object required");
     }
     emitCommonNewInstance(e);
   }

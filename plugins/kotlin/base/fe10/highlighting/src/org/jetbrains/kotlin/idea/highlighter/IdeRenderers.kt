@@ -79,10 +79,7 @@ object IdeRenderers {
 
     @JvmField
     val HTML_CONFLICTING_JVM_DECLARATIONS_DATA = Renderer { data: ConflictingJvmDeclarationsData ->
-
-        val descriptors = data.signatureOrigins
-            .mapNotNull { it.descriptor }
-            .sortedWith(MemberComparator.INSTANCE)
+        val descriptors = data.signatureDescriptors.sortedWith(MemberComparator.INSTANCE)
         val context = RenderingContext.of(descriptors)
         val conflicts = descriptors.joinToString("") { "<li>" + HTML.render(it, context) + "</li>\n" }
 

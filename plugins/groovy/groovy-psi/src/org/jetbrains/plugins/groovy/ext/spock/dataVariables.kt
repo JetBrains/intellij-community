@@ -22,7 +22,7 @@ fun createVariableMap(method: GrMethod): Map<String, SpockVariableDescriptor> {
 }
 
 private fun createVariableMap(methodBlock: GrOpenBlock): Map<String, SpockVariableDescriptor> {
-  val statements = LinkedList<GrStatement>(methodBlock.statements.asList())
+  val statements: LinkedList<GrStatement> = LinkedList(methodBlock.statements.asList())
   val whereBlockStart = findWhereBlockStart(statements) ?: return emptyMap()
 
   val result = HashMap<String, SpockVariableDescriptor>()

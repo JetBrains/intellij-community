@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project
 
 internal class PackageNode(project: Project, bookmark: PackageBookmark) : BookmarkNode<PackageBookmark>(project, bookmark) {
 
-  override fun getChildren() = emptyList<AbstractTreeNode<*>>()
+  override fun getChildren(): List<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(wrapIcon(CompoundIconProvider.findIcon(value?.element?.`package`, 0)))

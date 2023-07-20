@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.IntRef;
@@ -39,16 +39,15 @@ public class PagesTable {
   private final float loadFactor;
 
   /** Pages in pages array: count all !null entries, including tombstones */
-  //@GuardedBy(pagesLock.writeLock)
+  //@GuardedBy(pagesLock)
   private int pagesCount = 0;
 
   /**
    * Reads are non-blocking, writes must be guarded by .pagesLock
    */
-  @NotNull
-  private volatile AtomicReferenceArray<PageImpl> pages;
+  private volatile @NotNull AtomicReferenceArray<PageImpl> pages;
 
-  private transient final ReentrantLock pagesLock = new ReentrantLock();
+  private final transient ReentrantLock pagesLock = new ReentrantLock();
 
 
   public PagesTable(final int initialSize) {
@@ -62,15 +61,13 @@ public class PagesTable {
     pages = new AtomicReferenceArray<>(size);
   }
 
-  @Nullable
-  public Page lookupIfExist(final int pageIndex) {
+  public @Nullable Page lookupIfExist(final int pageIndex) {
     return findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */ null);
   }
 
-  @NotNull
-  public PageImpl lookupOrCreate(final int pageIndex,
-                                 final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
-                                 final @NotNull PageContentLoader pageContentLoader) throws IOException {
+  public @NotNull PageImpl lookupOrCreate(final int pageIndex,
+                                          final @NotNull IntFunction<PageImpl> uninitializedPageFactory,
+                                          final @NotNull PageContentLoader pageContentLoader) throws IOException {
     final PageImpl page = findPageOrInsertionIndex(this.pages, pageIndex, /*insertionIndexRef: */null);
     if (page != null) {
       return page;
@@ -96,12 +93,22 @@ public class PagesTable {
 
   /** Shrink table if alivePagesCount is too small for current size. */
   public boolean shrinkIfNeeded(final int alivePagesCount) {
-    final int expectedTableSize = (int)(alivePagesCount / loadFactor);
+    final int expectedTableSize = (int)Math.ceil(alivePagesCount / loadFactor);
     if (expectedTableSize >= MIN_TABLE_SIZE
         && expectedTableSize * SHRINK_FACTOR < pages.length()) {
       pagesLock.lock();
       try {
-        rehashToSize(expectedTableSize);
+        try {
+          rehashToSize(expectedTableSize);
+        }
+        catch (NoFreeSpaceException e) {
+          //RC: table content could change between alivePagesCount calculation, and actual rehash under
+          //    the lock: more pages could be inserted into a table, so alivePagesCount is an underestimation.
+          //    It could be so huge an underestimation that shrinking is not appropriate at all -- e.g.
+          //    there will be not enough slots in a table, if shrinked. We deal with it speculatively: try
+          //    to rehashToSize(), and cancel resize if NoFreeSpaceException is thrown:
+          return false;
+        }
         return true;
       }
       finally {
@@ -120,10 +127,9 @@ public class PagesTable {
   }
 
 
-  @NotNull
-  private PageImpl insertNewPage(final int pageIndex,
-                                 final IntFunction<PageImpl> uninitializedPageFactory,
-                                 final PageContentLoader pageContentLoader) throws IOException {
+  private @NotNull PageImpl insertNewPage(final int pageIndex,
+                                          final IntFunction<PageImpl> uninitializedPageFactory,
+                                          final PageContentLoader pageContentLoader) throws IOException {
 
     //Don't try to be lock-free on updates, just avoid holding the _global_ lock during IO:
     // 1) put blankPage under the pagesLock,
@@ -133,40 +139,48 @@ public class PagesTable {
     final PageImpl blankPage;
     pagesLock.lock();
     try {
-      final PageImpl alreadyInsertedPage = findPageOrInsertionIndex(this.pages, pageIndex, insertionIndexRef);
+      final PageImpl alreadyInsertedPage = findPageOrInsertionIndex(pages, pageIndex, insertionIndexRef);
       if (alreadyInsertedPage != null) {
         //race: somebody inserted the page between lock-free speculative check and locked re-check
         return alreadyInsertedPage;
       }
 
+      if (insertionIndexRef.get() < 0) {
+        // (page == null && insertionIndex < 0) => no space remains in the table
+        final int newTableSize = (int)Math.ceil((pagesCount / loadFactor) * GROWTH_FACTOR);
+        rehashToSize(newTableSize);
+
+        final PageImpl mustBeNull = findPageOrInsertionIndex(pages, pageIndex, insertionIndexRef);
+        if (mustBeNull != null) {
+          throw new AssertionError(
+            "Bug: first lookup(pageIndex: " + pageIndex + ") founds nothing, same search after resize must find nothing too " + pages);
+        }
+        if (insertionIndexRef.get() < 0) {
+          throw new AssertionError("Bug: table just resized {length: " + pages.length() + ", pages: " + pagesCount + "} => " +
+                                   "there must be a free slot for pageIndex: " + pageIndex);
+        }
+      }
+
       blankPage = uninitializedPageFactory.apply(pageIndex);
 
       final int insertionIndex = insertionIndexRef.get();
-      if (insertionIndex >= 0) {
-        pages.set(insertionIndex, blankPage);
-        pagesCount++;
+      pages.set(insertionIndex, blankPage);
+      pagesCount++;
 
-        if (pagesCount > pages.length() * loadFactor) {
-          final int newTableSize = (int)((pagesCount / loadFactor) * GROWTH_FACTOR);
-          rehashToSize(newTableSize);
+      if (pagesCount > pages.length() * loadFactor) {
+        final int newTableSize = (int)Math.ceil((pagesCount / loadFactor) * GROWTH_FACTOR);
+        rehashToSize(newTableSize);
 
-          //RC: page table need not only enlargement, but also shrinking. PageTable grows big
-          //    temporarily, while we read the file intensively -- but after that period the
-          //    table should shrink. Contrary to the enlargement, shrinking is implemented by
-          //    maintenance thread, in the background. This is because a lot of entries in the
-          //    enlarged table would be tombstones (pages already reclaimed, but entries remain)
-          //    and maintaining the count of those tombstones is not convenient -- Page status
-          //    changes (...->tombstone) are generally detached from PageTable logic, and better
-          //    be kept that way. But the maintenance thread regularly scans all the pages anyway,
-          //    so it could easily count (tombstones vs alive) entries, and trigger shrinking if
-          //    there are <30-40% entries are alive.
-        }
-      }
-      else {
-        // (page == null && insertionIndex < 0)
-        // => no space remains in table
-        //    => this is unexpected, since we resize table well in advance
-        throw new AssertionError("Bug: table[len:" + pages.length() + "] is full, but only " + pagesCount + " entries are in." + pages);
+        //RC: page table need not only enlargement, but also shrinking. PageTable grows big
+        //    temporarily, while we read the file intensively -- but after that period the
+        //    table should shrink. Contrary to the enlargement, shrinking is implemented by
+        //    maintenance thread, in the background. This is because a lot of entries in the
+        //    enlarged table would be tombstones (pages already reclaimed, but entries remain)
+        //    and maintaining the count of those tombstones is not convenient -- Page status
+        //    changes (...->tombstone) are generally detached from PageTable logic, and better
+        //    be kept that way. But the maintenance thread regularly scans all the pages anyway,
+        //    so it could easily count (tombstones vs alive) entries, and trigger shrinking if
+        //    there are <30-40% entries are alive.
       }
     }
     finally {
@@ -199,10 +213,10 @@ public class PagesTable {
       blankPage.pageLock().writeLock().unlock();
     }
   }
-  //@GuardedBy(pagesLock.writeLock)
 
-  private void rehashToSize(final int newPagesSize) {
-    assert pagesLock.isHeldByCurrentThread() : "Must hold writeLock while rehashing";
+  //@GuardedBy(pagesLock)
+  private void rehashToSize(final int newPagesSize) throws NoFreeSpaceException {
+    assert pagesLock.isHeldByCurrentThread() : "Must hold pagesLock while rehashing";
 
     final AtomicReferenceArray<PageImpl> newPages = new AtomicReferenceArray<>(newPagesSize);
     final int pagesCopied = rehashWithoutTombstones(pages, newPages);
@@ -216,10 +230,11 @@ public class PagesTable {
    * Pages with [state:TOMBSTONE] are skipped during the copy.
    *
    * @return number of pages copied
+   * @throws NoFreeSpaceException if targetPages is not big enough to fit all !tombstone pages from sourcePages
    */
-  //@GuardedBy(pagesLock.writeLock)
+  //@GuardedBy(pagesLock)
   private static int rehashWithoutTombstones(final @NotNull AtomicReferenceArray<PageImpl> sourcePages,
-                                             final @NotNull AtomicReferenceArray<PageImpl> targetPages) {
+                                             final @NotNull AtomicReferenceArray<PageImpl> targetPages) throws NoFreeSpaceException {
     final IntRef insertionIndexRef = new IntRef();
     int pagesCopied = 0;
     for (int i = 0; i < sourcePages.length(); i++) {
@@ -240,11 +255,18 @@ public class PagesTable {
                                  "\ntarget: " + targetPages);
       }
       if (insertionIndex < 0) {
-        //either targetPages is too small to fit, or code bug in hashing logic
-        throw new AssertionError("Insertion index must be found for Page[#" + pageIndex + "] during rehash. " +
-                                 " source.length: " + sourcePages.length() + " target.length: " + targetPages.length() +
-                                 "\nsource: " + sourcePages +
-                                 "\ntarget: " + targetPages);
+        if (pagesCopied == targetPages.length()) {
+          //either targetPages is too small to fit, or code bug in hashing logic
+          throw new NoFreeSpaceException("Not enought space in targetPages(length: " + targetPages.length() + "): " +
+                                         "sourcePages(length: " + sourcePages.length() + ") contains > " + pagesCopied +
+                                         " !tombstone pages. \nsource: " + sourcePages + "\ntarget: " + targetPages);
+        }
+        else {
+          throw new AssertionError("Bug: insertion index must be found for Page[#" + pageIndex + "] during rehash. " +
+                                   " source.length: " + sourcePages.length() + " target.length: " + targetPages.length() +
+                                   "\nsource: " + sourcePages +
+                                   "\ntarget: " + targetPages);
+        }
       }
 
       targetPages.set(insertionIndex, page);
@@ -253,10 +275,9 @@ public class PagesTable {
     return pagesCopied;
   }
 
-  @Nullable
-  private static PageImpl findPageOrInsertionIndex(final @NotNull AtomicReferenceArray<PageImpl> pages,
-                                                   final int pageIndex,
-                                                   final @Nullable IntRef insertionIndexRef) {
+  private static @Nullable PageImpl findPageOrInsertionIndex(final @NotNull AtomicReferenceArray<PageImpl> pages,
+                                                             final int pageIndex,
+                                                             final @Nullable IntRef insertionIndexRef) {
     final int length = pages.length();
     final int initialSlotIndex = hash(pageIndex) % length;
     final int probeStep = 1; // = linear probing
@@ -358,5 +379,9 @@ public class PagesTable {
 
     //no page found
     return pages.length();
+  }
+
+  private static class NoFreeSpaceException extends IllegalStateException {
+    public NoFreeSpaceException(final String message) { }
   }
 }

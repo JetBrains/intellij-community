@@ -16,15 +16,16 @@
 package com.intellij.formatting.engine;
 
 import com.intellij.formatting.IndentImpl;
+import org.jetbrains.annotations.NotNull;
 
 public class ExpandableIndent extends IndentImpl {
   private boolean myEnforceIndent;
 
-  public ExpandableIndent(Type type) {
+  public ExpandableIndent(@NotNull Type type) {
     this(type, false);
   }
 
-  public ExpandableIndent(Type type, boolean relativeToDirectParent) {
+  public ExpandableIndent(@NotNull Type type, boolean relativeToDirectParent) {
     super(type, false, 0, relativeToDirectParent, true);
     myEnforceIndent = false;
   }

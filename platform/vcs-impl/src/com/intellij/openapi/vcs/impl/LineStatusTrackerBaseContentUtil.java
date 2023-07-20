@@ -26,6 +26,17 @@ public final class LineStatusTrackerBaseContentUtil {
     return isHandledByVcs(project, file) || findProviderFor(project, file) != null;
   }
 
+  public static boolean isTracked(@NotNull Project project, @NotNull VirtualFile file) {
+    FileStatus status = FileStatusManager.getInstance(project).getStatus(file);
+    if (status == FileStatus.ADDED ||
+        status == FileStatus.DELETED ||
+        status == FileStatus.UNKNOWN ||
+        status == FileStatus.IGNORED) {
+      return false;
+    }
+    return true;
+  }
+
   private static boolean isHandledByVcs(@NotNull Project project, @NotNull VirtualFile file) {
     return file.isInLocalFileSystem() && ProjectLevelVcsManager.getInstance(project).getVcsFor(file) != null;
   }

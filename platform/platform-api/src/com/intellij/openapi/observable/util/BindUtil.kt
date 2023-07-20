@@ -181,14 +181,14 @@ fun <T, C : JList<T>> C.bind(property: ObservableMutableProperty<T?>): C = apply
   }
 }
 
-fun <T, C : JTree> C.bind(property: ObservableProperty<T?>) = apply {
+fun <T, C : JTree> C.bind(property: ObservableProperty<T?>): C = apply {
   selectionPath = model.getTreePath(property.get())
   property.afterChange {
     selectionPath = model.getTreePath(it)
   }
 }
 
-fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>) = apply {
+fun <T, C : JTree> C.bind(property: ObservableMutableProperty<T?>): C = apply {
   selectionPath = model.getTreePath(property.get())
   val mutex = AtomicBoolean()
   property.afterChange {

@@ -10,22 +10,20 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class DaemonBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.DaemonBundle";
-  private static final DaemonBundle INSTANCE = new DaemonBundle();
+public final class DaemonBundle {
+  private static final @NonNls String BUNDLE = "messages.DaemonBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(DaemonBundle.class, BUNDLE);
 
-  private DaemonBundle() { super(BUNDLE); }
+  private DaemonBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getMessage(key, params);
     }
     return IdeDeprecatedMessagesBundle.message(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     if (INSTANCE.containsKey(key)) {
       return INSTANCE.getLazyMessage(key, params);
     }

@@ -4,12 +4,14 @@ package com.intellij.codeInsight.editorActions
 import com.intellij.codeInsight.actions.ReaderModeSettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileOpenedSyncListener
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorImpl
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileListener
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent
@@ -25,7 +27,9 @@ private class ReaderModeFileEditorListener : FileOpenedSyncListener {
       override fun propertyChanged(event: VirtualFilePropertyEvent) {
         if (event.propertyName == VirtualFile.PROP_WRITABLE && event.file == file) {
           ApplicationManager.getApplication().invokeLater(Runnable {
-            if (fileEditor.editor.isDisposed) return@Runnable
+            if (fileEditor.editor.isDisposed) {
+              return@Runnable
+            }
 
             ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true, forceUpdate = true)
           }, modalityState, project.disposed)
@@ -38,9 +42,21 @@ private class ReaderModeFileEditorListener : FileOpenedSyncListener {
     }
 
     ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file)
+  }
+}
 
-    ApplicationManager.getApplication().messageBus.connect(fileEditor).subscribe(EditorColorsManager.TOPIC, EditorColorsListener {
-      ReaderModeSettings.applyReaderMode(project, fileEditor.editor, file, fileIsOpenAlready = true)
-    })
+private class ReaderModeEditorColorListener : EditorColorsListener {
+  override fun globalSchemeChange(scheme: EditorColorsScheme?) {
+    for (project in ProjectManagerEx.getOpenProjects()) {
+      if (!ReaderModeSettings.getInstance(project).enabled) {
+        continue
+      }
+
+      for (editor in (project.serviceIfCreated<FileEditorManager>() ?: continue).allEditors) {
+        if (editor is PsiAwareTextEditorImpl) {
+          ReaderModeSettings.applyReaderMode(project, editor.editor, editor.file, fileIsOpenAlready = true)
+        }
+      }
+    }
   }
 }

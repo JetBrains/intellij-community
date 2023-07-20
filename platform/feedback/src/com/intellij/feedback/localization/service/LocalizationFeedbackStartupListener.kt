@@ -6,6 +6,9 @@ import com.intellij.openapi.diagnostic.thisLogger
 
 class LocalizationFeedbackStartupListener : AppLifecycleListener {
   override fun appStarted() {
+    /*
+    Uncomment when strings are translated
+
     val service = LocalizationFeedbackService.getInstance()
     if (!service.isEnabled()) return
 
@@ -15,6 +18,6 @@ class LocalizationFeedbackStartupListener : AppLifecycleListener {
       thisLogger().info("Lang pack detected, starting watcher")
 
       service.runWatcher()
-    }
+    }*/
   }
 }

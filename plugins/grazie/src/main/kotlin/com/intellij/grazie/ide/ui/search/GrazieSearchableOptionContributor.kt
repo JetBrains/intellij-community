@@ -9,6 +9,7 @@ import com.intellij.grazie.text.TextExtractor
 import com.intellij.ide.ui.search.SearchableOptionContributor
 import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.openapi.options.OptionsBundle
+import com.intellij.openapi.progress.ProgressManager
 
 private class GrazieSearchableOptionContributor : SearchableOptionContributor() {
   private val proofreadId = "proofread"
@@ -18,10 +19,12 @@ private class GrazieSearchableOptionContributor : SearchableOptionContributor() 
   private val grammarName = GraziePlugin.settingsPageName
 
   private fun SearchableOptionProcessor.addProofreadOptions(text: String, path: String? = null, hit: String? = text) {
+    ProgressManager.checkCanceled()
     addOptions(text, path, hit, proofreadId, proofreadName, false)
   }
 
   private fun SearchableOptionProcessor.addGrammarOptions(text: String, path: String? = null, hit: String? = text) {
+    ProgressManager.checkCanceled()
     addOptions(text, path, hit, grammarId, grammarName, false)
   }
 

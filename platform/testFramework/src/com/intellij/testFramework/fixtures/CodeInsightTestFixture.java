@@ -305,6 +305,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper);
 
+  void testInspection(@NotNull String testDir, @NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull VirtualFile sourceDir);
+
   /**
    * @return all highlight infos for current file
    */

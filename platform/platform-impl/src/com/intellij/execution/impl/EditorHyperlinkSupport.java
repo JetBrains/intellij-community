@@ -5,6 +5,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.HyperlinkInfo;
 import com.intellij.execution.filters.HyperlinkInfoBase;
 import com.intellij.ide.OccurenceNavigator;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorCoreUtil;
@@ -17,11 +18,7 @@ import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -75,7 +72,9 @@ public class EditorHyperlinkSupport {
 
           Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
-            runnable.run();
+            try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+              runnable.run();
+            }
             e.consume();
           }
         }
@@ -111,7 +110,6 @@ public class EditorHyperlinkSupport {
     }
   }
 
-  @SuppressWarnings("SameParameterValue")
   public void waitForPendingFilters(long timeoutMs) {
     myFilterRunner.waitForPendingFilters(timeoutMs);
   }
@@ -163,7 +161,7 @@ public class EditorHyperlinkSupport {
   @Nullable
   public static HyperlinkInfo getHyperlinkInfo(@NotNull RangeHighlighter range) {
     HyperlinkInfoTextAttributes attributes = range.getUserData(HYPERLINK);
-    return attributes != null ? attributes.getHyperlinkInfo() : null;
+    return attributes != null ? attributes.hyperlinkInfo() : null;
   }
 
   @Nullable
@@ -252,11 +250,11 @@ public class EditorHyperlinkSupport {
                                          @Nullable TextAttributes followedHyperlinkAttributes,
                                          boolean fireChanged) {
     HyperlinkInfoTextAttributes attributes = new HyperlinkInfoTextAttributes(hyperlinkInfo, followedHyperlinkAttributes);
+    highlighter.putUserData(HYPERLINK, attributes);
     if (fireChanged) {
-      ((RangeHighlighterEx)highlighter).putUserDataAndFireChanged(HYPERLINK, attributes);
-    }
-    else {
-      highlighter.putUserData(HYPERLINK, attributes);
+      MarkupEditorFilter filter = highlighter.getEditorFilter();
+      highlighter.setEditorFilter(__ -> true);
+      highlighter.setEditorFilter(filter); // to fireChanged
     }
   }
 
@@ -323,8 +321,8 @@ public class EditorHyperlinkSupport {
 
   @NotNull
   private static TextAttributes getFollowedHyperlinkAttributes(@NotNull RangeHighlighter range) {
-    HyperlinkInfoTextAttributes attrs = HYPERLINK.get(range);
-    TextAttributes result = attrs != null ? attrs.getFollowedHyperlinkAttributes() : null;
+    HyperlinkInfoTextAttributes attrs = range.getUserData(HYPERLINK);
+    TextAttributes result = attrs == null ? null : attrs.followedHyperlinkAttributes();
     if (result == null) {
       result = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.FOLLOWED_HYPERLINK_ATTRIBUTES);
     }
@@ -368,7 +366,6 @@ public class EditorHyperlinkSupport {
     return null;
   }
 
-  // todo fix link followed here!
   private static void linkFollowed(@NotNull Editor editor, @NotNull Collection<? extends RangeHighlighter> ranges, @NotNull RangeHighlighter link) {
     MarkupModelEx markupModel = (MarkupModelEx)editor.getMarkupModel();
     for (RangeHighlighter range : ranges) {
@@ -401,23 +398,6 @@ public class EditorHyperlinkSupport {
     return document.getImmutableCharSequence().subSequence(document.getLineStartOffset(lineNumber), endOffset);
   }
 
-  private static class HyperlinkInfoTextAttributes extends TextAttributes {
-    private final HyperlinkInfo myHyperlinkInfo;
-    private final TextAttributes myFollowedHyperlinkAttributes;
-
-    HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
-      myHyperlinkInfo = hyperlinkInfo;
-      myFollowedHyperlinkAttributes = followedHyperlinkAttributes;
-    }
-
-    @NotNull
-    HyperlinkInfo getHyperlinkInfo() {
-      return myHyperlinkInfo;
-    }
-
-    @Nullable
-    TextAttributes getFollowedHyperlinkAttributes() {
-      return myFollowedHyperlinkAttributes;
-    }
+  private record HyperlinkInfoTextAttributes(@NotNull HyperlinkInfo hyperlinkInfo, @Nullable TextAttributes followedHyperlinkAttributes) {
   }
 }

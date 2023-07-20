@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl.event;
 
 import com.intellij.openapi.editor.Document;
@@ -18,11 +18,9 @@ import java.util.List;
 
 public class DocumentEventImpl extends DocumentEvent {
   private final int myOffset;
-  @NotNull
-  private final CharSequence myOldString;
+  private final @NotNull CharSequence myOldString;
   private final int myOldLength;
-  @NotNull
-  private final CharSequence myNewString;
+  private final @NotNull CharSequence myNewString;
   private final int myNewLength;
 
   private final long myOldTimeStamp;
@@ -83,15 +81,13 @@ public class DocumentEventImpl extends DocumentEvent {
     return myNewLength;
   }
 
-  @NotNull
   @Override
-  public CharSequence getOldFragment() {
+  public @NotNull CharSequence getOldFragment() {
     return myOldString;
   }
 
-  @NotNull
   @Override
-  public CharSequence getNewFragment() {
+  public @NotNull CharSequence getNewFragment() {
     return myNewString;
   }
 

@@ -11,18 +11,19 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.VfsTestUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.util.descriptors.ConfigFileItem
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -33,8 +34,16 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import java.nio.file.Path
 
 abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() {
+  protected val INDENT_SIZE = 2
+  protected val TAB_SIZE = 2
+  protected val CONTINUATION_INDENT_SIZE = 2
+
   override fun setUp() {
     super.setUp()
+    // Load codegen jar on warm-up phase
+    runBlocking {
+      CodegenJarLoader.getInstance(project).getClassLoader()
+    }
     val settings = EditorSettingsExternalizable.getInstance()
     val oldTrailingSpacesValue = settings.stripTrailingSpaces
     settings.stripTrailingSpaces = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE
@@ -53,9 +62,9 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     kotlinCommonSettings.RIGHT_MARGIN = 140
     codeStyleSettings.getCustomSettings(KotlinCodeStyleSettings::class.java).LINE_BREAK_AFTER_MULTILINE_WHEN_ENTRY = false
     val indentOptions = codeStyleSettings.getIndentOptions(KotlinFileType.INSTANCE)
-    indentOptions.INDENT_SIZE = 2
-    indentOptions.TAB_SIZE = 2
-    indentOptions.CONTINUATION_INDENT_SIZE = 2
+    indentOptions.INDENT_SIZE = INDENT_SIZE
+    indentOptions.TAB_SIZE = TAB_SIZE
+    indentOptions.CONTINUATION_INDENT_SIZE = CONTINUATION_INDENT_SIZE
     CodeStyle.setTemporarySettings(project, codeStyleSettings)
     disposeOnTearDown(Disposable {
       settings.stripTrailingSpaces = oldTrailingSpacesValue
@@ -74,12 +83,19 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
     }
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary)
+  override fun getProjectDescriptor(): LightProjectDescriptor = WorkspaceEntitiesProjectDescriptor(shouldAddWorkspaceStorageLibrary,
+                                                                                                   shouldAddWorkspaceJpsEntityLibrary)
 
   /**
    * Returns `true` if compiled content of intellij.platform.workspaceModel.storage should be added as a library. 
    */
   protected open val shouldAddWorkspaceStorageLibrary: Boolean
+    get() = true
+
+  /**
+   * Returns `true` if compiled content of intellij.platform.workspace.jps should be added as a library.
+   */
+  protected open val shouldAddWorkspaceJpsEntityLibrary: Boolean
     get() = true
 
   protected fun generateAndCompare(dirWithExpectedApiFiles: Path, dirWithExpectedImplFiles: Path, keepUnknownFields: Boolean = false,
@@ -111,21 +127,21 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
   protected fun generateCode(relativePathToEntitiesDirectory: String, keepUnknownFields: Boolean = false): Pair<VirtualFile, VirtualFile> {
     val srcRoot = myFixture.findFileInTempDir(relativePathToEntitiesDirectory)
     val genRoot = myFixture.tempDirFixture.findOrCreateDir("gen/$relativePathToEntitiesDirectory")
-    val keepUnknownFieldsValue = Registry.get("workspace.model.generator.keep.unknown.fields")
-    keepUnknownFieldsValue.setValue(keepUnknownFields)
+    System.setProperty("workspace.model.generator.keep.unknown.fields", keepUnknownFields.toString())
     try {
-      runWriteActionAndWait {
+      runBlocking {
         CodeWriter.generate(project, module, srcRoot) { genRoot }
         FileDocumentManager.getInstance().saveAllDocuments()
       }
     }
     finally {
-      keepUnknownFieldsValue.setValue(false)
+      System.setProperty("workspace.model.generator.keep.unknown.fields", "false")
     }
     return srcRoot to genRoot
   }
 
-  class WorkspaceEntitiesProjectDescriptor(private val addWorkspaceStorageLibrary: Boolean) : KotlinLightProjectDescriptor() {
+  class WorkspaceEntitiesProjectDescriptor(private val addWorkspaceStorageLibrary: Boolean,
+                                           private val addWorkspaceJpsEntityLibrary: Boolean) : KotlinLightProjectDescriptor() {
     override fun configureModule(module: Module, model: ModifiableRootModel) {
       val contentEntry = model.contentEntries.first()
       val genFolder = VfsUtil.createDirectoryIfMissing(contentEntry.file, "gen")
@@ -135,29 +151,68 @@ abstract class CodeGenerationTestBase : KotlinLightCodeInsightFixtureTestCase() 
       if (addWorkspaceStorageLibrary) {
         addWorkspaceStorageLibrary(model)
       }
+      if (addWorkspaceJpsEntityLibrary) {
+        addWorkspaceJpsEntitiesLibrary(model)
+      }
     }
 
     override fun equals(other: Any?): Boolean {
-      return other is WorkspaceEntitiesProjectDescriptor && addWorkspaceStorageLibrary == other.addWorkspaceStorageLibrary
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as WorkspaceEntitiesProjectDescriptor
+
+      if (addWorkspaceStorageLibrary != other.addWorkspaceStorageLibrary) return false
+      if (addWorkspaceJpsEntityLibrary != other.addWorkspaceJpsEntityLibrary) return false
+
+      return true
     }
 
     override fun hashCode(): Int {
-      return addWorkspaceStorageLibrary.hashCode()
+      var result = addWorkspaceStorageLibrary.hashCode()
+      result = 31 * result + addWorkspaceJpsEntityLibrary.hashCode()
+      return result
     }
+
   }
 
   companion object {
     internal fun removeWorkspaceStorageLibrary(model: ModifiableRootModel) {
-      val moduleLibraryTable = model.moduleLibraryTable
-      val modifiableModel = model.moduleLibraryTable.modifiableModel
-      modifiableModel.removeLibrary(moduleLibraryTable.libraries.first())
-      modifiableModel.commit()
+      removeLibraryByName(model, "workspace-storage")
+    }
+
+    internal fun removeWorkspaceJpsEntitiesLibrary(model: ModifiableRootModel) {
+      removeLibraryByName(model, "workspace-jps-entities")
+    }
+
+    internal fun removeIntellijJavaLibrary(model: ModifiableRootModel) {
+      removeLibraryByName(model, "intellij-java")
     }
 
     internal fun addWorkspaceStorageLibrary(model: ModifiableRootModel) {
-      val library = model.moduleLibraryTable.modifiableModel.createLibrary("workspace-storage")
+      addLibraryBaseOnClass(model, "workspace-storage", WorkspaceEntity::class.java)
+    }
+
+    internal fun addIntellijJavaLibrary(model: ModifiableRootModel) {
+      addLibraryBaseOnClass(model, "intellij-java", ConfigFileItem::class.java)
+    }
+
+    internal fun addWorkspaceJpsEntitiesLibrary(model: ModifiableRootModel) {
+      addLibraryBaseOnClass(model, "workspace-jps-entities", ContentRootEntity::class.java)
+    }
+
+    private fun removeLibraryByName(model: ModifiableRootModel, libraryName: String) {
+      val moduleLibraryTable = model.moduleLibraryTable
+      val modifiableModel = model.moduleLibraryTable.modifiableModel
+      val library = moduleLibraryTable.libraries.find { it.name == libraryName } ?: error("Library $libraryName has to be available")
+      modifiableModel.removeLibrary(library)
+      modifiableModel.commit()
+    }
+
+    private fun addLibraryBaseOnClass(model: ModifiableRootModel, libraryName: String, baseClass: Class<*>) {
+      val library = model.moduleLibraryTable.modifiableModel.createLibrary(libraryName)
       val modifiableModel = library.modifiableModel
-      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(WorkspaceEntity::class.java))
+      val workspaceStorageClassesPath = VfsUtil.pathToUrl(PathUtil.getJarPathForClass(baseClass))
       val workspaceStorageClassesRoot = VirtualFileManager.getInstance().refreshAndFindFileByUrl(workspaceStorageClassesPath)
       assertNotNull("Cannot find $workspaceStorageClassesPath", workspaceStorageClassesRoot)
       VfsUtil.markDirtyAndRefresh(false, true, true, workspaceStorageClassesRoot)

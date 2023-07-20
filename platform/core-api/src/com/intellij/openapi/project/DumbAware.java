@@ -16,6 +16,7 @@ import com.intellij.openapi.startup.StartupActivity;
  * <li> {@link com.intellij.codeInsight.completion.CompletionContributor}s
  * <li> {@link com.intellij.lang.annotation.Annotator}</li>
  * <li> {@link com.intellij.codeHighlighting.TextEditorHighlightingPass}es
+ * <li> {@link com.intellij.codeHighlighting.TextEditorHighlightingPassFactory}s</li>
  * <li> {@link com.intellij.openapi.wm.ToolWindowFactory}s
  * <li> {@link com.intellij.lang.injection.MultiHostInjector}s
  *

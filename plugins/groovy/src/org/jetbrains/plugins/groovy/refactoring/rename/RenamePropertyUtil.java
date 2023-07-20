@@ -145,7 +145,7 @@ public final class RenamePropertyUtil {
       box.add(myRbRenameMember);
       panel.add(box, BorderLayout.CENTER);
 
-      new RadioUpDownListener(myRbRenameMember, myRbRenameProperty);
+      RadioUpDownListener.installOn(myRbRenameMember, myRbRenameProperty);
       return panel;
     }
 

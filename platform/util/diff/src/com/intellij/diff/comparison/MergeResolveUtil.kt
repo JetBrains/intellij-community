@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.comparison
 
 import com.intellij.diff.fragments.DiffFragment
@@ -8,6 +8,8 @@ import com.intellij.diff.util.MergeConflictType.Type
 import com.intellij.diff.util.Side.LEFT
 import com.intellij.diff.util.Side.RIGHT
 import com.intellij.util.text.MergingCharSequence
+import kotlin.math.max
+import kotlin.math.min
 
 object MergeResolveUtil {
   @JvmStatic
@@ -176,7 +178,7 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
 
       // skip till the next block of changes
       if (changeStart1 != -1 && changeStart2 != -1) {
-        appendBase(Math.min(changeStart1, changeStart2))
+        appendBase(min(changeStart1, changeStart2))
       }
       else if (changeStart1 != -1) {
         appendBase(changeStart1)
@@ -196,12 +198,12 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
         val next2 = fragments2.getOrNull(end2)
 
         if (next1 != null && next1.startOffset1 <= baseOffsetEnd) {
-          baseOffsetEnd = Math.max(baseOffsetEnd, next1.endOffset1)
+          baseOffsetEnd = max(baseOffsetEnd, next1.endOffset1)
           end1++
           continue
         }
         if (next2 != null && next2.startOffset1 <= baseOffsetEnd) {
-          baseOffsetEnd = Math.max(baseOffsetEnd, next2.endOffset1)
+          baseOffsetEnd = max(baseOffsetEnd, next2.endOffset1)
           end2++
           continue
         }

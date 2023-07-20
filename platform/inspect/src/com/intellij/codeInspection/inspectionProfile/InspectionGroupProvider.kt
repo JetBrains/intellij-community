@@ -11,7 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 fun interface InspectionGroupProvider {
   companion object {
     @JvmStatic
-    val EP = ExtensionPointName.create<InspectionGroupProvider>("com.intellij.inspectionGroupProvider")
+    val EP: ExtensionPointName<InspectionGroupProvider> = ExtensionPointName.create("com.intellij.inspectionGroupProvider")
 
     private fun createYamlInspectionGroup(groupId: String): YamlInspectionGroup? {
       return EP.extensionList.firstNotNullOfOrNull { extension -> extension.findGroup(groupId) }

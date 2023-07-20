@@ -81,7 +81,7 @@ public abstract class TextProblem {
    * @deprecated use {@link #getSuggestions()} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull TextRange getReplacementRange() {
     return getHighlightRanges().get(0);
   }
@@ -100,7 +100,7 @@ public abstract class TextProblem {
    * @deprecated use {@link #getSuggestions()} instead
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull List<String> getCorrections() {
     return List.of();
   }
@@ -108,6 +108,7 @@ public abstract class TextProblem {
   /**
    * Whether this problem should be suppressed when the surrounding text looks like code.
    * Inline code tends to produce irrelevant grammar warnings, so this method returns true by default.
+   * @see CodeProblemFilter
    */
   public boolean shouldSuppressInCodeLikeFragments() {
     return true;

@@ -111,4 +111,8 @@ public class Main {
 
     b = /*test0*/localDateTime/*test1*/./*test2*/compareTo/*test3*/(/*test4*/localDateTime2/*test5*/) > 0;
   }
+
+  public static boolean unresolvedType(LocalTime localTime) {
+    return localTime.compareTo(unresolved) > 0;
+  }
 }

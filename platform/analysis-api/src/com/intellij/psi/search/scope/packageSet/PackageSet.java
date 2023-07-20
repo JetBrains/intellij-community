@@ -17,6 +17,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -24,10 +25,22 @@ import java.util.function.Predicate;
 
 public interface PackageSet {
   boolean contains(@NotNull PsiFile file, NamedScopesHolder holder);
+
+  default boolean contains(@NotNull PsiFileSystemItem file, NamedScopesHolder holder) {
+    if (file instanceof PsiFile) {
+      return contains((PsiFile)file, holder);
+    }
+    else {
+      return false;
+    }
+  }
+
   @NotNull
   PackageSet createCopy();
+
   @NlsSafe @NotNull
   String getText();
+
   int getNodePriority();
 
   /**

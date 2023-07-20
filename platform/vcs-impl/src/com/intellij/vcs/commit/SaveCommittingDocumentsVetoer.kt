@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
@@ -16,41 +15,51 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vfs.VirtualFile
 
 private sealed class SaveState
 private object SaveDenied : SaveState()
-private class ConfirmSave(val project: Project) : SaveState()
+private class RequireConfirmSave(val project: Project) : SaveState()
 
 private val SAVE_STATE_KEY = Key<SaveState>("Vcs.Commit.SaveState")
 
-private fun getSaveState(document: Document): SaveState? = document.getUserData(SAVE_STATE_KEY)
-
-private fun setSaveState(documents: Collection<Document>, state: SaveState?) =
-  documents.forEach { it.putUserData(SAVE_STATE_KEY, state) }
-
-private fun replaceSaveState(documents: Map<Document, SaveState?>, newState: SaveState?) =
-  documents.forEach { (document, oldState) -> (document as UserDataHolderEx).replace(SAVE_STATE_KEY, oldState, newState) }
+private fun getSaveState(file: VirtualFile): SaveState? = file.getUserData(SAVE_STATE_KEY)
+private fun setSaveState(file: VirtualFile, state: SaveState?) = file.putUserData(SAVE_STATE_KEY, state)
+private fun replaceSaveState(file: VirtualFile, expectedOldState: SaveState?, newState: SaveState?) =
+  (file as UserDataHolderEx).replace(SAVE_STATE_KEY, expectedOldState, newState)
 
 internal class SaveCommittingDocumentsVetoer : FileDocumentSynchronizationVetoer(), FileDocumentManagerListener {
   override fun beforeAllDocumentsSaving() {
-    val confirmSaveDocuments =
-      FileDocumentManager.getInstance().unsavedDocuments
-        .associateBy({ it }, { getSaveState(it) })
-        .filterValues { it is ConfirmSave }
-        .mapValues { it.value as ConfirmSave }
-    if (confirmSaveDocuments.isEmpty()) return
+    val fileDocumentManager = FileDocumentManager.getInstance()
+    val unsavedFiles = fileDocumentManager.unsavedDocuments
+      .mapNotNull { document -> fileDocumentManager.getFile(document) }
 
-    val project = confirmSaveDocuments.values.first().project
-    val newSaveState = if (confirmSave(project, confirmSaveDocuments.keys)) null else SaveDenied
-    replaceSaveState(confirmSaveDocuments, newSaveState) // use `replace` as commit could already be completed
+    val protectedFiles = buildMap {
+      for (file in unsavedFiles) {
+        val state = getSaveState(file) as? RequireConfirmSave ?: continue
+        put(file, state)
+      }
+    }
+    if (protectedFiles.isEmpty()) return
+
+    val project = protectedFiles.values.first().project
+    val saveConfirmed = confirmSave(project, protectedFiles.keys)
+
+    // use `replace` as commit could already be finished
+    val newState = if (saveConfirmed) null else SaveDenied
+    for ((file, oldState) in protectedFiles) {
+      replaceSaveState(file, oldState, newState)
+    }
   }
 
-  override fun maySaveDocument(document: Document, isSaveExplicit: Boolean): Boolean =
-    when (val saveState = getSaveState(document)) {
-      SaveDenied -> false
-      is ConfirmSave -> confirmSave(saveState.project, listOf(document))
-      null -> true
+  override fun maySaveDocument(document: Document, isSaveExplicit: Boolean): Boolean {
+    val file = FileDocumentManager.getInstance().getFile(document) ?: return true
+    val saveState = getSaveState(file) ?: return true
+    when (saveState) {
+      SaveDenied -> return false
+      is RequireConfirmSave -> return confirmSave(saveState.project, listOf(file))
     }
+  }
 }
 
 fun vetoDocumentSaving(project: Project, changes: Collection<Change>, block: () -> Unit) {
@@ -58,26 +67,20 @@ fun vetoDocumentSaving(project: Project, changes: Collection<Change>, block: () 
 }
 
 fun vetoDocumentSavingForPaths(project: Project, filePaths: Collection<FilePath>, block: () -> Unit) {
-  val confirmSaveState = ConfirmSave(project)
-  val documents = runReadAction { getDocuments(filePaths).also { setSaveState(it, confirmSaveState) } }
+  val files = filePaths.mapNotNull { it.virtualFile }
+
+  val confirmSaveState = RequireConfirmSave(project)
+  files.forEach { setSaveState(it, confirmSaveState) }
   try {
     block()
   }
   finally {
-    runReadAction { setSaveState(documents, null) }
+    files.forEach { setSaveState(it, null) }
   }
 }
 
-private fun getDocuments(filePaths: Iterable<FilePath>): List<Document> =
-  filePaths
-    .mapNotNull { it.virtualFile }
-    .filterNot { it.fileType.isBinary }
-    .mapNotNull { FileDocumentManager.getInstance().getDocument(it) }
-    .toList()
-
-private fun confirmSave(project: Project, documents: Collection<Document>): Boolean {
-  val files = documents.mapNotNull { FileDocumentManager.getInstance().getFile(it) }
-  val text = message("save.committing.files.confirmation.text", documents.size, files.joinToString("\n") { it.presentableUrl })
+private fun confirmSave(project: Project, files: Collection<VirtualFile>): Boolean {
+  val text = message("save.committing.files.confirmation.text", files.size, files.joinToString("\n") { it.presentableUrl })
 
   return Messages.OK == showOkCancelDialog(
     project,

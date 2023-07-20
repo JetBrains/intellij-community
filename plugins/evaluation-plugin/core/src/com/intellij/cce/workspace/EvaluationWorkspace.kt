@@ -28,6 +28,7 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
 
   private val sessionsDir = subdir("data")
   private val logsDir = subdir("logs")
+  private val fullLineLogsDir = subdir("full-line-logs")
   private val featuresDir = subdir("features")
   private val actionsDir = subdir("actions")
   private val errorsDir = subdir("errors")
@@ -45,7 +46,15 @@ class EvaluationWorkspace private constructor(private val basePath: Path) {
 
   val featuresStorage: FeaturesStorage = FeaturesStorageImpl(featuresDir.toString())
 
+  val fullLineLogsStorage: FullLineLogsStorage = FullLineLogsStorage(fullLineLogsDir.toString())
+
   override fun toString(): String = "Evaluation workspace: $basePath"
+
+  fun saveMetadata() {
+    sessionsStorage.saveMetadata()
+    featuresStorage.saveMetadata()
+    fullLineLogsStorage.saveMetadata()
+  }
 
   fun reportsDirectory(): String = reportsDir.toString()
 

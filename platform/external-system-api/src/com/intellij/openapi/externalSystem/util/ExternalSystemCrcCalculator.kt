@@ -25,7 +25,7 @@ interface ExternalSystemCrcCalculator {
   fun calculateCrc(project: Project, file: VirtualFile, fileText: CharSequence): Long?
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<ExternalSystemCrcCalculator>("com.intellij.externalSystemCrcCalculator")
+    val EP_NAME: ExtensionPointName<ExternalSystemCrcCalculator> = ExtensionPointName.create<ExternalSystemCrcCalculator>("com.intellij.externalSystemCrcCalculator")
 
     @JvmStatic
     fun getInstance(systemId: ProjectSystemId, file: VirtualFile): ExternalSystemCrcCalculator? {

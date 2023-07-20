@@ -22,13 +22,13 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import java.io.File;
 
 public interface BuildDataPaths {
-  File getDataStorageRoot();
+  @NotNull File getDataStorageRoot();
 
-  File getTargetsDataRoot();
+  @NotNull File getTargetsDataRoot();
 
-  File getTargetTypeDataRoot(BuildTargetType<?> targetType);
+  @NotNull File getTargetTypeDataRoot(@NotNull BuildTargetType<?> targetType);
 
-  File getTargetDataRoot(BuildTarget<?> target);
+  @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target);
 
   @NotNull
   File getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId);

@@ -45,6 +45,15 @@ public class InstallButton extends ColorButton {
     setText(text);
   }
 
+  @Override
+  public void updateUI() {
+    super.updateUI();
+
+    if (getParent() != null) {
+      setTextAndSize();
+    }
+  }
+
   public void setButtonColors(boolean fill) {
     if (fill) {
       setTextColor(FillForegroundColor);

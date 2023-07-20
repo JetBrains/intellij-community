@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.intention.CustomizableIntentionAction;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.intellij.codeInsight.intention.CustomizableIntentionAction.*;
 
 /**
  * QuickFix based on {@link ProblemDescriptor ProblemDescriptor}
@@ -75,6 +78,17 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
     if (fix == null || fix.getElementToMakeWritable(file) != file) return IntentionPreviewInfo.EMPTY;
     fix.applyFix(project, previewDescriptor);
     return IntentionPreviewInfo.DIFF;
+  }
+
+  /**
+   * Highlight specified ranges when the quick-fix is selected in intention popup
+   * 
+   * @param project current project
+   * @param descriptor problem descriptor
+   * @return list of ranges to highlight, along with highlight attributes; empty list if no specific highlighting should be done
+   */
+  default @NotNull List<@NotNull RangeToHighlight> getRangesToHighlight(Project project, ProblemDescriptor descriptor) {
+    return List.of();
   }
 
 

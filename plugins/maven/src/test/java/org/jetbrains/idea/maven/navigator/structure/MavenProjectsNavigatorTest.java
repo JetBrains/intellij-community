@@ -11,6 +11,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.toolWindow.ToolWindowHeadlessManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunConfigurationType;
+import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigatorState;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -21,11 +22,9 @@ import org.jetbrains.idea.maven.project.importing.MavenReadContext;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCase {
   private MavenProjectsNavigator myNavigator;
@@ -192,7 +191,9 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, getRootNodes().size());
     MavenUtil.cleanAllRunnables();
 
-    configConfirmationForYesAnswer();
+    //configConfirmationForYesAnswer();
+    MavenProjectLegacyImporter.setAnswerToDeleteObsoleteModulesQuestion(true);
+
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
     waitForImportCompletion();
     waitForMavenUtilRunnablesComplete();
@@ -271,12 +272,14 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     myNavigator.setShowIgnored(true);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(2, getRootNodes().get(0).getChildren().length);
+    var childNodeNamesBefore = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
+    assertEquals(Set.of("Lifecycle", "Plugins", "m"), childNodeNamesBefore);
 
     myNavigator.setShowIgnored(false);
     waitForMavenUtilRunnablesComplete();
     assertTrue(getRootNodes().get(0).isVisible());
-    assertEquals(1, getRootNodes().get(0).getChildren().length);
+    var childNodeNamesAfter = Arrays.stream(getRootNodes().get(0).getChildren()).map(node -> node.getName()).collect(Collectors.toSet());
+    assertEquals(Set.of("Lifecycle", "Plugins"), childNodeNamesAfter);
   }
 
   @Test

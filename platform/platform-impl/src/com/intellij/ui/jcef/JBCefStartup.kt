@@ -1,19 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef
 
-import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.registry.RegistryManager
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /**
  * Forces JCEF early startup in order to support co-existence with JavaFX (see IDEA-236310).
  */
-private class JBCefStartup {
+private class JBCefStartup(coroutineScope: CoroutineScope) {
   @Suppress("unused")
   private var STARTUP_CLIENT: JBCefClient? = null // auto-disposed along with JBCefApp on IDE shutdown
 
@@ -21,16 +22,14 @@ private class JBCefStartup {
   init {
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode) {
-      app.coroutineScope.launch {
+      coroutineScope.launch {
         doInit()
       }
     }
   }
 
   private suspend fun doInit() {
-    @Suppress("SpellCheckingInspection") val isPreinit = (ApplicationManager.getApplication() as ComponentManagerEx)
-      .getServiceAsync(RegistryManager::class.java)
-      .await()
+    @Suppress("SpellCheckingInspection") val isPreinit = ApplicationManager.getApplication().serviceAsync<RegistryManager>()
       .get("ide.browser.jcef.preinit")
     if (isPreinit.asBoolean() && JBCefApp.isSupported()) {
       try {

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.util.CommonJavaRefactoringUtil;
@@ -38,7 +39,7 @@ public class LocalVariableHidingMemberVariableInspection extends BaseInspection 
   public boolean m_ignoreStaticMethods = true;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RenameFix();
   }
 

@@ -358,7 +358,7 @@ class arguments(AST):
     args: list[arg]
     vararg: arg | None
     kwonlyargs: list[arg]
-    kw_defaults: list[expr]
+    kw_defaults: list[expr | None]
     kwarg: arg | None
     defaults: list[expr]
 

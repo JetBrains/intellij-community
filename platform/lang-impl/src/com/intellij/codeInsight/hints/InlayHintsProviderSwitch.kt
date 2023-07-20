@@ -10,6 +10,6 @@ class InlayHintsProviderSwitch : InlayHintsSwitch {
 
   override fun setEnabled(project: Project, value: Boolean) {
     InlayHintsSettings.instance().setEnabledGlobally(value)
-    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
   }
 }

@@ -2,10 +2,11 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.platform.buildScripts.testFramework.createBuildOptionsForTest
+import com.intellij.platform.buildScripts.testFramework.runTestBuild
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import org.jetbrains.intellij.build.testFramework.createBuildContext
-import org.jetbrains.intellij.build.testFramework.runTestBuild
+import org.jetbrains.intellij.build.impl.BuildContextImpl
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInfo
 
@@ -14,10 +15,11 @@ class IdeaCommunityBuildTest {
   fun testBuild() {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHomePath = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
+    val productProperties = IdeaCommunityProperties(communityHomePath.communityRoot)
     runTestBuild(
       homePath = homePath,
       communityHomePath = communityHomePath,
-      productProperties = IdeaCommunityProperties(communityHomePath.communityRoot),
+      productProperties = productProperties,
     ) {
       it.classesOutputDirectory = System.getProperty(BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
                                   ?: "$homePath/out/classes"
@@ -29,12 +31,12 @@ class IdeaCommunityBuildTest {
     val homePath = PathManager.getHomeDirFor(javaClass)!!
     val communityHome = IdeaProjectLoaderUtil.guessCommunityHome(javaClass)
     runBlocking(Dispatchers.Default) {
-      val context = createBuildContext(
-        homePath = homePath,
-        productProperties = IdeaCommunityProperties(communityHome.communityRoot),
-        skipDependencySetup = true,
-        communityHomePath = communityHome,
-      )
+      val productProperties = IdeaCommunityProperties(communityHome.communityRoot)
+      val options = createBuildOptionsForTest(productProperties = productProperties, skipDependencySetup = true)
+      val context = BuildContextImpl.createContext(communityHome = communityHome,
+                                                   projectHome = homePath,
+                                                   productProperties = productProperties,
+                                                   options = options)
       runTestBuild(context) {
         buildCommunityStandaloneJpsBuilder(targetDir = context.paths.artifactDir.resolve("jps"), context = context)
       }

@@ -28,7 +28,7 @@ class JavaFxColorProviderFormatTest : AbstractJavaFXTestCase() {
   }
 
   private fun doTest(testName: String) {
-    myFixture.configureByFile(testName + ".java")
+    myFixture.configureByFile("$testName.java")
     val colorExpressions = myFixture.editor.caretModel.allCarets
       .map { caret -> myFixture.file.findElementAt(caret.offset) }
       .map { element -> PsiTreeUtil.findFirstParent(element, { it?.parent !is PsiExpression }) as? PsiExpression }

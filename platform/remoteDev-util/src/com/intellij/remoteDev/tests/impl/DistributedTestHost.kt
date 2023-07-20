@@ -3,7 +3,6 @@ package com.intellij.remoteDev.tests.impl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.DebugLogManager
-import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
@@ -16,12 +15,15 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.remoteDev.tests.*
+import com.intellij.remoteDev.tests.modelGenerated.RdAgentType
+import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.util.application
 import com.intellij.util.ui.ImageUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.util.lifetime.EternalLifetime
+import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
 import org.jetbrains.annotations.ApiStatus
@@ -29,8 +31,6 @@ import java.awt.image.BufferedImage
 import java.io.File
 import java.io.IOException
 import java.net.InetAddress
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
@@ -39,7 +39,7 @@ import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 
 @ApiStatus.Internal
-class DistributedTestHost {
+open class DistributedTestHost {
   companion object {
     private val logger = Logger.getInstance(DistributedTestHost::class.java)
 
@@ -48,6 +48,15 @@ class DistributedTestHost {
     fun getDistributedTestPort(): Int? =
       (System.getProperty(AgentConstants.protocolPortEnvVar)
        ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
+  }
+
+  open fun setUpLogging(sessionLifetime: Lifetime, session: RdTestSession) {
+    logger.info("Setting up loggers")
+    LogFactoryHandler.bindSession<AgentTestLoggerFactory>(sessionLifetime, session)
+  }
+
+  protected open fun assertLoggerFactory() {
+    LogFactoryHandler.assertLoggerFactory<AgentTestLoggerFactory>()
   }
 
   val projectOrNull: Project?
@@ -90,9 +99,8 @@ class DistributedTestHost {
     logger.info("Advise for session...")
     model.session.viewNotNull(lifetime) { sessionLifetime, session ->
       try {
-        logger.info("Setting up loggers")
-        AgentTestLoggerFactory.bindSession(sessionLifetime, session)
-        if (session.testMethodName == null) {
+        setUpLogging(sessionLifetime, session)
+        if (session.testMethodName == null || session.testClassName == null) {
           logger.info("Test session without test class to run.")
         }
         else {
@@ -102,7 +110,7 @@ class DistributedTestHost {
           val testClassObject = testClass.kotlin.createInstance() as DistributedTestPlayer
 
           // Tell test we are running it inside an agent
-          val agentInfo = AgentInfo(session.agentId, session.testMethodName)
+          val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
           val queue = testClassObject.initAgent(agentInfo)
 
           // Play test method
@@ -126,8 +134,12 @@ class DistributedTestHost {
               IdeEventQueue.getInstance().flushQueue()
 
               // Execute test method
-              lateinit var result: RdTask<Boolean>
-              val context = AgentContext(session.agentId, application, projectOrNull, protocol)
+              lateinit var result: RdTask<String?>
+              val context = when (session.agentInfo.agentType) {
+                RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
+                RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
+                RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
+              }
               logger.info("'$actionTitle': starting action")
               val elapsedAction = measureTimeMillis {
                 result = action.action.invoke(context)
@@ -145,15 +157,16 @@ class DistributedTestHost {
               }
 
               // Assert state
-              assertStateAfterTestMethod()
+              assertLoggerFactory()
 
               return@set result
             }
             catch (ex: Throwable) {
-              logger.warn("Test action ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully", ex)
+              val msg = "${session.agentInfo.id}: ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully"
+              logger.warn(msg, ex)
               if (!application.isHeadlessEnvironment)
                 actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
-              return@set RdTask.faulted(ex)
+              return@set RdTask.faulted(AssertionError(msg, ex))
             }
           }
         }
@@ -161,7 +174,7 @@ class DistributedTestHost {
         session.closeProject.set { _, _ ->
           when (projectOrNull) {
             null ->
-              return@set RdTask.faulted(IllegalStateException("Nothing to close"))
+              return@set RdTask.faulted(IllegalStateException("${session.agentInfo.id}: Nothing to close"))
             else -> {
               logger.info("Close project...")
               try {
@@ -169,7 +182,7 @@ class DistributedTestHost {
                 return@set RdTask.fromResult(true)
               }
               catch (e: Exception) {
-                logger.error("Error on project closing", e)
+                logger.warn("Error on project closing", e)
                 return@set RdTask.fromResult(false)
               }
             }
@@ -184,7 +197,7 @@ class DistributedTestHost {
               return@set RdTask.fromResult(true)
             }
             catch (e: Exception) {
-              logger.error("Error on project closing", e)
+              logger.warn("Error on project closing", e)
               return@set RdTask.fromResult(false)
             }
           } ?: return@set RdTask.fromResult(true)
@@ -194,15 +207,6 @@ class DistributedTestHost {
         session.shutdown.advise(lifetime) {
           logger.info("Shutdown application...")
           application.exit(true, true, false)
-        }
-
-        session.dumpThreads.adviseOn(lifetime, DistributedTestInplaceScheduler) {
-          logger.info("Dump threads...")
-          val threadDump = ThreadDumper.dumpThreadsToString()
-          val threadDumpStamp = LocalTime.now().format(DateTimeFormatter.ofPattern("HH_mm_ss_SSS"))
-          val threadDumpFileName = "${AgentConstants.threadDumpFilePrefix}_$threadDumpStamp.log"
-          val threadDumpFile = File(PathManager.getLogPath()).resolve(threadDumpFileName)
-          threadDumpFile.writeText(threadDump)
         }
 
         session.makeScreenshot.set { fileName ->
@@ -217,16 +221,18 @@ class DistributedTestHost {
         session.ready.value = true
       }
       catch (ex: Throwable) {
-        logger.error("Test session initialization hasn't finished successfully", ex)
+        logger.warn("Test session initialization hasn't finished successfully", ex)
         session.ready.value = false
       }
     }
   }
 
-  private fun makeScreenshot(fileName: String): Boolean {
+  private fun makeScreenshot(actionName: String): Boolean {
     if (application.isHeadlessEnvironment) {
       error("Don't try making screenshots on application in headless mode.")
     }
+    val fileNameWithPostfix = if (actionName.endsWith(".png")) actionName else "$actionName.png"
+    val finalFileName = fileNameWithPostfix.replace("[^a-zA-Z.]".toRegex(), "_").replace("_+".toRegex(), "_")
 
     val result = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().invokeLater {
@@ -237,7 +243,6 @@ class DistributedTestHost {
         component.printAll(img.createGraphics())
         ApplicationManager.getApplication().executeOnPooledThread {
           try {
-            val finalFileName = if (fileName.endsWith(".png")) fileName else "$fileName.png"
             result.complete(ImageIO.write(img, "png", File(PathManager.getLogPath()).resolve(finalFileName)))
           }
           catch (e: IOException) {
@@ -255,7 +260,7 @@ class DistributedTestHost {
 
     try {
       if (result[45, TimeUnit.SECONDS])
-        logger.info("Screenshot is saved at: $fileName")
+        logger.info("Screenshot is saved at: $finalFileName")
       else
         logger.info("No writers were found for screenshot")
     }
@@ -269,14 +274,6 @@ class DistributedTestHost {
       }
     }
     return result.get()
-  }
-
-  private fun assertStateAfterTestMethod() {
-    assert(Logger.getFactory() is AgentTestLoggerFactory) {
-      "Logger Factory was overridden during test method execution. " +
-      "Inspect logs to find stack trace of the overrider. " +
-      "Overriding logger factory leads to breaking distributes test log processing."
-    }
   }
 
   @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")

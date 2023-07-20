@@ -7,16 +7,14 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class JavaStartersBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.JavaStartersBundle";
-  private static final JavaStartersBundle INSTANCE = new JavaStartersBundle();
+public final class JavaStartersBundle {
+  private static final @NonNls String BUNDLE = "messages.JavaStartersBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(JavaStartersBundle.class, BUNDLE);
 
   private JavaStartersBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 }

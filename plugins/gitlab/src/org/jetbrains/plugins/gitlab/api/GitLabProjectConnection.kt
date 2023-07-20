@@ -10,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
@@ -24,14 +25,14 @@ class GitLabProjectConnection(
   override val repo: GitLabProjectMapping,
   override val account: GitLabAccount,
   val currentUser: GitLabUserDTO,
-  val apiClient: GitLabApi,
+  apiClient: GitLabApi,
   tokenState: Flow<String>
 ) : HostedGitRepositoryConnection<GitLabProjectMapping, GitLabAccount> {
   val id: String = UUID.randomUUID().toString()
 
-  val tokenRefreshFlow: Flow<Unit> = tokenState.map { }
+  val tokenRefreshFlow: Flow<Unit> = tokenState.drop(1).map { }
 
-  val projectData = GitLabLazyProject(project, scope.childScope(), apiClient, repo)
+  val projectData = GitLabLazyProject(project, scope.childScope(), apiClient, repo, tokenRefreshFlow)
   val imageLoader = GitLabImageLoader(apiClient, repo.repository.serverPath)
 
   override suspend fun close() {

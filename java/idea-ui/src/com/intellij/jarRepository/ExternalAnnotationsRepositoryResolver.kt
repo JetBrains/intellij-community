@@ -12,6 +12,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.ExistingLibraryEditor
+import com.intellij.openapi.util.Disposer
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -117,14 +118,25 @@ class ExternalAnnotationsRepositoryResolver : ExternalAnnotationsArtifactsResolv
     if (roots.isNullOrEmpty()) {
       LOG.info("No annotations found for [$mavenLibDescriptor]")
     } else {
-      runWriteAction {
         LOG.debug("Found ${roots.size} external annotations for ${library.name}")
         val editor = ExistingLibraryEditor(library, null)
         val type = AnnotationOrderRootType.getInstance()
-        editor.getUrls(type).forEach { editor.removeRoot(it, type) }
-        editor.addRoots(roots)
-        editor.commit()
-      }
+        val newUrls = roots.map { it.file.url }.toHashSet()
+        editor.getUrls(type).forEach {
+          if (!newUrls.contains(it)) {
+            editor.removeRoot(it, type)
+          } else {
+            newUrls.remove(it)
+          }
+        }
+        if (!newUrls.isEmpty()) {
+          editor.addRoots(roots.filter { newUrls.contains(it.file.url) })
+          runWriteAction {
+            editor.commit()
+          }
+        } else {
+          Disposer.dispose(editor)
+        }
     }
   }
 

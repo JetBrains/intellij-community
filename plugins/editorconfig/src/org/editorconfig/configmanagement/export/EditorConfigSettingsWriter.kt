@@ -10,11 +10,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.containers.MultiMap
 import org.editorconfig.Utils
 import org.editorconfig.configmanagement.ConfigEncodingManager
-import org.editorconfig.configmanagement.LineEndingsManager
 import org.editorconfig.configmanagement.StandardEditorConfigProperties
 import org.editorconfig.configmanagement.extended.EditorConfigIntellijNameUtil
 import org.editorconfig.configmanagement.extended.EditorConfigPropertyKind
-import org.editorconfig.configmanagement.extended.EditorConfigValueUtil
 import org.editorconfig.configmanagement.extended.IntellijPropertyKindMap
 import java.io.IOException
 import java.io.OutputStream
@@ -48,7 +46,7 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
     }
     val lineSeparator = Utils.getLineSeparatorString(mySettings.lineSeparator)
     if (lineSeparator != null) {
-      target[LineEndingsManager.lineEndingsKey] = lineSeparator
+      target["end_of_line"] = lineSeparator
     }
     target[StandardEditorConfigProperties.INSERT_FINAL_NEWLINE] = EditorSettingsExternalizable.getInstance().isEnsureNewLineAtEOF.toString()
     val trimSpaces = Utils.getTrimTrailingSpaces()
@@ -147,8 +145,8 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
         val name = getEditorConfigName(mapper, property)
         if (name != null && isNameAllowed(name)) {
           val value = getEditorConfigValue(accessor)
-          if (isValueAllowed(value) && !(mapper is LanguageCodeStylePropertyMapper && matchesGeneral(name, value!!))) {
-            add(KeyValuePair(name, value!!))
+          if (value != null && !(mapper is LanguageCodeStylePropertyMapper && matchesGeneral(name, value))) {
+            add(KeyValuePair(name, value))
           }
         }
       }
@@ -182,8 +180,9 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
 
     private fun getEditorConfigValue(accessor: CodeStylePropertyAccessor<*>): String? {
       val value = accessor.asString
-      return if (value.isNullOrEmpty() && CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor))
-        EditorConfigValueUtil.EMPTY_LIST_VALUE
+      return if (value.isNullOrEmpty() &&
+                 (CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor) || accessor is StringAccessor))
+        ""
       else
         value
     }
@@ -193,8 +192,6 @@ class EditorConfigSettingsWriter(private val myProject: Project?,
       return IntellijPropertyKindMap.getPropertyKind(ijName)
     }
 
-    private fun isValueAllowed(value: String?): Boolean =
-      value != null && !value.trim { it <= ' ' }.isEmpty()
 
     private fun getEditorConfigName(mapper: AbstractCodeStylePropertyMapper, propertyName: String): String? {
       val editorConfigNames = EditorConfigIntellijNameUtil.toEditorConfigNames(mapper, propertyName)

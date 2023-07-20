@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,11 +124,11 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction, ActionC
   }
 
   @NotNull
-  public static List<LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
+  public static List<@NotNull LocalQuickFix> wrapToQuickFixes(@NotNull List<? extends IntentionAction> actions, @NotNull PsiFile file) {
     if (actions.isEmpty()) return Collections.emptyList();
     List<LocalQuickFix> fixes = new ArrayList<>(actions.size());
     for (IntentionAction action : actions) {
-      fixes.add(wrapToQuickFix(action, file));
+      ContainerUtil.addIfNotNull(fixes, wrapToQuickFix(action, file));
     }
     return fixes;
   }

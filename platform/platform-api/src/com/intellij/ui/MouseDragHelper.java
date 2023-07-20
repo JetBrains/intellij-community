@@ -70,7 +70,7 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
       return;
     }
 
-    new UiNotifyConnector(myDragComponent, new Activatable() {
+    UiNotifyConnector.installOn(myDragComponent, new Activatable() {
       @Override
       public void showNotify() {
         attach();

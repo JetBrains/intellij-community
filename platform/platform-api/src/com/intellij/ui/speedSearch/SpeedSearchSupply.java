@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,5 +90,18 @@ public abstract class SpeedSearchSupply {
 
   public boolean isObjectFilteredOut(Object o) {
     return false;
+  }
+
+  @ApiStatus.Experimental
+  @FunctionalInterface
+  public interface SpeedSearchLocator {
+    /**
+     * Returns location and size of SpeedSearch popup invoked on the {@code target}
+     *
+     * @param target a component for speed search
+     * @return location and size
+     */
+    @Nullable
+    RelativeRectangle getSizeAndLocation(JComponent target);
   }
 }

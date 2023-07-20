@@ -53,7 +53,7 @@ class AddStarProjectionsFix(element: KtUserType, private val argumentCount: Int)
         assert(element.typeArguments.isEmpty())
 
         val typeString = TypeReconstructionUtil.getTypeNameAndStarProjectionsString(element.text, argumentCount)
-        val replacement = KtPsiFactory(project).createType(typeString).typeElement.sure { "No type element after parsing " + typeString }
+        val replacement = KtPsiFactory(project).createType(typeString).typeElement.sure { "No type element after parsing $typeString" }
         element.replace(replacement)
     }
 }

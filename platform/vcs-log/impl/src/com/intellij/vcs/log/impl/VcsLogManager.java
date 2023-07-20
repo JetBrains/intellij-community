@@ -15,6 +15,7 @@ import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogFilterCollection;
@@ -40,7 +41,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 
-public final class VcsLogManager implements Disposable {
+public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   private final @NotNull Project myProject;
@@ -252,6 +253,7 @@ public final class VcsLogManager implements Disposable {
   }
 
   @Override
+  @RequiresBackgroundThread
   public void dispose() {
     // since disposing log triggers flushing indexes on disk we do not want to do it in EDT
     // disposing of VcsLogManager is done by manually executing dispose(@Nullable Runnable callback)

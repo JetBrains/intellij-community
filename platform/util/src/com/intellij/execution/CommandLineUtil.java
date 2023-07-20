@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,17 +33,21 @@ public final class CommandLineUtil {
     return quote(parameter, INESCAPABLE_QUOTE);
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull List<String> command) {
+  public static @NotNull List<String> toCommandLine(@NotNull List<@NotNull String> command) {
     assert !command.isEmpty();
     return toCommandLine(command.get(0), command.subList(1, command.size()));
   }
 
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters) {
+  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<@NotNull String> parameters) {
     return toCommandLine(command, parameters, Platform.current());
   }
 
   // please keep an implementation in sync with [junit-rt] ProcessBuilder.createProcess()
-  public static @NotNull List<String> toCommandLine(@NotNull String command, @NotNull List<String> parameters, @NotNull Platform platform) {
+  public static @NotNull List<String> toCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull Platform platform
+  ) {
     List<String> commandLine = new ArrayList<>(parameters.size() + 1);
 
     commandLine.add(FileUtilRt.toSystemDependentName(command, platform.fileSeparator));
@@ -203,7 +207,11 @@ public final class CommandLineUtil {
    *   http://stackoverflow.com/a/4095133/545027  How does the Windows Command Interpreter (CMD.EXE) parse scripts?
    *   https://blogs.msdn.microsoft.com/twistylittlepassagesallalike/2011/04/23/everyone-quotes-command-line-arguments-the-wrong-way/
    */
-  private static void addToWindowsCommandLine(String command, List<String> parameters, List<? super String> commandLine) {
+  private static void addToWindowsCommandLine(
+    @NotNull String command,
+    @NotNull List<@NotNull String> parameters,
+    @NotNull List<? super @NotNull String> commandLine
+  ) {
     boolean isCmdParam = isWinShell(command);
     int cmdInvocationDepth = isWinShellScript(command) ? 2 : isCmdParam ? 1 : 0;
 

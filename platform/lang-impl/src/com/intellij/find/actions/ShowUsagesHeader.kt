@@ -8,8 +8,8 @@ import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.dsl.builder.IntelliJSpacingConfiguration
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
+import com.intellij.ui.dsl.gridLayout.unscale
 import com.intellij.usageView.UsageViewBundle
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
@@ -49,12 +49,12 @@ internal class ShowUsagesHeader(pinButton: JComponent, @NlsContexts.PopupTitle t
           val pinCell = cell(pinButton)
 
           if (ExperimentalUI.isNewUI()) {
-            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets()
-            titleCell.customize(Gaps(top = headerInsets.top, bottom = headerInsets.bottom, right = JBUI.scale(12)))
+            val headerInsets = JBUI.CurrentTheme.ComplexPopup.headerInsets().unscale()
+            titleCell.customize(UnscaledGaps(top = headerInsets.top, bottom = headerInsets.bottom, right = 12))
             statusCell.component.foreground = JBUI.CurrentTheme.ContextHelp.FOREGROUND
-            statusCell.customize(JBGaps(right = 8))
+            statusCell.customize(UnscaledGaps(right = 8))
             // Fix vertical alignment for the pin icon
-            pinCell.customize(JBGaps(top = 2))
+            pinCell.customize(UnscaledGaps(top = 2))
           }
           else {
             statusCell.gap(RightGap.SMALL)

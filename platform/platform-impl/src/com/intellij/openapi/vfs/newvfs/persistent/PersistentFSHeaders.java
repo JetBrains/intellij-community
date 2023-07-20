@@ -19,16 +19,6 @@ final class PersistentFSHeaders {
   static final int SAFELY_CLOSED_MAGIC = 0x1f2f3f4f;
   static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
-  static {
-    //We use 0-th record for header fields, so record size should be big enough for header
-
-    //noinspection ConstantConditions
-    assert HEADER_SIZE <= PersistentFSLockFreeRecordsStorage.RECORD_SIZE :
-      "HEADER_SIZE(=" + HEADER_SIZE + ") > RECORD_SIZE(=" + PersistentFSLockFreeRecordsStorage.RECORD_SIZE + ")";
-    assert HEADER_SIZE <= PersistentFSSynchronizedRecordsStorage.RECORD_SIZE :
-      "HEADER_SIZE(=" + HEADER_SIZE + ") > RECORD_SIZE(=" + PersistentFSSynchronizedRecordsStorage.RECORD_SIZE + ")";
-  }
-
   @MagicConstant(flagsFromClass = PersistentFSHeaders.class)
   @Target(ElementType.TYPE_USE)
   public @interface HeaderOffset {

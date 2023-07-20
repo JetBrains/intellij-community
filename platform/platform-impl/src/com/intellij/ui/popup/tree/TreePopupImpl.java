@@ -15,10 +15,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.util.PopupImplUtil;
-import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.FilteringTreeModel;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -313,7 +313,8 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         }
 
         PopupStep<?> queriedStep;
-        try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect()) {
+        try (AccessToken ignore = PopupImplUtil.prohibitFocusEventsInHandleSelect();
+             AccessToken ignore2 = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
           queriedStep = myStep.onChosen(userObject, handleFinalChoices);
         }
         if (queriedStep == PopupStep.FINAL_CHOICE || !hasNextStep) {

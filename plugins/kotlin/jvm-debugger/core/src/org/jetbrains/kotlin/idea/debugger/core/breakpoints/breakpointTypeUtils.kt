@@ -12,6 +12,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.Processor
 import com.intellij.xdebugger.XDebuggerUtil
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
@@ -54,29 +55,9 @@ internal fun KtElement.hasExecutableCodeInsideOnLine(
         val maxOffset = min(endOffset, document.getLineEndOffset(line))
 
         hasExecutableCodeImpl(checker, visitElements = { processor ->
-            iterateOffsetRange(project, document, minOffset, maxOffset, processor)
+            (XDebuggerUtil.getInstance() as XDebuggerUtilImpl).iterateOffsetRange(project, document, minOffset, maxOffset, processor)
         }) {
             getTopmostParentWithinOffsetRangeOrSelf(it, minOffset, maxOffset)
-        }
-    }
-}
-
-// TODO(KTIJ-23034): move function to XDebuggerUtil in next PR. This wasn't done in current PR
-//  because this it going to be cherry-picked to kt- branches, and we can't modify java debugger part.
-private fun iterateOffsetRange(project: Project, document: Document, minOffset: Int, maxOffset: Int, processor: Processor<PsiElement>) {
-    val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
-    var element: PsiElement?
-    var offset: Int = minOffset
-    while (offset < maxOffset) {
-        element = file.findElementAt(offset)
-        if (element != null && element.textLength > 0) {
-            offset = if (!processor.process(element)) {
-                return
-            } else {
-                element.textRange.endOffset
-            }
-        } else {
-            offset++
         }
     }
 }
@@ -159,11 +140,10 @@ inline fun <reified T : PsiElement> getElementsAtLineIfAny(file: KtFile, line: I
 }
 
 fun getLambdasAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
-    return getElementsAtLineIfAny<KtFunction>(file, line)
-        .filter { (it is KtFunctionLiteral || it.name == null) && it.getLineNumber() == line }
+    return getLambdasAtLine(file, line).filter { it.getLineNumber() == line }
 }
 
-internal fun getLambdasStartingOrEndingAtLineIfAny(file: KtFile, line: Int): List<KtFunction> {
+internal fun getLambdasAtLine(file: KtFile, line: Int): List<KtFunction> {
     val start = file.getLineStartOffset(line)
     val end = file.getLineEndOffset(line)
     if (start == null || end == null) {
@@ -184,11 +164,10 @@ internal fun getLambdasStartingOrEndingAtLineIfAny(file: KtFile, line: Int): Lis
             offset++
         }
     }
-    return result.filter {
-        (it is KtFunctionLiteral || it.name == null) && it.isStartingOrEndingOnLine(line) }
+    return result.filter { it is KtFunctionLiteral || it.name == null }
 }
 
-private fun KtFunction.isStartingOrEndingOnLine(line: Int): Boolean {
+internal fun KtFunction.isStartingOrEndingOnLine(line: Int): Boolean {
     return line == getLineNumber(start = true) || line == getLineNumber(start = false)
 }
 

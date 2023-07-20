@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeHighlighting.*
-import com.intellij.lang.annotation.AnnotationHolder
-import com.intellij.lang.annotation.Annotator
-import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -28,52 +28,49 @@ import org.jetbrains.kotlin.psi.KtReferenceExpression
  * Quick showing possible problems with Kotlin internals in IDEA with tooltips
  */
 class DebugInfoHighlightingPass(file: KtFile, document: Document) : AbstractBindingContextAwareHighlightingPassBase(file, document) {
-    override val annotator: Annotator
-        get() = DebugInfoAnnotator()
 
-    private inner class DebugInfoAnnotator : Annotator {
-        override fun annotate(element: PsiElement, holder: AnnotationHolder) {
-            if (element is KtFile && element !is KtCodeFragment) {
+    override fun annotate(element: PsiElement, holder: HighlightInfoHolder) {
+        if (element is KtFile && element !is KtCodeFragment) {
 
-                @Suppress("HardCodedStringLiteral")
-                fun errorAnnotation(
-                    expression: PsiElement,
-                    message: String,
-                    textAttributes: TextAttributesKey? = KotlinHighlightingColors.DEBUG_INFO
-                ) =
-                    holder.newAnnotation(HighlightSeverity.ERROR, "[DEBUG] $message")
-                        .range(expression.textRange)
-                        .also {
-                            textAttributes?.let { ta -> it.textAttributes(ta) }
-                        }
-                        .create()
-
-                try {
-                    DebugInfoUtil.markDebugAnnotations(element, bindingContext(), object : DebugInfoUtil.DebugInfoReporter() {
-                        override fun reportElementWithErrorType(expression: KtReferenceExpression) =
-                            errorAnnotation(expression, "Resolved to error element", KotlinHighlightingColors.RESOLVED_TO_ERROR)
-
-                        override fun reportMissingUnresolved(expression: KtReferenceExpression) =
-                            errorAnnotation(
-                                expression,
-                                "Reference is not resolved to anything, but is not marked unresolved"
-                            )
-
-                        override fun reportUnresolvedWithTarget(expression: KtReferenceExpression, target: String) =
-                            errorAnnotation(
-                                expression,
-                                "Reference marked as unresolved is actually resolved to $target"
-                            )
-                    })
-                } catch (e: ProcessCanceledException) {
-                    throw e
-                } catch (e: Throwable) {
-                    // TODO
-                    errorAnnotation(element, "${e.javaClass.canonicalName}: ${e.message}", null)
-                    e.printStackTrace()
-                }
-
+            @Suppress("HardCodedStringLiteral")
+            fun errorAnnotation(
+                expression: PsiElement,
+                message: String,
+                textAttributes: TextAttributesKey? = KotlinHighlightingColors.DEBUG_INFO
+            ) {
+                val info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                    .descriptionAndTooltip("[DEBUG] $message")
+                    .range(expression.textRange)
+                    .also {
+                        textAttributes?.let { ta -> it.textAttributes(ta) }
+                    }.create()
+                holder.add(info)
             }
+            try {
+                DebugInfoUtil.markDebugAnnotations(element, bindingContext(), object : DebugInfoUtil.DebugInfoReporter() {
+                    override fun reportElementWithErrorType(expression: KtReferenceExpression) =
+                        errorAnnotation(expression, "Resolved to error element", KotlinHighlightingColors.RESOLVED_TO_ERROR)
+
+                    override fun reportMissingUnresolved(expression: KtReferenceExpression) =
+                        errorAnnotation(
+                            expression,
+                            "Reference is not resolved to anything, but is not marked unresolved"
+                        )
+
+                    override fun reportUnresolvedWithTarget(expression: KtReferenceExpression, target: String) =
+                        errorAnnotation(
+                            expression,
+                            "Reference marked as unresolved is actually resolved to $target"
+                        )
+                })
+            } catch (e: ProcessCanceledException) {
+                throw e
+            } catch (e: Throwable) {
+                // TODO
+                errorAnnotation(element, "${e.javaClass.canonicalName}: ${e.message}", null)
+                e.printStackTrace()
+            }
+
         }
     }
 

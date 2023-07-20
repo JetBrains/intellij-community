@@ -5,6 +5,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
+import com.intellij.openapi.progress.blockingContextToIndicator
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
 import kotlinx.coroutines.*
@@ -28,7 +29,9 @@ internal class XDebuggerLineChangeHandler(
         val (editor, position) = event
         try {
           val types: List<XLineBreakpointType<*>> = readAction {
-            XBreakpointUtil.getAvailableLineBreakpointTypes(editor.project!!, position, editor)
+            blockingContextToIndicator {
+              XBreakpointUtil.getAvailableLineBreakpointTypes(editor.project!!, position, editor)
+            }
           }
           withContext(Dispatchers.Main) {
             handler(editor.gutter as EditorGutterComponentEx, position, types)

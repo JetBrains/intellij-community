@@ -18,7 +18,7 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_19;
   }
 
   public void testInstanceOfBasics() {
@@ -51,7 +51,7 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
   }
 
   public void testDeconstructionInstanceOf() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testInstanceOfNonReified() {
@@ -62,16 +62,12 @@ public class LightPatternsHighlightingTest extends LightJavaCodeInsightFixtureTe
     doTest();
   }
 
-  public void testInstanceOfSubtypeJava19() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
-  }
-
   public void testInstanceOfPatternMatching() {
     doTest();
   }
 
   public void testRecordPatternsInForEachJava19() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testRecordPatternsInForEachJava20() {

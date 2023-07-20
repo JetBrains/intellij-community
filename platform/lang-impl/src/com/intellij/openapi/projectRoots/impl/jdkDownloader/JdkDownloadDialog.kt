@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.*
@@ -39,12 +40,12 @@ class JdkVersionItem(
   val excludedItems: List<JdkVersionVendorItem>
 )  {
   //we reuse model to keep selected element in-memory!
-  val model: ComboBoxModel<JdkVersionVendorElement> by lazy {
+  val model: ComboBoxModel<JdkVersionVendorItem> by lazy {
     require(this.includedItems.isNotEmpty()) { "No included items for $jdkVersion" }
     require(this.defaultSelectedItem in this.includedItems) { "Default selected item must be in the list of items for $jdkVersion" }
 
     val allItems = when {
-      this.excludedItems.isNotEmpty() -> this.includedItems + JdkVersionVendorGroupSeparator + this.excludedItems
+      this.excludedItems.isNotEmpty() -> this.includedItems + this.excludedItems
       else                            -> this.includedItems
     }
 
@@ -54,19 +55,17 @@ class JdkVersionItem(
   }
 }
 
-sealed class JdkVersionVendorElement
-object JdkVersionVendorGroupSeparator : JdkVersionVendorElement()
-
 class JdkVersionVendorItem(
   val item: JdkItem
-) : JdkVersionVendorElement() {
+) {
   var parent: JdkVersionItem? = null
-  val selectItem get() = parent?.includedItems?.find { it.item == item } ?: this
+  val selectItem: JdkVersionVendorItem get() = parent?.includedItems?.find { it.item == item } ?: this
 
   val canBeSelected: Boolean get() = parent == null
 }
 
-private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
+private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorItem>() {
+  var itemWithSeparator: JdkVersionVendorItem? = null
   private val myActionItemSelectedListeners = mutableListOf<(item: JdkVersionVendorItem) -> Unit>()
 
   override fun setSelectedItem(anObject: Any?) {
@@ -84,7 +83,7 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
     myActionItemSelectedListeners += action
   }
 
-  override fun setModel(aModel: ComboBoxModel<JdkVersionVendorElement>?) {
+  override fun setModel(aModel: ComboBoxModel<JdkVersionVendorItem>?) {
     if (model === aModel) return
 
     super.setModel(aModel)
@@ -95,35 +94,27 @@ private class JdkVersionVendorCombobox: ComboBox<JdkVersionVendorElement>() {
   init {
     isSwingPopup = false
 
-    renderer = object: ColoredListCellRenderer<JdkVersionVendorElement>() {
-      override fun getListCellRendererComponent(list: JList<out JdkVersionVendorElement>?,
-                                                value: JdkVersionVendorElement?,
-                                                index: Int,
-                                                selected: Boolean,
-                                                hasFocus: Boolean): Component {
-        if (value === JdkVersionVendorGroupSeparator ) {
-          return SeparatorWithText().apply { caption = ProjectBundle.message("dialog.row.jdk.other.versions") }
-        }
-
-        return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+    renderer = object: GroupedComboBoxRenderer<JdkVersionVendorItem>(this) {
+      override fun getText(item: JdkVersionVendorItem): String {
+        return item.item.product.packagePresentationText
       }
 
-      override fun customizeCellRenderer(list: JList<out JdkVersionVendorElement>, value: JdkVersionVendorElement?, index: Int, selected: Boolean, hasFocus: Boolean) {
-        if (value !is JdkVersionVendorItem) {
-          append("???")
-          return
+      override fun separatorFor(value: JdkVersionVendorItem): ListSeparator? {
+        if (itemWithSeparator == value) {
+          return ListSeparator(ProjectBundle.message("dialog.row.jdk.other.versions"))
         }
+        return null
+      }
 
-        append(value.item.product.packagePresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      override fun customize(item: SimpleColoredComponent, value: JdkVersionVendorItem, index: Int, isSelected: Boolean, hasFocus: Boolean) {
+        item.append(value.item.product.packagePresentationText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
 
+        val additionalInfo = mutableListOf<String>()
         val jdkVersion = value.item.jdkVersion
-        if (jdkVersion != value.parent?.jdkVersion) {
-          append(" $jdkVersion", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
-        }
+        additionalInfo.add("  $jdkVersion")
+        value.item.presentableArchIfNeeded?.let { archIfNeeded -> additionalInfo.add("  $archIfNeeded") }
 
-        value.item.presentableArchIfNeeded?.let { archIfNeeded ->
-          append("  $archIfNeeded", SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
-        }
+        item.append(additionalInfo.joinToString(""), SimpleTextAttributes.GRAYED_ATTRIBUTES, false)
       }
     }
   }
@@ -212,7 +203,7 @@ internal class JdkDownloaderMergedModel(
   val wslDistributions: List<WSLDistribution>,
   val projectWSLDistribution: WSLDistribution?
 ) {
-  val hasWsl get() = wslModel != null
+  val hasWsl: Boolean get() = wslModel != null
 
   fun selectModel(wsl: Boolean): JdkDownloaderModel = when {
     wsl && wslModel != null -> wslModel
@@ -329,15 +320,15 @@ internal class JdkDownloadDialog(
     setModel(WslPath.isWslUncPath(path))
   }
 
-  private fun onVendorActionItemSelected(it: JdkVersionVendorElement?) {
-    if (it !is JdkVersionVendorItem) return
+  private fun onVendorActionItemSelected(it: JdkVersionVendorItem?) {
+    if (it == null) return
     val parent = it.parent ?: return
     onVersionSelectionChange(parent)
     vendorComboBox.selectedItem = it.selectItem
   }
 
-  private fun onVendorSelectionChange(it: JdkVersionVendorElement?) {
-    if (it !is JdkVersionVendorItem || !it.canBeSelected) return
+  private fun onVendorSelectionChange(it: JdkVersionVendorItem?) {
+    if (it == null || !it.canBeSelected) return
 
     vendorComboBox.selectedItem = it.selectItem
     val newVersion = it.item
@@ -365,6 +356,7 @@ internal class JdkDownloadDialog(
     if (it == null) return
     versionComboBox.selectedItem = it
     vendorComboBox.model = it.model
+    vendorComboBox.itemWithSeparator = it.excludedItems.firstOrNull()
   }
 
   override fun doValidate(): ValidationInfo? {

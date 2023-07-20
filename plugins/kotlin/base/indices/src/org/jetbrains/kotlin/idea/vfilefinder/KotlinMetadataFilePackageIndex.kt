@@ -1,8 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.vfilefinder
 
+import com.intellij.util.indexing.ID
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.FqName
 
-object KotlinMetadataFilePackageIndex : KotlinMetadataFileIndexBase<KotlinMetadataFilePackageIndex>(
-    KotlinMetadataFilePackageIndex::class.java, ClassId::getPackageFqName
-)
+class KotlinMetadataFilePackageIndex : KotlinMetadataFileIndexBase(ClassId::getPackageFqName) {
+    companion object {
+        val NAME: ID<FqName, Void> = ID.create("org.jetbrains.kotlin.idea.vfilefinder.KotlinMetadataFilePackageIndex")
+    }
+
+    override fun getName() = NAME
+}

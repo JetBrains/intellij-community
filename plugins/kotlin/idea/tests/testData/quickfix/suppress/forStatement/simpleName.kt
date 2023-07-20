@@ -4,3 +4,5 @@ fun foo() {
     val a = 1
     <caret>a
 }
+
+// IGNORE_FIR

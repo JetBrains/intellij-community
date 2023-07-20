@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import org.jetbrains.annotations.NotNull;
@@ -14,21 +14,18 @@ public final class DelegatingFontPreferences extends FontPreferences {
     myDelegateSupplier = delegateSupplier;
   }
 
-  @NotNull
   @Override
-  public List<String> getEffectiveFontFamilies() {
+  public @NotNull List<String> getEffectiveFontFamilies() {
     return myDelegateSupplier.get().getEffectiveFontFamilies();
   }
 
-  @NotNull
   @Override
-  public List<String> getRealFontFamilies() {
+  public @NotNull List<String> getRealFontFamilies() {
     return myDelegateSupplier.get().getRealFontFamilies();
   }
 
-  @NotNull
   @Override
-  public String getFontFamily() {
+  public @NotNull String getFontFamily() {
     return myDelegateSupplier.get().getFontFamily();
   }
 

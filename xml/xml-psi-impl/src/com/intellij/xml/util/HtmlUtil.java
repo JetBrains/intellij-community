@@ -38,7 +38,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
@@ -47,6 +46,7 @@ import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * @author Maxim.Mossienko
@@ -81,6 +81,8 @@ public final class HtmlUtil {
     "Host", "If-Match", "If-Modified-Since", "If-None-Match", "If-Range", "If-Unmodified-Since", "Last-Modified", "Location",
     "Max-Forwards", "Pragma", "Proxy-Authenticate", "Proxy-Authorization", "Range", "Referer", "Refresh", "Retry-After", "Server", "TE",
     "Trailer", "Transfer-Encoding", "Upgrade", "User-Agent", "Vary", "Via", "Warning", "WWW-Authenticate"};
+  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
+  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
 
   private HtmlUtil() {
   }
@@ -90,7 +92,7 @@ public final class HtmlUtil {
     "wbr"
   );
 
-  private static final Set<String> OPTIONAL_END_TAGS_MAP = ContainerUtil.set(
+  private static final Set<String> OPTIONAL_END_TAGS_MAP = Set.of(
     //"html",
     "head",
     //"body",
@@ -99,7 +101,7 @@ public final class HtmlUtil {
   );
 
   private static final Set<String> BLOCK_TAGS_MAP =
-    ContainerUtil.set("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
+    Set.of("p", "h1", "h2", "h3", "h4", "h5", "h6", "ul", "ol", "dir", "menu", "pre",
            "dl", "div", "center", "noscript", "noframes", "blockquote", "form", "isindex", "hr", "table", "fieldset", "address",
            // nonexplicitly specified
            "map",
@@ -108,14 +110,14 @@ public final class HtmlUtil {
 
   // flow elements are block or inline, so they should not close <p> for example
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP =
-    ContainerUtil.set("a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
+    Set.of("a", "abbr", "acronym", "applet", "b", "basefont", "bdo", "big", "br", "button",
            "cite", "code", "del", "dfn", "em", "font", "i", "iframe", "img", "input", "ins",
            "kbd", "label", "map", "object", "q", "s", "samp", "select", "small", "span", "strike",
            "strong", "sub", "sup", "textarea", "tt", "u", "var");
 
-  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = ContainerUtil.set("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre");
+  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = Set.of("p", "h1", "h2", "h3", "h4", "h5", "h6", "pre");
 
-  private static final Set<String> HTML5_TAGS_SET = ContainerUtil.set("article", "aside", "audio", "canvas", "command", "datalist",
+  private static final Set<String> HTML5_TAGS_SET = Set.of("article", "aside", "audio", "canvas", "command", "datalist",
                                                            "details", "embed", "figcaption", "figure", "footer", "header",
                                                            "keygen", "mark", "meter", "nav", "output", "progress", "rp", "rt",
                                                            "ruby", "section", "source", "summary", "time", "video", "wbr",
@@ -530,6 +532,34 @@ public final class HtmlUtil {
     String descriptorPath = descriptorFile != null ? descriptorFile.getVirtualFile().getPath() : null;
     return Objects.equals(Html5SchemaProvider.getHtml5SchemaLocation(), descriptorPath) ||
            Objects.equals(Html5SchemaProvider.getXhtml5SchemaLocation(), descriptorPath);
+  }
+
+  /**
+   * Checks if the specified string starts with an HTML tag, and if it does, it returns the tag name.
+   *
+   * @param line the string to check if it starts with an HTML tag
+   * @return if the input starts with an HTML tag, it returns the tag name, otherwise {@code null}
+   */
+  public static String getStartTag(@NotNull String line) {
+    if (startsWithTag(line)) {
+      int tagStart = line.indexOf("<");
+      if (tagStart >= 0) {
+        tagStart ++;
+        for (int i = tagStart; i < line.length(); i ++) {
+          if (!Character.isAlphabetic(line.charAt(i))) {
+            return line.substring(tagStart,i);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  public static boolean startsWithTag(@NotNull String line) {
+    if (line.trim().startsWith("<")) {
+      return HTML_TAG_PATTERN.matcher(line).matches();
+    }
+    return false;
   }
 
   private static class TerminateException extends RuntimeException {

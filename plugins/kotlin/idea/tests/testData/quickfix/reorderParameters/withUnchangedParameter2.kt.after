@@ -1,0 +1,12 @@
+// "Reorder parameters" "true"
+fun foo(
+    a: String,
+    d: String,
+    c: String,
+    b: String = d,
+    f: String,
+) {}
+
+fun main() {
+    foo("a", "d", "c", "b", "e")
+}

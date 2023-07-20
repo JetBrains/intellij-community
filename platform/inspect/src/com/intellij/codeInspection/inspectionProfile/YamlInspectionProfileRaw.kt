@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
+import com.intellij.codeInspection.inspectionProfile.YamlProfileUtils.makeYaml
 import org.yaml.snakeyaml.Yaml
-import org.yaml.snakeyaml.constructor.CustomClassLoaderConstructor
-import org.yaml.snakeyaml.introspector.BeanAccess
-import org.yaml.snakeyaml.representer.Representer
 import java.io.Reader
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -14,7 +12,14 @@ class YamlInspectionProfileRaw(
   val name: String? = null,
   val groups: List<YamlInspectionGroupRaw> = emptyList(),
   val inspections: List<YamlInspectionConfigRaw> = emptyList()
-)
+) {
+  fun dump(): String {
+    val yaml = makeYaml()
+    return yaml.dump(this)
+  }
+
+
+}
 
 class YamlInspectionGroupRaw(
   val groupId: String = "Unknown",
@@ -28,17 +33,13 @@ class YamlInspectionConfigRaw(
   val enabled: Boolean? = null,
   val severity: String? = null,
   val ignore: List<String> = emptyList(),
-  val options: Map<String, *>? = null
+  val options: Map<String, String>? = null
 )
 
 
 fun readConfig(reader: Reader, includeReaders: (Path) -> Reader): YamlInspectionProfileRaw {
   val merged = readRaw(reader, includeReaders)
-  val representer = Representer()
-  representer.propertyUtils.isSkipMissingProperties = true
-  val constr = CustomClassLoaderConstructor(YamlInspectionProfileRaw::class.java, YamlInspectionProfileRaw::class.java.classLoader)
-  val yaml = Yaml(constr, representer)
-  yaml.setBeanAccess(BeanAccess.FIELD)
+  val yaml = makeYaml()
 
   return yaml.load(yaml.dump(merged))
 }
@@ -69,7 +70,7 @@ private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<Strin
   val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
 
   return includedConfigs.fold(rawConfig) { accumulator, path ->
-    val includedYaml = readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.parent.resolve(it)) }
+    val includedYaml = readRaw(includeReaders.invoke(path)) { includeReaders.invoke(path.resolveSibling(it)) }
     merge(accumulator, includedYaml.filterKeys { field -> field in FIELDS_TO_MERGE })
   }
 }

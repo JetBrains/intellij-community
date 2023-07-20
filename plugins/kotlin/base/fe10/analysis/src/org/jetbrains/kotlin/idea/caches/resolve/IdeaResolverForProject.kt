@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.load.java.structure.JavaClass
 import org.jetbrains.kotlin.load.java.structure.impl.JavaClassImpl
@@ -33,11 +34,13 @@ import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.RESOLUTION_ANCHOR_PROVIDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.ResolutionAnchorProvider
+import org.jetbrains.kotlin.resolve.STDLIB_CLASS_FINDER_CAPABILITY
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
 import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.REFINER_CAPABILITY
 import org.jetbrains.kotlin.types.checker.Ref
 import org.jetbrains.kotlin.types.checker.TypeRefinementSupport
+import java.util.*
 
 class IdeaResolverForProject(
     debugName: String,
@@ -65,6 +68,7 @@ class IdeaResolverForProject(
     }
 
     private val resolutionAnchorProvider = projectContext.project.service<ResolutionAnchorProvider>()
+    private val created = Date().toString()
 
     private val invalidModuleNotifier: InvalidModuleNotifier = object: InvalidModuleNotifier {
         override fun notifyModuleInvalidated(moduleDescriptor: ModuleDescriptor) {
@@ -77,6 +81,8 @@ class IdeaResolverForProject(
 
     private val builtInsCache: BuiltInsCache =
         (delegateResolver as? IdeaResolverForProject)?.builtInsCache ?: BuiltInsCache(projectContext, this)
+
+    private val stdlibClassFinder = IdeStdlibClassFinderImpl(projectContext.project)
 
     @OptIn(TypeRefinement::class)
     private fun getRefinerCapability(): Pair<ModuleCapability<Ref<TypeRefinementSupport>>, Ref<TypeRefinementSupport>> {
@@ -99,7 +105,8 @@ class IdeaResolverForProject(
                 getRefinerCapability() +
                 (PLATFORM_ANALYSIS_SETTINGS to settings) +
                 (RESOLUTION_ANCHOR_PROVIDER_CAPABILITY to resolutionAnchorProvider) +
-                (INVALID_MODULE_NOTIFIER_CAPABILITY to invalidModuleNotifier)
+                (INVALID_MODULE_NOTIFIER_CAPABILITY to invalidModuleNotifier) +
+                (STDLIB_CLASS_FINDER_CAPABILITY to stdlibClassFinder)
     }
 
     override fun sdkDependency(module: IdeaModuleInfo): SdkInfo? {
@@ -117,11 +124,11 @@ class IdeaResolverForProject(
     override fun createResolverForModule(descriptor: ModuleDescriptor, moduleInfo: IdeaModuleInfo): ResolverForModule {
         val moduleContent = ModuleContent(moduleInfo, syntheticFilesByModule[moduleInfo] ?: listOf(), moduleInfo.moduleContentScope)
 
-        val languageVersionSettings =
-            IDELanguageSettingsProvider.getLanguageVersionSettings(moduleInfo, projectContext.project)
+        val project = projectContext.project
+        val languageVersionSettings = project.service<LanguageSettingsProvider>().getLanguageVersionSettings(moduleInfo, project)
 
         val resolverForModuleFactory = getResolverForModuleFactory(moduleInfo)
-        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(projectContext.project, descriptor, moduleInfo)
+        val optimizingOptions = ResolveOptimizingOptionsProvider.getOptimizingOptions(project, descriptor, moduleInfo)
 
         val resolverForModule = resolverForModuleFactory.createResolverForModule(
             descriptor as ModuleDescriptorImpl,
@@ -131,8 +138,9 @@ class IdeaResolverForProject(
             languageVersionSettings,
             sealedInheritorsProvider = IdeSealedClassInheritorsProvider,
             resolveOptimizingOptions = optimizingOptions,
+            absentDescriptorHandlerClass = IdeaAbsentDescriptorHandler::class.java
         )
-        ResolverForModuleComputationTrackerEx.getInstance(projectContext.project)?.onCreateResolverForModule(descriptor, moduleInfo)
+        ResolverForModuleComputationTrackerEx.getInstance(project)?.onCreateResolverForModule(descriptor, moduleInfo)
         return resolverForModule
     }
 

@@ -1,9 +1,14 @@
 package org.jetbrains.plugins.textmate.editor
 
 fun fileNameExtensions(fileName: CharSequence): Sequence<CharSequence> {
-  return generateSequence(fileName) { s ->
-    val i = s.indexOf('.')
-    val extension = if (i == -1) "" else s.subSequence(i + 1, s.length)
-    extension.ifEmpty { null }
+  return generateSequence(fileNameExtension(fileName)) { s ->
+    fileNameExtension(s)
+  }
+}
+
+private fun fileNameExtension(fileName: CharSequence): CharSequence? {
+  return when(val i = fileName.indexOf('.')) {
+    -1 -> null
+    else -> fileName.subSequence(i + 1, fileName.length).ifEmpty { null }
   }
 }

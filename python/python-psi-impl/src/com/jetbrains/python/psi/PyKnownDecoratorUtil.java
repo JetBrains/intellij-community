@@ -88,7 +88,8 @@ public final class PyKnownDecoratorUtil {
     ATTRS_MUTABLE("attrs.mutable"),
     ATTRS_FROZEN("attrs.frozen"),
 
-    PYTEST_FIXTURE("pytest.fixture");
+    PYTEST_FIXTURE("pytest.fixture"),
+    PYTEST_FIXTURES_FIXTURE("_pytest.fixtures.fixture");
 
     private final QualifiedName myQualifiedName;
 

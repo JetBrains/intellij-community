@@ -239,22 +239,24 @@ abstract class LineStatusTrackerBase<R : Range>(
   override fun rollbackChanges(range: Range) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
-      runBulkRollback { it == newRange }
+      runBulkRollback { if (it == newRange) RangeExclusionState.Included else RangeExclusionState.Excluded }
     }
   }
 
   @RequiresEdt
   override fun rollbackChanges(lines: BitSet) {
-    runBulkRollback { it.isSelectedByLine(lines) }
+    runBulkRollback { if (it.isSelectedByLine(lines)) RangeExclusionState.Included else RangeExclusionState.Excluded }
   }
 
   @RequiresEdt
-  protected fun runBulkRollback(condition: (Block) -> Boolean) {
+  protected fun runBulkRollback(condition: (Block) -> RangeExclusionState) {
     if (!isValid()) return
 
     updateDocument(Side.RIGHT, DiffBundle.message("rollback.change.command.name")) {
-      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { block, shift ->
-        fireLinesUnchanged(block.start + shift, block.start + shift + (block.vcsEnd - block.vcsStart))
+      documentTracker.partiallyApplyBlocks(Side.RIGHT, condition) { appliedRange, shift ->
+        val start = appliedRange.start2 + shift
+        val length = appliedRange.end1 - appliedRange.start1
+        fireLinesUnchanged(start, start + length)
       }
     }
   }

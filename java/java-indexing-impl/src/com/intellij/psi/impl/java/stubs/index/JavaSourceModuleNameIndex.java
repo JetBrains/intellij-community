@@ -8,6 +8,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.BinaryFileTypePolicy;
+import com.intellij.util.indexing.hints.ExactFileNameInputFilter;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +57,7 @@ public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return file -> "MANIFEST.MF".equalsIgnoreCase(file.getName());
+    return new ExactFileNameInputFilter("MANIFEST.MF", true /* ignore case */, BinaryFileTypePolicy.NON_BINARY);
   }
 
   @Override

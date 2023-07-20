@@ -49,7 +49,7 @@ internal class AddNameToArgumentIntention :
     context(KtAnalysisSession)
     override fun prepareContext(element: KtValueArgument): Context? {
         val callElement = element.parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
-        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
 
         if (!resolvedCall.symbol.hasStableParameterNames) {
             return null

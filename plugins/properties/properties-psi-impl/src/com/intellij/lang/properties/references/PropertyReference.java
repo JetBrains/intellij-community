@@ -53,7 +53,7 @@ public class PropertyReference extends PropertyReferenceBase implements LocalQui
   }
 
   @Override
-  public LocalQuickFix @NotNull [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     List<PropertiesFile> propertiesFiles = retrievePropertyFilesByBundleName(myBundleName, getElement());
     LocalQuickFix fix = PropertiesQuickFixFactory.getInstance().createCreatePropertyFix(myElement, myKey, propertiesFiles);
     return new LocalQuickFix[] {fix};

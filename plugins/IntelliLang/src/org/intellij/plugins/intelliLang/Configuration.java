@@ -762,14 +762,9 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
       if (myDfaOption != DfaOption.RESOLVE) {
         switch (myDfaOption) {
-          case OFF:
-            break;
-          case ASSIGNMENTS:
-            JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
-            break;
-          case DFA:
-            JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
-            break;
+          case OFF -> {}
+          case ASSIGNMENTS -> JDOMExternalizerUtil.writeField(element, LOOK_FOR_VAR_ASSIGNMENTS, Boolean.TRUE.toString());
+          case DFA -> JDOMExternalizerUtil.writeField(element, USE_DFA_IF_AVAILABLE, Boolean.TRUE.toString());
         }
       }
     }

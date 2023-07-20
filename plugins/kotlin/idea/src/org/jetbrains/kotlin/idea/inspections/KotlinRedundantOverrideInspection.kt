@@ -6,27 +6,29 @@ import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JavaDescriptorVisibilities
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.endOffset
+import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
+import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.descriptors.LazyClassDescriptor
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.synthetic.canBePropertyAccessor
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession) =
@@ -36,7 +38,6 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             if (!modifierList.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
             if (Holder.MODIFIER_EXCLUDE_OVERRIDE.any { modifierList.hasModifier(it) }) return
             if (KotlinPsiHeuristics.hasNonSuppressAnnotations(function)) return
-            if (function.containingClass()?.isData() == true) return
 
             val bodyExpression = function.bodyExpression ?: return
             val qualifiedExpression = when (bodyExpression) {
@@ -61,14 +62,17 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
             if (!isSameFunctionName(superCallElement, function)) return
             if (!isSameArguments(superCallElement, function)) return
 
-            val context = function.analyze()
+            val context = superCallElement.analyze()
             val functionDescriptor = context[BindingContext.FUNCTION, function] ?: return
             val functionParams = functionDescriptor.valueParameters
-            val superCallDescriptor = superCallElement.resolveToCall()?.resultingDescriptor ?: return
+            val superCallDescriptor = superCallElement.getResolvedCall(context)?.resultingDescriptor ?: return
             val superCallFunctionParams = superCallDescriptor.valueParameters
             if (functionParams.size == superCallFunctionParams.size
                 && functionParams.zip(superCallFunctionParams).any { it.first.type != it.second.type }
             ) return
+
+            val superCallFqName = superCallDescriptor.fqNameSafe
+            if (function.containingClassOrObject?.isData() == true && superCallFqName in Holder.METHODS_OF_ANY) return
 
             if (function.hasDerivedProperty(functionDescriptor, context)) return
             var overriddenDescriptors = functionDescriptor.original.overriddenDescriptors
@@ -84,7 +88,7 @@ class KotlinRedundantOverrideInspection : AbstractKotlinInspection(), CleanupLoc
 
             if (overriddenDescriptors.any { it is JavaMethodDescriptor && it.visibility == JavaDescriptorVisibilities.PACKAGE_VISIBILITY }) return
             if (overriddenDescriptors.any { it.modality == Modality.ABSTRACT }) {
-                if (superCallDescriptor.fqNameSafe in Holder.METHODS_OF_ANY) return
+                if (superCallFqName in Holder.METHODS_OF_ANY) return
                 if (superCallDescriptor.isOverridingMethodOfAny() && !superCallDescriptor.isImplementedInContainingClass()) return
             }
             if (function.isAmbiguouslyDerived(overriddenDescriptors, context)) return

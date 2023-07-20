@@ -1,3 +1,4 @@
+// HIGHLIGHT: INFORMATION
 import Platform.JvmPlatform
 
 sealed class Platform {

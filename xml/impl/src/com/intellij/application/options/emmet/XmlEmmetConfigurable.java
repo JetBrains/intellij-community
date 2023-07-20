@@ -67,6 +67,8 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
     myFiltersListPanel.setLayout(layoutManager);
     int added = 0;
     for (ZenCodingFilter filter : filters) {
+      if (filter.isSystem()) continue;
+
       if (myFilterCheckboxes.containsKey(filter.getSuffix())) continue;
       final JBCheckBox checkBox = new JBCheckBox(filter.getDisplayName());
       myFilterCheckboxes.put(filter.getSuffix(), checkBox);
@@ -132,6 +134,7 @@ public class XmlEmmetConfigurable implements SearchableConfigurable, Disposable,
 
     Set<String> enabledByDefault = emmetOptions.getFiltersEnabledByDefault();
     for (ZenCodingFilter filter : ZenCodingFilter.getInstances()) {
+      if (filter.isSystem()) continue;
       final String filterSuffix = filter.getSuffix();
       final JBCheckBox checkBox = myFilterCheckboxes.get(filterSuffix);
       if (checkBox != null) {

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -25,6 +26,7 @@ public final class IndexVersion {
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = new ConcurrentHashMap<>();
   private static volatile int ourVersion = -1;
   private static volatile long ourLastStamp; // ensure any file index stamp increases
+  private static final Logger LOG = FileBasedIndexImpl.LOG;
 
   private final long myModificationCount;
   private final int myIndexVersion;
@@ -62,6 +64,16 @@ public final class IndexVersion {
   IndexVersion nextVersion(int indexVersion, long vfsCreationStamp) {
     long modificationCount = calcNextVersion(this == NON_EXISTING_INDEX_VERSION ? ourLastStamp : myModificationCount);
     return new IndexVersion(modificationCount, indexVersion, vfsCreationStamp);
+  }
+
+  @Override
+  public String toString() {
+    return "IndexVersion{" +
+           "myModificationCount=" + myModificationCount +
+           ", myIndexVersion=" + myIndexVersion +
+           ", myCommonIndicesVersion=" + myCommonIndicesVersion +
+           ", myVfsCreationStamp=" + myVfsCreationStamp +
+           '}';
   }
 
   private static long calcNextVersion(long modificationCount) {
@@ -126,8 +138,8 @@ public final class IndexVersion {
     }
 
     Path file = IndexInfrastructure.getVersionFile(indexId);
-    if (FileBasedIndexImpl.LOG.isDebugEnabled()) {
-      FileBasedIndexImpl.LOG.debug("Rewriting " + file + "," + version);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Rewriting " + file + "," + version);
     }
     IndexVersion newIndexVersion = getIndexVersion(indexId).nextVersion(version, FSRecords.getCreationTimestamp());
 
@@ -175,11 +187,13 @@ public final class IndexVersion {
         Path versionFile = IndexInfrastructure.getVersionFile(indexName);
         try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(versionFile)))) {
           version = new IndexVersion(in);
+          LOG.debug("Version for index '", indexName, "' from file ", versionFile, ": ", version);
           ourIndexIdToCreationStamp.put(indexName, version);
           return version;
         }
       }
-      catch (IOException ignore) {
+      catch (IOException e) {
+        LOG.debug("No version for index '" + indexName + "' (" + e + ")", e);
       }
       version = NON_EXISTING_INDEX_VERSION;
       ourIndexIdToCreationStamp.put(indexName, version);

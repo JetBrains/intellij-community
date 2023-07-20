@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
-import com.intellij.openapi.project.processOpenedProjects
+import com.intellij.openapi.project.getOpenedProjects
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
@@ -58,8 +58,8 @@ private class RCInArbitraryFileListener : AsyncFileListener {
       if (updatedRCFilePaths.isNotEmpty() || deletedRCFilePaths.isNotEmpty()) {
         return object : AsyncFileListener.ChangeApplier {
           override fun afterVfsChange() {
-            processOpenedProjects {
-              RunManagerImpl.getInstanceImpl(it).updateRunConfigsFromArbitraryFiles(deletedRCFilePaths, updatedRCFilePaths)
+            for (project in getOpenedProjects()) {
+              RunManagerImpl.getInstanceImpl(project).updateRunConfigsFromArbitraryFiles(deletedRCFilePaths, updatedRCFilePaths)
             }
           }
         }

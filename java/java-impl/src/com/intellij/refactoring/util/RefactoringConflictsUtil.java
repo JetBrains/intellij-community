@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +33,7 @@ public interface RefactoringConflictsUtil {
   void analyzeAccessibilityConflictsAfterMemberMove(@NotNull PsiClass targetClass,
                                                     @Nullable @PsiModifier.ModifierConstant String newVisibility,
                                                     @NotNull Set<? extends PsiMember> membersToMove,
-                                                    @NotNull MultiMap<PsiElement, String> conflicts);
+                                                    @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts);
 
   /**
    * Analyzes accessibility after members move to other place (for example class) and contributes to the conflicts map if needed.
@@ -54,7 +54,7 @@ public interface RefactoringConflictsUtil {
                                                     @NotNull @PsiModifier.ModifierConstant PsiElement context,
                                                     @Nullable Set<? extends PsiMethod> abstractMethods,
                                                     @NotNull Condition<? super PsiReference> ignorePredicate,
-                                                    @NotNull MultiMap<PsiElement, String> conflicts);
+                                                    @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts);
 
   /**
    * Ensures that inheritor overloads will be able to access this method after change of visibility modifier as well as super methods will
@@ -67,7 +67,7 @@ public interface RefactoringConflictsUtil {
   @Contract(mutates = "param3")
   void analyzeHierarchyConflictsAfterMethodModifierChange(@NotNull PsiMethod method,
                                                           @NotNull @PsiModifier.ModifierConstant String modifier,
-                                                          @NotNull MultiMap<PsiElement, @Nls String> conflicts);
+                                                          @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts);
 
   /**
    * Searches for conflicts appearing because of move of elements from one module to another.
@@ -82,7 +82,7 @@ public interface RefactoringConflictsUtil {
                               @Nullable Collection<? extends PsiElement> scopes,
                               UsageInfo[] usages,
                               @NotNull VirtualFile vFile,
-                              @NotNull MultiMap<PsiElement, @Nls String> conflicts);
+                              @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts);
 
   /**
    * Analyses conflicts appearing after deletion of a given parameter (for example, method will have the same erasure as existing one).
@@ -94,5 +94,5 @@ public interface RefactoringConflictsUtil {
   @Contract(mutates = "param3")
   void analyzeMethodConflictsAfterParameterDelete(@NotNull PsiMethod method,
                                                   @NotNull PsiParameter parameter,
-                                                  @NotNull MultiMap<PsiElement, @Nls String> conflicts);
+                                                  @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts);
 }

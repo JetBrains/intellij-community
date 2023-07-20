@@ -22,6 +22,10 @@ public abstract class PromptingMacro extends Macro{
     return userInput.get();
   }
 
+  @Override
+  public @Nullable String preview(@NotNull DataContext dataContext) {
+    return "<params>";
+  }
 
   /**
    * Called from expand() method

@@ -11,6 +11,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_PROJECT = "org.gradle.api.Project";
   @NonNls public static final String GRADLE_API_BASE_PLUGIN_CONVENTION = "org.gradle.api.plugins.BasePluginConvention";
   @NonNls public static final String GRADLE_API_JAVA_PLUGIN_CONVENTION = "org.gradle.api.plugins.JavaPluginConvention";
+  @NonNls public static final String GRADLE_API_JAVA_PLUGIN_EXTENSION = "org.gradle.api.plugins.internal.DefaultJavaPluginExtension";
   @NonNls public static final String GRADLE_API_APPLICATION_PLUGIN_CONVENTION = "org.gradle.api.plugins.ApplicationPluginConvention";
   @NonNls public static final String GRADLE_API_WAR_CONVENTION = "org.gradle.api.plugins.WarPluginConvention";
   @NonNls public static final String GRADLE_API_CONFIGURATION_CONTAINER = "org.gradle.api.artifacts.ConfigurationContainer";

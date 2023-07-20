@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 public class MockAbstractVcs extends AbstractVcs {
   private static final String NAME = "mock"; // NON-NLS
   private static final VcsKey ourKey = createKey(NAME);
-  private boolean myMarkExternalChangesAsCurrent = false;
   private CheckinEnvironment myCheckinEnvironment;
   private CommittedChangesProvider myCommittedChangesProvider;
   private DiffProvider myDiffProvider;
@@ -55,15 +54,6 @@ public class MockAbstractVcs extends AbstractVcs {
   @Override
   public ChangeProvider getChangeProvider() {
     return myChangeProvider;
-  }
-
-  @Override
-  public boolean markExternalChangesAsUpToDate() {
-    return myMarkExternalChangesAsCurrent ;
-  }
-
-  public void setMarkExternalChangesAsCurrent(boolean value){
-    myMarkExternalChangesAsCurrent = value;
   }
 
   @Override

@@ -16,6 +16,7 @@ import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.BoundedTaskExecutor;
@@ -58,7 +59,8 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
       fireEvents(session);
     }
     else if (app.holdsReadLock() || EDT.isCurrentThreadEdt()) {
-      LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire)");
+      LOG.error("Do not perform a synchronous refresh under read lock (causes deadlocks if there are events to fire). " +
+                "EDT=" + EDT.isCurrentThreadEdt());
     }
     else {
       queueSession(session, session.getModality());
@@ -171,6 +173,10 @@ public final class RefreshQueueImpl extends RefreshQueue implements Disposable {
     if (session != null) {
       session.cancel();
     }
+  }
+
+  RefreshSessionImpl getSession(long id) {
+    return mySessions.get(id);
   }
 
   @Override

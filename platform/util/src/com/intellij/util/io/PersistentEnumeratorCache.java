@@ -13,25 +13,25 @@ public final class PersistentEnumeratorCache {
   private static final CacheKey ourFlyweight = new FlyweightKey();
   private static final SLRUMap<Object, Integer> ourEnumerationCache = new SLRUMap<>(ENUMERATION_CACHE_SIZE, ENUMERATION_CACHE_SIZE);
 
-  static void cacheId(Object value, int id, PersistentEnumeratorBase<?> owner) {
+  static void cacheId(Object value, int id, DataEnumeratorEx<?> owner) {
     synchronized (ourEnumerationCache) {
       ourEnumerationCache.put(new CacheKey(value, owner), id);
     }
   }
 
-  static int getCachedId(Object value, PersistentEnumeratorBase<?> owner) {
+  static int getCachedId(Object value, DataEnumeratorEx<?> owner) {
     synchronized (ourEnumerationCache) {
       final Integer cachedId = ourEnumerationCache.get(sharedKey(value, owner));
       if (cachedId != null) return cachedId.intValue();
     }
-    return PersistentEnumeratorBase.NULL_ID;
+    return DataEnumeratorEx.NULL_ID;
   }
 
   private static class CacheKey implements ShareableKey {
-    public PersistentEnumeratorBase<?> owner;
+    public DataEnumeratorEx<?> owner;
     public Object key;
 
-    private CacheKey(Object key, PersistentEnumeratorBase<?> owner) {
+    private CacheKey(Object key, DataEnumeratorEx<?> owner) {
       this.key = key;
       this.owner = owner;
     }
@@ -71,7 +71,7 @@ public final class PersistentEnumeratorCache {
     }
   }
 
-  private static CacheKey sharedKey(Object key, PersistentEnumeratorBase<?> owner) {
+  private static CacheKey sharedKey(Object key, DataEnumeratorEx<?> owner) {
     ourFlyweight.key = key;
     ourFlyweight.owner = owner;
     return ourFlyweight;

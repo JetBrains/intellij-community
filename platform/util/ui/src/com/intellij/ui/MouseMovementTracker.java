@@ -13,7 +13,7 @@ import java.util.Arrays;
  * region on screen. Due to 'rasterization' of mouse locations (mapping to a grid of finite-size pixels), keeping only the previous mouse
  * mouse location is not enough - a diagonal mouse movement can contain purely horizontal or vertical 'steps'.
  */
-public class MouseMovementTracker {
+public final class MouseMovementTracker {
   private static final int HISTORY_SIZE = 2;
   private static final int MOVEMENT_MARGIN_PX = 2;
 

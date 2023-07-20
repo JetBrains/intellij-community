@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationBuilder;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.SingletonNotificationManager;
 import com.intellij.psi.*;
@@ -35,7 +34,6 @@ public class NotificationGroupIdReferenceContributor extends PsiReferenceContrib
                                     .sourcePsiFilter(psi -> PsiUtil.isPluginProject(psi.getProject()))
                                     .andOr(
                                       uExpression().constructorParameter(0, Notification.class.getName()),
-                                      uExpression().constructorParameter(0, NotificationBuilder.class.getName()),
                                       uExpression().methodCallParameter(0, psiMethod().withName("getNotificationGroup")
                                         .definedInClass(NotificationGroupManager.class.getName())),
                                       uExpression().constructorParameter(0, SingletonNotificationManager.class.getName())

@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 public interface LineNumbersMapping {
   /**
-   * A mapping between lines contained in a byte code and actual source lines
+   * A mapping between lines contained in a byte code and actual source lines in IDE
    * (placed into a user data of a VirtualFile for a .class file).
    */
   Key<LineNumbersMapping> LINE_NUMBERS_MAPPING_KEY = Key.create("line.numbers.mapping.key");

@@ -57,5 +57,5 @@ open class CommitTabTitleUpdater(val tree: ChangesTree,
   override fun dispose() = Unit
 
   private fun getTab(): Content? =
-    ChangesViewContentManager.getInstance(project).findContents { it.tabName == tabName }.firstOrNull()
+    ChangesViewContentManager.getInstance(project).findContent(tabName)
 }

@@ -23,6 +23,7 @@ import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,7 +35,6 @@ import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.Timer;
@@ -257,6 +257,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   }
 
   private GlobalMenuLinux(@NotNull JFrame frame) {
+    assert ourLib != null;
     LOG.info("created instance of GlobalMenuLinux for frame: " + frame);
 
     final long xid = _getX11WindowXid(frame);
@@ -326,7 +327,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
   @Override
   public void dispose() {
     // exec at EDT
-    if (ourLib == null || myIsDisposed) {
+    if (myIsDisposed) {
       return;
     }
 
@@ -335,6 +336,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
     if (myWindowHandle != null) {
       _trace("scheduled destroying of GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
       ourLib.releaseWindowOnMainLoop(myWindowHandle, myOnWindowReleased);
+    }
+    else {
+      _trace("scheduled destroying of unused GlobalMenuLinux for frame %s | xid=0x%X", myFrame, myXid);
+      ourLib.execOnMainLoop(myOnWindowReleased);
     }
   }
 
@@ -395,6 +400,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
         if (DO_FILL_ROOTS) {
           final long startMs = System.currentTimeMillis();
           am.removeAll(); // just for insurance
+          am.setSelected(true);
           am.fillMenu();
           _syncChildren(mi, am, 1, stats); // NOTE: fill root menus to avoid empty submenu showing
           am.removeAll();
@@ -616,6 +622,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       if (cmi != null) {
         if (deepness > 1 && (each instanceof ActionMenu jmiEach)) {
           jmiEach.removeAll();
+          jmiEach.setSelected(true);
           jmiEach.fillMenu();
           _syncChildren(cmi, jmiEach, deepness - 1, stats);
         }
@@ -731,7 +738,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
           if (jmi == null) {
             if (TRACE_HIERARCHY_MISMATCHES) {
               _trace(
-                "corresponding (opening) swing item is null, event source: " + mi + ", swing menu hierarchy:\n" + _dumpSwingHierarchy());
+                "corresponding (opening) swing item is null, event source: " +
+                mi +
+                ", swing menu hierarchy:\n" +
+                _dumpSwingHierarchy());
             }
             return;
           }
@@ -746,6 +756,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
           mi.lastFilledMs = timeMs;
 
           am.removeAll();
+          am.setSelected(true);
           am.fillMenu();
           _syncChildren(mi, am, DONT_FILL_SUBMENU ? 1 : 2,
                         stats); // NOTE: fill next submenus level to avoid empty submenu showing (intermittent behaviour of menu-applet)
@@ -1097,6 +1108,7 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
       }
 
       am.clearItems();
+      am.setSelected(false);
       clearChildrenSwingRefs();
       _onSwingCleared(System.currentTimeMillis());
       if (TRACE_CLEARING) _trace("\t cleared '%s'", toStringShort());

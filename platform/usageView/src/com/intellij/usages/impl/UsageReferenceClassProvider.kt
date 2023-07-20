@@ -10,7 +10,7 @@ interface UsageReferenceClassProvider {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<UsageReferenceClassProvider>("com.intellij.usages.usageReferenceClassProvider")
+    val EP_NAME: ExtensionPointName<UsageReferenceClassProvider> = ExtensionPointName.create("com.intellij.usages.usageReferenceClassProvider")
 
     fun getReferenceClass(usage: Usage): Class<out PsiReference>? {
       return EP_NAME.extensions.map { it.getReferenceClass(usage) }.firstNotNullOfOrNull { it }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -38,7 +38,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -103,18 +102,18 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiElement element = (PsiElement)infos[0];
     @SuppressWarnings("unchecked") final Collection<PsiClass> weakerClasses = (Collection<PsiClass>)infos[1];
     final PsiClass originalClass = (PsiClass)infos[2];
     final boolean onTheFly = (boolean)infos[3];
-    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+    final List<LocalQuickFix> fixes = new SmartList<>();
 
     if (element instanceof PsiVariable && !doNotWeakenInferredVariableType) {
       PsiTypeElement typeElement = ((PsiVariable)element).getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         final String optionText = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type");
-        fixes.add(new DelegatingFix(new SetInspectionOptionFix(this, "doNotWeakenInferredVariableType", optionText, true)));
+        fixes.add(new SetInspectionOptionFix(this, "doNotWeakenInferredVariableType", optionText, true));
       }
     }
     for (PsiClass weakestClass : weakerClasses) {
@@ -129,7 +128,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
         fixes.add(new AddStopWordQuickfix(candidates)); // not this class name, but all superclass names excluding this
       }
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @NotNull

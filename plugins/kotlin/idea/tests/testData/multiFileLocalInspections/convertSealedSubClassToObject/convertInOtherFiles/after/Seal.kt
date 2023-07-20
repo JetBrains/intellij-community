@@ -2,4 +2,4 @@ package seal
 
 sealed class Sealed
 
-object SubSealed : Sealed()
+data object SubSealed : Sealed()

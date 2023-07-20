@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.Location;
@@ -282,7 +282,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     ReadAction.nonBlocking(() -> getNavigatable())
       .expireWith(this)
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.NON_MODAL, navigatable -> {
+      .finishOnUiThread(ModalityState.nonModal(), navigatable -> {
       if (navigatable != null) {
         navigatable.navigate(requestFocus);
       }
@@ -513,7 +513,7 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     fireOnNewPrintable(myState);
   }
 
-  public void setTestFailed(@NotNull String localizedMessage, @Nullable String stackTrace, boolean testError) {
+  public void setTestFailed(@Nullable String localizedMessage, @Nullable String stackTrace, boolean testError) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
     TestFailedState failedState = testError ? new TestErrorState(localizedMessage, stackTrace) 
@@ -537,46 +537,52 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
     }
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+  public void setTestComparisonFailed(@Nullable final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText) {
     setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, null, null, true);
   }
 
-  public void setTestComparisonFailed(@NotNull final String localizedMessage,
+  public void setTestComparisonFailed(@Nullable final String localizedMessage,
                                       @Nullable final String stackTrace,
                                       @NotNull final String actualText,
                                       @NotNull final String expectedText,
                                       @NotNull final TestFailedEvent event) {
-    TestComparisionFailedState comparisonFailedState =
-      setTestComparisonFailed(localizedMessage, stackTrace, actualText, expectedText, event.getExpectedFilePath(), event.getActualFilePath(),
-                              event.shouldPrintExpectedAndActualValues());
+    TestComparisonFailedState comparisonFailedState = setTestComparisonFailed(
+      localizedMessage,
+      stackTrace,
+      actualText,
+      expectedText,
+      event.getActualFilePath(),
+      event.getExpectedFilePath(),
+      event.shouldPrintExpectedAndActualValues()
+    );
     comparisonFailedState.setToDeleteExpectedFile(event.isExpectedFileTemp());
     comparisonFailedState.setToDeleteActualFile(event.isActualFileTemp());
   }
 
-  public TestComparisionFailedState setTestComparisonFailed(@NotNull final String localizedMessage,
-                                                            @Nullable final String stackTrace,
-                                                            @NotNull final String actualText,
-                                                            @NotNull final String expectedText,
-                                                            @Nullable final String expectedFilePath,
-                                                            @Nullable final String actualFilePath,
-                                                            boolean printExpectedAndActualValues) {
+  public TestComparisonFailedState setTestComparisonFailed(
+    @Nullable final String localizedMessage,
+    @Nullable final String stackTrace,
+    @NotNull final String actualText,
+    @NotNull final String expectedText,
+    @Nullable final String actualFilePath,
+    @Nullable final String expectedFilePath,
+    boolean printExpectedAndActualValues
+  ) {
     setStacktraceIfNotSet(stackTrace);
     myErrorMessage = localizedMessage;
-    final TestComparisionFailedState comparisionFailedState = new TestComparisionFailedState(
+    final TestComparisonFailedState comparisonFailedState = new TestComparisonFailedState(
       localizedMessage, stackTrace, actualText, expectedText, printExpectedAndActualValues,
       expectedFilePath, actualFilePath
     );
-    DiffHyperlink hyperlink = comparisionFailedState.getHyperlink();
-    if (hyperlink != null) {
-      hyperlink.setTestProxy(this);
-    }
+    DiffHyperlink hyperlink = comparisonFailedState.getHyperlink();
+    hyperlink.setTestProxy(this);
 
-    updateFailedState(comparisionFailedState);
-    fireOnNewPrintable(comparisionFailedState);
-    return comparisionFailedState;
+    updateFailedState(comparisonFailedState);
+    fireOnNewPrintable(comparisonFailedState);
+    return comparisonFailedState;
   }
 
   @Override
@@ -759,8 +765,8 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     AbstractState state = myState;
-    if (state instanceof TestComparisionFailedState) {
-      return ((TestComparisionFailedState)state).getHyperlink();
+    if (state instanceof TestComparisonFailedState) {
+      return ((TestComparisonFailedState)state).getHyperlink();
     }
 
     if (state instanceof CompoundTestFailedState) {

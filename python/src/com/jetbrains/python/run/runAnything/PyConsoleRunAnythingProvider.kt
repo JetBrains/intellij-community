@@ -17,11 +17,9 @@ class PyConsoleRunAnythingProvider : RunAnythingAnActionProvider<RunPythonOrDebu
   override fun getHelpGroupTitle(): String = "Python" // NON-NLS
 
   override fun getValues(dataContext: DataContext, pattern: String): Collection<RunPythonOrDebugConsoleAction> {
-    val action = ActionManager.getInstance().getAction("com.jetbrains.python.console.RunPythonConsoleAction")
+    val action = ActionManager.getInstance().getAction("com.jetbrains.python.console.RunPythonOrDebugConsoleAction")
     return listOfNotNull(action as? RunPythonOrDebugConsoleAction)
   }
 
   override fun getHelpIcon(): Icon = PythonIcons.Python.PythonConsole
-
-  override fun getHelpDescription(): String = PyBundle.message("python.console.run.anything.provider")
 }

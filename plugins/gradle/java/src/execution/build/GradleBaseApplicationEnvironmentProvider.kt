@@ -131,7 +131,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
                                         runAppTaskName, mainClass, javaExePath, sourceSetName, javaModuleName)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_KEY, initScript)
     gradleRunConfiguration.putUserData<String>(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, runAppTaskName)
-    (gradleRunConfiguration as GradleRunConfiguration).isScriptDebugEnabled = false
+    (gradleRunConfiguration as GradleRunConfiguration).isDebugServerProcess = false
 
     // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
     gradleRunConfiguration.beforeRunTasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(runProfile)
@@ -155,7 +155,7 @@ abstract class GradleBaseApplicationEnvironmentProvider<T : JavaRunConfiguration
     private fun findJavaModuleName(sdk: Sdk, module: JavaRunConfigurationModule, mainClass: PsiClass): String? {
       return if (JavaSdkUtil.isJdkAtLeast(sdk, JavaSdkVersion.JDK_1_9)) {
         runReadAction {
-          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule, RuntimeException> {
+          DumbService.getInstance(module.project).computeWithAlternativeResolveEnabled<PsiJavaModule?, RuntimeException> {
             JavaModuleGraphUtil.findDescriptorByElement(module.findClass(mainClass.qualifiedName))
           }?.name
         } ?: return null

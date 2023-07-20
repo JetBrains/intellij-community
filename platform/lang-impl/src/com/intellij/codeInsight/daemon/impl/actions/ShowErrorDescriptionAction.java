@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -21,9 +21,8 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
     setEnabledInModalContext(true);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new ShowErrorDescriptionHandler(myRequestFocus);
   }
 
@@ -33,9 +32,9 @@ public class ShowErrorDescriptionAction extends BaseCodeInsightAction implements
   }
 
   @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    super.beforeActionPerformedUpdate(e);
+  public void actionPerformed(@NotNull AnActionEvent e) {
     // The tooltip gets the focus if using a screen reader and invocation through a keyboard shortcut.
     myRequestFocus = ScreenReader.isActive() && (e.getInputEvent() instanceof KeyEvent);
+    super.actionPerformed(e);
   }
 }

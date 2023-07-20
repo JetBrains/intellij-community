@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.navigation
 
 import com.intellij.codeInsight.CodeInsightBundle
-import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo.getReferenceRanges
 import com.intellij.lang.documentation.psi.isNavigatableQuickDoc
 import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTarget
@@ -75,6 +74,21 @@ internal fun psiCtrlMouseData(
     isNavigatable = isNavigatableQuickDoc(leafElement, targetElement),
     target = psiDocumentationTarget(targetElement, leafElement)
   )
+}
+
+@Internal
+internal fun getReferenceRanges(elementAtPointer: PsiElement): List<TextRange> {
+  if (!elementAtPointer.isPhysical) {
+    return emptyList()
+  }
+  var textOffset = elementAtPointer.textOffset
+  val range = elementAtPointer.textRange
+              ?: throw AssertionError("Null range for " + elementAtPointer + " of " + elementAtPointer.javaClass)
+  if (textOffset < range.startOffset || textOffset < 0) {
+    LOG.error("Invalid text offset " + textOffset + " of element " + elementAtPointer + " of " + elementAtPointer.javaClass)
+    textOffset = range.startOffset
+  }
+  return listOf(TextRange(textOffset, range.endOffset))
 }
 
 internal fun targetCtrlMouseData(

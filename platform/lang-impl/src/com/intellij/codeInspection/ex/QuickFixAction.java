@@ -15,6 +15,7 @@ import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -33,6 +34,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.SequentialModalProgressTask;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -272,10 +274,11 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
-        actionPerformed(AnActionEvent.createFromAnAction(QuickFixAction.this,
-                                                         event,
-                                                         place,
-                                                         ActionToolbar.getDataContextFor(button)));
+        AnActionEvent action = AnActionEvent.createFromAnAction(
+          QuickFixAction.this, event, place, ActionToolbar.getDataContextFor(button));
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          actionPerformed(action);
+        }
         return true;
       }
     }.installOn(button);

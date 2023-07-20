@@ -1,7 +1,7 @@
 <problems>
   <problem>
     <file>Test.java</file>
-    <line>9</line>
+    <line>10</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -14,7 +14,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>10</line>
+    <line>11</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -27,7 +27,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>11</line>
+    <line>12</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -40,7 +40,7 @@
   </problem>
   <problem>
     <file>Test.java</file>
-    <line>12</line>
+    <line>13</line>
     <module>light_idea_test_case</module>
     <package>sample</package>
     <entry_point TYPE="method" FQNAME="sample.Test void mustReport()" />
@@ -50,18 +50,5 @@
     <language>JAVA</language>
     <offset>40</offset>
     <length>24</length>
-  </problem>
-  <problem>
-    <file>Test.java</file>
-    <line>22</line>
-    <module>light_idea_test_case</module>
-    <package>sample</package>
-    <entry_point TYPE="method" FQNAME="sample.Test void doesntCompileSoItDoesntMatterWhetherToReportOrNot()" />
-    <problem_class id="EnumValuesSoftDeprecateInJava" severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Enum.values()' is recommended to be replaced by 'Enum.getEntries()' since Kotlin 1.9</problem_class>
-    <description>'Enum.values()' is recommended to be replaced by 'Enum.getEntries()' since Kotlin 1.9</description>
-    <highlighted_element>KotlinEnum2.values()</highlighted_element>
-    <language>JAVA</language>
-    <offset>8</offset>
-    <length>20</length>
   </problem>
 </problems>

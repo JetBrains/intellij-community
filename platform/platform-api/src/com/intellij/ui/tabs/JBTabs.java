@@ -81,16 +81,13 @@ public interface JBTabs extends DropAreaAware {
 
   void requestFocus();
 
-  JBTabs setNavigationActionBinding(String prevActionId, String nextActionId);
-  JBTabs setNavigationActionsEnabled(boolean enabled);
+  void setNavigationActionBinding(String prevActionId, String nextActionId);
 
   @NotNull
   JBTabs setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place, boolean addNavigationGroup);
 
   @NotNull
-  JBTabs setPopupGroup(@NotNull Supplier<? extends ActionGroup> popupGroup,
-                       @NotNull String place,
-                       boolean addNavigationGroup);
+  JBTabs setPopupGroup(@NotNull Supplier<? extends ActionGroup> popupGroup, @NotNull String place, boolean addNavigationGroup);
 
   void resetDropOver(TabInfo tabInfo);
   Image startDropOver(TabInfo tabInfo, RelativePoint point);
@@ -102,8 +99,9 @@ public interface JBTabs extends DropAreaAware {
   @NotNull
   default Rectangle getDropArea() {
     Rectangle r = new Rectangle(getComponent().getBounds());
-    Insets insets = JBUI.insets(0);
     if (getTabCount() > 0) {
+      @SuppressWarnings("UseDPIAwareInsets")
+      Insets insets = JBUI.insets(0);
       Rectangle bounds = getTabLabel(getTabAt(0)).getBounds();
       switch (getPresentation().getTabsPosition()) {
         case top -> insets.top = bounds.height;
@@ -111,14 +109,13 @@ public interface JBTabs extends DropAreaAware {
         case bottom -> insets.bottom = bounds.height;
         case right -> insets.right = bounds.width;
       }
+      JBInsets.removeFrom(r, insets);
     }
-    JBInsets.removeFrom(r, insets);
     return r;
   }
 
 
   interface SelectionChangeHandler {
-    @NotNull
-    ActionCallback execute(final TabInfo info, final boolean requestFocus, @NotNull ActiveRunnable doChangeSelection);
+    @NotNull ActionCallback execute(TabInfo info, boolean requestFocus, @NotNull ActiveRunnable doChangeSelection);
   }
 }

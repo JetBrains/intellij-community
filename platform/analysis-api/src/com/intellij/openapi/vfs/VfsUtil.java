@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -95,8 +95,7 @@ public final class VfsUtil extends VfsUtilCore {
    * @param toDir     directory to make a copy in
    * @throws IOException if file failed to be copied
    */
-  @NotNull
-  public static VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
+  public static @NotNull VirtualFile copy(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir) throws IOException {
     if (file.isDirectory()) {
       VirtualFile newDir = toDir.createChildDirectory(requestor, file.getName());
       copyDirectory(requestor, file, newDir, null);
@@ -276,18 +275,15 @@ public final class VfsUtil extends VfsUtilCore {
     }
   }
 
-  @NotNull
-  public static String getUrlForLibraryRoot(@NotNull File libraryRoot) {
+  public static @NotNull String getUrlForLibraryRoot(@NotNull File libraryRoot) {
     return getUrlForLibraryRoot(libraryRoot.getAbsolutePath(), libraryRoot.getName());
   }
 
-  @NotNull
-  public static String getUrlForLibraryRoot(@NotNull Path libraryRoot) {
+  public static @NotNull String getUrlForLibraryRoot(@NotNull Path libraryRoot) {
     return getUrlForLibraryRoot(libraryRoot.toAbsolutePath().toString(), libraryRoot.getFileName().toString());
   }
 
-  @NotNull
-  private static String getUrlForLibraryRoot(@NotNull String libraryRootAbsolutePath, @NotNull String libraryRootFileName) {
+  private static @NotNull String getUrlForLibraryRoot(@NotNull String libraryRootAbsolutePath, @NotNull String libraryRootFileName) {
     String path = FileUtil.toSystemIndependentName(libraryRootAbsolutePath);
     return FileTypeRegistry.getInstance().getFileTypeByFileName(libraryRootFileName) == ArchiveFileType.INSTANCE
            ? VirtualFileManager.constructUrl(StandardFileSystems.JAR_PROTOCOL, path + URLUtil.JAR_SEPARATOR)
@@ -471,24 +467,22 @@ public final class VfsUtil extends VfsUtilCore {
 
   public static @NotNull List<VirtualFile> markDirty(boolean recursive, boolean reloadChildren, VirtualFile @NotNull ... files) {
     List<VirtualFile> list = ContainerUtil.filter(files, Conditions.notNull());
-    if (list.isEmpty()) {
-      return Collections.emptyList();
-    }
+    if (list.isEmpty()) return Collections.emptyList();
 
-    for (VirtualFile file : list) {
+    for (var file : list) {
       if (reloadChildren && file.isValid()) {
         file.getChildren();
       }
-
-      if (file instanceof NewVirtualFile) {
+      if (file instanceof NewVirtualFile nvf) {
         if (recursive) {
-          ((NewVirtualFile)file).markDirtyRecursively();
+          nvf.markDirtyRecursively();
         }
         else {
-          ((NewVirtualFile)file).markDirty();
+          nvf.markDirty();
         }
       }
     }
+
     return list;
   }
 

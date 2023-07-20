@@ -9,22 +9,19 @@ import org.jetbrains.plugins.emojipicker.EmojiCategory;
 
 import java.util.function.Supplier;
 
-public class EmojiCategoriesBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.EmojiCategoriesBundle";
-  private static final EmojiCategoriesBundle INSTANCE = new EmojiCategoriesBundle();
+public final class EmojiCategoriesBundle {
+  private static final @NonNls String BUNDLE = "messages.EmojiCategoriesBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(EmojiCategoriesBundle.class, BUNDLE);
 
   private EmojiCategoriesBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 

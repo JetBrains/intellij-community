@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -26,8 +26,7 @@ public final class NamedScopeManager extends NamedScopesHolder {
     super(project);
   }
 
-  @NotNull
-  public static NamedScopeManager getInstance(Project project) {
+  public static @NotNull NamedScopeManager getInstance(Project project) {
     return project.getService(NamedScopeManager.class);
   }
 
@@ -37,17 +36,15 @@ public final class NamedScopeManager extends NamedScopesHolder {
     XmlSerializer.deserializeInto(myOrderState, state);
   }
 
-  @NotNull
   @Override
-  public Element getState() {
+  public @NotNull Element getState() {
     Element state = super.getState();
     XmlSerializer.serializeInto(myOrderState, state, new SkipDefaultValuesSerializationFilters());
     return state;
   }
 
-  @NotNull
   @Override
-  public String getDisplayName() {
+  public @NotNull String getDisplayName() {
     return AnalysisBundle.message("local.scopes.node.text");
   }
 

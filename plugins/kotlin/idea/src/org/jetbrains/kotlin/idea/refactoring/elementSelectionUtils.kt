@@ -2,16 +2,14 @@
 
 package org.jetbrains.kotlin.idea.refactoring
 
+import com.intellij.codeInsight.navigation.PsiTargetNavigator
 import com.intellij.codeInsight.unwrap.ScopeHighlighter
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.platform.backend.presentation.TargetPresentation
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.descriptors.ClassKind
@@ -31,10 +29,6 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.receivers.ClassQualifier
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import java.awt.Component
-import javax.swing.DefaultListCellRenderer
-import javax.swing.JList
 import kotlin.math.min
 
 fun selectElement(
@@ -197,7 +191,7 @@ private fun smartSelectElement(
     }
 
     val highlighter = ScopeHighlighter(editor)
-    val title: String = if (elementKinds.size == 1) {
+    val title = if (elementKinds.size == 1) {
         when (elementKinds.iterator().next()) {
             ElementKind.EXPRESSION -> KotlinBundle.message("popup.title.expressions")
             ElementKind.TYPE_ELEMENT, ElementKind.TYPE_CONSTRUCTOR -> KotlinBundle.message("popup.title.types")
@@ -206,38 +200,26 @@ private fun smartSelectElement(
         KotlinBundle.message("popup.title.elements")
     }
 
-    JBPopupFactory.getInstance()
-        .createPopupChooserBuilder(elements)
-        .setItemSelectedCallback { selectedElement ->
-            highlighter.dropHighlight()
-            selectedElement?.let { highlighter.highlight(it, listOf(it)) }
-        }
-        .setRenderer(object : DefaultListCellRenderer() {
-            override fun getListCellRendererComponent(
-                list: JList<*>,
-                value: Any?,
-                index: Int,
-                isSelected: Boolean,
-                cellHasFocus: Boolean,
-            ): Component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus).apply {
-                value?.safeAs<KtElement>()?.takeIf { it.isValid }?.let {
-                    text = getExpressionShortText(it)
-                }
-            }
-        })
-        .setTitle(title)
-        .setMovable(false)
-        .setResizable(false)
-        .setRequestFocus(true)
-        .setItemChosenCallback(callback)
-        .addListener(
-            object : JBPopupListener {
-                override fun onClosed(event: LightweightWindowEvent) {
+    PsiTargetNavigator(elements)
+        .presentationProvider { element -> TargetPresentation.builder(getExpressionShortText(element)).presentation() }
+        .builderConsumer { builder ->
+            builder
+                .setMovable(false)
+                .setResizable(false)
+                .setRequestFocus(true)
+                .setItemChosenCallback { presentation -> callback((presentation.item as SmartPsiElementPointer<*>).element) }
+                .setItemSelectedCallback { presentation ->
                     highlighter.dropHighlight()
+                    val psiElement = (presentation?.item as? SmartPsiElementPointer<*>)?.element ?: return@setItemSelectedCallback
+                    highlighter.highlight(psiElement, listOf(psiElement))
                 }
-            }
-        )
-        .createPopup()
+                .addListener(object : JBPopupListener {
+                    override fun onClosed(event: LightweightWindowEvent) {
+                        highlighter.dropHighlight()
+                    }
+                })
+        }
+        .createPopup(file.project, title)
         .showInBestPositionFor(editor)
 }
 

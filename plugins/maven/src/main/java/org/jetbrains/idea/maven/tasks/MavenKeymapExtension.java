@@ -129,6 +129,11 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
   private static void createActions(Project project, List<? extends MavenProject> mavenProjects) {
     ActionManager actionManager = ActionManager.getInstance();
     MavenShortcutsManager shortcutsManager = MavenShortcutsManager.getInstance(project);
+
+    var actionManagerActionsExist = !actionManager.getActionIdList(MavenShortcutsManager.ACTION_ID_PREFIX).isEmpty();
+    var shortcutsManagerActionsExist = shortcutsManager.hasShortcuts();
+    if (!actionManagerActionsExist && !shortcutsManagerActionsExist) return;
+
     for (MavenProject eachProject : mavenProjects) {
       //noinspection TestOnlyProblems
       String actionIdPrefix = getActionPrefix(project, eachProject);

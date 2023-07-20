@@ -2,6 +2,10 @@
 
 package org.jetbrains.kotlin.idea.maven
 
+import com.intellij.ide.BrowserUtil
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootManager
@@ -24,12 +28,13 @@ import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenArtifactScope
 import org.jetbrains.jps.model.java.JavaSourceRootType
-import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.idea.base.codeInsight.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.RepositoryDescription
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
@@ -221,8 +226,46 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
     fun isPluginExecutionMissing(plugin: MavenPlugin?, excludedExecutionId: String, goal: String) =
         plugin == null || plugin.executions.none { it.executionId != excludedExecutionId && goal in it.goals }
 
+    fun hasJavacPlugin(): Boolean {
+        return findPlugin(
+            MavenId(
+                "org.apache.maven.plugins",
+                "maven-compiler-plugin",
+                null
+            )
+        ) != null
+    }
+
     fun addJavacExecutions(module: Module, kotlinPlugin: MavenDomPlugin) {
         val javacPlugin = ensurePluginAfter(addPlugin(MavenId("org.apache.maven.plugins", "maven-compiler-plugin", null)), kotlinPlugin)
+
+        //We are doing this here rather than below, because unit tests cannot resolve the maven project
+        val defaultCompileExecution = findExecution(javacPlugin, "default-compile")
+        if (defaultCompileExecution == null) {
+            addExecution(javacPlugin, "default-compile", "none", emptyList())
+        }
+
+        val defaultTestCompileExecution = findExecution(javacPlugin, "default-testCompile")
+        if (defaultTestCompileExecution == null) {
+            addExecution(javacPlugin, "default-testCompile", "none", emptyList())
+        }
+
+        //Show warning that we could not automatically disable the default-* phases
+        if ((defaultCompileExecution != null && defaultCompileExecution.phase.stringValue != "none") ||
+            (defaultTestCompileExecution != null && defaultTestCompileExecution.phase.stringValue != "none")
+        ) {
+            @Suppress("DialogTitleCapitalization") //It is properly capitalized
+            NotificationGroupManager.getInstance()
+                .getNotificationGroup("Configure Kotlin")
+                .createNotification(
+                    title = KotlinProjectConfigurationBundle.message("configure.kotlin"),
+                    content = KotlinProjectConfigurationBundle.message("warning.failed.disable.default.compile.message"),
+                    type = NotificationType.WARNING,
+                )
+                .addAction(NotificationAction.createSimple(KotlinProjectConfigurationBundle.message("warning.failed.disable.default.compile.action")) {
+                    BrowserUtil.browse(KotlinProjectConfigurationBundle.message("warning.failed.disable.default.compile.link"))
+                }).notify(module.project)
+        }
 
         val project: MavenProject =
             MavenProjectsManager.getInstance(module.project).findProject(module) ?: run {
@@ -235,14 +278,6 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
 
         val plugin = project.findPlugin("org.apache.maven.plugins", "maven-compiler-plugin")
 
-        if (isExecutionEnabled(plugin, "default-compile")) {
-            addExecution(javacPlugin, "default-compile", "none", emptyList())
-        }
-
-        if (isExecutionEnabled(plugin, "default-testCompile")) {
-            addExecution(javacPlugin, "default-testCompile", "none", emptyList())
-        }
-
         if (isPluginExecutionMissing(plugin, "default-compile", "compile")) {
             addExecution(javacPlugin, "compile", DefaultPhases.Compile, listOf("compile"))
         }
@@ -252,22 +287,12 @@ class PomFile private constructor(private val xmlFile: XmlFile, val domModel: Ma
         }
     }
 
-    fun isExecutionEnabled(plugin: MavenPlugin?, executionId: String): Boolean {
-        if (plugin == null) {
-            return true
-        }
+    private fun findExecution(plugin: MavenDomPlugin, executionId: String): MavenDomPluginExecution? {
+        return plugin.executions.executions.firstOrNull { it.id.stringValue == executionId }
+    }
 
-        if (domModel.build.plugins.plugins.any {
-                it.groupId.stringValue == "org.apache.maven.plugins"
-                        && it.artifactId.stringValue == "maven-compiler-plugin"
-                        && it.executions.executions.any { it.id.stringValue == executionId && it.phase.stringValue == DefaultPhases.None }
-            }) {
-            return false
-        }
-
-        return plugin.executions.filter { it.executionId == executionId }.all { execution ->
-            execution.phase == DefaultPhases.None
-        }
+    fun findExecution(plugin: MavenPlugin?, executionId: String): MavenPlugin.Execution? {
+        return plugin?.executions?.firstOrNull { it.executionId == executionId }
     }
 
     fun executionSourceDirs(execution: MavenDomPluginExecution, sourceDirs: List<String>, forceSingleSource: Boolean = false) {

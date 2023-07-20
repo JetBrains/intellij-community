@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import java.awt.event.InputEvent;
+import java.awt.event.ActionEvent;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -70,10 +70,10 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     OpenProjectTask options = OpenProjectTaskKt.OpenProjectTask(builder -> {
       builder.setProjectToClose(project);
       int modifiers = e.getModifiers();
-      builder.setForceOpenInNewFrame(BitUtil.isSet(modifiers, InputEvent.CTRL_MASK)
-                                       || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
-                                       || ActionPlaces.WELCOME_SCREEN.equals(e.getPlace())
-                                       || LightEdit.owns(project));
+      builder.setForceOpenInNewFrame(BitUtil.isSet(modifiers, ActionEvent.CTRL_MASK) ||
+                                     BitUtil.isSet(modifiers, ActionEvent.SHIFT_MASK) ||
+                                     ActionPlaces.WELCOME_SCREEN.equals(e.getPlace()) ||
+                                     LightEdit.owns(project));
       builder.setRunConfigurators(true);
       return Unit.INSTANCE;
     });

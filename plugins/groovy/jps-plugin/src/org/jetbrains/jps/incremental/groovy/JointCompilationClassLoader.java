@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
-import com.intellij.util.lang.Loader;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,9 +14,9 @@ final class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader) {
+  public Class<?> consumeClassData(@NotNull String name, byte[] data) {
     try {
-      return super.consumeClassData(name, data, loader);
+      return super.consumeClassData(name, data);
     }
     catch (Exception e) {
       NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);
@@ -27,9 +26,9 @@ final class JointCompilationClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) {
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data) {
     try {
-      return super.consumeClassData(name, data, loader);
+      return super.consumeClassData(name, data);
     }
     catch (Exception e) {
       NoClassDefFoundError wrap = new NoClassDefFoundError(e.getMessage() + " needed for " + name);

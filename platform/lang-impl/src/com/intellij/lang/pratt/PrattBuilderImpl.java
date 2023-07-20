@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.pratt;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -7,7 +7,6 @@ import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.impl.PsiBuilderImpl;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,9 +109,9 @@ public class PrattBuilderImpl extends PrattBuilder {
   @Nullable
   private TokenParser findParser() {
     final IElementType tokenType = getTokenType();
-    for (final Trinity<Integer, PathPattern, TokenParser> trinity : myRegistry.getParsers(tokenType)) {
-      if (trinity.first > myPriority && trinity.second.accepts(this)) {
-        return trinity.third;
+    for (final PrattRegistry.ParserData parserData : myRegistry.getParsers(tokenType)) {
+      if (parserData.priority() > myPriority && parserData.pattern().accepts(this)) {
+        return parserData.parser();
       }
     }
     return null;

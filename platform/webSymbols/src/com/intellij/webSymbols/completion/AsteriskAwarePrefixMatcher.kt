@@ -10,7 +10,7 @@ class AsteriskAwarePrefixMatcher private constructor(prefix: String, delegate: P
 
   private val myDelegate: PrefixMatcher
 
-  constructor(delegate: PrefixMatcher) : this(delegate.prefix, delegate) {}
+  constructor(delegate: PrefixMatcher) : this(delegate.prefix, delegate)
 
   init {
     myDelegate = delegate.cloneWithPrefix(convert(prefix, true))

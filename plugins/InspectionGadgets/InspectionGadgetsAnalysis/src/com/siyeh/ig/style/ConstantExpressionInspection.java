@@ -1,15 +1,18 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
@@ -20,8 +23,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 50;
+  private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 40;
   private static final int MAX_EXPRESSION_LENGTH = 200;
+
+  public boolean skipIfContainsReferenceExpression = false;
+
+  @Override
+  public @NotNull OptPane getOptionsPane() {
+    return OptPane.pane(
+      OptPane.checkbox("skipIfContainsReferenceExpression",
+                       InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal")));
+  }
 
   @NotNull
   @Override
@@ -53,18 +65,31 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
               String message = valueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY ?
                                InspectionGadgetsBundle.message("inspection.constant.expression.display.name") :
                                InspectionGadgetsBundle.message("inspection.constant.expression.message", valueText);
-              holder.registerProblem(expression, message,
-                                     new ComputeConstantValueFix(expression, valueText));
+              if (skipIfContainsReferenceExpression &&
+                  hasReferences(expression)) {
+                if (isOnTheFly) {
+                  holder.registerProblem(expression, message, ProblemHighlightType.INFORMATION,
+                                         new ComputeConstantValueFix(expression, valueText));
+                }
+              }
+              else {
+                holder.registerProblem(expression, message,
+                                       new ComputeConstantValueFix(expression, valueText));
+              }
             }
           }
         }
         catch (ConstantEvaluationOverflowException ignore) {
         }
       }
+
+      private static boolean hasReferences(@NotNull PsiExpression expression) {
+        return PsiTreeUtil.getChildOfAnyType(expression, PsiReferenceExpression.class) != null;
+      }
     };
   }
 
-  private static class ComputeConstantValueFix implements LocalQuickFix {
+  private static class ComputeConstantValueFix extends PsiUpdateModCommandQuickFix {
     private final String myText;
     private final String myValueText;
 
@@ -77,10 +102,10 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      if (myValueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY) {
+      if (myValueText.length() < MAX_RESULT_LENGTH_TO_DISPLAY) {
         return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name", myText);
       }
-      return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.with.value", myText, myValueText);
+      return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.short");
     }
 
     @Nls
@@ -91,8 +116,8 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiExpression expression = (PsiExpression)descriptor.getStartElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      final PsiExpression expression = (PsiExpression)element;
       final Object value = ExpressionUtils.computeConstantExpression(expression);
       @NonNls final String newExpression = getValueText(value);
       PsiReplacementUtil.replaceExpression(expression, newExpression, new CommentTracker());

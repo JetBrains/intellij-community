@@ -20,6 +20,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.PythonModuleTypeBase
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
@@ -27,6 +28,8 @@ import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.sdk.installSdkIfNeeded
+import com.jetbrains.python.statistics.InterpreterTarget
+import com.jetbrains.python.statistics.InterpreterType
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
@@ -125,6 +128,14 @@ class PyAddPipEnvPanel(private val project: Project?,
                                        baseSdk, installPackagesCheckBox.isSelected)?.apply {
       PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdk
     }
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo {
+    return InterpreterStatisticsInfo(type = InterpreterType.PIPENV,
+                                     target = InterpreterTarget.LOCAL,
+                                     globalSitePackage = false,
+                                     makeAvailableToAllProjects = false,
+                                     previouslyConfigured = false)
   }
 
   override fun validateAll(): List<ValidationInfo> =

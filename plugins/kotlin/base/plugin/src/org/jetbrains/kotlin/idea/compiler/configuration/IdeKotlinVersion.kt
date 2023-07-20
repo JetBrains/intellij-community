@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.JarUtil
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.impl.FsRoot
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
@@ -73,8 +76,9 @@ class IdeKotlinVersion private constructor(
 
         @JvmStatic
         fun fromManifest(jarFile: VirtualFile): IdeKotlinVersion? {
-            val ioFile = VfsUtilCore.virtualToIoFile(jarFile)
-            val unprocessedVersion = JarUtil.getJarAttribute(ioFile, Attributes.Name.IMPLEMENTATION_VERSION) ?: return null
+            val jarRoot = if (jarFile is FsRoot) jarFile else JarFileSystem.getInstance().getJarRootForLocalFile(jarFile) ?: return null
+            val unprocessedVersion =
+                JarVersionDetectionUtil.getMainAttribute(jarRoot, Attributes.Name.IMPLEMENTATION_VERSION) ?: return null
             // "Implementation-Version" in MANIFEST.MF is sometimes written as '1.5.31-release-548(1.5.31)'
             val rawVersion = unprocessedVersion.substringBefore('(').trim()
             return opt(rawVersion)

@@ -23,33 +23,43 @@ public class UpdateKotlinCopyrightTestGenerated extends AbstractUpdateKotlinCopy
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("ClassDocComment.kt")
+    @TestMetadata("classDocComment.kt")
     public void testClassDocComment() throws Exception {
-        runTest("testData/update/ClassDocComment.kt");
+        runTest("testData/update/classDocComment.kt");
     }
 
-    @TestMetadata("Empty.kt")
+    @TestMetadata("empty.kt")
     public void testEmpty() throws Exception {
-        runTest("testData/update/Empty.kt");
+        runTest("testData/update/empty.kt");
     }
 
-    @TestMetadata("MultiComments.kt")
+    @TestMetadata("multiComments.kt")
     public void testMultiComments() throws Exception {
-        runTest("testData/update/MultiComments.kt");
+        runTest("testData/update/multiComments.kt");
     }
 
-    @TestMetadata("NoPackage.kt")
+    @TestMetadata("noPackage.kt")
     public void testNoPackage() throws Exception {
-        runTest("testData/update/NoPackage.kt");
+        runTest("testData/update/noPackage.kt");
     }
 
-    @TestMetadata("Script.kts")
+    @TestMetadata("script.kts")
     public void testScript() throws Exception {
-        runTest("testData/update/Script.kts");
+        runTest("testData/update/script.kts");
     }
 
-    @TestMetadata("Simple.kt")
+    @TestMetadata("scriptWithShebang.kts")
+    public void testScriptWithShebang() throws Exception {
+        runTest("testData/update/scriptWithShebang.kts");
+    }
+
+    @TestMetadata("scriptWithShebangAndComment.kts")
+    public void testScriptWithShebangAndComment() throws Exception {
+        runTest("testData/update/scriptWithShebangAndComment.kts");
+    }
+
+    @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
-        runTest("testData/update/Simple.kt");
+        runTest("testData/update/simple.kt");
     }
 }

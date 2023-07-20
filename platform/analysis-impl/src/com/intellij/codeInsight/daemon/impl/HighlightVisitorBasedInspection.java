@@ -7,12 +7,11 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.diagnostic.telemetry.IJTracer;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.platform.diagnostic.telemetry.IJTracer;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
@@ -27,13 +26,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.*;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.diagnostic.telemetry.TraceKt.runWithSpan;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = "Annotator";
+  @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean highlightErrorElements = true;
+  @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean runAnnotators = true;
+  @SuppressWarnings("WeakerAccess") // made public for serialization
   public boolean runVisitors = false;
 
   @Override
@@ -103,14 +106,15 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
   }
 
   @NotNull
-  private static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
+  public static List<HighlightInfo> runAnnotatorsInGeneralHighlighting(@NotNull PsiFile file,
                                                                         boolean highlightErrorElements,
                                                                         boolean runAnnotators,
                                                                         boolean runVisitors) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return Collections.emptyList();
-    ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
     DaemonProgressIndicator daemonProgressIndicator = GlobalInspectionContextBase.assertUnderDaemonProgress();
     HighlightingSessionImpl.getOrCreateHighlightingSession(file, daemonProgressIndicator, ProperTextRange.create(file.getTextRange()));
     TextEditorHighlightingPassRegistrarEx passRegistrarEx = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project);
@@ -129,13 +133,13 @@ public class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool 
 
     String fileName = file.getName();
     List<HighlightInfo> result = new ArrayList<>();
-    IJTracer tracer = TraceManager.INSTANCE.getTracer("highlightVisitor", true);
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(HighlightVisitorScope, true);
 
     for (TextEditorHighlightingPass pass : gpasses) {
       runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {
         span.setAttribute("file", fileName);
 
-        pass.doCollectInformation(progress);
+        pass.doCollectInformation(daemonProgressIndicator);
         List<HighlightInfo> infos = pass.getInfos();
         for (HighlightInfo info : infos) {
           if (info != null && info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0) {

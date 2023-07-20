@@ -17,6 +17,7 @@ package com.intellij.packaging.elements;
 
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,6 @@ public abstract class CompositePackagingElementType<E extends CompositePackaging
   @NotNull
   public List<? extends PackagingElement<?>> chooseAndCreate(@NotNull ArtifactEditorContext context, @NotNull Artifact artifact, @NotNull CompositePackagingElement<?> parent) {
     final PackagingElement<?> composite = createComposite(parent, null, context);
-    return composite != null ? Collections.singletonList(composite) : Collections.<E>emptyList();
+    return ContainerUtil.createMaybeSingletonList(composite);
   }
 }

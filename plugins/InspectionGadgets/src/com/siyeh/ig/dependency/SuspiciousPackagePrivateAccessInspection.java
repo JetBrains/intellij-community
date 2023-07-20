@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.dependency;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -16,7 +16,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -27,6 +26,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -49,7 +49,7 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
   private static final Key<SuspiciousPackagePrivateAccessInspection> INSPECTION_KEY = Key.create("SuspiciousPackagePrivateAccess");
   @XCollection
   public List<ModulesSet> MODULES_SETS_LOADED_TOGETHER = new ArrayList<>();
-  private final ClearableLazyValue<Map<String, ModulesSet>> myModuleSetByModuleName = ClearableLazyValue.createAtomic(() -> {
+  private final SynchronizedClearableLazy<Map<String, ModulesSet>> myModuleSetByModuleName = new SynchronizedClearableLazy<>(() -> {
     Map<String, ModulesSet> result = new HashMap<>();
     for (ModulesSet modulesSet : MODULES_SETS_LOADED_TOGETHER) {
       for (String module : modulesSet.modules) {
@@ -93,6 +93,11 @@ public final class SuspiciousPackagePrivateAccessInspection extends AbstractBase
           }
         }
       }
+    }
+
+    @Override
+    public void processLambda(@NotNull ULambdaExpression sourceNode, @NotNull PsiModifierListOwner target) {
+      processReference(sourceNode, target, null);
     }
 
     @Override

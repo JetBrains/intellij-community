@@ -22,7 +22,7 @@ class BundledKeymap(override val displayName: @Nls String, val keymap: Keymap, o
       return BundledKeymap(keymap.displayName, keymap, demoShortcuts)
     }
 
-    fun fromManager(keymapName: String) = fromManager(keymapName, emptyList())
+    fun fromManager(keymapName: String): BundledKeymap = fromManager(keymapName, emptyList())
   }
 }
 
@@ -30,7 +30,7 @@ class PluginKeymap(override val displayName: @Nls String, val pluginId: String, 
 
 class PatchedKeymap(var parent: com.intellij.ide.customize.transferSettings.models.Keymap, val overrides: List<KeyBinding>, val removal: List<KeyBinding>) : com.intellij.ide.customize.transferSettings.models.Keymap {
   override val displayName: String get() = parent.displayName
-  override val demoShortcuts by lazy { mergeShortcutsForDemo() }
+  override val demoShortcuts: List<SimpleActionDescriptor> by lazy { mergeShortcutsForDemo() }
 
   private fun mergeShortcutsForDemo(): List<SimpleActionDescriptor> {
     val overrides = overrides.associate { it.toPair() }

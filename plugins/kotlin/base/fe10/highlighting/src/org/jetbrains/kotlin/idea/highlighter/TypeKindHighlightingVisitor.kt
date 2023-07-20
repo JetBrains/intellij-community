@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
+import org.jetbrains.kotlin.util.unwrapIfTypeAlias
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
@@ -64,7 +65,8 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
     private fun computeHighlightingRangeForUsage(expression: KtSimpleNameExpression, referenceTarget: DeclarationDescriptor): TextRange {
         val expressionRange = expression.textRange
 
-        if (referenceTarget !is ClassDescriptor || referenceTarget.kind != ClassKind.ANNOTATION_CLASS) return expressionRange
+        val target = referenceTarget.unwrapIfTypeAlias() as? ClassDescriptor
+        if (target?.kind != ClassKind.ANNOTATION_CLASS) return expressionRange
 
         // include '@' symbol if the reference is the first segment of KtAnnotationEntry
         // if "Deprecated" is highlighted then '@' should be highlighted too in "@Deprecated"

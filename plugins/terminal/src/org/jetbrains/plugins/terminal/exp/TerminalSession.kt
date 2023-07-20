@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.ConcurrencyUtil
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
@@ -15,28 +15,32 @@ import com.jediterm.terminal.model.JediTermDebouncerImpl
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
+import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
 import java.util.concurrent.ExecutorService
 
 private var sessionIndex = 1
 
-class TerminalSession(private val project: Project,
-                      private val settings: JBTerminalSystemSettingsProviderBase) : Disposable {
+class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
   private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
+
   private val textBuffer: TerminalTextBuffer
-  private val controller: TerminalController
+  val controller: TerminalController
   private val commandManager: ShellCommandManager
   private val typeAheadManager: TerminalTypeAheadManager
+  @Volatile
+  var shellIntegration: ShellIntegration? = null
 
   init {
     val styleState = StyleState()
     styleState.setDefaultStyle(settings.defaultStyle)
-    textBuffer = TerminalTextBuffer(80, 24, styleState)
+    textBuffer = TerminalTextBufferEx(80, 24, styleState)
     model = TerminalModel(textBuffer, styleState)
     controller = TerminalController(model, settings)
+
     commandManager = ShellCommandManager(controller)
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
@@ -61,17 +65,26 @@ class TerminalSession(private val project: Project,
   fun postResize(newSize: TermSize) {
     // it can be executed right after component is shown,
     // terminal starter can not be initialized at this point
-    if (this::terminalStarter.isInitialized) {
+    if (this::terminalStarter.isInitialized && (newSize.columns != model.width || newSize.rows != model.height)) {
+      // TODO: is it needed?
+      //myTypeAheadManager.onResize()
       terminalStarter.postResize(newSize, RequestOrigin.User)
     }
   }
 
-  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable) {
+  fun addCommandListener(listener: ShellCommandListener, parentDisposable: Disposable? = null) {
     commandManager.addListener(listener, parentDisposable)
   }
 
   override fun dispose() {
     terminalExecutor.shutdown()
-    terminalStarter.close()
+    // Can be disposed before session is started
+    if (this::terminalStarter.isInitialized) {
+      terminalStarter.close()
+    }
+  }
+
+  companion object {
+    val KEY: Key<TerminalSession> = Key.create("TerminalSession")
   }
 }

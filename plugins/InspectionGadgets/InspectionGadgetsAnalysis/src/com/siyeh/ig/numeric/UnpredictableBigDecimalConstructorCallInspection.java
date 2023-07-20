@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -12,7 +14,6 @@ import com.intellij.util.text.LiteralFormatUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -44,7 +45,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiNewExpression newExpression = (PsiNewExpression)infos[0];
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) {
@@ -72,7 +73,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
            : text;
   }
 
-  private static class ReplaceDoubleArgumentWithStringFix extends InspectionGadgetsFix {
+  private static class ReplaceDoubleArgumentWithStringFix extends PsiUpdateModCommandQuickFix {
 
     private final String argumentText;
 
@@ -93,8 +94,7 @@ public class UnpredictableBigDecimalConstructorCallInspection extends BaseInspec
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiNewExpression newExpression = (PsiNewExpression)element.getParent();
       if (!isStillValid(newExpression)) {
         return;

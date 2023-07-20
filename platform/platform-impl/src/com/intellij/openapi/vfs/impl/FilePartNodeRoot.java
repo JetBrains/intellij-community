@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -157,11 +156,11 @@ final class FilePartNodeRoot extends FilePartNode {
       currentFS = fs;
       relativePathInsideJar = "";
     }
-    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(currentFS, path);
-    String pathFromRoot = pair == null ? path : pair.second;
+    VfsImplUtil.PathFromRoot pair = VfsImplUtil.extractRootFromPath(currentFS, path);
+    String pathFromRoot = pair == null ? path : pair.pathFromRoot();
     pathFromRoot += relativePathInsideJar;
     List<String> names = splitNames(pathFromRoot);
-    NewVirtualFile fsRoot = pair == null ? null : pair.first;
+    NewVirtualFile fsRoot = pair == null ? null : pair.root();
 
     FilePartNode currentNode = this;
     FilePartNode parentNode = this;

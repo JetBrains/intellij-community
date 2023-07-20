@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("PackageDirectoryMismatch", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.reference.SoftReference
 import com.intellij.serialization.SerializationException
 import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
@@ -15,6 +14,7 @@ import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.lang.reflect.Type
 import java.net.URL
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -24,7 +24,7 @@ import kotlin.concurrent.write
 private val skipDefaultsSerializationFilter = ThreadLocal<SoftReference<SkipDefaultsSerializationFilter>>()
 
 private fun doGetDefaultSerializationFilter(): SkipDefaultsSerializationFilter {
-  var result = SoftReference.dereference(skipDefaultsSerializationFilter.get())
+  var result = skipDefaultsSerializationFilter.get()?.get()
   if (result == null) {
     result = object : SkipDefaultsSerializationFilter() {
       override fun accepts(accessor: Accessor, bean: Any): Boolean {

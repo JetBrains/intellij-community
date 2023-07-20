@@ -33,6 +33,21 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
         runTest("../testData/basic/withLib/NamedArgumentsKotlin.kt");
     }
 
+    @TestMetadata("NonShadowingExtensionFromDefaultImport.kt")
+    public void testNonShadowingExtensionFromDefaultImport() throws Exception {
+        runTest("../testData/basic/withLib/NonShadowingExtensionFromDefaultImport.kt");
+    }
+
+    @TestMetadata("NonShadowingExtensionFromPackage.kt")
+    public void testNonShadowingExtensionFromPackage() throws Exception {
+        runTest("../testData/basic/withLib/NonShadowingExtensionFromPackage.kt");
+    }
+
+    @TestMetadata("NonShadowingExtensionFromStarImport.kt")
+    public void testNonShadowingExtensionFromStarImport() throws Exception {
+        runTest("../testData/basic/withLib/NonShadowingExtensionFromStarImport.kt");
+    }
+
     @TestMetadata("OverrideJava.kt")
     public void testOverrideJava() throws Exception {
         runTest("../testData/basic/withLib/OverrideJava.kt");
@@ -46,6 +61,11 @@ public class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBa
     @TestMetadata("SamAdapterAndGenerics.kt")
     public void testSamAdapterAndGenerics() throws Exception {
         runTest("../testData/basic/withLib/SamAdapterAndGenerics.kt");
+    }
+
+    @TestMetadata("ShadowingExtensionFromExplicitSimpleImport.kt")
+    public void testShadowingExtensionFromExplicitSimpleImport() throws Exception {
+        runTest("../testData/basic/withLib/ShadowingExtensionFromExplicitSimpleImport.kt");
     }
 
     @TestMetadata("TopLevelNonImportedExtFun.kt")

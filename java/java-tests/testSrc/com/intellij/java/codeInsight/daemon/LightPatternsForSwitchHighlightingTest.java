@@ -3,7 +3,6 @@ package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
@@ -22,7 +21,7 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_19;
   }
 
   public void testPatternsInSwitchIn16Java() {
@@ -34,7 +33,7 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testPatternsInSwitchIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testPatternsInSwitchIn20Java() {
@@ -42,11 +41,11 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testMismatchedDeconstructionIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testIllegalFallthroughIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testIllegalFallthroughIn20Java() {
@@ -54,11 +53,11 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testUnconditionalDestructuringAndDefaultIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessIn20Java() {
@@ -66,25 +65,19 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testSwitchExhaustivenessWithSealedIntersection(){
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSwitchExhaustivenessWithGenericsIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSwitchDominanceIn19Java() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
-  }
-
-  public void testPatternMatchingInSwitch() {
     doTest();
-    IntentionAction action = myFixture.getAvailableIntention("Remove 'default' branch");
-    assertNotNull(action);
   }
 
-  public void testPatternMatchingInSwitchJava18() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
+  public void testPatternMatchingInSwitchJava19() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
   }
 
   public void testPatternMatchingWithGuard() {
@@ -108,7 +101,7 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testEffectivelyFinalWhen() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSameVariableNameInPatternMatchingInSwitch() {
@@ -119,12 +112,8 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
     doTest();
   }
 
-  public void testGuardedPatterns() {
-    doTest();
-  }
-
   public void testWhenExpressions() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testSwitchExprHasResult() {
@@ -178,15 +167,15 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   }
 
   public void testRecordPatternsAndWhenGuardsInJava18() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, this::doTest);
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18, this::doTest);
   }
 
   public void testRecordPatternsAndWhenGuardsInJava19() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   public void testWhenExpressionIsFalse() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_19_PREVIEW, this::doTest);
+    doTest();
   }
 
   private void doTest() {

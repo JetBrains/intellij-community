@@ -17,7 +17,6 @@ package com.intellij.ui.roots;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,13 +29,6 @@ import java.awt.*;
  * @author Eugene Zhuravlev
  */
 public class ToolbarPanel extends JPanel {
-  /**
-   * @deprecated use {@link #ToolbarPanel(JComponent, ActionGroup, String, JComponent)} instead and specify action place and target component for toolbar explicitly
-   */
-  @Deprecated(forRemoval = true)
-  public ToolbarPanel(JComponent contentComponent, ActionGroup actions) {
-    this(contentComponent, actions, ActionPlaces.UNKNOWN);
-  }
 
   /**
    * @deprecated use {@link #ToolbarPanel(JComponent, ActionGroup, String, JComponent)} instead and specify action place and target component for toolbar explicitly

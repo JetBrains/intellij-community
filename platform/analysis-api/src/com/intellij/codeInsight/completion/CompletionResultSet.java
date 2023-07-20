@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -49,7 +49,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * If a given element matches the prefix, give it for further processing (which may eventually result in its appearing in the completion list).
    * @see #addAllElements(Iterable) 
    */
-  public abstract void addElement(@NotNull final LookupElement element);
+  public abstract void addElement(final @NotNull LookupElement element);
 
   public void passResult(@NotNull CompletionResult result) {
     myConsumer.consume(result);
@@ -77,7 +77,7 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * resulting in varying preselected item in completion and worse user experience. Using {@code addAllElements} 
    * instead of {@link #addElement(LookupElement)} helps to avoid that.
    */
-  public void addAllElements(@NotNull final Iterable<? extends LookupElement> elements) {
+  public void addAllElements(final @NotNull Iterable<? extends LookupElement> elements) {
     startBatch();
     int seldomCounter = 0;
     for (LookupElement element : elements) {
@@ -90,18 +90,17 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
     endBatch();
   }
 
-  @Contract(pure=true)
-  @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull PrefixMatcher matcher);
+  @Contract(pure = true)
+  public abstract @NotNull CompletionResultSet withPrefixMatcher(@NotNull PrefixMatcher matcher);
 
   /**
    * Creates a default camel-hump prefix matcher based on given prefix
    */
-  @Contract(pure=true)
-  @NotNull public abstract CompletionResultSet withPrefixMatcher(@NotNull String prefix);
+  @Contract(pure = true)
+  public abstract @NotNull CompletionResultSet withPrefixMatcher(@NotNull String prefix);
 
-  @NotNull
-  @Contract(pure=true)
-  public abstract CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
+  @Contract(pure = true)
+  public abstract @NotNull CompletionResultSet withRelevanceSorter(@NotNull CompletionSorter sorter);
 
   public abstract void addLookupAdvertisement(@NotNull @NlsContexts.PopupAdvertisement String text);
 
@@ -109,11 +108,10 @@ public abstract class CompletionResultSet implements Consumer<LookupElement> {
    * @return A result set with the same prefix, but the lookup strings will be matched case-insensitively. Their lookup strings will
    * remain as they are though, so upon insertion the prefix case will be changed.
    */
-  @Contract(pure=true)
-  @NotNull public abstract CompletionResultSet caseInsensitive();
+  @Contract(pure = true)
+  public abstract @NotNull CompletionResultSet caseInsensitive();
 
-  @NotNull
-  public PrefixMatcher getPrefixMatcher() {
+  public @NotNull PrefixMatcher getPrefixMatcher() {
     return myPrefixMatcher;
   }
 

@@ -800,9 +800,20 @@ public class FileUtilRt {
 
         @Override
         public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-          if (callback != null) callback.consume(dir);
-          doDelete(dir);
-          return FileVisitResult.CONTINUE;
+          try {
+            if (callback != null) callback.consume(dir);
+            doDelete(dir);
+            return FileVisitResult.CONTINUE;
+          }
+          catch (IOException e) {
+            if (exc != null) {
+              exc.addSuppressed(e);
+              throw exc;
+            }
+            else {
+              throw e;
+            }
+          }
         }
 
         @Override

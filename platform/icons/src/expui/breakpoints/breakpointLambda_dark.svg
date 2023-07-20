@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
-<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M2.86314 0.5H3.99261C5.33487 0.5 6.006 1.2939 6.43159 2.37426L10.0246 11.5H8.47162L6.19427 5.35547L3.73889 11.5H2.2002L5.49856 3.53646L4.99112 2.48065C4.80287 2.07143 4.42639 1.76042 3.92713 1.76042H2.86314V0.5Z" fill="#DB5C5C" stroke="#DB5C5C" stroke-width="0.6"/>
+<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M2.84728 0H4.2908C6.00628 0 6.86402 1.01042 7.40795 2.38542L12 14H10.0152L7.10464 6.17969L3.96653 14H2L6.21548 3.86458L5.56695 2.52083C5.32636 2 4.84519 1.60417 4.20711 1.60417H2.84728V0Z" fill="#DB5C5C"/>
 </svg>

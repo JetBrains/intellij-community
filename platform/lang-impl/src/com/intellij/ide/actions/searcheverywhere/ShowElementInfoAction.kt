@@ -28,9 +28,9 @@ class ShowElementInfoAction : AnAction() {
     e.presentation.isEnabled = getSEUI(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)) != null
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isDumbAware() = true
+  override fun isDumbAware(): Boolean = true
 
   private fun getSEUI(component: Component?): SearchEverywhereUI? {
     var current = component

@@ -1,21 +1,21 @@
 <html>
-<body>                                            
+<body>
 <p>Detects unused keys in TOML descriptors of version catalogs. </p>
 
 <p><b>Example:</b></p>
 
-<pre><code>
+<pre><code lang="groovy">
 // build.gradle
 dependencies {
   implementation libs.foo.bar
 }
 </code></pre>
 
-<pre><code>
-// libs.versions.toml
+<pre><code lang="toml">
+# libs.versions.toml
 [libraries]
 foo-bar = "com.gradle:example:1.0.0"
-bar-baz = "com.gradle:example:2.0.0" // highlights bar-baz
+bar-baz = "com.gradle:example:2.0.0" # highlights bar-baz
 </code></pre>
 
 

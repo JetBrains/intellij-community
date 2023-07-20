@@ -10,7 +10,7 @@ interface DynamicPluginListener {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
+    val TOPIC: Topic<DynamicPluginListener> = Topic(DynamicPluginListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
   }
 
   fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {

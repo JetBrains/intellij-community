@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.core.JavaPsiBundle;
@@ -8,9 +8,12 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public final class PsiMethodReferenceUtil {
 
@@ -220,16 +223,25 @@ public final class PsiMethodReferenceUtil {
     final PsiExpression expression = methodReferenceExpression.getQualifierExpression();
     if (expression != null) {
       PsiType expressionType = expression.getType();
-      if (expressionType instanceof PsiCapturedWildcardType) {
-        expressionType = ((PsiCapturedWildcardType)expressionType).getUpperBound();
+      if (expressionType instanceof PsiIntersectionType) {
+        List<PsiClassType> types = ContainerUtil.filterIsInstance(((PsiIntersectionType)expressionType).getConjuncts(), PsiClassType.class);
+        substitutor = types.stream().map(t -> t.resolveGenerics().getSubstitutor())
+          .reduce(PsiSubstitutor.EMPTY, PsiSubstitutor::putAll);
+        containingClass = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createTypeParameter(
+          "$SYNTHETIC$", types.toArray(PsiClassType.EMPTY_ARRAY));
       }
       else {
-        expressionType = replaceArrayType(expressionType, expression);
-      }
-      PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
-      containingClass = result.getElement();
-      if (containingClass != null) {
-        substitutor = result.getSubstitutor();
+        if (expressionType instanceof PsiCapturedWildcardType) {
+          expressionType = ((PsiCapturedWildcardType)expressionType).getUpperBound();
+        }
+        else {
+          expressionType = replaceArrayType(expressionType, expression);
+        }
+        PsiClassType.ClassResolveResult result = PsiUtil.resolveGenericsClassInType(expressionType);
+        containingClass = result.getElement();
+        if (containingClass != null) {
+          substitutor = result.getSubstitutor();
+        }
       }
       if (containingClass == null && expression instanceof PsiReferenceExpression) {
         final JavaResolveResult resolveResult = ((PsiReferenceExpression)expression).advancedResolve(false);

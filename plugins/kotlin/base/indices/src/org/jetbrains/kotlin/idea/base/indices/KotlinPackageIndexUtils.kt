@@ -36,7 +36,7 @@ object KotlinPackageIndexUtils {
         packageFqName: FqName,
         searchScope: GlobalSearchScope
     ): Boolean = !FileBasedIndex.getInstance().processValues(
-        KotlinPartialPackageNamesIndex.KEY,
+        KotlinPartialPackageNamesIndex.NAME,
         packageFqName,
         null,
         FileBasedIndex.ValueProcessor { _, _ -> false },
@@ -55,7 +55,7 @@ object KotlinPackageIndexUtils {
         val result = hashSetOf<FqName>()
 
         FileBasedIndex.getInstance().processValues(
-            KotlinPartialPackageNamesIndex.KEY, fqName, null,
+            KotlinPartialPackageNamesIndex.NAME, fqName, null,
             FileBasedIndex.ValueProcessor { _, subPackageName ->
                 if (subPackageName != null && nameFilter(subPackageName)) {
                     result.add(fqName.child(subPackageName))

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.openapi.project.Project;
@@ -12,8 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Function;
 
 public final class IntersectionPackageSet extends CompoundPackageSet {
-  @NotNull
-  public static PackageSet create(PackageSet @NotNull ... sets) {
+  public static @NotNull PackageSet create(PackageSet @NotNull ... sets) {
     if (sets.length == 0) throw new IllegalArgumentException("empty arguments");
     return sets.length == 1 ? sets[0] : new IntersectionPackageSet(sets);
   }
@@ -53,8 +52,7 @@ public final class IntersectionPackageSet extends CompoundPackageSet {
   }
 
   @Override
-  @NotNull
-  public String getText() {
+  public @NotNull String getText() {
     if (myText == null) {
       myText = StringUtil.join(mySets, set -> {
         boolean needParen = set.getNodePriority() > getNodePriority();

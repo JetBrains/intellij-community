@@ -13,12 +13,14 @@ import com.intellij.internal.statistic.libraryUsage.LibraryUsageDescriptors
  * See 'library-jar-statistics.xml' and 'library-usage-statistics.xml' files.
  */
 internal class LibraryNameValidationRule : CustomValidationRule() {
-  private val allowedNames: Set<String> = (LibraryUsageDescriptors.libraryNames +
-                                           LibraryJarStatisticsService.getInstance().libraryNames).toHashSet()
-
   override fun getRuleId(): String = "used_library_name"
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType {
-    return if (allowedNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+    return if (AllowListHolder.allowedNames.contains(data)) ValidationResultType.ACCEPTED else ValidationResultType.REJECTED
+  }
+
+  object AllowListHolder {
+    val allowedNames: Set<String> = (LibraryUsageDescriptors.libraryNames +
+                                     LibraryJarStatisticsService.getInstance().libraryNames).toHashSet()
   }
 }

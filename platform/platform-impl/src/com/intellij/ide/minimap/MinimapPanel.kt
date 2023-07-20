@@ -263,7 +263,7 @@ class MinimapPanel(private val parentDisposable: Disposable, private val editor:
   }
 
   companion object {
-    const val MINIMUM_WIDTH = 50
-    const val RESIZE_TOLERANCE = 7
+    const val MINIMUM_WIDTH: Int = 50
+    const val RESIZE_TOLERANCE: Int = 7
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.LanguageLevelUtil
+import com.intellij.pom.java.AcceptedLanguageLevelsSettings
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.UsefulTestCase
 import junit.framework.TestCase
@@ -56,6 +57,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
     ideCompilerConfiguration = CompilerConfiguration.getInstance(myProject) as CompilerConfigurationImpl
     javacCompiler = ideCompilerConfiguration.defaultCompiler
     eclipseCompiler = ideCompilerConfiguration.registeredJavaCompilers.find { it is EclipseCompiler } as EclipseCompiler
+    AcceptedLanguageLevelsSettings.allowLevel(testRootDisposable, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal + 1])
   }
 
   @Test
@@ -149,7 +151,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "<artifactId>project</artifactId>" +
                    "<version>1</version>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
+    TestCase.assertEquals(getDefaultLanguageLevel(), getLanguageLevelForModule())
   }
 
   @Test
@@ -166,27 +168,9 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                    "  </plugins>" +
                    "</build>"))
     assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
+    TestCase.assertEquals(getDefaultLanguageLevel(), getLanguageLevelForModule())
   }
 
-  @Test
-  open fun testLanguageLevelWhenSourceLanguageLevelIsNotSpecified() {
-    importProject(("<groupId>test</groupId>" +
-                   "<artifactId>project</artifactId>" +
-                   "<version>1</version>" +
-                   "<build>" +
-                   "  <plugins>" +
-                   "    <plugin>" +
-                   "      <groupId>org.apache.maven.plugins</groupId>" +
-                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                   "      <configuration>" +
-                   "      </configuration>" +
-                   "    </plugin>" +
-                   "  </plugins>" +
-                   "</build>"))
-    assertModules("project")
-    TestCase.assertEquals(LanguageLevel.JDK_1_5, getLanguageLevelForModule())
-  }
 
   @Test
   open fun testLanguageLevelFromPluginManagementSection() {
@@ -540,6 +524,7 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   open fun testReleasePropertyNotSupport() {
+
     createProjectPom(("<groupId>test</groupId>" +
                       "<artifactId>project</artifactId>" +
                       "<packaging>pom</packaging>" +
@@ -580,8 +565,9 @@ open class MavenCompilerImportingTest : MavenMultiVersionImportingTestCase() {
                      "  </plugins>" +
                      "</build>"))
     importProject()
-    assertEquals(LanguageLevel.JDK_11, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))))
-    assertEquals(LanguageLevel.JDK_11.toJavaVersion().toString(),
+    val expectedlevel = if (mavenVersionIsOrMoreThan("3.9.0")) LanguageLevel.JDK_1_9 else LanguageLevel.JDK_11;
+    assertEquals(expectedlevel, LanguageLevelUtil.getCustomLanguageLevel(getModule(mn("project", "m1"))))
+    assertEquals(expectedlevel.toJavaVersion().toString(),
                  ideCompilerConfiguration.getBytecodeTargetLevel(getModule(mn("project", "m1"))))
   }
 

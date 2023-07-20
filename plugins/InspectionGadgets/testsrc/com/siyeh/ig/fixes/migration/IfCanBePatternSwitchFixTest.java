@@ -23,7 +23,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
     super.tuneFixture(builder);
-    builder.setLanguageLevel(LanguageLevel.JDK_17_PREVIEW);
+    builder.setLanguageLevel(LanguageLevel.JDK_19_PREVIEW);
     builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
   }
 
@@ -33,8 +33,9 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testPatternExplicitNullCheck2(){ doTest(); }
   public void testPatternDefault() { doTest(); }
   public void testPatternKeepVariable() { doTest(); }
-  public void testGuardedPattern() { doTest(); }
-  public void testGuardedPatternCustomOrder() { doTest(); }
+  public void testPatternGuard1() { doTest(); }
+  public void testPatternGuard2() { doTest(); }
+  public void testPatternGuardCustomOrder() { doTest(); }
   public void testPatternToVariable() { doTest(); }
   public void testPatternToSwitchExpression() { doTest(); }
   public void testUnconditionalPattern(){ doTest(); }
@@ -43,7 +44,4 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testMultipleCastedVariables() { doTest(); }
   public void testMutableCastedVariable() { doTest(); }
   public void testLeakScope() { assertQuickfixNotAvailable(); }
-  public void testPatternGuard() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_19_PREVIEW, () -> doTest());
-  }
 }

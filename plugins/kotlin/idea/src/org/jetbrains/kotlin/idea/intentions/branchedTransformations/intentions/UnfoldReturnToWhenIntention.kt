@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.copied
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtPsiUtil
@@ -37,7 +37,7 @@ class UnfoldReturnToWhenIntention : LowPriorityAction, SelfTargetingRangeIntenti
         whenExpression.entries.zip(newWhenExpression.entries).forEach { (entry, newEntry) ->
             val expr = entry.expression!!.lastBlockStatementOrThis()
             val newExpr = newEntry.expression!!.lastBlockStatementOrThis()
-            newExpr.replace(UnfoldReturnToIfIntention.createReturnExpression(expr, labelName, psiFactory, context))
+            newExpr.replace(UnfoldReturnToIfIntention.Holder.createReturnExpression(expr, labelName, psiFactory, context))
         }
 
         element.replace(newWhenExpression)

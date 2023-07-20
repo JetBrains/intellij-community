@@ -3,14 +3,12 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.ui.popup.ListItemDescriptor;
-import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.navigation.Place;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.ui.popup.list.SelectablePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -108,12 +106,12 @@ public final class SidePanel extends JPanel {
             myCountLabel.setText(errorsCount > 100 ? "100+" : String.valueOf(errorsCount));
           }
         }
-        if (UIUtil.isClientPropertyTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
+        if (ClientProperty.isTrue(list, ExpandableItemsHandler.EXPANDED_RENDERER)) {
           Rectangle bounds = list.getCellBounds(index, index);
           bounds.setSize((int)component.getPreferredSize().getWidth(), (int)bounds.getHeight());
           AbstractExpandableItemsHandler.setRelativeBounds(component, bounds, myExtraPanel, myValidationParent);
           myExtraPanel.setSize((int)myExtraPanel.getPreferredSize().getWidth(), myExtraPanel.getHeight());
-          ComponentUtil.putClientProperty(myExtraPanel, ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
+          myExtraPanel.putClientProperty(ExpandableItemsHandler.USE_RENDERER_BOUNDS, true);
           return myExtraPanel;
         }
         return component;

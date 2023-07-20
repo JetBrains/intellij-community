@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.codeInsight.intention.*;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.NlsContexts.LinkLabel;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.border.NamedBorder;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
@@ -36,6 +38,7 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.AbstractBorder;
+import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.plaf.basic.BasicPanelUI;
 import java.awt.*;
@@ -46,6 +49,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.ui.border.NamedBorderKt.withName;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -54,6 +59,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   private static final Supplier<EditorColorsScheme> GLOBAL_SCHEME_SUPPLIER = () -> EditorColorsManager.getInstance().getGlobalScheme();
   private static final Consumer<Class<?>> VOID_CONSUMER = __ -> {
   };
+  private static final String BORDER_WITHOUT_STATUS = "borderWithoutStatus";
+  private static final String BORDER_WITH_STATUS = "borderWithStatus";
 
   protected final JLabel myLabel = new JLabel();
   protected final JLabel myGearLabel = new JLabel();
@@ -146,8 +153,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
     add(BorderLayout.CENTER, panel);
     add(BorderLayout.EAST, gearWrapper);
-    JBInsets defaultInsets = ExperimentalUI.isNewUI() ? JBInsets.create(9, 16) : JBInsets.create(5, 10);
-    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets(defaultInsets)));
+    setBorder(borderWithoutStatus());
     setOpaque(true);
 
     myLabel.setForeground(mySchemeSupplier.get().getDefaultForeground());
@@ -200,7 +206,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myLabel.setForeground(JBUI.CurrentTheme.Banner.FOREGROUND);
     myLabel.setBorder(JBUI.Borders.emptyRight(20));
 
-    setBorder(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets()));
+    setBorder(borderWithStatus());
 
     putClientProperty(FileEditorManager.SEPARATOR_BORDER, new SideBorder(status.border, SideBorder.TOP | SideBorder.BOTTOM));
 
@@ -229,11 +235,34 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     add(BorderLayout.EAST, myLastPanel);
   }
 
+  private @NotNull static NamedBorder borderWithoutStatus() {
+    return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsetsWithoutStatus()), BORDER_WITHOUT_STATUS);
+  }
+
+  private @NotNull static NamedBorder borderWithStatus() {
+    return withName(JBUI.Borders.empty(JBUI.CurrentTheme.Editor.Notification.borderInsets()), BORDER_WITH_STATUS);
+  }
+
   @Override
   public void updateUI() {
+    String borderName = null;
+    if (getBorder() instanceof NamedBorder border) {
+      borderName = border.getName();
+    }
     setUI(new BasicPanelUI() {
       @Override protected void installDefaults(JPanel p) {}
     });
+    Border updatedBorder = null;
+    if (borderName != null) {
+      updatedBorder = switch (borderName) {
+        case BORDER_WITHOUT_STATUS -> borderWithoutStatus();
+        case BORDER_WITH_STATUS -> borderWithStatus();
+        default -> null; // Someone set their own border, leave it alone.
+      };
+    }
+    if (updatedBorder != null) {
+      setBorder(updatedBorder);
+    }
   }
 
   @ApiStatus.Internal
@@ -307,7 +336,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
 
   private static @NotNull Icon getCloseIcon() {
     if (CLOSE_ICON == null) {
-      CLOSE_ICON = IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class);
+      CLOSE_ICON = ExpUiIcons.General.Close;
     }
     return CLOSE_ICON;
   }

@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.icons.DarkIconProvider;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.util.IconUtil;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
@@ -15,10 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
+import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import java.util.Objects;
 
@@ -113,6 +111,10 @@ public final class RoundedIcon extends JBScalableIcon implements DarkIconProvide
   }
 
   private static Shape getSuperEllipse(double x, double y, double width, double height, double arcRatio) {
+    if (width == height && arcRatio == 1.0) {
+      return new Ellipse2D.Double(x, y, width, height);
+    }
+
     GeneralPath path = new GeneralPath();
     path.moveTo(1, 0);
     double step = Math.PI / 360;

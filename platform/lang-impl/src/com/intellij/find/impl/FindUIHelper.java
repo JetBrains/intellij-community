@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -33,8 +18,8 @@ import javax.swing.*;
 @SuppressWarnings("WeakerAccess")
 public class FindUIHelper implements Disposable {
   @NotNull private final Project myProject;
-  @NotNull private  FindModel myModel;
-   FindModel myPreviousModel;
+  @NotNull private FindModel myModel;
+  FindModel myPreviousModel;
   @NotNull private Runnable myOkHandler;
 
   FindUI myUI;
@@ -77,24 +62,6 @@ public class FindUIHelper implements Disposable {
         myModel.setReplaceState(replace);
         ui.initByModel();
       }
-      //@NotNull
-      //private DataContextWrapper prepareDataContextForFind(@NotNull AnActionEvent e) {
-      //  DataContext dataContext = e.getDataContext();
-      //  Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      //  Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      //  final String selection = editor != null ? editor.getSelectionModel().getSelectedText() : null;
-      //
-      //  return new DataContextWrapper(dataContext) {
-      //    @Nullable
-      //    @Override
-      //    public Object getData(@NonNls String dataId) {
-      //      if (CommonDataKeys.PROJECT.is(dataId)) return project;
-      //      if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) return selection;
-      //      return super.getData(dataId);
-      //    }
-      //  };
-      //}
-
     }.registerCustomShortcutSet(action.getShortcutSet(), component);
   }
 
@@ -200,7 +167,6 @@ public class FindUIHelper implements Disposable {
   }
 
   public void doOKAction() {
-    updateFindSettings();
     myOkHandler.run();
   }
 }

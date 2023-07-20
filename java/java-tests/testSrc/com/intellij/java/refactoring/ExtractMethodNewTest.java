@@ -26,6 +26,7 @@ import com.intellij.refactoring.extractMethod.PrepareFailedException;
 import com.intellij.refactoring.extractMethod.newImpl.ExtractException;
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor;
 import com.intellij.refactoring.util.duplicates.Match;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
@@ -1440,12 +1441,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   }
 
   public void testNoStaticForInnerClass() {
-    try {
-      configureByFile(BASE_PATH + getTestName(false) + ".java");
-      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
-      fail("Static modifier is forbidden inside inner classes");
-    } catch (PrepareFailedException e){
-    }
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
+      try {
+        configureByFile(BASE_PATH + getTestName(false) + ".java");
+        performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+        fail("Static modifier is forbidden inside inner classes");
+      } catch (PrepareFailedException ignored){
+      }
+    });
   }
 
   public void testStaticForNestedClass() throws Exception {

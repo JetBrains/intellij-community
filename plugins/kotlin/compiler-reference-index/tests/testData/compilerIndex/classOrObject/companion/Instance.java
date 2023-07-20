@@ -1,5 +1,5 @@
 class Instance {
     void main() {
-        new MainClass.Companion.T();
+        Object i = MainClass.Companion;
     }
 }

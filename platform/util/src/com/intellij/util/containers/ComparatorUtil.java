@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -11,18 +11,15 @@ public final class ComparatorUtil {
   private ComparatorUtil() {
   }
 
-  @NotNull
-  public static <Type, Aspect> Comparator<Type> compareBy(@NotNull final Function<? super Type, ? extends Aspect> aspect, @NotNull final Comparator<? super Aspect> comparator) {
+  public static @NotNull <Type, Aspect> Comparator<Type> compareBy(final @NotNull Function<? super Type, ? extends Aspect> aspect, final @NotNull Comparator<? super Aspect> comparator) {
     return (element1, element2) -> comparator.compare(aspect.apply(element1), aspect.apply(element2));
   }
 
-  @NotNull
-  public static <T extends Comparable<? super T>> T max(@NotNull T o1, @NotNull T o2) {
+  public static @NotNull <T extends Comparable<? super T>> T max(@NotNull T o1, @NotNull T o2) {
     return o1.compareTo(o2) >= 0 ? o1 : o2;
   }
 
-  @NotNull
-  public static <T extends Comparable<? super T>> T min(@NotNull T o1, @NotNull T o2) {
+  public static @NotNull <T extends Comparable<? super T>> T min(@NotNull T o1, @NotNull T o2) {
     return o1.compareTo(o2) >= 0 ? o2 : o1;
   }
 

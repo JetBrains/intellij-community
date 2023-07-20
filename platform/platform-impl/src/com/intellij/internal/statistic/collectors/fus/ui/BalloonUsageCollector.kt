@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.ui
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventId1
 import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
@@ -10,7 +11,7 @@ class BalloonUsageCollector : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("balloons", 6)
 
     @JvmField
-    val BALLOON_SHOWN = GROUP.registerEvent("balloon.shown", BalloonIdField())
+    val BALLOON_SHOWN: EventId1<String?> = GROUP.registerEvent("balloon.shown", BalloonIdField())
   }
 
   override fun getGroup(): EventLogGroup {

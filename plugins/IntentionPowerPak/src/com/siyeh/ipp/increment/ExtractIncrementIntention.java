@@ -18,11 +18,11 @@ package com.siyeh.ipp.increment;
 import com.intellij.psi.PsiElement;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.assignment.IncrementDecrementUsedAsExpressionInspection;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ExtractIncrementIntention extends MutablyNamedIntention {
+public class ExtractIncrementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -30,10 +30,10 @@ public class ExtractIncrementIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public String getTextForElement(PsiElement element) {
+  public String getTextForElement(@NotNull PsiElement element) {
     final String operatorText = IncrementUtil.getOperatorText(element);
-    return operatorText != null ? IntentionPowerPackBundle.message(
-      "extract.increment.intention.name", operatorText) : null;
+    return IntentionPowerPackBundle.message(
+      "extract.increment.intention.name", operatorText);
   }
 
   @Override

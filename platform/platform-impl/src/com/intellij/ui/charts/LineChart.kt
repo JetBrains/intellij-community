@@ -27,7 +27,7 @@ import kotlin.math.min
 abstract class LineDataset<X: Number, Y: Number>: Dataset<Coordinates<X, Y>>() {
   var stepped: LineStepped = LineStepped.NONE
   var stacked: Boolean = false
-  var stroke = BasicStroke(1.5f, CAP_BUTT, JOIN_ROUND)
+  var stroke: BasicStroke = BasicStroke(1.5f, CAP_BUTT, JOIN_ROUND)
   var smooth: Boolean = false
 
   var modificationFirst: Boolean = false
@@ -42,15 +42,15 @@ abstract class LineDataset<X: Number, Y: Number>: Dataset<Coordinates<X, Y>>() {
 
   companion object {
 
-    @JvmStatic fun <T: Number> of(vararg values: T) = CategoryLineDataset<T>().apply {
+    @JvmStatic fun <T: Number> of(vararg values: T): CategoryLineDataset<T> = CategoryLineDataset<T>().apply {
       addAll(values.mapIndexed(::Coordinates).toList())
     }
 
-    @JvmStatic fun <X: Number, Y: Number> of(xs: Array<X>, ys: Array<Y>) = XYLineDataset<X, Y>().apply {
+    @JvmStatic fun <X: Number, Y: Number> of(xs: Array<X>, ys: Array<Y>): XYLineDataset<X, Y> = XYLineDataset<X, Y>().apply {
       addAll(Array(min(xs.size, ys.size)) { i -> Coordinates(xs[i], ys[i]) }.toList())
     }
 
-    @JvmStatic fun <X: Number, Y: Number> of(vararg points: Coordinates<X, Y>) = XYLineDataset<X, Y>().apply {
+    @JvmStatic fun <X: Number, Y: Number> of(vararg points: Coordinates<X, Y>): XYLineDataset<X, Y> = XYLineDataset<X, Y>().apply {
       addAll(points.toList())
     }
   }
@@ -101,25 +101,25 @@ abstract class LineChart<X: Number, Y: Number, D: LineDataset<X, Y>>: GridChartW
 
   companion object {
 
-    @JvmStatic fun <T: Number, D: CategoryLineDataset<T>> of(vararg values: D) = CategoryLineChart<T>().apply {
+    @JvmStatic fun <T: Number, D: CategoryLineDataset<T>> of(vararg values: D): CategoryLineChart<T> = CategoryLineChart<T>().apply {
       datasets = mutableListOf(*values)
     }
 
-    @JvmStatic fun <X: Number, Y: Number, D: XYLineDataset<X, Y>> of(vararg values: D) = XYLineChart<X, Y>().apply {
+    @JvmStatic fun <X: Number, Y: Number, D: XYLineDataset<X, Y>> of(vararg values: D): XYLineChart<X, Y> = XYLineChart<X, Y>().apply {
       datasets = mutableListOf(*values)
     }
 
-    @JvmStatic fun <T: Number> of(vararg values: T) = CategoryLineChart<T>().apply {
+    @JvmStatic fun <T: Number> of(vararg values: T): CategoryLineChart<T> = CategoryLineChart<T>().apply {
       datasets = mutableListOf(LineDataset.of(*values))
     }
 
-    @JvmStatic fun <X: Number, Y: Number> of(vararg points: Coordinates<X, Y>) = XYLineChart<X, Y>().apply {
+    @JvmStatic fun <X: Number, Y: Number> of(vararg points: Coordinates<X, Y>): XYLineChart<X, Y> = XYLineChart<X, Y>().apply {
       datasets = mutableListOf(LineDataset.of(*points))
     }
   }
 
   var borderPainted: Boolean = false
-  override val ranges = Grid<X, Y>()
+  override val ranges: Grid<X, Y> = Grid()
 
   override fun paintComponent(g: Graphics2D) {
     val gridWidth = width - (margins.left + margins.right)
@@ -141,7 +141,7 @@ abstract class LineChart<X: Number, Y: Number, D: LineDataset<X, Y>>: GridChartW
     }
   }
 
-  override fun findMinMax() = if (ranges.isInitialized) ranges else ranges * (ranges + MinMax()).apply {
+  override fun findMinMax(): MinMax<X, Y> = if (ranges.isInitialized) ranges else ranges * (ranges + MinMax()).apply {
     datasets.forEach { it.data.forEach(::process) }
   }
 
@@ -209,7 +209,7 @@ abstract class LineChart<X: Number, Y: Number, D: LineDataset<X, Y>>: GridChartW
     }
   }
 
-  fun findLocation(xy: MinMax<X, Y>, coordinates: Coordinates<X, Y>) = Point2D.Double(
+  fun findLocation(xy: MinMax<X, Y>, coordinates: Coordinates<X, Y>): Point2D.Double = Point2D.Double(
     findX(xy, coordinates.x) + margins.left, findY(xy, coordinates.y) + margins.top
   )
 
@@ -217,7 +217,7 @@ abstract class LineChart<X: Number, Y: Number, D: LineDataset<X, Y>>: GridChartW
     datasets.firstOrNull()?.add(x to y)
   }
 
-  fun getDataset() = datasets.first()
+  fun getDataset(): D = datasets.first()
 
   @JvmName("getDataset")
   operator fun get(label: String): LineDataset<X, Y> = datasets.find { it.label == label } ?: throw NoSuchElementException("Cannot find dataset with label $datasets")

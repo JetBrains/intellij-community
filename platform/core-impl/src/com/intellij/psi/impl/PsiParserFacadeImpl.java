@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl;
 
@@ -28,8 +28,7 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
   }
 
   @Override
-  @NotNull
-  public PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
+  public @NotNull PsiElement createWhiteSpaceFromText(@NotNull @NonNls String text) throws IncorrectOperationException {
     FileElement holderElement = DummyHolderFactory.createHolder(myManager, null).getTreeElement();
     LeafElement newElement = ASTFactory.leaf(TokenType.WHITE_SPACE, holderElement.getCharTable().intern(text));
     holderElement.rawAddChildren(newElement);
@@ -38,16 +37,14 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
   }
 
   @Override
-  @NotNull
-  public PsiComment createLineCommentFromText(@NotNull LanguageFileType fileType,
-                                              @NotNull String text) throws IncorrectOperationException {
+  public @NotNull PsiComment createLineCommentFromText(@NotNull LanguageFileType fileType,
+                                                       @NotNull String text) throws IncorrectOperationException {
     return createLineCommentFromText(fileType.getLanguage(), text);
   }
 
   @Override
-  @NotNull
-  public PsiComment createLineCommentFromText(@NotNull Language language,
-                                              @NotNull String text) throws IncorrectOperationException {
+  public @NotNull PsiComment createLineCommentFromText(@NotNull Language language,
+                                                       @NotNull String text) throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null;
     String prefix = commenter.getLineCommentPrefix();
@@ -59,10 +56,9 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
     return findPsiCommentChild(aFile);
   }
 
-  @NotNull
   @Override
-  public PsiComment createBlockCommentFromText(@NotNull Language language,
-                                               @NotNull String text) throws IncorrectOperationException {
+  public @NotNull PsiComment createBlockCommentFromText(@NotNull Language language,
+                                                        @NotNull String text) throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null : language;
     String blockCommentPrefix = commenter.getBlockCommentPrefix();
@@ -74,9 +70,8 @@ public final class PsiParserFacadeImpl implements PsiParserFacade {
   }
 
   @Override
-  @NotNull
-  public PsiComment createLineOrBlockCommentFromText(@NotNull Language language,
-                                                     @NotNull String text) throws IncorrectOperationException {
+  public @NotNull PsiComment createLineOrBlockCommentFromText(@NotNull Language language,
+                                                              @NotNull String text) throws IncorrectOperationException {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(language);
     assert commenter != null : language;
     String prefix = commenter.getLineCommentPrefix();

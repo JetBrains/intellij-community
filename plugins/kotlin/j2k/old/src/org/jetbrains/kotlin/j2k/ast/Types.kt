@@ -25,7 +25,7 @@ enum class Mutability {
     Default
 }
 
-fun Mutability.isMutable(settings: ConverterSettings) = when(this) {
+fun Mutability.isMutable() = when(this) {
     Mutability.Mutable -> true
     Mutability.NonMutable -> false
     Mutability.Default -> false //TODO: setting?

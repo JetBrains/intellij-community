@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven
 
 import com.intellij.build.BuildProgressListener
@@ -6,15 +6,19 @@ import com.intellij.build.BuildViewManager
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.OutputBuildEvent
-import com.intellij.ide.CommandLineInspectionProjectConfigurator
+import com.intellij.ide.CommandLineInspectionProjectAsyncConfigurator
 import com.intellij.ide.CommandLineInspectionProjectConfigurator.ConfiguratorContext
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.environment.EnvironmentService
+import com.intellij.ide.impl.ProjectOpenKeyProvider
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAsyncAware
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfigurationViewManager
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module.LanguageLevelUtil.getNextLanguageLevel
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -30,6 +34,8 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.pom.java.LanguageLevel.HIGHEST
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.lang.JavaVersion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProject
@@ -52,7 +58,7 @@ private const val MAVEN_COMMAND_LINE_CONFIGURATOR_EXIT_ON_UNRESOLVED_PLUGINS = "
 private const val MAVEN_LINEAR_IMPORT = "maven.linear.import"
 private val MAVEN_OUTPUT_LOG = Logger.getInstance("MavenOutput")
 
-class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectConfigurator {
+class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProjectAsyncConfigurator {
   override fun getName(): String = "maven"
 
   override fun getDescription(): String = MavenProjectBundle.message("maven.commandline.description")
@@ -62,10 +68,18 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     Registry.get(MAVEN_CREATE_DUMMY_MODULE_ON_FIRST_IMPORT_REGISTRY_KEY).setValue(false)
   }
 
-  override fun configureProject(project: Project, context: ConfiguratorContext) {
+  override suspend fun configureProjectAsync(project: Project, context: ConfiguratorContext) {
     val basePath = context.projectPath.pathString
     val pomXmlFile = basePath + "/" + MavenConstants.POM_XML
     if (FileUtil.findFirstThatExist(pomXmlFile) == null) return
+
+    val service = service<EnvironmentService>()
+    val projectSelectionKey = service.getEnvironmentValue(ProjectOpenKeyProvider.PROJECT_OPEN_PROCESSOR, "Maven")
+
+    if (projectSelectionKey != "Maven") {
+      // something else was selected to open the project
+      return
+    }
 
     val mavenProjectAware = ExternalSystemUnlinkedProjectAware.getInstance(MavenUtil.SYSTEM_ID)!!
     val isMavenProjectLinked = mavenProjectAware.isLinkedProject(project, basePath)
@@ -83,9 +97,11 @@ class MavenCommandLineInspectionProjectConfigurator : CommandLineInspectionProje
     syncViewManager.addListener(progressListener, disposable)
 
     if (!isMavenProjectLinked) {
-      ApplicationManager.getApplication().invokeAndWait {
-        mavenProjectAware.linkAndLoadProject(project, basePath)
+      withContext(Dispatchers.EDT) {
+        FileDocumentManager.getInstance().saveAllDocuments()
+        MavenUtil.setupProjectSdk(project)
       }
+      (mavenProjectAware as ExternalSystemUnlinkedProjectAsyncAware).linkAndLoadProjectAsync(project, basePath)
     }
     MavenLog.LOG.warn("linked finished for ${project.name}")
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)

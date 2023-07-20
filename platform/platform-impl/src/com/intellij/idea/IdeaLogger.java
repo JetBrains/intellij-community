@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,9 +47,9 @@ public final class IdeaLogger extends JulLogger {
    * We try to report exceptions thrown from frequently called methods (e.g. {@link Component#paint(Graphics)}) judiciously,
    * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
    * we print the error message and the stacktrace once in a while.
-   *
+   * <p>
    *  "-Didea.logger.exception.expiration.minutes=5" means to forget about this particular exception if it didn't occur for five minutes.
-   *
+   * <p>
    *  To disable this "mute frequent exceptions" feature completely specify "-Didea.logger.exception.expiration.minutes=0"
    */
   private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 8*60);
@@ -123,8 +124,11 @@ public final class IdeaLogger extends JulLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    if (isTooFrequentException(t)) return;
-    myLogger.log(Level.SEVERE, "{0}", LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
+    if (isTooFrequentException(t)) {
+      return;
+    }
+
+    myLogger.log(Level.SEVERE, "{0}", LogMessage.eventOf(t != null ? t : new Throwable(), message, List.of(attachments)));
     if (t != null) {
       reportToFus(t);
     }

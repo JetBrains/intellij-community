@@ -19,14 +19,13 @@ public class DisplayTroubleInfoCollector implements GeneralTroubleInfoCollector 
   @Override
   public String collectInfo(@NotNull Project project) {
     StringBuilder output = new StringBuilder();
-    output.append("Displays: \n");
     GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
     for (int i = 0; i < devices.length; i++) {
       DisplayMode displayMode = devices[i].getDisplayMode();
       float scale = JBUIScale.sysScale(devices[i].getDefaultConfiguration());
       Rectangle bounds = devices[i].getDefaultConfiguration().getBounds();
       output.append(
-        String.format("Display %d: %2.0fx%3.0f; scale: %.2f, bounds: %dx%d @ (%d; %d)\n", i, displayMode.getWidth() * scale, displayMode.getHeight() * scale, scale,
+        String.format("Display %d: %dx%d; scale: %.2f, bounds: %dx%d @ (%d; %d)\n", i, displayMode.getWidth(), displayMode.getHeight(), scale,
                       bounds.width, bounds.height, bounds.x, bounds.y));
     }
     return output.toString();

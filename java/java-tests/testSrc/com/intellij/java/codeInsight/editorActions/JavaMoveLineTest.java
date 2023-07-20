@@ -15,10 +15,10 @@
  */
 package com.intellij.java.codeInsight.editorActions;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
 
 public class JavaMoveLineTest extends LightJavaCodeInsightTestCase {
@@ -31,7 +31,7 @@ public class JavaMoveLineTest extends LightJavaCodeInsightTestCase {
 
   public void testMoveThroughFolding() {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
     FoldRegion lambdaStart = getEditor().getFoldingModel().getFoldRegion(140, 227);
     assertNotNull(lambdaStart);
     assertFalse(lambdaStart.isExpanded());

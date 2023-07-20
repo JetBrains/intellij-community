@@ -43,9 +43,9 @@ if(this == $paramName) return true;
 #end
 #macro(addDoubleFieldComparisonCondition $field)
   #if ($field.double)
-  java.lang.Double.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
+  java.lang.Double.compare($field.accessor,${classInstanceName}.$field.accessor) != 0 ##
   #else
-  java.lang.Float.compare(${classInstanceName}.$field.accessor, $field.accessor) != 0 ##
+  java.lang.Float.compare($field.accessor,${classInstanceName}.$field.accessor) != 0 ##
   #end
 #end
 #macro(addPrimitiveFieldComparisonConditionDirect $field)
@@ -53,8 +53,8 @@ if(this == $paramName) return true;
 #end
 #macro(addDoubleFieldComparisonConditionDirect $field)
   #if ($field.double)
-  java.lang.Double.compare(${classInstanceName}.$field.accessor, $field.accessor) == 0 ##
+  java.lang.Double.compare($field.accessor,${classInstanceName}.$field.accessor) == 0 ##
   #else
-  java.lang.Float.compare(${classInstanceName}.$field.accessor, $field.accessor) == 0 ##
+  java.lang.Float.compare($field.accessor,${classInstanceName}.$field.accessor) == 0 ##
   #end
 #end

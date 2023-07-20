@@ -19,7 +19,7 @@ open class DirProvider {
   open val defaultExtension: String
     get() = "png"
 
-  open fun dir(): String = ICONS_DIR_PREFIX + if (StartupUiUtil.isUnderDarcula()) "darcula/" else "intellij/"
+  open fun dir(): String = ICONS_DIR_PREFIX + if (StartupUiUtil.isUnderDarcula) "darcula/" else "intellij/"
 }
 
 object LafIconLookup {

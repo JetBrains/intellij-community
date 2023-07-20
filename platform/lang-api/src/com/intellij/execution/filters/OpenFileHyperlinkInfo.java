@@ -34,6 +34,11 @@ public class OpenFileHyperlinkInfo extends FileHyperlinkInfoBase implements File
     myFile = file;
   }
 
+  public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull VirtualFile file, int documentLine, int documentColumn, boolean isUseBrowser) {
+    super(project, documentLine, documentColumn, isUseBrowser);
+    myFile = file;
+  }
+
   public OpenFileHyperlinkInfo(@NotNull Project project, @NotNull final VirtualFile file, final int line) {
     this(project, file, line, 0);
   }

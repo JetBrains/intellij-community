@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
@@ -38,8 +38,7 @@ import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.MemberScopeImpl
 import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
-import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.SimpleType
+import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
 
 class CodeFragmentCodegenException(val reason: Exception) : Exception()
@@ -48,7 +47,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
     companion object {
         fun useIRFragmentCompiler(): Boolean =
-            Registry.get("debugger.kotlin.evaluator.use.jvm.ir.backend").asBoolean()
+            Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend").asBoolean()
     }
 
     data class CompilationResult(
@@ -126,6 +125,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
             return fragmentCompilerBackend.extractResult(methodDescriptor, parameterInfo, generationState).also {
+                compilingStrategy.onSuccess()
                 generationState.destroy()
             }
         } catch (e: ProcessCanceledException) {
@@ -186,10 +186,36 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             CallableMemberDescriptor.Kind.SYNTHESIZED, classDescriptor.source
         )
 
+        val typeParameterUpperBoundEraser = TypeParameterUpperBoundEraser(ErasureProjectionComputer())
+        val erasureTypeAttributes = ErasureTypeAttributes(TypeUsage.COMMON)
+
+        fun upperBoundIfTypeParameter(type: KotlinType) =
+            TypeUtils.getTypeParameterDescriptorOrNull(type)
+                ?.let { typeParameterUpperBoundEraser.getErasedUpperBound(it, erasureTypeAttributes) }
+
+        fun eraseTypeArguments(type: KotlinType): KotlinType {
+            val erasedArguments = type.arguments.mapNotNull {
+                val upperBound = upperBoundIfTypeParameter(it.type) ?: return@mapNotNull null
+                it.replaceType(upperBound)
+            }
+            if (erasedArguments.size == type.arguments.size) {
+                return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
+                    type.attributes,
+                    type.constructor,
+                    erasedArguments,
+                    type.isMarkedNullable,
+                    type.memberScope
+                )
+            }
+            return type
+        }
+
+        fun erase(type: KotlinType): KotlinType = upperBoundIfTypeParameter(type) ?: eraseTypeArguments(type)
+
         val parameters = parameterInfo.parameters.mapIndexed { index, parameter ->
             ValueParameterDescriptorImpl(
                 methodDescriptor, null, index, Annotations.EMPTY, Name.identifier("p$index"),
-                parameter.targetType,
+                erase(parameter.targetType),
                 declaresDefaultValue = false,
                 isCrossinline = false,
                 isNoinline = false,
@@ -200,7 +226,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
 
         methodDescriptor.initialize(
             null, classDescriptor.thisAsReceiverParameter, emptyList(), emptyList(),
-            parameters, returnType, Modality.FINAL, DescriptorVisibilities.PUBLIC
+            parameters, erase(returnType), Modality.FINAL, DescriptorVisibilities.PUBLIC
         )
 
         val memberScope = EvaluatorMemberScopeForMethod(methodDescriptor)

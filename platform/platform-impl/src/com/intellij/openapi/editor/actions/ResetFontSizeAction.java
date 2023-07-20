@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.execution.impl.ConsoleViewUtil;
-import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsUtils;
@@ -17,9 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -29,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class ResetFontSizeAction extends EditorAction {
-  private static final String UNSCALED_FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
-  private static final String UNSCALED_FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
+  static final String UNSCALED_FONT_SIZE_TO_RESET_CONSOLE = "fontSizeToResetConsole";
+  static final String UNSCALED_FONT_SIZE_TO_RESET_EDITOR = "fontSizeToResetEditor";
   public static final String PREVIOUS_COLOR_SCHEME = "previousColorScheme";
 
   @ApiStatus.Internal
@@ -53,10 +50,8 @@ public final class ResetFontSizeAction extends EditorAction {
 
     @Override
     public float getFontSize() {
-      if (ConsoleViewUtil.isConsoleViewEditor(myEditorEx)) {
-        return UISettingsUtils.getInstance().getScaledConsoleFontSize();
-      }
-      return UISettingsUtils.getInstance().getScaledEditorFontSize();
+      UISettingsUtils uiSettings = UISettingsUtils.getInstance();
+      return ConsoleViewUtil.isConsoleViewEditor(myEditorEx) ? uiSettings.getScaledConsoleFontSize() : uiSettings.getScaledEditorFontSize();
     }
 
     @Override
@@ -170,28 +165,6 @@ public final class ResetFontSizeAction extends EditorAction {
         return;
       }
       getStrategy((EditorEx)editor).reset();
-    }
-  }
-
-  private static final class Listener implements EditorColorsListener, ApplicationInitializedListener {
-    @Override
-    public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
-      impl(false);
-    }
-
-    @Override
-    public void componentsInitialized() {
-      impl(true);
-    }
-
-    private static void impl(boolean force) {
-      PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (force || !propertyComponent.getValue(PREVIOUS_COLOR_SCHEME, "").equals(globalScheme.getName())) {
-        propertyComponent.setValue(PREVIOUS_COLOR_SCHEME, globalScheme.getName());
-        propertyComponent.setValue(UNSCALED_FONT_SIZE_TO_RESET_CONSOLE, globalScheme.getConsoleFontSize2D(), -1);
-        propertyComponent.setValue(UNSCALED_FONT_SIZE_TO_RESET_EDITOR, globalScheme.getEditorFontSize2D(), -1);
-      }
     }
   }
 }

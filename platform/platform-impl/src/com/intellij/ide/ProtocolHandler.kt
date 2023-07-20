@@ -7,12 +7,12 @@ interface ProtocolHandler {
      * This exit code tells the platform that it shouldn't display the welcome screen,
      * because the handler wants to take full care of the UI (not applicable if URI is handled by an already running instance).
      */
-    const val PLEASE_NO_UI = -1
+    const val PLEASE_NO_UI: Int = -1
 
     /**
      * This exit code tells the platform that it should shut itself down (not applicable if URI is handled by an already running instance).
      */
-    const val PLEASE_QUIT = -2
+    const val PLEASE_QUIT: Int = -2
   }
 
   val scheme: String

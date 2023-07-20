@@ -283,9 +283,7 @@ public final class RecentLocationsAction extends DumbAwareAction implements Ligh
     topPanel.setPreferredSize(size);
     topPanel.setBorder(JBUI.Borders.empty(5, 8));
 
-    WindowMoveListener moveListener = new WindowMoveListener(topPanel);
-    topPanel.addMouseListener(moveListener);
-    topPanel.addMouseMotionListener(moveListener);
+    new WindowMoveListener(topPanel).installTo(topPanel);
 
     return topPanel;
   }

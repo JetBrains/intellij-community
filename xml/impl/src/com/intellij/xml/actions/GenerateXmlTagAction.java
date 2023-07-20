@@ -52,8 +52,7 @@ import java.util.*;
 /**
  * @author Dmitry Avdeev
  */
-public class GenerateXmlTagAction extends SimpleCodeInsightAction {
-
+public final class GenerateXmlTagAction extends SimpleCodeInsightAction {
   public static final ThreadLocal<String> TEST_THREAD_LOCAL = new ThreadLocal<>();
   private final static Logger LOG = Logger.getInstance(GenerateXmlTagAction.class);
 

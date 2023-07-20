@@ -6,8 +6,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.PropertyBinding
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -18,7 +20,7 @@ import javax.swing.JLabel
  */
 @Deprecated("Use \"\" instead of this constant")
 @ApiStatus.ScheduledForRemoval
-val EMPTY_LABEL = ""
+val EMPTY_LABEL: String = ""
 
 @ApiStatus.NonExtendable
 @JvmDefaultWithCompatibility
@@ -32,11 +34,11 @@ interface Panel : CellBase<Panel> {
 
   override fun enabledIf(predicate: ComponentPredicate): Panel
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Panel
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Panel
 
@@ -46,7 +48,11 @@ interface Panel : CellBase<Panel> {
 
   override fun gap(rightGap: RightGap): Panel
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Panel
+
+  override fun customize(customGaps: UnscaledGaps): Panel
 
   /**
    * Adds standard left indent and groups rows into [RowsRange] that allows to use some groups operations on the rows

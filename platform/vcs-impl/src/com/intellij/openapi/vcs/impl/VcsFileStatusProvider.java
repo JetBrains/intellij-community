@@ -13,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use {@link  FileStatusManager} instead.
  */
-@Service
+@Service(Service.Level.PROJECT)
 @Deprecated(forRemoval = true)
 public final class VcsFileStatusProvider {
   private final Project myProject;

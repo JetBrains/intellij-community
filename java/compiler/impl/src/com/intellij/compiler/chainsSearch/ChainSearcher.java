@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.chainsSearch;
 
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
@@ -168,15 +168,9 @@ public final class ChainSearcher {
       OperationChain chain = result.get(i);
       OperationChain.CompareResult r = OperationChain.compare(chain, newChain);
       switch (r) {
-        case LEFT_CONTAINS_RIGHT:
-          indicesToRemove.push(i);
-          break;
-        case RIGHT_CONTAINS_LEFT:
-        case EQUAL:
-          doAdd = false;
-          break;
-        case NOT_EQUAL:
-          break;
+        case LEFT_CONTAINS_RIGHT -> indicesToRemove.push(i);
+        case RIGHT_CONTAINS_LEFT, EQUAL -> doAdd = false;
+        case NOT_EQUAL -> {}
       }
     }
     while (!indicesToRemove.isEmpty()) {

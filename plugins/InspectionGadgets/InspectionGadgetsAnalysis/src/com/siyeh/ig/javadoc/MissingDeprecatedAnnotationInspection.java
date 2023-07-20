@@ -15,17 +15,15 @@
  */
 package com.siyeh.ig.javadoc;
 
-import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -35,7 +33,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -68,13 +65,12 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos[0] == null && !ApplicationManager.getApplication().isUnitTestMode()) return null;
+  protected LocalQuickFix buildFix(Object... infos) {
     final boolean annotationWarning = infos[0] == Boolean.TRUE;
     return annotationWarning ? new MissingDeprecatedAnnotationFix() : new MissingDeprecatedTagFix();
   }
 
-  private static class MissingDeprecatedAnnotationFix extends InspectionGadgetsFix {
+  private static class MissingDeprecatedAnnotationFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -83,8 +79,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement identifier = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement identifier, @NotNull ModPsiUpdater updater) {
       final PsiModifierListOwner parent = (PsiModifierListOwner)identifier.getParent();
       if (parent == null) {
         return;
@@ -99,7 +94,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
   }
 
-  private static class MissingDeprecatedTagFix extends InspectionGadgetsFix {
+  private static class MissingDeprecatedTagFix extends PsiUpdateModCommandQuickFix {
     @NonNls private static final String DEPRECATED_TAG_NAME = "deprecated";
     private static final String TEXT = " TODO: explain";
 
@@ -111,8 +106,8 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement parent = descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement parent = element.getParent();
       if (!(parent instanceof PsiJavaDocumentedElement documentedElement)) {
         return;
       }
@@ -123,7 +118,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
         PsiDocTag addedTag = existingTag != null
                              ? (PsiDocTag)existingTag.replace(deprecatedTag)
                              : (PsiDocTag)docComment.add(deprecatedTag);
-        moveCaretAfter(addedTag);
+        moveCaretAfter(addedTag, updater);
       }
       else {
         @NlsSafe PsiDocComment newDocComment = JavaPsiFacade.getElementFactory(project).createDocCommentFromText(
@@ -132,30 +127,21 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
         PsiDocComment addedComment = (PsiDocComment)documentedElement.addBefore(newDocComment, documentedElement.getFirstChild());
         PsiDocTag addedTag = addedComment.findTagByName(DEPRECATED_TAG_NAME);
         if (addedTag != null) {
-          moveCaretAfter(addedTag);
+          moveCaretAfter(addedTag, updater);
         }
       }
     }
 
-    private static void moveCaretAfter(PsiDocTag tag) {
-      if (IntentionPreviewUtils.isPreviewElement(tag)) {
-        return;
-      }
-      Editor editor = FileEditorManager.getInstance(tag.getProject()).getSelectedTextEditor();
-      if (editor == null) {
-        return;
-      }
+    private static void moveCaretAfter(PsiDocTag tag, @NotNull ModPsiUpdater updater) {
       PsiElement sibling = tag.getNextSibling();
-      if (sibling instanceof Navigatable navigatable) {
-        navigatable.navigate(true);
-      }
       PsiDocTagValue valueElement = tag.getValueElement();
-      if (valueElement == null) {
-        return;
+      if (valueElement != null) {
+        int start = valueElement.getTextOffset();
+        int end = tag.getTextOffset() + tag.getTextLength();
+        updater.select(TextRange.create(start, end));
+      } else {
+        updater.moveTo(sibling);
       }
-      int start = valueElement.getTextOffset();
-      int end = tag.getTextOffset() + tag.getTextLength();
-      editor.getSelectionModel().setSelection(start, end);
     }
   }
 
@@ -176,7 +162,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       super.visitModule(module);
       if (hasDeprecatedAnnotation(module)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(module, true)) {
-          registerModuleError(module, isOnTheFly() ? Boolean.FALSE : null);
+          registerModuleError(module, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(module, false)) {
@@ -189,7 +175,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
       super.visitClass(aClass);
       if (hasDeprecatedAnnotation(aClass)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(aClass, true)) {
-          registerClassError(aClass, isOnTheFly() ? Boolean.FALSE : null);
+          registerClassError(aClass, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(aClass, false)) {
@@ -211,7 +197,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
             }
             m = MethodUtils.getSuper(m);
           }
-          registerMethodError(method, isOnTheFly() ? Boolean.FALSE : null);
+          registerMethodError(method, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(method, false)) {
@@ -223,7 +209,7 @@ final class MissingDeprecatedAnnotationInspection extends BaseInspection impleme
     public void visitField(@NotNull PsiField field) {
       if (hasDeprecatedAnnotation(field)) {
         if (warnOnMissingJavadoc && !hasDeprecatedComment(field, true)) {
-          registerFieldError(field, isOnTheFly() ? Boolean.FALSE : null);
+          registerFieldError(field, Boolean.FALSE);
         }
       }
       else if (hasDeprecatedComment(field, false)) {

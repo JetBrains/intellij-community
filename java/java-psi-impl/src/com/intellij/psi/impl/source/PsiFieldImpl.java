@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -22,7 +22,6 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stub.JavaStubImplUtil;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -33,10 +32,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements PsiField, PsiVariableEx, Queryable {
   private static final Logger LOG = Logger.getInstance(PsiFieldImpl.class);
@@ -113,7 +115,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
   public @NotNull PsiType getType() {
     PsiFieldStub stub = getStub();
     if (stub != null) {
-      PsiType type = SoftReference.dereference(myCachedType);
+      PsiType type = dereference(myCachedType);
       if (type == null) {
         type = JavaSharedImplUtil.createTypeFromStub(this, stub.getType());
         myCachedType = new SoftReference<>(type);
@@ -265,7 +267,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     return ElementPresentationUtil.addVisibilityIcon(this, flags, baseIcon);
   }
 
-  private static class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
+  private static final class OurConstValueComputer implements JavaResolveCache.ConstValueComputer {
     private static final OurConstValueComputer INSTANCE = new OurConstValueComputer();
 
     @Override

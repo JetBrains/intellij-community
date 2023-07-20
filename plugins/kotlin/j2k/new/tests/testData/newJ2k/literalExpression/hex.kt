@@ -10,5 +10,9 @@ internal class Test {
         val l3 = 0xffffffffffL
         val l4 = -0x1L
         val l5 = -0x1000000000000000L
+        val f1 = 3.1412354f
+        val f2 = 3.1412354f
+        val d1 = 1024.0
+        val d2 = 1024.0
     }
 }

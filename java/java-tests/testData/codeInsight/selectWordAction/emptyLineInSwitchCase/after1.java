@@ -5,9 +5,9 @@ class C {
                 System.out.println(0);
                 break;
             case 1:
-<selection><caret>                System.out.println(1);
-</selection>
+<selection>                System.out.println(1);
+<caret>
                 break;
-        }
+</selection>        }
     }
 }

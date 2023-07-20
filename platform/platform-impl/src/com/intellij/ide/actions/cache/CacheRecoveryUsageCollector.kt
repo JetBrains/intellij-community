@@ -8,13 +8,14 @@ import com.intellij.openapi.project.Project
 
 internal class CacheRecoveryUsageCollector : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("cache.recovery.actions", 2)
+    private val GROUP = EventLogGroup("cache.recovery.actions", 3)
 
     private val ACTION_ID_FIELD =
       EventFields.String("action-id",
         listOf(
           "refresh",
           "hammer",
+          "recover-from-log",
           "reindex",
           "drop-shared-index",
           "rescan",

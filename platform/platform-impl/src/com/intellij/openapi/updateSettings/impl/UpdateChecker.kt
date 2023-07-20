@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
@@ -27,9 +28,9 @@ import com.intellij.openapi.util.*
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.reference.SoftReference
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -42,6 +43,7 @@ import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
+import java.lang.ref.SoftReference
 import java.net.HttpURLConnection
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
@@ -63,8 +65,8 @@ object UpdateChecker {
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
   private const val PRODUCT_DATA_TTL_MIN = 5L
-  const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
-  const val MACHINE_ID_PARAMETER = "mid"
+  const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
+  const val MACHINE_ID_PARAMETER: String = "mid"
 
   private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -114,14 +116,14 @@ object UpdateChecker {
   @JvmStatic
   fun updateAndShowResult(): ActionCallback {
     return ActionCallback().also {
-      ProcessIOExecutorService.INSTANCE.execute {
+      ProcessIOExecutorService.INSTANCE.execute(Runnable {
         doUpdateAndShowResult(
           userInitiated = false,
           preferDialog = false,
           showSettingsLink = true,
           callback = it,
         )
-      }
+      })
     }
   }
 
@@ -271,7 +273,7 @@ object UpdateChecker {
   @Throws(IOException::class, JDOMException::class)
   fun loadProductData(indicator: ProgressIndicator?): Product? =
     productDataLock.withLock {
-      val cached = SoftReference.dereference(productDataCache)
+      val cached = productDataCache?.get()
       if (cached != null) return@withLock cached.getOrThrow()
 
       val result = runCatching {
@@ -332,7 +334,7 @@ object UpdateChecker {
     if (!PluginEnabler.HEADLESS.isIgnoredDisabledPlugins) {
       val brokenPlugins = MarketplaceRequests.getInstance().getBrokenPlugins(ApplicationInfo.getInstance().build)
       if (brokenPlugins.isNotEmpty()) {
-        PluginManagerCore.updateBrokenPlugins(brokenPlugins)
+        updateBrokenPlugins(brokenPlugins)
       }
     }
 
@@ -806,7 +808,7 @@ object UpdateChecker {
   @Deprecated(level = DeprecationLevel.ERROR, replaceWith = ReplaceWith("getNotificationGroup()"), message = "Use getNotificationGroup()")
   @Suppress("DEPRECATION", "unused")
   @JvmField
-  val NOTIFICATIONS = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
+  val NOTIFICATIONS: NotificationGroup = NotificationGroup("IDE and Plugin Updates", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginManagerCore.CORE_ID)
 
   @get:ApiStatus.ScheduledForRemoval
   @get:Deprecated(message = "Use disabledToUpdate", replaceWith = ReplaceWith("disabledToUpdate"))

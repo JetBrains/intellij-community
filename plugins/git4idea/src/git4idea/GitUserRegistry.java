@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitUserRegistry implements Disposable, VcsMappingListener {
   private static final Logger LOG = Logger.getInstance(GitUserRegistry.class);
 

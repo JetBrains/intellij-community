@@ -13,6 +13,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.webSymbols.WebSymbol
+import com.intellij.webSymbols.WebSymbolApiStatus
 import com.intellij.webSymbols.WebSymbolOrigin
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
@@ -105,8 +106,21 @@ internal class WebSymbolDocumentationTargetImpl(override val symbol: WebSymbol,
     private fun buildSections(doc: WebSymbolDocumentation): Map<String, String> =
       LinkedHashMap(doc.descriptionSections).also { sections ->
         if (doc.required) sections[WebSymbolsBundle.message("mdn.documentation.section.isRequired")] = ""
-        if (doc.deprecated) sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = ""
-        if (doc.experimental) sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = ""
+        doc.apiStatus?.let { status ->
+          when (status) {
+            is WebSymbolApiStatus.Deprecated -> {
+              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Deprecated")] = status.message ?: ""
+              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.DeprecatedSince")] = it }
+            }
+            is WebSymbolApiStatus.Experimental -> {
+              sections[WebSymbolsBundle.message("mdn.documentation.section.status.Experimental")] = status.message ?: ""
+              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
+            }
+            is WebSymbolApiStatus.Stable -> {
+              status.since?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.status.Since")] = it }
+            }
+          }
+        }
         doc.defaultValue?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.defaultValue")] = "<p><code>$it</code>" }
         doc.library?.let { sections[WebSymbolsBundle.message("mdn.documentation.section.library")] = "<p>$it" }
       }

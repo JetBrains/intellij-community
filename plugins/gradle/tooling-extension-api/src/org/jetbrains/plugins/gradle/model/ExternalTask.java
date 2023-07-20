@@ -36,4 +36,6 @@ public interface ExternalTask extends Serializable {
   String getType();
 
   boolean isTest();
+
+  boolean isJvmTest();
 }

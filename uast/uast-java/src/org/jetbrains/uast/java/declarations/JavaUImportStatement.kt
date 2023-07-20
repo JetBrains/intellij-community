@@ -18,7 +18,6 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiImportStatementBase
 import com.intellij.psi.ResolveResult
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UImportStatement
@@ -37,5 +36,5 @@ class JavaUImportStatement(
     sourcePsi.importReference?.multiResolve(false)?.asIterable() ?: emptyList()
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi: PsiImportStatementBase get() = sourcePsi
 }

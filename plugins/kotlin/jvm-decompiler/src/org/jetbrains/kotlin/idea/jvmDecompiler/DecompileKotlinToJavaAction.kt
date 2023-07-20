@@ -12,13 +12,14 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
+import org.jetbrains.kotlin.idea.internal.KotlinJvmDecompilerFacade
 import org.jetbrains.kotlin.psi.KtFile
 
 class DecompileKotlinToJavaAction : AnAction(KotlinJvmDecompilerBundle.message("action.decompile.java.name")) {
     override fun actionPerformed(e: AnActionEvent) {
         val binaryFile = getBinaryKotlinFile(e) ?: return
 
-        KotlinJvmDecompilerFacadeImpl.showDecompiledCode(binaryFile)
+        KotlinJvmDecompilerFacade.getInstance()?.showDecompiledCode(binaryFile)
     }
 
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
@@ -54,7 +55,7 @@ internal class DecompileKotlinToJavaActionProvider : AttachSourcesProvider {
             override fun getName() = KotlinJvmDecompilerBundle.message("action.decompile.java.name")
 
             override fun perform(orderEntriesContainingFile: List<LibraryOrderEntry>): ActionCallback {
-                KotlinJvmDecompilerFacadeImpl.showDecompiledCode(psiFile)
+                KotlinJvmDecompilerFacade.getInstance()?.showDecompiledCode(psiFile)
                 return ActionCallback.DONE
             }
 

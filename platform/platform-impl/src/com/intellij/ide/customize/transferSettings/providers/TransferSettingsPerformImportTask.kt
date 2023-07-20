@@ -9,7 +9,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.util.application
 
-open class TransferSettingsPerformImportTask(project: Project,
+open class TransferSettingsPerformImportTask(project: Project?,
                                              private val performer: ImportPerformer,
                                              private var settings: Settings,
                                              private val shouldInstallPlugins: Boolean) : Task.Backgroundable(project,

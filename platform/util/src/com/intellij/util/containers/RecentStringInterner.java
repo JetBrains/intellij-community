@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
@@ -23,9 +23,8 @@ public final class RecentStringInterner {
     int capacity = 8192;
     for(int i = 0; i < myInterns.length; ++i) {
       myInterns[i] = new SLRUCache<String, String>(capacity / stripes, capacity / stripes) {
-        @NotNull
         @Override
-        public String createValue(String key) {
+        public @NotNull String createValue(String key) {
           return key;
         }
 
@@ -42,9 +41,8 @@ public final class RecentStringInterner {
     LowMemoryWatcher.register(this::clear, parentDisposable);
   }
 
-  @Nullable
   @Contract("null -> null")
-  public String get(@Nullable String s) {
+  public @Nullable String get(@Nullable String s) {
     if (s == null) return null;
     final int stripe = Math.abs(s.hashCode()) & myStripeMask;
     myStripeLocks[stripe].lock();

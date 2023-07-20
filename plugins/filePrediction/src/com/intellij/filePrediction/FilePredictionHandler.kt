@@ -42,6 +42,10 @@ class FilePredictionHandler(private val project: Project) : Disposable {
         }
       })
     }
+
+    if (Registry.`is`("filePrediction.highlighting.cache.enabled")) {
+      FilePredictionCache.getInstance(project).fileOpened(newFile)
+    }
   }
 
   override fun dispose() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.io;
 
 import com.google.gson.JsonParseException;
@@ -157,17 +157,13 @@ public final class JsonReaderEx implements Closeable {
   public JsonReaderEx subReader() {
     JsonToken nextToken = peek();
     switch (nextToken) {
-      case BEGIN_ARRAY:
-      case BEGIN_OBJECT:
-      case STRING:
-      case NUMBER:
-      case BOOLEAN:
-        break;
-      case NULL:
+      case BEGIN_ARRAY, BEGIN_OBJECT, STRING, NUMBER, BOOLEAN -> {
+      }
+      case NULL -> {
         // just return null
         return null;
-      default:
-        throw createParseError("Cannot create sub reader, next token " + nextToken + " is not value");
+      }
+      default -> throw createParseError("Cannot create sub reader, next token " + nextToken + " is not value");
     }
 
     JsonReaderEx subReader = new JsonReaderEx(sourceSequence, position, stack.clone());
@@ -375,16 +371,15 @@ public final class JsonReaderEx implements Closeable {
       // Look for a colon before the value.
       int c = nextNonWhitespace(true);
       switch (c) {
-        case ':':
-          break;
-        case '=':
+        case ':' -> {
+        }
+        case '=' -> {
           checkLenient();
           if (position < limit && sourceSequence.charAt(position) == '>') {
             position++;
           }
-          break;
-        default:
-          throw createParseError("Expected ':'");
+        }
+        default -> throw createParseError("Expected ':'");
       }
     }
     else if (peekStack == JsonScope.EMPTY_DOCUMENT) {

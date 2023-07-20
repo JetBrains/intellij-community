@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
 import org.jetbrains.kotlin.name.FqName
@@ -21,10 +21,6 @@ import org.jetbrains.kotlin.types.isNullable
 class ReplaceMapGetOrDefaultIntention : SelfTargetingRangeIntention<KtDotQualifiedExpression>(
     KtDotQualifiedExpression::class.java, KotlinBundle.lazyMessage("replace.with.indexing.and.elvis.operator")
 ) {
-    companion object {
-        private val getOrDefaultFqName = FqName("kotlin.collections.Map.getOrDefault")
-    }
-
     override fun applicabilityRange(element: KtDotQualifiedExpression): TextRange? {
         val callExpression = element.callExpression ?: return null
         val calleeExpression = callExpression.calleeExpression ?: return null
@@ -57,3 +53,5 @@ class ReplaceMapGetOrDefaultIntention : SelfTargetingRangeIntention<KtDotQualifi
         return first to second
     }
 }
+
+private val getOrDefaultFqName: FqName = FqName("kotlin.collections.Map.getOrDefault")

@@ -1,10 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.io.NioFiles;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -66,10 +64,10 @@ public abstract class Decompressor {
       TarArchiveEntry te;
       while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
-      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName());
+      if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
       // UNIX permissions are ignored on Windows
-      if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getLinkName());
-      return new Entry(te.getName(), te.isDirectory());
+      if (te.isSymbolicLink()) return new Entry(te.getName(), Entry.Type.SYMLINK, 0, te.getLinkName(), te.getSize());
+      return new Entry(te.getName(), te.isDirectory(), te.getSize());
     }
 
     private static Entry.Type type(TarArchiveEntry te) {
@@ -125,7 +123,7 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() {
       myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
-      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory());
+      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory(), myEntry.getSize());
     }
 
     @Override
@@ -167,24 +165,24 @@ public abstract class Decompressor {
         if (SystemInfo.isWindows) {
           // UNIX permissions are ignored on Windows
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
-            return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry));
+            return new Entry(myEntry.getName(), type(myEntry), 0, myZip.getUnixSymlink(myEntry), myEntry.getSize());
           }
           if (platform == ZipArchiveEntry.PLATFORM_FAT) {
-            return new Entry(myEntry.getName(), type(myEntry), (int)(myEntry.getExternalAttributes()), null);
+            return new Entry(myEntry.getName(), type(myEntry), (int)(myEntry.getExternalAttributes()), null, myEntry.getSize());
           }
         }
         else {
           if (platform == ZipArchiveEntry.PLATFORM_UNIX) {
-            return new Entry(myEntry.getName(), type(myEntry), myEntry.getUnixMode(), myZip.getUnixSymlink(myEntry));
+            return new Entry(myEntry.getName(), type(myEntry), myEntry.getUnixMode(), myZip.getUnixSymlink(myEntry), myEntry.getSize());
           }
           if (platform == ZipArchiveEntry.PLATFORM_FAT) {
             // DOS attributes are converted into Unix permissions
             long attributes = myEntry.getExternalAttributes();
             @SuppressWarnings("OctalInteger") int unixMode = (attributes & Entry.DOS_READ_ONLY) != 0 ? 0444 : 0644;
-            return new Entry(myEntry.getName(), type(myEntry), unixMode, myZip.getUnixSymlink(myEntry));
+            return new Entry(myEntry.getName(), type(myEntry), unixMode, myZip.getUnixSymlink(myEntry), myEntry.getSize());
           }
         }
-        return new Entry(myEntry.getName(), myEntry.isDirectory());
+        return new Entry(myEntry.getName(), myEntry.isDirectory(), myEntry.getSize());
       }
 
       private static Entry.Type type(ZipArchiveEntry e) {
@@ -220,13 +218,14 @@ public abstract class Decompressor {
     public final Type type;
     /** Depending on the source, could be POSIX permissions, DOS attributes, or just {@code 0} */
     public final int mode;
+    public final long size;
     public final @Nullable String linkTarget;
 
-    Entry(String name, boolean isDirectory) {
-      this(name, isDirectory ? Type.DIR : Type.FILE, 0, null);
+    Entry(String name, boolean isDirectory, long size) {
+      this(name, isDirectory ? Type.DIR : Type.FILE, 0, null, size);
     }
 
-    Entry(String name, Type type, int mode, @Nullable String linkTarget) {
+    Entry(String name, Type type, int mode, @Nullable String linkTarget, long size) {
       name = name.trim().replace('\\', '/');
       int s = 0, e = name.length() - 1;
       while (s < e && name.charAt(s) == '/') s++;
@@ -235,13 +234,41 @@ public abstract class Decompressor {
       this.type = type;
       this.mode = mode;
       this.linkTarget = linkTarget;
+      this.size = size;
     }
+  }
+
+  /**
+   * Policy for handling symbolic links which point to outside of archive.
+   * <p>Example:</p>
+   * {@code foo -> /opt/foo}
+   * <p>or</p>
+   * {@code foo -> ../foo}
+   */
+  public enum EscapingSymlinkPolicy {
+    /**
+     * Extract as is with no modification or check. Potentially can point to a completely different object
+     * if archive is transferred from some other host.
+     */
+    ALLOW,
+
+    /**
+     * Check during extraction and throw exception. See {@link com.intellij.util.io.Decompressor#verifySymlinkTarget}
+     */
+    DISALLOW,
+
+    /**
+     * <p>Make absolute symbolic links relative from the extraction directory.</p>
+     * For example, when archive contains link to {@code /opt/foo} and archive is extracted to
+     * {@code /foo/bar} then the resulting link will be {@code /foo/bar/opt/foo}
+     */
+    RELATIVIZE_ABSOLUTE
   }
 
   private @Nullable Predicate<? super Entry> myFilter = null;
   private @Nullable List<String> myPathPrefix = null;
   private boolean myOverwrite = true;
-  private boolean myAllowEscapingSymlinks = true;
+  private EscapingSymlinkPolicy myEscapingSymlinkPolicy = EscapingSymlinkPolicy.ALLOW;
   private BiConsumer<? super Entry, ? super Path> myPostProcessor;
 
   public Decompressor filter(@Nullable Predicate<? super String> filter) {
@@ -259,8 +286,8 @@ public abstract class Decompressor {
     return this;
   }
 
-  public Decompressor allowEscapingSymlinks(boolean allowEscapingSymlinks) {
-    myAllowEscapingSymlinks = allowEscapingSymlinks;
+  public Decompressor escapingSymlinkPolicy(EscapingSymlinkPolicy policy) {
+    myEscapingSymlinkPolicy = policy;
     return this;
   }
 
@@ -336,19 +363,30 @@ public abstract class Decompressor {
               throw new IOException("Invalid symlink entry: " + entry.name + " (empty target)");
             }
 
-            if (!myAllowEscapingSymlinks) {
-              verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+            String target = entry.linkTarget;
+
+            switch (myEscapingSymlinkPolicy) {
+              case DISALLOW: {
+                verifySymlinkTarget(entry.name, entry.linkTarget, outputDir, outputFile);
+                break;
+              }
+              case RELATIVIZE_ABSOLUTE: {
+                if (OSAgnosticPathUtil.isAbsolute(target)) {
+                  target = FileUtil.join(outputDir.toString(), entry.linkTarget.substring(1));
+                }
+                break;
+              }
             }
 
             if (myOverwrite || !Files.exists(outputFile, LinkOption.NOFOLLOW_LINKS)) {
               try {
-                Path outputTarget = Paths.get(entry.linkTarget);
+                Path outputTarget = Paths.get(target);
                 NioFiles.createDirectories(outputFile.getParent());
                 Files.deleteIfExists(outputFile);
                 Files.createSymbolicLink(outputFile, outputTarget);
               }
               catch (InvalidPathException e) {
-                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + entry.linkTarget, e);
+                throw new IOException("Invalid symlink entry: " + entry.name + " -> " + target, e);
               }
             }
             break;
@@ -380,13 +418,13 @@ public abstract class Decompressor {
     }
   }
 
-  private @Nullable static Entry mapPathPrefix(Entry e, List<String> prefix) throws IOException {
+  private static @Nullable Entry mapPathPrefix(Entry e, List<String> prefix) throws IOException {
     List<String> ourPathSplit = normalizePathAndSplit(e.name);
     if (prefix.size() >= ourPathSplit.size() || !ourPathSplit.subList(0, prefix.size()).equals(prefix)) {
       return null;
     }
     String newName = String.join("/", ourPathSplit.subList(prefix.size(), ourPathSplit.size()));
-    return new Entry(newName, e.type, e.mode, e.linkTarget);
+    return new Entry(newName, e.type, e.mode, e.linkTarget, e.size);
   }
 
   private static List<String> normalizePathAndSplit(String path) throws IOException {

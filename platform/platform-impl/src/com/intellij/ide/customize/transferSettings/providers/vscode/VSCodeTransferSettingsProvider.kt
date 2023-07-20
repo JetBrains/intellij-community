@@ -14,18 +14,20 @@ class VSCodeTransferSettingsProvider : TransferSettingsProvider {
   override val name: String
     get() = "Visual Studio Code"
 
-  override fun isAvailable() = true
+  override fun isAvailable(): Boolean = true
 
-  override fun getIdeVersions(skipIds: List<String>) = when (isVSCodeDetected()) {
+  override fun getIdeVersions(skipIds: List<String>): SmartList<IdeVersion> = when (isVSCodeDetected()) {
     true -> SmartList(getIdeVersion())
     false -> SmartList()
   }
 
-  override fun getImportPerformer(ideVersion: IdeVersion) = DefaultImportPerformer()
+  private val cachedIdeVersion by lazy {
+    IdeVersion("VSCode", AllIcons.TransferSettings.Vscode, "Visual Studio Code", settings = processor.getProcessedSettings(),
+               provider = this)
+  }
 
   private fun getIdeVersion(): IdeVersion {
-    return IdeVersion("VSCode", AllIcons.Idea_logo_welcome, "Visual Studio Code", settings = processor.getProcessedSettings(),
-                      provider = this)
+    return cachedIdeVersion
   }
 
   private fun isVSCodeDetected() = Files.isDirectory(Paths.get(vsCodeHome)) && processor.willDetectAtLeastSomething()

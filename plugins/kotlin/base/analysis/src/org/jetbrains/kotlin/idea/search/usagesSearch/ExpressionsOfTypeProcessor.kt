@@ -194,11 +194,7 @@ class ExpressionsOfTypeProcessor(
         }
 
         val qualifiedName = runReadAction { psiClass.qualifiedName }
-        if (qualifiedName.isNullOrEmpty()) {
-            return false
-        }
-
-        return true
+        return !qualifiedName.isNullOrEmpty()
     }
 
     private fun addNonKotlinClassToProcess(classToSearch: PsiClass) {

@@ -10,9 +10,9 @@ import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention
-import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.blockCommentWithName
-import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.isParameterNameComment
-import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Companion.toParameterNameComment
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Holder.blockCommentWithName
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Holder.isParameterNameComment
+import org.jetbrains.kotlin.idea.intentions.AddNamesInCommentToJavaCallArgumentsIntention.Holder.toParameterNameComment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
@@ -27,7 +27,7 @@ class InconsistentCommentForJavaParameterInspection: AbstractKotlinInspection() 
         override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) = annotationEntry.check()
 
         private fun KtCallElement.check() {
-            val valueDescriptorByValueArgument = AddNamesInCommentToJavaCallArgumentsIntention.resolveValueParameterDescriptors(
+            val valueDescriptorByValueArgument = AddNamesInCommentToJavaCallArgumentsIntention.Holder.resolveValueParameterDescriptors(
                 this,
                 canAddNameComments = false
             ) ?: return

@@ -40,10 +40,7 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
 
       val modality = ModalityState.current()
       val transactionGuard = TransactionGuard.getInstance()
-      if (transactionGuard.isWriteSafeModality(modality) && !transactionGuard.isWritingAllowed)
-        return true
-
-      return false
+      return transactionGuard.isWriteSafeModality(modality) && !transactionGuard.isWritingAllowed
     }
   }
 

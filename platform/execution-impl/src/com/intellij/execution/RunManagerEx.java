@@ -73,13 +73,6 @@ public abstract class RunManagerEx extends RunManager {
     return getAllSettings();
   }
 
-  /**
-   * @deprecated Use {@link RunManagerListener#TOPIC} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public void addRunManagerListener(@NotNull RunManagerListener listener) {
-  }
-
   @SafeVarargs
   public static void disableTasks(Project project, RunConfiguration settings, Key<? extends BeforeRunTask> @NotNull ... keys) {
     for (Key<? extends BeforeRunTask> key : keys) {

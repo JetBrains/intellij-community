@@ -46,9 +46,9 @@ class EnabledVisibleTest {
     panel {
       row {
         checkBoxRow = checkBox("")
-          .applyToComponent { isSelected = true }
+          .selected(true)
         checkBoxText = checkBox("")
-          .applyToComponent { isSelected = true }
+          .selected(true)
       }
 
       row("visibleIf test row") {

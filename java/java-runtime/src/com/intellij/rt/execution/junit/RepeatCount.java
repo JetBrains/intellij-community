@@ -19,8 +19,9 @@ public abstract class RepeatCount {
   public static final String ONCE = "Once";
   public static final String N = "N Times";
   public static final String UNTIL_FAILURE = "Until Failure";
+  public static final String UNTIL_SUCCESS = "Until Success";
   public static final String UNLIMITED = "Until Stopped";
-  public static final String[] REPEAT_TYPES = new String[]{ONCE, N, UNTIL_FAILURE, UNLIMITED};
+  public static final String[] REPEAT_TYPES = new String[]{ONCE, N, UNTIL_SUCCESS, UNTIL_FAILURE, UNLIMITED};
 
   public static String getCountString(int count) {
     if (count > 1) {
@@ -31,6 +32,9 @@ public abstract class RepeatCount {
     }
     if (count == -2) {
       return UNTIL_FAILURE;
+    }
+    if (count == -3) {
+      return UNTIL_SUCCESS;
     }
     return ONCE;
   }
@@ -46,6 +50,10 @@ public abstract class RepeatCount {
 
     if (countString.equals(UNTIL_FAILURE)) {
       return -2;
+    }
+
+    if (countString.equals(UNTIL_SUCCESS)) {
+      return -3;
     }
 
     final String prefix = "@" + N;

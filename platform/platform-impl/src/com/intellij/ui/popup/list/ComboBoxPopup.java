@@ -4,9 +4,11 @@ package com.intellij.ui.popup.list;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBoxPopupState;
+import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.GroupedComboBoxRenderer;
 import com.intellij.ui.GroupedElementsRenderer;
@@ -16,6 +18,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,12 +152,21 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     list.setSelectionForeground(UIManager.getColor("ComboBox.selectionForeground"));
     list.setSelectionBackground(UIManager.getColor("ComboBox.selectionBackground"));
     list.setBorder(null);
-    list.setFocusable(false);
+    list.setFocusable(ScreenReader.isActive());
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    Border border = UIManager.getBorder("ComboPopup.border");
-    if (border != null) {
-      getContent().setBorder(border);
+    final var renderer = ((MyBasePopupState<?>)myStep).myGetRenderer.get();
+    if (renderer instanceof GroupedComboBoxRenderer<?> ||
+        renderer instanceof ComboBoxWithWidePopup<?>.AdjustingListCellRenderer r && r.delegate instanceof GroupedComboBoxRenderer<?>) {
+      list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(false, false)));
+      mySpeedSearch.addChangeListener(x -> {
+        list.setBorder(JBUI.Borders.empty(PopupUtil.getListInsets(!mySpeedSearch.getFilter().isBlank(), false)));
+      });
+    } else {
+      Border border = UIManager.getBorder("ComboPopup.border");
+      if (border != null) {
+        getContent().setBorder(border);
+      }
     }
   }
 
@@ -247,8 +259,13 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
 
     @Override
     public @Nullable ListSeparator getSeparatorAbove(T value) {
-      if (myGetRenderer.get() instanceof GroupedComboBoxRenderer<? super T> renderer) {
+      final ListCellRenderer<? super T> cellRenderer = myGetRenderer.get();
+      if (cellRenderer instanceof GroupedComboBoxRenderer<? super T> renderer) {
         return renderer.separatorFor(value);
+      }
+      if (cellRenderer instanceof ComboBoxWithWidePopup<? super T>.AdjustingListCellRenderer renderer
+          && renderer.delegate instanceof GroupedComboBoxRenderer<? super T> delegate) {
+        return delegate.separatorFor(value);
       }
       return null;
     }

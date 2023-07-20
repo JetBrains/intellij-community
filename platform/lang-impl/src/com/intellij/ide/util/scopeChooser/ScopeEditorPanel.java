@@ -156,7 +156,7 @@ public final class ScopeEditorPanel implements Disposable {
     myPatternLegend.setText("");
 
     initTree(myPackageTree);
-    Disposer.register(this, new UiNotifyConnector(myPanel, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myPanel, new Activatable() {
       @Override
       public void hideNotify() {
         cancelCurrentProgress();
@@ -504,7 +504,7 @@ public final class ScopeEditorPanel implements Disposable {
 
     TreeUtil.installActions(tree);
     SmartExpander.installOn(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
       public void treeWillExpand(TreeExpansionEvent event) {

@@ -8,6 +8,7 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -40,6 +41,7 @@ import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
 public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements PsiElementFactory, Disposable {
   private final ConcurrentMap<LanguageLevel, PsiClass> myArrayClasses = new ConcurrentHashMap<>();
   private final ConcurrentMap<GlobalSearchScope, PsiClassType> myCachedObjectType = CollectionFactory.createConcurrentSoftMap();
+  private static final Key<Boolean> ARRAY_CLASS = Key.create("JavaSyntheticArrayClass");
 
   public PsiElementFactoryImpl(@NotNull Project project) {
     super(project);
@@ -65,7 +67,13 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     PsiFile file = psiClass.getContainingFile();
     file.clearCaches();
     PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(file, level);
+    ARRAY_CLASS.set(psiClass, true);
     return psiClass;
+  }
+
+  @Override
+  public boolean isArrayClass(@NotNull PsiClass psiClass) {
+    return Boolean.TRUE.equals(ARRAY_CLASS.get(psiClass));
   }
 
   private static void ensureNonWritable(PsiClass arrayClass) {

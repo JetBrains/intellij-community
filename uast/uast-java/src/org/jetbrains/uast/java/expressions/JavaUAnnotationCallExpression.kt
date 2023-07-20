@@ -7,12 +7,12 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.JavaAbstractUExpression
 import org.jetbrains.uast.java.JavaConverter
 import org.jetbrains.uast.java.JavaUAnnotation
+import org.jetbrains.uast.java.lazyPub
 import org.jetbrains.uast.visitor.UastVisitor
 
 @ApiStatus.Internal

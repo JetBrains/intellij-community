@@ -6,7 +6,7 @@ package com.intellij.util.text;
  */
 public final class JBDateFormat {
   private static final JBDateTimeFormatter DEFAULT_FORMATTER = new DefaultJBDateTimeFormatter();
-  static CustomJBDateTimeFormatter CUSTOM_FORMATTER;
+  private static CustomJBDateTimeFormatter CUSTOM_FORMATTER;
 
   static {
     invalidateCustomFormatter();

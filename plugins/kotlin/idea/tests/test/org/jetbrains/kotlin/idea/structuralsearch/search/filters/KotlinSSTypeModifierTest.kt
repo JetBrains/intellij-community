@@ -404,6 +404,38 @@ class KotlinSSTypeModifierTest : KotlinStructuralSearchTest() {
     """.trimIndent())
     }
 
+    fun `test call with qualified receiver from Kotlin companion`() {
+        myFixture.addFileToProject("FooBar.kt", """
+            package foo.bar
+            
+            class FooBar {
+                companion object {
+                    fun foo() { } 
+                }
+            }
+        """.trimIndent())
+        doTest("'_:[exprtype(foo.bar.FooBar.Companion)].foo()", """
+            fun main() {
+                <warning descr="SSR">foo.bar.FooBar.foo()</warning>
+            }
+        """.trimIndent())
+    }
+
+    fun `test call with qualified receiver from Java static`() {
+        myFixture.addFileToProject("foo/bar/FooBar.java", """
+            package foo.bar;
+            
+            public class FooBar {
+                public static void foo() { }
+            }
+        """.trimIndent())
+        doTest("'_:[exprtype(foo.bar.FooBar)].foo()", """
+            fun main() {
+                <warning descr="SSR">foo.bar.FooBar.foo()</warning>
+            }
+        """.trimIndent())
+    }
+
     fun testTypeCallableReferenceExpression() { doTest("'_:[exprtype(A)]::'_", """
         class A {
             val x = 1

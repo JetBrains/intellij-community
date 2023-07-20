@@ -21,6 +21,7 @@ interface HttpApiHelper {
   fun request(uri: URI): HttpRequest.Builder
 
   suspend fun <T> sendAndAwaitCancellable(request: HttpRequest, bodyHandler: HttpResponse.BodyHandler<T>): HttpResponse<out T>
+  suspend fun sendAndAwaitCancellable(request: HttpRequest): HttpResponse<out Unit>
 
   suspend fun loadImage(request: HttpRequest): HttpResponse<out Image>
 }
@@ -28,8 +29,9 @@ interface HttpApiHelper {
 @ApiStatus.Experimental
 fun HttpApiHelper(logger: Logger = Logger.getInstance(HttpApiHelper::class.java),
                   clientFactory: HttpClientFactory = HttpClientFactoryBase(),
-                  requestConfigurer: HttpRequestConfigurer = defaultRequestConfigurer): HttpApiHelper =
-  HttpApiHelperImpl(logger, clientFactory, requestConfigurer)
+                  requestConfigurer: HttpRequestConfigurer = defaultRequestConfigurer,
+                  errorCollector: suspend (Throwable) -> Unit = {}): HttpApiHelper =
+  HttpApiHelperImpl(logger, clientFactory, requestConfigurer, errorCollector)
 
 private val defaultRequestConfigurer = CompoundRequestConfigurer(listOf(
   RequestTimeoutConfigurer(),
@@ -39,7 +41,8 @@ private val defaultRequestConfigurer = CompoundRequestConfigurer(listOf(
 private class HttpApiHelperImpl(
   private val logger: Logger,
   private val clientFactory: HttpClientFactory,
-  private val requestConfigurer: HttpRequestConfigurer
+  private val requestConfigurer: HttpRequestConfigurer,
+  private val errorCollector: suspend (Throwable) -> Unit
 ) : HttpApiHelper {
 
   val client: HttpClient
@@ -59,7 +62,16 @@ private class HttpApiHelperImpl(
       cancellableBodyHandler.cancel()
       throw ce
     }
+    catch (e: Throwable) {
+      errorCollector(e)
+      throw e
+    }
   }
+
+  override suspend fun sendAndAwaitCancellable(request: HttpRequest): HttpResponse<out Unit> =
+    sendAndAwaitCancellable(request, InflatedStreamReadingBodyHandler { responseInfo, stream ->
+      HttpClientUtil.readSuccessResponseWithLogging(logger, request, responseInfo, stream) {}
+    })
 
   override suspend fun loadImage(request: HttpRequest): HttpResponse<out Image> {
     val bodyHandler = InflatedStreamReadingBodyHandler { responseInfo, stream ->

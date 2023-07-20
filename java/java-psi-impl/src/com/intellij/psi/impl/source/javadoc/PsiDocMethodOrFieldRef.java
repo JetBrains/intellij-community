@@ -27,6 +27,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -386,6 +387,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
     /**
      * @deprecated use {@link #bindToText(StringBuffer)} instead
      */
+    @ApiStatus.ScheduledForRemoval
     @Deprecated
     public PsiElement bindToText(@SuppressWarnings("unused") PsiClass containingClass, StringBuffer newText) {
       return bindToText(newText);

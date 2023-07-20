@@ -28,10 +28,10 @@ private val LOG = Logger.getInstance("#com.jetbrains.python.newProject.steps")
 
 internal fun createPythonSdkComboBox(sdks: List<Sdk>, initialSelection: Sdk?): ComboBox<Sdk> {
   val comboBox = ComboBox<Sdk>()
-  comboBox.model = CollectionComboBoxModel<Sdk>(sdks, initialSelection)
+  comboBox.model = CollectionComboBoxModel(sdks, initialSelection)
   comboBox.renderer = PySdkListCellRenderer()
   comboBox.addActionListener { comboBox.updateTooltip() }
-  ComboboxSpeedSearch(comboBox)
+  ComboboxSpeedSearch.installOn(comboBox)
   comboBox.updateTooltip()
   return comboBox
 }

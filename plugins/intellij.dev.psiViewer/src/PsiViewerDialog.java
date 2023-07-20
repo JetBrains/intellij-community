@@ -246,7 +246,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   @NotNull
   private JBTabs createTabPanel(@NotNull Project project) {
     JBEditorTabsBase tabs = JBTabsFactory.createEditorTabs(project, getDisposable());
-    tabs.getPresentation().setAlphabeticalMode(false).setSupportsCompression(false);
+    tabs.getPresentation().setAlphabeticalMode(false);
     return tabs;
   }
 
@@ -355,24 +355,26 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         label.setIcon(value.getIcon());
       }
     }));
-    new ComboboxSpeedSearch(myFileTypeComboBox) {
+    ComboboxSpeedSearch search1 = new ComboboxSpeedSearch(myFileTypeComboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return element instanceof PsiViewerSourceWrapper ? ((PsiViewerSourceWrapper)element).getText() : null;
       }
     };
+    search1.setupListeners();
     myFileTypeComboBox.addActionListener(__ -> {
       updateDialectsCombo(null);
       updateExtensionsCombo();
       updateEditor();
     });
     myDialectComboBox.addActionListener(__ -> updateEditor());
-    new ComboboxSpeedSearch(myDialectComboBox) {
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(myDialectComboBox, null) {
       @Override
       protected String getElementText(Object element) {
         return element instanceof Language ? ((Language)element).getDisplayName() : "<default>";
       }
     };
+    search.setupListeners();
     myFileTypeComboBox.addFocusListener(new AutoExpandFocusListener(myFileTypeComboBox));
     if (!myExternalDocument && lastUsed == null && !mySourceWrappers.isEmpty()) {
       myFileTypeComboBox.setSelectedIndex(0);
@@ -425,7 +427,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
     tree.updateUI();
     ToolTipManager.sharedInstance().registerComponent(tree);
     TreeUtil.installActions(tree);
-    new TreeSpeedSearch(tree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(tree);
   }
 
   @Override
@@ -684,35 +686,32 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId);
+      Object selection =
+        myPsiTree.hasFocus() ? TreeUtil.getLastUserObject(myPsiTree.getSelectionPath()) :
+        myRefs.hasFocus() ? myRefs.getSelectedValue() : null;
+      return selection == null ? null : (DataProvider)slowId -> getSlowData(slowId, selection);
     }
     return null;
   }
 
   @Nullable
-  private PsiFile getSlowData(@NonNls String d) {
-    if (CommonDataKeys.NAVIGATABLE.is(d)) {
-      String fqn = null;
-      if (myPsiTree.hasFocus()) {
-        TreePath path = myPsiTree.getSelectionPath();
-        if (path != null) {
-          DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
-          if (!(node.getUserObject() instanceof ViewerNodeDescriptor descriptor)) return null;
-          Object elementObject = descriptor.getElement();
-          PsiElement element = elementObject instanceof PsiElement
-                                     ? (PsiElement)elementObject
-                                     : elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
-          if (element != null) {
-            fqn = element.getClass().getName();
-          }
-        }
+  private PsiFile getSlowData(@NonNls String dataId, @NotNull Object selection) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+      String fqn;
+      if (selection instanceof ViewerNodeDescriptor descriptor) {
+        Object elementObject = descriptor.getElement();
+        PsiElement element =
+          elementObject instanceof PsiElement ? (PsiElement)elementObject :
+          elementObject instanceof ASTNode ? ((ASTNode)elementObject).getPsi() : null;
+        fqn = element != null ? element.getClass().getName() : null;
       }
-      else if (myRefs.hasFocus()) {
-        fqn = myRefs.getSelectedValue();
+      else if (selection instanceof String str) {
+        fqn = str;
       }
-      if (fqn != null) {
-        return getContainingFileForClass(fqn);
+      else {
+        fqn = null;
       }
+      return fqn == null ? null : getContainingFileForClass(fqn);
     }
     return null;
   }

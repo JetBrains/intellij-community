@@ -1,5 +1,5 @@
 class Test {
   void test(int foo) {
-    int x = foo * 16777<caret>216;
+    int x = foo * 167<caret>77216;
   }
 }

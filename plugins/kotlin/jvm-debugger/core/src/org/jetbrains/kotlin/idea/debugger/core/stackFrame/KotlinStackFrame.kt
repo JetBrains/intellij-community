@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.core.stackFrame
 
@@ -21,13 +21,17 @@ import org.jetbrains.kotlin.codegen.inline.INLINE_FUN_VAR_SUFFIX
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.ToggleKotlinVariablesState
+import org.jetbrains.kotlin.name.NameUtils.CONTEXT_RECEIVER_PREFIX
 
 @Suppress("EqualsOrHashCode")
 open class KotlinStackFrame(
-    frame: StackFrameProxyImpl,
+    stackFrameDescriptorImpl: StackFrameDescriptorImpl,
     visibleVariables: List<LocalVariableProxyImpl>
-) : JavaStackFrame(StackFrameDescriptorImpl(frame, MethodsTracker()), true) {
+) : JavaStackFrame(stackFrameDescriptorImpl, true) {
     private val kotlinVariableViewService = ToggleKotlinVariablesState.getService()
+
+    constructor(frame: StackFrameProxyImpl, visibleVariables: List<LocalVariableProxyImpl>) :
+            this(StackFrameDescriptorImpl(frame, MethodsTracker()), visibleVariables)
 
     override fun buildLocalVariables(
         evaluationContext: EvaluationContextImpl,
@@ -239,6 +243,15 @@ open class KotlinStackFrame(
                     this
                 }
             }
+            name.startsWith(CONTEXT_RECEIVER_PREFIX) || name.startsWith(AsmUtil.CAPTURED_PREFIX + CONTEXT_RECEIVER_PREFIX) -> {
+                val label = generateThisLabel(type)
+                if (label != null) {
+                    clone(getThisName(label), null)
+                } else {
+                    this
+                }
+            }
+
             name != this.name() -> {
                 object : LocalVariableProxyImpl(frame, variable) {
                     override fun name() = name

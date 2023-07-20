@@ -16,8 +16,7 @@ final class ObjectNode {
   static final int REASONABLY_BIG = 500;
 
   private final Disposable myObject;
-  @NotNull
-  private NodeChildren myChildren = EMPTY; // guarded by ObjectTree.treeLock
+  private @NotNull NodeChildren myChildren = EMPTY; // guarded by ObjectTree.treeLock
   private Throwable myTrace; // guarded by ObjectTree.treeLock
 
   private ObjectNode(@NotNull Disposable object, boolean parentIsRoot) {
@@ -55,8 +54,7 @@ final class ObjectNode {
     return myObject == ROOT_DISPOSABLE;
   }
 
-  @NotNull
-  static ObjectNode createRootNode() {
+  static @NotNull ObjectNode createRootNode() {
     return new ObjectNode();
   }
 
@@ -109,8 +107,7 @@ final class ObjectNode {
   }
 
   @Override
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return isRootNode() ? "ROOT" : "Node: " + myObject;
   }
 
@@ -194,8 +191,7 @@ final class ObjectNode {
   }
 
   private static class ListNodeChildren implements NodeChildren {
-    @NotNull
-    private final List<ObjectNode> myChildren;
+    private final @NotNull List<ObjectNode> myChildren;
 
     ListNodeChildren(@NotNull ObjectNode node) {
       myChildren = new SmartList<>(node);
@@ -267,7 +263,7 @@ final class ObjectNode {
     Collection<? extends ObjectNode> getAllNodes();
   }
 
-  private final static NodeChildren EMPTY = new NodeChildren() {
+  private static final NodeChildren EMPTY = new NodeChildren() {
     @Override
     public ObjectNode removeChildNode(@NotNull Disposable object) {
       return null;

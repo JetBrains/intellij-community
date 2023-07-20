@@ -625,6 +625,8 @@ def generate_skeleton(name, mod_file_name, mod_cache_dir, output_dir):
     if redo_imports:
         initial_module_set = set(sys.modules)
         for m in list(sys.modules):
+            if not m.startswith(name):
+                continue
             # Python 2 puts dummy None entries in sys.modules for imports of
             # top-level modules made from inside packages unless absolute
             # imports are explicitly enabled.

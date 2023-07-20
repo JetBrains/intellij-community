@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
@@ -30,7 +31,7 @@ sealed class AddElseBranchFix<T : KtExpression>(element: T) : KotlinPsiOnlyQuick
     abstract override fun invoke(project: Project, editor: Editor?, file: KtFile)
 }
 
-class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenExpression>(element) {
+class AddWhenElseBranchFix(element: KtWhenExpression) : AddElseBranchFix<KtWhenExpression>(element), LowPriorityAction {
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean = element?.closeBrace != null
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {

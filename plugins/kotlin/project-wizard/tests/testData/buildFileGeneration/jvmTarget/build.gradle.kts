@@ -14,12 +14,12 @@ repositories {
 
 kotlin {
     jvm {
-        compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
-        }
+        jvmToolchain(11)
         withJava()
-        testRuns["test"].executionTask.configure {
-            useJUnit()
+        testRuns.named("test") {
+            executionTask.configure {
+                useJUnit()
+            }
         }
     }
     sourceSets {

@@ -27,15 +27,13 @@ import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.ide.impl.TrustedProjects;
+import com.intellij.java.workspace.entities.JavaModuleSettingsKt;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -61,6 +59,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
+import com.intellij.openapi.util.registry.RegistryManagerKt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -70,6 +69,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener;
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity;
+import com.intellij.platform.workspace.storage.VersionedStorageChange;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -85,14 +90,6 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener;
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics;
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityChange;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.VersionedStorageChange;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -102,7 +99,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
 import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
+import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -141,8 +138,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
@@ -178,9 +174,9 @@ public final class BuildManager implements Disposable {
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager(this);
-  private final Executor myRequestsProcessor = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager RequestProcessor Pool", 1);
+  private final Executor myRequestsProcessor;
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
-  private final Executor myAutomakeTrigger = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager Auto-Make Trigger", 1);
+  private final Executor myAutomakeTrigger;
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
 
@@ -237,7 +233,7 @@ public final class BuildManager implements Disposable {
       return;
     }
 
-    Collection<File> systemDirs = Collections.singleton(getBuildSystemDirectory().toFile());
+    Collection<File> systemDirs = Collections.singleton(LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory().toFile());
     if (Boolean.parseBoolean(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
       final List<WSLDistribution> distributions = WslDistributionManager.getInstance().getInstalledDistributions();
       if (!distributions.isEmpty()) {
@@ -277,7 +273,7 @@ public final class BuildManager implements Disposable {
 
   private final BuildMessageDispatcher myMessageDispatcher = new BuildMessageDispatcher();
 
-  private static class ListeningConnection {
+  private static final class ListeningConnection {
     private final InetAddress myAddress;
     private final ChannelRegistrar myChannelRegistrar = new ChannelRegistrar();
     private volatile int myListenPort = -1;
@@ -292,7 +288,10 @@ public final class BuildManager implements Disposable {
   private final @NotNull Charset mySystemCharset = CharsetToolkit.getDefaultSystemCharset();
   private volatile boolean myBuildProcessDebuggingEnabled;
 
-  public BuildManager() {
+  public BuildManager(@NotNull CoroutineScope coroutineScope) {
+    myRequestsProcessor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager RequestProcessor Pool", coroutineScope);
+    myAutomakeTrigger = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager Auto-Make Trigger", coroutineScope);
+
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
 
@@ -398,7 +397,10 @@ public final class BuildManager implements Disposable {
     });
 
     if (!application.isHeadlessEnvironment()) {
-      configureIdleAutomake();
+      RegistryManagerKt.useRegistryManagerWhenReadyJavaAdapter(coroutineScope, registryManager -> {
+        configureIdleAutomake(registryManager);
+        return Unit.INSTANCE;
+      });
     }
 
     ShutDownTracker.getInstance().registerShutdownTask(this::stopListening);
@@ -409,19 +411,19 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private void configureIdleAutomake() {
-    int idleTimeout = getAutomakeWhileIdleTimeout();
+  private void configureIdleAutomake(@NotNull RegistryManager registryManager) {
+    int idleTimeout = getAutomakeWhileIdleTimeout(registryManager);
     int listenerTimeout = idleTimeout > 0 ? idleTimeout : 60000;
-    Ref<Function0<Unit>> idleListenerHandle = new Ref<>();
+    Ref<AccessToken> idleListenerHandle = new Ref<>();
     idleListenerHandle.set(IdleTracker.getInstance().addIdleListener(listenerTimeout, () -> {
-      int currentTimeout = getAutomakeWhileIdleTimeout();
+      int currentTimeout = getAutomakeWhileIdleTimeout(registryManager);
       if (idleTimeout != currentTimeout) {
         // re-schedule with a changed period
-        Function0<Unit> removeListener = idleListenerHandle.get();
+        AccessToken removeListener = idleListenerHandle.get();
         if (removeListener != null) {
-          removeListener.invoke();
+          removeListener.close();
         }
-        configureIdleAutomake();
+        configureIdleAutomake(registryManager);
       }
 
       if (currentTimeout > 0 /*is enabled*/ && !myAutoMakeTask.myInProgress.get()) {
@@ -492,20 +494,36 @@ public final class BuildManager implements Disposable {
   }
 
   public void notifyFilesChanged(final Collection<? extends File> paths) {
-    doNotify(paths, false);
+    if (!paths.isEmpty()) {
+      notifyFilesChanged(() -> paths);
+    }
+  }
+
+  public void notifyFilesChanged(Supplier<Collection<? extends File>> filesProvider) {
+    doNotify(filesProvider, false);
   }
 
   public void notifyFilesDeleted(Collection<? extends File> paths) {
-    doNotify(paths, true);
+    if (!paths.isEmpty()) {
+      notifyFilesDeleted(() -> paths);
+    }
+  }
+
+  public void notifyFilesDeleted(Supplier<Collection<? extends File>> filesProvider) {
+    doNotify(filesProvider, true);
   }
 
   public void runCommand(@NotNull Runnable command) {
     myRequestsProcessor.execute(command);
   }
 
-  private void doNotify(final Collection<? extends File> paths, final boolean notifyDeletion) {
+  private void doNotify(final Supplier<Collection<? extends File>> pathsProvider, final boolean notifyDeletion) {
     // ensure events are processed in the order they arrived
     runCommand(() -> {
+      final Collection<? extends File> paths = pathsProvider.get();
+      if (paths.isEmpty()) {
+        return;
+      }
       final List<String> filtered = new ArrayList<>(paths.size());
       for (File file : paths) {
         final String path = FileUtil.toSystemIndependentName(file.getPath());
@@ -667,7 +685,7 @@ public final class BuildManager implements Disposable {
 
   private void runAutoMake() {
     Collection<Project> projects = Collections.emptyList();
-    final int appIdleTimeout = getAutomakeWhileIdleTimeout();
+    final int appIdleTimeout = getAutomakeWhileIdleTimeout(RegistryManager.getInstance());
     if (appIdleTimeout > 0 && ApplicationManager.getApplication().getIdleTime() > appIdleTimeout) {
       // been idle for quite a while, so try to process all open projects while idle
       projects = getOpenProjects();
@@ -717,8 +735,8 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  private static int getAutomakeWhileIdleTimeout() {
-    return RegistryManager.getInstance().intValue("compiler.automake.build.while.idle.timeout", 60000);
+  private static int getAutomakeWhileIdleTimeout(@NotNull RegistryManager registryManager) {
+    return registryManager.intValue("compiler.automake.build.while.idle.timeout", 60000);
   }
 
   private static boolean canStartAutoMake(@NotNull Project project) {
@@ -992,7 +1010,7 @@ public final class BuildManager implements Disposable {
               if (exitValue != 0) {
                 final @Nls StringBuilder msg = new StringBuilder();
                 msg.append(JavaCompilerBundle.message("abnormal.build.process.termination")).append(": ");
-                if (errorsOnLaunch != null && errorsOnLaunch.length() > 0) {
+                if (errorsOnLaunch != null && !errorsOnLaunch.isEmpty()) {
                   msg.append("\n").append(errorsOnLaunch);
                   if (StringUtil.contains(errorsOnLaunch, "java.lang.NoSuchMethodError")) {
                     msg.append(
@@ -1667,13 +1685,6 @@ public final class BuildManager implements Disposable {
     return true;
   }
 
-  /** @deprecated use {@link #getBuildSystemDirectory(Project)} */
-  @Deprecated(forRemoval = true)
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public @NotNull Path getBuildSystemDirectory() {
-    return LocalBuildCommandLineBuilder.getLocalBuildSystemDirectory();
-  }
-
   public @NotNull Path getBuildSystemDirectory(Project project) {
     final WslPath wslPath = WslPath.parseWindowsUncPath(getProjectPath(project));
     if (wslPath != null) {
@@ -1964,34 +1975,7 @@ public final class BuildManager implements Disposable {
       }
       final MessageBusConnection connection = project.getMessageBus().connect();
       if (!project.isDefault()) {
-        connection.subscribe(WorkspaceModelTopics.CHANGED, new WorkspaceModelChangeListener() {
-          @Override
-          public void changed(@NotNull VersionedStorageChange event) {
-            boolean needFSRescan = false;
-            for (EntityChange<SourceRootEntity> change : event.getChanges(SourceRootEntity.class)) {
-              final Pair<SourceRootEntity, EntityStorage> p = getEntityAndStorage(event, change);
-              final SourceRootEntity entity = p.first; // added, changed or removed source root in some module
-              final EntityStorage storage = p.second;  // storage state relevant to the change
-              if (entity != null) {
-                needFSRescan = true;
-                break;
-              }
-            }
-
-            if (needFSRescan) {
-              getInstance().clearState(project);
-            }
-            else if (event.getAllChanges().iterator().hasNext()) {
-              getInstance().cancelPreloadedBuilds(getProjectPath(project));
-            }
-          }
-
-          private static @NotNull <T extends WorkspaceEntity> Pair<T, EntityStorage> getEntityAndStorage(@NotNull VersionedStorageChange event,
-                                                                                                         EntityChange<T> change) {
-            final T entity = change.getNewEntity();
-            return entity != null? Pair.create(entity, event.getStorageAfter()) : Pair.create(change.getOldEntity(), event.getStorageBefore());
-          }
-        });
+        connection.subscribe(WorkspaceModelTopics.CHANGED, new WSModelChangeListener(project));
 
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
           @Override
@@ -2119,7 +2103,7 @@ public final class BuildManager implements Disposable {
       getInstance().runCommand(() -> {
         updateUsageFile(project, getInstance().getProjectSystemDirectory(project));
       });
-      // run automake after project opened
+      // run automake after a project opened
       getInstance().scheduleAutoMake();
     }
   }
@@ -2301,7 +2285,7 @@ public final class BuildManager implements Disposable {
 
       final StringBuilder buf = new StringBuilder();
       for (CharSequence element : myPath) {
-        if (buf.length() > 0) {
+        if (!buf.isEmpty()) {
           buf.append("/");
         }
         buf.append(element);
@@ -2465,5 +2449,127 @@ public final class BuildManager implements Disposable {
         getInstance().scheduleProjectSave();
       }
     }
+  }
+
+  static final class WSModelChangeListener implements WorkspaceModelChangeListener {
+
+    private final Project myProject;
+
+    WSModelChangeListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void changed(@NotNull VersionedStorageChange event) {
+      boolean needFSRescan =
+        processEntityChanges(event, SourceRootEntity.class, ChangeProcessor.anyChange(true, false)) ||
+        processEntityChanges(event, ModuleEntity.class, new ModuleEntityChangeDetector());
+
+      if (needFSRescan) {
+        getInstance().clearState(myProject);
+      }
+      else if (event.getAllChanges().iterator().hasNext()) {
+        getInstance().cancelPreloadedBuilds(getProjectPath(myProject));
+      }
+    }
+
+    interface ChangeProcessor<T, R> {
+      default boolean added(T newData) {
+        return true;
+      }
+      default boolean changed(T oldData, T newData) {
+        return true;
+      }
+      default boolean removed(T oldData) {
+        return true;
+      }
+      default R getResult() {
+        return null;
+      }
+
+      static <T, R> ChangeProcessor<T, R> anyChange(R onChangesDetected, R noChanges) {
+        return new ChangeProcessor<>() {
+          private R myResult = noChanges;
+          @Override
+          public boolean added(Object newEntity) {
+            myResult = onChangesDetected;
+            return false;
+          }
+          @Override
+          public boolean changed(Object oldEntity, Object newEntity) {
+            myResult = onChangesDetected;
+            return false;
+          }
+          @Override
+          public boolean removed(Object oldEntity) {
+            myResult = onChangesDetected;
+            return false;
+          }
+          @Override
+          public R getResult() {
+            return myResult;
+          }
+        };
+      }
+    }
+
+    static class ModuleEntityChangeDetector implements ChangeProcessor<ModuleEntity, Boolean> {
+      private boolean myNeedRescan = false;
+
+      @Override
+      public boolean changed(ModuleEntity oldEntity, ModuleEntity newEntity) {
+        myNeedRescan = processChanges(
+          Collections.singleton(Pair.create(oldEntity, newEntity)),
+          (before, after) -> before.getDependencies().equals(after.getDependencies()) &&
+            Objects.equals(JavaModuleSettingsKt.getJavaSettings(before), JavaModuleSettingsKt.getJavaSettings(after)),
+          ChangeProcessor.anyChange(true, false)
+        );
+        return !myNeedRescan;
+      }
+
+      @Override
+      public boolean removed(ModuleEntity oldEntity) {
+        myNeedRescan = true;
+        return false;
+      }
+
+      @Override
+      public Boolean getResult() {
+        return myNeedRescan;
+      }
+    }
+
+    private static <T extends WorkspaceEntity, R> R processEntityChanges(@NotNull VersionedStorageChange event, Class<T> entityClass, ChangeProcessor<T, R> proc) {
+      return processChanges(
+        ContainerUtil.map(event.getChanges(entityClass).iterator(), change -> Pair.create(change.getOldEntity(), change.getNewEntity())),
+        Objects::equals, proc
+      );
+    }
+
+    private static <T, R> R processChanges(Iterable<Pair<T, T>> data, BiFunction<T, T, Boolean> equalsImpl, ChangeProcessor<T, R> proc) {
+      for (Pair<T, T> pair : data) {
+        final T before = pair.getFirst();
+        final T after = pair.getSecond();
+        boolean shouldContinue = true;
+        if (after != null) {
+          if (before != null) {
+            if (!equalsImpl.apply(before, after)) {
+              shouldContinue = proc.changed(before, after);
+            }
+          }
+          else {
+            shouldContinue = proc.added(after);
+          }
+        }
+        else if (before != null) {
+          shouldContinue = proc.removed(before);
+        }
+        if (!shouldContinue) {
+          return proc.getResult();
+        }
+      }
+      return proc.getResult();
+    }
+
   }
 }

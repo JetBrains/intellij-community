@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
@@ -90,8 +91,17 @@ public final class XDebuggerInlayUtil {
     FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
     if (editor instanceof TextEditor) {
       Editor e = ((TextEditor)editor).getEditor();
-      int offset = e.getDocument().getLineEndOffset(position.getLine());
-      Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(offset,
+      int lineStart = e.getDocument().getLineStartOffset(position.getLine());
+      int lineEnd = e.getDocument().getLineEndOffset(position.getLine());
+
+      // Don't add the same value twice.
+      List<Inlay<? extends InlineDebugRenderer>> existingInlays =
+        e.getInlayModel().getAfterLineEndElementsInRange(lineStart, lineEnd, InlineDebugRenderer.class);
+      if (ContainerUtil.exists(existingInlays, i -> i.getRenderer().getValueNode().equals(renderer.getValueNode()))) {
+        return;
+      }
+
+      Inlay<InlineDebugRenderer> inlay = e.getInlayModel().addAfterLineEndElement(lineEnd,
                                                                                   new InlayProperties()
                                                                                     .disableSoftWrapping(true)
                                                                                     .priority(renderer.isCustomNode() ? 0 : -1),

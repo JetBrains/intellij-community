@@ -11,16 +11,12 @@ class MavenProjectManagerListenerToBusBridge(project: Project) : MavenProjectsMa
     eventPublisher.activated()
   }
 
-  override fun projectsScheduled() {
-    eventPublisher.projectsScheduled();
-  }
-
   override fun importAndResolveScheduled() {
-    eventPublisher.importAndResolveScheduled();
+    eventPublisher.importAndResolveScheduled()
   }
 
   override fun projectImportCompleted() {
-    eventPublisher.projectImportCompleted();
+    eventPublisher.projectImportCompleted()
   }
 
 }

@@ -1,9 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.eclipse.codeStyleMapping.util
 
-import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.options.SchemeImportException
-
 sealed class MappingDefinitionElement {
   data class IdToSettingMapping(val id: String, val settingMapping: SettingMapping<String>)
     : MappingDefinitionElement()
@@ -34,8 +31,10 @@ class MappingDefinition(val elements: List<MappingDefinitionElement>) {
     .filter { it.settingMapping.isExportAllowed }
     .map { it.id to it.settingMapping.export() }
 
-  /** Imports are performed in the order in which they appear in [elements] */
-  fun importSettings(external: Map<String, String>) {
+  /** Imports are performed in the order in which they appear in [elements]
+   * @return Descriptions of settings that could not be imported */
+  fun importSettings(external: Map<String, String>): List<String> {
+    val problems = mutableListOf<String>()
     for (elem in elements) {
       when (elem) {
         is MappingDefinitionElement.IdToSettingMapping -> {
@@ -45,8 +44,8 @@ class MappingDefinition(val elements: List<MappingDefinitionElement>) {
             elem.settingMapping.import(externalValue)
           }
           catch (e: UnexpectedIncomingValue) {
-            LOG.debug(e)
-            throw SchemeImportException("Unexpected value when importing option ${elem.id}: ${e.value}")
+            val msg = "${elem.id}=${e.value}"
+            problems.add(msg)
           }
         }
         is MappingDefinitionElement.OnImportAction -> {
@@ -54,9 +53,6 @@ class MappingDefinition(val elements: List<MappingDefinitionElement>) {
         }
       }
     }
-  }
-
-  companion object {
-    private val LOG = logger<MappingDefinition>()
+    return problems
   }
 }

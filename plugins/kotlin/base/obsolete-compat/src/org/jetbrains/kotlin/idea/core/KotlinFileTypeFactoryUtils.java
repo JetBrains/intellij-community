@@ -9,7 +9,7 @@ import java.util.Set;
 /**
  * @deprecated Migrate to 'org.jetbrains.kotlin.base.util.ProjectStructureUtils'.
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class KotlinFileTypeFactoryUtils {
     public final static String[] KOTLIN_EXTENSIONS = new String[] { "kt", "kts" };
     public final static Set<FileType> KOTLIN_FILE_TYPES_SET = Set.of(KotlinFileType.INSTANCE);

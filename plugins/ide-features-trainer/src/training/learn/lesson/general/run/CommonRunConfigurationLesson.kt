@@ -10,8 +10,8 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.icons.toStrokeIcon
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBUI
 import training.dsl.*
 import training.learn.LessonsBundle
@@ -31,7 +31,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
   protected val demoWithParametersName: String get() = "$demoConfigurationName with parameters"
 
-  private val runIcon: Icon by lazy { IconUtil.toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_MODE_ICON) }
+  private val runIcon: Icon by lazy { toStrokeIcon(AllIcons.Actions.Execute, JBUI.CurrentTheme.RunWidget.RUN_ICON_COLOR) }
 
   override val lessonContent: LessonContext.() -> Unit
     get() = {
@@ -106,22 +106,18 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         dropDownTask = taskId
       }
 
-      task {
-        text(LessonsBundle.message("run.configuration.open.run.configurations.popup"))
-        triggerAndBorderHighlight().listItem { item ->
-          item is PopupFactoryImpl.ActionItem && item.text.contains(ExecutionBundle.message("run.toolbar.widget.all.configurations", ""))
-        }
-        test {
-          ideFrame {
-            highlightedArea.click()
-          }
-        }
-      }
-
       var foundItem = 0
 
       task {
-        text(LessonsBundle.message("run.configuration.open.expand.all.configurations"))
+        before {
+          // Just for sure
+          RunConfigurationStartHistory.getInstance(project).let {
+            it.state.allConfigurationsExpanded = true
+            it.state.history = mutableSetOf()
+            it.state.pinned = mutableSetOf()
+          }
+        }
+        text(LessonsBundle.message("run.configuration.open.run.configurations.popup"))
         triggerAndBorderHighlight().componentPart { jList: JList<*> ->
           foundItem = LessonUtil.findItem(jList) { item ->
             item is PopupFactoryImpl.ActionItem && item.text == demoWithParametersName
@@ -129,7 +125,6 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
 
           jList.getCellBounds(foundItem, foundItem)
         }
-        restoreByUi(restoreId = dropDownTask)
         test {
           ideFrame {
             highlightedArea.click()
@@ -165,7 +160,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         text(LessonsBundle.message("run.configuration.run.generated.configuration"))
         stateCheck {
-          RunConfigurationStartHistory.getInstance(project).history().first().configuration.name == demoWithParametersName
+          RunConfigurationStartHistory.getInstance(project).history().firstOrNull()?.configuration?.name == demoWithParametersName
         }
         restoreByUi(restoreId = dropDownTask)
         test {

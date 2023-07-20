@@ -23,8 +23,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Konstantin Bulenkov
  */
-public class XmlActionsGroup extends DefaultActionGroup {
-  public XmlActionsGroup() {
+final class XmlActionsGroup extends DefaultActionGroup {
+  XmlActionsGroup() {
     super();
     getTemplatePresentation().setText(XmlBundle.message("xml.actions"));
   }

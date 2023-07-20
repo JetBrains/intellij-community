@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ConstPropertyName")
 
 package org.jetbrains.intellij.build.io
@@ -9,6 +9,7 @@ import java.nio.channels.FileChannel.MapMode
 import java.nio.channels.WritableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.zip.CRC32
@@ -22,6 +23,20 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
+fun transformZipUsingTempFile(file: Path, task: (ZipFileWriter) -> Unit) {
+  val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
+  try {
+    ZipFileWriter(channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE))).use {
+      task(it)
+    }
+    Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
+  }
+  finally {
+    Files.deleteIfExists(tempFile)
+  }
+}
+
+
 inline fun writeNewZip(file: Path,
                        compress: Boolean = false,
                        withOptimizedMetadataEnabled: Boolean = !compress,
@@ -34,7 +49,7 @@ inline fun writeNewZip(file: Path,
   }
 }
 
-// you must pass SeekableByteChannel if files will be written (`file` method)
+// you must pass SeekableByteChannel if files are written (`file` method)
 class ZipFileWriter(channel: WritableByteChannel,
                     private val deflater: Deflater? = null,
                     withOptimizedMetadataEnabled: Boolean = deflater == null) : AutoCloseable {
@@ -44,6 +59,9 @@ class ZipFileWriter(channel: WritableByteChannel,
 
   private val bufferAllocator = ByteBufferAllocator()
   private val deflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
+
+  val channelPosition: Long
+    get() = resultStream.getChannelPosition()
 
   @Suppress("DuplicatedCode")
   fun file(nameString: String, file: Path) {
@@ -178,28 +196,28 @@ class ZipFileWriter(channel: WritableByteChannel,
     return compressedSize
   }
 
-  fun compressedData(nameString: String, data: ByteArray) {
+  fun compressedData(nameString: String, data: ByteBuffer) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
 
-    val input = ByteBuffer.wrap(data)
-    val size = data.size
+    val size = data.remaining()
 
+    data.mark()
     crc32.reset()
     crc32.update(data)
     val crc = crc32.value
-    input.position(0)
+    data.reset()
 
     val output = deflateBufferAllocator!!.allocate(headerSize + size + 4096)
     output.position(headerSize)
 
-    deflater!!.setInput(input)
+    deflater!!.setInput(data)
     deflater.finish()
     do {
       val n = deflater.deflate(output, Deflater.SYNC_FLUSH)
       assert(n != 0)
     }
-    while (input.hasRemaining())
+    while (data.hasRemaining())
     deflater.reset()
 
     output.limit(output.position())

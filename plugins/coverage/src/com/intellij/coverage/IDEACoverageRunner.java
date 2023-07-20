@@ -87,12 +87,6 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
       }
     }
-    if (project != null) {
-      final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(project);
-      if (optionsProvider.ignoreEmptyPrivateConstructors()) {
-        targetParameters.add(request -> JavaTargetParameter.fixed("-Dcoverage.ignore.private.constructor.util.class=true"));
-      }
-    }
   }
 
   @Nullable

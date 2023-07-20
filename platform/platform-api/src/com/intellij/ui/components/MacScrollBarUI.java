@@ -52,7 +52,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
 
   @Override
   boolean isAbsolutePositioning(MouseEvent event) {
-    return Behavior.JumpToSpot == Behavior.CURRENT.get();
+    return Behavior.JumpToSpot == Behavior.CURRENT.getValue();
   }
 
   @Override
@@ -83,7 +83,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
   @Override
   public void installUI(JComponent c) {
     super.installUI(c);
-    updateStyle(Style.CURRENT.get());
+    updateStyle(Style.CURRENT.getValue());
     processReferences(this, null, null);
     AWTEventListener listener = MOVEMENT_LISTENER.getAndSet(null); // add only one movement listener
     if (listener != null) Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_MOTION_EVENT_MASK);
@@ -232,11 +232,11 @@ class MacScrollBarUI extends DefaultScrollBarUI {
     private static final Native<Style> CURRENT = new Native<>() {
       @Override
       public void run() {
-        Style oldStyle = get();
+        Style oldStyle = getValue();
         if (SystemInfoRt.isMac && !Registry.is("ide.mac.disableMacScrollbars", false)) {
           super.run();
         }
-        Style newStyle = get();
+        Style newStyle = getValue();
         if (newStyle != oldStyle) {
           List<MacScrollBarUI> list = new ArrayList<>();
           processReferences(null, null, list);
@@ -284,7 +284,7 @@ class MacScrollBarUI extends DefaultScrollBarUI {
 
     abstract ID initialize();
 
-    T get() {
+    T getValue() {
       return myValue;
     }
 

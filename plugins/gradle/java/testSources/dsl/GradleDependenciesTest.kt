@@ -7,14 +7,13 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.junit.jupiter.params.ParameterizedTest
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.*
-import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder.Companion.JAVA_PROJECT
 
 class GradleDependenciesTest : GradleCodeInsightTestCase() {
 
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test dependencies delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { <caret> }") {
         closureDelegateTest(GRADLE_API_DEPENDENCY_HANDLER, 1)
       }
@@ -37,7 +36,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
     "dependencies.archives(':42') { <caret> }"
   """)
   fun `test add external module dependency delegate`(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         closureDelegateTest(GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, 1)
       }
@@ -56,7 +55,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
     "dependencies.archives(fileTree('libs')) { <caret> }"
   """)
   fun `test add self resolving dependency delegate`(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         closureDelegateTest(GRADLE_API_ARTIFACTS_SELF_RESOLVING_DEPENDENCY, 1)
       }
@@ -71,7 +70,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
       "dependencies.archives(project(':')) { <caret> }"
   """)
   fun `test add project dependency delegate`(gradleVersion: GradleVersion, expression: String) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript(expression) {
         closureDelegateTest(GRADLE_API_ARTIFACTS_PROJECT_DEPENDENCY, 1)
       }
@@ -81,7 +80,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test add delegate method setter`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { add('archives', 'notation') { <caret>transitive(false) } }") {
         setterMethodTest("transitive", "setTransitive", GRADLE_API_ARTIFACTS_MODULE_DEPENDENCY)
       }
@@ -91,7 +90,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test module delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { module(':') {<caret>} }") {
         closureDelegateTest(GRADLE_API_ARTIFACTS_CLIENT_MODULE_DEPENDENCY, 1)
       }
@@ -101,7 +100,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test module delegate method setter`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { module(':') { <caret>changing(true) } }") {
         setterMethodTest("changing", "setChanging", GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY)
       }
@@ -111,7 +110,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test components delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { components {<caret>} }") {
         closureDelegateTest(GRADLE_API_COMPONENT_METADATA_HANDLER, 1)
       }
@@ -121,7 +120,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test modules delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { modules {<caret>} }") {
         closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_HANDLER, 1)
       }
@@ -131,7 +130,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test modules module delegate`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { modules { module(':') { <caret> } } }") {
         closureDelegateTest(GRADLE_API_COMPONENT_MODULE_METADATA_DETAILS, 1)
       }
@@ -141,7 +140,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test classpath configuration`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { <caret>classpath('hi') }") {
         resolveTest<Nothing>(null)
       }
@@ -151,7 +150,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test archives configuration`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies { <caret>archives('hi') }") {
         methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
       }
@@ -161,7 +160,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test archives configuration via property`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("dependencies.<caret>archives('hi')") {
         methodTest(resolveTest(PsiMethod::class.java), "archives", GRADLE_API_DEPENDENCY_HANDLER)
       }
@@ -171,7 +170,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test buildscript classpath configuration`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("buildscript { dependencies { <caret>classpath('hi') } }") {
         methodTest(resolveTest(PsiMethod::class.java), "classpath", GRADLE_API_DEPENDENCY_HANDLER)
       }
@@ -181,7 +180,7 @@ class GradleDependenciesTest : GradleCodeInsightTestCase() {
   @ParameterizedTest
   @AllGradleVersionsSource
   fun `test buildscript archives configuration`(gradleVersion: GradleVersion) {
-    test(gradleVersion, JAVA_PROJECT) {
+    testJavaProject(gradleVersion) {
       testBuildscript("buildscript { dependencies { <caret>archives('hi') } }") {
         resolveTest<Nothing>(null)
       }

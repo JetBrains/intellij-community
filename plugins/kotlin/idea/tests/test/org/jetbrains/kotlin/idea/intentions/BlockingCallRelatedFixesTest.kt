@@ -348,7 +348,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
                 }
                 
                 <info descr="null">suspend</info> fun <info descr="null">unknownContext</info>() {
-                    <info descr="null"><info descr="Consider unknown contexts non-blocking">withContext</info></info>(<info descr="null"><info descr="Consider unknown contexts non-blocking">CustomContext</info></info>()) {
+                    <info descr="null">withContext</info>(<info descr="null">CustomContext</info>()) {
                         <info descr="null"><info descr="Consider unknown contexts non-blocking">blo<caret>ck</info></info>()
                     }
                 }

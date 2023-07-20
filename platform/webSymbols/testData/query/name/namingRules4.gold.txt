@@ -1,6 +1,6 @@
 [
  {
-  matchedName: "js/properties/propOne",
+  matchedName: "js/custom-properties/propOne",
   origin: "vue@3.0.0 (vue)",
   complete: true,
   priority: NORMAL,

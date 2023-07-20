@@ -160,7 +160,6 @@ sealed class ModuleDependencyType(
             } else UNIT_SUCCESS
         }
 
-        @OptIn(ExperimentalStdlibApi::class)
         override fun Reader.createToIRs(from: Module, to: Module, data: ModulesToIrConversionData): TaskResult<List<BuildSystemIR>> {
             val iosTargetName = to.iosTargetSafe()?.name
                 ?: return Failure(

@@ -648,6 +648,10 @@ public final class PyExtractMethodUtil {
     return "refactoring.python.extract.method";
   }
 
+  public static boolean checkNoNameClashes(@NotNull Project project, @NotNull PsiElement element, @NotNull String name) {
+    return (new PyExtractMethodValidator(element, project)).check(name) == null;
+  }
+
   private static class PyExtractMethodValidator implements ExtractMethodValidator {
     private final PsiElement myElement;
     private final Project myProject;

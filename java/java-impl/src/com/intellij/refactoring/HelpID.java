@@ -1,5 +1,5 @@
 
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.psi.PsiClass;
@@ -57,7 +57,6 @@ public final class HelpID {
   public static final String SAFE_DELETE                      = "refactoring.safeDelete";
   public static final String SAFE_DELETE_OVERRIDING           = "refactoring.safeDelete.overridingMethods";
   public static final String EJB_RENAME                 = "refactoring.rename.ejbRename";
-  public static final String TYPE_COOK                  = "refactoring.generify";
   public static final String CONVERT_TO_INSTANCE_METHOD = "refactoring.convertToInstanceMethod";
   public static final String METHOD_DUPLICATES          = "refactoring.replaceMethodCodeDuplicates";
   public static final String CHANGE_CLASS_SIGNATURE     = "change.class.signature.dialog";

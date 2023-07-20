@@ -18,10 +18,10 @@ import javax.swing.plaf.LabelUI
 
 open class InteractiveCoursePanel(protected val data: InteractiveCourseData, private val contentEnabled: Boolean = true) : JPanel() {
 
-  val startLearningButton = JButton()
+  val startLearningButton: JButton = JButton()
 
   // needed to align panel with button border without selection
-  protected val leftMargin = 3
+  protected val leftMargin: Int = 3
 
   private val newContentMarker = data.newContentMarker()
   private val nameLine: JPanel? = if (data.newContentMarker() != null) JPanel() else null
@@ -54,7 +54,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
 
   private fun createHeaderPanel(): JComponent {
     val learnIdeFeaturesHeader = DynamicFontLabel(data.getName(), data.getIcon()).apply {
-      val labelFont = StartupUiUtil.getLabelFont()
+      val labelFont = StartupUiUtil.labelFont
       font = labelFont.deriveFont(Font.BOLD).deriveFont(labelFont.size2D + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 )
     }
 
@@ -74,7 +74,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
     }
   }
 
-  protected open fun createSouthPanel() = createButtonPanel(data.getAction())
+  protected open fun createSouthPanel(): JPanel = createButtonPanel(data.getAction())
 
   protected fun createButtonPanel(action: Action): JPanel {
     startLearningButton.action = action
@@ -100,7 +100,7 @@ open class InteractiveCoursePanel(protected val data: InteractiveCourseData, pri
       super.setUI(ui)
       if (font != null) {
         font = FontUIResource(font.deriveFont(
-          StartupUiUtil.getLabelFont().size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
+          StartupUiUtil.labelFont.size.toFloat() + if (SystemInfo.isWindows) JBUIScale.scale(1) else 0 ).deriveFont(Font.BOLD))
       }
     }
   }

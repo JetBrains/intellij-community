@@ -197,8 +197,7 @@ public final class ExpressionUtils {
   }
 
   @Contract("null -> false")
-  public static boolean isNullLiteral(@Nullable PsiCaseLabelElement element) {
-    if (!(element instanceof PsiExpression expression)) return false;
+  public static boolean isNullLiteral(@Nullable PsiExpression expression) {
     expression = PsiUtil.deparenthesizeExpression(expression);
     return expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ArrayUtil;
@@ -266,7 +267,7 @@ public final class IdeMouseEventDispatcher {
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null && !actions.isEmpty()) {
       DataContext context = DataManager.getInstance().getDataContext(component);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction$intellij_platform_ide_impl(
         event, place, context, actions,
         newActionProcessor(modifiers), myPresentationFactory, shortcut);
     }
@@ -396,7 +397,7 @@ public final class IdeMouseEventDispatcher {
 
   public static boolean isDiagramViewComponent(@Nullable Component component) {
     // in production yfiles classes is obfuscated
-    return UIUtil.isClientPropertyTrue(component, "Diagram-View-Component-Key");
+    return component != null && ClientProperty.isTrue(component, "Diagram-View-Component-Key");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {

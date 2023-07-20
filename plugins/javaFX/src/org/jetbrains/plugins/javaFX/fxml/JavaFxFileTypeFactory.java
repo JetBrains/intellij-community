@@ -25,11 +25,9 @@ public final class JavaFxFileTypeFactory implements FileTypeUsageSchemaDescripto
   }
 
   public static boolean isFxml(@NotNull VirtualFile virtualFile) {
-    if (FXML_EXTENSION.equals(virtualFile.getExtension())) {
-      final FileType fileType = virtualFile.getFileType();
-      if (fileType == getFileType() && !fileType.isBinary()) {
-        return virtualFile.getName().endsWith(DOT_FXML_EXTENSION);
-      }
+    if (virtualFile.getName().endsWith(DOT_FXML_EXTENSION)) {
+      FileType fileType = virtualFile.getFileType();
+      return fileType == getFileType() && !fileType.isBinary();
     }
     return false;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -322,7 +322,7 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
             candidate -> candidate.getElement() instanceof PsiMethod method && method.hasModifierProperty(PsiModifier.DEFAULT));
         return new OverrideContext(anonymousClass, candidatesToImplement);
       }).withDocumentsCommitted(project)
-        .finishOnUiThread(ModalityState.NON_MODAL, context -> {
+        .finishOnUiThread(ModalityState.nonModal(), context -> {
         marker.dispose();
         if (context == null) return;
         CommandProcessor.getInstance().executeCommand(project, () -> {

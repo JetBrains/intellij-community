@@ -48,6 +48,7 @@ class ActionsInterpretationHandler(
     val files = workspace1.actionsStorage.getActionFiles()
     for (file in files) {
       val fileActions = workspace1.actionsStorage.getActions(file)
+      workspace2.fullLineLogsStorage.enableLogging(fileActions.path)
       try {
         val sessions = interpreter.interpret(fileActions) { session -> featuresStorage.saveSession(session, fileActions.path) }
         val fileText = FilesHelper.getFile(project, fileActions.path).text()
@@ -68,8 +69,7 @@ class ActionsInterpretationHandler(
     }
     if (config.saveLogs) workspace2.logsStorage.save(SetupStatsCollectorStep.statsCollectorLogsDirectory(), language, config.trainTestSplit)
     SetupStatsCollectorStep.deleteLogs()
-    workspace2.sessionsStorage.saveEvaluationInfo()
-    workspace2.featuresStorage.saveFeaturesInfo()
+    workspace2.saveMetadata()
     LOG.info("Interpreting actions completed")
   }
 }

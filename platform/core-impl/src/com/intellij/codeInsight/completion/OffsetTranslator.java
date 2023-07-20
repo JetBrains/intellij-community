@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.openapi.Disposable;
@@ -78,8 +78,7 @@ public class OffsetTranslator implements Disposable {
     return offset;
   }
 
-  @Nullable
-  private static Integer translateOffset(int offset, DocumentEvent event) {
+  private static @Nullable Integer translateOffset(int offset, DocumentEvent event) {
     if (event.getOffset() < offset && offset < event.getOffset() + event.getNewLength()) {
       if (event.getOldLength() == 0) {
         return event.getOffset();

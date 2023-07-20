@@ -13,7 +13,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -555,7 +554,6 @@ public class CaptureConfigurable implements SearchableConfigurable, NoScroll {
   }
 
   static void processCaptureAnnotations(@Nullable Project project, CapturePointConsumer consumer) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
     if (project == null) { // fallback
       project = JavaDebuggerSupport.getContextProjectForEditorFieldsInDebuggerConfigurables();
     }

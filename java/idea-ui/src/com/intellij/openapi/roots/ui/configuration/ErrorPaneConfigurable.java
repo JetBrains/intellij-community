@@ -299,7 +299,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
     }
 
     @Override
-    public boolean canEat(Update update) {
+    public boolean canEat(@NotNull Update update) {
       return update instanceof ShowErrorsUpdate && myCurrentStamp > ((ShowErrorsUpdate)update).myCurrentStamp;
     }
   }

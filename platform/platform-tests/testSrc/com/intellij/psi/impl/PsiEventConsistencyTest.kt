@@ -199,8 +199,8 @@ class PsiEventConsistencyTest : BasePlatformTestCase() {
   private fun createEmptyFile() : PsiFile =
     PsiFileFactory.getInstance(project).createFileFromText("a.txt", PlainTextLanguage.INSTANCE, "", true, false)
 
-  private val leafTypes = (1..5).map { i -> IElementType("Leaf" + i, null) }
-  private val compositeTypes = (1..5).map { i -> IElementType("Composite" + i, null) }
+  private val leafTypes = (1..5).map { i -> IElementType("Leaf$i", null) }
+  private val compositeTypes = (1..5).map { i -> IElementType("Composite$i", null) }
 
   private val leaves = Generator.zipWith(Generator.sampledFrom(leafTypes), Generator.asciiLetters()) { type, c ->
     leaf(type, c.toString())

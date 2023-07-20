@@ -38,7 +38,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 
-val CASE_KEY = Key.create<ImmediateConfigurable.Case>("inlay.case.key")
+val CASE_KEY: Key<ImmediateConfigurable.Case> = Key.create("inlay.case.key")
 
 class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
@@ -49,7 +49,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
   companion object {
     @kotlin.jvm.JvmField
-    val PREVIEW_KEY = Key.create<Any>("inlay.preview.key")
+    val PREVIEW_KEY: Key<Any> = Key.create("inlay.preview.key")
 
     fun getFileTypeForPreview(model: InlayProviderSettingsModel): LanguageFileType {
       return model.getCasePreviewLanguage(null)?.associatedFileType ?: PlainTextFileType.INSTANCE
@@ -111,7 +111,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
     tree = object : CheckboxTree(InlaySettingsTreeRenderer(), root, CheckPolicy(true, true, true, false)) {
       override fun installSpeedSearch() {
-        TreeSpeedSearch(this, true) {
+        TreeSpeedSearch.installOn(this, true) {
           getName(it.lastPathComponent as DefaultMutableTreeNode,
                   it.parentPath?.lastPathComponent as DefaultMutableTreeNode?)
         }
@@ -373,7 +373,7 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
   fun apply() {
     apply(tree.model.root as CheckedTreeNode, InlayHintsSettings.instance())
     ParameterHintsPassFactory.forceHintsUpdateOnNextPass()
-    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
   }
 
   private fun apply(node: CheckedTreeNode, settings: InlayHintsSettings) {
@@ -486,16 +486,16 @@ class InlaySettingsPanel(val project: Project) : JPanel(BorderLayout()) {
 
       when (val item = value.userObject) {
         is InlayGroupSettingProvider -> {
-          result.add(PropertyBean("Inlay Group Key", item.group.key))
+          result.add(PropertyBean("Inlay Group Key", item.group.key, true))
         }
         is InlayGroup -> {
-          result.add(PropertyBean("Inlay Group Key", item.key))
+          result.add(PropertyBean("Inlay Group Key", item.key, true))
         }
         is InlayProviderSettingsModel -> {
-          result.add(PropertyBean("Inlay Provider Model ID", item.id))
+          result.add(PropertyBean("Inlay Provider Model ID", item.id, true))
         }
         is ImmediateConfigurable.Case -> {
-          result.add(PropertyBean("Inlay ImmediateConfigurable ID", item.id))
+          result.add(PropertyBean("Inlay ImmediateConfigurable ID", item.id, true))
         }
       }
       return result

@@ -1,0 +1,6 @@
+import kotlin.math.cbrt
+
+// WITH_STDLIB
+fun test(x: Double) {
+    cbrt(x)
+}

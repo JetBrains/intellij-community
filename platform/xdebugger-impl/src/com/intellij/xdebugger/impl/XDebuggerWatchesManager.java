@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -104,7 +104,7 @@ public final class XDebuggerWatchesManager {
 
     ApplicationManager.getApplication().invokeLater(() -> {
       inlineWatches.values().stream().flatMap(set -> set.stream()).forEach(InlineWatch::setMarker);
-    }, ModalityState.NON_MODAL, myProject.getDisposed());
+    }, ModalityState.nonModal(), myProject.getDisposed());
   }
 
   public void showInplaceEditor(@NotNull XSourcePosition presentationPosition,

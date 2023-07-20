@@ -37,6 +37,15 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
   abstract fun getHint(element: PsiElement, file: PsiFile): String?
 
   /**
+   * The default text-only implementation. Override to provide the correct count.
+   * @return text, count of, and if the count is exact for a given element as a code lens
+   */
+  open fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
+    val hint = getHint(element, file) ?: return null
+    return CodeVisionInfo(hint)
+  }
+
+  /**
    * @param hint result of [getHint]
    */
   open fun logClickToFUS(element: PsiElement, hint: String) {}
@@ -94,4 +103,18 @@ abstract class CodeVisionProviderBase : DaemonBoundCodeVisionProvider {
 
   override val defaultAnchor: CodeVisionAnchorKind
     get() = CodeVisionAnchorKind.Default
+
+  /**
+   * Code vision item information
+   * @param text Label of the item that is displayed in the interline
+   * @param count If the item represents a counter, the count, null otherwise
+   * @param countIsExact Whether the counter represents the exact count or a lower bound estimate
+   *    (the latter can happen if computing the exact count is slow)
+   */
+  class CodeVisionInfo(
+    @Nls @get:Nls
+    val text: String,
+    val count: Int? = null,
+    val countIsExact: Boolean = true
+  )
 }

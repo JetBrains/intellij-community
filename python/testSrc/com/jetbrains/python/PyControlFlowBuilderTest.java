@@ -479,17 +479,17 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   // PY-7758
-  public void testControlFlowAbruptedOnExit() {
+  public void testControlFlowIsAbruptAfterExit() {
     doTest();
   }
 
   // PY-7758
-  public void testControlFlowAbruptedOnSysExit() {
+  public void testControlFlowIsAbruptAfterSysExit() {
     doTest();
   }
 
   // PY-23859
-  public void testControlFlowAbruptedOnRealSelfFailAssumedByClassName() {
+  public void testControlFlowIsAbruptAfterSelfFail() {
     final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
@@ -498,9 +498,16 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     check(fullPath, flow);
   }
 
-  public void testControlFlowAbruptedOnPytestFail() {
-    doTestFirstStatement();
+  // PY-24273
+  public void testControlFlowIsAbruptAfterNoReturn() {
+    doTest();
   }
+
+  // TODO migrate this test class to Python 3 SDK by default to make this test work
+  // PY-53703
+  //public void testControlFlowIsAbruptAfterNever() {
+  //  doTest();
+  //}
 
   private void doTestFirstStatement() {
     final String testName = getTestName(false);

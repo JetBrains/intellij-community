@@ -2,7 +2,10 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.actionSystem.AbbreviationManager;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.SettingsCategory;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,45 +15,39 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
-@State(
-  name = "AbbreviationManager", storages =
-  {
-    @Storage(value = "abbreviations.xml", roamingType = RoamingType.PER_OS, deprecated = true),
-    @Storage("abbrevs.xml")
-  },
-  category = SettingsCategory.KEYMAP)
+@State(name = "AbbreviationManager", storages = @Storage("abbrevs.xml"), category = SettingsCategory.KEYMAP)
 public final class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
-  private final Map<String, List<String>> myAbbreviation2ActionId = new HashMap<>();
-  private final Map<String, Set<String>> myActionId2Abbreviations = new HashMap<>();
-  private final Map<String, Set<String>> myPluginsActionId2Abbreviations = new HashMap<>();
+  private final Map<String, List<String>> abbreviationToActionId = new HashMap<>();
+  private final Map<String, Set<String>> actionIdToAbbreviations = new HashMap<>();
+  private final Map<String, Set<String>> pluginsActionIdToAbbreviations = new HashMap<>();
 
   @Override
   public @NotNull Element getState() {
     final Element actions = new Element("actions");
-    if (myActionId2Abbreviations.isEmpty()) {
+    if (actionIdToAbbreviations.isEmpty()) {
       return actions;
     }
 
-    Element abbreviations = null;
-    for (Map.Entry<String, Set<String>> entry : myActionId2Abbreviations.entrySet()) {
+    Element result = null;
+    for (Map.Entry<String, Set<String>> entry : actionIdToAbbreviations.entrySet()) {
       String key = entry.getKey();
-      Set<String> abbrs = entry.getValue();
-      Set<String> pluginAbbrs = myPluginsActionId2Abbreviations.get(key);
-      if (Objects.equals(abbrs, pluginAbbrs)) {
+      Set<String> abbreviations = entry.getValue();
+      Set<String> pluginAbbreviations = pluginsActionIdToAbbreviations.get(key);
+      if (Objects.equals(abbreviations, pluginAbbreviations)) {
         continue;
       }
 
-      if (abbrs != null) {
-        if (abbreviations == null) {
-          abbreviations = new Element("abbreviations");
-          actions.addContent(abbreviations);
+      if (abbreviations != null) {
+        if (result == null) {
+          result = new Element("abbreviations");
+          actions.addContent(result);
         }
 
         final Element action = new Element("action");
         action.setAttribute("id", key);
-        abbreviations.addContent(action);
-        for (String abbr : abbrs) {
-          final Element abbreviation = new Element("abbreviation");
+        result.addContent(action);
+        for (String abbr : abbreviations) {
+          Element abbreviation = new Element("abbreviation");
           abbreviation.setAttribute("name", abbr);
           action.addContent(abbreviation);
         }
@@ -67,40 +64,34 @@ public final class AbbreviationManagerImpl extends AbbreviationManager implement
       return;
     }
 
-    final List<Element> actions = abbreviations.get(0).getChildren("action");
+    List<Element> actions = abbreviations.get(0).getChildren("action");
     for (Element action : actions) {
-      final String actionId = action.getAttributeValue("id");
-      Set<String> values = myActionId2Abbreviations.computeIfAbsent(actionId, k -> new LinkedHashSet<>(1));
+      String actionId = action.getAttributeValue("id");
+      Set<String> values = actionIdToAbbreviations.computeIfAbsent(actionId, k -> new LinkedHashSet<>(1));
       for (Element abbr : action.getChildren("abbreviation")) {
         final String abbrValue = abbr.getAttributeValue("name");
         if (abbrValue != null) {
           values.add(abbrValue);
-          myAbbreviation2ActionId.computeIfAbsent(abbrValue, k -> new ArrayList<>()).add(actionId);
+          abbreviationToActionId.computeIfAbsent(abbrValue, k -> new ArrayList<>()).add(actionId);
         }
       }
     }
   }
 
-  @NotNull
   @Override
-  public Set<String> getAbbreviations() {
-    return myActionId2Abbreviations.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
+  public @NotNull Set<String> getAbbreviations() {
+    return actionIdToAbbreviations.values().stream().flatMap(Set::stream).collect(Collectors.toSet());
   }
 
-  @NotNull
   @Override
-  public Set<String> getAbbreviations(@NotNull String actionId) {
-    Set<String> abbreviations = myActionId2Abbreviations.get(actionId);
-    if (abbreviations == null) {
-      return Collections.emptySet();
-    }
-    return Collections.unmodifiableSet(abbreviations);
+  public @NotNull Set<String> getAbbreviations(@NotNull String actionId) {
+    Set<String> abbreviations = actionIdToAbbreviations.get(actionId);
+    return abbreviations == null ? Collections.emptySet() : Collections.unmodifiableSet(abbreviations);
   }
 
-  @NotNull
   @Override
-  public List<String> findActions(@NotNull String abbreviation) {
-    final List<String> actions = myAbbreviation2ActionId.get(abbreviation);
+  public @NotNull List<String> findActions(@NotNull String abbreviation) {
+    final List<String> actions = abbreviationToActionId.get(abbreviation);
     return actions == null ? Collections.emptyList() : Collections.unmodifiableList(actions);
   }
 
@@ -110,17 +101,16 @@ public final class AbbreviationManagerImpl extends AbbreviationManager implement
   }
 
   public void register(@NotNull String abbreviation, @NotNull String actionId, boolean fromPluginXml) {
-    if (fromPluginXml && myActionId2Abbreviations.containsKey(actionId)) {
-      register(abbreviation, actionId, myPluginsActionId2Abbreviations);
+    if (fromPluginXml && actionIdToAbbreviations.containsKey(actionId)) {
+      register(abbreviation, actionId, pluginsActionIdToAbbreviations);
       return;
     }
-    register(abbreviation, actionId, myActionId2Abbreviations);
+    register(abbreviation, actionId, actionIdToAbbreviations);
     if (fromPluginXml) {
-      register(abbreviation, actionId, myPluginsActionId2Abbreviations);
+      register(abbreviation, actionId, pluginsActionIdToAbbreviations);
     }
 
-    List<String> ids = myAbbreviation2ActionId.computeIfAbsent(abbreviation, k -> new ArrayList<>(0));
-
+    List<String> ids = abbreviationToActionId.computeIfAbsent(abbreviation, k -> new ArrayList<>(0));
     if (!ids.contains(actionId)) {
       ids.add(actionId);
     }
@@ -133,20 +123,21 @@ public final class AbbreviationManagerImpl extends AbbreviationManager implement
 
   @Override
   public void remove(@NotNull String abbreviation, @NotNull String actionId) {
-    final List<String> actions = myAbbreviation2ActionId.get(abbreviation);
+    List<String> actions = abbreviationToActionId.get(abbreviation);
     if (actions != null) {
       actions.remove(actionId);
     }
-    Set<String> abbreviations = myActionId2Abbreviations.get(actionId);
+
+    Set<String> abbreviations = actionIdToAbbreviations.get(actionId);
     if (abbreviations != null) {
       abbreviations.remove(abbreviation);
     }
     else {
-      Set<String> abbrs = myActionId2Abbreviations.get(actionId);
-      if (abbrs != null) {
-        Set<String> customValues = new LinkedHashSet<>(abbrs);
+      abbreviations = actionIdToAbbreviations.get(actionId);
+      if (abbreviations != null) {
+        Set<String> customValues = new LinkedHashSet<>(abbreviations);
         customValues.remove(abbreviation);
-        myActionId2Abbreviations.put(actionId, customValues);
+        actionIdToAbbreviations.put(actionId, customValues);
       }
     }
   }
@@ -155,8 +146,8 @@ public final class AbbreviationManagerImpl extends AbbreviationManager implement
   public void removeAllAbbreviations(@NotNull String actionId) {
     Set<String> abbreviations = getAbbreviations(actionId);
     for (String abbreviation : abbreviations) {
-      myAbbreviation2ActionId.get(abbreviation).remove(actionId);
+      abbreviationToActionId.get(abbreviation).remove(actionId);
     }
-    myActionId2Abbreviations.remove(actionId);
+    actionIdToAbbreviations.remove(actionId);
   }
 }

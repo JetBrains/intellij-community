@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollect
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import org.jetbrains.annotations.NotNull;
@@ -13,11 +14,16 @@ import java.awt.*;
 import java.awt.event.WindowEvent;
 
 final class FrameStateManagerAppListener implements ApplicationActivationListener {
+  private static final Logger LOG = Logger.getInstance(FrameStateManagerAppListener.class);
   private final FrameStateListener publisher = ApplicationManager.getApplication().getMessageBus().syncPublisher(FrameStateListener.TOPIC);
 
   private FrameStateManagerAppListener() {
     Toolkit.getDefaultToolkit().addAWTEventListener(e -> {
       if (e.getID() == WindowEvent.WINDOW_ACTIVATED || e.getID() == WindowEvent.WINDOW_DEACTIVATED) {
+        if (IdeEventQueueKt.getSkipWindowDeactivationEvents()) {
+          LOG.warn("Skipped " + e);
+          return;
+        }
         IdeFrame frame = ProjectUtil.getRootFrameForWindow(((WindowEvent)e).getWindow());
         if (frame != null) {
           IdeFrame otherFrame = ProjectUtil.getRootFrameForWindow(((WindowEvent)e).getOppositeWindow());

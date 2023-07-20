@@ -118,7 +118,7 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       }
       is JTable -> {
         val text = mutableListOf<String?>()
-        for (i in 0 until c.rowCount) {
+        for (i in c.selectedRows) {
           val rowText = mutableListOf<String?>()
           for (j in 0 until c.columnCount) {
             val value = c.getValueAt(i, j)
@@ -143,7 +143,7 @@ internal class CopyUiLabelAction : UiMouseAction("CopyUiLabel") {
       }
       is JTree -> {
         val text = mutableListOf<String?>()
-        for (i in 0 until c.rowCount) {
+        for (i in c.selectionRows ?: intArrayOf()) {
           val treePath = c.getPathForRow(i)
           val node = treePath.lastPathComponent as? DefaultMutableTreeNode ?: continue
           val renderer: TreeCellRenderer = c.cellRenderer ?: DefaultTreeCellRenderer()

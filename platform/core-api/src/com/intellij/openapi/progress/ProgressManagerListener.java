@@ -2,8 +2,10 @@
 package com.intellij.openapi.progress;
 
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public interface ProgressManagerListener {
 
   Topic<ProgressManagerListener> TOPIC = new Topic<>(ProgressManagerListener.class,

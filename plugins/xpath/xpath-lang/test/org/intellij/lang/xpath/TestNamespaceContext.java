@@ -17,7 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collection;
 import java.util.Collections;
 
-class TestNamespaceContext implements NamespaceContext {
+final class TestNamespaceContext implements NamespaceContext {
   private static final TestNamespaceContext INSTANCE = new TestNamespaceContext();
 
   @TestOnly

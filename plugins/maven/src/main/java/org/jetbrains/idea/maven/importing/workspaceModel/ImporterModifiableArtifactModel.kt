@@ -2,6 +2,10 @@
 package org.jetbrains.idea.maven.importing.workspaceModel
 
 import com.intellij.configurationStore.serialize
+import com.intellij.java.workspace.entities.ArtifactEntity
+import com.intellij.java.workspace.entities.ArtifactPropertiesEntity
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.modifyEntity
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.JDOMUtil
@@ -14,14 +18,10 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
-import com.intellij.workspaceModel.ide.virtualFile
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addArtifactPropertiesEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import com.intellij.platform.backend.workspace.virtualFile
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.jps.util.JpsPathUtil
 import kotlin.collections.set
 
@@ -161,10 +161,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
       val rootElement = artifact.rootElement
       val rootElementEntity = rootElement.getOrAddEntity(storage, source, project) as CompositePackagingElementEntity
 
-      val artifactEntity = storage.addArtifactEntity(
-        artifact.name, artifact.artifactType.id, false,
-        artifact.getOutputUrl(), rootElementEntity, source
-      )
+      val artifactEntity = storage addEntity ArtifactEntity(artifact.name, artifact.artifactType.id, false, source) {
+        this.outputUrl = artifact.getOutputUrl()
+        this.rootElement = rootElementEntity
+      }
 
       for (provider in artifact.propertiesProviders) {
         val properties = artifact.getProperties(provider)
@@ -184,7 +184,10 @@ internal class ImporterModifiableArtifactModel(private val project: Project,
           val existingProperty = artifactEntity.customProperties.find { it.providerType == provider.id }
 
           if (existingProperty == null) {
-            storage.addArtifactPropertiesEntity(artifactEntity, provider.id, tag, artifactEntity.entitySource)
+            storage addEntity ArtifactPropertiesEntity(provider.id, artifactEntity.entitySource) {
+              this.artifact = artifactEntity
+              this.propertiesXmlTag = tag
+            }
           }
           else {
             storage.modifyEntity(existingProperty) {

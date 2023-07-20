@@ -22,16 +22,16 @@ import java.util.Set;
 
 public class JavaPsiClassReferenceElement extends LookupItem<Object> implements TypedLookupItem {
   public static final ClassConditionKey<JavaPsiClassReferenceElement> CLASS_CONDITION_KEY = ClassConditionKey.create(JavaPsiClassReferenceElement.class);
-  private final SmartPsiElementPointer<PsiClass> myClass;
+  private final @NotNull PsiClass myClass;
   private final String myQualifiedName;
   private String myForcedPresentableName;
   private final String myPackageDisplayName;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
-  public JavaPsiClassReferenceElement(PsiClass psiClass) {
+  public JavaPsiClassReferenceElement(@NotNull PsiClass psiClass) {
     super(psiClass.getName(), psiClass.getName());
     myQualifiedName = psiClass.getQualifiedName();
-    myClass = SmartPointerManager.getInstance(psiClass.getProject()).createSmartPsiElementPointer(psiClass);
+    myClass = psiClass;
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailType.NONE);
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
@@ -82,14 +82,12 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   @NotNull
   @Override
   public PsiClass getObject() {
-    PsiClass element = myClass.getElement();
-    if (element == null) throw new IllegalStateException("Cannot restore from " + myClass);
-    return element;
+    return myClass;
   }
 
   @Override
   public boolean isValid() {
-    return myClass.getElement() != null;
+    return myClass.isValid();
   }
 
   @Override

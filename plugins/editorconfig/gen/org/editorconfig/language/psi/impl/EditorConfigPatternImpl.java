@@ -27,34 +27,4 @@ public class EditorConfigPatternImpl extends EditorConfigHeaderElementBase imple
     else super.accept(visitor);
   }
 
-  @Override
-  @NotNull
-  public List<EditorConfigAsteriskPattern> getAsteriskPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigAsteriskPattern.class);
-  }
-
-  @Override
-  @NotNull
-  public List<EditorConfigCharClass> getCharClassList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigCharClass.class);
-  }
-
-  @Override
-  @NotNull
-  public List<EditorConfigDoubleAsteriskPattern> getDoubleAsteriskPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigDoubleAsteriskPattern.class);
-  }
-
-  @Override
-  @NotNull
-  public List<EditorConfigFlatPattern> getFlatPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigFlatPattern.class);
-  }
-
-  @Override
-  @NotNull
-  public List<EditorConfigQuestionPattern> getQuestionPatternList() {
-    return PsiTreeUtil.getChildrenOfTypeAsList(this, EditorConfigQuestionPattern.class);
-  }
-
 }

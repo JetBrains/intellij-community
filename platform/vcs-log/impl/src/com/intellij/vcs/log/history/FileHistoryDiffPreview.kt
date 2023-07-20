@@ -4,11 +4,14 @@ package com.intellij.vcs.log.history
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.impl.DiffRequestProcessor
+import com.intellij.diff.tools.external.ExternalDiffTool
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ChainBackedDiffPreviewProvider
+import com.intellij.openapi.vcs.changes.EditorTabPreviewBase
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogDataKeys
@@ -56,5 +59,20 @@ class FileHistoryEditorDiffPreview(project: Project, private val fileHistoryPane
   override fun updateDiffAction(event: AnActionEvent) {
     val selection = event.getData(VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION) ?: return
     CompareRevisionsFromFileHistoryActionProvider.setTextAndDescription(event, selection)
+  }
+
+  override fun performDiffAction(): Boolean {
+    if (ExternalDiffTool.isEnabled()) {
+      val change = fileHistoryPanel.selectedChange
+      if (change != null) {
+        val diffProducers = ChangeDiffRequestProducer.create(project, change)
+          ?.let { ListSelection.createSingleton(it) }
+        if (EditorTabPreviewBase.showExternalToolIfNeeded(project, diffProducers)) {
+          return true
+        }
+      }
+    }
+
+    return super.performDiffAction()
   }
 }

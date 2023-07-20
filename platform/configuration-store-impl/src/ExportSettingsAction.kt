@@ -212,9 +212,12 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
       return@processAllImplementationClasses
     }
 
-    val storages =
-      if (!withDeprecated) stateAnnotation.storages.filter { !it.deprecated }
-      else stateAnnotation.storages.sortByDeprecated()
+    val storages = if (!withDeprecated) {
+      stateAnnotation.storages.filter { !it.deprecated }
+    }
+    else {
+      sortStoragesByDeprecated(stateAnnotation.storages.asList())
+    }
 
     if (storages.isEmpty()) return@processAllImplementationClasses
 
@@ -244,7 +247,7 @@ fun getExportableComponentsMap(isComputePresentableNames: Boolean,
     }
   }
 
-  // must be in the end - because most of SchemeManager clients specify additionalExportFile in the State spec
+  // must be in the end - because most of the SchemeManager clients specify additionalExportFile in the State spec
   (SchemeManagerFactory.getInstance() as SchemeManagerFactoryBase).process {
     if (it.roamingType != RoamingType.DISABLED && it.fileSpec.getOrNull(0) != '$') {
       val fileSpec = FileSpec(relativePath = it.fileSpec, rawFileSpec = it.fileSpec, isDirectory = true)
@@ -402,7 +405,7 @@ private fun loadFileContent(item: ExportableItem, storageManager: StateStorageMa
 }
 
 private fun isComponentDefined(componentName: String?, bytes: ByteArray): Boolean {
-  return componentName == null || String(bytes).contains("""<component name="${componentName}"""")
+  return componentName == null || bytes.decodeToString().contains("""<component name="${componentName}"""")
 }
 
 private fun exportDirectory(item: ExportableItem, zip: Compressor, storageManager: StateStorageManagerImpl) {

@@ -73,13 +73,6 @@ public interface ExtensionPoint<T extends @NotNull Object> {
   void addExtensionPointListener(@NotNull ExtensionPointListener<T> listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
 
   /**
-   * @deprecated Use {@link ExtensionPointName#addChangeListener(Runnable, Disposable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  void addExtensionPointListener(@NotNull ExtensionPointChangeListener listener, boolean invokeForLoadedExtensions, @Nullable Disposable parentDisposable);
-
-  /**
    * Consider using {@link ExtensionPointName#addChangeListener}
    */
   void addChangeListener(@NotNull Runnable listener, @Nullable Disposable parentDisposable);

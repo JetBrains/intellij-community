@@ -9,7 +9,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -36,15 +35,6 @@ import java.util.function.Function;
 public class SpellCheckingEditorCustomization extends SimpleEditorCustomization {
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();
-
-  /**
-   * @deprecated use {@link SpellCheckingEditorCustomizationProvider} methods.
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  public static SpellCheckingEditorCustomization getInstance(boolean enabled) {
-    return (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getCustomization(enabled);
-  }
 
   SpellCheckingEditorCustomization(boolean enabled) {
     super(enabled);

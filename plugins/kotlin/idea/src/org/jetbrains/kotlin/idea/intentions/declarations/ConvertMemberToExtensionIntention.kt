@@ -19,7 +19,6 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
@@ -32,8 +31,8 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.addIfNotNull
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 private val LOG = Logger.getInstance(ConvertMemberToExtensionIntention::class.java)
 
@@ -263,13 +262,15 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         if (javaCallsToFix.isNotEmpty()) {
             val lightMethod = extension.toLightMethods().first()
             for (javaCallToFix in javaCallsToFix) {
-                javaCallToFix.methodExpression.qualifierExpression?.let {
-                    val argumentList = javaCallToFix.argumentList
-                    argumentList.addBefore(it, argumentList.expressions.firstOrNull())
-                }
+                runWriteAction {
+                    javaCallToFix.methodExpression.qualifierExpression?.let {
+                        val argumentList = javaCallToFix.argumentList
+                        argumentList.addBefore(it, argumentList.expressions.firstOrNull())
+                    }
 
-                val newRef = javaCallToFix.methodExpression.bindToElement(lightMethod)
-                JavaCodeStyleManager.getInstance(project).shortenClassReferences(newRef)
+                    val newRef = javaCallToFix.methodExpression.bindToElement(lightMethod)
+                    JavaCodeStyleManager.getInstance(project).shortenClassReferences(newRef)
+                }
             }
         }
 
@@ -330,7 +331,7 @@ class ConvertMemberToExtensionIntention : SelfTargetingRangeIntention<KtCallable
         return copied.text
     }
 
-    companion object {
+    object Holder {
         fun convert(element: KtCallableDeclaration): KtCallableDeclaration =
             ConvertMemberToExtensionIntention().createExtensionCallableAndPrepareBodyToSelect(element).first
     }

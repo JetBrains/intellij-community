@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.externalDependencies.DependencyOnPlugin;
@@ -7,6 +7,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
+import com.intellij.notification.impl.NotificationsAnnouncer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -29,10 +30,12 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.AccessibleAnnouncerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -47,6 +50,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
 /**
  * @author Alexander Lobas
@@ -89,7 +94,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
   private final Map<IdeaPluginDescriptor, Pair<PluginEnableDisableAction, PluginEnabledState>> myDiff = new HashMap<>();
   private final Map<PluginId, Boolean> myRequiredPluginsForProject = new HashMap<>();
-  private final Map<IdeaPluginDescriptorImpl, Boolean> myRequiresRestart = new HashMap<>();
   private final Set<IdeaPluginDescriptor> myUninstalled = new HashSet<>();
 
   private final Set<PluginId> myErrorPluginsToDisable = new HashSet<>();
@@ -410,8 +414,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           runInstallOperation(operation, info, modalityState);
         }
 
-        private @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor,
-                                                  @NotNull ProgressIndicator indicator) {
+        private static @Nullable PluginNode toPluginNode(@NotNull IdeaPluginDescriptor descriptor, @NotNull ProgressIndicator indicator) {
           if (descriptor instanceof PluginNode) {
             PluginNode pluginNode = (PluginNode)descriptor;
             return pluginNode.detailsLoaded() ?
@@ -603,6 +606,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       if (success) {
         appendOrUpdateDescriptor(installedDescriptor != null ? installedDescriptor : descriptor, restartRequired);
         appendDependsAfterInstall();
+        if (installedDescriptor == null && descriptor instanceof PluginNode && myDownloaded != null && myDownloaded.ui != null) {
+          ListPluginComponent component = myDownloaded.ui.findComponent(descriptor);
+          if (component != null) {
+            component.setInstalledPluginMarketplaceNode((PluginNode)descriptor);
+          }
+        }
       }
       else if (myCancelInstallCallback != null) {
         myCancelInstallCallback.accept(descriptor);
@@ -621,6 +630,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     info.indicator.cancel();
+
+    if (NotificationsAnnouncer.isEnabled()) {
+      JFrame frame = WindowManager.getInstance().findVisibleFrame();
+      String key = success ? "plugins.configurable.plugin.installing.success" : "plugins.configurable.plugin.installing.failed";
+      String message = IdeBundle.message(key, descriptor.getName());
+      AccessibleAnnouncerUtil.announce(frame, message, true);
+    }
 
     if (success) {
       needRestart |= restartRequired;
@@ -847,12 +863,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
                                                          id.getIdString()::equals));
   }
 
-  boolean requiresRestart(@NotNull IdeaPluginDescriptor descriptor) {
-    return myRequiresRestart
-      .computeIfAbsent(descriptor instanceof IdeaPluginDescriptorImpl ? (IdeaPluginDescriptorImpl)descriptor : null,
-                       it -> it == null || DynamicPlugins.INSTANCE.checkCanUnloadWithoutRestart(it) != null);
-  }
-
   boolean isUninstalled(@NotNull IdeaPluginDescriptor descriptor) {
     return myUninstalled.contains(descriptor);
   }
@@ -936,7 +946,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
 
     if (PluginManagerCore.isIncompatible(descriptor) ||
-        PluginManagerCore.isBrokenPlugin(descriptor) ||
+        isBrokenPlugin(descriptor) ||
         hasProblematicDependencies(pluginId)) {
       myErrorPluginsToDisable.add(pluginId);
     }
@@ -1074,10 +1084,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginId)) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any loadingError
       return List.of();
-    }
-
-    if (descriptor.isOnDemand() && !EnabledOnDemandPluginsState.isEnabled(pluginId)) {
-      return List.of(createTextChunk(IdeBundle.message("plugin.manager.on.demand.plugin.not.loaded")));
     }
 
     PluginLoadingError loadingError = PluginManagerCore.getLoadingError(pluginId);
@@ -1263,13 +1269,14 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
 
   private final Map<String, Icon> myIcons = new HashMap<>(); // local cache for PluginLogo WeakValueMap
 
-  @NotNull
-  public Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean error, boolean disabled) {
+  public @NotNull Icon getIcon(@NotNull IdeaPluginDescriptor descriptor, boolean big, boolean error, boolean disabled) {
+
+
     String key = descriptor.getPluginId().getIdString() + big + error + disabled;
     Icon icon = myIcons.get(key);
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, error, disabled);
-      if (icon != PluginLogo.getDefault().getIcon(big, error, disabled)) {
+      if (icon != PluginLogo.INSTANCE.getDefault$intellij_platform_ide_impl().getIcon(big, error, disabled)) {
         myIcons.put(key, icon);
       }
     }

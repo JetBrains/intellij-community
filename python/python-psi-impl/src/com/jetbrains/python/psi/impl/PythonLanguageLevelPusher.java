@@ -20,6 +20,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
@@ -77,7 +78,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     myModuleSdks.putAll(moduleSdks);
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, moduleSdks);
-    guessLanguageLevelWithCaching(project, distinctSdks);
+    guessLanguageLevelWithCaching(project, () -> distinctSdks);
   }
 
   @Override
@@ -264,10 +265,10 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
   }
 
   private static @NotNull LanguageLevel guessLanguageLevelWithCaching(@NotNull Project project,
-                                                                      @NotNull Collection<? extends @NotNull Sdk> pythonModuleSdks) {
+                                                                      @NotNull Computable<@NotNull Collection<? extends @NotNull Sdk>> pythonModuleSdks) {
     LanguageLevel languageLevel = LanguageLevel.fromPythonVersion(PROJECT_LANGUAGE_LEVEL.get(project));
     if (languageLevel == null) {
-      languageLevel = guessLanguageLevel(pythonModuleSdks);
+      languageLevel = guessLanguageLevel(pythonModuleSdks.compute());
       PROJECT_LANGUAGE_LEVEL.set(project, languageLevel.toPythonVersion());
     }
 
@@ -312,7 +313,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     final Sdk sdk = virtualFile instanceof LightVirtualFile ? null : getFileSdk(project, virtualFile);
     if (sdk != null) return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
 
-    return guessLanguageLevelWithCaching(project, getPythonModuleSdks(project).values());
+    return guessLanguageLevelWithCaching(project, () -> getPythonModuleSdks(project).values());
   }
 
   private final class UpdateRootTask implements Runnable {

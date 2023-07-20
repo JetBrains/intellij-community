@@ -19,17 +19,18 @@ object JBCefPsiNavigationUtils {
 
   fun navigateTo(requestLink: String): Boolean {
     val (filePath, offset) = parsePsiElementCoordinates(requestLink) ?: return false
-    val dataContext = DataManager.getInstance().dataContext
-    val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return false
-    val virtualFile = ProjectRootManager.getInstance(project)
-                        .contentRoots.asSequence()
-                        .map { Paths.get(it.path, filePath) }
-                        .mapNotNull(VirtualFileManager.getInstance()::findFileByNioPath)
-                        .firstOrNull() ?: return false
+    DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
+      val project = CommonDataKeys.PROJECT.getData(dataContext) ?: return@onSuccess
+      val virtualFile = ProjectRootManager.getInstance(project)
+                          .contentRoots.asSequence()
+                          .map { Paths.get(it.path, filePath) }
+                          .mapNotNull(VirtualFileManager.getInstance()::findFileByNioPath)
+                          .firstOrNull() ?: return@onSuccess
 
-    ApplicationManager.getApplication().invokeLater {
-      FileEditorManager.getInstance(project)
-        .openEditor(OpenFileDescriptor(project, virtualFile, offset), true)
+      ApplicationManager.getApplication().invokeLater {
+        FileEditorManager.getInstance(project)
+          .openEditor(OpenFileDescriptor(project, virtualFile, offset), true)
+      }
     }
     return true
   }

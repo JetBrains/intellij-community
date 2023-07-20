@@ -18,9 +18,8 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
     myTarget = target;
   }
 
-  @NotNull
   @Override
-  public CheckResourcesTarget getTarget() {
+  public @NotNull CheckResourcesTarget getTarget() {
     return myTarget;
   }
 
@@ -46,12 +45,12 @@ class GroovyResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myDescriptor.getRootId();
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myDescriptor.getRootFile();
   }
 

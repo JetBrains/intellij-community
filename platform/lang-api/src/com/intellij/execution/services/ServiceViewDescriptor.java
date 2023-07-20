@@ -4,15 +4,18 @@ package com.intellij.execution.services;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.Key;
 import com.intellij.pom.Navigatable;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public interface ServiceViewDescriptor {
+  Key<Boolean> ACTION_HOLDER_KEY = Key.create("ServiceViewActionHolderContentComponent");
+
   @NotNull
   ItemPresentation getPresentation();
 
@@ -51,7 +54,7 @@ public interface ServiceViewDescriptor {
     return null;
   }
 
-  default void onNodeSelected() {
+  default void onNodeSelected(List<Object> selectedServices) {
   }
 
   default void onNodeUnselected() {

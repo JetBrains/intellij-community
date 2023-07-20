@@ -3,14 +3,15 @@ package com.intellij.execution.actions;
 
 import com.google.common.base.Ascii;
 import com.intellij.execution.process.ProcessHandler;
-import com.intellij.execution.ui.ConsoleView;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.execution.ui.*;
+import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.terminal.TerminalExecutionConsole;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,10 +30,20 @@ public final class EOFAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     RunContentDescriptor descriptor = StopAction.getRecentlyStartedContentDescriptor(e.getDataContext());
+    boolean isConsoleSelected = descriptor != null && isConsoleSelected(descriptor);
     ProcessHandler handler = descriptor != null ? descriptor.getProcessHandler() : null;
-    e.getPresentation().setEnabledAndVisible(e.getData(LangDataKeys.CONSOLE_VIEW) != null
+    e.getPresentation().setEnabledAndVisible(isConsoleSelected
                                              && handler != null
                                              && !handler.isProcessTerminated());
+  }
+
+  private static boolean isConsoleSelected(@NotNull RunContentDescriptor descriptor) {
+    RunnerLayoutUi runnerLayoutUi = descriptor.getRunnerLayoutUi();
+    if (runnerLayoutUi == null) return false;
+    ContentManager contentManager = runnerLayoutUi.getContentManager();
+    Content selectedContent = contentManager.getSelectedContent();
+    return selectedContent != null
+           && ExecutionConsole.CONSOLE_CONTENT_ID.equals(selectedContent.getUserData(ViewImpl.ID));
   }
 
   @Override

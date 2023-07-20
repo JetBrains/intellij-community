@@ -66,6 +66,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 /**
  * @author Jeka,dsl
  */
@@ -204,7 +206,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   public static void detectConflicts(UsageInfo[] usageInfos,
-                                     MultiMap<PsiElement, @Nls String> conflicts,
+                                     MultiMap<PsiElement, @DialogMessage String> conflicts,
                                      PsiElement @NotNull[] elementsToMove,
                                      @NotNull PackageWrapper targetPackage,
                                      @NotNull MoveDestination moveDestination) {
@@ -215,7 +217,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private static void detectMoveToDefaultPackage(UsageInfo[] infos,
-                                                 MultiMap<PsiElement, @Nls String> conflicts,
+                                                 MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                  PackageWrapper aPackage) {
     if (!aPackage.getQualifiedName().isEmpty()) return;
 
@@ -283,7 +285,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  static void detectPackageLocalsUsed(final MultiMap<PsiElement, String> conflicts,
+  static void detectPackageLocalsUsed(MultiMap<PsiElement, @DialogMessage String> conflicts,
                                       PsiElement[] elementsToMove,
                                       PackageWrapper targetPackage) {
     PackageLocalsUsageCollector visitor = new PackageLocalsUsageCollector(elementsToMove, targetPackage, conflicts);
@@ -295,8 +297,8 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private static void detectPackageLocalsMoved(final UsageInfo[] usages,
-                                               final MultiMap<PsiElement, String> conflicts,
+  private static void detectPackageLocalsMoved(UsageInfo[] usages,
+                                               MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                @NotNull PackageWrapper targetPackage,
                                                PsiElement[] elementsToMove) {
     Set<PsiClass> movedClasses = new HashSet<>();
@@ -833,15 +835,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
   }
 
   private static class MyClassInstanceReferenceVisitor implements ClassInstanceScanner.ClassInstanceReferenceVisitor {
-    private final MultiMap<PsiElement, String> myConflicts;
+    private final MultiMap<PsiElement, @DialogMessage String> myConflicts;
     private final Map<PsiModifierListOwner,HashSet<PsiElement>> myReportedElementToContainer = new HashMap<>();
     private final Map<PsiClass, RefactoringUtil.IsDescendantOf> myIsDescendantOfCache = new HashMap<>();
     private final @NotNull PackageWrapper myTargetPackage;
     private final PsiElement[] myElementsToMove;
 
     MyClassInstanceReferenceVisitor(@NotNull PackageWrapper targetPackage,
-                                    PsiElement[] elementsToMove, 
-                                    MultiMap<PsiElement, String> conflicts) {
+                                    PsiElement[] elementsToMove,
+                                    MultiMap<PsiElement, @DialogMessage String> conflicts) {
       myConflicts = conflicts;
       myTargetPackage = targetPackage;
       myElementsToMove = elementsToMove;

@@ -79,14 +79,6 @@ interface CodeVisionProvider<T> {
    */
   fun handleExtraAction(editor: Editor, textRange: TextRange, actionId: String): Unit = Unit
 
-  /**
-   * Calls on background BEFORE editor opening
-   * @return ranges where placeholders should be when editor opens
-   */
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("use getPlaceholderCollector")
-  fun collectPlaceholders(editor: Editor): List<TextRange> = emptyList()
-
   fun getPlaceholderCollector(editor: Editor, psiFile: PsiFile?) : CodeVisionPlaceholderCollector? = null
 
   /**

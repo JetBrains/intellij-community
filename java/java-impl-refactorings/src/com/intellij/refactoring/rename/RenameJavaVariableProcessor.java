@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
+
 public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   private static final Logger LOG = Logger.getInstance(RenameJavaVariableProcessor.class);
 
@@ -181,7 +183,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   @Override
   public void findExistingNameConflicts(@NotNull PsiElement element,
                                         @NotNull String newName,
-                                        @NotNull MultiMap<PsiElement, String> conflicts,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                         @NotNull Map<PsiElement, String> allRenames) {
     for (PsiElement psiElement : allRenames.keySet()) {
       RenamePsiElementProcessor.forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
@@ -189,7 +191,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
-  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName, @NotNull MultiMap<PsiElement, String> conflicts) {
+  public void findExistingNameConflicts(@NotNull PsiElement element, @NotNull String newName,
+                                        @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField refactoredField) {
       if (newName.equals(refactoredField.getName())) return;

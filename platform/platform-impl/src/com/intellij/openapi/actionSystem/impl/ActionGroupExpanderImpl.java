@@ -14,7 +14,7 @@ import java.util.List;
 
 final class ActionGroupExpanderImpl implements ActionGroupExpander {
   @Override
-  public boolean allowsFastUpdate(@Nullable Project project, @NotNull String place) {
+  public boolean allowsFastUpdate(@Nullable Project project, @NotNull ActionGroup group, @NotNull String place) {
     return true;
   }
 

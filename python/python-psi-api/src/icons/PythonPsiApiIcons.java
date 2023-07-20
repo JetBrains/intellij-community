@@ -14,16 +14,16 @@ public final class PythonPsiApiIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PythonPsiApiIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon IPythonNotebook = load("icons/com/jetbrains/python/iPythonNotebook.svg", -1133196947, 0);
+  /** 16x16 */ public static final @NotNull Icon IPythonNotebook = load("icons/com/jetbrains/python/iPythonNotebook.svg", -1973595245, 0);
 
   public static final class Nodes {
-    /** 16x16 */ public static final @NotNull Icon CyanDot = load("icons/com/jetbrains/python/nodes/cyan-dot.svg", -1726600174, 0);
-    /** 16x16 */ public static final @NotNull Icon Lock = load("icons/com/jetbrains/python/nodes/lock.svg", 189927754, 0);
-    /** 16x16 */ public static final @NotNull Icon RedInvTriangle = load("icons/com/jetbrains/python/nodes/red-inv-triangle.svg", -733376763, 0);
+    /** 16x16 */ public static final @NotNull Icon CyanDot = load("icons/com/jetbrains/python/nodes/cyan-dot.svg", -2089885137, 0);
+    /** 16x16 */ public static final @NotNull Icon Lock = load("icons/com/jetbrains/python/nodes/lock.svg", 193027614, 0);
+    /** 16x16 */ public static final @NotNull Icon RedInvTriangle = load("icons/com/jetbrains/python/nodes/red-inv-triangle.svg", 448881615, 0);
   }
 
-  /** 16x16 */ public static final @NotNull Icon PropertyDeleter = load("icons/com/jetbrains/python/propertyDeleter.svg", 87839192, 2);
-  /** 16x16 */ public static final @NotNull Icon PropertyGetter = load("icons/com/jetbrains/python/propertyGetter.svg", -1148624209, 2);
-  /** 16x16 */ public static final @NotNull Icon PropertySetter = load("icons/com/jetbrains/python/propertySetter.svg", 1399714944, 2);
-  /** 16x16 */ public static final @NotNull Icon PythonFile = load("icons/com/jetbrains/python/pythonFile.svg", -613428190, 0);
+  /** 16x16 */ public static final @NotNull Icon PropertyDeleter = load("icons/com/jetbrains/python/propertyDeleter.svg", 1197657283, 2);
+  /** 16x16 */ public static final @NotNull Icon PropertyGetter = load("icons/com/jetbrains/python/propertyGetter.svg", 342897730, 2);
+  /** 16x16 */ public static final @NotNull Icon PropertySetter = load("icons/com/jetbrains/python/propertySetter.svg", -1393895330, 2);
+  /** 16x16 */ public static final @NotNull Icon PythonFile = load("icons/com/jetbrains/python/pythonFile.svg", -1431086673, 0);
 }

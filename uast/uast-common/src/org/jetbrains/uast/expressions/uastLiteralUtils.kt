@@ -127,8 +127,8 @@ val UExpression.allPsiLanguageInjectionHosts: List<PsiLanguageInjectionHost>
 @ApiStatus.Experimental
 fun isConcatenation(uExpression: UElement?): Boolean {
   if (uExpression !is UPolyadicExpression) return false
-  if (uExpression.operator != UastBinaryOperator.PLUS) return false
-  return true
+
+  return uExpression.operator == UastBinaryOperator.PLUS
 }
 
 /**

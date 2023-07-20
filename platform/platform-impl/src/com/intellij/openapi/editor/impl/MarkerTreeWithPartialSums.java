@@ -28,7 +28,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
    * so that internal caches related to calculating value sums could be updated.
    */
   void valueUpdated(T marker) {
-    Node node = (Node)lookupNode(marker);
+    Node<T> node = (Node<T>)lookupNode(marker);
     if (node != null) node.recalculateSubTreeSumUp();
   }
 
@@ -117,7 +117,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends
     }
 
     private void recalculateSubTreeSumUp() {
-      Node n = this;
+      Node<?> n = this;
       while (n != null) {
         n.recalculateSubTreeSum();
         n = n.getParent();

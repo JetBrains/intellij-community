@@ -52,7 +52,7 @@ import java.util.function.BiPredicate;
 import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 
-import static com.intellij.util.indexing.diagnostic.IndexOperationFUS.IndexOperationFusCollector.*;
+import static com.intellij.util.indexing.diagnostic.IndexLookupTimingsReporting.IndexOperationFusCollector.*;
 import static com.intellij.util.io.MeasurableIndexStore.keysCountApproximatelyIfPossible;
 
 @ApiStatus.Internal
@@ -104,6 +104,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @NotNull
   @ApiStatus.Internal
   public abstract <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
+
+  public void resetHints() { }
 
   @ApiStatus.Internal
   public abstract void waitUntilIndicesAreInitialized();

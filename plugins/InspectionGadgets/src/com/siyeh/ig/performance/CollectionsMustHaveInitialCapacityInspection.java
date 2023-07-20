@@ -67,14 +67,9 @@ public class CollectionsMustHaveInitialCapacityInspection
 
   @Override
   public @NotNull OptPane getOptionsPane() {
-    return mySettings.getOptionPane().prefix("settings")
+    return mySettings.getOptionPane().prefix("mySettings")
       .append(checkbox("myIgnoreFields", InspectionGadgetsBundle.message(
       "inspection.collection.must.have.initial.capacity.initializers.option")));
-  }
-
-  @Override
-  public @NotNull OptionController getOptionController() {
-    return super.getOptionController().onPrefix("settings", mySettings.getOptionController());
   }
 
   @Pattern(VALID_ID_PATTERN)

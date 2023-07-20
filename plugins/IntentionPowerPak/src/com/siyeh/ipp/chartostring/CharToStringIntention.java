@@ -15,16 +15,17 @@
  */
 package com.siyeh.ipp.chartostring;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class CharToStringIntention extends Intention {
+public class CharToStringIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -32,7 +33,7 @@ public class CharToStringIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("char.to.string.intention.name");
   }
 

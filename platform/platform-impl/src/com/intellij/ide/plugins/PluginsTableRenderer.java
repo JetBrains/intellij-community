@@ -107,7 +107,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
                                                            SimpleTextAttributes.STYLE_PLAIN);
       Matcher matcher = NameUtil.buildMatcher("*" + query, NameUtil.MatchingCaseSensitivity.NONE);
 
-      String category = myPluginDescriptor.getCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getCategory()); //NON-NLS
+      String category = myPluginDescriptor.getDisplayCategory() == null ? null : StringUtil.toUpperCase(myPluginDescriptor.getDisplayCategory());
       if (category != null) {
         if (query != null) {
           SpeedSearchUtil.appendColoredFragmentForMatcher(category, myCategory, attr, matcher, UIUtil.getTableBackground(isSelected, hasFocus), true);

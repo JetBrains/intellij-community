@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -58,8 +58,7 @@ final class ObjectTree {
     }
   }
 
-  @NotNull
-  private ObjectNode getParentNode(@NotNull Disposable object) {
+  private @NotNull ObjectNode getParentNode(@NotNull Disposable object) {
     return ObjectUtils.chooseNotNull(myObject2ParentNode.get(object), myRootNode);
   }
 
@@ -79,6 +78,9 @@ final class ObjectTree {
     }
   }
   boolean isDisposed(@NotNull Disposable object) {
+    if (object instanceof CheckedDisposable) {
+      return ((CheckedDisposable)object).isDisposed();
+    }
     synchronized (getTreeLock()) {
       return myDisposedObjects.get(object) != null;
     }
@@ -224,13 +226,15 @@ final class ObjectTree {
     }
   }
 
-  @NotNull
-  static Logger getLogger() {
+  static @NotNull Logger getLogger() {
     return Logger.getInstance(ObjectTree.class);
   }
 
   // return old value
   Throwable rememberDisposedTrace(@NotNull Disposable object, @Nullable Throwable trace) {
+    if (object instanceof CheckedDisposable) {
+      return null;
+    }
     return myDisposedObjects.put(object, ObjectUtils.notNull(trace, UNKNOWN_TRACE));
   }
 

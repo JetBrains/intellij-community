@@ -8,5 +8,8 @@ data class TestResultRequestEntity(
   val buildInfo: BuildInfo,
 
   @JsonProperty("test_run_results")
-  val testRunResults: List<TestResultEntity>
+  val testRunResults: List<TestClassResultEntity>,
+
+  @JsonProperty("changes")
+  val changes: List<ChangeEntity>
 )

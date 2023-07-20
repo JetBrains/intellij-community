@@ -30,7 +30,8 @@ public final class EmmetPreviewUtil {
 
   @Nullable
   public static String calculateTemplateText(@NotNull Editor editor, @NotNull PsiFile file, boolean expandPrimitiveAbbreviations) {
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
     CollectCustomTemplateCallback callback = new CollectCustomTemplateCallback(editor, file);
     ZenCodingGenerator generator = ZenCodingTemplate.findApplicableDefaultGenerator(callback, false);
     if (generator instanceof XmlZenCodingGenerator) {
@@ -86,11 +87,7 @@ public final class EmmetPreviewUtil {
 
   private static String reformatTemplateText(@NotNull final PsiFile file, @NotNull String templateText) {
     final PsiFile copy = PsiFileFactory.getInstance(file.getProject()).createFileFromText(file.getName(), file.getFileType(), templateText);
-    VirtualFile vFile = copy.getVirtualFile();
-    if (vFile != null) {
-      UndoUtil.disableUndoFor(vFile);
-    }
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().runUndoTransparentAction(() -> CodeStyleManager.getInstance(file.getProject()).reformat(copy)));
+    CodeStyleManager.getInstance(file.getProject()).reformat(copy);
     return copy.getText();
   }
 

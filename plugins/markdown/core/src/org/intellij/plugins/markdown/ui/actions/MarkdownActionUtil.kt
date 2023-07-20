@@ -19,6 +19,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLangua
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor
+import org.jetbrains.annotations.ApiStatus
 
 internal object MarkdownActionUtil {
   @RequiresEdt
@@ -63,6 +64,7 @@ internal object MarkdownActionUtil {
     return checkNotNull(editor) { "Markdown editor was expected to be found in data context" }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated(
     message = "Use findMarkdownEditor instead",
     replaceWith = ReplaceWith("findMarkdownEditor")

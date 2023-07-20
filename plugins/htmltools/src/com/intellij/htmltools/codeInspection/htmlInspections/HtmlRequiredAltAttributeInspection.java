@@ -8,7 +8,6 @@ import com.intellij.codeInspection.htmlInspections.HtmlLocalInspectionTool;
 import com.intellij.htmltools.HtmlToolsBundle;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NonNls;
@@ -23,7 +22,7 @@ public class HtmlRequiredAltAttributeInspection extends HtmlLocalInspectionTool 
   private static final String ALT = "alt";
 
   static {
-    htmlTagsWithRequiredAltAttribute = ContainerUtil.immutableSet("area", "img", "input", "applet");
+    htmlTagsWithRequiredAltAttribute = Set.of("area", "img", "input", "applet");
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
@@ -7,7 +7,6 @@ import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
@@ -19,9 +18,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -51,7 +48,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
   private final Map<PsiTypeCastExpression, StateInfo> myClassCastProblems = new HashMap<>();
   private final Map<PsiTypeCastExpression, TypeConstraint> myRealOperandTypes = new HashMap<>();
   private final Map<ContractFailureProblem, Boolean> myFailingCalls = new HashMap<>();
-  private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
   private final Map<PsiExpression, ThreeState> myNegativeArraySizes = new HashMap<>();
@@ -169,10 +165,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     return myArrayStoreProblems;
   }
 
-  Map<PsiElement, ThreeState> getOfNullableCalls() {
-    return myOfNullableCalls;
-  }
-
   Map<PsiCaseLabelElement, ThreeState> getSwitchLabelsReachability() {
     return mySwitchLabelsReachability;
   }
@@ -203,8 +195,8 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       (element, info) -> info.alwaysFails());
   }
 
-  StreamEx<PsiCallExpression> alwaysFailingCalls() {
-    return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).select(PsiCallExpression.class).distinct();
+  StreamEx<PsiExpression> alwaysFailingCalls() {
+    return StreamEx.ofKeys(myFailingCalls, v -> v).map(ContractFailureProblem::getAnchor).distinct();
   }
 
   boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
@@ -295,9 +287,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
         throw new IllegalStateException("Non-physical expression is passed");
       }
     }
-    if (expression instanceof PsiMethodCallExpression call && OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
-      processOfNullableResult(value, memState, call.getArgumentList().getExpressions()[0]);
-    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression cast) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
@@ -313,25 +302,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     if (context instanceof PsiMethod || context instanceof PsiLambdaExpression) {
       myAlwaysReturnsNotNull = myAlwaysReturnsNotNull && !state.getDfType(value).isSuperType(DfTypes.NULL);
     }
-    else if (context instanceof PsiMethodReferenceExpression methodRef &&
-             OptionalUtil.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
-      processOfNullableResult(value, state, methodRef.getReferenceNameElement());
-    }
-  }
-
-  private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
-    DfaValueFactory factory = value.getFactory();
-    DfaValue optionalValue = SpecialField.OPTIONAL_VALUE.createValue(factory, value);
-    DfaNullability nullability = DfaNullability.fromDfType(memState.getDfType(optionalValue));
-    ThreeState present;
-    if (nullability == DfaNullability.NULL) {
-      present = ThreeState.NO;
-    }
-    else if (nullability == DfaNullability.NOT_NULL) {
-      present = ThreeState.YES;
-    }
-    else present = ThreeState.UNSURE;
-    myOfNullableCalls.merge(anchor, present, ThreeState::merge);
   }
 
   @Override
@@ -356,11 +326,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
       myArrayStoreProblems.put(storeProblem.getAnchor(), Pair.create(storeProblem.getFromType(), storeProblem.getToType()));
     }
     else if (problem instanceof ContractFailureProblem contractFailure) {
-      if (contractFailure.getAnchor() instanceof PsiCallExpression call) {
-        Boolean isFailing = myFailingCalls.get(problem);
-        if (isFailing != null || !hasTrivialFailContract(call)) {
-          myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
-        }
+      Boolean isFailing = myFailingCalls.get(problem);
+      if (isFailing != null || !hasTrivialFailContract(contractFailure.getAnchor())) {
+        myFailingCalls.put(contractFailure, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
       }
     }
     else if (problem instanceof NullabilityProblemKind.NullabilityProblem<?> nullabilityProblem) {
@@ -382,9 +350,9 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     myEndOfInitializerStates.add(state.createCopy());
   }
 
-  private static boolean hasTrivialFailContract(PsiCallExpression call) {
-    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
-    return contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
+  private static boolean hasTrivialFailContract(@NotNull PsiExpression call) {
+    List<? extends MethodContract> contracts = getContracts(call);
+    return contracts != null && contracts.size() == 1 && contracts.get(0).isTrivial() && contracts.get(0).getReturnValue().isFail();
   }
 
   private void reportMutabilityViolation(boolean receiver, @NotNull PsiElement anchor) {
@@ -402,6 +370,21 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     else {
       myArgumentMutabilityViolation.add(anchor);
     }
+  }
+
+  @Nullable
+  static List<? extends MethodContract> getContracts(@NotNull PsiExpression anchor) {
+    List<? extends MethodContract> contracts;
+    if (anchor instanceof PsiCallExpression call) {
+      contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+    }
+    else if (anchor instanceof PsiMethodReferenceExpression methodRef && methodRef.resolve() instanceof PsiMethod method) {
+      contracts = JavaMethodContractUtil.getMethodContracts(method);
+    }
+    else {
+      return null;
+    }
+    return contracts;
   }
 
   private static class StateInfo {

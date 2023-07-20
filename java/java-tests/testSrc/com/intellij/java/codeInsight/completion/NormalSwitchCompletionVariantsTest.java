@@ -23,7 +23,7 @@ public class NormalSwitchCompletionVariantsTest extends LightFixtureCompletionTe
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   public void testCompletionPrimitiveTypeExpr() { doTest(COMMON_VARIANTS); }

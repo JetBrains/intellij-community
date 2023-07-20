@@ -107,7 +107,7 @@ public class SwitchStatementsWithoutDefault
 
   void testPatterns(X x, Foo foo, String s) {
       switch (<error descr="'switch' statement does not cover all possible input values">x</error>) {
-        case X xx && false:
+        case X xx when Math.random() > 0.5:
           break;
       }
 
@@ -134,7 +134,7 @@ public class SwitchStatementsWithoutDefault
       }
 
       switch (s) {
-        case (String ss && true):
+        case String ss when true:
           break;
       }
   }

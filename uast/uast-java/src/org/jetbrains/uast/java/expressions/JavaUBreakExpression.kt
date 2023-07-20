@@ -2,7 +2,6 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiBreakStatement
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UElement

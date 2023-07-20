@@ -11,13 +11,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.JavaPsiFacade
 
 internal class PackageBookmarkProvider(private val project: Project) : BookmarkProvider {
-  override fun getWeight() = 100
-  override fun getProject() = project
+  override fun getWeight(): Int = 100
+  override fun getProject(): Project = project
 
-  internal val moduleManager
+  internal val moduleManager: ModuleManager?
     get() = if (project.isDisposed) null else ModuleManager.getInstance(project)
 
-  internal val projectSettingsService
+  internal val projectSettingsService: ProjectSettingsService?
     get() = if (project.isDisposed) null else ProjectSettingsService.getInstance(project)
 
   override fun compare(bookmark1: Bookmark, bookmark2: Bookmark): Int {

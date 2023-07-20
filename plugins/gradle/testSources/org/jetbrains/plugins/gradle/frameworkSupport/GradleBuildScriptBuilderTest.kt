@@ -313,6 +313,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         
         dependencies {
             testImplementation 'org.junit.jupiter:junit-jupiter-api:$junit5'
+            testImplementation 'org.junit.jupiter:junit-jupiter-params:$junit5'
             testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:$junit5'
         }
         
@@ -326,6 +327,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
         
         dependencies {
             testImplementation("org.junit.jupiter:junit-jupiter-api:$junit5")
+            testImplementation("org.junit.jupiter:junit-jupiter-params:$junit5")
             testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junit5")
         }
         

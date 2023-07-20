@@ -48,7 +48,6 @@ public final class MavenWrapperDownloader {
     MavenLog.LOG.info("start install wrapper " + distributionUrl);
 
     if (syncConsole != null) syncConsole.startWrapperResolving();
-    MavenWrapperEventLogNotification.informationEvent(project, SyncBundle.message("maven.wrapper.notification.downloading.start"));
 
     Task.Backgroundable task = getTaskInfo();
     BackgroundableProcessIndicator indicator = new WrapperProgressIndicator(project, task, syncConsole);
@@ -59,7 +58,6 @@ public final class MavenWrapperDownloader {
       }
       distributionsCache.addWrapper(multiModuleDir, distribution);
       if (syncConsole != null) syncConsole.finishWrapperResolving(null);
-      MavenWrapperEventLogNotification.informationEvent(project, SyncBundle.message("maven.wrapper.notification.downloading.finish"));
     }
     catch (Exception e) {
       MavenLog.LOG.warn("error install wrapper", e);

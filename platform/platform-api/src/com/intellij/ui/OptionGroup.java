@@ -20,7 +20,22 @@ import static java.awt.GridBagConstraints.*;
 
 /**
  * This class creates a nicely formatted panel with components. Useful for option panels.
+ * <p>
+ *   <em>Implementation note:</em> even though this class implements an interface with a "panel" in its name,
+ *   it's not a Swing component itself, and therefore can be instantiated or accessed outside of the EDT.
+ *   Implementations, therefore, should NOT instantiate Swing objects in the constructors and/or
+ *   field/property initializers. They should be instantiated in the {@link #createPanel()} method
+ *   instead. For Kotlin implementations the easiest way to achieve this is to use lazy initialization
+ *   or {@code lateinit} for component fields, for example:
+<pre>
+private val myLabel: JLabel by lazy { JLabel(message("some.message.key")) }
+</pre>
+ * </p>
+ *
+ * @deprecated Provides incorrect spacing between components and out-dated. Fully covered by Kotlin UI DSL, which should be used instead.
+ * OptionGroup will be removed after moving Kotlin UI DSL into platform API package
  */
+@Deprecated(forRemoval = true)
 public class OptionGroup implements PanelWithAnchor {
   private final @NlsContexts.BorderTitle String myTitle;
   private final List<Object> myOptions = new ArrayList<>();
@@ -88,7 +103,7 @@ public class OptionGroup implements PanelWithAnchor {
       panel.setBorder(titledBorder);
       titledBorder.acceptMinimumSize(panel);
     }
-
+    UIUtil.applyDeprecatedBackground(panel);
     return panel;
   }
 

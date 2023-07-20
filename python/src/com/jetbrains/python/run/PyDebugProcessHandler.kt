@@ -10,6 +10,10 @@ class PyDebugProcessHandler : PythonProcessHandler {
   constructor(process: Process, commandLine: String, charset: Charset) : super(process, commandLine, charset)
 
   override fun readerOptions(): BaseOutputReader.Options {
-    return BaseOutputReader.Options.forMostlySilentProcess()
+    return if (hasPty()) {
+      BaseOutputReader.Options.forTerminalPtyProcess()
+    } else {
+      BaseOutputReader.Options.forMostlySilentProcess()
+    }
   }
 }

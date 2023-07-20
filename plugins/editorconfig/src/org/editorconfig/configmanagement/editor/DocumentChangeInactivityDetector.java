@@ -5,7 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ class DocumentChangeInactivityDetector implements DocumentListener {
 
   DocumentChangeInactivityDetector(@NotNull Document document) {
     myDocument = document;
-    myExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("DocumentChangeInactivityDetector");
+    myExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("DocumentChangeInactivityDetector", 1);
   }
 
   void addListener(@NotNull InactivityListener listener) {
@@ -41,7 +41,7 @@ class DocumentChangeInactivityDetector implements DocumentListener {
 
   void start() {
     myLastChangeTime = System.currentTimeMillis();
-    myExecutorService.scheduleAtFixedRate(() -> checkLastUpdate(), CHECK_DELAY, CHECK_DELAY, TimeUnit.MILLISECONDS);
+    myExecutorService.scheduleWithFixedDelay(() -> checkLastUpdate(), CHECK_DELAY, CHECK_DELAY, TimeUnit.MILLISECONDS);
   }
 
   void stop() {

@@ -1,3 +1,4 @@
+// INTENTION_TEXT: "Replace with a 'forEach' function call"
 // WITH_STDLIB
 // AFTER-WARNING: The expression is unused
 fun foo() {

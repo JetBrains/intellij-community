@@ -9,20 +9,20 @@ data class CaretStop
 @JvmOverloads constructor(@Attribute("start") val isAtStart: Boolean = false,
                           @Attribute("end") val isAtEnd: Boolean = false) {
   companion object { // @formatter:off
-    @JvmField val NONE  = CaretStop(isAtStart = false, isAtEnd = false)
-    @JvmField val START = CaretStop(isAtStart = true,  isAtEnd = false)
-    @JvmField val END   = CaretStop(isAtStart = false, isAtEnd = true)
-    @JvmField val BOTH  = CaretStop(isAtStart = true,  isAtEnd = true)
+    @JvmField val NONE:CaretStop  = CaretStop(isAtStart = false, isAtEnd = false)
+    @JvmField val START:CaretStop = CaretStop(isAtStart = true,  isAtEnd = false)
+    @JvmField val END:CaretStop   = CaretStop(isAtStart = false, isAtEnd = true)
+    @JvmField val BOTH:CaretStop  = CaretStop(isAtStart = true,  isAtEnd = true)
   } // @formatter:on
 }
 
 data class CaretStopPolicy(@OptionTag("WORD") val wordStop: CaretStop = CaretStop.NONE,
                            @OptionTag("LINE") val lineStop: CaretStop = CaretStop.NONE) {
   companion object { // @formatter:off
-    @JvmField val NONE       = CaretStopPolicy(wordStop = CaretStop.NONE,  lineStop = CaretStop.NONE)
-    @JvmField val WORD_START = CaretStopPolicy(wordStop = CaretStop.START, lineStop = CaretStop.BOTH)
-    @JvmField val WORD_END   = CaretStopPolicy(wordStop = CaretStop.END,   lineStop = CaretStop.BOTH)
-    @JvmField val BOTH       = CaretStopPolicy(wordStop = CaretStop.BOTH,  lineStop = CaretStop.BOTH)
+    @JvmField val NONE:CaretStopPolicy       = CaretStopPolicy(wordStop = CaretStop.NONE,  lineStop = CaretStop.NONE)
+    @JvmField val WORD_START:CaretStopPolicy = CaretStopPolicy(wordStop = CaretStop.START, lineStop = CaretStop.BOTH)
+    @JvmField val WORD_END:CaretStopPolicy   = CaretStopPolicy(wordStop = CaretStop.END,   lineStop = CaretStop.BOTH)
+    @JvmField val BOTH:CaretStopPolicy       = CaretStopPolicy(wordStop = CaretStop.BOTH,  lineStop = CaretStop.BOTH)
   } // @formatter:on
 }
 
@@ -40,12 +40,12 @@ data class CaretStopOptions(@OptionTag("BACKWARD") val backwardPolicy: CaretStop
 data class CaretStopBoundary(val backward: CaretStop = CaretStop.NONE,
                              val forward: CaretStop = CaretStop.NONE) {
   companion object { // @formatter:off
-    @JvmField val NONE = CaretStopBoundary(backward = CaretStop.NONE, forward = CaretStop.NONE)
-    @JvmField val CURRENT = CaretStopBoundary(backward = CaretStop.START, forward = CaretStop.END)
-    @JvmField val NEIGHBOR = CaretStopBoundary(backward = CaretStop.END, forward = CaretStop.START)
-    @JvmField val START = CaretStopBoundary(backward = CaretStop.START, forward = CaretStop.START)
-    @JvmField val END = CaretStopBoundary(backward = CaretStop.END, forward = CaretStop.END)
-    @JvmField val BOTH = CaretStopBoundary(backward = CaretStop.BOTH, forward = CaretStop.BOTH)
+    @JvmField val NONE:CaretStopBoundary = CaretStopBoundary(backward = CaretStop.NONE, forward = CaretStop.NONE)
+    @JvmField val CURRENT:CaretStopBoundary = CaretStopBoundary(backward = CaretStop.START, forward = CaretStop.END)
+    @JvmField val NEIGHBOR:CaretStopBoundary = CaretStopBoundary(backward = CaretStop.END, forward = CaretStop.START)
+    @JvmField val START:CaretStopBoundary = CaretStopBoundary(backward = CaretStop.START, forward = CaretStop.START)
+    @JvmField val END:CaretStopBoundary = CaretStopBoundary(backward = CaretStop.END, forward = CaretStop.END)
+    @JvmField val BOTH:CaretStopBoundary = CaretStopBoundary(backward = CaretStop.BOTH, forward = CaretStop.BOTH)
   } // @formatter:on
 }
 
@@ -55,7 +55,7 @@ data class CaretStopBoundary(val backward: CaretStop = CaretStop.NONE,
  */
 data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
                                       val lineBoundary: CaretStopBoundary) {
-  fun toCaretStopOptions() =
+  fun toCaretStopOptions(): CaretStopOptions =
     CaretStopOptions(backwardPolicy = CaretStopPolicy(wordStop = wordBoundary.backward,
                                                       lineStop = lineBoundary.backward),
                      forwardPolicy = CaretStopPolicy(wordStop = wordBoundary.forward,
@@ -63,17 +63,17 @@ data class CaretStopOptionsTransposed(val wordBoundary: CaretStopBoundary,
 
   companion object {
     @JvmField
-    val DEFAULT_WINDOWS = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
-                                                     lineBoundary = CaretStopBoundary.BOTH)
+    val DEFAULT_WINDOWS: CaretStopOptionsTransposed = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.START,
+                                                                                 lineBoundary = CaretStopBoundary.BOTH)
     @JvmField
-    val DEFAULT_UNIX = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
-                                                  lineBoundary = CaretStopBoundary.NONE)
+    val DEFAULT_UNIX: CaretStopOptionsTransposed = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
+                                                                              lineBoundary = CaretStopBoundary.NONE)
     @JvmField
-    val DEFAULT = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
-                                             lineBoundary = CaretStopBoundary.NEIGHBOR)
+    val DEFAULT: CaretStopOptionsTransposed = CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary.CURRENT,
+                                                                         lineBoundary = CaretStopBoundary.NEIGHBOR)
 
     @JvmStatic
-    fun fromCaretStopOptions(caretStopOptions: CaretStopOptions) = with(caretStopOptions) {
+    fun fromCaretStopOptions(caretStopOptions: CaretStopOptions): CaretStopOptionsTransposed = with(caretStopOptions) {
       CaretStopOptionsTransposed(wordBoundary = CaretStopBoundary(backward = backwardPolicy.wordStop,
                                                                   forward = forwardPolicy.wordStop),
                                  lineBoundary = CaretStopBoundary(backward = backwardPolicy.lineStop,

@@ -65,19 +65,10 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
   }
 
   @Override
-  public void visitElement(@NotNull PsiElement element) {
-    if (element instanceof PyDecorator) {
-      visitPyCallExpression((PyDecorator)element);
-    }
-    super.visitElement(element);
-  }
-
-  @Override
   public void visitPyDecoratorList(@NotNull PyDecoratorList node) {
     PyDecorator[] decorators = node.getDecorators();
     if (decorators.length > 0) {
       decorators[0].accept(this);
-      visitPyCallExpression(decorators[0]);
     }
   }
 

@@ -77,6 +77,6 @@ class RecurrentTaskExecutorTest(private val requestsNumber: Int, private val del
   companion object {
     @JvmStatic
     @Parameters(name = "{index}: connections={0}, connection delay={1} ms")
-    fun data(): Collection<Array<Any>> = listOf<Array<Any>>(arrayOf(100, 0L), arrayOf(40, 50L), arrayOf(20, 100L))
+    fun data(): Collection<Array<Any>> = listOf(arrayOf(100, 0L), arrayOf(40, 50L), arrayOf(20, 100L))
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jdom;
 
 import com.intellij.openapi.util.Comparing;
@@ -79,8 +79,7 @@ public final class JDOMInterner {
     return object.getValue().hashCode();
   }
 
-  @NotNull
-  public synchronized Element internElement(@NotNull final Element element) {
+  public synchronized @NotNull Element internElement(final @NotNull Element element) {
     if (element instanceof ImmutableElement) {
       return element;
     }
@@ -103,8 +102,7 @@ public final class JDOMInterner {
     return element instanceof ImmutableElement;
   }
 
-  @NotNull
-  synchronized Text internText(@NotNull Text text) {
+  synchronized @NotNull Text internText(@NotNull Text text) {
     if (text instanceof ImmutableText || text instanceof ImmutableCDATA) return text;
     Text interned = myTexts.get(text);
     if (interned == null) {

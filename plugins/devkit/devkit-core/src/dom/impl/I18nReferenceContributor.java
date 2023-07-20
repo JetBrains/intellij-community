@@ -41,7 +41,6 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.patterns.StandardPatterns.or;
 import static com.intellij.patterns.XmlPatterns.*;
 
 public class I18nReferenceContributor extends PsiReferenceContributor {

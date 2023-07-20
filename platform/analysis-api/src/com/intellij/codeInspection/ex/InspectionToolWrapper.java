@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.DynamicBundle;
@@ -15,8 +15,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.project.ProjectTypeService;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ResourceUtil;
 import org.jetbrains.annotations.Nls;
@@ -25,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.Set;
 
 import static com.intellij.DynamicBundle.findLanguageBundle;
@@ -247,7 +244,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
 
   public abstract JobDescriptor @NotNull [] getJobDescriptors(@NotNull GlobalInspectionContext context);
 
-  public HighlightDisplayKey getDisplayKey() {
+  public @Nullable HighlightDisplayKey getDisplayKey() {
     HighlightDisplayKey key = myDisplayKey;
     if (key == null) {
       myDisplayKey = key = HighlightDisplayKey.find(getShortName());
@@ -255,13 +252,13 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return key;
   }
 
-  public boolean isApplicable(Collection<ProjectType> projectTypes) {
+  public boolean isApplicable(Set<String> projectTypes) {
     if (myEP == null) return true;
 
     String projectType = myEP.projectType;
     if (projectType == null) return true;
 
-    return ProjectTypeService.hasProjectType(projectTypes, projectType);
+    return projectTypes.contains(projectType);
   }
 
   private static @Nullable InputStream getPluginClassLoaderStream(@Nullable ClassLoader classLoader,

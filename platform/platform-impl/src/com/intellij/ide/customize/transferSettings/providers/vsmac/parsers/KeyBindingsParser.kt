@@ -23,7 +23,7 @@ class KeyBindingsParser(private val settings: Settings) {
 
   private val customShortcuts = mutableListOf<KeyBinding>()
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)
@@ -37,12 +37,7 @@ class KeyBindingsParser(private val settings: Settings) {
   private fun processKeyBindings(root: Element) {
     val currentScheme = root.children.firstOrNull { scheme ->
       val schemeAttributes = scheme?.attributes ?: return@firstOrNull false
-
-      if (!(schemeAttributes.size == 1 && schemeAttributes[0]?.value == CURRENT)) {
-        return@firstOrNull false
-      }
-
-      return@firstOrNull true
+      return@firstOrNull schemeAttributes.size == 1 && schemeAttributes[0]?.value == CURRENT
     } ?: return
 
     processCurrentScheme(currentScheme)

@@ -184,7 +184,8 @@ internal class FieldProcessor(private val reader: InterfaceReader, typeClass: Cl
   }
 }
 
-internal inline fun <reified T : Annotation> KCallable<*>.annotation(): T? = annotations.firstOrNull() { it is T } as? T ?: (this as? KFunction<*>)?.javaMethod?.getAnnotation<T>(T::class.java)
+internal inline fun <reified T : Annotation> KCallable<*>.annotation(): T? =
+  annotations.firstOrNull { it is T } as? T ?: (this as? KFunction<*>)?.javaMethod?.getAnnotation(T::class.java)
 
 /**
  * An internal facility for navigating from object of base type to object of subtype. Used only

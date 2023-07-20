@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.AttributesInterceptor
 
 class AttributesLogInterceptor(
-  private val processor: OperationProcessor
+  private val context: VfsLogContext
 ) : AttributesInterceptor {
   override fun onWriteAttribute(underlying: (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream): (connection: PersistentFSConnection, fileId: Int, attribute: FileAttribute) -> AttributeOutputStream =
     { connection, fileId, attribute ->
@@ -16,20 +16,18 @@ class AttributesLogInterceptor(
         override fun writeEnumeratedString(str: String?) = aos.writeEnumeratedString(str)
 
         override fun close() {
-          { super.close() } catchResult ::interceptClose
+          val data = aos.asByteArraySequence().toBytes();
+          { super.close() } catchResult { interceptClose(data, it) }
         }
 
-        private fun interceptClose(result: OperationResult<Unit>) {
-          val data = aos.asByteArraySequence().toBytes()
-          processor.enqueue {
-            descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_WRITE_ATTR) {
-              val attrIdEnumerated = stringEnumerator.enumerate(attribute.id)
-              val payloadRef =
-                payloadStorage.writePayload(data.size.toLong()) {
-                  write(data, 0, data.size)
-                }
-              VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
-            }
+        private fun interceptClose(data: ByteArray, result: OperationResult<Unit>) {
+          context.enqueueOperationWrite(VfsOperationTag.ATTR_WRITE_ATTR) {
+            val attrIdEnumerated = enumerateAttribute(attribute)
+            val payloadRef =
+              payloadStorage.writePayload(data.size.toLong()) {
+                write(data, 0, data.size)
+              }
+            VfsOperation.AttributesOperation.WriteAttribute(fileId, attrIdEnumerated, payloadRef, result)
           }
         }
       }
@@ -38,10 +36,8 @@ class AttributesLogInterceptor(
   override fun onDeleteAttributes(underlying: (connection: PersistentFSConnection, fileId: Int) -> Unit): (connection: PersistentFSConnection, fileId: Int) -> Unit =
     { connection, fileId ->
       { underlying(connection, fileId) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_DELETE_ATTRS) {
-            VfsOperation.AttributesOperation.DeleteAttributes(fileId, result)
-          }
+        context.enqueueOperationWrite(VfsOperationTag.ATTR_DELETE_ATTRS) {
+          VfsOperation.AttributesOperation.DeleteAttributes(fileId, result)
         }
       }
     }
@@ -49,10 +45,8 @@ class AttributesLogInterceptor(
   override fun onSetVersion(underlying: (version: Int) -> Unit): (version: Int) -> Unit =
     { version ->
       { underlying(version) } catchResult { result ->
-        processor.enqueue {
-          descriptorStorage.writeDescriptor(VfsOperationTag.ATTR_SET_VERSION) {
-            VfsOperation.AttributesOperation.SetVersion(version, result)
-          }
+        context.enqueueOperationWrite(VfsOperationTag.ATTR_SET_VERSION) {
+          VfsOperation.AttributesOperation.SetVersion(version, result)
         }
       }
     }

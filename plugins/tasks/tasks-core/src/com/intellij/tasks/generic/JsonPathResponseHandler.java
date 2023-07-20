@@ -110,7 +110,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
       return ContainerUtil.emptyList();
     }
     JsonProvider jsonProvider = Configuration.defaultConfiguration().jsonProvider();
-    return ContainerUtil.getFirstItems(ContainerUtil.map2List(list, o -> jsonProvider.toJson(o)), max);
+    return ContainerUtil.getFirstItems(ContainerUtil.map(list, o -> jsonProvider.toJson(o)), max);
   }
 
   @Nullable

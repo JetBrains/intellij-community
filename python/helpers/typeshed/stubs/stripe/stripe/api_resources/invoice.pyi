@@ -6,11 +6,12 @@ from stripe.api_resources.abstract import (
     CreateableAPIResource as CreateableAPIResource,
     DeletableAPIResource as DeletableAPIResource,
     ListableAPIResource as ListableAPIResource,
+    SearchableAPIResource as SearchableAPIResource,
     UpdateableAPIResource as UpdateableAPIResource,
     custom_method as custom_method,
 )
 
-class Invoice(CreateableAPIResource, DeletableAPIResource, ListableAPIResource, UpdateableAPIResource):
+class Invoice(CreateableAPIResource, DeletableAPIResource, ListableAPIResource, SearchableAPIResource, UpdateableAPIResource):
     OBJECT_NAME: str
     def finalize_invoice(self: Self, idempotency_key: str | None = ..., **params) -> Self: ...
     def mark_uncollectible(self: Self, idempotency_key: str | None = ..., **params) -> Self: ...

@@ -65,7 +65,7 @@ class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
   }
 
   companion object {
-    private const val SEPARATOR: @NlsSafe String = " ";
+    private const val SEPARATOR: @NlsSafe String = " "
 
     fun SimpleColoredComponent.presetRuntime(value: RuntimeChooserItemWithFixedLocation) {
       value.version?.let {

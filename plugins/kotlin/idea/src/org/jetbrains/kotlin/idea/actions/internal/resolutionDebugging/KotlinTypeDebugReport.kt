@@ -34,9 +34,7 @@ internal class KotlinTypeDebugReport(
 
         other as KotlinTypeDebugReport
 
-        if (typeReference != other.typeReference) return false
-
-        return true
+        return typeReference == other.typeReference
     }
 
     override fun hashCode(): Int {

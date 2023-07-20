@@ -26,6 +26,8 @@ public class CommentZenCodingFilterTest extends EmmetFilterTestCase {
 
   public void testInvokeByPrefix() {
     expand("div.className|c");
+
+
     checkResultByText("<div class=\"className\"></div>\n<!-- /.className -->");
   }
 

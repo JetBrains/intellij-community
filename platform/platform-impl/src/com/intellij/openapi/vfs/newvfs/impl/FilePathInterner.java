@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.CharSequenceWithStringHash;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.util.containers.WeakInterner;
 import org.jetbrains.annotations.NotNull;
 

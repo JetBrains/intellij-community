@@ -18,9 +18,6 @@ if not defined PROTOC_CACHE_DIR (
 )
 if not exist "%PROTOC_CACHE_DIR%" mkdir "%PROTOC_CACHE_DIR%"
 
-call:getprotoc 3.5.1 || goto :exit
-move /y "%PROTOC_BIN_DIR%\protoc-3.5.1.exe" "%PROTOC_BIN_DIR%\protoc-java6.exe" >nul
-
 call:getprotoc || goto :exit
 
 set PATH=%PROTOC_BIN_DIR%;%PATH%

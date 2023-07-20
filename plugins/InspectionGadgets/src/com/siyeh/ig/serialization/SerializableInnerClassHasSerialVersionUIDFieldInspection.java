@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.serialization;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,7 +37,7 @@ public class SerializableInnerClassHasSerialVersionUIDFieldInspection extends Se
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new AddSerialVersionUIDFix();
   }
 

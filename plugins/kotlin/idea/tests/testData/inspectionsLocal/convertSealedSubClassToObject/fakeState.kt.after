@@ -12,7 +12,7 @@ sealed class Sealed : Base() {
         get() = emptyList()
 }
 
-object Derived : Sealed() {
+data object Derived : Sealed() {
     var length: Int
         get() = s.length
         set(value) {}

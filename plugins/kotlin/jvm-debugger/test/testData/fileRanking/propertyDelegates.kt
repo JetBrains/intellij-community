@@ -10,6 +10,7 @@ class A {
         ""
     }
 }
+// PRODUCED_CLASS_NAMES: foo.A, foo.A$a$2(optional)
 
 //FILE: b/a.kt
 package bar
@@ -19,3 +20,4 @@ class B {
         val b = 0
     }
 }
+// PRODUCED_CLASS_NAMES: bar.B, bar.B$a$2(optional)

@@ -11,7 +11,7 @@ import java.util.EventListener;
  * Project root changes.
  * <p>
  * Instead of events with {{@link ModuleRootEvent#isCausedByWorkspaceModelChangesOnly()}} one may use
- * {@link com.intellij.workspaceModel.ide.WorkspaceModelChangeListener} and get  more fine-grained incremental events.
+ * {@link com.intellij.platform.backend.workspace.WorkspaceModelChangeListener} and get  more fine-grained incremental events.
  *
  * @see ProjectTopics#PROJECT_ROOTS
  */

@@ -1,7 +1,9 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataOutputStream;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -29,8 +31,8 @@ public class PersistentStringEnumeratorTest extends NonStrictStringsEnumeratorTe
   public void testLongStringsEnumeration() throws Exception {
     int minSize = 4000;
     int maxSize = 7000;
-    assertTrue(minSize < AppendableStorageBackedByResizableMappedFile.ourAppendBufferLength);
-    assertTrue(maxSize > AppendableStorageBackedByResizableMappedFile.ourAppendBufferLength);
+    assertTrue(minSize < AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE);
+    assertTrue(maxSize > AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE);
     String[] strings = generateValues(10000, minSize, maxSize);
 
     for (String string : strings) {

@@ -117,10 +117,7 @@ internal object JavaInlayHintsProvider {
 
   private fun isCallInfoToShow(info: CallInfo): Boolean {
     val hintsProvider = JavaInlayParameterHintsProvider.getInstance()
-    if (!hintsProvider.ignoreOneCharOneDigitHints.get() && info.allParamsSequential()) {
-      return false
-    }
-    return true
+    return hintsProvider.ignoreOneCharOneDigitHints.get() || !info.allParamsSequential()
   }
 
   private fun String.decomposeOrderedParams(): Pair<String, Int>? {

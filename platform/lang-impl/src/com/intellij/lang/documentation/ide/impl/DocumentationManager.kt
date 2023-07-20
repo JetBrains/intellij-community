@@ -3,6 +3,8 @@
 package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.codeInsight.CodeInsightSettings
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE
+import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction.Companion.CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.LookupEx
@@ -10,6 +12,7 @@ import com.intellij.codeInsight.lookup.LookupListener
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.codeWithMe.ClientId
 import com.intellij.codeWithMe.asContextElement
+import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.openapi.Disposable
@@ -30,6 +33,7 @@ import com.intellij.platform.backend.documentation.impl.documentationRequest
 import com.intellij.platform.backend.documentation.impl.resolveLink
 import com.intellij.platform.ide.documentation.DOCUMENTATION_TARGETS
 import com.intellij.ui.popup.AbstractPopup
+import com.intellij.util.childScope
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +44,7 @@ import java.lang.ref.WeakReference
 
 @ApiStatus.Internal
 @Service
-class DocumentationManager(private val project: Project) : Disposable {
+class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
 
   companion object {
 
@@ -50,9 +54,8 @@ class DocumentationManager(private val project: Project) : Disposable {
     var skipPopup: Boolean by propComponentProperty(name = "documentation.skip.popup", defaultValue = false)
   }
 
-  private val cs: CoroutineScope = CoroutineScope(SupervisorJob())
   // separate scope is needed for the ability to cancel its children
-  private val popupScope: CoroutineScope = CoroutineScope(SupervisorJob(parent = cs.coroutineContext.job))
+  private val popupScope: CoroutineScope = cs.childScope()
 
   override fun dispose() {
     cs.cancel()
@@ -72,8 +75,11 @@ class DocumentationManager(private val project: Project) : Disposable {
       return
     }
 
-    val secondaryPopupContext = lookupPopupContext(editor)
-                                ?: quickSearchPopupContext(project)
+    val secondaryPopupContext = lookupPopupContext(editor)?.also {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_LOOKUP_FEATURE)
+    } ?: quickSearchPopupContext(project)?.also {
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_CTRLN_FEATURE)
+    }
     if (secondaryPopupContext == null) {
       // no popups
       if (toolWindowManager.focusVisibleReusableTab()) {
@@ -268,4 +274,4 @@ class DocumentationManager(private val project: Project) : Disposable {
   }
 }
 
-fun isDocumentationPopupVisible(project: Project) = DocumentationManager.instance(project).isPopupVisible
+fun isDocumentationPopupVisible(project: Project): Boolean = DocumentationManager.instance(project).isPopupVisible

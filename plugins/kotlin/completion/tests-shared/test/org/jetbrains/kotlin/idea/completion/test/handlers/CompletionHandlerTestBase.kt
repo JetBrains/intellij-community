@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
+import org.jetbrains.kotlin.idea.completion.test.testWithAutoCompleteSetting
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 
@@ -17,6 +18,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
 
     companion object {
         fun doTestWithTextLoaded(
+            fileText: String,
             fixture: JavaCodeInsightTestFixture,
             completionType: CompletionType,
             time: Int,
@@ -28,28 +30,30 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
             actions: List<String>? = emptyList(),
             afterTypingBlock: () -> Unit = {}
         ) {
-            for (idx in 0 until completionChars.length - 1) {
-                fixture.type(completionChars[idx])
+            testWithAutoCompleteSetting(fileText) {
+                for (idx in 0 until completionChars.length - 1) {
+                    fixture.type(completionChars[idx])
+                    afterTypingBlock()
+                }
+
+                if (!actions.isNullOrEmpty()) {
+                    for (action in actions) {
+                        fixture.performEditorAction(action)
+                    }
+                }
+
+                fixture.complete(completionType, time)
+
+                if (lookupString != null || itemText != null || tailText != null) {
+                    val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText)
+                    if (item != null) {
+                        selectItem(fixture, item, completionChars.last())
+                    }
+                }
                 afterTypingBlock()
+
+                fixture.checkResultByFile(afterFilePath)
             }
-
-            if (!actions.isNullOrEmpty()) {
-                for (action in actions) {
-                    fixture.performEditorAction(action)
-                }
-            }
-
-            fixture.complete(completionType, time)
-
-            if (lookupString != null || itemText != null || tailText != null) {
-                val item = getExistentLookupElement(fixture.project, lookupString, itemText, tailText)
-                if (item != null) {
-                    selectItem(fixture, item, completionChars.last())
-                }
-            }
-            afterTypingBlock()
-
-            fixture.checkResultByFile(afterFilePath)
         }
 
         fun completionChars(text: String): String {
@@ -60,6 +64,7 @@ abstract class CompletionHandlerTestBase : KotlinLightCodeInsightFixtureTestCase
                     null -> "\n"
                     else -> chars.replace("\\n", "\n").replace("\\t", "\t")
                 }
+
                 "\\n" -> "\n"
                 "\\t" -> "\t"
                 else -> char.single().toString()

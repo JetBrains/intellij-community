@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
@@ -42,7 +42,10 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   fun start() {
     alarm.value.addRequest(Runnable {
       if (progress == null) {
-        progress = MyProgressIndicator().also { statusBar.addProgress(it, it.taskInfo) }
+        progress = MyProgressIndicator().also { p ->
+          p.start()
+          statusBar.addProgress(p, p.taskInfo)
+        }
       }
     }, Registry.intValue("vcs.log.index.progress.delay.millis"))
   }
@@ -50,7 +53,10 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
   @RequiresEdt
   fun stop() {
     if (alarm.isInitialized()) alarm.value.cancelAllRequests()
-    progress?.let { it.finish(it.taskInfo) }
+    progress?.let { p ->
+      p.stop()
+      p.finish(p.taskInfo)
+    }
     progress = null
   }
 

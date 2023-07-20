@@ -1,0 +1,15 @@
+<html>
+<body>
+Reports mismatches between light service levels and constructors.
+<p>The following problems are reported:</p>
+<ul>
+  <li>A light service class has a constructor with one parameter of type <code>com.intellij.openapi.project.Project</code> is
+    not annotated as project-level service.
+  </li>
+  <li>A light service class annotated as an application-level service does not have a no-arg constructor, nor a constructor with one
+    parameter of type <code>kotlinx.coroutines.CoroutineScope</code>.
+  </li>
+</ul>
+<p><small>New in 2023.2</small>
+</body>
+</html>

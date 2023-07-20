@@ -25,10 +25,10 @@ public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
   @Nullable
   @Override
   public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
-    if (!(referenceTarget instanceof PyDecoratable) || !(referenceTarget instanceof PyElement)) {
+    if (!(referenceTarget instanceof PyDecoratable pyDecoratable)) {
       return null;
     }
-    PyDecoratorList decoratorList = ((PyDecoratable)referenceTarget).getDecoratorList();
+    PyDecoratorList decoratorList = pyDecoratable.getDecoratorList();
     if (decoratorList == null) {
       return null;
     }
@@ -47,12 +47,12 @@ public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
     return RecursionManager.doPreventingRecursion(
       Pair.create(referenceTarget, context),
       false,
-      () -> evaluateType(referenceTarget, context, decorators)
+      () -> evaluateType(pyDecoratable, context, decorators)
     );
   }
 
   @Nullable
-  private static Ref<PyType> evaluateType(@NotNull PsiElement referenceTarget,
+  private static Ref<PyType> evaluateType(@NotNull PyDecoratable referenceTarget,
                                           @NotNull TypeEvalContext context,
                                           @NotNull List<PyDecorator> decorators) {
     PyExpression fakeCallExpression = fakeCallExpression(referenceTarget, decorators, context);
@@ -63,10 +63,9 @@ public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
   }
 
   @Nullable
-  private static PyExpression fakeCallExpression(@NotNull PsiElement referenceTarget,
+  private static PyExpression fakeCallExpression(@NotNull PyDecoratable referenceTarget,
                                                  @NotNull List<PyDecorator> decorators,
                                                  @NotNull TypeEvalContext context) {
-    String callableName = referenceTarget instanceof PyElement ? ((PyElement)referenceTarget).getName() : "";
     StringBuilder result = new StringBuilder();
 
     for (PyDecorator decorator : decorators) {
@@ -80,7 +79,7 @@ public class PyDecoratedFunctionTypeProvider extends PyTypeProviderBase {
       }
       result.append("(");
     }
-    result.append(callableName);
+    result.append(referenceTarget.getName());
     StringUtil.repeatSymbol(result, ')', decorators.size());
 
     return PyUtil.createExpressionFromFragment(result.toString(), referenceTarget.getContainingFile());

@@ -20,7 +20,9 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer
 import java.io.File
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.io.path.inputStream
+import kotlin.io.path.listDirectoryEntries
 
 object JpsProjectUtils {
   fun loadJpsProject(projectHome: Path, jdkHome: Path, kotlincHome: Path): JpsModel {
@@ -54,12 +56,31 @@ object JpsProjectUtils {
   }
 
   fun getModuleRuntimeClasspath(module: JpsModule): List<File> {
+    val allOutputDirectories = module.project.modules.mapNotNull {
+      JpsJavaExtensionService.getInstance().getOutputDirectory(it, false) to it
+    }.toMap()
+
     val enumerator = getModuleRuntimeClasspathEnumerator(module)
     val roots = enumerator.classes().roots.sortedBy { it.path }
-    for (root in roots) {
-      check(root.exists()) { "Classpath element does not exist: $root" }
+    return roots.filter { root ->
+      if (root.exists()) {
+        return@filter true
+      }
+
+      // Skip modules with non-existent or empty source roots
+      // they're ok with missing output directory and a known case
+      val m = allOutputDirectories[root]
+      if (m != null) {
+        val moduleWithEmptySources = m.sourceRoots.isEmpty() ||
+          m.sourceRoots.all { !it.path.exists() || it.path.listDirectoryEntries().isEmpty() }
+        if (moduleWithEmptySources) {
+          // skip it without error
+          return@filter false
+        }
+      }
+
+      error("Classpath element does not exist: $root")
     }
-    return roots
   }
 
   private fun getModuleRuntimeClasspathEnumerator(module: JpsModule): JpsJavaDependenciesEnumerator {

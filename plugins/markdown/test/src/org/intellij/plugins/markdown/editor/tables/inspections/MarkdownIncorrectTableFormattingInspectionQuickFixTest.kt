@@ -121,6 +121,24 @@ class MarkdownIncorrectTableFormattingInspectionQuickFixTest: LightPlatformCodeI
     myFixture.checkPreviewAndLaunchAction(fix)
   }
 
+  @TestFor(issues = ["IDEA-307242"])
+  @Test
+  fun `quick fix is available with caret after the last symbol`() {
+    // language=Markdown
+    val before = """
+    | none | none |
+    |------|------|
+    | some | some   |<caret>
+    """.trimIndent()
+    // language=Markdown
+    val after = """
+    | none | none |
+    |------|------|
+    | some | some |
+    """.trimIndent()
+    doTest(before, after)
+  }
+
   private fun doTest(content: String, after: String) {
     myFixture.configureByText("some.md", content)
     myFixture.enableInspections(MarkdownIncorrectTableFormattingInspection())

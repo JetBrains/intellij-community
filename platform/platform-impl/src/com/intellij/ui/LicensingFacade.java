@@ -24,6 +24,7 @@ public final class LicensingFacade {
   public Map<String, Date> expirationDates;
   public Map<String, String> confirmationStamps;
   public String metadata;
+  public static volatile boolean isUnusedSignalled;
 
   public volatile static LicensingFacade INSTANCE;
 
@@ -127,4 +128,9 @@ public final class LicensingFacade {
       return null;
     }
   }
+
+  public static void signalUnused(boolean value) {
+    isUnusedSignalled = value;
+  }
+
 }

@@ -204,6 +204,15 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     return ideModuleGroup;
   }
 
+  /**
+   * Set or remove explicit module group for this module.
+   *
+   * @deprecated explicit module groups are replaced by automatic module grouping accordingly to qualified names of modules
+   * ([IDEA-166061](https://youtrack.jetbrains.com/issue/IDEA-166061) for details), so this method must not be used anymore, group names
+   * must be prepended to the module name, separated by dots, instead.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public void setIdeModuleGroup(String @Nullable [] ideModuleGroup) {
     this.ideModuleGroup = ideModuleGroup;
   }

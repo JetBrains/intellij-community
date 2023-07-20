@@ -1,0 +1,4 @@
+// ALLOW_ERRORS
+// HIGHLIGHTER_ATTRIBUTES_KEY
+
+<!HIGHLIGHTING("textAttributesKey='KOTLIN_KEYWORD'; highlightingTextAttributesKey='INFORMATION_ATTRIBUTES'")!>import<!> <!HIGHLIGHTING("severity='ERROR'; descr='[UNRESOLVED_REFERENCE] Unresolved reference: unresolved'; highlightingTextAttributesKey='WRONG_REFERENCES_ATTRIBUTES'")!>unresolved<!>

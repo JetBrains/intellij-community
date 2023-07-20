@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.*;
 import java.util.stream.IntStream;
 
-public class MavenRunnerPanel implements MavenSettingsObservable {
+public class MavenRunnerPanel {
   protected final Project myProject;
   private final boolean myRunConfigurationMode;
 
@@ -237,17 +237,5 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     } else {
       myJdkLabel.setLabelFor(myJdkCombo);
     }
-  }
-
-  @Override
-  public void registerSettingsWatcher(@NotNull MavenRCSettingsWatcher watcher) {
-    watcher.registerComponent("delegateToMaven", myDelegateToMavenCheckbox);
-    watcher.registerComponent("runInBackground", myRunInBackgroundCheckbox);
-    watcher.registerComponent("vmParameters", myVMParametersEditor);
-    watcher.registerComponent("envVariables", myEnvVariablesComponent);
-    watcher.registerComponent("jdk", myJdkCombo);
-    watcher.registerComponent("targetJdk", myTargetJdkCombo);
-    watcher.registerComponent("skipTests", mySkipTestsCheckBox);
-    watcher.registerComponent("properties", myPropertiesPanel);
   }
 }

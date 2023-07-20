@@ -231,7 +231,9 @@ public final class JUnitUtil {
   }
 
   public static boolean isJUnit3TestClass(final PsiClass clazz) {
-    return PsiClassUtil.isRunnableClass(clazz, true, false) && isTestCaseInheritor(clazz);
+    return hasSinglePublicConstructor(clazz) &&
+           PsiClassUtil.isRunnableClass(clazz, true, false) &&
+           isTestCaseInheritor(clazz);
   }
 
   public static boolean isJUnit4TestClass(final PsiClass psiClass) {
@@ -266,6 +268,7 @@ public final class JUnitUtil {
       }
     }
 
+    if (!hasSinglePublicConstructor(psiClass)) return false;
     if (!PsiClassUtil.isRunnableClass(psiClass, true, checkAbstract)) return false;
 
     for (final PsiMethod method : psiClass.getAllMethods()) {
@@ -282,6 +285,24 @@ public final class JUnitUtil {
       topLevelClass = topLevelClass.getContainingClass();
     }
     return topLevelClass;
+  }
+
+  private static boolean hasSinglePublicConstructor(PsiClass psiClass) {
+    PsiMethod[] constructors = psiClass.getConstructors();
+    if (constructors.length > 0) {
+      int publicConstructors = 0;
+      boolean noArgsConstructorFound = false;
+      for (PsiMethod constructor : constructors) {
+        if (constructor.getModifierList().hasModifierProperty(PsiModifier.PUBLIC)) {
+          publicConstructors++;
+          if (constructor.getParameters().length == 0) {
+            noArgsConstructorFound = true;
+          }
+        }
+      }
+      if (publicConstructors != 1 || !noArgsConstructorFound) return false;
+    }
+    return true;
   }
 
   public static boolean isJUnit5TestClass(@NotNull final PsiClass psiClass, boolean checkAbstract) {
@@ -516,17 +537,22 @@ public final class JUnitUtil {
 
   public static class  TestMethodFilter implements Condition<PsiMethod> {
     private final PsiClass myClass;
-    private final JavaTestFramework framework;
+    private final TestFramework framework;
 
     public TestMethodFilter(final PsiClass aClass) {
       myClass = aClass;
-      TestFramework framework = TestFrameworks.detectFramework(aClass);
-      this.framework = (framework instanceof JavaTestFramework) ? (JavaTestFramework)framework : null;
+      this.framework = TestFrameworks.detectFramework(aClass);
     }
 
     @Override
     public boolean value(final PsiMethod method) {
-      return framework != null && framework.isTestMethod(method, myClass);
+      if (framework == null) {
+        return false;
+      }
+      if (framework instanceof JavaTestFramework) {
+        return ((JavaTestFramework)framework).isTestMethod(method, myClass);
+      }
+      return framework.isTestMethod(method);
     }
   }
 

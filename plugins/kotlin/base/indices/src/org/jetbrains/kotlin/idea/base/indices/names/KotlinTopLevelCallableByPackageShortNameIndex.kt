@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.idea.base.indices.names
 import com.intellij.util.indexing.FileContent
 import com.intellij.util.indexing.ID
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryClass
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.name.FqName
@@ -13,10 +15,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.serialization.deserialization.getName
 
 @ApiStatus.Internal
-object KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
-    val KEY = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+class KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameIndex() {
+    companion object {
+        val NAME = ID.create<FqName, List<Name>>(KotlinTopLevelCallableByPackageShortNameIndex::class.java.name)
+    }
 
-    override fun getName(): ID<FqName, List<Name>> = KEY
+    override fun getName(): ID<FqName, List<Name>> = NAME
+
+    override fun getVersion(): Int = 2
 
     override fun getDeclarationNamesByKtFile(ktFile: KtFile): List<Name> = buildList {
         for (declaration in ktFile.declarations) {
@@ -45,7 +51,8 @@ object KotlinTopLevelCallableByPackageShortNameIndex : NameByPackageShortNameInd
     }
 
     override fun getPackageAndNamesFromBuiltIns(fileContent: FileContent): Map<FqName, List<Name>> {
-        // builtins do not contain callables
-        return emptyMap()
+        val metadata = readKotlinMetadataDefinition(fileContent) ?: return emptyMap()
+        //there are no top level properties in builtins
+        return mapOf(metadata.packageFqName to metadata.proto.`package`.functionOrBuilderList.map { metadata.nameResolver.getName(it.name) })
     }
 }

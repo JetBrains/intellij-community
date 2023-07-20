@@ -56,6 +56,19 @@ internal fun <A, B, C, D, Z> combineLatest(
 ) = combine(flowA, flowB, flowC, flowD) { a, b, c, d -> CombineLatest4(a, b, c, d) }
     .mapLatest { transform(it.a, it.b, it.c, it.d) }
 
+internal fun <A, B, C, D, Z> combineLatest(
+    flowA: Flow<A>,
+    flowB: Flow<B>,
+    flowC: Flow<C>,
+    flowD: Flow<D>,
+    loadingContainer: LoadingContainer? = null,
+    transform: suspend (A, B, C, D) -> Z
+): Flow<Z> {
+    val loadingFlow = loadingContainer?.addLoadingState()
+    return combine(flowA, flowB, flowC, flowD) { a, b, c, d -> CombineLatest4(a, b, c, d) }
+        .mapLatest { loadingFlow?.whileLoading { transform(it.a, it.b, it.c, it.d) } ?: transform(it.a, it.b, it.c, it.d) }
+}
+
 internal fun <A, B, C, D, E, Z> combineLatest(
     flowA: Flow<A>,
     flowB: Flow<B>,
@@ -136,6 +149,39 @@ internal fun <A, B, C, D, E, F, G, H, Z> combineLatest(
     }.mapLatest {
         loadingFLow?.whileLoading { transform(it.a, it.b, it.c, it.d, it.e, it.f, it.g, it.h) }
             ?: transform(it.a, it.b, it.c, it.d, it.e, it.f, it.g, it.h)
+    }
+}
+
+@Suppress("UNCHECKED_CAST")
+internal fun <A, B, C, D, E, F, G, H, I, Z> combineLatest(
+    flowA: Flow<A>,
+    flowB: Flow<B>,
+    flowC: Flow<C>,
+    flowD: Flow<D>,
+    flowE: Flow<E>,
+    flowF: Flow<F>,
+    flowG: Flow<G>,
+    flowH: Flow<H>,
+    flowI: Flow<I>,
+    loadingContainer: LoadingContainer? = null,
+    transform: suspend (A, B, C, D, E, F, G, H, I) -> Z
+): Flow<Z> {
+    val loadingFLow = loadingContainer?.addLoadingState()
+    return combine(flowA, flowB, flowC, flowD, flowE, flowF, flowG, flowH, flowI) { array ->
+        CombineLatest9(
+            array[0]!! as A,
+            array[1]!! as B,
+            array[2]!! as C,
+            array[3]!! as D,
+            array[4]!! as E,
+            array[5]!! as F,
+            array[6]!! as G,
+            array[7]!! as H,
+            array[8]!! as I,
+        )
+    }.mapLatest {
+        loadingFLow?.whileLoading { transform(it.a, it.b, it.c, it.d, it.e, it.f, it.g, it.h, it.i) }
+            ?: transform(it.a, it.b, it.c, it.d, it.e, it.f, it.g, it.h, it.i)
     }
 }
 

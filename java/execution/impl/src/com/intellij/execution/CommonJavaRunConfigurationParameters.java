@@ -7,6 +7,7 @@ import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
 import com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +48,7 @@ public interface CommonJavaRunConfigurationParameters extends CommonProgramRunCo
   @Override
   default @NotNull List<EventPair<?>> getAdditionalUsageData() {
     EventPair<Integer> data = getAlternativeJreUserData(getAlternativeJrePath());
-    return data != null ? Collections.singletonList(data) : Collections.emptyList();
+    return ContainerUtil.createMaybeSingletonList(data);
   }
 
   static EventPair<Integer> getAlternativeJreUserData(String jrePath) {

@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -64,7 +65,7 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     };
   }
 
-  private static class ReplaceMethodRefWithQualifierFix implements LocalQuickFix {
+  private static class ReplaceMethodRefWithQualifierFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -73,9 +74,8 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
-      PsiElement parent = element != null ? element.getParent() : null;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiElement parent = element.getParent();
       if (parent instanceof PsiMethodReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)parent).getQualifierExpression();
         if (qualifierExpression != null) {

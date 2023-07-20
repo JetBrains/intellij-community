@@ -133,13 +133,13 @@ class GeneralSettings : PersistentStateComponent<GeneralSettingsState> {
   }
 
   companion object {
-    const val IDE_GENERAL_XML = "ide.general.xml"
-    const val OPEN_PROJECT_ASK = -1
-    const val OPEN_PROJECT_NEW_WINDOW = 0
-    const val OPEN_PROJECT_SAME_WINDOW = 1
-    const val OPEN_PROJECT_SAME_WINDOW_ATTACH = 2
+    const val IDE_GENERAL_XML: String = "ide.general.xml"
+    const val OPEN_PROJECT_ASK: Int = -1
+    const val OPEN_PROJECT_NEW_WINDOW: Int = 0
+    const val OPEN_PROJECT_SAME_WINDOW: Int = 1
+    const val OPEN_PROJECT_SAME_WINDOW_ATTACH: Int = 2
     @Suppress("SpellCheckingInspection")
-    const val SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled"
+    const val SUPPORT_SCREEN_READERS: String = "ide.support.screenreaders.enabled"
     private val SUPPORT_SCREEN_READERS_OVERRIDDEN = getSupportScreenReadersOverridden()
 
     val SAVE_FILES_AFTER_IDLE_SEC: UINumericRange = UINumericRange(15, 1, 300)

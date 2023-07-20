@@ -22,6 +22,7 @@ import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBMenu;
+import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.ui.mac.screenmenu.Menu;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -32,7 +33,6 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -124,12 +124,6 @@ public final class ActionMenu extends JBMenu {
     BegMenuItemUI.registerMultiChoiceSupport(getPopupMenu(), popupMenu -> {
       Utils.updateMenuItems(popupMenu, getDataContext(), myPlace, myPresentationFactory);
     });
-  }
-
-  @Override
-  protected Graphics getComponentGraphics(Graphics graphics) {
-    if (!(getParent() instanceof JMenuBar)) return super.getComponentGraphics(graphics);
-    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
   public @NotNull AnAction getAnAction() { return myGroup.getAction(); }
@@ -225,7 +219,7 @@ public final class ActionMenu extends JBMenu {
     if (icon != null && settings != null && settings.getShowIconsInMenus()) {
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU.equals(myPlace)) {
         // JDK can't paint correctly our HiDPI icons at the system menu bar
-        icon = IconLoader.INSTANCE.getMenuBarIcon(icon, myUseDarkIcons);
+        icon = IconUtilKt.getMenuBarIcon(icon, myUseDarkIcons);
       } else if (shouldConvertIconToDarkVariant()) {
         icon = IconLoader.getDarkIcon(icon, true);
       }

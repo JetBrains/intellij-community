@@ -16,10 +16,6 @@ public abstract class MavenSimpleProjectComponent {
     return !MavenUtil.isMavenUnitTestModeEnabled() && !isHeadless() && !isDefault();
   }
 
-  protected boolean isNoBackgroundMode() {
-    return MavenUtil.isNoBackgroundMode();
-  }
-
   protected boolean isHeadless() {
     return ApplicationManager.getApplication().isHeadlessEnvironment();
   }

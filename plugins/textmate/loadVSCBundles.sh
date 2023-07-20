@@ -101,6 +101,18 @@ cp -r "language-configuration.json" "$ROOT/lib/bundles/terraform"
 cp -r "README.md" "$ROOT/lib/bundles/terraform"
 cp -r "snippets" "$ROOT/lib/bundles/terraform"
 
+git clone https://github.com/twxs/vs.language.cmake
+cd vs.language.cmake
+
+echo "Adding CMake"
+mkdir -p "$ROOT/lib/bundles/cmake"
+cp -r "LICENSE" "$ROOT/lib/bundles/cmake"
+cp -r "package.json" "$ROOT/lib/bundles/cmake"
+cp -r "README.md" "$ROOT/lib/bundles/cmake"
+cp -r "syntaxes" "$ROOT/lib/bundles/cmake"
+
+cd ..
+
 mkdir -p "$ROOT/lib/bundles/terraform/syntaxes"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/terraform.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/terraform.tmGrammar.json"
 

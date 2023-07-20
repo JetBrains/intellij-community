@@ -12,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
+
 /**
  * Converts the frame bounds b/w the user space (JRE-managed HiDPI mode) and the device space (IDE-managed HiDPI mode).
  * See {@link JreHiDpiUtil#isJreHiDPIEnabled()}
@@ -51,10 +53,16 @@ public final class FrameBoundsConverter {
         if (b.height > screen.height) {
           b.height = screen.height;
         }
+        if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+          IDE_FRAME_EVENT_LOG.debug("Found the screen " + screen + " for the loaded bounds " + bounds);
+        }
         return new Pair<>(b, gd);
       }
     }
 
+    if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+      IDE_FRAME_EVENT_LOG.debug("Found no screen for the loaded bounds " + bounds);
+    }
     // We didn't find a proper device at all. Probably it was an external screen that is unavailable now. We cannot use specified bounds.
     return null;
   }

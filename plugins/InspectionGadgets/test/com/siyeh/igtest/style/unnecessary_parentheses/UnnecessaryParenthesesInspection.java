@@ -28,6 +28,8 @@ public class UnnecessaryParenthesesInspection
     public int foo()
     {
         final String s = "foo" + (3 + 4); // do not warn here
+        String s2 = 1 + (2 + "x") + 2; // no warn here
+        String s3 = <warning descr="Parentheses around '(2 + \"x\")' are unnecessary">(2 + "x")</warning> + 1 + 2;
         final String t = <warning descr="Parentheses around '(\"foo\" + 3)' are unnecessary">("foo" + 3)</warning> + 4; // but warn here
         return <warning descr="Parentheses around '(3)' are unnecessary">(3)</warning>; // warn
     }

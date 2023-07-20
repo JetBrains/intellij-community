@@ -54,8 +54,7 @@ public final class SuperMethodWarningUtil {
     return superMethods.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method,
-                                                      @NotNull Collection<? extends PsiElement> ignore) {
+  public static PsiMethod @NotNull [] checkSuperMethods(@NotNull PsiMethod method, @NotNull Collection<? extends PsiElement> ignore) {
     return checkSuperMethods(method, null, ignore);
   }
 

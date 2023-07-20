@@ -127,15 +127,6 @@
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
-    <action internal="true" id="TestParseEventsSchemeAction"
-            class="com.intellij.internal.statistic.devkit.actions.TestParseEventsSchemeAction">
-    </action>
-
-    <action internal="true" id="CollectFUStatisticsAction"
-            class="com.intellij.internal.statistic.devkit.actions.CollectFUStatisticsAction">
-      <add-to-group group-id="FeatureUsage.Internal" anchor="last"/>
-    </action>
-
     <!-- Toolbar -->
 
     <group id="ToolbarMakeGroup">
@@ -372,8 +363,6 @@
       <separator/>
       <action id="EncapsulateFields" class="com.intellij.refactoring.actions.EncapsulateFieldsAction"/>
       <reference ref="MigrationMenu"/>
-      <separator/>
-      <action id="Generify" class="com.intellij.refactoring.actions.TypeCookAction"/>
       <separator/>
 
       <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="MemberPushDown"/>

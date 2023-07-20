@@ -206,7 +206,10 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
   }
 
   private boolean processActions(String pattern, Predicate<? super MatchedValue> consumer) {
-    Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
+    return processActions(pattern, consumer, ((ActionManagerImpl)myActionManager).getActionIds());
+  }
+
+  public boolean processActions(String pattern, Predicate<? super MatchedValue> consumer, @NotNull Set<String> ids) {
     Stream<AnAction> actions = ids.stream().map(myActionManager::getAction).filter(Objects::nonNull);
     Matcher matcher = buildMatcher(pattern);
 
@@ -341,7 +344,7 @@ public final class GotoActionItemProvider implements ChooseByNameWeightedItemPro
 
   @Nullable
   @Nls
-  private static String getAnActionText(AnAction value) {
+  public static String getAnActionText(AnAction value) {
     Presentation presentation = value.getTemplatePresentation().clone();
     value.applyTextOverride(ActionPlaces.ACTION_SEARCH, presentation);
     return presentation.getText();

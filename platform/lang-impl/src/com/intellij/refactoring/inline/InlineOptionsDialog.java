@@ -87,7 +87,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     for (JRadioButton button : buttons) {
       bg.add(button);
     }
-    new RadioUpDownListener(buttons);
+    RadioUpDownListener.installOn(buttons);
 
     myRbInlineThisOnly.setEnabled(myInvokedOnReference);
     myRbInlineAll.setEnabled(writable);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.project.Project;
@@ -25,8 +25,7 @@ public final class JpsFileTargetContextUtils {
    * @see com.intellij.codeInsight.daemon.quickFix.CreateFilePathFix
    * @see com.intellij.codeInsight.daemon.quickFix.FileReferenceQuickFixProvider
    */
-  @NotNull
-  public static Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
+  public static @NotNull Collection<FileTargetContext> prepareTargetContexts(@NotNull Project project,
                                                                     @NotNull VirtualFile file,
                                                                     @NotNull Collection<FileTargetContext> targetContexts) {
     // here we try to sort target locations depending on src/test origin
@@ -189,8 +188,7 @@ public final class JpsFileTargetContextUtils {
       return myTargetContext;
     }
 
-    @Nullable
-    public JpsModuleSourceRootType<?> getSourceRootType() {
+    public @Nullable JpsModuleSourceRootType<?> getSourceRootType() {
       return mySourceRootType;
     }
 

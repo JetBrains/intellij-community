@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.idea.LoggerFactory;
 import com.intellij.notification.NotificationAction;
@@ -30,7 +31,7 @@ public class ShowLogAction extends AnAction implements DumbAware {
   }
 
   public ShowLogAction() {
-    getTemplatePresentation().setText(getActionName());
+    getTemplatePresentation().setText(ActionsBundle.message("show.log.in.action.text", IdeBundle.message("action.file.manager.text")));
   }
 
   @Override

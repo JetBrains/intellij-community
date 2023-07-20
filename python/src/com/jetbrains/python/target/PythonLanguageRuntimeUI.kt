@@ -2,13 +2,15 @@
 package com.jetbrains.python.target
 
 import com.intellij.execution.target.CustomToolLanguageConfigurable
+import com.intellij.execution.target.LanguageRuntimeType
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
 import com.jetbrains.python.sdk.add.target.PyAddTargetBasedSdkPanel
@@ -18,19 +20,18 @@ class PythonLanguageRuntimeUI(project: Project,
                               config: PythonLanguageRuntimeConfiguration,
                               targetSupplier: Supplier<TargetEnvironmentConfiguration>)
   : BoundConfigurable(PyBundle.message("configurable.name.python.language")), CustomToolLanguageConfigurable<Sdk> {
+  private val existingSdks: List<Sdk> = PyConfigurableInterpreterList.getInstance(project).model.sdks.asList()
 
-  private val panel: PyAddTargetBasedSdkPanel
+  private var introspectable: LanguageRuntimeType.Introspectable? = null
 
-  init {
-    val existingSdks = PyConfigurableInterpreterList.getInstance(project).model.sdks.asList()
-
-    panel = PyAddTargetBasedSdkPanel(project = project, module = null, existingSdks = existingSdks, targetSupplier = targetSupplier,
-                                     config = config)
+  private val panel: PyAddTargetBasedSdkPanel by lazy {
+    PyAddTargetBasedSdkPanel(project = project, module = null, existingSdks = existingSdks, targetSupplier = targetSupplier,
+                             config = config, introspectable = introspectable)
   }
 
   override fun createPanel(): DialogPanel =
     panel {
-      row { panel.createCenterPanel()() }
+      row { cell(panel.createCenterPanel()).align(AlignX.FILL) }
     }
 
   override fun apply() {
@@ -39,8 +40,13 @@ class PythonLanguageRuntimeUI(project: Project,
     // we do not create Python SDK here, we return the configuration to the caller and let him do all the work
   }
 
+  override fun setIntrospectable(introspectable: LanguageRuntimeType.Introspectable) {
+    this.introspectable = introspectable
+  }
+
   override fun createCustomTool(savedConfiguration: TargetEnvironmentConfiguration): Sdk? {
     return panel.getOrCreateSdk(savedConfiguration)
   }
+
   override fun validate(): Collection<ValidationInfo> = panel.doValidateAll()
 }

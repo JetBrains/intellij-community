@@ -38,7 +38,7 @@ internal class SearchModel(ui: DocumentationUI) : Disposable {
   private val editorPane: JEditorPane = ui.editorPane
   private val cs = CoroutineScope(Dispatchers.EDT)
 
-  val searchField = SearchTextField()
+  val searchField: SearchTextField = SearchTextField()
 
   val matchLabel: JLabel = JLabel().also { label ->
     // adapted from com.intellij.find.editorHeaderActions.StatusTextAction

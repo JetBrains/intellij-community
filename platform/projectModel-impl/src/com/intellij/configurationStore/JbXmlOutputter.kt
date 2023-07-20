@@ -20,8 +20,6 @@ import java.io.StringWriter
 import java.io.Writer
 import java.util.*
 
-private val DEFAULT_FORMAT = JDOMUtil.createFormat("\n")
-
 // expandEmptyElements is ignored
 open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n",
                                                     private val elementFilter: JDOMUtil.ElementOutputFilter? = null,
@@ -57,8 +55,7 @@ open class JbXmlOutputter @JvmOverloads constructor(lineSeparator: String = "\n"
     private val reportedSensitiveProblems = Collections.synchronizedSet(HashSet<String>())
   }
 
-  // For normal output
-  private val format = if (DEFAULT_FORMAT.lineSeparator == lineSeparator) DEFAULT_FORMAT else JDOMUtil.createFormat(lineSeparator)
+  private val format = JDOMUtil.createFormat(lineSeparator)
 
   @Throws(IOException::class)
   fun output(doc: Document, out: Writer) {

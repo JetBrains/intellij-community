@@ -93,6 +93,12 @@
                      implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
 
     <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLIncompatibleTypes"
+                     key="inspections.types.mismatch.name" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLIncompatibleTypesInspection"/>
+
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
                      shortName="YAMLSchemaValidation"
                      key="inspections.schema.validation.name"
                      groupKey="inspections.group.name"
@@ -108,6 +114,8 @@
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDeprecationInspection"/>
 
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
+
+    <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

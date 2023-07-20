@@ -118,7 +118,7 @@ class Main {
     TestCase.assertTrue("Is method", member is PsiMethod)
     val parameters = (member as PsiMethod).parameterList.parameters
     TestCase.assertEquals("Parameter count", expectedParameterTypes.size, parameters.size)
-    for (i in 0 until expectedParameterTypes.size) {
+    for (i in expectedParameterTypes.indices) {
       TestCase.assertEquals("Parameter $i", expectedParameterTypes[i], parameters[i].type.canonicalText)
     }
   }

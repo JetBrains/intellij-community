@@ -110,9 +110,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   private static void invoke(Project project, Editor editor, PsiFile file, boolean isInteractive) {
     PsiParameter psiParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
     if (!IntentionPreviewUtils.prepareElementForWrite(file)) return;
-    PsiMethod method = psiParameter != null
-                       ? (PsiMethod)psiParameter.getDeclarationScope()
-                       : PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PsiMethod.class);
+    PsiMethod method = findMethod(psiParameter, editor, file);
     LOG.assertTrue(method != null);
 
     HashSet<String> usedNames = new HashSet<>();

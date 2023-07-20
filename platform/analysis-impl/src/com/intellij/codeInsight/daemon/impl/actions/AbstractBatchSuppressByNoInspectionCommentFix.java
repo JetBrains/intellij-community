@@ -39,7 +39,7 @@ public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements C
 
   @Override
   @Nullable
-  public abstract PsiElement getContainer(PsiElement context);
+  public abstract PsiElement getContainer(@NotNull PsiElement context);
 
   /**
    * @param ID                         Inspection ID

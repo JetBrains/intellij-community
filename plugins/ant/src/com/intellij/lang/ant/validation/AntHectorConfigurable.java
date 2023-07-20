@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.validation;
 
 import com.intellij.lang.ant.AntBundle;
@@ -39,7 +39,7 @@ public class AntHectorConfigurable extends HectorComponentPanel {
   private final XmlFile myFile;
   private final @NlsSafe String myLocalPath;
   private final Map<@NlsSafe String, XmlFile> myPathToFileMap = new HashMap<>();
-  private final @Nls String myNoneText = AntBundle.message("combobox.hector.configurable.none.text");
+  @SuppressWarnings("FieldMayBeStatic") private final @Nls String myNoneText = AntBundle.message("combobox.hector.configurable.none.text");
   private @NlsSafe String myOriginalContext = myNoneText;
 
   private JComboBox<String> myCombo;

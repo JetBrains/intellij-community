@@ -6,10 +6,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.util.messages.MessageBusConnection
-import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.WorkspaceModelTopics.Companion.getInstance
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics.Companion.getInstance
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.junit.Assert
 
 class MavenEventsTestHelper {

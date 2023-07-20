@@ -37,8 +37,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
-import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
-import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,11 +50,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.*;
+import com.intellij.xdebugger.XDebugProcess;
+import com.intellij.xdebugger.XDebugProcessStarter;
+import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
@@ -97,7 +97,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   private XDebuggerState myState = new XDebuggerState();
 
-  public XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
+  XDebuggerManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
 
     MessageBusConnection messageBusConnection = project.getMessageBus().connect(this);
@@ -156,24 +156,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (descriptor != null && ToolWindowId.DEBUG.equals(executor.getToolWindowId())) {
           mySessions.remove(descriptor.getProcessHandler());
         }
-      }
-    });
-
-    messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
-      @Override
-      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
-        XDebugSessionImpl session = getCurrentSession();
-        if (session == null) return;
-
-        XStackFrame currentFrame = session.getCurrentStackFrame();
-        if (currentFrame == null) return;
-
-        XSourcePosition alternativePosition = session.getFrameSourcePosition(currentFrame, XSourceKind.ALTERNATIVE);
-        boolean isAlternativeSourceSelected = alternativePosition != null && alternativePosition.getFile().equals(event.getNewFile());
-        boolean isAlternativeSourceDeselected = alternativePosition != null && alternativePosition.getFile().equals(event.getOldFile());
-
-        session.setCurrentSourceKind(!isAlternativeSourceSelected || isAlternativeSourceDeselected
-                                     ? XSourceKind.MAIN : XSourceKind.ALTERNATIVE);
       }
     });
 
@@ -379,9 +361,10 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         if (tab != null) {
           tab.select();
         }
+        myExecutionPointManager.setAlternativeSourceKindFlow(session.getAlternativeSourceKindState());
       }
       else {
-        myExecutionPointManager.setExecutionPoint(null);
+        myExecutionPointManager.clearExecutionPoint();
       }
       onActiveSessionChanged(previousSession, session);
     }
@@ -426,7 +409,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       lineChangeHandler = new XDebuggerLineChangeHandler(coroutineScope, (gutter, position, types) -> {
         myLastIcon = ObjectUtils.doIfNotNull(ContainerUtil.getFirstItem(types), XBreakpointType::getEnabledIcon);
         if (myLastIcon != null) {
-          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
           updateActiveLineNumberIcon(gutter, myLastIcon, position.getLine());
         }
         return Unit.INSTANCE;
@@ -440,7 +422,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
       if (editor.getProject() != myProject || editor.getEditorKind() != EditorKind.MAIN_EDITOR) return;
       EditorGutter editorGutter = editor.getGutter();
       if (editorGutter instanceof EditorGutterComponentEx gutter) {
-        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
+        if (e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA && EditorUtil.isBreakPointsOnLineNumbers()) {
           int line = EditorUtil.yToLogicalLineNoCustomRenderers(editor, e.getMouseEvent().getY());
           Document document = editor.getDocument();
           if (DocumentUtil.isValidLine(line, document)) {
@@ -451,10 +433,6 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
                 clear(gutter);
                 myLastPosition = position;
                 lineChangeHandler.lineChanged(editor, position);
-              }
-              else if (myLastIcon != null) {
-                // we need to set the cursor on every event, otherwise it is reset inside the editor
-                gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
               }
               return;
             }
@@ -480,6 +458,9 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
         gutter.putClientProperty("line.number.hover.icon", icon);
         gutter.putClientProperty("line.number.hover.icon.context.menu", icon == null ? null
                                                                                      : ActionManager.getInstance().getAction("XDebugger.Hover.Breakpoint.Context.Menu"));
+        if (icon != null) {
+          gutter.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // Editor updates cursor on MouseMoved, set it explicitly
+        }
         requireRepaint = true;
       }
       if (!Objects.equals(gutter.getClientProperty("active.line.number"), line)) {

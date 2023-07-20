@@ -16,9 +16,13 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -29,7 +33,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -38,10 +41,10 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.function.Predicate;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
   private static final CallMatcher THREAD_ON_SPIN_WAIT = CallMatcher.staticCall("java.lang.Thread", "onSpinWait");
@@ -57,7 +60,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new SpinLoopFix((PsiField)infos[0], (boolean)infos[1]);
   }
 
@@ -172,7 +175,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
   }
 
-  private static class SpinLoopFix extends InspectionGadgetsFix {
+  private static class SpinLoopFix extends ModCommandQuickFix {
     private final String myFieldName;
     private final boolean myAddOnSpinWait;
     private final boolean myAddVolatile;
@@ -204,13 +207,20 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (myAddVolatile) {
-        addVolatile(descriptor.getPsiElement());
-      }
-      if (myAddOnSpinWait) {
-        addOnSpinWait(descriptor.getPsiElement());
-      }
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      var element = descriptor.getStartElement();
+      return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptor), updater -> {
+        PsiModifierList modifierList = null;
+        if (myAddVolatile) {
+          modifierList = updater.getWritable(getFieldModifierList(element));
+        }
+        if (myAddOnSpinWait) {
+          addOnSpinWait(updater.getWritable(element));
+        }
+        if (modifierList != null) {
+          modifierList.setModifierProperty(PsiModifier.VOLATILE, true);
+        }
+      });
     }
 
     private static void addOnSpinWait(PsiElement element) {
@@ -229,15 +239,14 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
       CodeStyleManager.getInstance(element.getProject()).reformat(loop);
     }
 
-    private static void addVolatile(PsiElement element) {
+    @Nullable
+    private static PsiModifierList getFieldModifierList(PsiElement element) {
       PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiWhileStatement whileStatement)) return;
+      if (!(parent instanceof PsiWhileStatement whileStatement)) return null;
       PsiExpression condition = whileStatement.getCondition();
       PsiField field = getFieldIfSimpleFieldComparison(condition);
-      if (field == null) return;
-      PsiModifierList list = field.getModifierList();
-      if (list == null) return;
-      list.setModifierProperty(PsiModifier.VOLATILE, true);
+      if (field == null) return null;
+      return field.getModifierList();
     }
   }
 }

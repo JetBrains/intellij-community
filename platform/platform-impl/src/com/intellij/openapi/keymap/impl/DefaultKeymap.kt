@@ -103,7 +103,7 @@ open class DefaultKeymap {
     keymaps.remove(removed)
   }
 
-  internal fun findScheme(name: String) = nameToScheme[name]
+  internal fun findScheme(name: String): Keymap? = nameToScheme[name]
 
   open val defaultKeymapName: String
     get() = when {
@@ -137,9 +137,9 @@ open class DefaultKeymap {
   }
 }
 
-internal fun getEffectiveFile(bean: BundledKeymapBean) = "keymaps/${bean.file.replace("\$OS\$", osName())}"
+internal fun getEffectiveFile(bean: BundledKeymapBean): String = "keymaps/${bean.file.replace("\$OS\$", osName())}"
 
-internal fun getKeymapName(bean: BundledKeymapBean) = FileUtilRt.getNameWithoutExtension(bean.file).removePrefix("\$OS\$/")
+internal fun getKeymapName(bean: BundledKeymapBean): String = FileUtilRt.getNameWithoutExtension(bean.file).removePrefix("\$OS\$/")
 
 private fun osName(): String {
   return when {

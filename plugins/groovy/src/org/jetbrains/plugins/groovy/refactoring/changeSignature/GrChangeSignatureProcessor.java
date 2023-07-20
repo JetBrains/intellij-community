@@ -25,7 +25,6 @@ import com.intellij.refactoring.ConflictsDialogBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessorBase;
 import com.intellij.refactoring.changeSignature.ChangeSignatureViewDescriptor;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,7 +69,7 @@ public class GrChangeSignatureProcessor extends ChangeSignatureProcessorBase {
 
     final UsageInfo[] usagesIn = refUsages.get();
     RenameUtil.addConflictDescriptions(usagesIn, conflictDescriptions);
-    Set<UsageInfo> usagesSet = ContainerUtil.set(usagesIn);
+    Set<UsageInfo> usagesSet = ContainerUtil.newHashSet(usagesIn);
     RenameUtil.removeConflictUsages(usagesSet);
     if (!conflictDescriptions.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {

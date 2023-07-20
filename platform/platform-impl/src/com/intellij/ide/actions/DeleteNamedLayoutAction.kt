@@ -35,5 +35,5 @@ abstract class DeleteNamedLayoutAction(@NlsSafe private val layoutName: String) 
 
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }

@@ -1,7 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.uploader
 
-import com.google.gson.Gson
+import com.fasterxml.jackson.annotation.JsonView
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.module.kotlin.KotlinFeature
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
@@ -15,11 +18,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.ArrayUtil
+import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import org.jetbrains.annotations.NotNull
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.reflect.full.IllegalCallableAccessException
 
 object EventLogExternalUploader {
   private val LOG = Logger.getInstance(EventLogExternalUploader.javaClass)
@@ -107,12 +112,18 @@ object EventLogExternalUploader {
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
 
-    val libPaths = ArrayList<String>()
-    libPaths.add(findLibraryByClass(kotlin.coroutines.Continuation::class.java)) // add kotlin-std to classpath
-    libPaths.add(findLibraryByClass(NotNull::class.java))
-    libPaths.add(findLibraryByClass(Gson::class.java))
-    libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
-    val classpath = joinAsClasspath(libPaths, uploader)
+    val libPaths = setOf(
+      findLibraryByClass(kotlin.coroutines.Continuation::class.java), // add kotlin-std to classpath
+      findLibraryByClass(NotNull::class.java), // annotations
+      findLibraryByClass(JsonParser::class.java), //add jackson-core
+      findLibraryByClass(JsonNode::class.java), //add jackson-databind
+      findLibraryByClass(JsonView::class.java), //add jackson-annotations
+      findLibraryByClass(KotlinFeature::class.java), // add jackson-kotlin-module
+      findLibraryByClass(IllegalCallableAccessException::class.java), // add kotlin-reflect
+      findLibraryByClass(EventGroupsFilterRules::class.java), // validation library
+      findLibraryByClass(EventGroupRemoteDescriptors::class.java) // model library
+    )
+    val classpath = joinAsClasspath(libPaths.toList(), uploader)
 
     return createExternalUploadCommand(applicationInfo, sendConfigs, classpath, tempDir)
   }
@@ -165,6 +176,8 @@ object EventLogExternalUploader {
 
     val filesToSend = config.getFilesToSendProvider().getFilesToSend().map { it.file }
     addArgument(args, LOGS_OPTION + recorderIdLowerCase, filesToSend.joinToString(separator = File.pathSeparator))
+
+    addArgument(args, ESCAPING_OPTION + recorderIdLowerCase, config.isEscapingEnabled().toString())
   }
 
   private fun addArgument(args: ArrayList<String>, name: String, value: String) {

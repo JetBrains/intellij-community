@@ -17,7 +17,6 @@ package org.jetbrains.jps.model.impl;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsElementReference;
-import org.jetbrains.jps.model.JpsEventDispatcher;
 import org.jetbrains.jps.model.JpsModel;
 
 public final class JpsModelImpl implements JpsModel {
@@ -25,15 +24,15 @@ public final class JpsModelImpl implements JpsModel {
   private final JpsGlobalImpl myGlobal;
   private JpsModelImpl myOriginalModel;
 
-  public JpsModelImpl(JpsEventDispatcher eventDispatcher) {
-    myProject = new JpsProjectImpl(this, eventDispatcher);
-    myGlobal = new JpsGlobalImpl(this, eventDispatcher);
+  public JpsModelImpl() {
+    myProject = new JpsProjectImpl(this);
+    myGlobal = new JpsGlobalImpl(this);
   }
 
-  private JpsModelImpl(JpsModelImpl original, JpsEventDispatcher eventDispatcher) {
+  private JpsModelImpl(JpsModelImpl original) {
     myOriginalModel = original;
-    myProject = new JpsProjectImpl(original.myProject, this, eventDispatcher);
-    myGlobal = new JpsGlobalImpl(original.myGlobal, this, eventDispatcher);
+    myProject = new JpsProjectImpl(original.myProject, this);
+    myGlobal = new JpsGlobalImpl(original.myGlobal, this);
   }
 
   @Override
@@ -46,12 +45,6 @@ public final class JpsModelImpl implements JpsModel {
   @NotNull
   public JpsGlobalImpl getGlobal() {
     return myGlobal;
-  }
-
-  @NotNull
-  @Override
-  public JpsModel createModifiableModel(@NotNull JpsEventDispatcher eventDispatcher) {
-    return new JpsModelImpl(this, eventDispatcher);
   }
 
   @Override

@@ -1,5 +1,9 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 
+import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
+import com.intellij.java.workspace.entities.asJavaResourceRoot
+import com.intellij.java.workspace.entities.asJavaSourceRoot
+import com.intellij.java.workspace.entities.modifyEntity
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.roots.ContentFolder
 import com.intellij.openapi.roots.ExcludeFolder
@@ -7,18 +11,13 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
-import com.intellij.workspaceModel.storage.bridgeEntities.addJavaSourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.asJavaResourceRoot
-import com.intellij.workspaceModel.storage.bridgeEntities.asJavaSourceRoot
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootType
-import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension
-import com.intellij.workspaceModel.storage.bridgeEntities.modifyEntity
 
 internal abstract class ContentFolderBridge(private val entry: ContentEntryBridge, private val contentFolderUrl: VirtualFileUrl) : ContentFolder {
   override fun getContentEntry(): ContentEntryBridge = entry
@@ -74,9 +73,7 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
 
     val customRoot = sourceRootEntity.customSourceRootProperties
     val otherCustomRoot = other.sourceRootEntity.customSourceRootProperties
-    if (customRoot?.propertiesXmlTag != otherCustomRoot?.propertiesXmlTag) return false
-
-    return true
+    return customRoot?.propertiesXmlTag == otherCustomRoot?.propertiesXmlTag
   }
 
   override fun setPackagePrefix(packagePrefix: String) {
@@ -91,7 +88,9 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       if (javaResourceRoot != null) return
 
       updater { diff ->
-        diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix)
+        diff addEntity JavaSourceRootPropertiesEntity(false, packagePrefix, sourceRootEntity.entitySource) {
+          sourceRoot = sourceRootEntity
+        }
       }
     }
     else {

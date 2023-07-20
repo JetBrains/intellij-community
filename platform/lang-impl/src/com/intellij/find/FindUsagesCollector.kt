@@ -4,6 +4,8 @@ package com.intellij.find
 import com.intellij.find.impl.FindPopupPanel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventId1
+import com.intellij.internal.statistic.eventLog.events.EventId3
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -13,11 +15,11 @@ class FindUsagesCollector : CounterUsagesCollector() {
   companion object {
     private val GROUP = EventLogGroup("find", 6)
 
-    const val FIND_IN_FILE = "FindInFile"
+    const val FIND_IN_FILE: String = "FindInFile"
 
-    const val FIND_IN_PATH = "FindInPath"
+    const val FIND_IN_PATH: String = "FindInPath"
 
-    const val UNKNOWN = "Unknown"
+    const val UNKNOWN: String = "Unknown"
 
     private val REGEXP_HELP_CLICKED = GROUP.registerEvent("regexp.help.clicked",
                                                           EventFields.String("type", listOf(FIND_IN_FILE, UNKNOWN)))
@@ -46,14 +48,14 @@ class FindUsagesCollector : CounterUsagesCollector() {
     private val OPTION_VALUE = EventFields.Boolean("option_value")
 
     @JvmField
-    val CHECK_BOX_TOGGLED = GROUP.registerEvent("check.box.toggled",
-                                                EventFields.String("type", listOf(FIND_IN_PATH)),
-                                                EventFields.Enum("option_name", FindPopupPanel.ToggleOptionName::class.java),
-                                                OPTION_VALUE
+    val CHECK_BOX_TOGGLED: EventId3<String?, FindPopupPanel.ToggleOptionName, Boolean> = GROUP.registerEvent("check.box.toggled",
+                                                                                                             EventFields.String("type", listOf(FIND_IN_PATH)),
+                                                                                                             EventFields.Enum("option_name", FindPopupPanel.ToggleOptionName::class.java),
+                                                                                                             OPTION_VALUE
     )
 
     @JvmField
-    val PIN_TOGGLED = GROUP.registerEvent("pin.toggled", OPTION_VALUE)
+    val PIN_TOGGLED: EventId1<Boolean> = GROUP.registerEvent("pin.toggled", OPTION_VALUE)
 
     @JvmStatic
     fun triggerUsedOptionsStats(project: Project?,

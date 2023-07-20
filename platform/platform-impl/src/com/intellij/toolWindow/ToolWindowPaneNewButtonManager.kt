@@ -18,7 +18,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
   constructor(paneId: String) : this(paneId, true)
 
   private val left = ToolWindowLeftToolbar(paneId, isPrimary)
-  private val right = ToolWindowRightToolbar(paneId)
+  private val right = ToolWindowRightToolbar(paneId, isPrimary)
 
   override val isNewUi: Boolean
     get() = true
@@ -38,6 +38,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
 
   override fun initMoreButton() {
     left.initMoreButton()
+    right.initMoreButton()
   }
 
   override fun layout(size: Dimension, layeredPane: JComponent) {
@@ -50,7 +51,7 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
   override fun revalidateNotEmptyStripes() {
   }
 
-  override fun getBottomHeight() = 0
+  override fun getBottomHeight(): Int = 0
 
   override fun getStripeFor(anchor: ToolWindowAnchor, isSplit: Boolean?): AbstractDroppableStripe {
     return when (anchor) {
@@ -89,6 +90,19 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
       ToolWindowAnchor.BOTTOM, ToolWindowAnchor.LEFT -> left
       else -> throw java.lang.IllegalArgumentException("Anchor=$anchor")
     }
+  }
+
+  fun getMoreButton(anchor: ToolWindowAnchor): MoreSquareStripeButton {
+    return when (anchor) {
+      ToolWindowAnchor.LEFT -> left.moreButton
+      ToolWindowAnchor.RIGHT -> right.moreButton
+      else -> throw java.lang.IllegalArgumentException("Anchor=$anchor")
+    }
+  }
+
+  fun updateMoreButtons() {
+    left.moreButton.update()
+    right.moreButton.update()
   }
 
   override fun startDrag() {
@@ -162,5 +176,5 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
     return manager
   }
 
-  override fun hasButtons() = left.hasButtons() || right.hasButtons()
+  override fun hasButtons(): Boolean = left.hasButtons() || right.hasButtons()
 }

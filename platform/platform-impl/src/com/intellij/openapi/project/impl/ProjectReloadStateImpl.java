@@ -7,13 +7,12 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.ProjectReloadState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @State(
   name = "ProjectReloadState",
   storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
 )
-class ProjectReloadStateImpl extends ProjectReloadState implements PersistentStateComponent<ProjectReloadStateImpl> {
+final class ProjectReloadStateImpl extends ProjectReloadState implements PersistentStateComponent<ProjectReloadStateImpl> {
   public static final int UNKNOWN = 0;
   public static final int BEFORE_RELOAD = 1;
   public static final int AFTER_RELOAD = 2;
@@ -30,9 +29,8 @@ class ProjectReloadStateImpl extends ProjectReloadState implements PersistentSta
     STATE = BEFORE_RELOAD;
   }
 
-  @Nullable
   @Override
-  public ProjectReloadStateImpl getState() {
+  public @NotNull ProjectReloadStateImpl getState() {
     return this;
   }
 

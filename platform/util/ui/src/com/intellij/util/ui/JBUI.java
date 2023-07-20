@@ -4,7 +4,6 @@ package com.intellij.util.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.border.NamedBorderKt;
@@ -77,6 +76,13 @@ public final class JBUI {
    */
   public static int scale(int i) {
     return JBUIScale.scale(i);
+  }
+
+  /**
+   * @return 'i' unscaled by the user scale factor
+   */
+  public static int unscale(int i) {
+    return Math.round(i / JBUIScale.scale(1f));
   }
 
   public static int scaleFontSize(float fontSize) {
@@ -451,6 +457,23 @@ public final class JBUI {
       public static @NotNull Color disabledOutlineColor() {
         return JBColor.namedColor("Button.disabledBorderColor", JBColor.namedColor("Button.darcula.disabledOutlineColor", Gray.xCF));
       }
+
+      public static final class Split {
+        public static final class Default {
+          public static final @NotNull Color SEPARATOR_COLOR =
+            JBColor.namedColor("Button.Split.default.separatorColor", 0x88ADF7, 0x83ACFC);
+
+          public static final @NotNull Color ICON_COLOR = JBColor.namedColor("Button.Split.default.iconColor", 0xFFFFFF);
+        }
+      }
+    }
+
+    public interface SearchOption {
+      JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
+      JBColor BUTTON_SELECTED_PRESSED_BACKGROUND =
+        JBColor.namedColor("SearchOption.selectedPressedBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
+      JBColor BUTTON_SELECTED_HOVERED_BACKGROUND =
+        JBColor.namedColor("SearchOption.selectedHoveredBackground", JBUI.CurrentTheme.ActionButton.pressedBackground());
     }
 
     public interface SegmentedButton {
@@ -600,7 +623,7 @@ public final class JBUI {
       }
 
       public static Insets tabInsets() {
-        return insets(tabInsetsKey(), isNewUI() ? insets(-7, 12, -7, 8) : insets(0, 8));
+        return insets(tabInsetsKey(), isNewUI() ? insets(-7, 8) : insets(0, 4));
       }
 
       public static String tabInsetsKey() {
@@ -615,12 +638,28 @@ public final class JBUI {
         return "EditorTabs.verticalTabInsets";
       }
 
-      public static int tabActionsInset() {
-        return getInt(tabActionsInsetKey(), 6);
+      public static Insets tabContentInsets(Boolean actionsOnTheRight) {
+        if (actionsOnTheRight == null) {
+          return insets(tabContentInsetsActionsNoneKey(), isNewUI() ? insetsLeft(4) : insets(0, 4));
+        }
+        else if (actionsOnTheRight) {
+          return insets(tabContentInsetsActionsRightKey(), isNewUI() ? insets(0, 4, 0, 6) : insets(0, 4, 0, 2));
+        }
+        else {
+          return insets(tabContentInsetsActionsLeftKey(), isNewUI() ? insetsLeft(6) : insets(0, 6, 0, 4));
+        }
       }
 
-      public static String tabActionsInsetKey() {
-        return "EditorTabs.tabActionsInset";
+      public static String tabContentInsetsActionsRightKey() {
+        return "EditorTabs.tabContentInsetsActionsRight";
+      }
+
+      public static String tabContentInsetsActionsLeftKey() {
+        return "EditorTabs.tabContentInsetsActionsLeft";
+      }
+
+      public static String tabContentInsetsActionsNoneKey() {
+        return "EditorTabs.tabContentInsetsActionsNone";
       }
 
       public static @NotNull Color borderColor() {
@@ -727,12 +766,27 @@ public final class JBUI {
       }
 
       interface Notification {
-        static @NotNull JBInsets borderInsets(@NotNull JBInsets defaultValue) {
-          return insets("Editor.Notification.borderInsets", defaultValue);
-        }
 
         static @NotNull JBInsets borderInsets() {
-          return borderInsets(insets(10, 12));
+          return insets(borderInsetsKey(), insets(10, 12));
+        }
+
+        static @NotNull String borderInsetsKey() {
+          return "Editor.Notification.borderInsets";
+        }
+
+        static @NotNull JBInsets borderInsetsWithoutStatus() {
+          return insets(
+            borderInsetsKeyWithoutStatus(),
+            insets(
+              borderInsetsKey(), // fall back to the other key first to keep backwards compatibility
+              isNewUI() ? JBInsets.create(9, 16) : JBInsets.create(5, 10)
+            )
+          );
+        }
+
+        static @NotNull String borderInsetsKeyWithoutStatus() {
+          return "Editor.Notification.borderInsetsWithoutStatus";
         }
       }
     }
@@ -1047,7 +1101,7 @@ public final class JBUI {
 
       @NotNull
       public static JBDimension defaultExperimentalToolbarButtonSize() {
-        return size(40, 40);
+        return size(30, 30);
       }
 
       public static int experimentalToolbarButtonIconSize() {
@@ -1123,7 +1177,24 @@ public final class JBUI {
       public static final class Dropdown {
 
         @NotNull public static Insets borderInsets() {
-          return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(3, 12, 3, 6) : insets(3, 5));
+          return insets("MainToolbar.Dropdown.borderInsets", isNewUI() ? insets(5, 10, 5, 6) : insets(3, 5));
+        }
+
+        @NotNull public static JBValue hoverArc() {
+          return new JBValue.UIInteger("MainToolbar.Dropdown.arc", 12);
+        }
+      }
+
+      public static final class SplitDropdown {
+
+        @NotNull public static Insets borderInsets() {
+          return insets("MainToolbar.SplitDropdown.borderInsets", isNewUI() ? insets(5, 5, 5, 3) : insets(3, 5));
+        }
+      }
+
+      public static final class Button {
+        @NotNull public static JBValue hoverArc() {
+          return new JBValue.UIInteger("MainToolbar.Button.arc", 12);
         }
       }
     }
@@ -1217,7 +1288,7 @@ public final class JBUI {
         return insets("ComplexPopup.TextField.borderInsets", insets(0, 12));
       }
 
-      public static Insets textFieldInputInsets() {
+      public static JBInsets textFieldInputInsets() {
         return insets(textFieldInputInsetsKey(), insets(6, 2));
       }
 
@@ -1977,6 +2048,10 @@ public final class JBUI {
           return focused ? FOREGROUND : Inactive.FOREGROUND;
         }
 
+        public static boolean forceFocusedSelectionForeground() {
+          return UIManager.getBoolean("Tree.forceFocusedSelectionForeground");
+        }
+
         private interface Inactive {
           Color BACKGROUND = JBColor.namedColor("Tree.selectionInactiveBackground", DEFAULT_RENDERER_SELECTION_INACTIVE_BACKGROUND);
           Color FOREGROUND = JBColor.namedColor("Tree.selectionInactiveForeground", Tree.FOREGROUND);
@@ -1998,10 +2073,12 @@ public final class JBUI {
 
     public final static class RunWidget {
       public static final Color FOREGROUND = JBColor.namedColor("RunWidget.foreground", Color.WHITE);
-      public static final Color DISABLED_FOREGROUND = JBColor.namedColor("RunWidget.disabledForeground", new Color(0x66FFFFFF, true));
-      public static final Color RUN_MODE_ICON = JBColor.namedColor("RunWidget.runModeIconColor", new Color(0x5FAD65));
-      public static final Color BACKGROUND = JBColor.namedColor("RunWidget.background", 0x3369D6);
+      public static final Color ICON_COLOR = JBColor.namedColor("RunWidget.iconColor", Color.WHITE);
+      public static final Color RUN_ICON_COLOR = JBColor.namedColor("RunWidget.runIconColor", new Color(0x5FAD65));
       public static final Color RUNNING_BACKGROUND = JBColor.namedColor("RunWidget.runningBackground", 0x599E5E);
+      public static final Color RUNNING_ICON_COLOR = JBColor.namedColor("RunWidget.runningIconColor", Color.WHITE);
+      /** @deprecated The separator key was used in the contrast run widget implementation, and now it is now needed any more */
+      @Deprecated(forRemoval = true)
       public static final Color SEPARATOR = JBColor.namedColor("RunWidget.separatorColor", new Color(255, 255, 255, 64));
       public static final Color STOP_BACKGROUND = JBColor.namedColor("RunWidget.stopBackground", new Color(0xC94F4F));
 
@@ -2035,30 +2112,13 @@ public final class JBUI {
         return 5;
       }
 
-      public static int actionButtonWidth(boolean isContrastWidget) {
-        return getInt(actionButtonWidthKey(), defaultActionButtonWidth(isContrastWidget));
+      public static int actionButtonWidth() {
+        return getInt(actionButtonWidthKey(), 30);
       }
 
       @NotNull
       public static String actionButtonWidthKey() {
         return "RunWidget.actionButtonWidth";
-      }
-
-      public static int defaultActionButtonWidth(boolean isContrastWidget) {
-        return isContrastWidget ? 36 : 30;
-      }
-
-      public static int configurationSelectorWidth() {
-        return getInt(configurationSelectorWidthKey(), defaultConfigurationSelectorWidth());
-      }
-
-      @NotNull
-      public static String configurationSelectorWidthKey() {
-        return "RunWidget.configurationSelectorWidth";
-      }
-
-      public static int defaultConfigurationSelectorWidth() {
-        return 90;
       }
 
       public static Font configurationSelectorFont() {
@@ -2077,18 +2137,13 @@ public final class JBUI {
 
     public final static class TitlePane {
 
-      public static @NotNull Dimension buttonPreferredSize() {
-        return size(buttonPreferredSizeKey(), defaultButtonPreferredSize());
+      public static @NotNull Dimension buttonPreferredSize(float scaleDefaultValues) {
+        return size(buttonPreferredSizeKey(), size((int)(47 * scaleDefaultValues), (int)(28 * scaleDefaultValues)));
       }
 
       @NotNull
       public static String buttonPreferredSizeKey() {
         return "TitlePane.Button.preferredSize";
-      }
-
-      @NotNull
-      public static JBDimension defaultButtonPreferredSize() {
-        return size(47, 28);
       }
     }
 
@@ -2160,6 +2215,6 @@ public final class JBUI {
   }
 
   private static boolean isNewUI() {
-    return Registry.is("ide.experimental.ui");
+    return NewUiValue.isEnabled();
   }
 }

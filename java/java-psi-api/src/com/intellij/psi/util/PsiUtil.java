@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
@@ -1425,9 +1425,13 @@ public final class PsiUtil extends PsiUtilCore {
     return module.addAfter(moduleStatement, anchor);
   }
 
+  /**
+   * @param psiClass element to test
+   * @return true if element is a synthetic array class
+   * @see PsiElementFactory#isArrayClass(PsiClass) 
+   */
   public static boolean isArrayClass(@Nullable PsiElement psiClass) {
-    return psiClass != null && psiClass.getManager().areElementsEquivalent(
-      psiClass, JavaPsiFacade.getElementFactory(psiClass.getProject()).getArrayClass(getLanguageLevel(psiClass)));
+    return psiClass instanceof PsiClass && JavaPsiFacade.getElementFactory(psiClass.getProject()).isArrayClass((PsiClass)psiClass);
   }
 
   /**

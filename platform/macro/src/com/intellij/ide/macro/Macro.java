@@ -33,8 +33,6 @@ public abstract class Macro {
   public static final class ExecutionCancelledException extends Exception {
   }
 
-  protected String myCachedPreview;
-
   @NonNls
   @NotNull
   public abstract String getName();
@@ -51,17 +49,13 @@ public abstract class Macro {
     return expand(dataContext);
   }
 
-  public void cachePreview(@NotNull DataContext dataContext) {
-    try{
-      myCachedPreview = expand(dataContext);
+  public @Nullable String preview(@NotNull DataContext dataContext) {
+    try {
+      return expand(dataContext);
     }
-    catch(ExecutionCancelledException e){
-      myCachedPreview = "";
+    catch (ExecutionCancelledException ignore) {
+      return null;
     }
-  }
-
-  public final String preview() {
-    return myCachedPreview;
   }
 
   @NotNull

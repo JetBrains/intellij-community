@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.actions;
 
 import com.intellij.CommonBundle;
@@ -48,7 +48,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     DataContext dataContext = context.getDefaultDataContext();
     ReadAction
       .nonBlocking(() -> findExisting(context))
-      .finishOnUiThread(ModalityState.NON_MODAL, existingConfiguration -> perform(runManager, existingConfiguration, dataContext))
+      .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> perform(runManager, existingConfiguration, dataContext))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 
@@ -67,7 +67,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
       DataContext dataContext = context.getDefaultDataContext();
       ReadAction
         .nonBlocking(() -> findExisting(context))
-        .finishOnUiThread(ModalityState.NON_MODAL, existingConfiguration -> {
+        .finishOnUiThread(ModalityState.nonModal(), existingConfiguration -> {
           if (configuration != existingConfiguration) {
             RunConfigurationOptionUsagesCollector.logAddNew(context.getProject(), configuration.getType().getId(), context.getPlace());
             runManager.setTemporaryConfiguration(configuration);

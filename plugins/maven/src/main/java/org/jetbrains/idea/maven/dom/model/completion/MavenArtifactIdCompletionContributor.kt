@@ -11,6 +11,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomShortArtifactCoordinates
 import org.jetbrains.idea.maven.dom.model.completion.insert.MavenArtifactIdInsertionHandler
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.PoisonedRepositoryArtifactData
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Consumer
@@ -55,6 +56,7 @@ class MavenArtifactIdCompletionContributor : MavenCoordinateCompletionContributo
             .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
         )
       }
+      if (item === PoisonedRepositoryArtifactData.INSTANCE) break
     }
   }
 }

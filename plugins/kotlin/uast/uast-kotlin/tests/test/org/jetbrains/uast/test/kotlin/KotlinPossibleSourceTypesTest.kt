@@ -2,8 +2,8 @@
 package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.*
-import org.jetbrains.uast.test.common.PossibleSourceTypesTestBase
-import org.jetbrains.uast.test.common.allUElementSubtypes
+import com.intellij.platform.uast.testFramework.common.PossibleSourceTypesTestBase
+import com.intellij.platform.uast.testFramework.common.allUElementSubtypes
 import org.junit.Test
 
 

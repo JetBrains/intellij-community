@@ -6,6 +6,9 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtFunctionLikeSignature
+import org.jetbrains.kotlin.analysis.api.signatures.KtVariableLikeSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtSubstitutor
@@ -33,30 +36,34 @@ class KotlinFirLookupElementFactory {
         symbol: KtNamedSymbol,
         importStrategyDetector: ImportStrategyDetector,
         importingStrategy: ImportStrategy? = null,
-        substitutor: KtSubstitutor = KtSubstitutor.Empty(token)
+        substitutor: KtSubstitutor = KtSubstitutor.Empty(token),
+        expectedType: KtType? = null,
     ): LookupElement {
         return when (symbol) {
             is KtCallableSymbol -> createCallableLookupElement(
-                symbol,
+                symbol.name,
+                symbol.substitute(substitutor),
                 detectCallableOptions(symbol, importStrategyDetector),
-                substitutor,
+                expectedType,
             )
 
-            is KtClassLikeSymbol -> with(classLookupElementFactory) { createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategy(symbol)) }
+            is KtClassLikeSymbol -> with(classLookupElementFactory) {
+                createLookup(symbol, importingStrategy ?: importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol))
+            }
             is KtTypeParameterSymbol -> with(typeParameterLookupElementFactory) { createLookup(symbol) }
             else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
         }
     }
 
     fun KtAnalysisSession.createCallableLookupElement(
-        symbol: KtCallableSymbol,
+        name: Name,
+        signature: KtCallableSignature<*>,
         options: CallableInsertionOptions,
-        substitutor: KtSubstitutor,
+        expectedType: KtType? = null,
     ): LookupElementBuilder {
-        return when (symbol) {
-            is KtFunctionSymbol -> with(functionLookupElementFactory) { createLookup(symbol, options, substitutor) }
-            is KtVariableLikeSymbol -> with(variableLookupElementFactory) { createLookup(symbol, options, substitutor) }
-            else -> throw IllegalArgumentException("Cannot create a lookup element for $symbol")
+        return when (signature) {
+            is KtFunctionLikeSignature<*> -> with(functionLookupElementFactory) { createLookup(name, signature, options, expectedType) }
+            is KtVariableLikeSignature<*> -> with(variableLookupElementFactory) { createLookup(signature, options) }
         }
     }
 

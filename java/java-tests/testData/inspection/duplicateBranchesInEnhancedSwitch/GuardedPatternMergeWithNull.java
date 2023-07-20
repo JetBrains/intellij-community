@@ -3,7 +3,7 @@ class C {
     switch (o) {
       case null -> bar("A");
       case String s -> bar("B");
-      case Number n && n.intValue() == 42 -> bar("A");
+      case Number n when n.intValue() == 42 -> bar("A");
       default -> bar("C");
     }
   }

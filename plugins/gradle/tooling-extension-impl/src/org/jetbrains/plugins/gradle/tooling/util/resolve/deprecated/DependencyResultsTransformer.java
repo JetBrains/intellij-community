@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated;
 
 import groovy.lang.MetaMethod;
@@ -236,7 +236,7 @@ public class DependencyResultsTransformer {
     if (resolveFromArtifacts) {
       Collection<ResolvedArtifact> artifacts = artifactMap.get(componentResult.getModuleVersion());
 
-      if (artifacts != null && artifacts.isEmpty()) {
+      if (artifacts.isEmpty()) {
         result.addAll(
           buildExternalDependencies(componentResult.getDependencies())
         );
@@ -244,70 +244,68 @@ public class DependencyResultsTransformer {
 
       boolean first = true;
 
-      if (artifacts != null) {
-        for (ResolvedArtifact artifact : artifacts) {
-          String packaging = artifact.getExtension();
-          String classifier = artifact.getClassifier();
-          final ExternalDependency dependency;
-          if (isProjectDependencyArtifact(artifact)) {
-            ProjectComponentIdentifier artifactComponentIdentifier =
-              (ProjectComponentIdentifier)artifact.getId().getComponentIdentifier();
+      for (ResolvedArtifact artifact : artifacts) {
+        String packaging = artifact.getExtension();
+        String classifier = artifact.getClassifier();
+        final ExternalDependency dependency;
+        if (isProjectDependencyArtifact(artifact)) {
+          ProjectComponentIdentifier artifactComponentIdentifier =
+            (ProjectComponentIdentifier)artifact.getId().getComponentIdentifier();
 
-            dependency = new DefaultExternalProjectDependency();
-            DefaultExternalProjectDependency dDep = (DefaultExternalProjectDependency)dependency;
-            dDep.setName(name);
-            dDep.setGroup(group);
-            dDep.setVersion(version);
-            dDep.setScope(scope);
-            dDep.setSelectionReason(selectionReason);
-            dDep.setProjectPath(artifactComponentIdentifier.getProjectPath());
-            dDep.setConfigurationName(Dependency.DEFAULT_CONFIGURATION);
+          dependency = new DefaultExternalProjectDependency();
+          DefaultExternalProjectDependency dDep = (DefaultExternalProjectDependency)dependency;
+          dDep.setName(name);
+          dDep.setGroup(group);
+          dDep.setVersion(version);
+          dDep.setScope(scope);
+          dDep.setSelectionReason(selectionReason);
+          dDep.setProjectPath(artifactComponentIdentifier.getProjectPath());
+          dDep.setConfigurationName(Dependency.DEFAULT_CONFIGURATION);
 
-            Collection<ResolvedArtifact> resolvedArtifacts = artifactMap.get(componentResult.getModuleVersion());
-            List<File> files = new ArrayList<>(resolvedArtifacts.size());
-            for (ResolvedArtifact resolvedArtifact : resolvedArtifacts) {
-              files.add(resolvedArtifact.getFile());
-            }
-            dDep.setProjectDependencyArtifacts(files);
-            dDep.setProjectDependencyArtifactsSources(findArtifactSources(files, mySourceSetFinder));
-            resolvedDepsFiles.addAll(dDep.getProjectDependencyArtifacts());
+          Collection<ResolvedArtifact> resolvedArtifacts = artifactMap.get(componentResult.getModuleVersion());
+          List<File> files = new ArrayList<>(resolvedArtifacts.size());
+          for (ResolvedArtifact resolvedArtifact : resolvedArtifacts) {
+            files.add(resolvedArtifact.getFile());
           }
-          else {
-            dependency = new DefaultExternalLibraryDependency();
-            DefaultExternalLibraryDependency dDep = (DefaultExternalLibraryDependency)dependency;
-            dDep.setName(name);
-            dDep.setGroup(group);
-            dDep.setPackaging(packaging);
-            dDep.setClassifier(classifier);
-            dDep.setVersion(version);
-            dDep.setScope(scope);
-            dDep.setSelectionReason(selectionReason);
-            dDep.setFile(artifact.getFile());
-
-            ComponentArtifactsResult artifactsResult = componentResultsMap.get(componentIdentifier);
-            if (artifactsResult != null) {
-              ResolvedArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
-              if (sourcesResult != null) {
-                ((DefaultExternalLibraryDependency)dependency).setSource(sourcesResult.getFile());
-              }
-
-              ResolvedArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
-              if (javadocResult != null) {
-                ((DefaultExternalLibraryDependency)dependency).setJavadoc(javadocResult.getFile());
-              }
-            }
-          }
-
-          if (first) {
-            dependency.getDependencies().addAll(
-              buildExternalDependencies(componentResult.getDependencies())
-            );
-            first = false;
-          }
-
-          result.add(dependency);
-          resolvedDepsFiles.add(artifact.getFile());
+          dDep.setProjectDependencyArtifacts(files);
+          dDep.setProjectDependencyArtifactsSources(findArtifactSources(files, mySourceSetFinder));
+          resolvedDepsFiles.addAll(dDep.getProjectDependencyArtifacts());
         }
+        else {
+          dependency = new DefaultExternalLibraryDependency();
+          DefaultExternalLibraryDependency dDep = (DefaultExternalLibraryDependency)dependency;
+          dDep.setName(name);
+          dDep.setGroup(group);
+          dDep.setPackaging(packaging);
+          dDep.setClassifier(classifier);
+          dDep.setVersion(version);
+          dDep.setScope(scope);
+          dDep.setSelectionReason(selectionReason);
+          dDep.setFile(artifact.getFile());
+
+          ComponentArtifactsResult artifactsResult = componentResultsMap.get(componentIdentifier);
+          if (artifactsResult != null) {
+            ResolvedArtifactResult sourcesResult = findMatchingArtifact(artifact, artifactsResult, SourcesArtifact.class);
+            if (sourcesResult != null) {
+              ((DefaultExternalLibraryDependency)dependency).setSource(sourcesResult.getFile());
+            }
+
+            ResolvedArtifactResult javadocResult = findMatchingArtifact(artifact, artifactsResult, JavadocArtifact.class);
+            if (javadocResult != null) {
+              ((DefaultExternalLibraryDependency)dependency).setJavadoc(javadocResult.getFile());
+            }
+          }
+        }
+
+        if (first) {
+          dependency.getDependencies().addAll(
+            buildExternalDependencies(componentResult.getDependencies())
+          );
+          first = false;
+        }
+
+        result.add(dependency);
+        resolvedDepsFiles.add(artifact.getFile());
       }
     }
 

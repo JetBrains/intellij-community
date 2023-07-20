@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
+final class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
   private final FoldingModelEx myDelegate;
   private final DocumentWindow myDocumentWindow;
   private final EditorWindow myEditorWindow;
@@ -82,17 +82,15 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
     return host; //todo convert to window?
   }
 
-  @Nullable
   @Override
-  public FoldRegion getFoldRegion(int startOffset, int endOffset) {
+  public @Nullable FoldRegion getFoldRegion(int startOffset, int endOffset) {
     TextRange range = new TextRange(startOffset, endOffset);
     TextRange hostRange = myDocumentWindow.injectedToHost(range);
     FoldRegion hostRegion = myDelegate.getFoldRegion(hostRange.getStartOffset(), hostRange.getEndOffset());
     return hostRegion == null ? null : getWindowRegion(hostRegion);
   }
   
-  @Nullable
-  private FoldingRegionWindow getWindowRegion(@NotNull FoldRegion hostRegion) {
+  private @Nullable FoldingRegionWindow getWindowRegion(@NotNull FoldRegion hostRegion) {
     FoldingRegionWindow window = hostRegion.getUserData(FOLD_REGION_WINDOW);
     return window != null && window.getEditor() == myEditorWindow ? window : null;
   }
@@ -156,9 +154,8 @@ class FoldingModelWindow implements FoldingModelEx, ModificationTracker {
     myDelegate.rebuild();
   }
 
-  @NotNull
   @Override
-  public List<FoldRegion> getGroupedRegions(FoldingGroup group) {
+  public @NotNull List<FoldRegion> getGroupedRegions(FoldingGroup group) {
     List<FoldRegion> hostRegions = myDelegate.getGroupedRegions(group);
     return getWindowRegions(hostRegions);
   }

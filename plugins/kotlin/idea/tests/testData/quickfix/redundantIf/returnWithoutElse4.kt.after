@@ -1,0 +1,5 @@
+// "Remove redundant 'if' statement" "true"
+// WITH_STDLIB
+fun foo(b: Boolean): Boolean {
+    return !b // comment
+}

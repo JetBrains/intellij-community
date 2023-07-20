@@ -20,7 +20,7 @@ object RemoveArgumentNamesUtils {
      * No arguments following vararg argument are returned.
      */
     fun KtAnalysisSession.collectSortedArgumentsThatCanBeUnnamed(callElement: KtCallElement): ArgumentsData? {
-        val resolvedCall = callElement.resolveCall().singleFunctionCallOrNull() ?: return null
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
         val valueArguments = callElement.valueArgumentList?.arguments ?: return null
 
         val argumentToParameterIndex = CallParameterInfoProvider.mapArgumentsToParameterIndices(

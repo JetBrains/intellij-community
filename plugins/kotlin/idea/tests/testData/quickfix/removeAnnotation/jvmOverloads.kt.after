@@ -1,4 +1,5 @@
 // "Remove @JvmOverloads annotation" "true"
+// IGNORE_FIR
 // WITH_STDLIB
 
 interface T {

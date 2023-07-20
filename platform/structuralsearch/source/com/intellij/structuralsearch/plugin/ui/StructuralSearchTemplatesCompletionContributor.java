@@ -19,9 +19,9 @@ import java.util.Set;
 public class StructuralSearchTemplatesCompletionContributor extends CompletionContributor {
   @Override
   public void fillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_DIALOG);
+    final StructuralSearchDialog dialog = parameters.getEditor().getUserData(StructuralSearchDialogKeys.STRUCTURAL_SEARCH_DIALOG);
     if (dialog == null) {
-      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialog.TEST_STRUCTURAL_SEARCH_DIALOG);
+      final Boolean test = parameters.getEditor().getUserData(StructuralSearchDialogKeys.TEST_STRUCTURAL_SEARCH_DIALOG);
       if (test == null || !test) return;
     }
 

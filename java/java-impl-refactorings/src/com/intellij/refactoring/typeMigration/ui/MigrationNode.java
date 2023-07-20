@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -64,12 +64,7 @@ public class MigrationNode extends AbstractTreeNode<TypeMigrationUsageInfo> impl
 
       final PsiElement element = myInfo.getElement();
       if (element != null) {
-        try {
-          myLabeler.setRootAndMigrate(myInfo, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
-        }
-        catch (TypeMigrationLabeler.MigrateException e) {
-          //skip warning
-        }
+        myLabeler.setRootAndMigrate(myInfo, myMigrationType, myLabeler.markRootUsages(element, myMigrationType));
 
         final HashSet<Pair<TypeMigrationUsageInfo, PsiType>> roots = myLabeler.getRootsTree().get(myInfo);
         if (roots != null) {

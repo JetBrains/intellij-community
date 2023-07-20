@@ -75,7 +75,7 @@ final class FormatterBasedIndentAdjuster  {
         ReadAction
           .nonBlocking(() -> codeStyleManager.getLineIndent(myFile, lineStart, FormattingMode.ADJUST_INDENT_ON_ENTER))
           .withDocumentsCommitted(myProject)
-          .finishOnUiThread(ModalityState.NON_MODAL, indentString -> updateIndent(indentMarker, indentString))
+          .finishOnUiThread(ModalityState.nonModal(), indentString -> updateIndent(indentMarker, indentString))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
     }

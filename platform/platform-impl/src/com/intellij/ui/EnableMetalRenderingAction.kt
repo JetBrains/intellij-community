@@ -17,7 +17,7 @@ import com.intellij.util.lang.JavaVersion
  */
 class EnableMetalRenderingAction: ToggleAction(), DumbAware {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -26,7 +26,7 @@ class EnableMetalRenderingAction: ToggleAction(), DumbAware {
                                          && VMOptions.canWriteOptions()
   }
 
-  override fun isSelected(e: AnActionEvent) = java.lang.Boolean.getBoolean("sun.java2d.metal")
+  override fun isSelected(e: AnActionEvent): Boolean = java.lang.Boolean.getBoolean("sun.java2d.metal")
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     ApplicationManager.getApplication().runWriteAction {

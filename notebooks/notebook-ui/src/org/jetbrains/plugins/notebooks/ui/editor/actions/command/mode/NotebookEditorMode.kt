@@ -3,13 +3,14 @@ package org.jetbrains.plugins.notebooks.ui.editor.actions.command.mode
 
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.CaretVisualAttributes
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.MarkupModelEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
-import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.CalledInAny
@@ -38,7 +39,7 @@ interface NotebookEditorModeListener {
   fun onModeChange(mode: NotebookEditorMode)
 }
 
-abstract class NotebookEditorModeListenerAdapter : TextEditor, NotebookEditorModeListener, CaretListener {
+class NotebookEditorModeListenerAdapter(private val editor: Editor) : NotebookEditorModeListener, CaretListener {
   private var currentEditorMode: NotebookEditorMode? = null
 
   private fun getCaretAttributes(mode: NotebookEditorMode): CaretVisualAttributes {
@@ -74,10 +75,17 @@ abstract class NotebookEditorModeListenerAdapter : TextEditor, NotebookEditorMod
 
     currentEditorMode = mode
 
+    if (editor.isDisposed) {
+      thisLogger().warn("Cannot change notebook mode, Editor is disposed already")
+      return
+    }
+
     editor.apply {
       (markupModel as MarkupModelEx).apply {
         allHighlighters.filterIsInstance<RangeHighlighterEx>().forEach {
-          fireAttributesChanged(it, true, false)
+          val lineMarkerRenderer = it.getLineMarkerRenderer()
+          it.setLineMarkerRenderer(null)
+          it.setLineMarkerRenderer(lineMarkerRenderer) // to fireChange
         }
       }
 
@@ -117,10 +125,13 @@ fun setMode(mode: NotebookEditorMode) {
   // Although LAB-50 is marked as closed, the checks still aren't added to classes written in Kotlin.
   ApplicationManager.getApplication().assertIsDispatchThread()
 
+  val modeChanged = mode != currentMode_
   currentMode_ = mode
 
   // may be call should be skipped if mode == currentMode_
-  ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(mode)
+  if (modeChanged) {
+    ApplicationManager.getApplication().messageBus.syncPublisher(NOTEBOOK_EDITOR_MODE).onModeChange(mode)
+  }
 }
 
 @Volatile

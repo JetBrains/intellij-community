@@ -2,13 +2,9 @@
 package org.jetbrains.plugins.gradle.testFramework
 
 import org.gradle.util.GradleVersion
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleTestFixtureFactory
-import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
-import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
 interface GradleTestFixtureBuilder {
 
@@ -17,10 +13,6 @@ interface GradleTestFixtureBuilder {
   fun createFixture(gradleVersion: GradleVersion): GradleProjectTestFixture
 
   companion object {
-    val EMPTY_PROJECT: GradleTestFixtureBuilder = empty()
-    val JAVA_PROJECT: GradleTestFixtureBuilder = plugin("java")
-    val GROOVY_PROJECT: GradleTestFixtureBuilder = plugin("groovy")
-    val IDEA_PLUGIN_PROJECT: GradleTestFixtureBuilder = plugin("idea")
 
     fun create(projectName: String, configure: FileTestFixture.Builder.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
       return object : GradleTestFixtureBuilder {
@@ -30,45 +22,6 @@ interface GradleTestFixtureBuilder {
           return fixtureFactory.createGradleProjectTestFixture(projectName, gradleVersion) {
             configure(gradleVersion)
           }
-        }
-      }
-    }
-
-    fun empty(): GradleTestFixtureBuilder {
-      return create("empty-project") {
-        withSettingsFile {
-          setProjectName("empty-project")
-        }
-      }
-    }
-
-    fun buildFile(projectName: String, configure: GradleBuildScriptBuilder<*>.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
-      return create(projectName) { gradleVersion ->
-        withSettingsFile {
-          setProjectName(projectName)
-        }
-        withBuildFile(gradleVersion) {
-          configure(gradleVersion)
-        }
-      }
-    }
-
-    fun settingsFile(projectName: String, configure: GradleSettingScriptBuilder<*>.(GradleVersion) -> Unit): GradleTestFixtureBuilder {
-      return create(projectName) { gradleVersion ->
-        withSettingsFile {
-          setProjectName(projectName)
-          configure(gradleVersion)
-        }
-      }
-    }
-
-    fun plugin(pluginName: String): GradleTestFixtureBuilder {
-      return buildFile("$pluginName-plugin-project") {
-        when (pluginName) {
-          "java" -> withJavaPlugin()
-          "idea" -> withIdeaPlugin()
-          "groovy" -> withGroovyPlugin()
-          else -> withPlugin(pluginName)
         }
       }
     }

@@ -37,7 +37,7 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
     myEditor.getInlayModel().myPutMergedIntervalsAtBeginning = intervalStart() == e.getOffset();
     super.changedUpdateImpl(e);
     if (isValid() && DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
-      invalidate(e);
+      invalidate();
     }
   }
 
@@ -48,7 +48,7 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
     if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
       inlayModel.myMoveInProgress = true;
       try {
-        invalidate("moved inside surrogate pair on retarget");
+        invalidate();
       }
       finally {
         inlayModel.myMoveInProgress = false;

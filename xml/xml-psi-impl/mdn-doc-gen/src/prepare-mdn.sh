@@ -7,6 +7,9 @@ mkdir -p "$DIR/../work"
 
 cd "$DIR/../work"
 
+rm -f browser-compat-data.json
+wget "https://unpkg.com/@mdn/browser-compat-data/data.json" -O browser-compat-data.json
+
 if [ ! -d "mdn-content" ]; then
   git clone https://github.com/mdn/content.git mdn-content
 fi
@@ -21,12 +24,13 @@ if [ ! -d "yari" ]; then
 fi
 
 cd "yari"
+git reset --hard
 git pull
+rm -Rf cloud-function
 yarn install
 
 export CONTENT_ROOT="$DIR/../work/mdn-content/files"
-yarn build:client
-yarn build:ssr
+yarn build:prepare
 yarn build
 
 echo "Done!"

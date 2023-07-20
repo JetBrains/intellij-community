@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
 import org.jetbrains.kotlin.utils.PathUtil
 
 fun getLibraryDescription(project: Project, platformKind: IdePlatformKind): CustomLibraryDescription? {
@@ -47,6 +48,7 @@ fun getLibraryDescription(project: Project, platformKind: IdePlatformKind): Cust
         CommonIdePlatformKind -> CommonStandardLibraryDescription(project)
         JvmIdePlatformKind -> JavaRuntimeLibraryDescription(project)
         JsIdePlatformKind -> JSLibraryStdDescription(project)
+        WasmIdePlatformKind -> null
         NativeIdePlatformKind -> null
         else -> throw IllegalArgumentException("Unsupported platform kind: $platformKind")
     }

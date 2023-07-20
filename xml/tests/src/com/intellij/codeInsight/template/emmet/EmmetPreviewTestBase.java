@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.application.options.emmet.EmmetOptions;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class EmmetPreviewTestBase extends BasePlatformTestCase {
@@ -26,6 +28,9 @@ public abstract class EmmetPreviewTestBase extends BasePlatformTestCase {
   }
 
   protected void assertPreview(@NotNull String previewContent) {
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
+    UIUtil.dispatchAllInvocationEvents();
+
     EmmetPreviewHint previewHint = getPreview();
     assertNotNull(previewHint);
     assertEquals(previewContent, previewHint.getContent());

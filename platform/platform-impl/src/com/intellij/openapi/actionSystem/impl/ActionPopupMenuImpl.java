@@ -158,10 +158,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
       PsiFile psiFile = (PsiFile)Utils.getRawDataIfCached(myContext, CommonDataKeys.PSI_FILE.getName());
       Language language = psiFile == null ? null : psiFile.getLanguage();
       boolean coldStart = SEEN_ACTION_GROUPS.add(Objects.hash(myGroup, language));
-      UILatencyLogger.POPUP_LATENCY.log(EventFields.DurationMs.with(time),
-                                        EventFields.ActionPlace.with(myPlace),
-                                        UILatencyLogger.COLD_START.with(coldStart),
-                                        EventFields.Language.with(language));
+      UILatencyLogger.ACTION_POPUP_LATENCY.log(EventFields.DurationMs.with(time),
+                                               EventFields.ActionPlace.with(myPlace),
+                                               UILatencyLogger.COLD_START.with(coldStart),
+                                               EventFields.Language.with(language));
       if (Registry.is("ide.diagnostics.show.context.menu.invocation.time")) {
         //noinspection HardCodedStringLiteral
         new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Context menu invocation took " + time + "ms",

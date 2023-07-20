@@ -2,7 +2,7 @@
     <id>com.jetbrains.packagesearch.intellij-plugin</id>
     <name>Package Search</name>
     <vendor>JetBrains</vendor>
-
+    <resource-bundle>messages.packageSearchBundle</resource-bundle>
     <description><![CDATA[
 Find and manage dependencies for JVM and Kotlin Multiplatform projects.
 <br>

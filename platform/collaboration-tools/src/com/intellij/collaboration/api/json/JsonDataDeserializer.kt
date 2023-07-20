@@ -6,6 +6,6 @@ import java.io.Reader
 
 @ApiStatus.Experimental
 interface JsonDataDeserializer {
-  fun <T> fromJson(bodyReader: Reader, clazz: Class<T>): T
-  fun <T> fromJson(bodyReader: Reader, clazz: Class<T>, vararg classArgs: Class<*>): T
+  fun <T> fromJson(bodyReader: Reader, clazz: Class<T>): T?
+  fun <T> fromJson(bodyReader: Reader, clazz: Class<T>, vararg classArgs: Class<*>): T?
 }

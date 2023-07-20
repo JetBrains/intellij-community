@@ -68,10 +68,10 @@ public abstract class JavaRunConfigurationBase extends ModuleBasedConfiguration<
    */
   public List<VMOption> getKnownVMOptions() {
     return List.of(
-      VMOption.property("java.awt.headless", "bool", "Run the application in headless mode"),
-      VMOption.property("user.home", "string", "User home directory"),
-      VMOption.property("user.dir", "string", "User working directory"),
-      VMOption.property("user.name", "string", "User account name")
+      VMOption.property("java.awt.headless", "bool", "Run the application in headless mode", null),
+      VMOption.property("user.home", "string", "User home directory", null),
+      VMOption.property("user.dir", "string", "User working directory", null),
+      VMOption.property("user.name", "string", "User account name", null)
     );
   }
 }

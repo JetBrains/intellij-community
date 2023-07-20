@@ -17,7 +17,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
+import java.util.Set;
 
 import static java.util.Collections.emptyList;
 
@@ -45,8 +45,8 @@ public final class ProjectTypeService implements PersistentStateComponent<Projec
     return null;
   }
 
-  public static boolean hasProjectType(Collection<ProjectType> projectTypes, @NotNull String projectTypeId) {
-    return ContainerUtil.exists(projectTypes, p -> Objects.equals(p.getId(), projectTypeId));
+  public static Set<String> getProjectTypeIds(@Nullable Project project) {
+    return ContainerUtil.map2Set(getProjectTypes(project), ProjectType::getId);
   }
 
   public static Collection<ProjectType> getProjectTypes(@Nullable Project project) {

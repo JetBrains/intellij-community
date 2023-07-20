@@ -22,7 +22,7 @@ data class CallableInsertionOptions(
 
 internal fun KtAnalysisSession.detectCallableOptions(symbol: KtCallableSymbol, importStrategyDetector: ImportStrategyDetector): CallableInsertionOptions {
     return CallableInsertionOptions(
-        importingStrategy = importStrategyDetector.detectImportStrategy(symbol),
+        importingStrategy = importStrategyDetector.detectImportStrategyForCallableSymbol(symbol),
         insertionStrategy = when (symbol) {
             is KtFunctionSymbol -> CallableInsertionStrategy.AsCall
             else -> CallableInsertionStrategy.AsIdentifier

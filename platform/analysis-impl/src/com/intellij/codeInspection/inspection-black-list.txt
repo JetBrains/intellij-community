@@ -23,7 +23,6 @@ com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
 com.intellij.lang.javascript.inspections.UnterminatedStatementJSInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
 com.intellij.spellchecker.inspections.SpellCheckingInspection
-com.intellij.spring.model.highlighting.config.SpringFacetInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedVariableInspection
 com.jetbrains.php.lang.inspections.PhpUnusedParameterInspection

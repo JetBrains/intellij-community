@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.collaboration.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
@@ -17,7 +18,9 @@ internal class GHNewPRDiffVirtualFile(fileManagerId: String,
     val dataContext = GHPRDataContextRepository.getInstance(project).findContext(repository)!!
     val diffRequestModel = dataContext.newPRDiffModel
 
-    return GHPRDiffRequestChainProcessor(project, diffRequestModel)
+    return MutableDiffRequestChainProcessor(project, null).also {
+      diffRequestModel.process(it)
+    }
   }
 
   override fun getName() = "newPR.diff"

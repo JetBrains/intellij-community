@@ -1,14 +1,14 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment")
+@file:Suppress("ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.icons.ImageDescriptor
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
-import org.jetbrains.jps.util.JpsPathUtil
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -26,14 +26,21 @@ internal const val ROBOTS_FILE_NAME = "icon-robots.txt"
 
 private val EMPTY_IMAGE_FLAGS = ImageFlags(used = false, deprecation = null)
 
-internal class ImageInfo(val id: String,
-                         val sourceRoot: JpsModuleSourceRoot,
-                         val phantom: Boolean) {
+internal class ImageInfo(@JvmField val id: String,
+                         @JvmField val sourceRoot: JpsModuleSourceRoot,
+                         @JvmField val phantom: Boolean) {
   private var flags = EMPTY_IMAGE_FLAGS
   private val images = ArrayList<Path>()
 
   val files: List<Path>
     get() = images
+
+  fun trimPrefix(prefix: String): ImageInfo {
+    val copy = ImageInfo(id = id.removePrefix(prefix), sourceRoot = sourceRoot, phantom = phantom)
+    copy.images.addAll(images)
+    copy.flags = flags
+    return copy
+  }
 
   @Synchronized
   fun addImage(file: Path, fileFlags: ImageFlags) {
@@ -101,21 +108,22 @@ internal class ImageCollector(private val projectHome: Path,
   // files processed in parallel, so, concurrent data structures must be used
   private val icons = ConcurrentHashMap<String, ImageInfo>()
   private val phantomIcons = ConcurrentHashMap<String, ImageInfo>()
-  private val usedIconRobots: MutableSet<Path> = Collections.newSetFromMap(ConcurrentHashMap())
+  private val usedIconRobots: MutableSet<Path> = ContainerUtil.newConcurrentSet()
 
   fun collect(module: JpsModule, includePhantom: Boolean = false): Collection<ImageInfo> {
     for (sourceRoot in module.sourceRoots) {
       if (sourceRoot.rootType != JavaResourceRootType.RESOURCE) {
         continue
       }
-      val rootDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.url))
+
+      val rootDir = sourceRoot.path
 
       val iconDirectory = moduleConfig?.iconDirectory
       if (iconDirectory != null) {
         val rootRobotData = upToProjectHome(rootDir)
         val iconRoot = rootDir.resolve(iconDirectory).normalize()
-        processDirectory(iconRoot, rootDir, sourceRoot, rootRobotData, "", 0)
-        processPhantomIcons(iconRoot, sourceRoot, rootRobotData, "")
+        processDirectory(dir = iconRoot, rootDir = rootDir, sourceRoot = sourceRoot, robotData = rootRobotData, prefix = "", level = 0)
+        processPhantomIcons(root = iconRoot, sourceRoot = sourceRoot, robotData = rootRobotData, prefix = "")
         break
       }
 
@@ -141,8 +149,8 @@ internal class ImageCollector(private val projectHome: Path,
   }
 
   fun collectSubDir(sourceRoot: JpsModuleSourceRoot, name: String, includePhantom: Boolean = false): List<ImageInfo> {
-    processRoot(sourceRoot, Path.of(JpsPathUtil.urlToPath(sourceRoot.url)).resolve(name))
-    val result = ArrayList(icons.values)
+    processRoot(sourceRoot, sourceRoot.path.resolve(name))
+    val result = icons.values.toMutableList()
     if (includePhantom) {
       result.addAll(phantomIcons.values)
     }
@@ -187,7 +195,7 @@ internal class ImageCollector(private val projectHome: Path,
                                prefix: String,
                                level: Int) {
     // do not process in parallel for if level >= 3 because no sense - parents processed in parallel already
-    dir.processChildren(level < 3) { file ->
+    processChildren(dir, level < 3) { file ->
       if (robotData.isSkipped(file)) {
         return@processChildren
       }
@@ -439,8 +447,8 @@ private fun mergeDeprecations(data1: DeprecationData?,
   throw AssertionError("Different deprecation statements found for icon: $comment\n$data1\n$data2")
 }
 
-fun Path.processChildren(isParallel: Boolean = true, consumer: (Path) -> Unit) {
-  DirectorySpliterator.list(this, isParallel).use {
+internal fun processChildren(path: Path, isParallel: Boolean = true, consumer: (Path) -> Unit) {
+  DirectorySpliterator.list(path, isParallel).use {
     it.forEach(consumer)
   }
 }

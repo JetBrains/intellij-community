@@ -120,7 +120,7 @@ final class SliceForwardUtil {
     if (from instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)from;
 
-      Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
+      Collection<PsiMethod> superMethods = ContainerUtil.newHashSet(method.findDeepestSuperMethods());
       superMethods.add(method);
       final Set<PsiReference> processed = new HashSet<>(); //usages of super method and overridden method can overlap
       for (final PsiMethod containingMethod : superMethods) {

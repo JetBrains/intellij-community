@@ -15,13 +15,16 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 import org.jetbrains.kotlin.resolve.calls.tower.isSynthesized
+import org.jetbrains.kotlin.resolve.sam.SamConstructorDescriptor
 
 class RenameSyntheticDeclarationByReferenceHandler : RenameHandler {
     override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
         val file = CommonDataKeys.PSI_FILE.getData(dataContext) ?: return false
         val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return false
         val refExpression = file.findElementForRename<KtSimpleNameExpression>(editor.caretModel.offset) ?: return false
-        return (refExpression.resolveToCall()?.resultingDescriptor)?.isSynthesized ?: false
+        val descriptor = refExpression.resolveToCall()?.resultingDescriptor ?: return false
+        // SamConstructorDescriptor is synthetic but it can be renamed
+        return descriptor !is SamConstructorDescriptor && descriptor.isSynthesized
     }
 
     override fun isRenaming(dataContext: DataContext) = isAvailableOnDataContext(dataContext)

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.command.undo;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,9 +45,7 @@ public abstract class UndoManager {
 
   public abstract boolean isRedoAvailable(@Nullable FileEditor editor);
 
-  @NotNull
-  public abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoActionNameAndDescription(FileEditor editor);
+  public abstract @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getUndoActionNameAndDescription(FileEditor editor);
 
-  @NotNull
-  public abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getRedoActionNameAndDescription(FileEditor editor);
+  public abstract @NotNull Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getRedoActionNameAndDescription(FileEditor editor);
 }

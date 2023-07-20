@@ -65,6 +65,9 @@ final class ShowByteCodeAction extends AnAction {
     final PsiElement psiElement = getPsiElement(dataContext, project, editor);
     if (psiElement == null) return;
 
+    // Some PSI elements could be multiline. Try to be precise about the line we were invoked at.
+    int lineNumber = editor != null ? editor.getCaretModel().getLogicalPosition().line : -1;
+
     if (ByteCodeViewerManager.getContainingClass(psiElement) == null) {
       Messages.showWarningDialog(project, JavaByteCodeViewerBundle.message("bytecode.class.in.selection.message"),
                                  JavaByteCodeViewerBundle.message("bytecode.not.found.message"));
@@ -104,7 +107,7 @@ final class ShowByteCodeAction extends AnAction {
 
         final ByteCodeViewerManager codeViewerManager = ByteCodeViewerManager.getInstance(project);
         if (codeViewerManager.hasActiveDockedDocWindow()) {
-          codeViewerManager.doUpdateComponent(targetElement, myByteCode);
+          codeViewerManager.doUpdateComponent(targetElement, lineNumber, myByteCode);
         }
         else {
           if (myByteCode == null) {
@@ -114,7 +117,7 @@ final class ShowByteCodeAction extends AnAction {
           }
 
           final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project);
-          component.setText(myByteCode, targetElement);
+          component.setText(myByteCode, targetElement, lineNumber);
           Processor<JBPopup> pinCallback = popup -> {
             codeViewerManager.recreateToolWindow(targetElement, targetElement);
             popup.cancel();

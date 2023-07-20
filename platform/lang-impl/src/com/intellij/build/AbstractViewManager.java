@@ -2,6 +2,7 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.LangBundle;
@@ -14,7 +15,6 @@ import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
@@ -24,6 +24,7 @@ import com.intellij.ui.SystemNotifications;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.ui.EmptyIcon;
@@ -51,7 +52,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
   protected final Project myProject;
   protected final BuildContentManager myBuildContentManager;
-  private final AtomicClearableLazyValue<MultipleBuildsView> myBuildsViewValue;
+  private final SynchronizedClearableLazy<MultipleBuildsView> myBuildsViewValue;
   private final Set<MultipleBuildsView> myPinnedViews;
   private final AtomicBoolean isDisposed = new AtomicBoolean(false);
   private final DisposableWrapperList<BuildProgressListener> myListeners = new DisposableWrapperList<>();
@@ -59,15 +60,12 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   public AbstractViewManager(Project project) {
     myProject = project;
     myBuildContentManager = project.getService(BuildContentManager.class);
-    myBuildsViewValue = new AtomicClearableLazyValue<>() {
-      @Override
-      protected @NotNull MultipleBuildsView compute() {
-        MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, AbstractViewManager.this);
-        Disposer.register(AbstractViewManager.this, buildsView);
-        return buildsView;
-      }
-    };
-    myPinnedViews = ContainerUtil.newConcurrentSet();
+    myBuildsViewValue = new SynchronizedClearableLazy<>(() -> {
+      MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, this);
+      Disposer.register(this, buildsView);
+      return buildsView;
+    });
+    myPinnedViews = ConcurrentCollectionFactory.createConcurrentSet();
     @Nullable BuildViewProblemsService buildViewProblemsService = project.getService(BuildViewProblemsService.class);
     if (buildViewProblemsService != null) {
       buildViewProblemsService.listenToBuildView(this);

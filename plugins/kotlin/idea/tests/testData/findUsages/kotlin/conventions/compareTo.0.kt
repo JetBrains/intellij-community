@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtNamedFunction
 // OPTIONS: usages
+// PSI_ELEMENT_AS_TITLE: "infix operator fun compareTo(A): Int"
 
 class A(val n: Int) {
     infix operator fun <caret>compareTo(other: A): Int = compareTo(other.n)

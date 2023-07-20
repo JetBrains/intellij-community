@@ -25,7 +25,6 @@ import com.intellij.util.PairConsumer
 import com.intellij.util.PathUtil
 import org.jdom.Element
 import org.jdom.Text
-import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.idea.maven.execution.MavenRunner
 import org.jetbrains.idea.maven.importing.MavenImporter
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter
@@ -105,7 +104,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
     ) {
 
         if (changes.hasPluginsChanges()) {
-            contributeSourceDirectories(mavenProject, module, rootModel)
+            if (module.name == mavenProjectToModuleName[mavenProject]) {
+                contributeSourceDirectories(mavenProject, module, rootModel)
+            }
         }
 
         val mavenPlugin = mavenProject.findKotlinMavenPlugin() ?: return
@@ -183,7 +184,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
 
         if (toBeDownloaded.isNotEmpty()) {
             MavenProjectsManager.getInstance(module.project)
-                .scheduleArtifactsDownloading(listOf(mavenProject), toBeDownloaded, true, false, AsyncPromise())
+                .downloadArtifactsSync(listOf(mavenProject), toBeDownloaded, true, false)
         }
     }
 
@@ -348,9 +349,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val executionArguments = mavenPlugin.executions
             ?.firstOrNull { it.goals.any { s -> s in compilationGoals } }
             ?.configurationElement?.let { getCompilerArgumentsByConfigurationElement(mavenProject, it, configuredPlatform, module.project) }
-        parseCompilerArgumentsToFacet(sharedArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
+        parseCompilerArgumentsToFacet(sharedArguments.args, kotlinFacet, modifiableModelsProvider)
         if (executionArguments != null) {
-            parseCompilerArgumentsToFacet(executionArguments.args, emptyList(), kotlinFacet, modifiableModelsProvider)
+            parseCompilerArgumentsToFacet(executionArguments.args, kotlinFacet, modifiableModelsProvider)
         }
         if (facetSettings.compilerArguments is K2JSCompilerArguments) {
             configureJSOutputPaths(mavenProject, modifiableModelsProvider.getModifiableRootModel(module), facetSettings, mavenPlugin)
@@ -530,7 +531,7 @@ private enum class SourceType {
 class KotlinImporterComponent : PersistentStateComponent<KotlinImporterComponent.State> {
     class State(var directories: List<String> = ArrayList())
 
-    val addedSources: MutableSet<String> = Collections.synchronizedSet(HashSet<String>())
+    val addedSources: MutableSet<String> = Collections.synchronizedSet(HashSet())
 
     override fun loadState(state: State) {
         addedSources.clear()

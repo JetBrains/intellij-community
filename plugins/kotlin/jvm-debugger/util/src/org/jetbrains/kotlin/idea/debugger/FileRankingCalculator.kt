@@ -206,7 +206,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         var overallRanking = ZERO
         val method = location.method()
 
-        if (method.isLambda()) {
+        if (method.isIndyLambda() || method.isAnonymousClassLambda()) {
             val (className, methodName) = method.getContainingClassAndMethodNameForLambda() ?: return ZERO
             if (method.isBridge && method.isSynthetic) {
                 // It might be a static lambda field accessor
@@ -321,6 +321,9 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     private fun Method.getContainingClassAndMethodNameForLambda(): Pair<String, String>? {
+        if (isIndyLambda()) {
+            return getContainingClassAndMethodNameForIndyLambda()
+        }
         // TODO this breaks nested classes
         val declaringClass = declaringType() as ClassType
         val (className, methodName) = declaringClass.name().split('$', limit = 3)
@@ -330,7 +333,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         return Pair(className, methodName)
     }
 
-    private fun Method.isLambda(): Boolean {
+    private fun Method.isAnonymousClassLambda(): Boolean {
         val declaringClass = declaringType() as? ClassType ?: return false
 
         tailrec fun ClassType.isLambdaClass(): Boolean {
@@ -345,6 +348,21 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         return declaringClass.superclass()?.isLambdaClass() ?: false
     }
 
+    private fun Method.isIndyLambda(): Boolean {
+        return name().matches(INDY_LAMBDA_NAME_REGEX)
+    }
+
+    private fun Method.getContainingClassAndMethodNameForIndyLambda(): Pair<String, String>? {
+        val match = INDY_LAMBDA_NAME_REGEX.matchEntire(this.name()) ?: return null
+        val values = match.groupValues
+        if (values.size != 2) {
+            return null
+        }
+        val methodName = values[1]
+        val className = this.declaringType().name()
+        return className to methodName
+    }
+
     private fun makeTypeMapper(bindingContext: BindingContext): KotlinTypeMapper {
         return KotlinTypeMapper(
             bindingContext,
@@ -356,6 +374,8 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     }
 
     companion object {
+        private val INDY_LAMBDA_NAME_REGEX = "([^\$]+)\\\$lambda\\\$\\d+.*".toRegex()
+
         val LOG = Logger.getInstance("FileRankingCalculator")
     }
 }

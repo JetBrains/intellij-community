@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -23,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAction {
   private volatile boolean useElementToTheLeft;
@@ -64,8 +50,7 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
 
   @Override
   public final void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    int offset = editor.getCaretModel().getOffset();
-    PsiElement element = file.findElementAt(useElementToTheLeft ? offset - 1 : offset);
+    PsiElement element = getElement(editor, file);
     if (element == null) {
       return;
     }
@@ -82,4 +67,17 @@ public abstract class BaseElementAtCaretIntentionAction extends BaseIntentionAct
    * @throws IncorrectOperationException On errors.
    */
   public abstract void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException;
+
+  /**
+   * Retrieves the element this intention was invoked on.
+   *
+   * @param editor the editor in which the intention was invoked, may be preview editor.
+   * @param file  the file in which the intention was invoked.
+   * @return the element under the caret.
+   */
+  @Nullable
+  protected PsiElement getElement(@NotNull Editor editor, @NotNull PsiFile file) {
+    int position = editor.getCaretModel().getOffset();
+    return file.findElementAt(useElementToTheLeft ? position - 1 : position);
+  }
 }

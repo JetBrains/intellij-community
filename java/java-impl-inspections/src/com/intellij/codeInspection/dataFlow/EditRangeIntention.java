@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -9,26 +9,21 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.codeInspection.options.OptionContainer;
+import com.intellij.codeInspection.options.StringValidator;
+import com.intellij.codeInspection.ui.OptPaneUtils;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ui.GridBag;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import java.awt.*;
 
 public class EditRangeIntention extends BaseIntentionAction implements LowPriorityAction {
   private static final String JETBRAINS_RANGE = "org.jetbrains.annotations.Range";
@@ -81,65 +76,48 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     if (owner instanceof PsiMethod) name += "()";
     return name;
   }
+  
+  private static class RangeData implements OptionContainer {
+    private final LongRangeSet myType;
+    String min;
+    String max;
+
+    RangeData(@NotNull LongRangeSet type, @NotNull String min, @NotNull String max) {
+      myType = type;
+      this.min = min;
+      this.max= max;
+    }
+
+    static @NotNull RangeData from(@NotNull PsiModifierListOwner owner) {
+      LongRangeSet existingRange = JvmPsiRangeSetUtil.fromPsiElement(owner);
+      LongRangeSet fromType = rangeFromType(owner);
+      assert fromType != null;
+
+      return new RangeData(fromType, existingRange.min() > fromType.min() ? String.valueOf(existingRange.min()) : "",
+                                     existingRange.max() < fromType.max() ? String.valueOf(existingRange.max()) : "");
+    }
+    
+    @NotNull OptPane getOptionPane() {
+      return OptPane.pane(
+        OptPane.string("min", JavaBundle.message("label.from.inclusive"),
+                       StringValidator.of("java.range.min", value -> getErrorMessages(value, max, myType).first))
+          .description(JavaBundle.message("edit.range.dialog.message")),
+        OptPane.string("max", JavaBundle.message("label.to.inclusive"),
+                       StringValidator.of("java.range.max", value -> getErrorMessages(min, value, myType).second))
+          .description(JavaBundle.message("edit.range.dialog.message"))
+      );
+    }
+  }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiModifierListOwner owner = getTarget(editor, file);
     assert owner != null;
-    LongRangeSet existingRange = JvmPsiRangeSetUtil.fromPsiElement(owner);
-    LongRangeSet fromType = rangeFromType(owner);
-    assert fromType != null;
-
-    String min = existingRange.min() > fromType.min() ? String.valueOf(existingRange.min()) : "";
-    String max = existingRange.max() < fromType.max() ? String.valueOf(existingRange.max()) : "";
-    JBTextField minText = new JBTextField(min);
-    JBTextField maxText = new JBTextField(max);
-    DialogBuilder builder = createDialog(project, minText, maxText, getElementName(owner));
-    DocumentAdapter validator = new DocumentAdapter() {
-      @Override
-      protected void textChanged(@NotNull DocumentEvent e) {
-        Couple<@Nls String> errors = getErrorMessages(minText.getText(), maxText.getText(), fromType);
-        if (errors.getFirst() != null || errors.getSecond() != null) {
-          builder.setOkActionEnabled(false);
-          builder.setErrorText(errors.getFirst(), minText);
-          if (errors.getSecond() != null) {
-            builder.setErrorText(errors.getSecond(), maxText);
-          }
-        }
-        else {
-          builder.setOkActionEnabled(true);
-          builder.setErrorText(null);
-        }
-      }
-    };
-    minText.getDocument().addDocumentListener(validator);
-    maxText.getDocument().addDocumentListener(validator);
-    if (builder.showAndGet()) {
-      updateRange(owner, fromType, minText.getText(), maxText.getText());
-    }
-  }
-
-  private static DialogBuilder createDialog(@NotNull Project project, JBTextField minText, JBTextField maxText, @Nullable String name) {
-    JPanel panel = new JPanel(new GridBagLayout());
-
-    GridBag c = new GridBag().setDefaultAnchor(GridBagConstraints.WEST).setDefaultFill(GridBagConstraints.HORIZONTAL)
-      .setDefaultInsets(JBUI.insets(2)).setDefaultWeightX(0, 1.0).setDefaultWeightX(1, 3.0).setDefaultWeightY(1.0);
-    panel.add(new JLabel(JavaBundle.message("edit.range.dialog.message", name)), c.nextLine().next().coverLine());
-
-    JLabel fromLabel = new JLabel(JavaBundle.message("label.from.inclusive"));
-    fromLabel.setLabelFor(minText);
-    panel.add(fromLabel, c.nextLine().next());
-    panel.add(minText, c.next());
-
-    JLabel toLabel = new JLabel(JavaBundle.message("label.to.inclusive"));
-    toLabel.setLabelFor(maxText);
-    panel.add(toLabel, c.nextLine().next());
-    panel.add(maxText, c.next());
-
-    DialogBuilder builder = new DialogBuilder(project).setNorthPanel(panel).title(JavaBundle.message("dialog.title.edit.range"));
-    builder.setPreferredFocusComponent(minText);
-    builder.setHelpId("define_range_dialog");
-    return builder;
+    RangeData data = RangeData.from(owner);
+    OptPaneUtils.editOptions(project, data, data.getOptionPane(),
+                             JavaBundle.message("dialog.title.edit.range", getElementName(owner)),
+                             "define_range_dialog",
+                             () -> updateRange(owner, data.myType, data.min, data.max));
   }
 
   private static void updateRange(PsiModifierListOwner owner, LongRangeSet fromType, String min, String max) {
@@ -197,6 +175,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     } else if (maxValue > fromType.max()) {
       maxError = JavaBundle.message("edit.range.value.should.be.bigger.than", fromType.max());
     } else if (minValue != null && maxValue < minValue) {
+      minError = JavaBundle.message("edit.range.should.not.be.greater.than.to");
       maxError = JavaBundle.message("edit.range.should.not.be.less.than.from");
     }
     return Couple.of(minError, maxError);

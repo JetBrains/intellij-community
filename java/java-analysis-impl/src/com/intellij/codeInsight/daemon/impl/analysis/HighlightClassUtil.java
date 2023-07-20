@@ -1239,14 +1239,14 @@ public final class HighlightClassUtil {
                            .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
                            .create());
             }
-            else if (!(inheritorClass instanceof PsiCompiledElement || hasPermittedSubclassModifier(inheritorClass))) {
+            else if (!(inheritorClass instanceof PsiCompiledElement) && !hasPermittedSubclassModifier(inheritorClass)) {
               HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                 .range(permitted)
                 .descriptionAndTooltip(JavaErrorBundle.message("permitted.subclass.must.have.modifier"));
               IntentionAction markNonSealed = QUICK_FIX_FACTORY.createModifierListFix(inheritorClass, PsiModifier.NON_SEALED, true, false);
               info.registerFix(markNonSealed, null, null, null, null);
               boolean hasInheritors = DirectClassInheritorsSearch.search(inheritorClass).findFirst() != null;
-              if (!inheritorClass.isInterface() || hasInheritors) {
+              if (!inheritorClass.isInterface() && !inheritorClass.hasModifierProperty(PsiModifier.ABSTRACT) || hasInheritors) {
                 IntentionAction action = hasInheritors ?
                                          QUICK_FIX_FACTORY.createSealClassFromPermitsListFix(inheritorClass) :
                                          QUICK_FIX_FACTORY.createModifierListFix(inheritorClass, PsiModifier.FINAL, true, false);

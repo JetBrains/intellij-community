@@ -5,18 +5,24 @@ import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.debugger.test.AbstractFileRankingTest
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
+import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
 import org.jetbrains.kotlin.idea.k2.debugger.test.K2DebuggerTestCompilerFacility
 
-abstract class AbstractK2FileRankingTest : AbstractFileRankingTest() {
+abstract class AbstractK2IdeK1CodeFileRankingTest : AbstractFileRankingTest() {
 
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,
         jvmTarget: JvmTarget,
-        useIrBackend: Boolean,
-        lambdasGenerationScheme: JvmClosureGenerationScheme,
+        compileConfig: TestCompileConfiguration,
     ): DebuggerTestCompilerFacility {
-        return K2DebuggerTestCompilerFacility(project, testFiles, jvmTarget, useIrBackend, lambdasGenerationScheme)
+        return K2DebuggerTestCompilerFacility(project, testFiles, jvmTarget, compileConfig)
     }
 
+}
+
+abstract class AbstractK2IdeK2CodeFileRankingTest : AbstractK2IdeK1CodeFileRankingTest() {
+    override val compileWithK2 = true
+
+    override val lambdasGenerationScheme = JvmClosureGenerationScheme.INDY
 }

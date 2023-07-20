@@ -26,27 +26,27 @@ import java.io.File;
 public class BuildDataPathsImpl implements BuildDataPaths {
   private final File myDataStorageRoot;
 
-  public BuildDataPathsImpl(File dataStorageRoot) {
+  public BuildDataPathsImpl(@NotNull File dataStorageRoot) {
     myDataStorageRoot = dataStorageRoot;
   }
 
   @Override
-  public File getDataStorageRoot() {
+  public @NotNull File getDataStorageRoot() {
     return myDataStorageRoot;
   }
 
   @Override
-  public File getTargetsDataRoot() {
+  public @NotNull File getTargetsDataRoot() {
     return new File(myDataStorageRoot, "targets");
   }
 
   @Override
-  public File getTargetTypeDataRoot(BuildTargetType<?> targetType) {
+  public @NotNull File getTargetTypeDataRoot(@NotNull BuildTargetType<?> targetType) {
     return new File(getTargetsDataRoot(), targetType.getTypeId());
   }
 
   @Override
-  public File getTargetDataRoot(BuildTarget<?> target) {
+  public @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target) {
     BuildTargetType<?> targetType = target.getTargetType();
     final String targetId = target.getId();
     return getTargetDataRoot(targetType, targetId);

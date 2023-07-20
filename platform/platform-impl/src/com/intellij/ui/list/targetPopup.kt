@@ -15,6 +15,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.function.Consumer
 import java.util.function.Function
+import java.util.function.Predicate
 import javax.swing.ListCellRenderer
 
 @RequiresEdt
@@ -51,6 +52,15 @@ fun <T> buildTargetPopup(
   presentationProvider: Function<in T, out TargetPresentation>,
   processor: Consumer<in T>
 ): IPopupChooserBuilder<T> {
+  return buildTargetPopupWithMultiSelect(items, presentationProvider, Predicate { processor.accept(it); return@Predicate false })
+}
+
+@RequiresEdt
+fun <T> buildTargetPopupWithMultiSelect(
+  items: List<T>,
+  presentationProvider: Function<in T, out TargetPresentation>,
+  predicate: Predicate<in T>
+): IPopupChooserBuilder<T> {
   require(items.size > 1) {
     "Attempted to build a target popup with ${items.size} elements"
   }
@@ -61,7 +71,7 @@ fun <T> buildTargetPopup(
     .withHintUpdateSupply()
     .setNamerForFiltering { item: T ->
       presentationProvider.apply(item).speedSearchText()
-    }.setItemChosenCallback(processor::accept)
+    }.setItemsChosenCallback { set -> set.all { predicate.test(it) } }
 }
 
 fun <T> createTargetPresentationRenderer(presentationProvider: Function<in T, out TargetPresentation>): ListCellRenderer<T> {

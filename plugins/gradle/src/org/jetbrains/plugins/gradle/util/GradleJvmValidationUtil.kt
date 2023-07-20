@@ -20,6 +20,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.lang.JavaVersion
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.properties.models.Property
 import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
@@ -55,13 +56,10 @@ fun validateGradleJavaHome(gradleVersion: GradleVersion, javaHome: String?): Jav
   val javaSdkType = ExternalSystemJdkUtil.getJavaSdkType()
   val versionString = javaSdkType.getVersionString(javaHome) ?: return JavaHomeValidationStatus.Invalid
   val javaVersion = JavaVersion.tryParse(versionString) ?: return JavaHomeValidationStatus.Invalid
-  if (!isSupported(gradleVersion, versionString)) return JavaHomeValidationStatus.Unsupported(javaVersion, gradleVersion)
+  if (!GradleJvmSupportMatrix.isSupported(gradleVersion, javaVersion)) {
+    return JavaHomeValidationStatus.Unsupported(javaVersion, gradleVersion)
+  }
   return JavaHomeValidationStatus.Success(javaHome)
-}
-
-fun isSupported(gradleVersion: GradleVersion, javaVersionString: String): Boolean {
-  val javaVersion = JavaVersion.tryParse(javaVersionString) ?: return false
-  return isSupported(gradleVersion, javaVersion)
 }
 
 private fun notifyInvalidGradleJavaHomeInfo(

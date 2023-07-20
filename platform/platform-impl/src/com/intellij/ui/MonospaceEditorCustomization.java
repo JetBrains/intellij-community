@@ -19,18 +19,17 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import org.jetbrains.annotations.NotNull;
 
-public class MonospaceEditorCustomization implements EditorCustomization {
+public final class MonospaceEditorCustomization implements EditorCustomization {
   private static final EditorCustomization INSTANCE = new MonospaceEditorCustomization();
 
-  @NotNull
-  public static EditorCustomization getInstance() {
+  public static @NotNull EditorCustomization getInstance() {
     return INSTANCE;
   }
 
   @Override
   public void customize(@NotNull EditorEx editor) {
     /* For the sake of simplicity and consistency, we load the global editor scheme here, although its font is not necessarily monospace.
-       However if the main editor has not monospaced font, we don't wanna use monospace here either. */
+       However, if the main editor has not monospaced font, we don't use monospace here either. */
     editor.setColorsScheme(EditorColorsManager.getInstance().getGlobalScheme());
   }
 }

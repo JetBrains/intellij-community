@@ -252,7 +252,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
-    if (debugProcess.getVirtualMachineProxy().canBeModified()) {
+    if (debugProcess.getVirtualMachineProxy().canBeModified() && !isObsolete()) {
       processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
     }
   }

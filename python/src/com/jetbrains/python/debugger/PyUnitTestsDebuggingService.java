@@ -44,7 +44,6 @@ import java.util.*;
 
 @Service
 final class PyUnitTestsDebuggingService {
-
   private static final @NotNull Map<XDebugSession, List<Inlay<FailedTestInlayRenderer>>> ourActiveInlays = new WeakHashMap<>();
   private static final @NotNull Map<Inlay<?>, ComponentListener> ourEditorListeners = Maps.newHashMap();
 
@@ -142,9 +141,9 @@ final class PyUnitTestsDebuggingService {
 
   private static final class FailedTestInlayRenderer implements EditorCustomElementRenderer {
 
-    private final static float HEIGHT_FACTOR = .5f;
-    private final static short RIGHT_BAR_THICKNESS = 2;
-    private final static short INLAY_TEXT_INDENT = 10;
+    private static final float HEIGHT_FACTOR = .5f;
+    private static final short RIGHT_BAR_THICKNESS = 2;
+    private static final short INLAY_TEXT_INDENT = 10;
 
     private final @NotNull String myExceptionType;
     private final @NotNull String myErrorMessage;
@@ -252,7 +251,6 @@ final class PyUnitTestsDebuggingService {
   }
 
   private static final class FailedTestGutterIconRenderer extends GutterIconRenderer {
-
     private static final FailedTestGutterIconRenderer INSTANCE = new FailedTestGutterIconRenderer();
 
     private FailedTestGutterIconRenderer() {}

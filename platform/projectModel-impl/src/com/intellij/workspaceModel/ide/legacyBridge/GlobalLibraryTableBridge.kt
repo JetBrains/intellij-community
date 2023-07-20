@@ -5,10 +5,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.platform.workspace.storage.EntityChange
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -21,10 +21,8 @@ interface GlobalLibraryTableBridge : LibraryTable {
   fun handleBeforeChangeEvents(event: VersionedStorageChange)
   fun handleChangedEvents(event: VersionedStorageChange)
   companion object {
-    @JvmStatic
     fun getInstance(): GlobalLibraryTableBridge = ApplicationManager.getApplication().service()
 
-    @JvmStatic
     fun isEnabled(): Boolean = Registry.`is`("workspace.model.global.library.bridge", true)
   }
 }

@@ -33,9 +33,7 @@ class SdkId private constructor(val homeDirectory: String?) {
 
         other as SdkId
 
-        if (homeDirectory != other.homeDirectory) return false
-
-        return true
+        return homeDirectory == other.homeDirectory
     }
 
     override fun hashCode(): Int {

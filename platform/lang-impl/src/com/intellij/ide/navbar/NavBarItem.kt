@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navbar
 
 import com.intellij.model.Pointer
-import com.intellij.navigation.NavigationRequest
 import com.intellij.openapi.actionSystem.DataKey
+import com.intellij.platform.backend.navigation.NavigationRequest
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 
@@ -39,7 +39,7 @@ interface NavBarItem {
    * entity and <code>null</code> otherwise.
    *
    * @see com.intellij.pom.Navigatable
-   * @see com.intellij.navigation.NavigationService
+   * @see com.intellij.navigation.NavigationRequests
    */
   @RequiresReadLock
   @RequiresBackgroundThread

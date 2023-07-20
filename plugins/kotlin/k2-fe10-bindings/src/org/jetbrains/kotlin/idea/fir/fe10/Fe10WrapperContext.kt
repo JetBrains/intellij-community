@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeTokenFactory
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -65,13 +65,11 @@ fun KtSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDe
         else -> context.implementationPlanned(this::class.qualifiedName ?: "")
     }
 
-fun KtReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor {
-    val owner = owningCallableSymbol.toDeclarationDescriptor(context)
-    return when (owner) {
+fun KtReceiverParameterSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): DeclarationDescriptor =
+    when (val owner = owningCallableSymbol.toDeclarationDescriptor(context)) {
         is CallableDescriptor -> owner.extensionReceiverParameter ?: context.errorHandling("no receiver for $owner but expected")
         else -> context.errorHandling("Unexpected type of owner: $owner")
     }
-}
 
 fun KtClassOrObjectSymbol.toDeclarationDescriptor(context: Fe10WrapperContext): ClassDescriptor =
     when (this) {
@@ -117,7 +115,7 @@ class Fe10WrapperContextImpl(
 ) : Fe10WrapperContext {
     private val token: KtLifetimeToken = KtLifetimeTokenForKtSymbolBasedWrappers(project, ktElement)
 
-    private val module: KtModule = ktElement.getKtModule(project)
+    private val module: KtModule = ProjectStructureProvider.getModule(project, ktElement, null)
 
     override fun <R> withAnalysisSession(f: KtAnalysisSession.() -> R): R {
         return analyze(ktElement, token.factory, f)

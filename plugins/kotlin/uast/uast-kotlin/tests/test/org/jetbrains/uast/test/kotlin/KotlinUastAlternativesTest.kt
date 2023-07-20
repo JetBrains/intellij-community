@@ -88,7 +88,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 )
             }
 
-            plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UElement::class.java)).let {
+            plugin.convertToAlternatives(ktProperty, arrayOf(UElement::class.java)).let {
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull var paramAndProp: java.lang.String, " +
                             "@org.jetbrains.annotations.NotNull private final var paramAndProp: java.lang.String, " +
@@ -119,7 +119,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 )
             }
 
-            plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UElement::class.java)).let {
+            plugin.convertToAlternatives(ktProperty, arrayOf(UElement::class.java)).let {
                 assertEquals(
                     "@org.jetbrains.annotations.NotNull var justParam: int",
                     it.joinToString(transform = UElement::asRenderString)
@@ -148,7 +148,7 @@ class KotlinUastAlternativesTest : AbstractKotlinUastTest() {
                 )
             }
 
-            plugin.convertToAlternatives<UElement>(ktProperty, arrayOf(UElement::class.java)).let {
+            plugin.convertToAlternatives(ktProperty, arrayOf(UElement::class.java)).let {
                 assertEquals(
                     "public final class ClassA {, " +
                             "public fun ClassA(@org.jetbrains.annotations.NotNull justParam: int, @org.jetbrains.annotations.NotNull paramAndProp: java.lang.String) = UastEmptyExpression",

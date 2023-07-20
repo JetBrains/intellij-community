@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.ide.CopyProvider;
@@ -181,7 +181,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   private void updateGrouping() {
     if (myGroupingStrategy.changedSinceApply()) {
-      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.NON_MODAL);
+      ApplicationManager.getApplication().invokeLater(() -> updateModel(), ModalityState.nonModal());
     }
   }
 
@@ -219,6 +219,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
 
   @Override
   public void dispose() {
+    myDetailsView.shutdown();
     myConnection.disconnect();
     mySplitterProportionsData.saveSplitterProportions(this);
     mySplitterProportionsData.externalizeToDimensionService("CommittedChanges.SplitterProportions");
@@ -560,7 +561,7 @@ public class CommittedChangesTreeBrowser extends JPanel implements DataProvider,
   }
 
   public void setLoading(final boolean value) {
-    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.NON_MODAL, myProject);
+    runOrInvokeLaterAboveProgress(() -> myChangesTree.setPaintBusy(value), ModalityState.nonModal(), myProject);
   }
 
   private static class MyRepositoryChangesViewer extends CommittedChangesBrowser {

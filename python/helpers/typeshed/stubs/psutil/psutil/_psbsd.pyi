@@ -26,17 +26,17 @@ HAS_PROC_NUM_FDS: Any
 kinfo_proc_map: Any
 
 class svmem(NamedTuple):
-    total: Any
-    available: Any
-    percent: Any
-    used: Any
-    free: Any
-    active: Any
-    inactive: Any
-    buffers: Any
-    cached: Any
-    shared: Any
-    wired: Any
+    total: int
+    available: int
+    percent: float
+    used: int
+    free: int
+    active: int
+    inactive: int
+    buffers: int
+    cached: int
+    shared: int
+    wired: int
 
 class scputimes(NamedTuple):
     user: Any
@@ -85,7 +85,7 @@ class sdiskio(NamedTuple):
     write_time: Any
     busy_time: Any
 
-def virtual_memory(): ...
+def virtual_memory() -> svmem: ...
 def swap_memory(): ...
 def cpu_times(): ...
 def per_cpu_times(): ...

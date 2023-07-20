@@ -5,7 +5,7 @@ public class TestClass {
         if (true) {
             System.out.println();
         }
-<caret>        else if (true) {
+        <caret>else if (true) {
             System.out.println();
         }
         else {

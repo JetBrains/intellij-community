@@ -5,7 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlChunk.*
-import com.intellij.ui.AppUIUtil
+import com.intellij.ui.findAppIcon
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.io.File
 
@@ -30,7 +30,7 @@ object AuthResultPage {
     )
 
   private fun loadIcon(): @NlsSafe String? {
-    val icon = AppUIUtil.findIcon() ?: return null
+    val icon = findAppIcon() ?: return null
     if (!icon.endsWith(".svg")) {
       return null
     }

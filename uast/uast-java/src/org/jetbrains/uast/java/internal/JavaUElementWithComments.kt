@@ -22,6 +22,7 @@ import org.jetbrains.uast.UComment
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.java.isSemicolon
 
 interface JavaUElementWithComments : UElement {
   override val comments: List<UComment>
@@ -38,7 +39,7 @@ interface JavaUElementWithComments : UElement {
 
   private fun PsiElement.nearestCommentSibling(forward: Boolean): PsiComment? {
     var sibling = if (forward) nextSibling else prevSibling
-    while (sibling is PsiWhiteSpace && !sibling.text.contains('\n')) {
+    while ((sibling is PsiWhiteSpace || sibling.isSemicolon()) && !sibling.text.contains('\n')) {
       sibling = if (forward) sibling.nextSibling else sibling.prevSibling
     }
     return sibling as? PsiComment

@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -22,7 +23,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopeManager
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.serviceContainer.NonInjectable
 import org.jdom.JDOMException
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Paths
@@ -30,8 +31,10 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Function
 
-open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
+open class ApplicationInspectionProfileManagerBase @Internal @NonInjectable constructor(schemeManagerFactory: SchemeManagerFactory) :
   BaseInspectionProfileManager(ApplicationManager.getApplication().messageBus) {
+
+  constructor() : this(SchemeManagerFactory.getInstance())
 
   init {
     val app = ApplicationManager.getApplication()
@@ -45,12 +48,12 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
     })
   }
 
-  override val schemeManager = schemeManagerFactory.create(InspectionProfileManager.INSPECTION_DIR, object : InspectionProfileProcessor() {
+  override val schemeManager: SchemeManager<InspectionProfileImpl> = schemeManagerFactory.create(InspectionProfileManager.INSPECTION_DIR, object : InspectionProfileProcessor() {
     override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String) = fileNameWithoutExtension
 
     override fun createScheme(dataHolder: SchemeDataHolder<InspectionProfileImpl>,
                               name: String,
-                              attributeProvider: Function<in String, String?>,
+                              attributeProvider: (String) -> String?,
                               isBundled: Boolean): InspectionProfileImpl {
       return InspectionProfileImpl(name,
                                    InspectionToolRegistrar.getInstance(),
@@ -71,7 +74,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
     }
   }, settingsCategory = SettingsCategory.CODE)
 
-  protected val profilesAreInitialized by lazy {
+  protected val profilesAreInitialized: Unit by lazy {
     val app = ApplicationManager.getApplication()
     if (!(app.isUnitTestMode || app.isHeadlessEnvironment)) {
       BUNDLED_EP_NAME.processWithPluginDescriptor(BiConsumer { ep, pluginDescriptor ->
@@ -88,7 +91,7 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
   }
 
   @Volatile
-  protected var LOAD_PROFILES = !ApplicationManager.getApplication().isUnitTestMode
+  protected var LOAD_PROFILES: Boolean = !ApplicationManager.getApplication().isUnitTestMode
 
   override fun getProfiles(): Collection<InspectionProfileImpl> {
     initProfiles()
@@ -149,6 +152,6 @@ open class ApplicationInspectionProfileManagerBase @TestOnly @NonInjectable cons
     private val BUNDLED_EP_NAME = ExtensionPointName<BundledSchemeEP>("com.intellij.bundledInspectionProfile")
 
     @JvmStatic
-    fun getInstanceBase() = service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
+    fun getInstanceBase(): ApplicationInspectionProfileManagerBase = service<InspectionProfileManager>() as ApplicationInspectionProfileManagerBase
   }
 }

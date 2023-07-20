@@ -104,3 +104,9 @@ fun FunctionDescriptor.shouldNotConvertToProperty(notProperties: Set<FqNameUnsaf
 
 fun SyntheticJavaPropertyDescriptor.suppressedByNotPropertyList(set: Set<FqNameUnsafe>) =
     getMethod.shouldNotConvertToProperty(set) || setMethod?.shouldNotConvertToProperty(set) ?: false
+
+fun DeclarationDescriptor.unwrapIfTypeAlias(): DeclarationDescriptor? =
+    when(this) {
+        is TypeAliasDescriptor -> this.classDescriptor?.unwrapIfTypeAlias()
+        else -> this
+    }

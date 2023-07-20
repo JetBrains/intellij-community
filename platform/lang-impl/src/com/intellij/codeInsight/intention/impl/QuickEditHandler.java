@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -69,12 +69,10 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private final Project myProject;
   private final QuickEditAction myAction;
 
-  @NotNull
-  private final Editor myEditor;
+  private final @NotNull Editor myEditor;
   private final Document myOrigDocument;
 
-  @NotNull
-  private final Document myNewDocument;
+  private final @NotNull Document myNewDocument;
   private final PsiFile myNewFile;
   private final LightVirtualFile myNewVirtualFile;
 
@@ -88,7 +86,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   QuickEditHandler(@NotNull Project project,
                    @NotNull PsiFile injectedFile,
-                   final @NotNull PsiFile origFile,
+                   @NotNull PsiFile origFile,
                    @NotNull Editor editor,
                    @NotNull QuickEditAction action) {
     myProject = project;
@@ -123,7 +121,8 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
     PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
     myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
-    myNewDocument = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
+    myNewDocument =
+      Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(myNewFile), "doc for file " + myNewFile.getName());
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
     myOrigCreationStamp = myOrigDocument.getModificationStamp(); // store creation stamp for UNDO tracking
     EditorFactory editorFactory = Objects.requireNonNull(EditorFactory.getInstance());
@@ -152,17 +151,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     }, this);
 
 
-    InjectedFileChangesHandlerProvider changesHandlerFactory =
-      InjectedFileChangesHandlerProvider.EP.forLanguage(firstShred.getHost().getLanguage());
-    if (changesHandlerFactory != null) {
-      myEditChangesHandler = changesHandlerFactory.createFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
-    }
-    else if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
-      myEditChangesHandler = new IndentAwareInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
-    }
-    else {
-      myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
-    }
+    myEditChangesHandler = getHandler(injectedFile, editor, shreds, myNewDocument);
     Disposer.register(this, myEditChangesHandler);
 
     StreamEx.of(shreds).map(it -> it.getHost()).nonNull().distinct().forEach(h -> {
@@ -182,6 +171,22 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     myNewDocument.addDocumentListener(this, this);
   }
 
+  static InjectedFileChangesHandler getHandler(@NotNull PsiFile injectedFile,
+                                               @NotNull Editor editor,
+                                               @NotNull Place shreds,
+                                               @NotNull Document document) {
+    PsiLanguageInjectionHost host = ContainerUtil.getFirstItem(shreds).getHost();
+    InjectedFileChangesHandlerProvider changesHandlerFactory =
+      host == null ? null : InjectedFileChangesHandlerProvider.EP.forLanguage(host.getLanguage());
+    if (changesHandlerFactory != null) {
+      return changesHandlerFactory.createFileChangesHandler(shreds, editor, document, injectedFile);
+    }
+    if (ContainerUtil.or(shreds, it -> InjectionMeta.INJECTION_INDENT.get(it.getHost()) != null)) {
+      return new IndentAwareInjectedFileChangesHandler(shreds, editor, document, injectedFile);
+    }
+    return new CommonInjectedFileChangesHandler(shreds, editor, document, injectedFile);
+  }
+
   private static final Key<Set<QuickEditHandler>> QUICK_EDIT_HANDLERS = Key.create("QUICK_EDIT_HANDLERS");
 
   public static @NotNull Set<QuickEditHandler> getFragmentEditors(@NotNull PsiLanguageInjectionHost host) {
@@ -196,12 +201,12 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   public void navigate(int injectedOffset) {
     if (myAction.isShowInBalloon()) {
-      final JComponent component = myAction.createBalloonComponent(myNewFile);
+      JComponent component = myAction.createBalloonComponent(myNewFile);
       if (component != null) showBalloon(myEditor, myNewFile, component);
     }
     else {
-      final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
-      final FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
+      FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(myProject);
+      FileEditor[] editors = fileEditorManager.getEditors(myNewVirtualFile);
       if (editors.length == 0) {
         EditorWindow currentWindow = fileEditorManager.getCurrentWindow();
         mySplittedWindow = Objects.requireNonNull(currentWindow).split(JSplitPane.VERTICAL_SPLIT, false, myNewVirtualFile, true);
@@ -210,7 +215,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
       // fold missing values
       if (editor instanceof EditorEx) {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
-        final FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
+        FoldingModelEx foldingModel = ((EditorEx)editor).getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
           CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
@@ -236,7 +241,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   }
 
   public static void showBalloon(Editor editor, PsiFile newFile, JComponent component) {
-    final Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
+    Balloon balloon = JBPopupFactory.getInstance().createBalloonBuilder(component)
       .setShadow(true)
       .setAnimationCycle(0)
       .setHideOnClickOutside(true)
@@ -247,10 +252,10 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
     DumbAwareAction.create(e -> balloon.hide())
       .registerCustomShortcutSet(CommonShortcuts.ESCAPE, component);
     Disposer.register(newFile.getProject(), balloon);
-    final Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
+    Balloon.Position position = QuickEditAction.getBalloonPosition(editor);
     RelativePoint point = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
     if (position == Balloon.Position.above) {
-      final Point p = point.getPoint();
+      Point p = point.getPoint();
       point = new RelativePoint(point.getComponent(), new Point(p.x, p.y - editor.getLineHeight()));
     }
     balloon.show(point, position);
@@ -291,7 +296,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   private void closeEditor() {
     boolean unsplit = false;
     if (mySplittedWindow != null && !mySplittedWindow.isDisposed()) {
-      final List<EditorComposite> editors = mySplittedWindow.getAllComposites();
+      List<EditorComposite> editors = mySplittedWindow.getAllComposites();
       if (editors.size() == 1 && Comparing.equal(editors.get(0).getFile(), myNewVirtualFile)) {
         unsplit = true;
       }
@@ -331,10 +336,11 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
   }
 
 
-  private void commitToOriginal(final DocumentEvent e) {
+  private void commitToOriginal(DocumentEvent e) {
     myCommittingToOriginal = true;
     try {
-      PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
+      PostprocessReformattingAspect.getInstance(myProject)
+        .disablePostprocessFormattingInside(() -> myEditChangesHandler.commitToOriginal(e));
       PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myOrigDocument);
     }
     finally {
@@ -370,7 +376,7 @@ public final class QuickEditHandler extends UserDataHolderBase implements Dispos
 
   private static class MyQuietHandler implements ReadonlyFragmentModificationHandler {
     @Override
-    public void handle(final ReadOnlyFragmentModificationException e) {
+    public void handle(ReadOnlyFragmentModificationException e) {
       //nothing
     }
   }

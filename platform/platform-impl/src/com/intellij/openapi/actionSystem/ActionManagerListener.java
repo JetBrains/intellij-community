@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.Internal
 public interface ActionManagerListener {
   @Topic.AppLevel
-  Topic<ActionManagerListener> TOPIC = Topic.create("Action Manager Listener", ActionManagerListener.class);
+  Topic<ActionManagerListener> TOPIC = new Topic<>(ActionManagerListener.class, Topic.BroadcastDirection.NONE);
 
   default void toolbarCreated(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, @NotNull ActionToolbar toolbar) {
   }

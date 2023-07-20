@@ -13,7 +13,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 
 class JavaFqnDeclarativeInlayActionHandler : InlayActionHandler {
   companion object {
-    const val HANDLER_NAME = "java.fqn.class"
+    const val HANDLER_NAME: String = "java.fqn.class"
   }
 
   override fun handleClick(editor: Editor, payload: InlayActionPayload) {

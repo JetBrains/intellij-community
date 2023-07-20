@@ -6,6 +6,7 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.ReflectionUtil
@@ -16,13 +17,13 @@ private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryImpl()
   override fun createStore(project: Project) = MyProjectStore(project)
 }
 
-private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
+private class MyProjectStore(project: Project) : ProjectWithModuleStoreImpl(project) {
   val isConfigurationFileListenerAdded = AtomicBoolean()
   private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
   fun configurationFileChanged() {
     if (storages.isNotEmpty()) {
-      StoreReloadManager.getInstance().storageFilesChanged(mapOf(project to storages.values.toList()))
+      StoreReloadManager.getInstance(project).storageFilesChanged(project.stateStore, storages.values.toList())
     }
   }
 
@@ -64,11 +65,15 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
     }
   }
 
-  // In general this method is not required in this form, because SaveSessionBase.setState accepts serialized state (Element) without any side-effects or performance degradation,
+  // In general, this method is not required in this form,
+  // because SaveSessionBase.setState accepts serialized state (Element) without any side effects or performance degradation,
   // but it is better to express contract in code to make sure that it will be not broken in the future.
-  override fun setStateToSaveSessionProducer(state: Any?, info: ComponentInfo, effectiveComponentName: String, sessionProducer: SaveSessionProducer) {
+  override fun setStateToSaveSessionProducer(state: Any?,
+                                             info: ComponentInfo,
+                                             effectiveComponentName: String,
+                                             sessionProducer: SaveSessionProducer) {
     val configurationSchemaKey = info.configurationSchemaKey
-    if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionBase) {
+    if (state == null || configurationSchemaKey == null || info.affectedPropertyNames.isEmpty() || sessionProducer !is SaveSessionProducerBase) {
       super.setStateToSaveSessionProducer(state, info, effectiveComponentName, sessionProducer)
     }
     else {
@@ -97,8 +102,10 @@ private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(pro
   }
 }
 
-private class ReadOnlyStorage(val configurationSchemaKey: String, val componentClass: Class<Any>, private val store: MyProjectStore) : StateStorage {
-  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T? {
+private class ReadOnlyStorage(val configurationSchemaKey: String,
+                              val componentClass: Class<Any>,
+                              private val store: MyProjectStore) : StateStorage {
+  override fun <T : Any> getState(component: Any?, componentName: String, stateClass: Class<T>, mergeInto: T?, reload: Boolean): T {
     val state = ReflectionUtil.newInstance(stateClass, false) as BaseState
 
     val configurationFileManager = ConfigurationFileManager.getInstance(store.project)

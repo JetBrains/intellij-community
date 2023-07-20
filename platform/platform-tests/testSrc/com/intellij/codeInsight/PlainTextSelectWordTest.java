@@ -18,4 +18,12 @@ public class PlainTextSelectWordTest extends SelectWordTestBase {
   public void testPlainTextEmptyLine() {
     doTest("txt");
   }
+
+  public void testLeadingWhitespace() {
+    doTest("txt");
+  }
+
+  public void testInnerWhitespace() {
+    doTest("txt");
+  }
 }

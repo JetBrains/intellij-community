@@ -16,16 +16,17 @@
 package com.siyeh.ipp.comment;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.text.CharArrayUtil;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ChangeToEndOfLineCommentIntention extends Intention {
+public class ChangeToEndOfLineCommentIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -33,7 +34,7 @@ public class ChangeToEndOfLineCommentIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("change.to.end.of.line.comment.intention.name");
   }
 

@@ -8,6 +8,7 @@ import com.intellij.codeInspection.export.InspectionTreeHtmlWriter
 import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.Project
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
@@ -21,8 +22,8 @@ class ExportToHTMLAction : InspectionResultsExportActionProvider(Supplier { "HTM
                                                                  AllIcons.FileTypes.Html) {
   override val progressTitle: String = InspectionsBundle.message("inspection.generating.html.progress.title")
 
-  val openProperty = propertyGraph.property(false)
-  val open by openProperty
+  val openProperty: GraphProperty<Boolean> = propertyGraph.property(false)
+  val open: Boolean by openProperty
   var outputPath: Path? = null
 
   override fun writeResults(tree: InspectionTree,

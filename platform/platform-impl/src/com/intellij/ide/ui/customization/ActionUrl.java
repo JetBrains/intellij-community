@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -157,7 +157,7 @@ public final class ActionUrl implements JDOMExternalizable {
       element.setAttribute(SEPARATOR, Boolean.TRUE.toString());
     }
     else if (myComponent instanceof Group group) {
-      final String groupId = group.getId() != null && group.getId().length() != 0
+      final String groupId = group.getId() != null && !group.getId().isEmpty()
                              ? group.getId() : group.getName();
       element.setAttribute(VALUE, groupId != null ? groupId : "");
       element.setAttribute(IS_GROUP, Boolean.TRUE.toString());

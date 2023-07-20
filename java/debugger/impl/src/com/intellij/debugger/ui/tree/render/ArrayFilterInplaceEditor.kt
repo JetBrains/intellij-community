@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render
 
 import com.intellij.debugger.DebuggerManagerEx
@@ -32,6 +32,7 @@ import com.sun.jdi.ArrayType
 import java.awt.Rectangle
 import javax.swing.event.TreeModelEvent
 import javax.swing.tree.TreeNode
+import kotlin.math.min
 
 final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp: Boolean, thisType: PsiType?) : XDebuggerTreeInplaceEditor(node,
                                                                                                                                             "arrayFilter") {
@@ -112,7 +113,7 @@ final class ArrayFilterInplaceEditor(node: XDebuggerTreeNode, private val myTemp
                 val lastChildrenValue = ExpressionChildrenRenderer.getLastChildrenValue(javaValue.descriptor)
                 if (lastChildrenValue is ArrayReference) {
                   // take first non-null element for now
-                  for (v in lastChildrenValue.getValues(0, Math.min(lastChildrenValue.length(), 100))) {
+                  for (v in lastChildrenValue.getValues(0, min(lastChildrenValue.length(), 100))) {
                     if (v != null) {
                       type = v.type().name()
                       break

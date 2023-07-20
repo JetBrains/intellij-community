@@ -1,8 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
@@ -11,15 +13,17 @@ import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
-abstract class IndexDataInitializer<T> : Callable<T?> {
+abstract class IndexDataInitializer<T>(val name: String) : Callable<T?> {
   override fun call(): T? {
-    val log = Logger.getInstance(javaClass.name)
+    val log = thisLogger()
     val started = Instant.now()
     return try {
       val tasks = prepareTasks()
+      val activity = StartUpMeasurer.startActivity("$name storages initialization")
       runParallelTasks(tasks, true)
       val result = finish()
       val message = getInitializationFinishedMessage(result)
+      activity.end()
       log.info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms. " + message)
       result
     }

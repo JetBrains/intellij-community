@@ -3,7 +3,6 @@ package org.jetbrains.yaml.structureView;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.ide.util.treeView.NodeDescriptorProvidingKey;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.pom.Navigatable;
@@ -13,7 +12,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 
 /**
@@ -68,11 +66,7 @@ abstract class DuplicatedPsiTreeElementBase<T extends PsiElement & Navigatable> 
 
   @Override
   public final StructureViewTreeElement @NotNull [] getChildren() {
-    return AbstractTreeUi.calculateYieldingToWriteAction(this::doGetChildren).toArray(EMPTY_ARRAY);
-  }
-
-  private @NotNull List<StructureViewTreeElement> doGetChildren() {
-    return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase(), true);
+    return PsiTreeElementBase.mergeWithExtensions(getElement(), getChildrenBase(), true).toArray(EMPTY_ARRAY);
   }
 
   @Override

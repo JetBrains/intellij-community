@@ -8,12 +8,15 @@ package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.gradle.newTests.TestConfiguration
-import org.jetbrains.kotlin.gradle.newTests.TestWithKotlinPluginAndGradleVersions
-import org.jetbrains.kotlin.gradle.newTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
-import org.jetbrains.kotlin.gradle.newTests.workspace.checkWorkspaceModel
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfiguration
+import org.jetbrains.kotlin.gradle.multiplatformTests.TestWithKotlinPluginAndGradleVersions
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
+import org.jetbrains.kotlin.gradle.multiplatformTests.workspace.checkWorkspaceModel
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_7_21
 import org.jetbrains.kotlin.idea.codeInsight.gradle.KotlinGradlePluginVersions.V_1_8_0
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
@@ -192,6 +195,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         val testConfiguration = TestConfiguration().apply {
             // Temporary hack for older usages (they were expecting K/N Dist to be leniently folded)
             getConfiguration(OrderEntriesChecker).hideKonanDist = true
+            getConfiguration(GeneralWorkspaceChecks).testClassifier = testClassifier
             configure()
         }
 
@@ -202,7 +206,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             kotlinPluginVersion,
             gradleVersion,
             listOf(OrderEntriesChecker),
-            testClassifier = testClassifier,
             testConfiguration = testConfiguration
         )
     }
@@ -221,6 +224,26 @@ fun MultiplePluginVersionGradleImportingTestCase.kotlinPluginVersionMatches(vers
 fun MultiplePluginVersionGradleImportingTestCase.isStdlibJdk78AddedByDefault() =
     kotlinPluginVersion >= KotlinToolingVersion("1.5.0-M1")
 
+fun MultiplePluginVersionGradleImportingTestCase.isKgpDependencyResolutionEnabled(): Boolean =
+    kotlinPluginVersion >= KotlinToolingVersion("1.8.20-beta-0")
+
 fun MultiplePluginVersionGradleImportingTestCase.gradleVersionMatches(version: String): Boolean {
     return VersionMatcher(GradleVersion.version(gradleVersion)).isVersionMatch(version, true)
+}
+
+// for representation differences between KGP-based and non-KGP-based import
+fun MultiplePluginVersionGradleImportingTestCase.nativeDistLibraryDependency(
+    libraryName: String,
+    libraryPlatform: String?
+): Regex {
+    val namePart = "Kotlin/Native(:| ${kotlinPluginVersion} -) (platform\\.)?$libraryName"
+    val platformPart = " \\| $libraryPlatform".takeIf { libraryPlatform != null } ?: ".*"
+
+    return Regex("$namePart$platformPart")
+}
+
+fun setKgpImportInGradlePropertiesFile(projectRoot: VirtualFile, enableKgpDependencyResolution: Boolean) {
+    VfsUtil.virtualToIoFile(projectRoot).resolve("gradle.properties").apply {
+        appendText("\nkotlin.mpp.import.enableKgpDependencyResolution=$enableKgpDependencyResolution")
+    }
 }

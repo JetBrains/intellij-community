@@ -150,10 +150,7 @@ class KotlinFirSafeDeleteProcessor : SafeDeleteProcessorDelegateBase() {
         for (overriddenFunction in overridden) {
             if (ReferencesSearch.search(overriddenFunction).forEach(Processor {
                     val place = it.element
-                    if (!isInside(place)) {
-                        return@Processor false
-                    }
-                    return@Processor true
+                    return@Processor isInside(place)
                 })) {
                 additionalElementsToDelete.add(overriddenFunction)
                 result.add(SafeDeleteReferenceSimpleDeleteUsageInfo(overriddenFunction, element, true))

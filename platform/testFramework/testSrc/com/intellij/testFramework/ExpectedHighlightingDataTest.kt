@@ -20,7 +20,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.lang.annotation.HighlightSeverity
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import java.util.*
 
 class ExpectedHighlightingDataTest {
   private val TYPES = mapOf(
@@ -28,130 +27,80 @@ class ExpectedHighlightingDataTest {
     "warn" to ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.WARNING, false, true),
     "eol_err" to ExpectedHighlightingData.ExpectedHighlightingSet(HighlightSeverity.ERROR, true, true))
 
-  private val TEST_BUNDLE = object : ListResourceBundle() {
-    private val CONTENTS: Array<Array<Any>> = arrayOf(
-      arrayOf("single.value", "My text"),
-      arrayOf("one.param.start", "{0}foo"),
-      arrayOf("one.param.end", "foo{0}"),
-      arrayOf("two.params", "A {0} B {1} C"),
-      arrayOf("special.chars", "\"|'"),
-      arrayOf("expected.lbrace.or.semicolon", "expected { or ;")
-    )
+  @Test fun empty(): Unit = doTest("text", emptyList(), "text")
 
-    override fun getContents(): Array<Array<Any>> = CONTENTS
-  }
-
-  private val TEST_BUNDLE_2 = object : ListResourceBundle() {
-    private val CONTENTS: Array<Array<Any>> = arrayOf(
-      arrayOf("single.value.2", "My text"),
-      arrayOf("another.single.value", "Another text")
-    )
-
-    override fun getContents(): Array<Array<Any>> = CONTENTS
-  }
-
-  @Test fun empty() = doTest("text", emptyList(), "text")
-
-  @Test fun fullLength() =
+  @Test fun fullLength(): Unit =
     doTest("text", listOf(error(0, 4, "_")), """<err descr="_">text</err>""")
 
-  @Test fun sequential() =
+  @Test fun sequential(): Unit =
     doTest("_my text_",
            listOf(error(1, 3, "1"), error(4, 8, "2")),
            """_<err descr="1">my</err> <err descr="2">text</err>_""")
 
-  @Test fun simpleNested() =
+  @Test fun simpleNested(): Unit =
     doTest("[(nested)]",
            listOf(error(1, 9, "1"), error(2, 8, "2")),
            """[<err descr="1">(<err descr="2">nested</err>)</err>]""")
 
-  @Test fun deepNested() =
+  @Test fun deepNested(): Unit =
     doTest("m1(m2(m3(m4(x))))",
            listOf(error(3, 16, "m1"), error(6, 15, "m2"), error(9, 14, "m3"), error(12, 13, "m4")),
            """m1(<err descr="m1">m2(<err descr="m2">m3(<err descr="m3">m4(<err descr="m4">x</err>)</err>)</err>)</err>)""")
 
-  @Test fun sameStart() =
+  @Test fun sameStart(): Unit =
     doTest("same start",
            listOf(error(0, 4, "1"), error(0, 10, "2")),
            """<err descr="2"><err descr="1">same</err> start</err>""")
 
-  @Test fun sameEnd() =
+  @Test fun sameEnd(): Unit =
     doTest("same end",
            listOf(error(0, 8, "1"), error(5, 8, "2")),
            """<err descr="1">same <err descr="2">end</err></err>""")
 
-  @Test fun sameBothBounds() =
+  @Test fun sameBothBounds(): Unit =
     doTest("same",
            listOf(error(0, 4, "-"), warning(0, 4, "-")),
            """<err descr="-"><warn descr="-">same</warn></err>""")
 
-  @Test fun samePriority() =
+  @Test fun samePriority(): Unit =
     doTest("_same_",
            listOf(warning(1, 5, "1"), warning(1, 5, "2")),
            """_<warn descr="1"><warn descr="2">same</warn></warn>_""")
 
-  @Test fun twoNests() =
+  @Test fun twoNests(): Unit =
     doTest("(two nests)",
            listOf(error(0, 11, "-"), error(1, 4, "1"), error(5, 10, "2")),
            """<err descr="-">(<err descr="1">two</err> <err descr="2">nests</err>)</err>""")
 
-  @Test fun realistic() =
+  @Test fun realistic(): Unit =
     doTest("one and (two nests)",
            listOf(error(4, 7, "-"), error(8, 19, "-"), error(9, 12, "1"), error(13, 18, "2")),
            """one <err descr="-">and</err> <err descr="-">(<err descr="1">two</err> <err descr="2">nests</err>)</err>""")
 
-  @Test fun twoEOLs() =
+  @Test fun twoEOLs(): Unit =
     doTest("text\nmore text",
            listOf(eolError(4, 4, "1"), eolError(4, 4, "2")),
            """
              text<eol_err descr="2"></eol_err><eol_err descr="1"></eol_err>
              more text""".trimIndent())
 
-  @Test fun eolAfterError() =
+  @Test fun eolAfterError(): Unit =
     doTest("some error\nmore text",
            listOf(error(5, 10, "1"), eolError(10, 10, "2")),
            """
              some <err descr="1">error</err><eol_err descr="2"></eol_err>
              more text""".trimIndent())
 
-  @Test fun consecutiveNests() =
+  @Test fun consecutiveNests(): Unit =
     doTest(" ab ",
            listOf(error(1, 2, "a1"), error(1, 2, "a2"), error(2, 3, "b1"), error(2, 3, "b2")),
            """ <err descr="a1"><err descr="a2">a</err></err><err descr="b1"><err descr="b2">b</err></err> """)
 
-  @Test fun zeroLengthAtZeroOffset() =
+  @Test fun zeroLengthAtZeroOffset(): Unit =
     doTest("text", listOf(error(0, 0, "_")), """<err descr="_"></err>text""")
 
-  @Test fun bundleMsgNoParams() =
-    doTest("text", listOf(error(0, 4, "My text")), """<err bundleMsg="single.value">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgOneParamStart() =
-    doTest("text", listOf(error(0, 4, "xfoo")), """<err bundleMsg="one.param.start|x">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgOneParamEnd() =
-    doTest("text", listOf(error(0, 4, "foox")), """<err bundleMsg="one.param.end|x">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgOneParamMultipleMatch() =
-    doTest("text", listOf(error(0, 4, "foo")), """<err descr="foo">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgTwoParams() =
-    doTest("text", listOf(error(0, 4, "A 1 B 2 C")), """<err bundleMsg="two.params|1|2">text</err>""", TEST_BUNDLE)
-
-  @Test fun bundleMsgSpecialChars() =
-    doTest("text", listOf(error(0, 4, "\"|'")), """<err bundleMsg="special.chars">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
-
-  @Test fun bundleMsgUniqueFromTwoBundles() =
-    doTest("text", listOf(error(0, 4, "My text")), """<err descr="My text">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
-
-  @Test fun bundleMsgMultipleMatchFromTwoBundles() =
-    doTest("text", listOf(error(0, 4, "Another text")), """<err bundleMsg="another.single.value">text</err>""", TEST_BUNDLE, TEST_BUNDLE_2)
-
-  @Test fun bundleMessageUnclosedBrace() =
-    doTest("text", listOf(error(0, 4, "expected { or ;")), """<err bundleMsg="expected.lbrace.or.semicolon">text</err>""", TEST_BUNDLE)
-
-
-  private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String, vararg bundles: ResourceBundle) =
-    assertEquals(expected, ExpectedHighlightingData.composeText(TYPES, highlighting, original, *bundles))
+  private fun doTest(original: String, highlighting: Collection<HighlightInfo>, expected: String) =
+    assertEquals(expected, ExpectedHighlightingData.composeText(TYPES, highlighting, original))
 
   private fun error(start: Int, end: Int, description: String) =
     HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(start, end).descriptionAndTooltip(description).createUnconditionally()

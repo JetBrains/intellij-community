@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.javadoc;
 
 import com.intellij.psi.JavaDocTokenType;
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.javadoc.PsiSnippetAttribute;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +41,8 @@ public class PsiSnippetAttributeImpl extends CompositePsiElement implements PsiS
   }
 
   @Override
-  public @Nullable PsiElement getValue() {
-    return findPsiChildByType(JavaDocTokenType.DOC_TAG_ATTRIBUTE_VALUE);
+  public @Nullable PsiSnippetAttributeValue getValue() {
+    return (PsiSnippetAttributeValue)findPsiChildByType(JavaDocElementType.DOC_SNIPPET_ATTRIBUTE_VALUE);
   }
 
   @Override

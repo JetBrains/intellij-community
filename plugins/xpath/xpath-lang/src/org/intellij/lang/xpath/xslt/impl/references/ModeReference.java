@@ -216,7 +216,7 @@ class ModeReference extends SimpleAttributeReference implements PsiPolyVariantRe
     }
 
     @Override
-    public LocalQuickFix @Nullable [] getQuickFixes() {
+    public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       // TODO: This should actually scan all (reachable) xslt files for mode-declarations with the same local name
       return LocalQuickFix.EMPTY_ARRAY;
     }

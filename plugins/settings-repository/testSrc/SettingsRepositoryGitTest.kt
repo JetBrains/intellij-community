@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.settingsRepository.test
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.write
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
@@ -19,7 +20,6 @@ import org.jetbrains.settingsRepository.git.computeIndexDiff
 import org.jetbrains.settingsRepository.git.deletePath
 import org.jetbrains.settingsRepository.git.writePath
 import org.junit.Test
-import java.util.*
 
 val MARKER_ACCEPT_MY = "__accept my__".toByteArray()
 val MARKER_ACCEPT_THEIRS = "__accept theirs__".toByteArray()
@@ -30,13 +30,13 @@ internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
       val mergeSession = mergeProvider.createMergeSession(files)
       for (file in files) {
         val mergeData = mergeProvider.loadRevisions(file)
-        if (Arrays.equals(mergeData.CURRENT, MARKER_ACCEPT_MY) || Arrays.equals(mergeData.LAST, MARKER_ACCEPT_THEIRS)) {
+        if (mergeData.CURRENT.contentEquals(MARKER_ACCEPT_MY) || mergeData.LAST.contentEquals(MARKER_ACCEPT_THEIRS)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedYours)
         }
-        else if (mergeData.CURRENT!!.contentEquals(MARKER_ACCEPT_THEIRS) || mergeData.LAST!!.contentEquals(MARKER_ACCEPT_MY)) {
+        else if (mergeData.CURRENT.contentEquals(MARKER_ACCEPT_THEIRS) || mergeData.LAST.contentEquals(MARKER_ACCEPT_MY)) {
           mergeSession.conflictResolvedForFile(file, MergeSession.Resolution.AcceptedTheirs)
         }
-        else if (Arrays.equals(mergeData.LAST, MARKER_ACCEPT_MY)) {
+        else if (mergeData.LAST.contentEquals(MARKER_ACCEPT_MY)) {
           file.setBinaryContent(mergeData.LAST)
           mergeProvider.conflictResolvedForFile(file)
         }
@@ -369,7 +369,7 @@ internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
     repositoryManager.createRepositoryIfNeeded()
     repositoryManager.setUpstream(remoteRepository.workTree.absolutePath)
 
-    val store = ApplicationStoreImpl()
+    val store = ApplicationStoreImpl(ApplicationManager.getApplication())
     val localConfigPath = tempDirManager.newPath("local_config", refreshVfs = true)
 
     val lafData = """<application>

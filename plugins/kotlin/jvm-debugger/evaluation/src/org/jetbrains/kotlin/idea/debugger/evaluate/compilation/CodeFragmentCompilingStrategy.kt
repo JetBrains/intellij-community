@@ -7,8 +7,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.readText
 import org.jetbrains.kotlin.idea.core.util.analyzeInlinedFunctions
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.LOG
-import org.jetbrains.kotlin.idea.debugger.evaluate.gatherProjectFilesDependedOnByFragment
+import org.jetbrains.kotlin.idea.debugger.evaluate.*
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -22,8 +21,10 @@ abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
 
+    abstract fun onSuccess()
     abstract fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext)
     abstract fun getFallbackStrategy(): CodeFragmentCompilingStrategy?
+    abstract fun beforeRunningFallback()
 }
 
 class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -38,11 +39,27 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         )
     }
 
+    override fun onSuccess() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.OLD,
+            StatisticsEvaluationResult.SUCCESS
+        )
+    }
+
     override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.OLD,
+            StatisticsEvaluationResult.FAILURE
+        )
         throw e
     }
 
     override fun getFallbackStrategy(): CodeFragmentCompilingStrategy? = null
+
+    override fun beforeRunningFallback() {
+    }
 }
 
 class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragmentCompilingStrategy(codeFragment) {
@@ -85,14 +102,26 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         }
     }
 
+    override fun onSuccess() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.IR,
+            StatisticsEvaluationResult.SUCCESS
+        )
+    }
+
     override fun processError(e: CodeFragmentCodegenException, codeFragment: KtCodeFragment, executionContext: ExecutionContext) {
+        KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+            codeFragment.project,
+            StatisticsEvaluator.IR,
+            StatisticsEvaluationResult.FAILURE
+        )
         if (isFallbackDisabled()) {
             throw e
         }
         if (isApplicationInternalMode()) {
             reportErrorWithAttachments(executionContext, codeFragment, e)
         }
-        // TODO add statistics
     }
 
     private fun reportErrorWithAttachments(
@@ -143,6 +172,10 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         if (isUnitTestMode()) return null
 
         return OldCodeFragmentCompilingStrategy(codeFragment)
+    }
+
+    override fun beforeRunningFallback() {
+        KotlinDebuggerEvaluatorStatisticsCollector.logFallbackToOldEvaluator(codeFragment.project)
     }
 
     private fun isFallbackDisabled(): Boolean {

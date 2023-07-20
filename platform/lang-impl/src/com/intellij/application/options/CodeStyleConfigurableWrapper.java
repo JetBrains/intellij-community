@@ -17,17 +17,20 @@ import java.util.Set;
 
 public class CodeStyleConfigurableWrapper
   implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll, OptionsContainingConfigurable {
-  private boolean myInitialResetInvoked;
-  protected CodeStyleMainPanel myPanel;
+
   private final CodeStyleSettingsProvider myProvider;
   private final CodeStyleSettingsPanelFactory myFactory;
   private final CodeStyleSchemesConfigurable myOwner;
 
-  public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider, @NotNull CodeStyleSettingsPanelFactory factory, CodeStyleSchemesConfigurable owner) {
+  private @Nullable CodeStyleMainPanel myPanel;
+  private boolean myInitialResetInvoked = false;
+
+  public CodeStyleConfigurableWrapper(@NotNull CodeStyleSettingsProvider provider,
+                                      @NotNull CodeStyleSettingsPanelFactory factory,
+                                      @NotNull CodeStyleSchemesConfigurable owner) {
     myProvider = provider;
     myFactory = factory;
     myOwner = owner;
-    myInitialResetInvoked = false;
   }
 
   @Override
@@ -120,6 +123,8 @@ public class CodeStyleConfigurableWrapper
     if (myPanel != null) {
       myPanel.disposeUIResources();
     }
+    myPanel = null;
+    myInitialResetInvoked = false;
   }
 
   public boolean isPanelModified() {

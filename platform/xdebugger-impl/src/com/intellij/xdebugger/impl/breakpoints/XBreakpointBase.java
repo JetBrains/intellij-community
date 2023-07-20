@@ -5,10 +5,10 @@ import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAware;
@@ -418,7 +418,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     if (!XDebuggerUtilImpl.isEmptyExpression(getConditionExpression())) {
       LayeredIcon newIcon = new LayeredIcon(2);
       newIcon.setIcon(icon, 0);
-      int hShift = ExperimentalUI.isNewUI() ? 5 : 10;
+      int hShift = ExperimentalUI.isNewUI() ? 7 : 10;
       newIcon.setIcon(AllIcons.Debugger.Question_badge, 1, hShift, 6);
       myIcon = JBUIScale.scaleIcon(newIcon);
     }
@@ -568,13 +568,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     @NotNull
     @Override
     public Alignment getAlignment() {
-      return ExperimentalUI.isNewUI() && isBreakPointsOnLineNumbers() ? Alignment.LINE_NUMBERS : Alignment.RIGHT;
-    }
-
-    private static boolean isBreakPointsOnLineNumbers() {
-      return UISettings.getInstance().getShowBreakpointsOverLineNumbers()
-             && !UISettings.getInstance().getPresentationMode()
-             && !Registry.is("editor.distraction.free.mode");
+      return ExperimentalUI.isNewUI() && EditorUtil.isBreakPointsOnLineNumbers() ? Alignment.LINE_NUMBERS : Alignment.RIGHT;
     }
 
     @Override

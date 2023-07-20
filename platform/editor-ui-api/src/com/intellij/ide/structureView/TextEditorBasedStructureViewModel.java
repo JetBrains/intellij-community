@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.*;
@@ -128,7 +128,7 @@ public abstract class TextEditorBasedStructureViewModel implements StructureView
   public @NotNull FileStatus getElementStatus(Object element) {
     if (myEditor == null || myPsiFile == null) return FileStatus.NOT_CHANGED;
     if (!(element instanceof PsiElement psiElement)) return FileStatus.NOT_CHANGED;
-    if (psiElement.getContainingFile() != myPsiFile) return FileStatus.NOT_CHANGED;
+    if (!psiElement.isValid() || psiElement.getContainingFile() != myPsiFile) return FileStatus.NOT_CHANGED;
     return ElementStatusTracker.getInstance(myPsiFile.getProject()).getElementStatus(psiElement);
   }
 

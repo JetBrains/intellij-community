@@ -79,7 +79,7 @@ class ExternalProjectsDataStorageTest: UsefulTestCase() {
                                         externalName: String,
                                         externalProjectPath: String): InternalExternalProjectInfo {
     val projectData = ProjectData(testId, externalName, externalProjectPath, externalProjectPath)
-    val node = DataNode<ProjectData>(Key(ProjectData::class.jvmName, 0), projectData, null)
+    val node = DataNode(Key(ProjectData::class.jvmName, 0), projectData, null)
     return InternalExternalProjectInfo(testId, externalProjectPath, node)
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
+import org.jetbrains.kotlin.idea.intentions.ConvertPropertyInitializerToGetterIntention.Factory.convertPropertyInitializerToGetter
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
@@ -54,7 +55,7 @@ class ConvertPropertyInitializerToGetterIntention : SelfTargetingRangeIntention<
         convertPropertyInitializerToGetter(element, editor)
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
+    object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction {
             return ConvertPropertyInitializerToGetterIntention()
         }

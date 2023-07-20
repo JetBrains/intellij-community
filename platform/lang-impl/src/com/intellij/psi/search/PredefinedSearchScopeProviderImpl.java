@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
@@ -211,9 +211,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
           GlobalSearchScope prev = new GlobalSearchScope(project) {
             private Set<VirtualFile> myFiles;
 
-            @NotNull
             @Override
-            public String getDisplayName() {
+            public @NotNull String getDisplayName() {
               return IdeBundle.message("scope.files.in.previous.search.result");
             }
 
@@ -313,8 +312,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     }
   }
 
-  @NotNull
-  public static SearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
+  public static @NotNull SearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
     String name = changedOnly ? getRecentlyChangedFilesScopeName() : getRecentlyViewedFilesScopeName();
     List<VirtualFile> files = changedOnly ? IdeDocumentHistory.getInstance(project).getChangedFiles() :
                               JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
@@ -323,10 +321,9 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return files.isEmpty() ? LocalSearchScope.EMPTY : GlobalSearchScope.filesScope(project, files, name);
   }
 
-  @Nullable
-  public static SearchScope getSelectedFilesScope(@NotNull Project project,
-                                                  @Nullable DataContext dataContext,
-                                                  @Nullable PsiFile currentFile) {
+  public static @Nullable SearchScope getSelectedFilesScope(@NotNull Project project,
+                                                            @Nullable DataContext dataContext,
+                                                            @Nullable PsiFile currentFile) {
     VirtualFile[] filesOrDirs = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (filesOrDirs == null || filesOrDirs.length == 0 ||
         filesOrDirs.length == 1 && currentFile != null && filesOrDirs[0].equals(currentFile.getVirtualFile())) {
@@ -335,8 +332,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     return new SelectedFilesScope(project, filesOrDirs);
   }
 
-  @NotNull
-  protected static Set<VirtualFile> collectFiles(Set<? extends Usage> usages, boolean findFirst) {
+  protected static @NotNull Set<VirtualFile> collectFiles(Set<? extends Usage> usages, boolean findFirst) {
     final Set<VirtualFile> files = new HashSet<>();
     for (Usage usage : usages) {
       if (usage instanceof PsiElementUsage) {
@@ -391,9 +387,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       return VfsUtilCore.isUnder(file, myDirectories);
     }
 
-    @NotNull
     @Override
-    public String getDisplayName() {
+    public @NotNull String getDisplayName() {
       if (myFiles.isEmpty()) {
         return IdeBundle.message("scope.selected.directories", myDirectories.size());
       }

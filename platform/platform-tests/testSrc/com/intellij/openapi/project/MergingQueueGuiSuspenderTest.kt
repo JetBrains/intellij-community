@@ -38,13 +38,13 @@ class MergingQueueGuiSuspenderConcurrentTest() : BasePlatformTestCase() {
     fun suspendingTask(suspender: ProgressSuspender, id: Char) {
       try {
         phaser.arriveAndAwaitAdvanceWithTimeout()
-        guiSuspender.suspendAndRun("test activity $id") {
+        guiSuspender.suspendAndRun("test activity $id", Runnable {
           repeat(maxCount) {
             TestCase.assertTrue(suspender.isSuspended)
             LockSupport.parkNanos(Random.nextLong(maxDelayNs))
             TestCase.assertTrue(suspender.isSuspended)
           }
-        }
+        })
       }
       catch (t: Throwable) {
         exception.set(t)
@@ -92,12 +92,12 @@ class MergingQueueGuiSuspenderConcurrentTest() : BasePlatformTestCase() {
             val phaser = Phaser(4)
 
             Thread {
-              guiSuspender.suspendAndRun("task that suspends progress") {
+              guiSuspender.suspendAndRun("task that suspends progress", Runnable {
                 phaser.arriveAndAwaitAdvanceWithTimeout() // 1
                 phaser.arriveAndAwaitAdvanceWithTimeout() // 2
                 phaser.arriveAndAwaitAdvanceWithTimeout() // 3
                 phaser.arriveAndDeregister() // 4
-              }
+              })
             }.start()
 
             Thread {
@@ -160,7 +160,7 @@ class MergingQueueGuiSuspenderNestingTest(private val suspendPattern: String) : 
         }
         actualOrder.add(id)
 
-        guiSuspender.suspendAndRun("test activity $id") {
+        guiSuspender.suspendAndRun("test activity $id", Runnable {
           do {
             TestCase.assertTrue(suspender.isSuspended)
             phaser.arriveAndAwaitAdvanceWithTimeout()
@@ -170,7 +170,7 @@ class MergingQueueGuiSuspenderNestingTest(private val suspendPattern: String) : 
           actualOrder.add(id)
 
           TestCase.assertTrue(suspender.isSuspended)
-        }
+        })
       }
       catch (t: Throwable) {
         exception.set(t)

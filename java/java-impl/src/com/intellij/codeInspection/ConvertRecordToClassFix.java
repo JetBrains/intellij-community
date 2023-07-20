@@ -1,18 +1,18 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction;
 import com.intellij.codeInspection.util.IntentionFamilyName;
-import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.parser.DeclarationParser;
 import com.intellij.lang.java.parser.JavaParser;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -42,7 +42,7 @@ import java.util.Objects;
 
 import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
 
-public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class ConvertRecordToClassFix extends PsiUpdateModCommandAction<PsiElement> {
   private final LanguageLevel myLanguageLevel;
 
   public ConvertRecordToClassFix(@NotNull PsiElement candidate) {
@@ -51,13 +51,14 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   }
 
   @Override
-  public @IntentionFamilyName @NotNull String getFamilyName() {
-    return JavaBundle.message("intention.family.name.convert.record.to.class");
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return Presentation.of(getFamilyName())
+      .withPriority(PriorityAction.Priority.LOW);
   }
 
   @Override
-  public @IntentionName @NotNull String getText() {
-    return getFamilyName();
+  public @IntentionFamilyName @NotNull String getFamilyName() {
+    return JavaBundle.message("intention.family.name.convert.record.to.class");
   }
 
   @Nullable
@@ -75,11 +76,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  protected void invoke(@NotNull ActionContext context, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
     PsiClass recordClass;
     if (startElement instanceof PsiErrorElement) {
       recordClass = tryMakeRecord(startElement);
@@ -92,6 +89,8 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
     JavaDummyElement dummyElement = new JavaDummyElement(
       recordClassText, builder -> JavaParser.INSTANCE.getDeclarationParser().parse(builder, DeclarationParser.Context.CLASS),
       LanguageLevel.JDK_16);
+    Project project = context.project();
+    PsiFile file = startElement.getContainingFile();
     DummyHolder holder = DummyHolderFactory.createHolder(file.getManager(), dummyElement, recordClass);
     PsiClass converted = (PsiClass)Objects.requireNonNull(SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode()));
     postProcessAnnotations(recordClass, converted);
@@ -294,7 +293,7 @@ public class ConvertRecordToClassFix extends LocalQuickFixAndIntentionActionOnPs
   private void insertMethods(StringBuilder result, PsiClass psiClass, PsiRecordComponent @NotNull [] components) {
     boolean hasEquals = false, hasHashCode = false, hasToString = false;
     for (PsiMethod method : psiClass.getMethods()) {
-      if (!method.isPhysical() && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
+      if (method instanceof SyntheticElement && JavaPsiRecordUtil.getRecordComponentForAccessor(method) != null) {
         result.append(method.getText()).append("\n");
       }
       hasEquals |= MethodUtils.isEquals(method);

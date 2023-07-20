@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -94,6 +95,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     final IntentionAction intention = myFixture.getAvailableIntention(name);
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult(result);
   }
 
@@ -101,6 +103,7 @@ public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFi
     final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 

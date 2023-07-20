@@ -2,7 +2,7 @@
 package com.intellij.compiler.cache;
 
 import com.intellij.compiler.CompilerConfigurationSettings;
-import com.intellij.compiler.cache.client.CompilerCacheServerAuthUtil;
+import com.intellij.compiler.cache.client.CompilerCacheServerAuthService;
 import com.intellij.compiler.cache.client.CompilerCachesServerClient;
 import com.intellij.compiler.cache.git.GitCommitsIterator;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
@@ -27,7 +27,7 @@ public final class CompilerCacheConfigurator {
     String serverUrl = getServerUrl(project);
     if (serverUrl == null || !CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) return null;
 
-    Map<String, String> authHeaders = CompilerCacheServerAuthUtil.getRequestHeaders(project, true);
+    Map<String, String> authHeaders = CompilerCacheServerAuthService.getInstance(project).getRequestHeaders(true);
     if (authHeaders.isEmpty()) return null;
     Pair<String, Integer> commit = getCommitToDownload(project, serverUrl, CompilerCacheLoadingSettings.getForceUpdateValue());
     if (commit == null) return null;

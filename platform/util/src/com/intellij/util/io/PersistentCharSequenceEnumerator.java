@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 
 public class PersistentCharSequenceEnumerator extends PersistentEnumerator<CharSequence> {
-  @Nullable private final CachingEnumerator<CharSequence> myCache;
+  private final @Nullable CachingEnumerator<CharSequence> myCache;
 
   public PersistentCharSequenceEnumerator(@NotNull Path file) throws IOException {
     this(file, null);
@@ -43,9 +43,8 @@ public class PersistentCharSequenceEnumerator extends PersistentEnumerator<CharS
         return PersistentCharSequenceEnumerator.super.enumerate(value);
       }
 
-      @Nullable
       @Override
-      public CharSequence valueOf(int idx) throws IOException {
+      public @Nullable CharSequence valueOf(int idx) throws IOException {
         return PersistentCharSequenceEnumerator.super.valueOf(idx);
       }
     }, EnumeratorCharSequenceDescriptor.INSTANCE) : null;
@@ -56,9 +55,8 @@ public class PersistentCharSequenceEnumerator extends PersistentEnumerator<CharS
     return myCache != null ? myCache.enumerate(value) : super.enumerate(value);
   }
 
-  @Nullable
   @Override
-  public CharSequence valueOf(int idx) throws IOException {
+  public @Nullable CharSequence valueOf(int idx) throws IOException {
     return myCache != null ? myCache.valueOf(idx) : super.valueOf(idx);
   }
 

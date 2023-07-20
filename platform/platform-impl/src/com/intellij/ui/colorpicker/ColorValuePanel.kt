@@ -32,6 +32,8 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.DocumentListener
 import javax.swing.text.AttributeSet
 import javax.swing.text.PlainDocument
+import kotlin.math.max
+import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.properties.Delegates
 
@@ -72,14 +74,14 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
    * Used to update the color of picker when color text fields are edited.
    */
   @get:TestOnly
-  val updateAlarm = Alarm()
+  val updateAlarm: Alarm = Alarm()
 
   @get:TestOnly
-  val alphaField = ColorValueField()
+  val alphaField: ColorValueField = ColorValueField()
   private val alphaHexDocument = DigitColorDocument(alphaField, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val alphaPercentageDocument = DigitColorDocument(alphaField, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   @get:TestOnly
-  val hexField = ColorValueField(hex = true, showAlpha = showAlpha)
+  val hexField: ColorValueField = ColorValueField(hex = true, showAlpha = showAlpha)
 
   private val alphaLabel = ColorLabel()
   private val colorLabel1 = ColorLabel()
@@ -87,25 +89,25 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   private val colorLabel3 = ColorLabel()
 
   @TestOnly
-  val alphaButtonPanel = createAlphaLabel(alphaLabel) {
+  val alphaButtonPanel: ButtonPanel = createAlphaLabel(alphaLabel) {
     currentAlphaFormat = currentAlphaFormat.next()
   }
 
   @TestOnly
-  val colorFormatButtonPanel = createFormatLabels(colorLabel1, colorLabel2, colorLabel3) {
+  val colorFormatButtonPanel: ButtonPanel = createFormatLabels(colorLabel1, colorLabel2, colorLabel3) {
     currentColorFormat = currentColorFormat.next()
   }
 
   @get:TestOnly
-  val colorField1 = ColorValueField()
+  val colorField1: ColorValueField = ColorValueField()
   private val redDocument = DigitColorDocument(colorField1, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val hueDocument = DigitColorDocument(colorField1, HUE_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   @get:TestOnly
-  val colorField2 = ColorValueField()
+  val colorField2: ColorValueField = ColorValueField()
   private val greenDocument = DigitColorDocument(colorField2, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val saturationDocument = DigitColorDocument(colorField2, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   @get:TestOnly
-  val colorField3 = ColorValueField()
+  val colorField3: ColorValueField = ColorValueField()
   private val blueDocument = DigitColorDocument(colorField3, COLOR_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
   private val brightnessDocument = DigitColorDocument(colorField3, PERCENT_RANGE).apply { addDocumentListener(this@ColorValuePanel) }
 
@@ -174,7 +176,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     model.addListener(this)
   }
 
-  override fun requestFocusInWindow() = colorField1.requestFocusInWindow()
+  override fun requestFocusInWindow(): Boolean = colorField1.requestFocusInWindow()
 
   private fun updateAlphaFormat() {
     when (currentAlphaFormat) {
@@ -228,7 +230,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     repaint()
   }
 
-  override fun colorChanged(color: Color, source: Any?) = updateTextField(color, source)
+  override fun colorChanged(color: Color, source: Any?): Unit = updateTextField(color, source)
 
   private fun updateTextField(color: Color, source: Any?) {
     if (currentAlphaFormat == AlphaFormat.BYTE) {
@@ -263,11 +265,11 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     }
   }
 
-  override fun insertUpdate(e: DocumentEvent) = update((e.document as ColorDocument).src)
+  override fun insertUpdate(e: DocumentEvent): Unit = update((e.document as ColorDocument).src)
 
-  override fun removeUpdate(e: DocumentEvent) = update((e.document as ColorDocument).src)
+  override fun removeUpdate(e: DocumentEvent): Unit = update((e.document as ColorDocument).src)
 
-  override fun changedUpdate(e: DocumentEvent) = Unit
+  override fun changedUpdate(e: DocumentEvent): Unit = Unit
 
   private fun update(src: JTextField) {
     updateAlarm.cancelAllRequests()
@@ -430,12 +432,12 @@ abstract class ButtonPanel : JPanel() {
   }
 
   // Needs to be final to be used in init block
-  final override fun addMouseListener(l: MouseListener?) = super.addMouseListener(l)
+  final override fun addMouseListener(l: MouseListener?): Unit = super.addMouseListener(l)
 
   // Needs to be final to be used in init block
-  final override fun addFocusListener(l: FocusListener?) = super.addFocusListener(l)
+  final override fun addFocusListener(l: FocusListener?): Unit = super.addFocusListener(l)
 
-  override fun isFocusable() = true
+  override fun isFocusable(): Boolean = true
 
   abstract fun clicked()
 
@@ -524,11 +526,11 @@ class ColorValueField(private val hex: Boolean = false, private val showAlpha: B
 
     val doc = document as DigitColorDocument
     val newValue = doc.getText(0, doc.length).toInt() + diff
-    val valueInRange = Math.max(doc.valueRange.start, Math.min(newValue, doc.valueRange.endInclusive))
+    val valueInRange = max(doc.valueRange.start, min(newValue, doc.valueRange.endInclusive))
     text = valueInRange.toString()
   }
 
-  override fun isFocusable() = true
+  override fun isFocusable(): Boolean = true
 
   val colorValue: Int
     get() {

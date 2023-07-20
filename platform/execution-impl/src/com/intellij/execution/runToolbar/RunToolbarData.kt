@@ -156,7 +156,7 @@ internal fun ExecutionEnvironment.getRunToolbarProcess(): RunToolbarProcess? {
 
 internal fun DataContext.editConfiguration() {
   getData(CommonDataKeys.PROJECT)?.let {
-    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this)).show()
+    EditConfigurationsDialog(it, createRunConfigurationConfigurable(it, this), this).show()
   }
 }
 
@@ -183,18 +183,14 @@ private fun createRunConfigurationConfigurable(project: Project, dataContext: Da
 
   return when {
     project.isDefault -> object : RunConfigurable(project) {
-      override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
-        return settings
-      }
+      override fun getInitialSelectedConfiguration() = settings
 
       override fun updateActiveConfigurationFromSelected() {
         updateActiveConfigurationFromSelected(getSelectedConfigurable())
       }
     }
     else -> object : ProjectRunConfigurationConfigurable(project) {
-      override fun getSelectedConfiguration(): RunnerAndConfigurationSettings? {
-        return settings
-      }
+      override fun getInitialSelectedConfiguration() = settings
 
       override fun updateActiveConfigurationFromSelected() {
        updateActiveConfigurationFromSelected(getSelectedConfigurable())

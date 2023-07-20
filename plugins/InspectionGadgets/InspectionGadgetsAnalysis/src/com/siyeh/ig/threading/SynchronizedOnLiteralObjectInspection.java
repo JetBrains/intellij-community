@@ -2,26 +2,23 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Set;
 
-import static com.intellij.codeInspection.options.OptPane.*;
+import static com.intellij.codeInspection.options.OptPane.checkbox;
+import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class SynchronizedOnLiteralObjectInspection extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean warnOnAllPossiblyLiterals = false;
 
-  private static final Set<String> LITERAL_TYPES = ContainerUtil.set(
+  private static final Set<String> LITERAL_TYPES = Set.of(
     CommonClassNames.JAVA_LANG_STRING,
     CommonClassNames.JAVA_LANG_BOOLEAN,
     CommonClassNames.JAVA_LANG_CHARACTER,

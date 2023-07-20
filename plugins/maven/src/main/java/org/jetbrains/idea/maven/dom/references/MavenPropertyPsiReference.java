@@ -573,7 +573,7 @@ public class MavenPropertyPsiReference extends MavenPsiReference implements Loca
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[]{ new MyLocalQuickFix() };
   }
 

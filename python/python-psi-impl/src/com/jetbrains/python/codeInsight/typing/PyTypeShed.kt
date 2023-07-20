@@ -64,6 +64,7 @@ object PyTypeShed {
     "importlib.metadata._meta" to (LanguageLevel.PYTHON310 to null),  // likely it is ignored now
     "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
     "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
+    "multiprocessing.resource_tracker" to (LanguageLevel.PYTHON38 to null), // likely it is ignored now
     "multiprocessing.shared_memory" to (LanguageLevel.PYTHON38 to null),  // likely it is ignored now
     "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
     "symbol" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),

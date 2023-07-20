@@ -5,6 +5,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.ModuleChunk;
@@ -37,11 +38,11 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   private volatile float myDone = -1.0f;
   private final EventDispatcher<BuildListener> myListeners = EventDispatcher.create(BuildListener.class);
 
-  CompileContextImpl(CompileScope scope,
-                     ProjectDescriptor pd,
-                     MessageHandler delegateMessageHandler,
-                     Map<String, String> builderParams,
-                     CanceledStatus cancelStatus) {
+  CompileContextImpl(@NotNull CompileScope scope,
+                     @NotNull ProjectDescriptor pd,
+                     @NotNull MessageHandler delegateMessageHandler,
+                     @NotNull Map<String, String> builderParams,
+                     @NotNull CanceledStatus cancelStatus) {
     myProjectDescriptor = pd;
     myBuilderParams = Collections.unmodifiableMap(builderParams);
     myCancelStatus = cancelStatus;
@@ -50,7 +51,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @TestOnly
-  public static CompileContext createContextForTests(CompileScope scope, ProjectDescriptor descriptor) {
+  public static CompileContext createContextForTests(@NotNull CompileScope scope, @NotNull ProjectDescriptor descriptor) {
     return new CompileContextImpl(scope, descriptor, DEAF, Collections.emptyMap(), CanceledStatus.NULL);
   }
 
@@ -62,7 +63,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void setCompilationStartStamp(Collection<? extends BuildTarget<?>> targets, long stamp) {
+  public void setCompilationStartStamp(@NotNull Collection<? extends BuildTarget<?>> targets, long stamp) {
     synchronized (myCompilationStartStamp) {
       for (BuildTarget<?> target : targets) {
         myCompilationStartStamp.put(target, stamp);
@@ -80,7 +81,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public BuildLoggingManager getLoggingManager() {
+  public @NotNull BuildLoggingManager getLoggingManager() {
     return myProjectDescriptor.getLoggingManager();
   }
 
@@ -91,17 +92,17 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void addBuildListener(BuildListener listener) {
+  public void addBuildListener(@NotNull BuildListener listener) {
     myListeners.addListener(listener);
   }
 
   @Override
-  public void removeBuildListener(BuildListener listener) {
+  public void removeBuildListener(@NotNull BuildListener listener) {
     myListeners.removeListener(listener);
   }
 
   @Override
-  public void markNonIncremental(ModuleBuildTarget target) {
+  public void markNonIncremental(@NotNull ModuleBuildTarget target) {
     if (!target.isTests()) {
       myNonIncrementalModules.add(new ModuleBuildTarget(target.getModule(), JavaModuleBuildTargetType.TEST));
     }
@@ -109,7 +110,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public boolean shouldDifferentiate(ModuleChunk chunk) {
+  public boolean shouldDifferentiate(@NotNull ModuleChunk chunk) {
     if (myNonIncrementalModules.isEmpty()) {
       return true;
     }
@@ -122,7 +123,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public final CanceledStatus getCancelStatus() {
+  public final @NotNull CanceledStatus getCancelStatus() {
     return myCancelStatus;
   }
 
@@ -134,12 +135,12 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public void clearNonIncrementalMark(ModuleBuildTarget target) {
+  public void clearNonIncrementalMark(@NotNull ModuleBuildTarget target) {
     myNonIncrementalModules.remove(target);
   }
 
   @Override
-  public CompileScope getScope() {
+  public @NotNull CompileScope getScope() {
     return myScope;
   }
 
@@ -166,7 +167,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   }
 
   @Override
-  public ProjectDescriptor getProjectDescriptor() {
+  public @NotNull ProjectDescriptor getProjectDescriptor() {
     return myProjectDescriptor;
   }
 }

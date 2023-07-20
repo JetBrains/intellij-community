@@ -12,10 +12,25 @@ public class UnnecessaryCallToStringValueOfInspectionTest extends LightJavaInspe
     doTest();
   }
 
+  public void testUnnecessaryCallToStringValueOf_all() {
+    doAllTest();
+  }
+
+  private void doAllTest() {
+    String name = getTestName(false);
+    myFixture.configureByFile(name + ".java");
+    myFixture.testHighlighting(true, false, true);
+  }
+
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new UnnecessaryCallToStringValueOfInspection();
+    UnnecessaryCallToStringValueOfInspection inspection = new UnnecessaryCallToStringValueOfInspection();
+    if (getTestName(true).contains("_all")) {
+      inspection.reportWithEmptyString = true;
+    }
+    return inspection;
   }
 
   @Override

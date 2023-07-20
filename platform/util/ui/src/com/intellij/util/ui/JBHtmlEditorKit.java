@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -220,7 +220,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       return myDisableLinkedCss ? new CallbackWrapper(reader) : reader;
     }
 
-    private final class CallbackWrapper extends ParserCallback {
+    private static final class CallbackWrapper extends ParserCallback {
       private final ParserCallback delegate;
       private int depth;
 

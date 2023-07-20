@@ -16,9 +16,6 @@ signal.sigtimedwait
 signal.sigwaitinfo
 select.epoll.register
 
-# Exists at runtime, but missing from stubs
-distutils.command.build_ext.__warningregistry__
-
 # ==========
 # Allowlist entries that cannot or should not be fixed
 # ==========

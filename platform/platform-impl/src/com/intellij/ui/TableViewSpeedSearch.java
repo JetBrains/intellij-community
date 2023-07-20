@@ -25,6 +25,20 @@ import java.util.List;
  * @author Gregory.Shrago
  */
 public abstract class TableViewSpeedSearch<Item> extends TableSpeedSearchBase<TableView<Item>> {
+  /**
+   * @param sig parameter is used to avoid clash with the deprecated constructor
+   */
+  protected TableViewSpeedSearch(TableView<Item> component, Void sig) {
+    super(component, sig);
+    setComparator(new SpeedSearchComparator(false));
+  }
+
+  /**
+   * @deprecated For inheritance use the non-deprecated constructor.
+   * <p>
+   * Also, note that non-deprecated constructor is side effect free, and you should call for {@link SpeedSearchBase#setupListeners()}
+   * method to enable speed search
+   */
   public TableViewSpeedSearch(TableView<Item> component) {
     super(component);
     setComparator(new SpeedSearchComparator(false));

@@ -5,10 +5,6 @@ import com.intellij.openapi.vfs.VirtualFile
 
 interface TestFilesConfiguration {
 
-  fun findFile(relativePath: String): String?
-
-  fun getFile(relativePath: String): String
-
   fun withDirectory(relativePath: String)
 
   fun withFile(relativePath: String, content: String)
@@ -16,6 +12,8 @@ interface TestFilesConfiguration {
   fun withFiles(action: suspend (VirtualFile) -> Unit)
 
   fun areContentsEqual(root: VirtualFile): Boolean
+
+  fun assertContentsAreEqual(root: VirtualFile)
 
   suspend fun createFiles(root: VirtualFile)
 }

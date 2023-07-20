@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -20,6 +21,7 @@ public class UnusedImportsTest extends LightJavaCodeInsightFixtureTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myFixture.enableInspections(new UnusedImportInspection());
+    myFixture.enableInspections(new UnusedDeclarationInspection());
   }
 
   public void test1() { doTest(); }

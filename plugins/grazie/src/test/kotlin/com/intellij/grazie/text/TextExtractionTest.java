@@ -197,11 +197,11 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   public void testXmlHtml() {
-    checkHtmlXml(false);
-
-    Registry.get("grazie.html.concatenate.inline.tag.contents").setValue(true, getTestRootDisposable());
-    myFixture.getPsiManager().dropPsiCaches();
     checkHtmlXml(true);
+
+    Registry.get("grazie.html.concatenate.inline.tag.contents").setValue(false, getTestRootDisposable());
+    myFixture.getPsiManager().dropPsiCaches();
+    checkHtmlXml(false);
   }
 
   public void testLargeXmlPerformance() {

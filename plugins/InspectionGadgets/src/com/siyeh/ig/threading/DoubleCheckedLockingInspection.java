@@ -15,7 +15,9 @@
  */
 package com.siyeh.ig.threading;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -24,7 +26,6 @@ import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceHolderFix;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
@@ -48,20 +49,20 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiField field = (PsiField)infos[0];
     final PsiIfStatement innerIf = (PsiIfStatement)infos[1];
     final PsiIfStatement outerIf = (PsiIfStatement)infos[2];
-    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+    final List<LocalQuickFix> fixes = new SmartList<>();
     final IntroduceHolderFix fix = IntroduceHolderFix.createFix(field, innerIf);
     if (fix != null && outerIf.getElseBranch() == null) {
       fixes.add(fix);
     }
     fixes.add(new DoubleCheckedLockingFix(field));
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static final class DoubleCheckedLockingFix extends InspectionGadgetsFix {
+  private static final class DoubleCheckedLockingFix extends PsiUpdateModCommandQuickFix {
 
     private final String myFieldName;
 
@@ -82,8 +83,7 @@ public class DoubleCheckedLockingInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiIfStatement ifStatement)) {
         return;

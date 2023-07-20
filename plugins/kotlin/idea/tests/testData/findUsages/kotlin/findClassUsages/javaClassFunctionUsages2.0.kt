@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtClass
 // OPTIONS: functionUsages
+// PSI_ELEMENT_AS_TITLE: "class A : X"
 interface X {
     val a: String
         get() {

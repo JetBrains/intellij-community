@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.application.options.PathMacrosCollector;
@@ -26,24 +26,23 @@ public class PathMacroManager implements PathMacroSubstitutor {
     return componentManager.getService(PathMacroManager.class);
   }
 
-  private static class Holder {
-    private static @NotNull CompositePathMacroFilter createFilter() {
-      return new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
-    }
-  }
+  private PathMacrosImpl pathMacros;
 
-  private PathMacrosImpl myPathMacros;
-
-  private ReplacePathToMacroMap myReplacePathToMacroMap;
-  private long myPathMacrosModificationCount;
+  private ReplacePathToMacroMap replacePathToMacroMap;
+  private long pathMacrosModificationCount;
 
   public PathMacroManager(@Nullable PathMacros pathMacros) {
-    myPathMacros = (PathMacrosImpl)pathMacros;
+    this.pathMacros = (PathMacrosImpl)pathMacros;
   }
 
-  @NotNull
-  public PathMacroFilter getMacroFilter() {
-    return Holder.createFilter();
+  private static @NotNull CompositePathMacroFilter createFilter() {
+    return PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.computeIfAbsent(PathMacroManager.class, () -> {
+      return new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
+    });
+  }
+
+  public @NotNull PathMacroFilter getMacroFilter() {
+    return createFilter();
   }
 
   public static void addFileHierarchyReplacements(@NotNull ExpandMacroToPathMap result, @NotNull String macroName, @SystemIndependent @Nullable String path) {
@@ -75,8 +74,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
     }
   }
 
-  @NotNull
-  public ExpandMacroToPathMap getExpandMacroMap() {
+  public @NotNull ExpandMacroToPathMap getExpandMacroMap() {
     ExpandMacroToPathMap result = new ExpandMacroToPathMap();
     getPathMacros().addMacroExpands(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
@@ -85,20 +83,18 @@ public class PathMacroManager implements PathMacroSubstitutor {
     return result;
   }
 
-  @NotNull
-  public final synchronized ReplacePathToMacroMap getReplacePathMap() {
+  public final synchronized @NotNull ReplacePathToMacroMap getReplacePathMap() {
     long pathMacrosModificationCount = getPathMacros().getModificationCount();
-    if (myReplacePathToMacroMap != null && pathMacrosModificationCount == myPathMacrosModificationCount) {
-      return myReplacePathToMacroMap;
+    if (replacePathToMacroMap != null && pathMacrosModificationCount == this.pathMacrosModificationCount) {
+      return replacePathToMacroMap;
     }
 
-    myReplacePathToMacroMap = computeReplacePathMap();
-    myPathMacrosModificationCount = pathMacrosModificationCount;
-    return myReplacePathToMacroMap;
+    replacePathToMacroMap = computeReplacePathMap();
+    this.pathMacrosModificationCount = pathMacrosModificationCount;
+    return replacePathToMacroMap;
   }
 
-  @NotNull
-  protected ReplacePathToMacroMap computeReplacePathMap() {
+  protected @NotNull ReplacePathToMacroMap computeReplacePathMap() {
     ReplacePathToMacroMap result = new ReplacePathToMacroMap();
     getPathMacros().addMacroReplacements(result);
     for (Map.Entry<String, String> entry : PathMacroUtil.getGlobalSystemMacros().entrySet()) {
@@ -108,7 +104,7 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   protected void resetCachedReplacePathMap() {
-    myReplacePathToMacroMap = null;
+    replacePathToMacroMap = null;
   }
 
   @Override
@@ -140,15 +136,14 @@ public class PathMacroManager implements PathMacroSubstitutor {
   }
 
   public static void collapsePaths(@NotNull Element element, boolean recursively, @NotNull ReplacePathToMacroMap map) {
-    map.substitute(element, SystemInfoRt.isFileSystemCaseSensitive, recursively, Holder.createFilter());
+    map.substitute(element, SystemInfoRt.isFileSystemCaseSensitive, recursively, createFilter());
   }
 
-  @NotNull
-  private PathMacrosImpl getPathMacros() {
-    if (myPathMacros == null) {
-      myPathMacros = PathMacrosImpl.getInstanceEx();
+  private @NotNull PathMacrosImpl getPathMacros() {
+    if (pathMacros == null) {
+      pathMacros = PathMacrosImpl.getInstanceEx();
     }
-    return myPathMacros;
+    return pathMacros;
   }
 
   protected static boolean pathsEqual(@Nullable String path1, @Nullable String path2) {

@@ -4,10 +4,13 @@ package git4idea.remote.hosting
 import com.intellij.collaboration.api.ServerPath
 import git4idea.remote.GitRemoteUrlCoordinates
 import org.jetbrains.annotations.ApiStatus
+import java.net.URI
 
 @ApiStatus.Experimental
 interface HostedRepositoryCoordinates {
   val serverPath: ServerPath
+
+  fun getWebURI(): URI
 }
 
 @ApiStatus.Experimental

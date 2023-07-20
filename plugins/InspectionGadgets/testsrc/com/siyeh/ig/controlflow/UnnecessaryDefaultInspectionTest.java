@@ -2,8 +2,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.pom.java.LanguageLevel;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -133,7 +131,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     doTest("class X {" +
            "  void x(I i) {" +
            "    switch (i) {" +
-           "      case (I ii && false):" +
+           "      case I ii when Math.random() > 0.5:" +
            "        break;" +
            "      case C1 c1:" +
            "        break;" +
@@ -148,7 +146,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "class X {" +
                   "  void x(I i) {" +
                   "    switch (i) {" +
-                  "      case (I ii && false):" +
+                  "      case I ii when Math.random() > 0.5:" +
                   "        break;" +
                   "      case C1 c1:" +
                   "        break;" +
@@ -163,7 +161,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
     doTest("class X {" +
            "  void x(I i) {" +
            "    switch (i) {" +
-           "      case /*'default' branch is unnecessary*/default/*_*//**/, <error descr=\"Illegal fall-through to a pattern\">(I ii && false)</error>:" +
+           "      case /*'default' branch is unnecessary*/default/*_*//**/, <error descr=\"Illegal fall-through to a pattern\">I ii when Math.random() > 0.5</error>:" +
            "        break;" +
            "      case C1 c1:" +
            "        break;" +
@@ -176,7 +174,7 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
                   "class X {" +
                   "  void x(I i) {" +
                   "    switch (i) {" +
-                  "      case (I ii && false):" +
+                  "      case I ii when Math.random() > 0.5:" +
                   "        break;" +
                   "      case C1 c1:" +
                   "        break;" +
@@ -192,31 +190,10 @@ public class UnnecessaryDefaultInspectionTest extends LightJavaInspectionTestCas
            "  void x(J<Integer> j) {" +
            "    switch (j) {" +
            "      case D2 d2 -> {}" +
-           "      case default -> {}" +
+           "      case /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
            "    }" +
            "  }" +
            "}");
-  }
-
-  public void testDefaultInParameterizedSealedHierarchyJava18() {
-    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_18_PREVIEW, () -> {
-      doTest("class X {" +
-             "  void x(J<Integer> j) {" +
-             "    switch (j) {" +
-             "      case D2 d2 -> {}" +
-             "      case /*'default' branch is unnecessary*/default/*_*//**/ -> {}" +
-             "    }" +
-             "  }" +
-             "}");
-      checkQuickFix("Remove 'default' branch",
-                    "class X {" +
-                    "  void x(J<Integer> j) {" +
-                    "    switch (j) {" +
-                    "      case D2 d2 -> {}\n" +
-                    "}" +
-                    "  }" +
-                    "}");
-    });
   }
 
   @Override
@@ -227,7 +204,7 @@ enum E { A, B }
 sealed interface I {}
 final class C1 implements I {}
 final class C2 implements I {}
-sealed interface J<T>
+sealed interface J<T> {}
 final class D1 implements J<String> {}
 final class D2<T> implements J<T> {}
 """
@@ -244,6 +221,6 @@ final class D2<T> implements J<T> {}
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_19;
   }
 }

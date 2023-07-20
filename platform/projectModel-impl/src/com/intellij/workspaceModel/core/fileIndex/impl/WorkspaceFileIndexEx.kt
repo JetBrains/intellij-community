@@ -2,7 +2,6 @@
 package com.intellij.workspaceModel.core.fileIndex.impl
 
 import com.intellij.openapi.roots.ContentIteratorEx
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.AsyncFileListener
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
@@ -13,8 +12,8 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetData
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
-import com.intellij.workspaceModel.storage.EntityReference
-import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.EntityReference
+import com.intellij.platform.workspace.storage.WorkspaceEntity
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
@@ -81,11 +80,6 @@ interface WorkspaceFileIndexEx : WorkspaceFileIndex {
   
   @TestOnly
   fun reset()
-
-  companion object {
-    @JvmField
-    val IS_ENABLED: Boolean = Registry.`is`("platform.projectModel.workspace.model.file.index", true)
-  }
 }
 
 /**

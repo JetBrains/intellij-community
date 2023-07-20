@@ -19,7 +19,6 @@ import com.intellij.vcs.log.VcsLogRangeFilter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.DataPackChangeListener
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogTabLocation.Companion.findLogUi
 import com.intellij.vcs.log.ui.MainVcsLogUi
@@ -59,7 +58,9 @@ class GitUpdateInfoAsLog(private val project: Project,
   @RequiresBackgroundThread
   fun calculateDataAndCreateLogTab(): NotificationData? {
     val commitsAndFiles = calculateDataFromGit() ?: return null
-    if (!VcsProjectLog.ensureLogCreated(project)) return null
+    if (!VcsProjectLog.ensureLogCreated(project)) {
+      return null
+    }
 
     if (isPathFilterSet()) {
       return waitForLogRefreshAndCalculate(commitsAndFiles)
@@ -175,7 +176,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
                                               logData.index)
-      val initialSortType = properties.get<PermanentGraph.SortType>(MainVcsLogUiProperties.BEK_SORT_TYPE)
+      val initialSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
       val refresher = VisiblePackRefresherImpl(project, logData, VcsLogFilterObject.collection(rangeFilter), initialSortType,
                                                vcsLogFilterer, logId)
 

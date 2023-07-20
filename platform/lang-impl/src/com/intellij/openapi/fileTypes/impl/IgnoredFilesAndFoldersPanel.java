@@ -204,7 +204,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
                                       .setHideOnKeyOutside(true)
                                       .setFadeoutTime(1000)
                                       .createBalloon();
-      int xLoc = (int) getGraphics().getFontMetrics().getStringBounds(getText(), getGraphics()).getWidth();
+      int xLoc = getFontMetrics(getFont()).stringWidth(getText());
       RelativePoint relativePoint =
         new RelativePoint(this, new Point(xLoc, this.getHeight()));
       balloon.show(relativePoint, Balloon.Position.below);

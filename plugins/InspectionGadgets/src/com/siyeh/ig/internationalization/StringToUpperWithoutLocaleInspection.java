@@ -17,14 +17,13 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.DelegatingFix;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.fixes.AddArgumentFix;
 import org.intellij.lang.annotations.Pattern;
@@ -54,16 +53,16 @@ public class StringToUpperWithoutLocaleInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiReferenceExpression methodExpression = (PsiReferenceExpression)infos[0];
-    List<InspectionGadgetsFix> fixes = new ArrayList<>(2);
+    List<LocalQuickFix> fixes = new ArrayList<>(2);
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
     String constantName = PsiUtil.isLanguageLevel6OrHigher(methodExpression) ? "ROOT" : "ENGLISH";
     fixes.add(new AddArgumentFix("java.util.Locale." + constantName, "Locale." + constantName));
     if (annotatableQualifier != null) {
-      fixes.add(new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier)));
+      fixes.add(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

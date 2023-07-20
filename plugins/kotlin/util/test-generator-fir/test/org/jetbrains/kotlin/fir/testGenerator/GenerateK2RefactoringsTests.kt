@@ -30,4 +30,11 @@ internal fun MutableTWorkspace.generateK2RefactoringsTests() {
             model("refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin", pattern = Patterns.JAVA, testMethodName = "doJavaParameterTest")
         }
     }
+
+    // TODO enable when move refactoring works
+    //testGroup("refactorings/kotlin.refactorings.move.k2", testDataPath = "../../idea/tests/testData") {
+    //    testClass<AbstractK2MoveTest> {
+    //        model("refactoring/move/kotlin/moveFile/", pattern = Patterns.TEST, flatten = true)
+    //    }
+    //}
 }

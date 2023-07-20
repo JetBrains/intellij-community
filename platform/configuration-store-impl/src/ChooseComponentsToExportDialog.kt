@@ -121,7 +121,7 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
     for (componentElementProperty in LinkedHashSet(componentToContainingListElement.values)) {
       chooser.addElement(componentElementProperty, markedElementNames.isEmpty() || markedElementNames.contains(componentElementProperty.fileName), componentElementProperty)
     }
-    chooser.sort(Comparator.comparing<ComponentElementProperties, String> { it.toString() })
+    chooser.sort(Comparator.comparing { it.toString() })
 
     val exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH)
     pathPanel.text = exportPath

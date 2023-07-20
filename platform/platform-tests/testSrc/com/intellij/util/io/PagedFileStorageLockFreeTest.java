@@ -240,7 +240,7 @@ public class PagedFileStorageLockFreeTest {
 
   /** @see PagedStorageWithPageUnalignedAccess */
   @Test
-  public void pageUnAlignedPrimitiveAccesses_ThrowException() throws IOException, InterruptedException {
+  public void pageUnAlignedPrimitiveAccesses_ThrowException() throws Exception {
     final File file = tmpDirectory.newFile();
     try (final PagedFileStorageLockFree pagedStorage = openFile(file)) {
       final int pageSize = pagedStorage.getPageSize();
@@ -282,7 +282,7 @@ public class PagedFileStorageLockFreeTest {
 
   @SuppressWarnings("IntegerMultiplicationImplicitCastToLong")
   @Test
-  public void uncontendedMultiThreadedWrites_ReadBackUnchanged() throws IOException, InterruptedException {
+  public void uncontendedMultiThreadedWrites_ReadBackUnchanged() throws Exception {
     final int pagesInCache = (int)(storageContext.pageCache().getCacheCapacityBytes() / PAGE_SIZE);
     final int fileSize = (2 * pagesInCache + 20) * PAGE_SIZE;
     final int blockSize = 64;

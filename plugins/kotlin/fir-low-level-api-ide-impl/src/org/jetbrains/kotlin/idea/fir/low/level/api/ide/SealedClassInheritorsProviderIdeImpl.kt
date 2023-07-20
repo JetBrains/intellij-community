@@ -28,7 +28,7 @@ internal class SealedClassInheritorsProviderIdeImpl : SealedClassInheritorsProvi
     @OptIn(SealedClassInheritorsProviderInternals::class)
     override fun getSealedClassInheritors(firClass: FirRegularClass): List<ClassId> {
         require(firClass.isSealed)
-        firClass.sealedInheritorsAttr?.let { return it }
+        firClass.sealedInheritorsAttr?.value?.let { return it }
         return cache.computeIfAbsent(firClass.classId) { getInheritors(firClass) }
     }
 

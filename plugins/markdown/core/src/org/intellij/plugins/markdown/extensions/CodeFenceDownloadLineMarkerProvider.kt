@@ -19,7 +19,8 @@ import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 abstract class CodeFenceDownloadLineMarkerProvider : LineMarkerProviderDescriptor() {
   init {
     application.messageBus.connect().subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, object: MarkdownExtensionsSettings.ChangeListener {

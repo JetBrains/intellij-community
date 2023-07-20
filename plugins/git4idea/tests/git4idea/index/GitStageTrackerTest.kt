@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.google.common.util.concurrent.SettableFuture
 import com.intellij.AppTopics
 import com.intellij.idea.Bombed
+import com.intellij.idea.IgnoreJUnit3
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.application.runWriteAction
@@ -123,7 +124,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
     }
   }
 
-  @Bombed(year = 3000, month = Calendar.JANUARY, day = 1, user = "Julia.Beliaeva")
+  @IgnoreJUnit3
   fun `test untracked`() {
     val fileName = "file.txt"
     val file = runWithTrackerUpdate("createChildData") {

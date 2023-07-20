@@ -1,12 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.wm.ex.IdeFrameEx
-import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
-import com.intellij.ui.ComponentUtil
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockContainerFactory
 import com.intellij.ui.docking.DockableContent
@@ -34,11 +29,6 @@ internal class DockableEditorContainerFactory(private val fileEditorManager: Fil
 
       override fun afterFileOpen(file: VirtualFile) {
         container!!.fireContentOpen(file)
-      }
-
-      override fun getFrame(project: Project): IdeFrameEx? {
-        val frame = ComponentUtil.findUltimateParent(this)
-        return if (frame is IdeFrameEx) frame else getFrameHelper(frame as IdeFrameImpl)
       }
 
       override val isFloating: Boolean

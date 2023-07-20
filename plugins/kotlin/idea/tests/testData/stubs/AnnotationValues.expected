@@ -221,11 +221,17 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=Arrays]
         VALUE_ARGUMENT_LIST
           VALUE_ARGUMENT[isSpread=false]
+            COLLECTION_LITERAL_EXPRESSION
           VALUE_ARGUMENT[isSpread=false]
+            COLLECTION_LITERAL_EXPRESSION
           VALUE_ARGUMENT[isSpread=false]
+            COLLECTION_LITERAL_EXPRESSION
           VALUE_ARGUMENT[isSpread=false]
+            COLLECTION_LITERAL_EXPRESSION
           VALUE_ARGUMENT[isSpread=false]
+            COLLECTION_LITERAL_EXPRESSION
           VALUE_ARGUMENT[isSpread=false]
+            COLLECTION_LITERAL_EXPRESSION
   CLASS[classId=test/ClassLiteral, fqName=test.ClassLiteral, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=ClassLiteral, superNames=[]]
     MODIFIER_LIST[annotation]
     PRIMARY_CONSTRUCTOR[fqName=null, hasBody=false, isDelegatedCallToThis=false, isExtension=false, isTopLevel=false, name=ClassLiteral]
@@ -257,8 +263,14 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=ClassLiteral]
         VALUE_ARGUMENT_LIST
           VALUE_ARGUMENT[isSpread=false]
+            CLASS_LITERAL_EXPRESSION
+              REFERENCE_EXPRESSION[referencedName=WithClassLiteral]
           VALUE_ARGUMENT[isSpread=false]
+            CLASS_LITERAL_EXPRESSION
+              REFERENCE_EXPRESSION[referencedName=String]
           VALUE_ARGUMENT[isSpread=false]
+            CLASS_LITERAL_EXPRESSION
+              REFERENCE_EXPRESSION[referencedName=T]
     TYPE_PARAMETER_LIST
       TYPE_PARAMETER[fqName=null, isInVariance=false, isOutVariance=false, name=T]
   CLASS[classId=test/Nested, fqName=test.Nested, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=Nested, superNames=[]]
@@ -317,6 +329,7 @@ PsiJetFileStubImpl[package=test]
               REFERENCE_EXPRESSION[referencedName=ArraysSpread]
         VALUE_ARGUMENT_LIST
           VALUE_ARGUMENT[isSpread=true]
+            COLLECTION_LITERAL_EXPRESSION
   CLASS[classId=test/WithComplexDotQualifiedAnnotation, fqName=test.WithComplexDotQualifiedAnnotation, isEnumEntry=false, isInterface=false, isLocal=false, isTopLevel=true, name=WithComplexDotQualifiedAnnotation, superNames=[]]
     MODIFIER_LIST[]
       ANNOTATION_ENTRY[hasValueArguments=true, shortName=SomeAnno1]

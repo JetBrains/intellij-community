@@ -81,14 +81,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
       });
     }
     MavenProjectsManager.getInstance(project).getEmbeddersManager().reset();
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, SyncBundle.message("maven.sync.restarting"), false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        connectorsToShutDown.forEach(it -> {
-          it.stop(wait);
-        });
-      }
-    });
+    MavenServerManagerEx.stopConnectors(project, wait, connectorsToShutDown);
   }
 
   MavenServerManagerImpl() {
@@ -327,7 +320,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
       values = new ArrayList<>(myMultimoduleDirToConnectorMap.values());
     }
 
-
     shutdownConnector(myIndexingConnector, wait);
     values.forEach(c -> shutdownConnector(c, wait));
   }
@@ -345,20 +337,18 @@ final class MavenServerManagerImpl implements MavenServerManager {
     final String root = pluginFileOrDir.getParent();
     if (pluginFileOrDir.isDirectory()) {
       eventListenerJar = getEventSpyPathForLocalBuild();
+      if (!eventListenerJar.exists()) {
+        MavenLog.LOG.warn("""
+                            Event listener does not exist: Please run rebuild for maven modules:
+                            community/plugins/maven/maven-event-listener"""
+        );
+      }
     }
     else {
       eventListenerJar = new File(root, "maven-event-listener.jar");
-    }
-    if (!eventListenerJar.exists()) {
-      if (ApplicationManager.getApplication().isInternal()) {
-        MavenLog.LOG.warn("""
-                            Event listener does not exist: Please run rebuild for maven modules:
-                            community/plugins/maven/maven-event-listener
-                            and all maven*-server* modules"""
-        );
-      }
-      else {
-        MavenLog.LOG.warn("Event listener does not exist " + eventListenerJar);
+      if (!eventListenerJar.exists()) {
+        MavenLog.LOG.warn("Event listener does not exist at " + eventListenerJar +
+                          ". It should be built as part of plugin layout process and bundled along with maven plugin jars");
       }
     }
     return eventListenerJar;
@@ -377,7 +367,7 @@ final class MavenServerManagerImpl implements MavenServerManager {
     MavenServerSettings result = new MavenServerSettings();
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
-    result.setSnapshotUpdatePolicy(settings.isAlwaysUpdateSnapshots()? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
+    result.setUpdateSnapshots(settings.isAlwaysUpdateSnapshots());
     File mavenHome = settings.getEffectiveMavenHome();
     if (mavenHome != null) {
       String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
@@ -397,9 +387,6 @@ final class MavenServerManagerImpl implements MavenServerManager {
     String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
 
     result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
-    result.setPluginUpdatePolicy(settings.getPluginUpdatePolicy().getServerPolicy());
-    result.setSnapshotUpdatePolicy(
-      settings.isAlwaysUpdateSnapshots() ? MavenServerSettings.UpdatePolicy.ALWAYS_UPDATE : MavenServerSettings.UpdatePolicy.DO_NOT_UPDATE);
     return result;
   }
 
@@ -408,10 +395,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
   @NotNull
   public MavenEmbedderWrapper createEmbedder(final Project project,
                                              final boolean alwaysOnline,
-                                             @Nullable String workingDirectory,
                                              @NotNull String multiModuleProjectDirectory) {
 
-    return new MavenEmbedderWrapper(project, null) {
+    return new MavenEmbedderWrapperEx(project) {
       private MavenServerConnector myConnector;
 
       @NotNull
@@ -429,11 +415,17 @@ final class MavenServerManagerImpl implements MavenServerManager {
           sdkPath = transformer.toRemotePath(sdkPath);
         }
         settings.setProjectJdk(sdkPath);
-        myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
 
-        return myConnector.createEmbedder(
-          new MavenEmbedderSettings(settings, workingDirectory == null ? null : transformer.toRemotePath(workingDirectory),
-                                    transformer.toRemotePath(multiModuleProjectDirectory)));
+        var forceResolveDependenciesSequentially = Registry.is("maven.server.force.resolve.dependencies.sequentially");
+        var useCustomDependenciesResolver = Registry.is("maven.server.use.custom.dependencies.resolver");
+
+        myConnector = MavenServerManagerImpl.this.getConnector(project, multiModuleProjectDirectory);
+        return myConnector.createEmbedder(new MavenEmbedderSettings(
+          settings,
+          transformer.toRemotePath(multiModuleProjectDirectory),
+          forceResolveDependenciesSequentially,
+          useCustomDependenciesResolver
+        ));
       }
 
       @Override

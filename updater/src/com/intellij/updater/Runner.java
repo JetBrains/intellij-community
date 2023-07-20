@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import com.studio.updater.UpdaterService;
@@ -183,6 +183,8 @@ public final class Runner {
              args.length >= 3 && ("batch-install".equals(args[0]))) {
       // Android Studio: Analytics
       for (UpdaterService service : UpdaterService.loader) { service.logProcessStart(); }
+      LOG.info("JRE: " + System.getProperty("java.runtime.version", "unknown") + " @ " + System.getProperty("java.home"));
+
       String destPath = args[1];
 
       Path destDirectory = Paths.get(destPath);

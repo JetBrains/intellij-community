@@ -12,8 +12,12 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton
 import com.intellij.ui.UIBundle
+import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.bindSelected
+import com.intellij.ui.dsl.builder.bindText
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.enteredTextSatisfies
-import com.intellij.ui.layout.panel
 import com.intellij.util.io.isWritable
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
@@ -40,24 +44,26 @@ class UpdateFromSourcesDialog(private val project: Project,
   override fun createCenterPanel(): DialogPanel {
     panel = panel {
       row(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.row.ide.installation")) {
-        pathField = textFieldWithHistoryWithBrowseButton({ state.actualIdePath },
-                                                         { state.workIdePath = it },
-                                                         DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
-                                                         project,
-                                                         FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-                                                         { state.workIdePathsHistory }).component
+        pathField = textFieldWithHistoryWithBrowseButton(
+          project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.installation.choose.ide.directory.title"),
+          FileChooserDescriptorFactory.createSingleFolderDescriptor(), { state.workIdePathsHistory })
+        cell(pathField)
+          .align(AlignX.FILL)
+          .bindText({ state.actualIdePath }, { state.workIdePath = it })
       }
       row {
-        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"), { !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
+        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"))
+          .bindSelected({ !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
       }
       row {
-        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"),
-                 { state.restartAutomatically }, { state.restartAutomatically = it })
+        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"))
+          .bindSelected({ state.restartAutomatically }, { state.restartAutomatically = it })
           .visibleIf(pathField.childComponent.textEditor.enteredTextSatisfies { FileUtil.pathsEqual(it, PathManager.getHomePath()) })
       }
       row {
-        checkBox(UIBundle.message("dialog.options.do.not.show"), { !state.showSettings }, { state.showSettings = !it },
-                 DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.do.not.show.description"))
+        checkBox(UIBundle.message("dialog.options.do.not.show"))
+          .bindSelected({ !state.showSettings }, { state.showSettings = !it })
+          .comment(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.do.not.show.description"))
       }
     }
     return panel

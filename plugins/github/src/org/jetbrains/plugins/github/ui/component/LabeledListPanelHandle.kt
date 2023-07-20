@@ -119,7 +119,7 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRMetad
 
   private fun editList() {
     showEditPopup(editButton)
-      ?.thenComposeAsync(Function<CollectionDelta<T>, CompletableFuture<Unit>> { delta ->
+      ?.thenComposeAsync(Function { delta ->
         if (delta == null || delta.isEmpty) {
           CompletableFuture.completedFuture(Unit)
         }

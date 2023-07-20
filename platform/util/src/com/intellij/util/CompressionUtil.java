@@ -3,7 +3,7 @@ package com.intellij.util;
 
 import com.intellij.openapi.util.ThreadLocalCachedByteArray;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.openapi.util.io.DataInputOutputUtilRt;
 import com.intellij.util.io.DataOutputStream;
 import net.jpountz.lz4.LZ4Compressor;
 import net.jpountz.lz4.LZ4Factory;
@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.lang.invoke.MethodHandles;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.util.Arrays;
@@ -22,19 +23,47 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class CompressionUtil {
   private static final int COMPRESSION_THRESHOLD = 64;
   private static final ThreadLocalCachedByteArray spareBufferLocal = new ThreadLocalCachedByteArray();
-  private static final LZ4Factory factory;
+  private static final LZ4Compressor compressor;
+  private static final LZ4FastDecompressor decompressor;
+
   static {
-    factory = SystemProperties.getBooleanProperty("idea.use.native.compression", false)
-              ? LZ4Factory.fastestInstance()
-              : LZ4Factory.fastestJavaInstance();
+    if (Boolean.getBoolean("idea.use.native.compression")) {
+      LZ4Factory factory = LZ4Factory.fastestInstance();
+      compressor = factory.fastCompressor();
+      decompressor = factory.fastDecompressor();
+    }
+    else {
+      LZ4Compressor c = null;
+      LZ4FastDecompressor d = null;
+      try {
+        // java 9+ is required - util still has java 8 level
+        Class<?> cClass = CompressionUtil.class.getClassLoader().loadClass("com.intellij.util.io.LZ4Compressor");
+        MethodHandles.Lookup lookup = MethodHandles.lookup();
+        c = (LZ4Compressor)lookup.findStaticGetter(cClass, "INSTANCE", cClass).invoke();
+        Class<?> dClass = CompressionUtil.class.getClassLoader().loadClass("com.intellij.util.io.LZ4Decompressor");
+        d = (LZ4FastDecompressor)lookup.findStaticGetter(dClass, "INSTANCE", dClass).invoke();
+      }
+      catch (Throwable ignore) {
+      }
+
+      if (c == null || d == null) {
+        LZ4Factory factory = LZ4Factory.fastestJavaInstance();
+        compressor = factory.fastCompressor();
+        decompressor = factory.fastDecompressor();
+      }
+      else {
+        compressor = c;
+        decompressor = d;
+      }
+    }
   }
 
   private static LZ4Compressor compressor() {
-    return factory.fastCompressor();
+    return compressor;
   }
 
   private static LZ4FastDecompressor decompressor() {
-    return factory.fastDecompressor();
+    return decompressor;
   }
 
   public static int writeCompressed(@NotNull DataOutput out, byte @NotNull [] bytes, int start, int length) throws IOException {
@@ -44,13 +73,14 @@ public final class CompressionUtil {
       byte[] compressedOutputBuffer = spareBufferLocal.getBuffer(compressor.maxCompressedLength(length));
       int compressedSize = compressor.compress(bytes, start, length, compressedOutputBuffer, 0);
       if (compressedSize < length) {
-        DataInputOutputUtil.writeINT(out, -compressedSize);
-        DataInputOutputUtil.writeINT(out, length - compressedSize);
+        int val = -compressedSize;
+        DataInputOutputUtilRt.writeINT(out, val);
+        DataInputOutputUtilRt.writeINT(out, length - compressedSize);
         out.write(compressedOutputBuffer, 0, compressedSize);
         return compressedSize;
       }
     }
-    DataInputOutputUtil.writeINT(out, length);
+    DataInputOutputUtilRt.writeINT(out, length);
     out.write(bytes, start, length);
     return length;
   }
@@ -82,14 +112,14 @@ public final class CompressionUtil {
       System.out.println("Compressed " + requests + " times, size:" + mySizeBeforeCompression + "->" + mySizeAfterCompression + " for " + (l  / 1000000) + "ms");
     }
 
-    DataInputOutputUtil.writeINT(out, compressedSize);
+    DataInputOutputUtilRt.writeINT(out, compressedSize);
     out.write(compressedOutputBuffer, 0, compressedSize);
 
     return compressedSize;
   }
 
   public static byte @NotNull [] readCompressedWithoutOriginalBufferLength(@NotNull DataInput in, int originalBufferLength) throws IOException {
-    int size = DataInputOutputUtil.readINT(in);
+    int size = DataInputOutputUtilRt.readINT(in);
 
     byte[] bytes = spareBufferLocal.getBuffer(size);
     in.readFully(bytes, 0, size);
@@ -109,13 +139,12 @@ public final class CompressionUtil {
     return decompressedResult;
   }
 
-
   public static byte @NotNull [] readCompressed(@NotNull DataInput in) throws IOException {
-    int size = DataInputOutputUtil.readINT(in);
+    int size = DataInputOutputUtilRt.readINT(in);
     if (size < 0) {
       size = -size;
       byte[] bytes = spareBufferLocal.getBuffer(size);
-      int sizeUncompressed = DataInputOutputUtil.readINT(in) + size;
+      int sizeUncompressed = DataInputOutputUtilRt.readINT(in) + size;
       in.readFully(bytes, 0, size);
       byte[] result = new byte[sizeUncompressed];
       int decompressed = decompressor().decompress(bytes, 0, result, 0, sizeUncompressed);
@@ -131,8 +160,7 @@ public final class CompressionUtil {
 
   private static final int STRING_COMPRESSION_THRESHOLD = 1024;
 
-  @NotNull
-  public static Object compressStringRawBytes(@NotNull CharSequence string) {
+  public static @NotNull Object compressStringRawBytes(@NotNull CharSequence string) {
     int length = string.length();
     if (length < STRING_COMPRESSION_THRESHOLD) {
       if (string instanceof CharBuffer && ((CharBuffer)string).capacity() > STRING_COMPRESSION_THRESHOLD) {
@@ -146,14 +174,14 @@ public final class CompressionUtil {
 
       for (int i=0; i< length;i++) {
         char c = string.charAt(i);
-        DataInputOutputUtil.writeINT(out, c);
+        DataInputOutputUtilRt.writeINT(out, c);
       }
 
       LZ4Compressor compressor = compressor();
       int bytesWritten = bytes.size();
       ByteBuffer dest = ByteBuffer.wrap(spareBufferLocal.getBuffer(compressor.maxCompressedLength(bytesWritten) + 10));
-      DataInputOutputUtil.writeINT(dest, length);
-      DataInputOutputUtil.writeINT(dest, bytesWritten - length);
+      DataInputOutputUtilRt.writeINT(dest, length);
+      DataInputOutputUtilRt.writeINT(dest, bytesWritten - length);
       compressor.compress(ByteBuffer.wrap(bytes.getInternalBuffer(), 0, bytesWritten), dest);
 
       return dest.position() < length * 2 ? Arrays.copyOf(dest.array(), dest.position()) : string;
@@ -164,13 +192,12 @@ public final class CompressionUtil {
     }
   }
 
-  @NotNull
-  public static CharSequence uncompressStringRawBytes(@NotNull Object compressed) {
+  public static @NotNull CharSequence uncompressStringRawBytes(@NotNull Object compressed) {
     if (compressed instanceof CharSequence) return (CharSequence)compressed;
 
     ByteBuffer buffer = ByteBuffer.wrap((byte[])compressed);
-    int len = DataInputOutputUtil.readINT(buffer);
-    int uncompressedLength = DataInputOutputUtil.readINT(buffer) + len;
+    int len = DataInputOutputUtilRt.readINT(buffer);
+    int uncompressedLength = DataInputOutputUtilRt.readINT(buffer) + len;
 
     ByteBuffer dest = ByteBuffer.wrap(spareBufferLocal.getBuffer(uncompressedLength), 0, uncompressedLength);
     decompressor().decompress(buffer, dest);
@@ -179,7 +206,7 @@ public final class CompressionUtil {
     char[] chars = new char[len];
 
     for (int i=0; i<len; i++) {
-      int c = DataInputOutputUtil.readINT(dest);
+      int c = DataInputOutputUtilRt.readINT(dest);
       chars[i] = (char)c;
     }
     return new String(chars);

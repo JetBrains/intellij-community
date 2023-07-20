@@ -4,151 +4,214 @@
 package com.intellij.ui
 
 import com.intellij.feedback.new_ui.state.NewUIInfoService
+import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.PlatformUtils
 
 /**
  * @author Konstantin Bulenkov
  */
-class ExperimentalUIImpl : ExperimentalUI(), AppLifecycleListener {
-  var newValue: Boolean = isNewUI()
-
-  init {
-    val app = ApplicationManager.getApplication()
-    app.messageBus.connect().subscribe(AppLifecycleListener.TOPIC, this)
-    if (ConfigImportHelper.isNewUser() && isNewUIEnabledByDefault() && !isNewUI()) {
-      app.invokeLater {
-        newValue = true
-        onExpUIEnabled(false)
-      }
-    }
+private class ExperimentalUIImpl : ExperimentalUI() {
+  companion object {
+    private val logger = logger<ExperimentalUI>()
   }
 
-  private fun isNewUIEnabledByDefault() = true
+  private var shouldApplyOnClose: Boolean? = null
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
 
+  /**
+   * For RD session, we take the newUI preference from the join link of IDE backend,
+   * and we don't read from or write to a local thin client registry.
+   *
+   * For CWM session, we take the newUI preference from a local thin client registry,
+   * and when a user changes the value, we write it to the local registry.
+   *
+   * Both for RD and CWM sessions an actual change of newUI preference is done by
+   * [ExperimentalUIJetBrainsClientDelegate].
+   *
+   * For local IDE, we show a restart dialog on user action.
+   * On app closing, we save new value stored in the [shouldApplyOnClose]
+   */
   override fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {
-    if (newUI) {
-      val propertyComponent = PropertiesComponent.getInstance()
-      if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
-        propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
-      }
-      else {
-        propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
-      }
+    if (newUI == NewUiValue.isEnabled()) {
+      logger.warn("Setting the same value $newUI")
+      return
     }
 
-    newValue = newUI
-
-    if (newValue != isNewUI() && suggestRestart) {
-      val action = if (ApplicationManager.getApplication().isRestartCapable) IdeBundle.message("ide.restart.action")
-      else IdeBundle.message("ide.shutdown.action")
-      if (PlatformUtils.isJetBrainsClient()) {
-        Registry.get("ide.experimental.ui").setValue(newValue)
-      }
-      else {
-        val result = Messages.showYesNoDialog(IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
-                                                                ApplicationNamesInfo.getInstance().fullProductName),
-                                              IdeBundle.message("dialog.title.restart.required"),
-                                              action,
-                                              IdeBundle.message("ide.notnow.action"),
-                                              Messages.getQuestionIcon())
-
-
-        if (result == Messages.YES) {
-          ApplicationManagerEx.getApplicationEx().restart(true);
-        }
-      }
+    if (PlatformUtils.isJetBrainsClient()) {
+      changeUiWithDelegate(newUI)
     }
-  }
-
-  override fun appStarted() {
-    if (isNewUI()) {
-      val propertyComponent = PropertiesComponent.getInstance()
-      propertyComponent.setValue(NEW_UI_USED_PROPERTY, true)
-    }
-  }
-
-  override fun appClosing() {
-    if (newValue != isNewUI()) {
-      Registry.get("ide.experimental.ui").setValue(newValue)
-      if (newValue) {
-        onExpUIEnabled(false)
+    else {
+      onValueChanged(newUI)
+      if (suggestRestart) {
+        shouldApplyOnClose = newUI
+        showRestartDialog()
       } else {
-        onExpUIDisabled(false)
+        saveNewValue(newUI)
       }
     }
   }
 
   override fun onExpUIEnabled(suggestRestart: Boolean) {
+    onValueChanged(isEnabled = true)
+  }
+
+  override fun onExpUIDisabled(suggestRestart: Boolean) {
+    onValueChanged(isEnabled = false)
+  }
+
+  fun appStarted() {
+    if (isNewUI()) {
+      PropertiesComponent.getInstance()
+        .setValue(NEW_UI_USED_PROPERTY, true)
+    }
+  }
+
+  fun appClosing() {
+    val newValue = shouldApplyOnClose
+    if (newValue != null && newValue != NewUiValue.isEnabled()) {
+      saveNewValue(newValue)
+    }
+  }
+
+  private fun onValueChanged(isEnabled: Boolean) {
+    if (isEnabled) setNewUiUsed()
+
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
     }
 
-    newValue = true
-    NewUIInfoService.getInstance().updateEnableNewUIDate()
+    if (isEnabled) {
+      NewUIInfoService.getInstance().updateEnableNewUIDate()
+      UISettings.getInstance().hideToolStripes = false
+    }
+    else {
+      NewUIInfoService.getInstance().updateDisableNewUIDate()
+    }
 
-    setRegistryKeyIfNecessary("ide.experimental.ui", true)
-    setRegistryKeyIfNecessary("debugger.new.tool.window.layout", true)
-    UISettings.getInstance().hideToolStripes = false
-    val name = if (JBColor.isBright()) "Light" else "Dark"
+    // On the client, onValueChanged will not be called again as there's no real registry value change.
+    // Set the override before calling  resetLafSettingsToDefault to ensure correct LaF is chosen.
+    if (PlatformUtils.isJetBrainsClient())
+      NewUiValue.overrideNewUiForOneRemDevSession(isEnabled)
+    resetLafSettingsToDefault()
+  }
+
+  private fun saveNewValue(enabled: Boolean) {
+    try {
+      logger.info("Saving newUi=$enabled to registry")
+      Registry.get(KEY).setValue(enabled)
+      EarlyAccessRegistryManager.syncAndFlush()
+    }
+    catch (e: Throwable) {
+      logger.error(e)
+    }
+  }
+
+  override fun saveCurrentValueAndReapplyDefaultLaf() {
+    saveNewValue(NewUiValue.isEnabled())
+    resetLafSettingsToDefault()
+  }
+
+  private fun setNewUiUsed() {
+    val propertyComponent = PropertiesComponent.getInstance()
+    if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
+      propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
+    }
+    else {
+      propertyComponent.setValue(NEW_UI_FIRST_SWITCH, true)
+    }
+  }
+
+  private fun changeUiWithDelegate(isEnabled: Boolean) {
+    val shouldRestart = MessageDialogBuilder.yesNo(
+      title = IdeBundle.message("dialog.newui.title.user.interface"),
+      message = IdeBundle.message("dialog.newui.message.need.restart.client.and.backend.to.apply.settings"),
+      icon = AllIcons.General.QuestionDialog,
+    ).yesText(IdeBundle.message("dialog.newui.message.new.ui.restart"))
+      .noText(IdeBundle.message("dialog.newui.message.new.ui.revert"))
+      .guessWindowAndAsk()
+    if (shouldRestart) {
+      val delegate = ExperimentalUIJetBrainsClientDelegate.getInstance()
+      delegate.changeUi(isEnabled, updateLocally = {
+        onValueChanged(isEnabled)
+        saveNewValue(isEnabled)
+      })
+    }
+  }
+
+  private fun showRestartDialog() {
+    val action = if (ApplicationManager.getApplication().isRestartCapable) {
+      IdeBundle.message("ide.restart.action")
+    }
+    else {
+      IdeBundle.message("ide.shutdown.action")
+    }
+    val result = Messages.showYesNoDialog(
+      /* message = */ IdeBundle.message("dialog.message.must.be.restarted.for.changes.to.take.effect",
+                                        ApplicationNamesInfo.getInstance().fullProductName),
+      /* title = */ IdeBundle.message("dialog.title.restart.required"),
+      /* yesText = */ action,
+      /* noText = */ IdeBundle.message("ide.notnow.action"),
+      /* icon = */ Messages.getQuestionIcon()
+    )
+
+    if (result == Messages.YES) {
+      ApplicationManagerEx.getApplicationEx().restart(true)
+    }
+  }
+
+  private fun resetLafSettingsToDefault() {
     val lafManager = LafManager.getInstance()
-    val laf = lafManager.installedLookAndFeels.firstOrNull { it.name == name }
-    if (laf != null) {
-      lafManager.currentLookAndFeel = laf
-      if (lafManager.autodetect) {
-        if (JBColor.isBright()) {
-          lafManager.setPreferredLightLaf(laf)
-        }
-        else {
-          lafManager.setPreferredDarkLaf(laf)
-        }
-      }
+    val defaultLightLaf = lafManager.defaultLightLaf
+    val defaultDarkLaf = lafManager.defaultDarkLaf
+    if (defaultLightLaf == null || defaultDarkLaf == null) {
+      return
+    }
+
+    val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
+    lafManager.currentLookAndFeel = laf
+    if (lafManager.autodetect) {
+      lafManager.setPreferredLightLaf(defaultLightLaf)
+      lafManager.setPreferredDarkLaf(defaultDarkLaf)
     }
   }
+}
 
-  override fun onExpUIDisabled(suggestRestart: Boolean) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) return
-
-    newValue = false
-    NewUIInfoService.getInstance().updateDisableNewUIDate()
-
-    setRegistryKeyIfNecessary("ide.experimental.ui", false)
-    setRegistryKeyIfNecessary("debugger.new.tool.window.layout", false)
-    val lafManager = LafManager.getInstance() as LafManagerImpl
-    val currentLafName = lafManager.currentLookAndFeel?.name
-    if (currentLafName == "Dark" || currentLafName == "Light") {
-      val laf = if (JBColor.isBright()) lafManager.defaultLightLaf!! else lafManager.getDefaultDarkLaf()
-      lafManager.setCurrentLookAndFeel(laf)
-      if (lafManager.autodetect) {
-        if (JBColor.isBright()) {
-          lafManager.setPreferredLightLaf(laf)
-        } else {
-          lafManager.setPreferredDarkLaf(laf)
-        }
-      }
-    }
+/**
+ * We can't implement AppLifecycleListener with ExperimentalUiImpl
+ * because it would create another instance of ExperimentalUiImpl
+ */
+private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
+  override fun appStarted() {
+    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)
+      ?.appStarted()
   }
 
+  override fun appClosing() {
+    (ExperimentalUI.getInstance() as? ExperimentalUIImpl)
+      ?.appClosing()
+  }
+}
+
+interface ExperimentalUIJetBrainsClientDelegate {
   companion object {
-    private fun setRegistryKeyIfNecessary(key: String, value: Boolean) {
-      if (Registry.`is`(key) != value) {
-        Registry.get(key).setValue(value)
-      }
-    }
+    fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()
   }
+
+  fun changeUi(isEnabled: Boolean, updateLocally: (Boolean) -> Unit)
 }

@@ -45,7 +45,7 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
   }
 
   @Override
-  public LocalQuickFix @Nullable [] getQuickFixes() {
+  public @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
     return new LocalQuickFix[] { new DownloadResourceFix(myAttribute.getValue()) };
   }
 

@@ -65,6 +65,6 @@ class ThreadDumpService(private val cs: CoroutineScope) {
 
   companion object {
     @JvmStatic
-    fun getInstance() = service<ThreadDumpService>()
+    fun getInstance(): ThreadDumpService = service<ThreadDumpService>()
   }
 }

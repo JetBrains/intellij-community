@@ -1,6 +1,15 @@
-import logging
-from typing import Any
-
+from .__version__ import (
+    __author__ as __author__,
+    __author_email__ as __author_email__,
+    __build__ as __build__,
+    __cake__ as __cake__,
+    __copyright__ as __copyright__,
+    __description__ as __description__,
+    __license__ as __license__,
+    __title__ as __title__,
+    __url__ as __url__,
+    __version__ as __version__,
+)
 from .api import (
     delete as delete,
     get as get,
@@ -26,14 +35,5 @@ from .exceptions import (
 from .models import PreparedRequest as PreparedRequest, Request as Request, Response as Response
 from .sessions import Session as Session, session as session
 from .status_codes import codes as codes
-
-__title__: Any
-__build__: Any
-__license__: Any
-__copyright__: Any
-__version__: Any
-
-class NullHandler(logging.Handler):
-    def emit(self, record): ...
 
 def check_compatibility(urllib3_version: str, chardet_version: str | None, charset_normalizer_version: str | None) -> None: ...

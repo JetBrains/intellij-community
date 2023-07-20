@@ -159,7 +159,6 @@ class KotlinApplicatorBuilder<PSI : PsiElement, INPUT : KotlinApplicatorInput> i
         applyTo = { element, data, project, _ -> doApply(element, data, project) }
     }
 
-    @OptIn(ExperimentalTypeInference::class)
     fun isApplicableByPsi(isApplicable: ((PSI) -> Boolean)? = null) {
         this.isApplicableByPsi = isApplicable
     }

@@ -247,7 +247,7 @@ public final class JsonSchemaCompletionContributor extends CompletionContributor
     }
 
     // some schemas provide empty array / empty object in enum values...
-    private static final Set<String> filtered = ContainerUtil.set("[]", "{}", "[ ]", "{ }");
+    private static final Set<String> filtered = Set.of("[]", "{}", "[ ]", "{ }");
 
     private void suggestValues(JsonSchemaObject schema, boolean isSurelyValue) {
       suggestValuesForSchemaVariants(schema.getAnyOf(), isSurelyValue);

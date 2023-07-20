@@ -8,8 +8,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 
 interface BaseKotlinUastResolveProviderService {
-    fun isJvmElement(psiElement: PsiElement): Boolean
-
     val languagePlugin: UastLanguagePlugin
 
     // ----------
@@ -103,6 +101,8 @@ interface BaseKotlinUastResolveProviderService {
     fun getFunctionType(ktFunction: KtFunction, source: UElement?): PsiType?
 
     fun getFunctionalInterfaceType(uLambdaExpression: KotlinULambdaExpression): PsiType?
+
+    fun hasInheritedGenericType(psiElement: PsiElement): Boolean
 
     fun nullability(psiElement: PsiElement): KtTypeNullability?
 

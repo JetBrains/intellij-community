@@ -3,7 +3,6 @@ package com.intellij.ide.todo
 
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContext
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManager
@@ -32,11 +31,11 @@ open class TodoViewChangesSupport {
     }
   }
 
-  open fun createPanel(project: Project, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory) : TodoPanel? {
+  open fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content, factory: TodoTreeBuilderFactory) : TodoPanel? {
     return null
   }
 
-  open fun createPanel(project: Project, settings: TodoPanelSettings, content: Content) : TodoPanel? {
+  open fun createPanel(todoView: TodoView, settings: TodoPanelSettings, content: Content) : TodoPanel? {
     return null
   }
 

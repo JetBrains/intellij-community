@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -17,6 +17,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +35,14 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
   @NonNls private static final String INPUT_VARIABLE_NAME = "INPUTVAR";
   @NonNls private static final String OTHER_VARIABLE_NAME = "OTHERVAR";
   private final boolean myUnresolvedOnly;
+  @NotNull
+  private @Nls String myText = QuickFixBundle.message("rename.wrong.reference.text");
 
   public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr) {
     this(refExpr, false);
   }
 
-  public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr, final boolean unresolvedOnly) {
+  public RenameWrongRefFix(@NotNull PsiReferenceExpression refExpr, boolean unresolvedOnly) {
     myRefExpr = refExpr;
     myUnresolvedOnly = unresolvedOnly;
   }
@@ -50,7 +55,7 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
   @Override
   @NotNull
   public String getText() {
-    return QuickFixBundle.message("rename.wrong.reference.text");
+    return myText;
   }
 
   @Override
@@ -64,7 +69,17 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
     if (!myRefExpr.isValid() || !BaseIntentionAction.canModify(myRefExpr)) return false;
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;
-
+    PsiExpression qualifier = myRefExpr.getQualifierExpression();
+    if (qualifier != null && qualifier.getType() instanceof PsiPrimitiveType) {
+      PsiExpression expression = (myRefExpr.getParent() instanceof PsiMethodCallExpression call) ? call : myRefExpr;
+      if (ExpressionUtils.isVoidContext(expression)) {
+        return false;
+      }
+      myText = QuickFixBundle.message("replace.with.qualifier.text");
+    }
+    else {
+      myText = QuickFixBundle.message("rename.wrong.reference.text");
+    }
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
@@ -138,7 +153,15 @@ public class RenameWrongRefFix implements IntentionAction, LowPriorityAction {
   }
 
   @Override
-  public void invoke(@NotNull Project project, final Editor editor, PsiFile file) {
+  public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
+    PsiExpression qualifier = myRefExpr.getQualifierExpression();
+
+    PsiExpression expression = (myRefExpr.getParent() instanceof PsiMethodCallExpression call) ? call : myRefExpr;
+    if (qualifier != null && qualifier.getType() instanceof PsiPrimitiveType && !ExpressionUtils.isVoidContext(expression)) {
+      new CommentTracker().replaceAndRestoreComments(expression, qualifier);
+      return;
+    }
+
     PsiReferenceExpression[] refs = CreateFromUsageUtils.collectExpressions(myRefExpr, PsiMember.class, PsiFile.class);
     PsiElement element = PsiTreeUtil.getParentOfType(myRefExpr, PsiMember.class, PsiFile.class);
     if (element == null) return;

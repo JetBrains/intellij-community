@@ -112,7 +112,7 @@ internal object UpdateInfoPanel {
 
   @NlsSafe
   private fun textPaneContent(newBuild: BuildInfo, updatedChannel: UpdateChannel, appNames: ApplicationNamesInfo): String {
-    val style = UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont())
+    val style = UIUtil.getCssFontDeclaration(StartupUiUtil.labelFont)
 
     val message = newBuild.message
     val content = when {

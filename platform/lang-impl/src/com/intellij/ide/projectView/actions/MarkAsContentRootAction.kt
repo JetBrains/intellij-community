@@ -25,7 +25,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 
 class MarkAsContentRootAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)

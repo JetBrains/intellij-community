@@ -121,9 +121,10 @@ internal class GitConflictsPanel(
         reversedRoots.addAll(newReversedRoots)
 
         conflictsTree.setChangesToDisplay(conflicts)
-
-        if (conflictsTree.selectionCount == 0) {
-          TreeUtil.promiseSelectFirstLeaf(conflictsTree)
+        conflictsTree.invokeAfterRefresh {
+          if (conflictsTree.selectionCount == 0) {
+            TreeUtil.promiseSelectFirstLeaf(conflictsTree)
+          }
         }
       }
     }))
@@ -211,13 +212,13 @@ private class ConflictChangesBrowserNode(conflict: GitConflict) : ChangesBrowser
 }
 
 private class MyChangesTree(project: Project)
-  : ChangesTreeImpl<GitConflict>(project, false, true, GitConflict::class.java) {
+  : AsyncChangesTreeImpl<GitConflict>(project, false, true, GitConflict::class.java) {
 
   companion object {
     private const val GROUPING_KEYS_PROPERTY = "GitConflictsView.GroupingKeys"
   }
 
-  override fun buildTreeModel(conflicts: List<GitConflict>): DefaultTreeModel {
+  override fun buildTreeModel(grouping: ChangesGroupingPolicyFactory, conflicts: MutableList<out GitConflict>): DefaultTreeModel {
     val builder = MyTreeModelBuilder(project, grouping)
     builder.addConflicts(conflicts)
     return builder.build()

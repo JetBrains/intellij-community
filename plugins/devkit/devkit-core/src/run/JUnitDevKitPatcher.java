@@ -78,11 +78,6 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     }
 
     @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
-    @NonNls String bootJarPath = libPath + File.separator + "boot.jar";
-    if (Files.exists(Path.of(bootJarPath))) {
-      // there is no need to add boot.jar in modern IDE builds (181.*)
-      vm.add("-Xbootclasspath/a:" + bootJarPath);
-    }
 
     if (!vm.hasProperty("idea.load.plugins.id") && module != null && PluginModuleType.isOfType(module)) {
       //non-optional dependencies of 'idea.load.plugin.id' are automatically enabled (see com.intellij.ide.plugins.PluginManagerCore.detectReasonToNotLoad)

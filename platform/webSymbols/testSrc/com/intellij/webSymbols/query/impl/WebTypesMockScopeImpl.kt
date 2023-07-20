@@ -3,30 +3,21 @@ package com.intellij.webSymbols.query.impl
 
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.webTypes.WebTypesJsonFilesCache
-import com.intellij.webSymbols.webTypes.WebTypesSymbolTypeSupport
-import com.intellij.webSymbols.webTypes.WebTypesSymbolsScopeBase
+import com.intellij.webSymbols.webTypes.WebTypesScopeBase
 import java.io.File
 
-internal class WebTypesMockScopeImpl : WebTypesSymbolsScopeBase() {
+internal class WebTypesMockScopeImpl : WebTypesScopeBase() {
 
   fun registerFile(file: File) {
     val webTypes = WebTypesJsonFilesCache.fromUrlNoCache(file.toURI().toString())
     val context = WebTypesJsonOriginImpl(
       webTypes,
-      typeSupport = object : WebTypesSymbolTypeSupport {
-        override fun resolve(types: List<WebTypesSymbolTypeSupport.TypeReference>): Any =
-          types.map {
-            if (it.module != null) "${it.module}:${it.name}"
-            else it.name
-          }.let {
-            if (it.size == 1) it[0] else it
-          }
-      }
+      typeSupport = WebSymbolsMockTypeSupport
     )
     addWebTypes(webTypes, context)
   }
 
-  override fun createPointer(): Pointer<out WebTypesSymbolsScopeBase> =
+  override fun createPointer(): Pointer<out WebTypesScopeBase> =
     Pointer.hardPointer(this)
 
 }

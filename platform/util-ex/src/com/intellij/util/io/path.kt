@@ -2,7 +2,6 @@
 package com.intellij.util.io
 
 import com.intellij.openapi.util.io.NioFiles
-import java.io.File
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
@@ -14,6 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 import kotlin.io.path.exists
+import kotlin.io.path.invariantSeparatorsPathString
 
 @Suppress("DeprecatedCallableAddReplaceWith") // ReplaceWith does not work
 @Deprecated(message = "Use kotlin.io.path.exists", level = DeprecationLevel.ERROR)
@@ -25,10 +25,10 @@ fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
  * Opposite to Java, parent directories will be created
  */
 @JvmOverloads
-fun Path.outputStream(append: Boolean = false): OutputStream {
+fun Path.outputStream(append: Boolean = false, vararg options: OpenOption): OutputStream {
   parent?.createDirectories()
   if (append) {
-    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE)
+    return Files.newOutputStream(this, StandardOpenOption.APPEND, StandardOpenOption.CREATE, *options)
   }
   return Files.newOutputStream(this)
 }
@@ -103,7 +103,7 @@ fun Path.deleteChildrenStartingWith(prefix: String) {
 fun Path.lastModified(): FileTime = Files.getLastModifiedTime(this)
 
 val Path.systemIndependentPath: String
-  get() = toString().replace(File.separatorChar, '/')
+  get() = invariantSeparatorsPathString
 
 @Throws(IOException::class)
 fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
@@ -122,10 +122,10 @@ fun Path.readChars(): CharSequence {
 }
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: ByteArray) = resolve(relativePath).write(data)
+fun Path.writeChild(relativePath: String, data: ByteArray): Path = resolve(relativePath).write(data)
 
 @Throws(IOException::class)
-fun Path.writeChild(relativePath: String, data: String) = writeChild(relativePath, data.toByteArray())
+fun Path.writeChild(relativePath: String, data: String): Path = writeChild(relativePath, data.toByteArray())
 
 @Throws(IOException::class)
 @JvmOverloads

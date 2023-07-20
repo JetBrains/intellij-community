@@ -17,6 +17,7 @@ import com.intellij.presentation.FilePresentationService
 import com.intellij.ui.BackgroundSupplier
 import com.intellij.ui.IconManager
 import com.intellij.ui.SimpleTextAttributes
+import java.awt.Color
 import javax.swing.Icon
 
 abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
@@ -28,20 +29,20 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
   private val bookmarkType
     get() = bookmarksManager?.getType(value)
 
-  val bookmarkDescription
+  val bookmarkDescription: @NlsSafe String?
     get() = bookmarkGroup?.getDescription(value)?.ifBlank { null }
 
   var bookmarkGroup: BookmarkGroup? = null
 
-  override fun canRepresent(element: Any?) = virtualFile?.equals(element) ?: false
-  override fun contains(file: VirtualFile) = virtualFile?.let { VfsUtil.isAncestor(it, file, true) } ?: false
+  override fun canRepresent(element: Any?): Boolean = virtualFile?.equals(element) ?: false
+  override fun contains(file: VirtualFile): Boolean = virtualFile?.let { VfsUtil.isAncestor(it, file, true) } ?: false
 
-  override fun canNavigate() = value.canNavigate()
-  override fun canNavigateToSource() = value.canNavigateToSource()
-  override fun navigate(requestFocus: Boolean) = value.navigate(requestFocus)
+  override fun canNavigate(): Boolean = value.canNavigate()
+  override fun canNavigateToSource(): Boolean = value.canNavigateToSource()
+  override fun navigate(requestFocus: Boolean): Unit = value.navigate(requestFocus)
 
-  override fun computeBackgroundColor() = FilePresentationService.getFileBackgroundColor(project, virtualFile)
-  override fun getElementBackground(row: Int) = presentation.background
+  override fun computeBackgroundColor(): Color? = FilePresentationService.getFileBackgroundColor(project, virtualFile)
+  override fun getElementBackground(row: Int): Color? = presentation.background
 
   protected fun wrapIcon(icon: Icon?): Icon {
     val type = bookmarkType ?: BookmarkType.DEFAULT

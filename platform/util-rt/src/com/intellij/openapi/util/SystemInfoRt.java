@@ -5,7 +5,7 @@ import java.util.Locale;
 
 /**
  * A stripped-down version of {@link com.intellij.openapi.util.SystemInfo}.
- * Intended to use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
+ * Intended for use by external (out-of-IDE-process) runners and helpers, so it should not contain any library dependencies.
  */
 public final class SystemInfoRt {
   public static final String OS_NAME;
@@ -16,6 +16,7 @@ public final class SystemInfoRt {
     String version = System.getProperty("os.version").toLowerCase(Locale.ENGLISH);
 
     if (name.startsWith("Windows") && name.matches("Windows \\d+")) {
+      // for whatever reason, JRE reports "Windows 11" as a name and "10.0" as a version on Windows 11
       try {
         String version2 = name.substring("Windows".length() + 1) + ".0";
         if (Float.parseFloat(version2) > Float.parseFloat(version)) {

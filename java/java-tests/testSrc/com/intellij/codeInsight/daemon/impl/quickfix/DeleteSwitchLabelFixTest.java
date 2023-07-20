@@ -17,7 +17,7 @@ public class DeleteSwitchLabelFixTest extends LightQuickFixParameterizedTestCase
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_17;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_19;
   }
 
   @Override

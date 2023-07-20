@@ -11,6 +11,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarConstants;
 import org.apache.commons.compress.compressors.bzip2.BZip2CompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,8 +35,13 @@ public abstract class Compressor implements Closeable {
   public static class Tar extends Compressor {
     public enum Compression {GZIP, BZIP2, NONE}
 
+    @ApiStatus.Obsolete
+    public Tar(@NotNull Path file, @NotNull Compression compression) throws IOException {
+      this(Files.newOutputStream(file), compression);
+    }
+
     public Tar(@NotNull File file, @NotNull Compression compression) throws IOException {
-      this(Files.newOutputStream(file.toPath()), compression);
+      this(file.toPath(), compression);
     }
 
     //<editor-fold desc="Implementation">
@@ -105,6 +111,7 @@ public abstract class Compressor implements Closeable {
    * ZIP extensions (file modes, symlinks, etc.) are not supported.
    */
   public static class Zip extends Compressor {
+    @ApiStatus.Obsolete
     public Zip(@NotNull File file) throws IOException {
       this(file.toPath());
     }
@@ -239,6 +246,7 @@ public abstract class Compressor implements Closeable {
     }
   }
 
+  @ApiStatus.Obsolete
   public final void addDirectory(@NotNull File directory) throws IOException {
     addDirectory(directory.toPath());
   }

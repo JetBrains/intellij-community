@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
@@ -43,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.stream.Stream;
 
 import static com.intellij.util.ui.UI.PanelFactory.grid;
@@ -85,16 +85,16 @@ public final class GitRefDialog extends DialogWrapper {
     }
     List<GitBranch> branches = ContainerUtil.concat(GitBranchUtil.getCommonLocalBranches(repositories),
                                                     GitBranchUtil.getCommonRemoteBranches(repositories));
-    FutureResult<Collection<GitTag>> tagsFuture = scheduleCollectCommonTags(repositories, disposable);
+    Future<Collection<GitTag>> tagsFuture = scheduleCollectCommonTags(repositories, disposable);
     return new MySimpleCompletionListProvider(branches, tagsFuture);
   }
 
-  private static FutureResult<Collection<GitTag>> scheduleCollectCommonTags(@NotNull List<GitRepository> repositories,
+  private static Future<Collection<GitTag>> scheduleCollectCommonTags(@NotNull List<GitRepository> repositories,
                                                                             @NotNull Disposable disposable) {
-    FutureResult<Collection<GitTag>> futureResult = new FutureResult<>();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      futureResult.set(BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () -> {
-        return GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
+    return
+    ApplicationManager.getApplication().executeOnPooledThread(() ->
+      BackgroundTaskUtil.runUnderDisposeAwareIndicator(disposable, () ->
+        GitBranchUtil.collectCommon(repositories.stream().map(repository -> {
           try {
             List<String> tags = GitBranchUtil.getAllTags(repository.getProject(), repository.getRoot());
             return ContainerUtil.map(tags, GitTag::new);
@@ -102,10 +102,8 @@ public final class GitRefDialog extends DialogWrapper {
           catch (VcsException e) {
             return Collections.emptyList();
           }
-        }));
-      }));
-    });
-    return futureResult;
+        })))
+    );
   }
 
 
@@ -157,10 +155,10 @@ public final class GitRefDialog extends DialogWrapper {
 
   private static final class MySimpleCompletionListProvider extends TwoStepCompletionProvider<GitReference> {
     @NotNull private final List<? extends GitBranch> myBranches;
-    @NotNull private final FutureResult<? extends Collection<GitTag>> myTagsFuture;
+    @NotNull private final Future<? extends Collection<GitTag>> myTagsFuture;
 
     MySimpleCompletionListProvider(@NotNull List<? extends GitBranch> branches,
-                                   @NotNull FutureResult<? extends Collection<GitTag>> tagsFuture) {
+                                   @NotNull Future<? extends Collection<GitTag>> tagsFuture) {
       super(new GitReferenceDescriptor());
       myBranches = branches;
       myTagsFuture = tagsFuture;

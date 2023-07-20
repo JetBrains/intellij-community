@@ -1,3 +1,6 @@
+// FIR_IDENTICAL
+// FIR_COMPARISON
+
 package main.objects
 
 import main.objects.B.ArrayList

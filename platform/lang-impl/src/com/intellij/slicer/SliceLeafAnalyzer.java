@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -174,17 +174,17 @@ public final class SliceLeafAnalyzer {
 
     @Override
     public SliceNode getNextSibling(@NotNull SliceNode element) {
-      AbstractTreeNode parent = element.getParent();
+      AbstractTreeNode<?> parent = element.getParent();
       if (parent == null) return null;
 
-      return element.getNext((List)parent.getChildren());
+      return element.getNext((List<? extends AbstractTreeNode<?>>)parent.getChildren());
     }
 
     @Override
     public SliceNode getPrevSibling(@NotNull SliceNode element) {
-      AbstractTreeNode parent = element.getParent();
+      AbstractTreeNode<?> parent = element.getParent();
       if (parent == null) return null;
-      return element.getPrev((List)parent.getChildren());
+      return element.getPrev((List<? extends AbstractTreeNode<?>>)parent.getChildren());
     }
 
     @Override
@@ -195,7 +195,7 @@ public final class SliceLeafAnalyzer {
 
     @Override
     public SliceNode getParent(@NotNull SliceNode element) {
-      AbstractTreeNode parent = element.getParent();
+      AbstractTreeNode<?> parent = element.getParent();
       return parent instanceof SliceNode ? (SliceNode)parent : null;
     }
   }

@@ -20,6 +20,17 @@ internal class GitRewordAction : GitSingleCommitEditingAction() {
     GitBundle.message("rebase.log.action.operation.reword.name")
   )
 
+  override fun checkNotMergeCommit(commitEditingData: SingleCommitEditingData): String? {
+    val commit = commitEditingData.selectedCommit
+    val repository = commitEditingData.repository
+    if (commit.id.asString() == repository.currentRevision) {
+      // allow amending merge commit
+      return null
+    }
+
+    return super.checkNotMergeCommit(commitEditingData)
+  }
+
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
     val details = getOrLoadDetails(commitEditingData.project, commitEditingData.logData, commitEditingData.selection)
     val commit = details.first()

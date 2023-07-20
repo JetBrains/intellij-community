@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 public class PatternVariablesCanBeReplacedWithCastInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_17;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_20;
   }
 
   @Override

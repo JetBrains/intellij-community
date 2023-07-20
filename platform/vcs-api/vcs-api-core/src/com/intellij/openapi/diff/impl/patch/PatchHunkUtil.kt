@@ -120,7 +120,7 @@ object PatchHunkUtil {
       val start = side.select(range.start1, range.start2)
       val end = side.select(range.end1, range.end2)
 
-      if (lineIndex in start .. end) {
+      if (lineIndex in start..end) {
         return hunk to diffLineCounter
       }
 
@@ -134,5 +134,57 @@ object PatchHunkUtil {
     return """--- a/$filePath
 +++ b/$filePath
 """ + diffHunk
+  }
+
+  fun truncateHunkBefore(hunk: PatchHunk, hunkLineIndex: Int): PatchHunk {
+    if (hunkLineIndex <= 0) return hunk
+    val lines = hunk.lines
+
+    var startLineBefore: Int = hunk.startLineBefore
+    var startLineAfter: Int = hunk.startLineAfter
+
+    for (i in 0 until hunkLineIndex) {
+      val line = lines[i]
+      when (line.type) {
+        PatchLine.Type.CONTEXT -> {
+          startLineBefore++
+          startLineAfter++
+        }
+        PatchLine.Type.ADD -> startLineAfter++
+        PatchLine.Type.REMOVE -> startLineBefore++
+      }
+    }
+    val truncatedLines = lines.subList(hunkLineIndex, lines.size)
+    return PatchHunk(startLineBefore, hunk.endLineBefore, startLineAfter, hunk.endLineAfter).apply {
+      for (line in truncatedLines) {
+        addLine(line)
+      }
+    }
+  }
+
+  fun truncateHunkAfter(hunk: PatchHunk, hunkLineIndex: Int): PatchHunk {
+    val lines = hunk.lines
+    if (hunkLineIndex > lines.size - 1) return hunk
+
+    var endLineBefore: Int = hunk.endLineBefore
+    var endLineAfter: Int = hunk.endLineAfter
+
+    for (i in lines.size - 1 downTo hunkLineIndex) {
+      val line = lines[i]
+      when (line.type) {
+        PatchLine.Type.CONTEXT -> {
+          endLineBefore--
+          endLineAfter--
+        }
+        PatchLine.Type.ADD -> endLineAfter--
+        PatchLine.Type.REMOVE -> endLineBefore--
+      }
+    }
+    val truncatedLines = lines.subList(0, hunkLineIndex + 1)
+    return PatchHunk(hunk.startLineBefore, endLineBefore, hunk.startLineAfter, endLineAfter).apply {
+      for (line in truncatedLines) {
+        addLine(line)
+      }
+    }
   }
 }

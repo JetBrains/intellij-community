@@ -33,9 +33,4 @@ public abstract class FileTypeManagerEx extends FileTypeManager {
    * Use this method to notify {@link FileTypeManager} that file type association has been changed.
    */
   public abstract void makeFileTypesChange(@NonNls @NotNull String debugReasonMessage, @NotNull Runnable command);
-
-  // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
-  public @Nullable FileType getByFile(@NotNull VirtualFile file) {
-    return null;
-  }
 }

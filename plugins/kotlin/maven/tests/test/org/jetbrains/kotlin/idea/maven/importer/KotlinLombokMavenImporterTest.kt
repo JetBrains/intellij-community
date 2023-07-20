@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import kotlin.io.path.absolutePathString
 
 @RunWith(JUnit38ClassRunner::class)
-class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest() {
+class KotlinLombokMavenImporterTest : AbstractKotlinMavenImporterTest(false) {
     @Test
     fun `test kotlin lombok with config import and check plugin classpath and options`() {
         createProjectSubDirs("src/main/kotlin", "src/test/kotlin")

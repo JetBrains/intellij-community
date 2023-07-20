@@ -30,10 +30,10 @@ fun debugSharedJvmCommon() {
 // RESULT: 2: I
 
 
-// MODULE: jvm
+// MODULE: jvm(left, right)
 // FILE: jvm.kt
 // PLATFORM: jvm
-// DEPENDS_ON: left, right
+
 actual fun left(): Int = 1
 actual fun right(): Int = 2
 

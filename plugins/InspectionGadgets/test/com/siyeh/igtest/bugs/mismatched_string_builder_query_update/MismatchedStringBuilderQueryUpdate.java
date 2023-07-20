@@ -168,4 +168,44 @@ class Sample {
       currentIndex++;
     }
   }
+
+  private void stringJoinerTest() {
+    StringJoiner stringJoiner1 = new StringJoiner(",", "(", ")");
+    System.out.println(stringJoiner1.toString());
+
+    StringJoiner <warning descr="Contents of 'StringJoiner stringJoiner2' are queried, but never updated">stringJoiner2</warning> = new StringJoiner(","); //warn
+    System.out.println(stringJoiner2.toString());
+
+    StringJoiner <warning descr="Contents of 'StringJoiner stringJoiner3' are updated, but never queried">stringJoiner3</warning> = new StringJoiner(","); //warn
+    stringJoiner3.add("1").add("1");
+
+    StringJoiner stringJoiner4 = new StringJoiner(",");
+    StringJoiner <warning descr="Contents of 'StringJoiner stringJoiner5' are updated, but never queried">stringJoiner5</warning> = new StringJoiner(","); //warn
+    stringJoiner5.merge(stringJoiner4);
+    stringJoiner5.add("1");
+  }
+
+  private void stringBuilderChainInitializer() {
+    StringBuilder <warning descr="Contents of 'StringBuilder sb' are updated, but never queried">sb</warning> = ((new StringBuilder())
+      .append("asdf"));
+    sb.append("a");
+    sb.append("1")
+      .append("2");
+
+    StringBuilder <warning descr="Contents of 'StringBuilder sb2' are updated, but never queried">sb2</warning> = ((new StringBuilder())
+                                                                                                                   .append("asdf"));
+  }
+  private void stringJoinerChainInitializer() {
+    StringJoiner <warning descr="Contents of 'StringJoiner sb' are updated, but never queried">sb</warning> = ((new StringJoiner(","))
+      .add("asdf"));
+    sb.add("a");
+    sb.add("1")
+      .add("2");
+
+
+  }
+
+  private final static StringBuilder <warning descr="Contents of 'StringBuilder sbField' are updated, but never queried">sbField</warning> = ((new StringBuilder())
+                        .append("asdf"));
+
 }

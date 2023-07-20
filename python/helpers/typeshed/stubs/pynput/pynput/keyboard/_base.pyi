@@ -86,8 +86,8 @@ class Key(enum.Enum):
     scroll_lock: int
 
 class Controller:
-    _KeyCode: ClassVar[KeyCode]  # undocumented
-    _Key: ClassVar[Key]  # undocumented
+    _KeyCode: ClassVar[type[KeyCode]]  # undocumented
+    _Key: ClassVar[type[Key]]  # undocumented
 
     class InvalidKeyException(Exception): ...
     class InvalidCharacterException(Exception): ...

@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -8,12 +7,13 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * An extension point for "Safe Delete" refactoring.
@@ -74,7 +74,7 @@ public interface SafeDeleteProcessorDelegate {
    * @return collection of conflict messages which would be shown to the user before delete can be performed.
    */
   @Nullable
-  Collection<@Nls String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete);
+  Collection<@DialogMessage String> findConflicts(@NotNull PsiElement element, PsiElement @NotNull [] allElementsToDelete);
 
   /**
    * Called after the user has confirmed the refactoring. Can filter out some of the usages

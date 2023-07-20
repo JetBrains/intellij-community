@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogge
 import com.intellij.internal.statistic.service.fus.collectors.ProjectFUStateUsagesLogger
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -25,7 +26,7 @@ internal class StatisticsStateCollectorsScheduler : ApplicationInitializedListen
     internal val allowExecution = AtomicBoolean(true) // TODO get rid of this
   }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
+  override suspend fun execute(asyncScope: CoroutineScope) : Unit = blockingContext {
     ApplicationManager.getApplication().service<FUStateUsagesLogger>() // init service
   }
 

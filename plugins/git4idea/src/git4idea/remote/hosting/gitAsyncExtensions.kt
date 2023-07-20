@@ -69,7 +69,12 @@ fun <S : ServerPath> GitRemotesFlow.discoverServers(knownServersFlow: Flow<Set<S
         remotes.chunked(parallelism).forEach { remotesChunk ->
           remotesChunk.map { remote ->
             async {
-              val server = checkForDedicatedServer(remote)
+              val server = try {
+                checkForDedicatedServer(remote)
+              }
+              catch (e: Exception) {
+                null
+              }
               if (server != null) send(server)
             }
           }.awaitAll()

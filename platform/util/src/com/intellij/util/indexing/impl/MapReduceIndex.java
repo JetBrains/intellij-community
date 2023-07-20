@@ -174,6 +174,13 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     }
   }
 
+  public boolean isDirty() {
+    if (myForwardIndex != null && myForwardIndex.isDirty()) {
+      return true;
+    }
+    return myStorage.isDirty();
+  }
+
   protected void doFlush() throws IOException, StorageException {
     if (myForwardIndex != null) myForwardIndex.force();
     myStorage.flush();

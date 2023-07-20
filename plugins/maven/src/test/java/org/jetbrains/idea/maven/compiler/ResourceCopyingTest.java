@@ -26,6 +26,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assume;
 import org.junit.Test;
 
@@ -250,7 +251,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
                       <resources>
                         <resource>
                           <directory>res</directory>
-                          <targetPath>${build.directory}/anotherDir</targetPath>
+                          <targetPath>${project.build.directory}/anotherDir</targetPath>
                         </resource>
                       </resources>
                     </build>

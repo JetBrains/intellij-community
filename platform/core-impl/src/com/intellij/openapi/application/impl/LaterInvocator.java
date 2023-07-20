@@ -39,7 +39,7 @@ public final class LaterInvocator {
   // Per-project modal entities
   private static final Map<Project, List<Dialog>> projectToModalEntities = new WeakHashMap<>(); // accessed in EDT only
   private static final Map<Project, Stack<ModalityState>> projectToModalEntitiesStack = new WeakHashMap<>(); // accessed in EDT only
-  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.NON_MODAL);// guarded by ourModalityStack
+  private static final Stack<ModalityStateEx> ourModalityStack = new Stack<>((ModalityStateEx)ModalityState.nonModal());// guarded by ourModalityStack
   private static final EventDispatcher<ModalityStateListener> ourModalityStateMulticaster =
     EventDispatcher.create(ModalityStateListener.class);
   private static final FlushQueue ourEdtQueue = new FlushQueue();
@@ -52,8 +52,7 @@ public final class LaterInvocator {
 
   private static final ConcurrentMap<Window, ModalityStateEx> ourWindowModalities = CollectionFactory.createConcurrentWeakMap();
 
-  @NotNull
-  static ModalityStateEx modalityStateForWindow(@NotNull Window window) {
+  static @NotNull ModalityStateEx modalityStateForWindow(@NotNull Window window) {
     return ourWindowModalities.computeIfAbsent(window, __ -> {
       synchronized (ourModalityStack) {
         for (ModalityStateEx state : ourModalityStack) {
@@ -64,7 +63,7 @@ public final class LaterInvocator {
       }
 
       Window owner = window.getOwner();
-      ModalityStateEx ownerState = owner == null ? (ModalityStateEx)ModalityState.NON_MODAL : modalityStateForWindow(owner);
+      ModalityStateEx ownerState = owner == null ? (ModalityStateEx)ModalityState.nonModal() : modalityStateForWindow(owner);
       return isModalDialog(window) ? ownerState.appendEntity(window) : ownerState;
     });
   }
@@ -83,7 +82,7 @@ public final class LaterInvocator {
     ourEdtQueue.push(modalityState, expired, runnable);
   }
 
-  static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
+  static void invokeAndWait(@NotNull ModalityState modalityState, final @NotNull Runnable runnable) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
     final AtomicReference<Runnable> runnableRef = new AtomicReference<>(runnable);
@@ -109,8 +108,7 @@ public final class LaterInvocator {
       }
 
       @Override
-      @NonNls
-      public String toString() {
+      public @NonNls String toString() {
         Runnable runnable = runnableRef.get();
         return "InvokeAndWait[" + (runnable == null ? "(cancelled)" : runnable.toString()) + "]";
       }
@@ -182,7 +180,7 @@ public final class LaterInvocator {
     List<Dialog> modalEntitiesList = projectToModalEntities.computeIfAbsent(project, __->ContainerUtil.createLockFreeCopyOnWriteList());
     modalEntitiesList.add(dialog);
 
-    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.computeIfAbsent(project, __->new Stack<>(ModalityState.NON_MODAL));
+    Stack<ModalityState> modalEntitiesStack = projectToModalEntitiesStack.computeIfAbsent(project, __->new Stack<>(ModalityState.nonModal()));
     modalEntitiesStack.push(new ModalityStateEx(ourModalEntities));
   }
 
@@ -261,7 +259,7 @@ public final class LaterInvocator {
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
-    LOG.assertTrue(getCurrentModalityState() == ModalityState.NON_MODAL, getCurrentModalityState());
+    LOG.assertTrue(getCurrentModalityState() == ModalityState.nonModal(), getCurrentModalityState());
     reincludeSkippedItemsAndRequestFlush();
   }
 
@@ -274,7 +272,7 @@ public final class LaterInvocator {
   public static void forceLeaveAllModals() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ModalityStateEx currentState = getCurrentModalityState();
-    if (currentState != ModalityState.NON_MODAL) {
+    if (currentState != ModalityState.nonModal()) {
       currentState.cancelAllEntities();
       // let event queue pump once before trying to cancel next modal
       invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals());
@@ -286,8 +284,7 @@ public final class LaterInvocator {
     return ArrayUtil.toObjectArray(ourModalEntities);
   }
 
-  @NotNull
-  public static ModalityStateEx getCurrentModalityState() {
+  public static @NotNull ModalityStateEx getCurrentModalityState() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (ourModalityStack) {
       return ourModalityStack.peek();
@@ -349,8 +346,7 @@ public final class LaterInvocator {
   }
 
   @TestOnly
-  @NotNull
-  public static Object getLaterInvocatorEdtQueue() {
+  public static @NotNull Object getLaterInvocatorEdtQueue() {
     return ourEdtQueue.getQueue();
   }
 

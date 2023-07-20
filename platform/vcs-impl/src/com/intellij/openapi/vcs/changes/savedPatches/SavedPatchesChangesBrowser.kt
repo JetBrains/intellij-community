@@ -23,8 +23,11 @@ import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import javax.swing.tree.DefaultTreeModel
 
-class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Component?) -> Unit,
-                                 parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
+class SavedPatchesChangesBrowser(project: Project,
+                                 private val focusMainUi: (Component?) -> Unit,
+                                 parentDisposable: Disposable)
+  : AsyncChangesBrowserBase(project, false, false), Disposable {
+
   var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
     private set
 
@@ -77,17 +80,19 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
     return super.createPopupMenuActions() + ActionManager.getInstance().getAction("Vcs.SavedPatches.ChangesBrowser.ContextMenu")
   }
 
-  override fun buildTreeModel(): DefaultTreeModel {
-    val builder = TreeModelBuilder(myProject, grouping)
-    val groupedChanges = changes.groupBy { it.tag }
-    for ((tag, changes) in groupedChanges) {
-      if (changes.isEmpty()) continue
-      val root = if (tag == null) builder.myRoot else builder.createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
-      changes.forEach { change ->
-        builder.insertChangeNode(change.filePath, root, ChangeObjectNode(change))
+  override val changesTreeModel: AsyncChangesTreeModel = object : SimpleAsyncChangesTreeModel() {
+    override fun buildTreeModelSync(grouping: ChangesGroupingPolicyFactory): DefaultTreeModel {
+      val builder = TreeModelBuilder(myProject, grouping)
+      val groupedChanges = changes.groupBy { it.tag }
+      for ((tag, changes) in groupedChanges) {
+        if (changes.isEmpty()) continue
+        val root = if (tag == null) builder.myRoot else builder.createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
+        changes.forEach { change ->
+          builder.insertChangeNode(change.filePath, root, ChangeObjectNode(change))
+        }
       }
+      return builder.build()
     }
-    return builder.build()
   }
 
   private fun setEmpty(updateEmptyText: (StatusText) -> Unit) = setData(emptyList(), updateEmptyText)
@@ -186,6 +191,7 @@ class SavedPatchesChangesBrowser(project: Project, private val focusMainUi: (Com
   }
 
   override fun dispose() {
+    shutdown()
   }
 
   private class ChangeObjectNode(change: SavedPatchesProvider.ChangeObject) :

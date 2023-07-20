@@ -45,11 +45,9 @@ internal class UseExpressionBodyIntention :
 
         // Check if the returnedExpression actually always returns (early return is possible)
         // TODO: take into consideration other cases (???)
-        if (returnedExpression.anyDescendantOfType<KtReturnExpression>(
-                canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor }
-        )) return false
-
-        return true
+        return !returnedExpression.anyDescendantOfType<KtReturnExpression>(
+            canGoInside = { it !is KtFunctionLiteral && it !is KtNamedFunction && it !is KtPropertyAccessor }
+        )
     }
 
     override fun apply(element: KtDeclarationWithBody, project: Project, editor: Editor?) {

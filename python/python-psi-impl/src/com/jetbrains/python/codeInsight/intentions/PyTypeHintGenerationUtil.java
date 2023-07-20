@@ -318,6 +318,9 @@ public final class PyTypeHintGenerationUtil {
         symbols.add((PsiNamedElement)element);
       }
     }
+    else if (type instanceof PyLiteralStringType) {
+      typingTypes.add("LiteralString");
+    }
     else if (type instanceof PyCollectionType) {
       if (type instanceof PyCollectionTypeImpl) {
         final PyClass pyClass = ((PyCollectionTypeImpl)type).getPyClass();

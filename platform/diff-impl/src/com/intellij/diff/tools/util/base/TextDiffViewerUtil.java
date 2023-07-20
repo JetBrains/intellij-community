@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -220,6 +221,7 @@ public final class TextDiffViewerUtil {
     }
 
     @NotNull
+    @Unmodifiable
     protected abstract List<T> getAvailableOptions();
 
     @NotNull
@@ -612,7 +614,7 @@ public final class TextDiffViewerUtil {
   /**
    * @deprecated Use {@link DiffUtil#recursiveRegisterShortcutSet}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
                                                   @NotNull JComponent component,
                                                   @Nullable Disposable parentDisposable) {

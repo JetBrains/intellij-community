@@ -36,6 +36,10 @@ public class XmlGreaterTest extends DefaultActionTestCase {
     configureByFile(path + "6.html");
     performAction('>');
     checkResultByFile(path + "6_after.html");
+
+    configureByFile(path + "7.html");
+    performAction('>');
+    checkResultByFile(path + "7_after.html");
   }
 
   public void testXHtmlGreater() {

@@ -27,13 +27,12 @@ import javax.swing.*;
 
 class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent {
   private static final int CONTEXT_LINE_NUMBER = 3;
-  private final ProperTextRange myInfoRange;
 
-  UsageCodeSnippetComponent(@NotNull PsiElement element, @Nullable ProperTextRange infoRange) {
-    super(element.getProject(), element.getLanguage(), false);
-    myInfoRange = infoRange;
+  UsageCodeSnippetComponent(@NotNull SnippetRenderingData renderingData) {
+    super(renderingData.getProject(), renderingData.getLanguage(), false);
     setupEditor();
-    addUsagePreview(element);
+    addUsagePreview(renderingData);
+    getEditor().getGutterComponentEx().setLineNumberConverter(renderingData.getConverter());
   }
 
   private void setupEditor() {
@@ -58,11 +57,20 @@ class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGu
                                     rangeToHighlight.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX, HighlighterTargetArea.EXACT_RANGE);
   }
 
-  private void addUsagePreview(@NotNull PsiElement element) {
+  private void addUsagePreview(SnippetRenderingData result) {
+    if (result == null) return;
+    setText(result.getText());
+    getEditor().getGutterComponentEx().updateUI();
+    getEditor().getMarkupModel().removeAllHighlighters();
+    highlightRange(result.getSelectionRange());
+  }
+
+  public static @Nullable SnippetRenderingData calculateSnippetRenderingData(@NotNull PsiElement element,
+                                                                             @Nullable ProperTextRange infoRange) {
     PsiDocumentManager docManager = PsiDocumentManager.getInstance(element.getProject());
     Document doc = docManager.getDocument(InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element));
-    if (doc == null) return;
-    TextRange selectionRange = UsagePreviewPanel.calculateHighlightingRangeForUsage(element, myInfoRange);
+    if (doc == null) return null;
+    TextRange selectionRange = UsagePreviewPanel.calculateHighlightingRangeForUsage(element, infoRange);
     if (element instanceof PsiNamedElement && !(element instanceof PsiFile)) {
       selectionRange = UsagePreviewPanel.getNameElementTextRange(element);
     }
@@ -72,16 +80,15 @@ class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGu
     final int contextStartLineNumber = Math.max(0, usageStartLineNumber - CONTEXT_LINE_NUMBER);
     int startOffset = doc.getLineStartOffset(contextStartLineNumber);
     int endOffset = doc.getLineEndOffset(Math.min(usageEndLineNumber + CONTEXT_LINE_NUMBER, doc.getLineCount() - 1));
-    getEditor().getGutterComponentEx().setLineNumberConverter(
-      contextStartLineNumber == 0 ? LineNumberConverter.DEFAULT : new LineNumberConverter.Increasing() {
-        @Override
-        public Integer convert(@NotNull Editor editor, int lineNumber) {
-          return lineNumber + contextStartLineNumber;
-        }
-      });
-    setText(doc.getText(new TextRange(startOffset, endOffset)));
-    getEditor().getGutterComponentEx().updateUI();
-    highlightRange(selectionRange.shiftLeft(startOffset));
+    selectionRange = selectionRange.shiftLeft(startOffset);
+    String text = doc.getText(new TextRange(startOffset, endOffset));
+    LineNumberConverter converter = contextStartLineNumber == 0 ? LineNumberConverter.DEFAULT : new LineNumberConverter.Increasing() {
+      @Override
+      public Integer convert(@NotNull Editor editor, int lineNumber) {
+        return lineNumber + contextStartLineNumber;
+      }
+    };
+    return new SnippetRenderingData(element.getProject(), element.getLanguage(), selectionRange, text, converter);
   }
 }
 

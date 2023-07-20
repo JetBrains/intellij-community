@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitDisposable implements Disposable {
   @Override
   public void dispose() {

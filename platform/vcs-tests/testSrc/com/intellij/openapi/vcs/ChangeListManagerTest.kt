@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.util.ThreeState
 import junit.framework.TestCase
 
 class ChangeListManagerTest : BaseChangeListsTest() {
@@ -121,5 +122,22 @@ class ChangeListManagerTest : BaseChangeListsTest() {
     removeLocalFile(FILE_1)
     refreshCLM()
     FILE_2.toFilePath.assertAffectedChangeLists(DEFAULT)
+  }
+
+  fun `test haveChangesUnder flag`() {
+    val file1 = addLocalFile(FILE_1, "a_b_c_d_e")
+    setBaseVersion(FILE_1, "a_b1_c_d1_e")
+    val file2 = createLocalFile(FILE_2, "a_b_c_d_e")
+    refreshCLM()
+    val dir3 = runWriteAction {
+      testRoot.createChildDirectory(this, "DIR_1")
+    }
+
+    assertEquals(ThreeState.NO, clm.haveChangesUnder(file1))
+    assertEquals(ThreeState.YES, clm.haveChangesUnder(file1.parent))
+    assertEquals(ThreeState.UNSURE, clm.haveChangesUnder(file1.parent.parent))
+    assertEquals(ThreeState.NO, clm.haveChangesUnder(file2))
+    assertEquals(ThreeState.NO, clm.haveChangesUnder(dir3))
+    assertEquals(ThreeState.YES, clm.haveChangesUnder(dir3.parent))
   }
 }

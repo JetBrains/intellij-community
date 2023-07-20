@@ -18,8 +18,8 @@ class BuildDependenciesDownloaderCleanupTest {
   @Test
   fun isTimeForCleanup() {
     val cachesDir = tempDir.createDir()
-    val markerFile = cachesDir.resolve(BuildDependenciesDownloaderCleanup.LAST_CLEANUP_MARKER_FILE_NAME)
-    val cleanup = BuildDependenciesDownloaderCleanup(cachesDir)
+    val markerFile = cachesDir.resolve(CacheDirCleanup.LAST_CLEANUP_MARKER_FILE_NAME)
+    val cleanup = CacheDirCleanup(cachesDir)
 
     // No marker file
     Assert.assertTrue(cleanup.runCleanupIfRequired())
@@ -36,7 +36,7 @@ class BuildDependenciesDownloaderCleanupTest {
   @Test
   fun cleanupOrphanMarkerFiles() {
     val cachesDir = tempDir.createDir()
-    val cleanup = BuildDependenciesDownloaderCleanup(cachesDir)
+    val cleanup = CacheDirCleanup(cachesDir)
 
     val dir1 = cachesDir.resolve("dir1")
     Files.createDirectories(dir1)
@@ -51,7 +51,7 @@ class BuildDependenciesDownloaderCleanupTest {
   @Test
   fun `do not remove marked files if they were recently updated`() {
     val cachesDir = tempDir.createDir()
-    val cleanup = BuildDependenciesDownloaderCleanup(cachesDir)
+    val cleanup = CacheDirCleanup(cachesDir)
 
     val dir1 = cachesDir.resolve("dir1")
     Files.createDirectories(dir1)
@@ -67,8 +67,8 @@ class BuildDependenciesDownloaderCleanupTest {
   @Test
   fun cleanupProcess() {
     val cachesDir = tempDir.createDir()
-    val markerFile = cachesDir.resolve(BuildDependenciesDownloaderCleanup.LAST_CLEANUP_MARKER_FILE_NAME)
-    val cleanup = BuildDependenciesDownloaderCleanup(cachesDir)
+    val markerFile = cachesDir.resolve(CacheDirCleanup.LAST_CLEANUP_MARKER_FILE_NAME)
+    val cleanup = CacheDirCleanup(cachesDir)
 
     val dir1 = cachesDir.resolve("dir1")
     Files.createDirectories(dir1)
@@ -105,6 +105,6 @@ class BuildDependenciesDownloaderCleanupTest {
     BuildDependenciesUtil.listDirectory(dir)
       .map { it.name }
       .sorted()
-      .filter { it != BuildDependenciesDownloaderCleanup.LAST_CLEANUP_MARKER_FILE_NAME }
+      .filter { it != CacheDirCleanup.LAST_CLEANUP_MARKER_FILE_NAME }
       .joinToString("\n")
 }

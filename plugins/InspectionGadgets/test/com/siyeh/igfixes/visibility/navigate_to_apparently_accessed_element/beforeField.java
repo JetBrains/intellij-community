@@ -10,7 +10,7 @@ class Bar {
   void foo(java.util.List<String> name) {
     for(String name1: name) {
       doSome(new Foo() {{
-        set(name<caret>);
+        set(name);
       }});
     }
   }

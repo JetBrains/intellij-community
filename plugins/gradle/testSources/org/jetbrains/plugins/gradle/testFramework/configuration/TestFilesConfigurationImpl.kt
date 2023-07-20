@@ -2,9 +2,11 @@
 package org.jetbrains.plugins.gradle.testFramework.configuration
 
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.testFramework.utils.vfs.createDirectory
 import com.intellij.testFramework.utils.vfs.createFile
+import org.junit.jupiter.api.Assertions
 import java.util.ArrayList
 import java.util.HashMap
 
@@ -13,14 +15,6 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   private val directories = HashSet<String>()
   private val files = HashMap<String, String>()
   private val builders = ArrayList<suspend (VirtualFile) -> Unit>()
-
-  override fun findFile(relativePath: String): String? {
-    return files[relativePath]
-  }
-
-  override fun getFile(relativePath: String): String {
-    return requireNotNull(findFile(relativePath)) { "Cannot find file $relativePath" }
-  }
 
   override fun withDirectory(relativePath: String) {
     directories.add(relativePath)
@@ -35,19 +29,39 @@ open class TestFilesConfigurationImpl : TestFilesConfiguration {
   }
 
   override fun areContentsEqual(root: VirtualFile): Boolean {
-    for ((path, expectedContent) in files) {
-      val file = root.findFile(path) ?: return false
+    for ((relativePath, expectedContent) in files) {
+      val file = root.findFile(relativePath) ?: return false
       val content = file.readText()
       if (expectedContent != content) {
         return false
       }
     }
-    for (path in directories) {
-      if (root.findDirectory(path) == null) {
+    for (relativePath in directories) {
+      if (root.findDirectory(relativePath) == null) {
         return false
       }
     }
     return true
+  }
+
+  override fun assertContentsAreEqual(root: VirtualFile) {
+    for ((relativePath, expectedContent) in files) {
+      val file = root.findFile(relativePath)
+      Assertions.assertNotNull(file) {
+        "File doesn't exist: ${root.path}/$relativePath"
+      }
+      val actualContent = file!!.readText()
+      val actual = StringUtil.convertLineSeparators(actualContent.trim())
+      val expected = StringUtil.convertLineSeparators(expectedContent.trim())
+      Assertions.assertEquals(expected, actual) {
+        "File doesn't match: ${root.path}/$relativePath"
+      }
+    }
+    for (relativePath in directories) {
+      Assertions.assertNotNull(root.findDirectory(relativePath)) {
+        "Directory doesn't exist: ${root.path}/$relativePath"
+      }
+    }
   }
 
   override suspend fun createFiles(root: VirtualFile) {

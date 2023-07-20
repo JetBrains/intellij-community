@@ -42,8 +42,11 @@ class GHPRReviewThreadModelImpl(thread: GHPullRequestReviewThread)
     }
     else null
 
-  override val line = thread.line
-  override val startLine = thread.startLine
+  override val location: DiffLineLocation? =
+    thread.line?.let { thread.side to it - 1 }
+
+  override val startLocation: DiffLineLocation? =
+    thread.startLine?.let { (thread.startSide ?: thread.side) to it - 1 }
 
   override val collapsedState = MutableStateFlow(isResolved || isOutdated)
 

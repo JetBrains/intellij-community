@@ -321,7 +321,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
       }
 
       if (!StringUtil.equals(oldScheme, myColorsManager.getGlobalScheme().getName())) {
-        changeLafIfNecessary(activeOriginalScheme);
+        changeLafIfNecessary(oldScheme, activeOriginalScheme);
       }
 
       reset();

@@ -56,7 +56,7 @@ public final class ThreadDumpAction extends DumbAwareAction {
               if (xSession != null) {
                 DebuggerUtilsEx.addThreadDump(project, threads, xSession.getUI(), session.getSearchScope());
               }
-            }, ModalityState.NON_MODAL);
+            }, ModalityState.nonModal());
           }
           finally {
             vm.resume();

@@ -7,6 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.DiffUtil;
@@ -24,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -42,12 +42,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
-import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -59,6 +56,7 @@ import java.util.Collections;
 import java.util.List;
 
 public final class XLineBreakpointManager {
+  public static final DataKey<Integer> BREAKPOINT_LINE_KEY = DataKey.create("xdebugger.breakpoint.line");
   private final MultiMap<String, XLineBreakpointImpl> myBreakpoints = MultiMap.createConcurrent();
   private final MergingUpdateQueue myBreakpointsUpdateQueue;
   private final Project myProject;
@@ -99,7 +97,8 @@ public final class XLineBreakpointManager {
     busConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
-        myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null).forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
+        myBreakpoints.get(file.getUrl()).stream().filter(b -> b.getHighlighter() == null)
+          .forEach(XLineBreakpointManager.this::queueBreakpointUpdate);
       }
     });
   }
@@ -174,7 +173,7 @@ public final class XLineBreakpointManager {
     queueBreakpointUpdate(slave, null);
   }
 
-   public void queueBreakpointUpdate(final XBreakpoint<?> slave, @Nullable Runnable callOnUpdate) {
+  public void queueBreakpointUpdate(final XBreakpoint<?> slave, @Nullable Runnable callOnUpdate) {
     if (slave instanceof XLineBreakpointImpl<?>) {
       queueBreakpointUpdate((XLineBreakpointImpl<?>)slave, callOnUpdate);
     }
@@ -251,12 +250,11 @@ public final class XLineBreakpointManager {
           || mouseEvent.isMetaDown() || mouseEvent.isControlDown()
           || mouseEvent.getButton() != MouseEvent.BUTTON1
           || DiffUtil.isDiffEditor(editor)
-          || !isInsideGutter(e, editor)
+          || !isInsideClickableGutterArea(e, editor)
           || ConsoleViewUtil.isConsoleViewEditor(editor)
           || !isFromMyProject(editor)
           || (editor.getSelectionModel().hasSelection() && myDragDetected)
-          || (ExperimentalUI.isNewUI() && !UISettings.getInstance().getShowBreakpointsOverLineNumbers() && e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA)
-        ) {
+      ) {
         return;
       }
 
@@ -267,37 +265,16 @@ public final class XLineBreakpointManager {
       if (line >= 0 && line < document.getLineCount() && file != null) {
         AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT);
         if (action == null) throw new AssertionError("'" + IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT + "' action not found");
-        DataContext dataContext = DataManager.getInstance().getDataContext(mouseEvent.getComponent());
+        DataContext dataContext = SimpleDataContext.getSimpleContext(BREAKPOINT_LINE_KEY, line,
+                                                                     DataManager.getInstance().getDataContext(mouseEvent.getComponent()));
         AnActionEvent event = AnActionEvent.createFromAnAction(action, mouseEvent, ActionPlaces.EDITOR_GUTTER, dataContext);
-        ActionUtil.performDumbAwareWithCallbacks(action, event, () ->
-          XBreakpointUtil.toggleLineBreakpoint(myProject,
-                                               XSourcePositionImpl.create(file, line),
-                                               editor,
-                                               mouseEvent.isAltDown(),
-                                               false,
-                                               !mouseEvent.isShiftDown() && !Registry.is("debugger.click.disable.breakpoints"))
-            .onSuccess(breakpoint -> {
-              if (!mouseEvent.isAltDown() && mouseEvent.isShiftDown() && breakpoint != null) {
-                breakpoint.setSuspendPolicy(SuspendPolicy.NONE);
-                String selection = editor.getSelectionModel().getSelectedText();
-                if (selection != null) {
-                  breakpoint.setLogExpression(selection);
-                }
-                else {
-                  breakpoint.setLogMessage(true);
-                }
-                // edit breakpoint
-                DebuggerUIUtil
-                  .showXBreakpointEditorBalloon(myProject, mouseEvent.getPoint(), ((EditorEx)editor).getGutterComponentEx(),
-                                                false, breakpoint);
-              }
-            }));
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event);
       }
     }
 
-    private boolean isInsideGutter(EditorMouseEvent e, Editor editor) {
+    private static boolean isInsideClickableGutterArea(EditorMouseEvent e, Editor editor) {
       if (ExperimentalUI.isNewUI() && e.getArea() == EditorMouseEventArea.LINE_NUMBERS_AREA) {
-        return true;
+        return UISettings.getInstance().getShowBreakpointsOverLineNumbers();
       }
       if (e.getArea() != EditorMouseEventArea.LINE_MARKERS_AREA && e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) {
         return false;

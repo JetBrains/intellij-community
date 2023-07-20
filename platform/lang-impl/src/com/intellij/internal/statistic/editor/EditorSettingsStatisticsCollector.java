@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 8);
+  private static final EventLogGroup GROUP = new EventLogGroup("editor.settings.ide", 9);
   private static final EnumEventField<Settings> SETTING_ID = EventFields.Enum("setting_id", Settings.class, it -> it.internalName);
   private static final IntEventField INT_VALUE_FIELD = EventFields.Int("value");
   private static final StringEventField TRAILING_SPACES_FIELD = EventFields.String("value", List.of("Whole", "Changed", "None"));
@@ -77,6 +77,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     addBoolIfDiffers(set, es, esDefault, s -> s.isLineNumbersShown(), Settings.LINE_NUMBERS);
     addBoolIfDiffers(set, es, esDefault, s -> s.areGutterIconsShown(), Settings.GUTTER_ICONS);
     addBoolIfDiffers(set, es, esDefault, s -> s.isFoldingOutlineShown(), Settings.FOLDING_OUTLINE);
+    addBoolIfDiffers(set, es, esDefault, s -> s.isFoldingOutlineShownOnlyOnHover(), Settings.FOLDING_OUTLINE_ONLY_ON_HOVER);
     addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isLeadingWhitespacesShown(), Settings.SHOW_LEADING_WHITESPACE);
     addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isInnerWhitespacesShown(), Settings.SHOW_INNER_WHITESPACE);
     addBoolIfDiffers(set, es, esDefault, s -> s.isWhitespacesShown() && s.isTrailingWhitespacesShown(), Settings.SHOW_TRAILING_WHITESPACE);
@@ -256,6 +257,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     LINE_NUMBERS("lineNumbers"),
     GUTTER_ICONS("gutterIcons"),
     FOLDING_OUTLINE("foldingOutline"),
+    FOLDING_OUTLINE_ONLY_ON_HOVER("foldingOutlineOnlyOnHover"),
     SHOW_LEADING_WHITESPACE("showLeadingWhitespace"),
     SHOW_INNER_WHITESPACE("showInnerWhitespace"),
     SHOW_TRAILING_WHITESPACE("showTrailingWhitespace"),

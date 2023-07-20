@@ -53,7 +53,7 @@ public final class ThreadLeakTracker {
     return map;
   }
 
-  // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads detection)
+  // contains prefixes of the thread names which are known to be long-running (and thus exempted from the leaking threads' detection)
   private static final Set<String> wellKnownOffenders;
 
   static {
@@ -74,7 +74,7 @@ public final class ThreadLeakTracker {
       "Finalizer",
       FlushingDaemon.NAME,
       "HttpClient-",
-      // any usage of HttpClient (from JDK) may leave a thread pool. It's ok since it's not supposed to be disposed to reuse connections
+      // Any usage of HttpClient (from JDK) may leave a thread pool. It's OK since it's not supposed to be disposed to reuse connections
       ProcessIOExecutorService.POOLED_THREAD_PREFIX,
       "IDEA Test Case Thread",
       "Image Fetcher ",
@@ -119,7 +119,7 @@ public final class ThreadLeakTracker {
     wellKnownOffenders = new HashSet<>(offenders);
 
     try {
-      // init zillions of timers in e.g. MacOSXPreferencesFile
+      // init zillions of timers in e.g., MacOSXPreferencesFile
       Preferences.userRoot().flush();
     }
     catch (BackingStoreException e) {
@@ -128,9 +128,9 @@ public final class ThreadLeakTracker {
   }
 
   // marks Thread with this name as long-running, which should be ignored from the thread-leaking checks
-  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, final String @NotNull ... threadNamePrefixes) {
-    wellKnownOffenders.addAll(Arrays.asList(threadNamePrefixes));
-    Disposer.register(parentDisposable, () -> Arrays.asList(threadNamePrefixes).forEach(wellKnownOffenders::remove));
+  public static void longRunningThreadCreated(@NotNull Disposable parentDisposable, @NotNull String @NotNull ... threadNamePrefixes) {
+    ContainerUtil.addAll(wellKnownOffenders, threadNamePrefixes);
+    Disposer.register(parentDisposable, () -> ContainerUtil.removeAll(wellKnownOffenders, threadNamePrefixes));
   }
 
   public static void awaitQuiescence() {
@@ -174,7 +174,7 @@ public final class ThreadLeakTracker {
         else {
           UIUtil.pump();
         }
-        // afters some time the submitted task can finish and the thread become idle pool
+        // after some time, the submitted task can finish and the thread can become idle
         stackTrace = thread.getStackTrace();
         if (shouldIgnore(thread, stackTrace)) break;
       }
@@ -228,19 +228,15 @@ public final class ThreadLeakTracker {
     return false;
   }
 
-  // true if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for next task
+  // true, if somebody started new thread via "executeInPooledThread()" and then the thread is waiting for the next task
   private static boolean isIdleApplicationPoolThread(StackTraceElement @NotNull [] stackTrace) {
-    return ContainerUtil.exists(stackTrace, element -> {
-      return element.getMethodName().equals("getTask")
-             && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor");
-    });
+    return ContainerUtil.exists(stackTrace, element -> element.getMethodName().equals("getTask")
+                                                     && element.getClassName().equals("java.util.concurrent.ThreadPoolExecutor"));
   }
 
   private static boolean isKotlinCIOSelector(StackTraceElement @NotNull [] stackTrace) {
-    return ContainerUtil.exists(stackTrace, element -> {
-      return element.getMethodName().equals("select")
-             && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager");
-    });
+    return ContainerUtil.exists(stackTrace, element -> element.getMethodName().equals("select")
+                                                     && element.getClassName().equals("io.ktor.network.selector.ActorSelectorManager"));
   }
 
   private static boolean isIdleCommonPoolThread(@NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {

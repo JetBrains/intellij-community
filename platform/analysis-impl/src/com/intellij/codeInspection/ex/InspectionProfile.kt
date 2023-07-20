@@ -43,7 +43,7 @@ abstract class NewInspectionProfile(name: String, private var profileManager: Ba
   }
 
   @Transient
-  fun getProfileManager() = profileManager
+  fun getProfileManager(): BaseInspectionProfileManager = profileManager
 
   fun setProfileManager(value: BaseInspectionProfileManager) {
     profileManager = value

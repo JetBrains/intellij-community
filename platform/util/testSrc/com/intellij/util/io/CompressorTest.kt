@@ -27,7 +27,7 @@ import java.util.zip.ZipInputStream
 import kotlin.io.path.name
 
 class CompressorTest {
-  @Rule @JvmField var tempDir = TempDirectory()
+  @Rule @JvmField var tempDir: TempDirectory = TempDirectory()
 
   @Test fun simpleZip() {
     val zip = tempDir.newFile("test.zip")

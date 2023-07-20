@@ -9,17 +9,16 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.Language
-import java.awt.*
+import java.awt.Graphics
+import java.awt.Shape
+import java.net.URL
 import javax.swing.JEditorPane
 import javax.swing.JTextPane
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.DefaultCaret
 import javax.swing.text.Element
 import javax.swing.text.View
-import javax.swing.text.html.HTML
-import javax.swing.text.html.ImageView
-import javax.swing.text.html.InlineView
-import javax.swing.text.html.StyleSheet
+import javax.swing.text.html.*
 
 /**
  * Read-only editor pane intended to display simple HTML snippet
@@ -28,7 +27,8 @@ import javax.swing.text.html.StyleSheet
 fun SimpleHtmlPane(
   additionalStyleSheet: StyleSheet? = null,
   addBrowserListener: Boolean = true,
-  customImageLoader: AsyncHtmlImageLoader? = null
+  customImageLoader: AsyncHtmlImageLoader? = null,
+  baseUrl: URL? = null
 ): JEditorPane =
   JTextPane().apply {
     editorKit = HTMLEditorKitBuilder().withViewFactoryExtensions(
@@ -56,6 +56,9 @@ fun SimpleHtmlPane(
 
     if (customImageLoader != null) {
       document.putProperty(AsyncHtmlImageLoader.KEY, customImageLoader)
+    }
+    if (baseUrl != null) {
+      (document as HTMLDocument).base = baseUrl
     }
 
     name = "Simple HTML Pane"

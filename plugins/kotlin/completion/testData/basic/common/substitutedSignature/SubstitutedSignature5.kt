@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 fun<T> T.doSomething(t: T): T = t
 
 fun foo(s: String?) {

@@ -107,7 +107,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                 is KtFunctionLiteral -> {
                     val lambdaExpression = function.parent as? KtLambdaExpression ?: return null
                     val descriptor = function.descriptor as? FunctionDescriptor ?: return null
-                    LambdaToAnonymousFunctionIntention.convertLambdaToFunction(lambdaExpression, descriptor) as? KtNamedFunction
+                    LambdaToAnonymousFunctionIntention.Holder.convertLambdaToFunction(lambdaExpression, descriptor) as? KtNamedFunction
                 }
 
                 else -> null

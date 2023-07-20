@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
@@ -30,14 +29,19 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.GroupHeaderSeparator;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.mac.screenmenu.Menu;
+import com.intellij.ui.mac.screenmenu.MenuItem;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.OpenTelemetry;
@@ -71,6 +75,8 @@ import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.actionSystem.util.ActionSystemScopeKt.ActionSystem;
+
 @ApiStatus.Internal
 public final class Utils {
   private static final Key<Boolean> IS_MODAL_CONTEXT = Key.create("Component.isModalContext");
@@ -86,7 +92,7 @@ public final class Utils {
 
   static @NotNull Tracer getTracer(boolean checkNoop) {
     return checkNoop && !Boolean.TRUE.equals(Context.current().get(OT_ENABLE_SPANS)) ?
-           OpenTelemetry.noop().getTracer("") : TraceManager.INSTANCE.getTracer("actionSystem", true);
+           OpenTelemetry.noop().getTracer("") : TelemetryManager.getInstance().getTracer(ActionSystem, true);
   }
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
@@ -134,7 +140,7 @@ public final class Utils {
   @ApiStatus.Internal
   public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
     return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
-           dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
+           dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached$intellij_platform_ide_impl(dataId) : null;
   }
 
   static void clearAllCachesAndUpdates() {
@@ -148,7 +154,7 @@ public final class Utils {
                                                                           @NotNull PresentationFactory presentationFactory,
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place) {
-    return expandActionGroupAsync(group, presentationFactory, context, place, false, false);
+    return expandActionGroupAsync(group, presentationFactory, context, place, false, getFastTrackTimeout());
   }
 
   @ApiStatus.Internal
@@ -157,14 +163,21 @@ public final class Utils {
                                                                           @NotNull DataContext context,
                                                                           @NotNull String place,
                                                                           boolean isToolbarAction,
-                                                                          boolean skipFastTrack) {
+                                                                          long fastTrackTimeout) {
     LOG.assertTrue(isAsyncDataContext(context), "Async data context required in '" + place + "': " + dumpDataContextClass(context));
     ActionUpdater updater = new ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction);
-    List<AnAction> actions = skipFastTrack ? null : expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null);
-    if (actions != null) {
-      return Promises.resolvedCancellablePromise(actions);
+    if (ActionGroupExpander.getInstance().allowsFastUpdate(CommonDataKeys.PROJECT.getData(context), group, place)) {
+      List<AnAction> actions = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, null, fastTrackTimeout);
+      if (actions != null) {
+        return Promises.resolvedCancellablePromise(actions);
+      }
     }
     return updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
+  }
+
+  @ApiStatus.Internal
+  public static long getFastTrackTimeout() {
+    return Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 50);
   }
 
   @ApiStatus.Internal
@@ -224,9 +237,9 @@ public final class Utils {
       if (isContextMenu) {
         ActionUpdater.cancelAllUpdates("context menu requested");
       }
-      if (expander.allowsFastUpdate(project, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
+      if (expander.allowsFastUpdate(project, group, place) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt")) {
         Set<String> missedKeys = new HashSet<>();
-        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add);
+        list = expandActionGroupFastTrack(updater, group, group instanceof CompactActionGroup, missedKeys::add, getFastTrackTimeout());
         if (list != null && missedKeys.isEmpty()) {
           if (onProcessed != null) onProcessed.run();
           return list;
@@ -299,8 +312,8 @@ public final class Utils {
   static @Nullable List<AnAction> expandActionGroupFastTrack(@NotNull ActionUpdater updater,
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
-                                                             @Nullable Consumer<? super String> missedKeys) {
-    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
+                                                             @Nullable Consumer<? super String> missedKeys,
+                                                             long maxTime) {
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
@@ -406,45 +419,37 @@ public final class Utils {
     component.removeAll();
     Menu nativePeer = component instanceof ActionMenu ? ((ActionMenu)component).getScreenMenuPeer() : null;
     if (nativePeer != null) nativePeer.beginFill();
+    List<AnAction> filtered = filterInvisible(list, presentationFactory, place);
     ArrayList<Component> children = new ArrayList<>();
 
-    for (int i = 0, size = list.size(); i < size; i++) {
-      AnAction action = list.get(i);
+    for (int i = 0, size = filtered.size(); i < size; i++) {
+      AnAction action = filtered.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
-      if (!presentation.isVisible()) {
-        reportInvisibleMenuItem(action, place);
-        continue;
-      }
-      else if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
-        reportEmptyTextMenuItem(action, place);
-        continue;
-      }
       if (multiChoice && action instanceof Toggleable) {
         presentation.setMultiChoice(true);
       }
 
-      if (action instanceof Separator) {
-        String text = ((Separator)action).getText();
-        if (!StringUtil.isEmpty(text) || (i > 0 && i < size - 1)) {
-          JPopupMenu.Separator separator = createSeparator(text);
-          component.add(separator);
-          children.add(separator);
-          if (nativePeer != null) nativePeer.add(null);
-        }
+      JComponent comp;
+      MenuItem peer;
+
+      if (action instanceof Separator s) {
+        comp = createSeparator(s.getText(), children.isEmpty());
+        peer = null;
       }
-      else if (action instanceof ActionGroup && !isSubmenuSuppressed(presentation)) {
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
-        component.add(menu);
-        children.add(menu);
-        if (nativePeer != null) nativePeer.add(menu.getScreenMenuPeer());
+      else if (action instanceof ActionGroup g && !isSubmenuSuppressed(presentation)) {
+        ActionMenu menu = new ActionMenu(context, place, g, presentationFactory, enableMnemonics, useDarkIcons);
+        comp = menu;
+        peer = menu.getScreenMenuPeer();
       }
       else {
         ActionMenuItem each = new ActionMenuItem(action, place, context, enableMnemonics, checked, useDarkIcons);
         each.updateFromPresentation(presentation);
-        component.add(each);
-        children.add(each);
-        if (nativePeer != null) nativePeer.add(each.getScreenMenuItemPeer());
+        comp = each;
+        peer = each.getScreenMenuItemPeer();
       }
+      component.add(comp);
+      children.add(comp);
+      if (nativePeer != null) nativePeer.add(peer);
     }
 
     if (list.isEmpty()) {
@@ -480,6 +485,41 @@ public final class Utils {
         }
       }
     }
+  }
+
+  @NotNull
+  private static List<AnAction> filterInvisible(@NotNull List<? extends AnAction> list,
+                                           @NotNull PresentationFactory presentationFactory,
+                                           @NotNull String place) {
+    List<AnAction> filtered = new ArrayList<>(list.size());
+    for (int i = 0, size = list.size(); i < size; i++) {
+      AnAction action = list.get(i);
+      Presentation presentation = presentationFactory.getPresentation(action);
+      if (!presentation.isVisible()) {
+        reportInvisibleMenuItem(action, place);
+        continue;
+      }
+      if (!(action instanceof Separator) && StringUtil.isEmpty(presentation.getText())) {
+        reportEmptyTextMenuItem(action, place);
+        continue;
+      }
+      if (action instanceof Separator s) {
+        int lastIdx = filtered.size() - 1;
+        if (lastIdx < 0 && StringUtil.isEmpty(s.getText())) {
+          continue;
+        }
+        if (lastIdx >= 0 && filtered.get(lastIdx) instanceof Separator) {
+          filtered.set(lastIdx, action);
+          continue;
+        }
+      }
+      filtered.add(action);
+    }
+    int lastIdx = filtered.size() - 1;
+    if (lastIdx >= 0 && filtered.get(lastIdx) instanceof Separator s && StringUtil.isEmpty(s.getText())) {
+      filtered.remove(lastIdx);
+    }
+    return filtered;
   }
 
   private static void reportInvisibleMenuItem(@NotNull AnAction action, @NotNull String place) {
@@ -588,10 +628,21 @@ public final class Utils {
     return Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL));
   }
 
-  private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text) {
+  private static @NotNull JPopupMenu.Separator createSeparator(@NlsContexts.Separator String text, boolean first) {
     return new JPopupMenu.Separator() {
-      private final JMenuItem myMenu = !StringUtil.isEmpty(text) ? new JMenuItem(text) : null;
-
+      private final GroupHeaderSeparator myMenu;
+      {
+        if (StringUtil.isNotEmpty(text)) {
+          Insets labelInsets = ExperimentalUI.isNewUI() ? JBUI.CurrentTheme.Popup.separatorLabelInsets() :
+                               JBUI.CurrentTheme.ActionsList.cellPadding();
+          myMenu = new GroupHeaderSeparator(labelInsets);
+          myMenu.setCaption(text);
+          myMenu.setHideLine(first);
+        }
+        else {
+          myMenu = null;
+        }
+      }
       @Override
       public void doLayout() {
         super.doLayout();
@@ -839,7 +890,6 @@ public final class Utils {
         LOG.error(ex);
       }
       else if (rethrowCancellation) {
-        pce.fillInStackTrace();
         throw pce;
       }
     }
@@ -889,6 +939,11 @@ public final class Utils {
 
     ProcessCanceledWithReasonException(Object reason) {
       this.reason = reason;
+    }
+
+    @Override
+    public Throwable fillInStackTrace() {
+      return this;
     }
   }
 }

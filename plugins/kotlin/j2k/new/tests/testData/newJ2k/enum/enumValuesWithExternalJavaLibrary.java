@@ -1,5 +1,5 @@
 // COMPILER_ARGUMENTS: -XXLanguage:+EnumEntries
-// WITH_LIBRARY: /enum/java
+// WITH_LIBRARY: ../../libSources/enum/java
 // !LANGUAGE: -XXLanguage:+EnumEntries
 
 import library.java.test.LibraryEnum;

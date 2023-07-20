@@ -73,7 +73,7 @@ public interface LibraryEx extends Library {
 
     LibraryProperties getProperties();
 
-    void setKind(@NotNull PersistentLibraryKind<?> type);
+    void setKind(@Nullable PersistentLibraryKind<?> type);
 
     PersistentLibraryKind<?> getKind();
 
@@ -85,10 +85,17 @@ public interface LibraryEx extends Library {
     void setExternalSource(@NotNull ProjectModelExternalSource externalSource);
 
     /**
-     * Removes custom library kind and associated properties if any
+     * Replaces custom kind by a special 'unknown' kind if it was set. 
+     * This method is called by the platform when a plugin which provides the custom kind is dynamically unloaded.
      */
+    @ApiStatus.Internal
     void forgetKind();
 
+    /**
+     * Restores original kind which was converted to 'unknown' by {@link #forgetKind()}.  
+     * This method is called by the platform when a plugin which provides the custom kind is dynamically loaded.
+     */
+    @ApiStatus.Internal
     void restoreKind();
 
     /**

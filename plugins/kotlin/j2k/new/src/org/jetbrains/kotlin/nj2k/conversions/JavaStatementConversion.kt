@@ -28,13 +28,13 @@ class JavaStatementConversion(context: NewJ2kConverterContext) : RecursiveApplic
     private fun convertAssert(element: JKJavaAssertStatement): JKExpressionStatement {
         val messageExpression =
             if (element.description is JKStubExpression) null
-            else JKLambdaExpression(JKExpressionStatement(element::description.detached()), parameters = emptyList())
+            else JKLambdaExpression(JKExpressionStatement(element::description.detached()))
         return JKExpressionStatement(kotlinAssert(element::condition.detached(), messageExpression, typeFactory))
     }
 
     private fun convertSynchronized(element: JKJavaSynchronizedStatement): JKExpressionStatement {
         element.invalidate()
-        val lambdaBody = JKLambdaExpression(JKBlockStatement(element.body), parameters = emptyList())
+        val lambdaBody = JKLambdaExpression(JKBlockStatement(element.body))
         return JKExpressionStatement(
             JKCallExpressionImpl(
                 symbolProvider.provideMethodSymbol("kotlin.synchronized"),

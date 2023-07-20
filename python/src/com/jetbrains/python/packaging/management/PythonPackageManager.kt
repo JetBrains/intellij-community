@@ -22,6 +22,8 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
   abstract val repositoryManager: PythonRepositoryManager
 
   abstract suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>>
+
+  abstract suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>>
   abstract suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>>
 
   abstract suspend fun reloadPackages(): Result<List<PythonPackage>>

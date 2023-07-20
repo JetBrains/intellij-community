@@ -56,8 +56,9 @@ class KotlinStepOverRequestHint(
     stepThread: ThreadReferenceProxyImpl,
     suspendContext: SuspendContextImpl,
     private val filter: KotlinMethodFilter,
-    parentHint: RequestHint?
-) : RequestHint(stepThread, suspendContext, StepRequest.STEP_LINE, StepRequest.STEP_OVER, filter, parentHint) {
+    parentHint: RequestHint?,
+    stepSize: Int
+) : RequestHint(stepThread, suspendContext, stepSize, StepRequest.STEP_OVER, filter, parentHint) {
     private companion object {
         private val LOG = Logger.getInstance(KotlinStepOverRequestHint::class.java)
     }
@@ -142,11 +143,7 @@ class KotlinStepOverRequestHint(
             }
         }
 
-        if (endArgs[endArgs.size - 1].descriptor != "Ljava/lang/Object;") {
-            return false
-        }
-
-        return true
+        return endArgs[endArgs.size - 1].descriptor == "Ljava/lang/Object;"
     }
 
     private fun installCoroutineResumedBreakpoint(context: SuspendContextImpl): Boolean {
@@ -158,6 +155,8 @@ class KotlinStepOverRequestHint(
         return CoroutineBreakpointFacility.installCoroutineResumedBreakpoint(context, location, method)
     }
 }
+
+interface StopOnReachedMethodFilter
 
 class KotlinStepIntoRequestHint(
     stepThread: ThreadReferenceProxyImpl,
@@ -180,13 +179,19 @@ class KotlinStepIntoRequestHint(
                 lastWasKotlinFakeLineNumber = true
                 return StepRequest.STEP_INTO
             }
-            // If the last line was a fake line number, the next non-fake line number
-            // is always of interest (otherwise, we wouldn't have had to insert the
-            // fake line number in the first place).
-            if (lastWasKotlinFakeLineNumber) {
+            // If the last line was a fake line number, and we are not smart-stepping,
+            // the next non-fake line number is always of interest (otherwise, we wouldn't
+            // have had to insert the fake line number in the first place).
+            if (lastWasKotlinFakeLineNumber && methodFilter == null) {
                 lastWasKotlinFakeLineNumber = false
                 return STOP
             }
+
+            val filter = methodFilter
+            if (filter is StopOnReachedMethodFilter && filter.locationMatches(context.debugProcess, location)) {
+                return STOP
+            }
+
             return super.getNextStepDepth(context)
         } catch (ignored: VMDisconnectedException) {
         } catch (e: EvaluateException) {

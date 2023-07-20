@@ -56,7 +56,6 @@ import javax.swing.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.StyleSheet;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
@@ -134,13 +133,6 @@ public final class AboutPopup {
     });
 
     ourPopup.show(location);
-  }
-
-  private static void copyInfoToClipboard(String text) {
-    try {
-      CopyPasteManager.getInstance().setContents(new StringSelection(text));
-    }
-    catch (Exception ignore) { }
   }
 
   static @Nullable String loadThirdPartyLibraries() {
@@ -271,7 +263,7 @@ public final class AboutPopup {
           }
 
           if (getCopyIconArea().contains(event.getPoint())) {
-              copyInfoToClipboard(getText());
+              CopyPasteManager.copyTextToClipboard(getText());
               if (ourPopup != null) {
                 ourPopup.cancel();
               }
@@ -467,7 +459,7 @@ public final class AboutPopup {
       private int fontHeight;
       private Font font;
 
-      public class OverflowException extends Exception { }
+      public static class OverflowException extends Exception { }
 
       TextRenderer(final int xBase, final int yBase, final int w, final int h, final Graphics2D g2) {
         this.xBase = xBase;
@@ -727,7 +719,7 @@ public final class AboutPopup {
     public void setInfoSurface(InfoSurface infoSurface) {
       myInfoSurface = infoSurface;
       add(infoSurface, BorderLayout.NORTH);
-      DumbAwareAction.create(e -> copyInfoToClipboard(myInfoSurface.getText()))
+      DumbAwareAction.create(e -> CopyPasteManager.copyTextToClipboard(myInfoSurface.getText()))
         .registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), this);
     }
 
@@ -761,7 +753,7 @@ public final class AboutPopup {
       @Override
       public boolean doAccessibleAction(int i) {
         if (i == 0 && myInfoSurface != null) {
-          copyInfoToClipboard(myInfoSurface.getText());
+          CopyPasteManager.copyTextToClipboard(myInfoSurface.getText());
           return true;
         }
         return false;

@@ -8,6 +8,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.paths.PsiDynaReference;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -161,6 +162,11 @@ public abstract class XmlTagDelegate {
 
     if (hints.offsetInElement == null || inStartTag || inEndTag || isInsideXmlText(hints.offsetInElement)) {
       Collections.addAll(refs, ReferenceProvidersRegistry.getReferencesFromProviders(myTag, hints));
+    }
+
+    Integer offset = hints.offsetInElement;
+    if (offset != null) {
+      return PsiDynaReference.filterByOffset(refs.toArray(PsiReference.EMPTY_ARRAY), offset);
     }
 
     return refs.toArray(PsiReference.EMPTY_ARRAY);

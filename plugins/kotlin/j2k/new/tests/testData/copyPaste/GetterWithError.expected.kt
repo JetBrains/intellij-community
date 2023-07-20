@@ -1,3 +1,4 @@
+// ERROR: Unresolved reference: getX
 internal class A {
     var x = 0
 

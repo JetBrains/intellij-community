@@ -5,6 +5,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.ui.PartiallyExcludedFilesStateHolder
 import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
+import com.intellij.openapi.vcs.ex.RangeExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 
 abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTest() {
@@ -80,7 +81,7 @@ abstract class BasePartiallyExcludedChangesTest : BaseLineStatusTrackerManagerTe
 
   protected fun PartialLocalLineStatusTracker.assertExcluded(index: Int, expected: Boolean) {
     val range = this.getRanges()!![index]
-    assertEquals(expected, range.isExcludedFromCommit)
+    assertEquals(expected, range.exclusionState == RangeExclusionState.Excluded)
   }
 
   protected fun String.assertExcludedState(holderState: ExclusionState, trackerState: ExclusionState = holderState) {

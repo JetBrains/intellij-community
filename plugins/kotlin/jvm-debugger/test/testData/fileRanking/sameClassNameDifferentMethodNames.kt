@@ -6,6 +6,7 @@ class A {
         val a = 5
     }
 }
+// PRODUCED_CLASS_NAMES: bar.A
 
 //FILE: b/a.kt
 package foo
@@ -17,3 +18,4 @@ class A {
         val g = ""
     }
 }
+// PRODUCED_CLASS_NAMES: foo.A

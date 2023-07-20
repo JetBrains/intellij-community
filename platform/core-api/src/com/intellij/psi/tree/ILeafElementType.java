@@ -20,10 +20,15 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * An additional interface to be implemented by {@link IElementType} instances to allow customizing how leaf AST elements are created
- * for tokens of this type. By default, plain LeafElement instances would be created. Implementing this interface only makes sense
- * if you want to override some methods in LeafElement.
+ * for tokens of this type. By default, plain LeafElement instances would be created.
+ * <p>
+ * Implementing this interface makes sense if you want to override some methods in LeafElement.
+ * Moreover, it's required if you want to preserve zero-length tokens in the AST.
  *
  * @see ICompositeElementType
+ * @see IReparseableLeafElementType
+ * @see com.intellij.lang.ASTFactory#leaf(IElementType, CharSequence)
+ * @see com.intellij.psi.impl.source.tree.LeafPsiElement
  */
 public interface ILeafElementType {
 

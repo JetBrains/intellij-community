@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -31,22 +31,17 @@ public abstract class GutterTooltipBuilder {
   private static final JBColor CONTEXT_HELP_FOREGROUND
     = JBColor.namedColor("GutterTooltip.infoForeground", new JBColor(0x787878, 0x878787));
 
-  @NotNull
-  protected abstract String getLinkProtocol();
+  protected abstract @NotNull String getLinkProtocol();
 
-  @Nullable
-  protected abstract String getLinkReferenceText(@NotNull PsiElement element);
+  protected abstract @Nullable String getLinkReferenceText(@NotNull PsiElement element);
 
-  @Nullable
-  protected abstract PsiElement getContainingElement(@NotNull PsiElement element);
+  protected abstract @Nullable PsiElement getContainingElement(@NotNull PsiElement element);
 
   protected abstract boolean shouldSkipAsFirstElement(@NotNull PsiElement element);
 
-  @Nullable
-  protected abstract String getPresentableName(@NotNull PsiElement element);
+  protected abstract @Nullable String getPresentableName(@NotNull PsiElement element);
 
-  @Nullable
-  protected String getLocationString(@NotNull PsiElement element) {
+  protected @Nullable String getLocationString(@NotNull PsiElement element) {
     return null;
   }
 
@@ -57,8 +52,7 @@ public abstract class GutterTooltipBuilder {
    * @param skipFirstMember {@code true} to skip a method (or field) name in the link to element
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    */
-  @NotNull
-  public <E extends PsiElement> String buildTooltipText(@NotNull Collection<E> elements,
+  public @NotNull <E extends PsiElement> String buildTooltipText(@NotNull Collection<E> elements,
                                                         @NotNull String prefix,
                                                         boolean skipFirstMember,
                                                         @Nullable String actionId) {
@@ -72,8 +66,7 @@ public abstract class GutterTooltipBuilder {
    * @param actionId        an action identifier to generate context help or {@code null} if not applicable
    * @param pressMessageKey JavaBundle key to retrieve context help message with shortcut
    */
-  @NotNull
-  protected <E extends PsiElement> String buildTooltipText(@NotNull Collection<E> elements,
+  protected @NotNull <E extends PsiElement> String buildTooltipText(@NotNull Collection<E> elements,
                                                            @NotNull String prefix,
                                                            boolean skipFirstMember,
                                                            @Nullable String actionId,
@@ -98,21 +91,19 @@ public abstract class GutterTooltipBuilder {
    * @param skipFirstMemberOfElement a function that returns {@code true} to skip a method (or field) name for the current element
    * @param actionId                 an action identifier to generate context help or {@code null} if not applicable
    */
-  @NotNull
-  public <E extends PsiElement> String buildTooltipText(@NotNull Collection<? extends E> elements,
+  public @NotNull <E extends PsiElement> String buildTooltipText(@NotNull Collection<? extends E> elements,
                                                            @NotNull Function<? super E, String> elementToPrefix,
                                                            @NotNull Predicate<? super E> skipFirstMemberOfElement,
                                                            @Nullable String actionId) {
     return buildTooltipText(null, elements, elementToPrefix, skipFirstMemberOfElement, actionId, "press.to.navigate");
   }
 
-  @NotNull
-  protected  <E extends PsiElement> String buildTooltipText(@Nullable String prefix,
-                                                         @NotNull Collection<? extends E> elements,
-                                                         @NotNull Function<? super E, String> elementToPrefix,
-                                                         @NotNull Predicate<? super E> skipFirstMemberOfElement,
-                                                         @Nullable String actionId,
-                                                         @NotNull String pressMessageKey) {
+  protected @NotNull <E extends PsiElement> String buildTooltipText(@Nullable String prefix,
+                                                                    @NotNull Collection<? extends E> elements,
+                                                                    @NotNull Function<? super E, String> elementToPrefix,
+                                                                    @NotNull Predicate<? super E> skipFirstMemberOfElement,
+                                                                    @Nullable String actionId,
+                                                                    @NotNull String pressMessageKey) {
     StringBuilder sb = new StringBuilder("<html><body><p>");
     if (prefix != null) sb.append(prefix);
     Set<String> names = new HashSet<>();

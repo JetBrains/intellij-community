@@ -105,7 +105,7 @@ class PsiBasedClassResolver @TestOnly constructor(private val targetClassFqName:
 
             if (candidate.qualifiedName == target.qualifiedName) {
                 // File with same FQ name in another module, don't bother with analyzing dependencies
-                if (candidate.navigationElement.containingFile != target.navigationElement.containingFile) {
+                if (candidate !== target && candidate.navigationElement.containingFile != target.navigationElement.containingFile) {
                     forceAmbiguity = true
                     break
                 }

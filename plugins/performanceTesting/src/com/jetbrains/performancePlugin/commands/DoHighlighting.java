@@ -1,6 +1,5 @@
 package com.jetbrains.performancePlugin.commands;
 
-import com.google.common.base.Stopwatch;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection;
 import com.intellij.codeInspection.GlobalInspectionContext;
@@ -8,7 +7,7 @@ import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEngine;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.diagnostic.telemetry.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -27,15 +26,20 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.psi.PsiManager.getInstance;
 
+/**
+ * Command runs highlighting pass.
+ * Runs all highlighting passes. Can't be invoked multiple times in a row since it drops caches before run.
+ * Example: %doHighlighting
+ */
 public final class DoHighlighting extends PerformanceCommand {
   public static final String NAME = "doHighlight";
   public static final String PREFIX = CMD_PREFIX + NAME;
 
   public static final String SPAN_NAME = "highlighting";
+  public static final int MILLIS_IN_NANO = 1000000;
 
   public DoHighlighting(@NotNull String text, int line) {
     super(text, line);
@@ -66,7 +70,7 @@ public final class DoHighlighting extends PerformanceCommand {
       }
       getInstance(project).dropPsiCaches();
       ReadAction.nonBlocking(Context.current().wrap((Callable<Void>)() -> {
-        Stopwatch timer = Stopwatch.createStarted();
+        long start = System.nanoTime();
         TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, SPAN_NAME, span -> {
           GlobalInspectionTool tool = new HighlightVisitorBasedInspection()
             .setHighlightErrorElements(highlightErrorElements).setRunAnnotators(runAnnotators).setRunVisitors(false);
@@ -75,7 +79,8 @@ public final class DoHighlighting extends PerformanceCommand {
           InspectionEngine.runInspectionOnFile(psiFile, new GlobalInspectionToolWrapper(tool), globalContext);
 
           span.setAttribute("lines", editor.getDocument().getLineCount());
-          span.setAttribute("timeToLines", timer.stop().elapsed(TimeUnit.MILLISECONDS) / (Math.max(1, editor.getDocument().getLineCount())));
+          long stop = System.nanoTime();
+          span.setAttribute("timeToLines", (double)(stop - start) / MILLIS_IN_NANO / (Math.max(1, editor.getDocument().getLineCount())));
         });
         actionCallback.setDone();
         return null;

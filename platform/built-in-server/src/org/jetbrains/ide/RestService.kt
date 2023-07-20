@@ -43,7 +43,6 @@ import java.awt.Window
 import java.io.IOException
 import java.io.OutputStream
 import java.lang.reflect.InvocationTargetException
-import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.URI
 import java.net.URISyntaxException
@@ -155,7 +154,7 @@ abstract class RestService : HttpRequestHandler() {
 
   private val abuseCounter = Caffeine.newBuilder()
     .expireAfterWrite(1, TimeUnit.MINUTES)
-    .build<InetAddress, AtomicInteger>(CacheLoader { AtomicInteger() })
+    .build<Any, AtomicInteger>(CacheLoader { AtomicInteger() })
 
   private val trustedOrigins = Caffeine.newBuilder()
     .maximumSize(1024)
@@ -217,14 +216,14 @@ abstract class RestService : HttpRequestHandler() {
 
   override fun process(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Boolean {
     try {
-      val counter = abuseCounter.get((context.channel().remoteAddress() as InetSocketAddress).address)!!
-      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
-        HttpResponseStatus.TOO_MANY_REQUESTS.orInSafeMode(HttpResponseStatus.OK).sendError(context.channel(), request)
+      if (!isHostTrusted(request, urlDecoder)) {
+        HttpResponseStatus.FORBIDDEN.sendError(context.channel(), request)
         return true
       }
 
-      if (!isHostTrusted(request, urlDecoder)) {
-        HttpResponseStatus.FORBIDDEN.orInSafeMode(HttpResponseStatus.OK).sendError(context.channel(), request)
+      val counter = abuseCounter.get(getRequesterId(urlDecoder, request, context))!!
+      if (counter.incrementAndGet() > Registry.intValue("ide.rest.api.requests.per.minute", 30)) {
+        HttpResponseStatus.TOO_MANY_REQUESTS.sendError(context.channel(), request)
         return true
       }
 
@@ -267,6 +266,14 @@ abstract class RestService : HttpRequestHandler() {
   protected open fun isHostTrusted(request: FullHttpRequest, urlDecoder: QueryStringDecoder): Boolean {
     @Suppress("DEPRECATION")
     return isHostTrusted(request)
+  }
+
+  /**
+   * Used to set individual API access rate limits.
+   */
+  @Throws(InterruptedException::class, InvocationTargetException::class)
+  protected open fun getRequesterId(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): Any {
+    return (context.channel().remoteAddress() as InetSocketAddress).address
   }
 
   @Deprecated("Use {@link #isHostTrusted(FullHttpRequest, QueryStringDecoder)}")
@@ -357,5 +364,11 @@ abstract class RestService : HttpRequestHandler() {
 }
 
 fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  return if (Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode == true) this else safeStatus
+  if (Registry.`is`("ide.http.server.response.actual.status", true) ||
+      ApplicationManager.getApplication()?.isUnitTestMode == true) {
+    return this
+  }
+  else {
+    return safeStatus
+  }
 }

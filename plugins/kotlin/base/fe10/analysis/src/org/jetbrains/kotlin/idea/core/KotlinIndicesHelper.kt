@@ -89,10 +89,10 @@ class KotlinIndicesHelper(
     }
 
     private fun MutableSet<KtNamedDeclaration>.addTopLevelNonExtensionCallablesByName(
-        index: KotlinStringStubIndexExtension<out KtNamedDeclaration>,
+        helper: KotlinStringStubIndexHelper<out KtNamedDeclaration>,
         name: String
     ) {
-        index.processElements(name, project, scope) {
+        helper.processElements(name, project, scope) {
             ProgressManager.checkCanceled()
             if (it.parent is KtFile && it is KtCallableDeclaration && it.receiverTypeReference == null) {
                 add(it)
@@ -233,7 +233,7 @@ class KotlinIndicesHelper(
         return out.values.toSet()
     }
 
-    private fun KotlinExtensionsByReceiverTypeIndex.processSuitableExtensions(
+    private fun KotlinExtensionsByReceiverTypeStubIndexHelper.processSuitableExtensions(
         receiverTypes: Collection<KotlinType>,
         nameFilter: (String) -> Boolean,
         declarationFilter: (KtDeclaration) -> Boolean,

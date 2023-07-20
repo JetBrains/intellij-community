@@ -1,17 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 
 import java.util.Collection;
 import java.util.Set;
 
 abstract class UpdateTask<Type> {
   private final Semaphore myUpdateSemaphore = new Semaphore();
-  private final Set<Type> myItemsBeingIndexed = ContainerUtil.newConcurrentSet();
+  private final Set<Type> myItemsBeingIndexed = ConcurrentCollectionFactory.createConcurrentSet();
   private static final boolean DEBUG = false;
 
   final boolean processAll(Collection<? extends Type> itemsToProcess, Project project) {

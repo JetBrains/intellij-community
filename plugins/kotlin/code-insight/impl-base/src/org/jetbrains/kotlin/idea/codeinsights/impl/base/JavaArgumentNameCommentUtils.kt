@@ -46,7 +46,7 @@ typealias NameCommentsByArgument = Map<SmartPsiElementPointer<KtValueArgument>, 
 context(KtAnalysisSession)
 fun getArgumentNameComments(element: KtCallElement): NameCommentsByArgument? {
     val arguments = element.getNonLambdaArguments()
-    val resolvedCall = element.resolveCall().successfulFunctionCallOrNull() ?: return null
+    val resolvedCall = element.resolveCall()?.successfulFunctionCallOrNull() ?: return null
 
     // Use `unwrapFakeOverrides` to handle `SUBSTITUTION_OVERRIDE` and `INTERSECTION_OVERRIDE` callee symbols. Also see the test
     // `genericSuperTypeMethodCall.kt`.

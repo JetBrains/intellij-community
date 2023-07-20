@@ -19,7 +19,8 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
 
     <projectConfigurable groupId="build" id="build.tools" groupWeight="1000"
-                         instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"/>
+                         instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"
+                         key="settings.build.tools.display.name" bundle="messages.ExternalSystemBundle"/>
     <search.optionContributor
       implementation="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupSearchableContributor"/>
 

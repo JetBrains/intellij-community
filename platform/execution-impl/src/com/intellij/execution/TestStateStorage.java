@@ -77,7 +77,7 @@ public class TestStateStorage implements Disposable {
     } catch (IOException e) {
       LOG.error(e);
     }
-    myMapFlusher = FlushingDaemon.everyFiveSeconds(this::flushMap);
+    myMapFlusher = FlushingDaemon.runPeriodically(this::flushMap);
   }
 
   private PersistentHashMap<String, Record> initializeMap() throws IOException {

@@ -21,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
-import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
-import static com.intellij.codeInspection.dataFlow.MethodContract.trivialContract;
+import static com.intellij.codeInspection.dataFlow.MethodContract.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
 import static com.intellij.psi.CommonClassNames.*;
@@ -184,16 +183,31 @@ public final class HardcodedContracts {
     .register(enumValues(), ContractProvider.of(StandardMethodContract.fromText("->new")))
     .register(staticCall("java.lang.System", "arraycopy"), expression -> getArraycopyContract())
     .register(anyOf(
-      instanceCall("java.util.Date", "before", "after"),
-      instanceCall("java.time.LocalDate", "isBefore", "isAfter"),
-      instanceCall("java.time.LocalDateTime", "isBefore", "isAfter"),
-      instanceCall("java.time.LocalTime", "isBefore", "isAfter"),
-      instanceCall("java.time.ZonedDateTime", "isBefore", "isAfter"),
-      instanceCall("java.time.Year", "isBefore", "isAfter"),
-      instanceCall("java.time.YearMonth", "isBefore", "isAfter")
-    ), ContractProvider.of(
-      singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnFalse())
-    ))
+                instanceCall(JAVA_TIME_LOCAL_DATE, "isAfter"),
+                instanceCall(JAVA_TIME_LOCAL_TIME, "isAfter"),
+                instanceCall(JAVA_TIME_OFFSET_TIME, "isAfter"),
+                instanceCall(JAVA_TIME_OFFSET_DATE_TIME, "isAfter"),
+                instanceCall(JAVA_TIME_ZONED_DATE_TIME, "isAfter"),
+                instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "isAfter"),
+                instanceCall("java.util.Date", "after"),
+                instanceCall("java.time.Year", "isAfter"),
+                instanceCall("java.time.YearMonth", "isAfter")),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.qualifier(), RelationType.GT, ContractValue.argument(0), returnBoolean(true)),
+                trivialContract(returnBoolean(false))))
+    .register(anyOf(
+                instanceCall(JAVA_TIME_LOCAL_DATE, "isBefore"),
+                instanceCall(JAVA_TIME_LOCAL_TIME, "isBefore"),
+                instanceCall(JAVA_TIME_OFFSET_TIME, "isBefore"),
+                instanceCall(JAVA_TIME_OFFSET_DATE_TIME, "isBefore"),
+                instanceCall(JAVA_TIME_ZONED_DATE_TIME, "isBefore"),
+                instanceCall(JAVA_TIME_LOCAL_DATE_TIME, "isBefore"),
+                instanceCall("java.util.Date", "before"),
+                instanceCall("java.time.Year", "isBefore"),
+                instanceCall("java.time.YearMonth", "isBefore")),
+              ContractProvider.of(
+                singleConditionContract(ContractValue.qualifier(), RelationType.LT, ContractValue.argument(0), returnBoolean(true)),
+                trivialContract(returnBoolean(false))))
     //for propagation CONSUMED_STREAM
     .register(ConsumedStreamUtils.getSkipStreamMatchers(), ContractProvider.of(trivialContract(returnThis())))
     .register(staticCall(JAVA_LANG_CHARACTER, "isSurrogate").parameterCount(1),

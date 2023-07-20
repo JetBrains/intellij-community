@@ -6,7 +6,6 @@ import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,17 +57,6 @@ public final class PsiPrimitiveType extends PsiType.Stub implements JvmPrimitive
     JvmPrimitiveTypeKind kind = JvmPrimitiveTypeKind.getKindByName(name);
     if (kind == null) throw new NoSuchElementException("Cannot find primitive type: " + name);
     myKind = kind;
-    myName = name;
-  }
-
-  /**
-   * @deprecated please don't use {@link PsiPrimitiveType} to represent fake types
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public PsiPrimitiveType(@NotNull String name, PsiAnnotation @NotNull [] annotations) {
-    super(annotations);
-    myKind = null;
     myName = name;
   }
 

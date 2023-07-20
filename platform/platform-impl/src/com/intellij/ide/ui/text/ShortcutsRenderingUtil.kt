@@ -19,7 +19,7 @@ import javax.swing.KeyStroke
 @ApiStatus.Experimental
 @ApiStatus.Internal
 object ShortcutsRenderingUtil {
-  val SHORTCUT_PART_SEPARATOR = NON_BREAK_SPACE.repeat(3)
+  val SHORTCUT_PART_SEPARATOR: String = NON_BREAK_SPACE.repeat(3)
 
   /**
    * @param actionId

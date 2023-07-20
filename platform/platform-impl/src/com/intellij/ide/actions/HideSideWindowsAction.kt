@@ -39,5 +39,5 @@ internal class HideSideWindowsAction : AnAction(), DumbAware {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 }

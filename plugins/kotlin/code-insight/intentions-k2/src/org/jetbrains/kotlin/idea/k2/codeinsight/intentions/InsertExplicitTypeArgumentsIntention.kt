@@ -30,7 +30,7 @@ class InsertExplicitTypeArgumentsIntention :
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtCallExpression): String? {
-        val resolvedCall = element.resolveCall().singleFunctionCallOrNull() ?: return null
+        val resolvedCall = element.resolveCall()?.singleFunctionCallOrNull() ?: return null
         val typeParameterSymbols = resolvedCall.partiallyAppliedSymbol.symbol.typeParameters
         if (typeParameterSymbols.isEmpty()) return null
         val renderedTypeParameters = buildList {

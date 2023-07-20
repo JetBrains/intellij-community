@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -9,8 +10,9 @@ import java.util.Collections;
 import java.util.Map;
 
 /**
- * @author gregsh
+ * Deprecated. Use {@link java.util.function.Function} instead.
  */
+@ApiStatus.Obsolete
 public final class Functions {
   private static final Function.Mono<?> ID = new Function.Mono<Object>() {
     @Override

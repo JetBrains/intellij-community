@@ -197,29 +197,31 @@ private fun doEvaluate(str: String): Double {
       }
       else {
         val startPos = pos
-        if (ch in '1'..'9' || ch == '.') { // numbers
-          nextChar()
-          while (ch in '0'..'9' || ch == '.') {
+        when (ch) {
+          in '1'..'9', '.' -> { // numbers
             nextChar()
+            while (ch in '0'..'9' || ch == '.') {
+              nextChar()
+            }
+            x = str.substring(startPos, pos).toDouble()
           }
-          x = str.substring(startPos, pos).toDouble()
-        }
-        else if (ch in 'a'..'z') { // functions
-          while (ch in 'a'..'z') {
-            nextChar()
+          in 'a'..'z' -> { // functions
+            while (ch in 'a'..'z') {
+              nextChar()
+            }
+            val func = str.substring(startPos, pos)
+            x = parseFactor()
+            x = when (func) {
+              "sqrt" -> sqrt(x)
+              "sin" -> sin(Math.toRadians(x))
+              "cos" -> cos(Math.toRadians(x))
+              "tan" -> tan(Math.toRadians(x))
+              else -> throw RuntimeException("Unknown function: $func")
+            }
           }
-          val func = str.substring(startPos, pos)
-          x = parseFactor()
-          x = when (func) {
-            "sqrt" -> sqrt(x)
-            "sin" -> sin(Math.toRadians(x))
-            "cos" -> cos(Math.toRadians(x))
-            "tan" -> tan(Math.toRadians(x))
-            else -> throw RuntimeException("Unknown function: $func")
+          else -> {
+            throw RuntimeException("Unexpected: $ch")
           }
-        }
-        else {
-          throw RuntimeException("Unexpected: $ch")
         }
       }
       if (eat('^')) {

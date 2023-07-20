@@ -9,11 +9,12 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class RefactorJBundle extends DynamicBundle {
+public final class RefactorJBundle {
   @NonNls private static final String BUNDLE = "messages.RefactorJBundle";
-  private static final RefactorJBundle INSTANCE = new RefactorJBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(RefactorJBundle.class, BUNDLE);
 
-  private RefactorJBundle() { super(BUNDLE); }
+  private RefactorJBundle() {
+  }
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {

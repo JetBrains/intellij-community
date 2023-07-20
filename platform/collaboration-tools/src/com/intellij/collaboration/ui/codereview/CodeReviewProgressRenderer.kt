@@ -7,7 +7,9 @@ import com.intellij.ui.CellRendererPanel
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.util.ui.JBUI
 import icons.CollaborationToolsIcons
-import java.awt.BorderLayout
+import net.miginfocom.layout.CC
+import net.miginfocom.layout.LC
+import net.miginfocom.swing.MigLayout
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JLabel
@@ -19,17 +21,15 @@ internal class CodeReviewProgressRenderer(
   private val codeReviewProgressStateProvider: (ChangesBrowserNode<*>) -> NodeCodeReviewProgressState
 ) : CellRendererPanel(), TreeCellRenderer {
 
-  private val iconLabel = JLabel().apply { border = JBUI.Borders.empty(0, TEXT_ICON_GAP, 0, ICON_BORDER) }
-
-  init {
-    buildLayout()
+  private val iconLabel = JLabel().apply {
+    border = JBUI.Borders.empty(0, TEXT_ICON_GAP, 0, ICON_BORDER)
   }
 
-  private fun buildLayout() {
-    layout = BorderLayout()
-
-    add(renderer, BorderLayout.CENTER)
-    add(iconLabel, BorderLayout.EAST)
+  init {
+    layout = MigLayout(LC().gridGap("0", "0")
+                         .insets("0", "0", "0", "0")
+                         .fill()
+                         .noGrid())
   }
 
   override fun getTreeCellRendererComponent(
@@ -43,12 +43,23 @@ internal class CodeReviewProgressRenderer(
   ): Component {
     value as ChangesBrowserNode<*>
 
+    removeAll()
     background = null
     isSelected = selected
 
-    renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
-    iconLabel.icon = getIcon(value)
-    iconLabel.text = getText(value)
+    val comp = renderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus)
+    add(comp, CC().minWidth("0").dockWest())
+
+    val icon = getIcon(value)
+    iconLabel.icon = icon
+    val text = getText(value)
+    iconLabel.text = text
+
+    val fm = iconLabel.getFontMetrics(iconLabel.font)
+    val width = (icon?.iconWidth ?: 0) + iconLabel.iconTextGap +
+                fm.charWidth('8') * (text?.length ?: 0) +
+                iconLabel.insets.left + iconLabel.insets.right
+    add(iconLabel, CC().minWidth("${width}px").dockEast())
 
     return this
   }

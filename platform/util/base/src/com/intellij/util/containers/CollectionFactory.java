@@ -404,6 +404,9 @@ public final class CollectionFactory {
   public static <K> @NotNull Set<K> createCustomHashingStrategySet(@NotNull HashingStrategy<? super K> strategy) {
     return new ObjectOpenCustomHashSet<>(adaptStrategy(strategy));
   }
+  public static <K,V> @NotNull Map<K, V> createLinkedCustomHashingStrategyMap(@NotNull HashingStrategy<? super K> strategy) {
+    return new Object2ObjectLinkedOpenCustomHashMap<>(adaptStrategy(strategy));
+  }
   public static <K> @NotNull Set<K> createLinkedCustomHashingStrategySet(@NotNull HashingStrategy<? super K> strategy) {
     return new ObjectLinkedOpenCustomHashSet<>(adaptStrategy(strategy));
   }

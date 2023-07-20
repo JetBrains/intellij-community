@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.flavors;
 
+import com.google.common.collect.EvictingQueue;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
@@ -43,6 +44,11 @@ import java.util.regex.Pattern;
  */
 public abstract class PythonSdkFlavor<D extends PyFlavorData> {
   public static final ExtensionPointName<PythonSdkFlavor<?>> EP_NAME = ExtensionPointName.create("Pythonid.pythonSdkFlavor");
+  /**
+   * To prevent log pollution, we cache every {@link #isFileExecutable(String, TargetEnvironmentConfiguration)} call
+   * and only log it once
+   */
+  private static final Collection<String> ourBuffer = Collections.synchronizedCollection(EvictingQueue.create(10));
 
   private static final Pattern VERSION_RE = Pattern.compile("(Python \\S+).*");
   private static final Logger LOG = Logger.getInstance(PythonSdkFlavor.class);
@@ -138,11 +144,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
       LOG.warn("Sdk doesn't have homepath:" + sdk.getName());
       return false;
     }
-    boolean executable = isFileExecutable(path, targetConfig);
-    if (! executable) {
-      LOG.warn("File not executable on default sdk flavour:" + path);
-    }
-    return executable;
+    return isFileExecutable(path, targetConfig);
   }
 
   /**
@@ -151,6 +153,17 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * @param fullPath full path on target
    */
   protected static boolean isFileExecutable(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration targetEnvConfig) {
+    boolean executable = isFileExecutableImpl(fullPath, targetEnvConfig);
+    if (!executable) {
+      if (!ourBuffer.contains(fullPath)) {
+        ourBuffer.add(fullPath);
+        Logger.getInstance(PythonSdkFlavor.class).warn(String.format("%s is not executable", fullPath));
+      }
+    }
+    return executable;
+  }
+
+  private static boolean isFileExecutableImpl(@NotNull String fullPath, @Nullable TargetEnvironmentConfiguration targetEnvConfig) {
     if (targetEnvConfig == null) {
       // Local
       return Files.isExecutable(Path.of(fullPath));

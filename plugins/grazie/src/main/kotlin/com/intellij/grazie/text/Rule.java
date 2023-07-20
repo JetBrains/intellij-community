@@ -76,7 +76,7 @@ public abstract class Rule {
    * @return the presentable name of the rule's topmost category
    * @deprecated use {@link #getCategories()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final String getCategory() {
     return categories.get(0);
   }

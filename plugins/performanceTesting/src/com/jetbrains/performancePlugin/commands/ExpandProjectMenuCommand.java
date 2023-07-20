@@ -5,6 +5,11 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+/**
+ * Command to test how long does it take to open context menu in project view.
+ * The popup won't be shown but all heavy methods that may cause context menu long load will be invoked.
+ * Example: %expandProjectMenu
+ */
 public class ExpandProjectMenuCommand extends ExpandMenuCommand {
   public static final @NonNls String PREFIX = CMD_PREFIX + "expandProjectMenu";
 

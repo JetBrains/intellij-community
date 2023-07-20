@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.ProblemsHolder
@@ -17,7 +17,7 @@ import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
 
-class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpression::class.java) {
+class IncorrectParentDisposableInspection : DevKitUastInspectionBase() {
 
   override fun isAllowed(holder: ProblemsHolder): Boolean = DevKitInspectionUtil.isAllowedInPluginsOnly(holder.file)
 
@@ -44,13 +44,15 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
 
       val project = argumentType.project
       val facade = JavaPsiFacade.getInstance(project)
+      val callSiteResolveScope = holder.file.resolveScope
+
       @NlsSafe val typeName: String? =
         when {
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Project::class.java.name, callSiteResolveScope),
                                             true) -> "Project"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Application::class.java.name, callSiteResolveScope),
                                             true) -> "Application"
-          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, psiMethod.resolveScope),
+          InheritanceUtil.isInheritorOrSelf(argumentType, facade.findClass(Module::class.java.name, callSiteResolveScope),
                                             true) -> "Module"
           else -> null
         }

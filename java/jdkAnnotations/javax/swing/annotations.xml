@@ -1,62 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
   <item name="javax.swing">
-    <annotation name="org.jetbrains.annotations.Nls"/>
+    <annotation name="org.jetbrains.annotations.Nls" />
   </item>
   <item name='javax.swing.AbstractAction void putValue(java.lang.String, java.lang.Object) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.AbstractButton java.lang.String getActionCommand()'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.AbstractButton void setActionCommand(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.Action NAME'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.Action SHORT_DESCRIPTION'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.Action LONG_DESCRIPTION'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.Action SMALL_ICON'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.Action ACTION_COMMAND_KEY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.Action ACCELERATOR_KEY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
-  <item name='javax.swing.Action MNEMONIC_KEY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.Action SELECTED_KEY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name='javax.swing.Action ACTION_COMMAND_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.Action DISPLAYED_MNEMONIC_INDEX_KEY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.Action LARGE_ICON_KEY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action LONG_DESCRIPTION'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action MNEMONIC_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action NAME'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action SELECTED_KEY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action SHORT_DESCRIPTION'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.Action SMALL_ICON'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.Action java.lang.Object getValue(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.Action void putValue(java.lang.String, java.lang.Object) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.ActionMap javax.swing.Action get(java.lang.Object) 0">
-    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="javax.swing.ActionMap void put(java.lang.Object, javax.swing.Action) 0">
-    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="javax.swing.BoxLayout BoxLayout(java.awt.Container, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
-      <val name="valuesFromClass" val="javax.swing.BoxLayout.class"/>
+      <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
     </annotation>
   </item>
   <item name="javax.swing.BoxLayout BoxLayout(java.awt.Container, int, java.io.PrintStream) 1">
@@ -70,22 +70,22 @@
     </annotation>
   </item>
   <item name='javax.swing.ButtonModel java.lang.String getActionCommand()'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.ButtonModel void setActionCommand(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.ImageIcon ImageIcon(java.lang.String, java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.InputMap void put(javax.swing.KeyStroke, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name='javax.swing.JComboBox java.lang.Object getSelectedItem()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.Nullable' />
   </item>
   <item name="javax.swing.JComponent boolean processKeyBinding(javax.swing.KeyStroke, java.awt.event.KeyEvent, int, boolean) 2">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -106,10 +106,10 @@
     </annotation>
   </item>
   <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, boolean, boolean) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JComponent void firePropertyChange(java.lang.String, int, int) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
@@ -117,9 +117,8 @@
   <item name="javax.swing.JComponent void putClientProperty(java.lang.Object, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
-  <item
-    name='javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name='javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.JComponent void registerKeyboardAction(java.awt.event.ActionListener, java.lang.String, javax.swing.KeyStroke, int) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -140,16 +139,16 @@
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name='javax.swing.JEditorPane void scrollToReference(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JEditorPane void setContentType(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JFormattedTextField.AbstractFormatter java.lang.Object stringToValue(java.lang.String) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JFormattedTextField.AbstractFormatter java.lang.String valueToString(java.lang.Object)'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JFrame void setDefaultCloseOperation(int) 0'>
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -292,7 +291,7 @@
     </annotation>
   </item>
   <item name='javax.swing.JOptionPane java.awt.Frame getRootFrame()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' />
   </item>
   <item name="javax.swing.JOptionPane java.lang.Object showInputDialog(java.awt.Component, java.lang.Object, java.lang.String, int, javax.swing.Icon, java.lang.Object[], java.lang.Object) 3">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -340,7 +339,7 @@
     </annotation>
   </item>
   <item name="javax.swing.JPasswordField void setText(java.lang.String) 0">
-    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="javax.swing.JScrollBar JScrollBar(int) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -383,7 +382,7 @@
     </annotation>
   </item>
   <item name='javax.swing.JScrollPane void setCorner(java.lang.String, java.awt.Component) 0'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.JSplitPane JSplitPane(int, boolean) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -476,56 +475,56 @@
   <item name="javax.swing.JTable void sorterChanged(javax.swing.event.RowSorterEvent) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='javax.swing.JTree CELL_RENDERER_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree TREE_MODEL_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree ROOT_VISIBLE_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree SHOWS_ROOT_HANDLES_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree ROW_HEIGHT_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+  <item name='javax.swing.JTree ANCHOR_SELECTION_PATH_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JTree CELL_EDITOR_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree CELL_RENDERER_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JTree EDITABLE_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree LARGE_MODEL_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree SELECTION_MODEL_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree VISIBLE_ROW_COUNT_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree INVOKES_STOP_CELL_EDITING_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree SCROLLS_ON_EXPAND_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree TOGGLE_CLICK_COUNT_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree LEAD_SELECTION_PATH_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
-  </item>
-  <item name='javax.swing.JTree ANCHOR_SELECTION_PATH_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JTree EXPANDS_SELECTED_PATHS_PROPERTY'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree INVOKES_STOP_CELL_EDITING_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree LARGE_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree LEAD_SELECTION_PATH_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree ROOT_VISIBLE_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree ROW_HEIGHT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree SCROLLS_ON_EXPAND_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree SELECTION_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree SHOWS_ROOT_HANDLES_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree TOGGLE_CLICK_COUNT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree TREE_MODEL_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
+  </item>
+  <item name='javax.swing.JTree VISIBLE_ROW_COUNT_PROPERTY'>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name='javax.swing.JTree int[] getSelectionRows()'>
-    <annotation name='org.jetbrains.annotations.Nullable'/>
+    <annotation name='org.jetbrains.annotations.Nullable' />
   </item>
   <item name="javax.swing.JTree java.awt.Rectangle getPathBounds(javax.swing.tree.TreePath)">
     <annotation name="org.jetbrains.annotations.Nullable" />
@@ -534,7 +533,7 @@
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
   <item name="javax.swing.JTree javax.swing.tree.TreePath getSelectionPath()">
-    <annotation name="org.jetbrains.annotations.Nullable"/>
+    <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
   <item name="javax.swing.JTree javax.swing.tree.TreePath[] getSelectionPaths()">
     <annotation name="org.jetbrains.annotations.Nullable" />
@@ -565,6 +564,9 @@
       <val name="flagsFromClass" val="java.awt.event.InputEvent.class" />
     </annotation>
   </item>
+  <item name='javax.swing.KeyboardManager void registerKeyStroke(javax.swing.KeyStroke, javax.swing.JComponent) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
   <item name="javax.swing.ListSelectionModel int getSelectionMode()">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="valuesFromClass" val="javax.swing.ListSelectionModel.class" />
@@ -591,13 +593,13 @@
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name='javax.swing.LookAndFeel void installProperty(javax.swing.JComponent, java.lang.String, java.lang.Object) 1'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.RowSorter.SortKey SortKey(int, javax.swing.SortOrder) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name='javax.swing.ScrollPaneConstants'>
-    <annotation name='org.jetbrains.annotations.NonNls'/>
+    <annotation name='org.jetbrains.annotations.NonNls' />
   </item>
   <item name="javax.swing.Scrollable int getScrollableBlockIncrement(java.awt.Rectangle, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
@@ -610,7 +612,7 @@
     </annotation>
   </item>
   <item name='javax.swing.SwingUtilities java.awt.Frame getSharedOwnerFrame()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' />
   </item>
   <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -618,23 +620,29 @@
   <item name="javax.swing.SwingUtilities java.awt.Point convertPoint(java.awt.Component, java.awt.Point, java.awt.Component) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
+  <item name='javax.swing.SwingUtilities void convertPointFromScreen(java.awt.Point, java.awt.Component) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull' />
+  </item>
   <item name="javax.swing.TransferHandler java.awt.datatransfer.Transferable createTransferable(javax.swing.JComponent)">
     <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
   <item name='javax.swing.UIDefaults'>
-    <annotation name="org.jetbrains.annotations.NonNls"/>
+    <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name="javax.swing.UIManager">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
   <item name='javax.swing.UIManager java.lang.String getCrossPlatformLookAndFeelClassName()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' />
   </item>
   <item name='javax.swing.UIManager java.lang.String getSystemLookAndFeelClassName()'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' />
   </item>
   <item name='javax.swing.UIManager.LookAndFeelInfo java.lang.String getName()'>
-    <annotation name='org.jetbrains.annotations.Nls'/>
+    <annotation name='org.jetbrains.annotations.Nls' />
   </item>
 </root>
 

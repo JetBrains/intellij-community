@@ -106,7 +106,7 @@ internal fun moveComponentConfiguration(defaultProject: Project,
 
     val storagePath = when {
       stateAnnotation.name.isEmpty() -> "misc.xml"
-      else -> (stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return).path
+      else -> (sortStoragesByDeprecated(stateAnnotation.storages.asList()).firstOrNull() ?: return).path
     }
 
     when (storagePath) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "PrivatePropertyName")
 
 package com.intellij.openapi.fileEditor.impl
@@ -9,7 +9,9 @@ import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.TransactionGuardImpl
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.markup.TextAttributes
@@ -39,6 +41,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.isActive
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
@@ -53,10 +56,10 @@ private val LOG = logger<EditorWindow>()
 class EditorWindow internal constructor(val owner: EditorsSplitters, private val coroutineScope: CoroutineScope) {
   companion object {
     @JvmField
-    val DATA_KEY = DataKey.create<EditorWindow>("editorWindow")
+    val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
 
     @JvmField
-    val HIDE_TABS = Key.create<Boolean>("HIDE_TABS")
+    val HIDE_TABS: Key<Boolean> = Key.create("HIDE_TABS")
 
     // Metadata to support editor tab drag&drop process: initial index
     internal val DRAG_START_INDEX_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor index", -1)
@@ -65,7 +68,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     internal val DRAG_START_LOCATION_HASH_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor location hash", 0)
 
     // Metadata to support editor tab drag&drop process: initial 'pinned' state
-    internal val DRAG_START_PINNED_KEY = Key.create<Boolean>("drag start editor pinned state")
+    internal val DRAG_START_PINNED_KEY: Key<Boolean> = Key.create("drag start editor pinned state")
 
     @JvmStatic
     val tabLimit: Int
@@ -186,7 +189,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     get() = getFileSequence().toList()
 
   @RequiresEdt
-  fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
+  internal fun getFileSequence(): Sequence<VirtualFile> = getComposites().map { it.file }
 
   init {
     panel = JPanel(BorderLayout())
@@ -272,6 +275,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use {@link #setComposite(EditorComposite, boolean)}",
               ReplaceWith("setComposite(editor, FileEditorOpenOptions().withRequestFocus(focusEditor))",
                           "com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions"))
@@ -499,11 +503,12 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
   fun updateTabsVisibility(settings: UISettings = UISettings.getInstance()) {
     tabbedPane.tabs.presentation.isHideTabs = (owner.isFloating && this.tabCount == 1 && shouldHideTabs(selectedComposite)) ||
-                                              settings.editorTabPlacement == UISettings.TABS_NONE || settings.presentationMode
+                                              settings.editorTabPlacement == UISettings.TABS_NONE ||
+                                              (settings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
 
   fun closeAllExcept(selectedFile: VirtualFile?) {
-    FileEditorManagerImpl.runBulkTabChange(owner) {
+    runBulkTabChange(owner) {
       for (file in getFileSequence().toList()) {
         if (file != selectedFile && !isFilePinned(file)) {
           closeFile(file)
@@ -543,7 +548,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   }
 
   internal fun closeFile(file: VirtualFile, composite: EditorComposite?, disposeIfNeeded: Boolean = true) {
-    FileEditorManagerImpl.runBulkTabChange(owner) {
+    runBulkTabChange(owner) {
       val fileEditorManager = manager
       try {
         fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
@@ -640,7 +645,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         val composite = getComposite(histFile) ?: continue
         val histFileIndex = findComponentIndex(composite.component)
         if (histFileIndex >= 0) {
-          // if the file being closed is located before the hist file, then after closing the index of the histFile will be shifted by -1
+          // if the file being closed is located before the hist file, then after closing, the index of the histFile will be shifted by -1
           return histFileIndex
         }
       }
@@ -649,7 +654,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
       return fileIndex + 1
     }
 
-    // by default, select previous neighbour
+    // by default, select the previous neighbour
     return if (fileIndex > 0) fileIndex - 1 else -1
   }
 
@@ -871,7 +876,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
 
     val limit = tabLimit
     fun isUnderLimit(): Boolean =
-      tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || areAllTabsPinned(fileToIgnore)
+      tabbedPane.tabCount <= limit || tabbedPane.tabCount == 0 || !isAnyTabClosable(fileToIgnore)
 
     if (isUnderLimit()) {
       return
@@ -958,8 +963,8 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     return !owner.manager.isChanged(composite)
   }
 
-  private fun areAllTabsPinned(fileToIgnore: VirtualFile?): Boolean {
-    return (tabbedPane.tabCount - 1 downTo 0).none { fileCanBeClosed(getFileAt(it), fileToIgnore) }
+  private fun isAnyTabClosable(fileToIgnore: VirtualFile?): Boolean {
+    return (tabbedPane.tabCount - 1 downTo 0).any { fileCanBeClosed(getFileAt(it), fileToIgnore) }
   }
 
   private fun defaultCloseFile(file: VirtualFile, transferFocus: Boolean) {
@@ -970,12 +975,26 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     if (file is BackedVirtualFile && file.originFile == fileToIgnore) {
       return false
     }
-    return isFileOpen(file) && file != fileToIgnore && !isFilePinned(file)
+    return isFileOpen(file) && file != fileToIgnore && !isFilePinned(file) && isClosingAllowed(file)
+  }
+
+  private fun isClosingAllowed(file: VirtualFile): Boolean {
+    val extensions = EditorAutoClosingHandler.EP_NAME.extensionList
+    if (extensions.isEmpty()) return true
+    val composite = getComposite(file) ?: return true
+    return extensions.all { handler -> handler.isClosingAllowed(composite) }
   }
 
   internal fun getFileAt(i: Int): VirtualFile = getCompositeAt(i).file
 
-  override fun toString() = "EditorWindow(files=${getComposites().joinToString { it.file.path }})"
+  override fun toString(): String {
+    if (EDT.isCurrentThreadEdt()) {
+      return "EditorWindow(files=${getComposites().joinToString { it.file.path }})"
+    }
+    else {
+      return super.toString()
+    }
+  }
 }
 
 private fun shouldReservePreview(file: VirtualFile, options: FileEditorOpenOptions, project: Project): Boolean {
@@ -1094,7 +1113,7 @@ private class MySplitPainter(
     val switchShortcuts = IdeBundle.message("split.with.chooser.switch.tab", getShortcut("SplitChooser.NextWindow"))
 
     // Adjust default width to an info text
-    val font = StartupUiUtil.getLabelFont()
+    val font = StartupUiUtil.labelFont
     val fontMetrics = g.getFontMetrics(font)
     val openShortcutsWidth = fontMetrics.stringWidth(openShortcuts)
     val switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts)

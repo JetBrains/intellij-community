@@ -4,6 +4,7 @@ package git4idea.checkin
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.checkin.PostCommitChangeConverter
@@ -15,6 +16,7 @@ import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.history.GitCommitRequirements
 import git4idea.history.GitLogUtil
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 
 class GitPostCommitChangeConverter(private val project: Project) : PostCommitChangeConverter {
@@ -32,7 +34,8 @@ class GitPostCommitChangeConverter(private val project: Project) : PostCommitCha
     val consumer = CollectConsumer<GitCommit>()
     val commitRequirements = GitCommitRequirements(diffInMergeCommits = GitCommitRequirements.DiffInMergeCommits.FIRST_PARENT)
     GitLogUtil.readFullDetailsForHashes(project, repo.root, listOf(hash.asString()), commitRequirements, consumer)
-    val commit = consumer.result.first()
+    val commit = consumer.result.firstOrNull() ?: throw VcsException(GitBundle.message("post.commit.check.load.changes.error",
+                                                                                       repo.root.name, hash.asString()))
 
     return commit.getChanges(0).toList()
   }

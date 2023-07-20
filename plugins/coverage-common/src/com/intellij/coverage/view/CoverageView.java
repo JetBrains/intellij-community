@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
@@ -177,7 +177,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       }
     }.installOn(myTable.getTree());
 
-    final TreeSpeedSearch speedSearch = new TreeSpeedSearch(myTable.getTree(), false, path -> path.getLastPathComponent().toString());
+    final TreeSpeedSearch speedSearch = TreeSpeedSearch.installOn(myTable.getTree(), false, path -> path.getLastPathComponent().toString());
     speedSearch.setCanExpand(true);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
     PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
@@ -551,7 +551,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         final VirtualFile file = myViewExtension.getVirtualFile(object);
         return getNode(element, file);
       })
-      .finishOnUiThread(ModalityState.NON_MODAL, (node) -> myModel.makeVisible(node, this::selectPath))
+      .finishOnUiThread(ModalityState.nonModal(), (node) -> myModel.makeVisible(node, this::selectPath))
       .submit(AppExecutorUtil.getAppExecutorService());
   }
 

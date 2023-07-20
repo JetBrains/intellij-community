@@ -16,12 +16,14 @@
 package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.java.parser.ExpressionParser;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -33,7 +35,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
@@ -78,7 +79,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new IntegerMultiplicationImplicitCastToLongInspectionFix();
   }
 
@@ -153,7 +154,7 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     return ExpressionParser.SHIFT_OPS.contains(tokenType);
   }
 
-  private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends InspectionGadgetsFix {
+  private static class IntegerMultiplicationImplicitCastToLongInspectionFix extends PsiUpdateModCommandQuickFix {
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
@@ -163,8 +164,8 @@ public class IntegerMultiplicationImplicitCastToLongInspection extends BaseInspe
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiPolyadicExpression expression = (PsiPolyadicExpression)descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiPolyadicExpression expression = (PsiPolyadicExpression)startElement;
 
       final PsiExpression[] operands = expression.getOperands();
       if (operands.length < 2) {

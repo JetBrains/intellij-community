@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.inspections.branchedTransformations
 
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemHighlightType.INFORMATION
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
@@ -16,6 +18,13 @@ class IntroduceWhenSubjectInspection : AbstractApplicabilityBasedInspection<KtWh
     override fun isApplicable(element: KtWhenExpression) = element.getSubjectToIntroduce() != null
 
     override fun inspectionHighlightRangeInElement(element: KtWhenExpression) = element.whenKeyword.textRangeIn(element)
+
+    // Don't highlight it as a warning if only one branch is affected:
+    // the resulting code with a 'when' subject will arguably be less clear than the original
+    override fun inspectionHighlightType(element: KtWhenExpression): ProblemHighlightType {
+        val regularEntries = element.entries.filter { !it.isElse }
+        return if (regularEntries.size < 2) INFORMATION else super.inspectionHighlightType(element)
+    }
 
     override fun inspectionText(element: KtWhenExpression) = KotlinBundle.message("when.with.subject.should.be.used")
 

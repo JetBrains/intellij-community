@@ -25,7 +25,8 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
     return switch (data) {
       case NULLABILITY_ANNOTATIONS -> NullableNotNullDialog.createConfigureAnnotationsButton(project);
       case ENTRY_POINT_CODE_PATTERNS -> EntryPointsManagerImpl.createConfigureClassPatternsButton(project);
-      case ENTRY_POINT_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton(project);
+      case ENTRY_POINT_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton(project, false);
+      case IMPLICIT_WRITE_ANNOTATIONS -> EntryPointsManagerImpl.createConfigureAnnotationsButton(project, true);
       case DEPENDENCY_CONFIGURATION -> DependencyConfigurable.getConfigureButton(project);
     };
   }
@@ -43,7 +44,14 @@ public class JavaInspectionButtons extends CustomComponentExtensionWithSwingRend
   public enum ButtonKind {
     NULLABILITY_ANNOTATIONS,
     ENTRY_POINT_CODE_PATTERNS,
+    /**
+     * Entry point annotations + implicit write annotations
+     */
     ENTRY_POINT_ANNOTATIONS,
+    /**
+     * Implicit write annotations only
+     */
+    IMPLICIT_WRITE_ANNOTATIONS,
     DEPENDENCY_CONFIGURATION
   }
 }

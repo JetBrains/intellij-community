@@ -3,7 +3,6 @@ package git4idea.index
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
@@ -144,7 +143,7 @@ private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRec
   val it = split.iterator()
   while (it.hasNext()) {
     val line = it.next()
-    if (StringUtil.isEmptyOrSpaces(line)) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
+    if (line.isBlank()) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
     if (line.startsWith("starting fsmonitor-daemon in ")) continue // skip debug output from experimental daemon in git-for-windows-2.33
     // format: XY_filename where _ stands for space.
     if (line.length < 4 || line[2] != ' ') { // X, Y, space and at least one symbol for the file

@@ -141,7 +141,7 @@ open class NewToolbarRootPaneManager(private val project: Project) : SimpleModif
                                     actionGroup: ActionGroup,
                                     horizontal: Boolean, decorateButtons: Boolean,
                                     popupActionGroup: ActionGroup?,
-                                    popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons,
+                                    popupActionId: String?) : ActionToolbarImpl(place, actionGroup, horizontal, decorateButtons, true,
                                                                                 popupActionGroup, popupActionId) {
 
     override fun addNotify() {

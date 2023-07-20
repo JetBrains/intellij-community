@@ -6,7 +6,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.navigation.CtrlMouseAction;
 import com.intellij.codeInsight.navigation.CtrlMouseData;
-import com.intellij.codeInsight.navigation.CtrlMouseInfo;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
@@ -106,12 +105,6 @@ public final class GotoTypeDeclarationAction extends BaseCodeInsightAction imple
     }
 
     return null;
-  }
-
-  @Deprecated
-  @Override
-  public @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset) {
-    return GotoTypeDeclarationHandler2.getCtrlMouseInfo(file, offset);
   }
 
   @Override

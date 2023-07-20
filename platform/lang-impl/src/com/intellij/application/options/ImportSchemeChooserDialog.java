@@ -8,9 +8,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
-import com.intellij.ui.SimpleListCellRenderer;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.BuilderKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,8 +51,8 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
         return myNames.get(index);
       }
     });
-    mySchemeList.setCellRenderer(SimpleListCellRenderer.create(
-      (JBLabel label, @NlsContexts.Label String value, int index) -> label.setText(value == null ? '<' + ApplicationBundle.message("code.style.scheme.import.unnamed") + '>' : value)));
+    mySchemeList.setCellRenderer(BuilderKt.simpleListCellRenderer(
+      value -> value == null ? '<' + ApplicationBundle.message("code.style.scheme.import.unnamed") + '>' : value));
     mySchemeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     mySchemeList.addListSelectionListener(new ListSelectionListener() {
       @Override

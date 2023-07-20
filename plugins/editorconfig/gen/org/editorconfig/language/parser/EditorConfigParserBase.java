@@ -21,7 +21,7 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
 
   public void parseLight(IElementType t, PsiBuilder b) {
     boolean r;
-    b = adapt_builder_(t, b, this, null);
+    b = adapt_builder_(t, b, this, EXTENDS_SETS_);
     Marker m = enter_section_(b, 0, _COLLAPSE_, null);
     r = parse_root_(t, b);
     exit_section_(b, 0, m, t, r, true, TRUE_CONDITION);
@@ -35,6 +35,11 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     return editorConfigFile(b, l + 1);
   }
 
+  public static final TokenSet[] EXTENDS_SETS_ = new TokenSet[] {
+    create_token_set_(ASTERISK_PATTERN, CHAR_CLASS_PATTERN, CONCATENATED_PATTERN, DOUBLE_ASTERISK_PATTERN,
+      ENUMERATION_PATTERN, FLAT_PATTERN, QUESTION_PATTERN),
+  };
+
   /* ********************************************************** */
   // ASTERISK
   public static boolean asterisk_pattern(PsiBuilder b, int l) {
@@ -44,43 +49,6 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, ASTERISK);
     exit_section_(b, m, ASTERISK_PATTERN, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // L_BRACKET char_class_exclamation? char_class_letter+ R_BRACKET
-  public static boolean char_class(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "char_class")) return false;
-    if (!nextTokenIs(b, L_BRACKET)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, L_BRACKET);
-    r = r && char_class_1(b, l + 1);
-    r = r && char_class_2(b, l + 1);
-    r = r && consumeToken(b, R_BRACKET);
-    exit_section_(b, m, CHAR_CLASS, r);
-    return r;
-  }
-
-  // char_class_exclamation?
-  private static boolean char_class_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "char_class_1")) return false;
-    char_class_exclamation(b, l + 1);
-    return true;
-  }
-
-  // char_class_letter+
-  private static boolean char_class_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "char_class_2")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = char_class_letter(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!char_class_letter(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "char_class_2", c)) break;
-    }
-    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -105,6 +73,80 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b);
     r = consumeToken(b, CHARCLASS_LETTER);
     exit_section_(b, m, CHAR_CLASS_LETTER, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // L_BRACKET char_class_exclamation? char_class_letter+ R_BRACKET
+  public static boolean char_class_pattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "char_class_pattern")) return false;
+    if (!nextTokenIs(b, L_BRACKET)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, L_BRACKET);
+    r = r && char_class_pattern_1(b, l + 1);
+    r = r && char_class_pattern_2(b, l + 1);
+    r = r && consumeToken(b, R_BRACKET);
+    exit_section_(b, m, CHAR_CLASS_PATTERN, r);
+    return r;
+  }
+
+  // char_class_exclamation?
+  private static boolean char_class_pattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "char_class_pattern_1")) return false;
+    char_class_exclamation(b, l + 1);
+    return true;
+  }
+
+  // char_class_letter+
+  private static boolean char_class_pattern_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "char_class_pattern_2")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = char_class_letter(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!char_class_letter(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "char_class_pattern_2", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // elemental_pattern (elemental_pattern)+
+  public static boolean concatenated_pattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "concatenated_pattern")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _COLLAPSE_, CONCATENATED_PATTERN, "<concatenated pattern>");
+    r = elemental_pattern(b, l + 1);
+    r = r && concatenated_pattern_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (elemental_pattern)+
+  private static boolean concatenated_pattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "concatenated_pattern_1")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = concatenated_pattern_1_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!concatenated_pattern_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "concatenated_pattern_1", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (elemental_pattern)
+  private static boolean concatenated_pattern_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "concatenated_pattern_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = elemental_pattern(b, l + 1);
+    exit_section_(b, m, null, r);
     return r;
   }
 
@@ -155,6 +197,74 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // enumeration_pattern | flat_pattern | asterisk_pattern | double_asterisk_pattern | question_pattern | char_class_pattern
+  static boolean elemental_pattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elemental_pattern")) return false;
+    boolean r;
+    r = enumeration_pattern(b, l + 1);
+    if (!r) r = flat_pattern(b, l + 1);
+    if (!r) r = asterisk_pattern(b, l + 1);
+    if (!r) r = double_asterisk_pattern(b, l + 1);
+    if (!r) r = question_pattern(b, l + 1);
+    if (!r) r = char_class_pattern(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // L_CURLY (pattern_aux (COMMA pattern_aux)*)? R_CURLY
+  public static boolean enumeration_pattern(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumeration_pattern")) return false;
+    if (!nextTokenIs(b, L_CURLY)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, L_CURLY);
+    r = r && enumeration_pattern_1(b, l + 1);
+    r = r && consumeToken(b, R_CURLY);
+    exit_section_(b, m, ENUMERATION_PATTERN, r);
+    return r;
+  }
+
+  // (pattern_aux (COMMA pattern_aux)*)?
+  private static boolean enumeration_pattern_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumeration_pattern_1")) return false;
+    enumeration_pattern_1_0(b, l + 1);
+    return true;
+  }
+
+  // pattern_aux (COMMA pattern_aux)*
+  private static boolean enumeration_pattern_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumeration_pattern_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = pattern_aux(b, l + 1);
+    r = r && enumeration_pattern_1_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // (COMMA pattern_aux)*
+  private static boolean enumeration_pattern_1_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumeration_pattern_1_0_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!enumeration_pattern_1_0_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "enumeration_pattern_1_0_1", c)) break;
+    }
+    return true;
+  }
+
+  // COMMA pattern_aux
+  private static boolean enumeration_pattern_1_0_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "enumeration_pattern_1_0_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, COMMA);
+    r = r && pattern_aux(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // IDENTIFIER
   public static boolean flat_option_key(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "flat_option_key")) return false;
@@ -167,19 +277,33 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // PATTERN_IDENTIFIER
+  // (PATTERN_IDENTIFIER | PATTERN_WHITE_SPACE)+
   public static boolean flat_pattern(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "flat_pattern")) return false;
-    if (!nextTokenIs(b, PATTERN_IDENTIFIER)) return false;
+    if (!nextTokenIs(b, "<flat pattern>", PATTERN_IDENTIFIER, PATTERN_WHITE_SPACE)) return false;
     boolean r;
-    Marker m = enter_section_(b);
+    Marker m = enter_section_(b, l, _NONE_, FLAT_PATTERN, "<flat pattern>");
+    r = flat_pattern_0(b, l + 1);
+    while (r) {
+      int c = current_position_(b);
+      if (!flat_pattern_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "flat_pattern", c)) break;
+    }
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // PATTERN_IDENTIFIER | PATTERN_WHITE_SPACE
+  private static boolean flat_pattern_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "flat_pattern_0")) return false;
+    boolean r;
     r = consumeToken(b, PATTERN_IDENTIFIER);
-    exit_section_(b, m, FLAT_PATTERN, r);
+    if (!r) r = consumeToken(b, PATTERN_WHITE_SPACE);
     return r;
   }
 
   /* ********************************************************** */
-  // L_BRACKET (pattern | pattern_enumeration)* R_BRACKET
+  // L_BRACKET pattern_aux? R_BRACKET
   public static boolean header(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "header")) return false;
     boolean r, p;
@@ -192,24 +316,11 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // (pattern | pattern_enumeration)*
+  // pattern_aux?
   private static boolean header_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "header_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!header_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "header_1", c)) break;
-    }
+    pattern_aux(b, l + 1);
     return true;
-  }
-
-  // pattern | pattern_enumeration
-  private static boolean header_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "header_1_0")) return false;
-    boolean r;
-    r = pattern(b, l + 1);
-    if (!r) r = pattern_enumeration(b, l + 1);
-    return r;
   }
 
   /* ********************************************************** */
@@ -450,84 +561,12 @@ public class EditorConfigParserBase implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (flat_pattern | asterisk_pattern | double_asterisk_pattern | question_pattern | char_class)+
-  public static boolean pattern(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern")) return false;
+  // concatenated_pattern | elemental_pattern
+  static boolean pattern_aux(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "pattern_aux")) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, PATTERN, "<pattern>");
-    r = pattern_0(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!pattern_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "pattern", c)) break;
-    }
-    exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // flat_pattern | asterisk_pattern | double_asterisk_pattern | question_pattern | char_class
-  private static boolean pattern_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_0")) return false;
-    boolean r;
-    r = flat_pattern(b, l + 1);
-    if (!r) r = asterisk_pattern(b, l + 1);
-    if (!r) r = double_asterisk_pattern(b, l + 1);
-    if (!r) r = question_pattern(b, l + 1);
-    if (!r) r = char_class(b, l + 1);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // L_CURLY (pattern (COMMA pattern)*)? R_CURLY
-  public static boolean pattern_enumeration(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_enumeration")) return false;
-    if (!nextTokenIs(b, L_CURLY)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, L_CURLY);
-    r = r && pattern_enumeration_1(b, l + 1);
-    r = r && consumeToken(b, R_CURLY);
-    exit_section_(b, m, PATTERN_ENUMERATION, r);
-    return r;
-  }
-
-  // (pattern (COMMA pattern)*)?
-  private static boolean pattern_enumeration_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_enumeration_1")) return false;
-    pattern_enumeration_1_0(b, l + 1);
-    return true;
-  }
-
-  // pattern (COMMA pattern)*
-  private static boolean pattern_enumeration_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_enumeration_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = pattern(b, l + 1);
-    r = r && pattern_enumeration_1_0_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // (COMMA pattern)*
-  private static boolean pattern_enumeration_1_0_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_enumeration_1_0_1")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!pattern_enumeration_1_0_1_0(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "pattern_enumeration_1_0_1", c)) break;
-    }
-    return true;
-  }
-
-  // COMMA pattern
-  private static boolean pattern_enumeration_1_0_1_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "pattern_enumeration_1_0_1_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, COMMA);
-    r = r && pattern(b, l + 1);
-    exit_section_(b, m, null, r);
+    r = concatenated_pattern(b, l + 1);
+    if (!r) r = elemental_pattern(b, l + 1);
     return r;
   }
 

@@ -234,7 +234,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
                                  branch: GitBranch? = null): ListPopupStep<*> {
       val dataContext = createDataContext(project, selectedRepository, repositories, branch)
       return JBPopupFactory.getInstance()
-        .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, true, 0, false)
+        .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
 
     internal fun createDataContext(project: Project, selectedRepository: GitRepository?, repositories: List<GitRepository>, branch: GitBranch? = null): DataContext =

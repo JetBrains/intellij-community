@@ -82,7 +82,17 @@ public final class TestFrameworkUtil {
   }
 
   public static boolean isPerformanceTest(@Nullable String testName, @Nullable String className) {
-    return testName != null && StringUtil.containsIgnoreCase(testName, "performance") ||
-           className != null && StringUtil.containsIgnoreCase(className, "performance");
+    return containsWord(testName, className, "performance");
+  }
+
+  public static boolean isStressTest(@Nullable String testName, @Nullable String className) {
+    return isPerformanceTest(testName, className) ||
+           containsWord(testName, className, "stress") ||
+           containsWord(testName, className, "slow");
+  }
+
+  private static boolean containsWord(@Nullable String testName, @Nullable String className, @NotNull String word) {
+    return testName != null && StringUtil.containsIgnoreCase(testName, word) ||
+           className != null && StringUtil.containsIgnoreCase(className, word);
   }
 }

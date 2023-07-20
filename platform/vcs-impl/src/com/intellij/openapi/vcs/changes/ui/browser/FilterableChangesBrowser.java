@@ -32,10 +32,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
   }
 
   private void updateTreeOnFilterChange() {
-    ChangesTree.TreeStateStrategy<?> oldTreeStateStrategy = myViewer.getTreeStateStrategy();
-    myViewer.setTreeStateStrategy(ChangesTree.ALWAYS_KEEP);
-    myViewer.rebuildTree();
-    myViewer.setTreeStateStrategy(oldTreeStateStrategy);
+    myViewer.rebuildTree(ChangesTree.ALWAYS_KEEP);
     myViewer.expandDefaults();
 
     float progress = myChangesFilterer.getProgress();
@@ -51,7 +48,7 @@ public abstract class FilterableChangesBrowser extends ChangesBrowserBase implem
     onActiveChangesFilterChanges();
   }
 
-  protected void onActiveChangesFilterChanges() {}
+  protected void onActiveChangesFilterChanges() { }
 
   @Override
   public void dispose() {

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrRangeExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 
@@ -129,6 +130,7 @@ public final class ParenthesesUtils {
   public static int getPrecedence(GrExpression expr) {
     if (expr instanceof GrUnaryExpression) return ((GrUnaryExpression)expr).isPostfix() ? POSTFIX_PRECEDENCE : PREFIX_PRECEDENCE;
     if (expr instanceof GrTypeCastExpression) return TYPE_CAST_PRECEDENCE;
+    if (expr instanceof GrRangeExpression) return RANGE_PRECEDENCE;
     if (expr instanceof GrConditionalExpression) return CONDITIONAL_PRECEDENCE;
     if (expr instanceof GrSafeCastExpression) return SAFE_CAST_PRECEDENCE;
     if (expr instanceof GrAssignmentExpression) return ASSIGNMENT_PRECEDENCE;

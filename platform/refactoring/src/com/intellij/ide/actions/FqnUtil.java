@@ -5,12 +5,9 @@ import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.BaseProjectDirectories;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -20,7 +17,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,18 +65,6 @@ public class FqnUtil {
       String qualifiedName = provider.getQualifiedName(project, virtualFile);
       if (qualifiedName != null) {
         return qualifiedName;
-      }
-    }
-
-    if (!WorkspaceFileIndexEx.IS_ENABLED) {
-      Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
-      if (module != null) {
-        for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
-          String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
-          if (relativePath != null) {
-            return relativePath;
-          }
-        }
       }
     }
 

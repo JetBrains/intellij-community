@@ -29,12 +29,6 @@ NO_SUCH_MODULE_ERROR: str
 MODULE_UNLOAD_NOT_POSSIBLE_ERROR: str
 MODULE_EXPORTS_DATA_TYPES_ERROR: str
 
-class _HiredisReaderArgs(TypedDict):
-    protocolError: Callable[[str], Exception]
-    replyError: Callable[[str], Exception]
-    encoding: str | None
-    errors: str | None
-
 class Encoder:
     encoding: Any
     encoding_errors: Any

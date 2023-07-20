@@ -58,8 +58,7 @@ internal fun computeVisibility(project: Project, ownerClass: PsiClass?, targetCl
       }
     }
   }
-  val setting = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings::class.java).VISIBILITY
-  return when (setting) {
+  return when (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings::class.java).VISIBILITY) {
     PsiModifier.PUBLIC -> JvmModifier.PUBLIC
     PsiModifier.PROTECTED -> JvmModifier.PROTECTED
     PsiModifier.PACKAGE_LOCAL -> JvmModifier.PACKAGE_LOCAL

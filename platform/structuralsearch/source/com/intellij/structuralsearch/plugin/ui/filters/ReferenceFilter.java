@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.ui.ComboBox;
@@ -24,10 +24,9 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
-public class ReferenceFilter extends FilterAction {
+class ReferenceFilter extends FilterAction {
 
-  public ReferenceFilter() {
+  ReferenceFilter() {
     super(SSRBundle.messagePointer("reference.filter.name"));
   }
 
@@ -36,10 +35,11 @@ public class ReferenceFilter extends FilterAction {
     if (!(variable instanceof MatchVariableConstraint constraint)) {
       return "";
     }
-    if (StringUtil.isEmpty(constraint.getReferenceConstraint())) {
+    final String ref = constraint.getReferenceConstraint();
+    if (StringUtil.isEmpty(ref)) {
       return "";
     }
-    final String text = StringUtil.unquoteString(constraint.getReferenceConstraintName());
+    final String text = StringUtil.unquoteString(ref);
     return SSRBundle.message("reference.target.tooltip.message", constraint.isInvertReference() ? 1 : 0, text);
   }
 

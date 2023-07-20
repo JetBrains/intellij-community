@@ -62,7 +62,6 @@ public class TestStatusLine extends NonOpaquePanel {
                                 final long endTime) {
     UIUtil.invokeLaterIfNeeded(() -> {
       doFormatTestMessage(testsTotal, finishedTestsCount, failuresCount, ignoredTestsCount, duration, endTime);
-      myState.firePropertyChange("state", 0, 1);
       updateWarningVisibility();
     });
   }
@@ -142,7 +141,6 @@ public class TestStatusLine extends NonOpaquePanel {
       myProgressPanel.remove(myProgressBar);
       if (toolbarIconSupplier != null) {
         myState.setIcon(toolbarIconSupplier.get());
-        myState.firePropertyChange("state", 0, 1);
       }
     });
   }
@@ -160,27 +158,15 @@ public class TestStatusLine extends NonOpaquePanel {
     myProgressBar.setValue(fraction);
   }
 
-  /**
-   * @deprecated Usages should be deleted as progress is now incorporated into console
-   */
-  @Deprecated(forRemoval = true)
-  public void setPreferredSize(boolean orientation) {
-    final Dimension size = new JBDimension(orientation ? 150 : 450 , -1);
-    myProgressPanel.setMaximumSize(size);
-    myProgressPanel.setMinimumSize(size);
-    myProgressPanel.setPreferredSize(size);
-  }
-
   public void setText(@Nls String progressStatus_text) {
     UIUtil.invokeLaterIfNeeded(() -> {
       myState.clear();
       myState.append(progressStatus_text);
-      myState.firePropertyChange("state", 0, 1);
       myWarning.setVisible(!progressStatus_text.isEmpty());
     });
   }
 
-  @TestOnly
+  @NlsSafe
   @NotNull
   public String getStateText() {
     return myState.toString();

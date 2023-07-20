@@ -1,8 +1,8 @@
 <html>
 <body>
 Reports redundant escapes in the replacement string of regex methods.
-It is possible to escape any character in a regex replacement string,
-but if a literal <code>$</code> or <code>\</code> is required is escaping necessary.
+It is allowed to escape any character in a regex replacement string,
+but only for the <code>$</code> and <code>\</code> characters is escaping necessary.
 <p><b>Example:</b></p>
 <pre><code>
   string.replaceAll("a", "\\b");

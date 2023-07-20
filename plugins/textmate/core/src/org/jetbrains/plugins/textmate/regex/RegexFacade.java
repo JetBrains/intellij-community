@@ -76,7 +76,10 @@ public final class RegexFacade {
       matchResult.set(new LastMatch(string.id, byteOffset, gosOffset, options, matchData));
       return matchData;
     }
-    catch (JOniException e) {
+    catch (JOniException
+           // We catch AIOOBE here because of a bug in joni,
+           // apparently the lengths of code units are not calculated correctly in UnicodeEncoding.mbcCaseFold
+           | ArrayIndexOutOfBoundsException e) {
       LOGGER.info("Failed to match textmate regex", e);
       return MatchData.NOT_MATCHED;
     }

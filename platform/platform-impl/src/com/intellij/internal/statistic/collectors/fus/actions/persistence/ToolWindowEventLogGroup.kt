@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EnumEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.toolWindow.ToolWindowEventSource
@@ -17,7 +18,7 @@ class ToolWindowEventLogGroup : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("toolwindow", 62)
 
     @JvmField
-    val TOOLWINDOW_ID = EventFields.StringValidatedByCustomRule("id", ToolWindowUtilValidator::class.java)
+    val TOOLWINDOW_ID: StringEventField = EventFields.StringValidatedByCustomRule("id", ToolWindowUtilValidator::class.java)
 
     @JvmField
     val VIEW_MODE: EnumEventField<ViewMode> = Enum("ViewMode", ViewMode::class.java) { mode: ViewMode -> mode.name }
@@ -27,11 +28,11 @@ class ToolWindowEventLogGroup : CounterUsagesCollector() {
     val SOURCE: EnumEventField<ToolWindowEventSource> = Enum("Source", ToolWindowEventSource::class.java)
 
     @JvmField
-    val ACTIVATED = registerToolwindowEvent("activated")
+    val ACTIVATED: VarargEventId = registerToolwindowEvent("activated")
     @JvmField
-    val SHOWN = registerToolwindowEvent("shown")
+    val SHOWN: VarargEventId = registerToolwindowEvent("shown")
     @JvmField
-    val HIDDEN = registerToolwindowEvent("hidden")
+    val HIDDEN: VarargEventId = registerToolwindowEvent("hidden")
 
     private fun registerToolwindowEvent(eventId: String): VarargEventId {
       return GROUP.registerVarargEvent(eventId, TOOLWINDOW_ID, EventFields.PluginInfo, VIEW_MODE, LOCATION, SOURCE)

@@ -51,3 +51,29 @@ fun importActivityStarted(project: Project, externalSystemId: ProjectSystemId,
     data
   }
 }
+
+suspend fun <T> runImportActivity(project: Project,
+                                  externalSystemId: ProjectSystemId,
+                                  taskClass: Class<*>,
+                                  action: suspend () -> T): T {
+  val activity = importActivityStarted(project, externalSystemId) { listOf(ProjectImportCollector.TASK_CLASS.with(taskClass)) }
+  try {
+    return action()
+  }
+  finally {
+    activity.finished()
+  }
+}
+
+fun <T> runImportActivitySync(project: Project,
+                              externalSystemId: ProjectSystemId,
+                              taskClass: Class<*>,
+                              action: () -> T): T {
+  val activity = importActivityStarted(project, externalSystemId) { listOf(ProjectImportCollector.TASK_CLASS.with(taskClass)) }
+  try {
+    return action()
+  }
+  finally {
+    activity.finished()
+  }
+}

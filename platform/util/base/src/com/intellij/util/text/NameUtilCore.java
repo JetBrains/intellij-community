@@ -42,16 +42,20 @@ public final class NameUtilCore {
     }
 
     int i = start;
-    while (i < text.length() && Character.isDigit(text.codePointAt(i))) {
-      i += Character.charCount(text.codePointAt(i));
+    while (i < text.length()) {
+      int codePoint = text.codePointAt(i);
+      if (!Character.isDigit(codePoint)) break;
+      i += Character.charCount(codePoint);
     }
     if (i > start) {
       // digits form a separate hump
       return i;
     }
 
-    while (i < text.length() && Character.isUpperCase(text.codePointAt(i))) {
-      i += Character.charCount(text.codePointAt(i));
+    while (i < text.length()) {
+      int codePoint = text.codePointAt(i);
+      if (!Character.isUpperCase(codePoint)) break;
+      i += Character.charCount(codePoint);
     }
 
     if (i > start + chLen) {
@@ -63,8 +67,10 @@ public final class NameUtilCore {
     }
 
     if (i == start) i += chLen;
-    while (i < text.length() && Character.isLetter(text.codePointAt(i)) && !isWordStart(text, i)) {
-      i += Character.charCount(text.codePointAt(i));
+    while (i < text.length()) {
+      int codePoint = text.codePointAt(i);
+      if (!Character.isLetter(codePoint) || isWordStart(text, i)) break;
+      i += Character.charCount(codePoint);
     }
     return i;
   }

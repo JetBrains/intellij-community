@@ -83,14 +83,18 @@ class ListLayout private constructor(
   }
 
   private val nonDefaultGrowComponents = mutableSetOf<Component>()
+  private val nonDefaultAlignmentComponents = mutableMapOf<Component, Alignment>()
 
   private val minorAxis = if (majorAxis == Axis.X) Axis.Y else Axis.X
   private val gapValue = JBValue.UIInteger("ListLayout.gap", max(0, gap))
 
   override fun addLayoutComponent(component: Component, constraints: Any?) {
     if (constraints == null || constraints == defaultGrowPolicy) return
-    require(constraints is GrowPolicy) { "Unsupported constraints: $constraints" }
-    nonDefaultGrowComponents.add(component)
+    when (constraints) {
+      is GrowPolicy -> nonDefaultGrowComponents.add(component)
+      is Alignment -> nonDefaultAlignmentComponents[component] = constraints
+      else -> throw IllegalArgumentException("Unsupported constraints: $constraints")
+    }
   }
 
   override fun addLayoutComponent(name: String?, component: Component) {
@@ -195,7 +199,7 @@ class ListLayout private constructor(
       val minorAxisSpan = getMinorAxisSpan(
         minSize.on(minorAxis), prefSize.on(minorAxis), maxSize.on(minorAxis), minorAxisAllocation, shouldGrow
       )
-      val minorAxisStart = bounds.startOn(minorAxis) + getMinorAxisStartOffset(minorAxisSpan, minorAxisAllocation)
+      val minorAxisStart = bounds.startOn(minorAxis) + getMinorAxisStartOffset(minorAxisSpan, minorAxisAllocation, nonDefaultAlignmentComponents[component] ?: minorAxisAlignment)
 
 
       component.location = getLocation(majorAxisStart, minorAxisStart)
@@ -225,8 +229,8 @@ class ListLayout private constructor(
     return pref
   }
 
-  private fun getMinorAxisStartOffset(minorAxisSpan: Int, minorAxisAllocation: Int) =
-    when (minorAxisAlignment) {
+  private fun getMinorAxisStartOffset(minorAxisSpan: Int, minorAxisAllocation: Int, alignment: Alignment) =
+    when (alignment) {
       Alignment.CENTER -> ((minorAxisAllocation - minorAxisSpan) / 2).coerceAtLeast(0)
       Alignment.END -> max(0, minorAxisAllocation - minorAxisSpan)
       Alignment.START -> 0
@@ -247,7 +251,7 @@ class ListLayout private constructor(
   override fun getLayoutAlignmentX(target: Container): Float = .5f
   override fun getLayoutAlignmentY(target: Container): Float = .5f
 
-  override fun invalidateLayout(target: Container) = Unit
+  override fun invalidateLayout(target: Container) {}
 
   override fun toString(): String =
     when (majorAxis) {

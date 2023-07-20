@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchingProcessStatisticsCollector;
@@ -250,7 +251,7 @@ class MixedResultsSearcher implements SESearcher {
     private final Map<? extends SearchEverywhereContributor<?>, Integer> sectionsLimits;
     private final Map<? extends SearchEverywhereContributor<?>, Condition> conditionsMap;
     private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreMap = new ConcurrentHashMap<>();
-    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ContainerUtil.newConcurrentSet();
+    private final Set<SearchEverywhereContributor<?>> finishedContributorsSet = ConcurrentCollectionFactory.createConcurrentSet();
     private final Lock lock = new ReentrantLock();
     private volatile boolean mySearchFinished = false;
 

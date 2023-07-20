@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -9,11 +9,11 @@ import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.Weighted
 import com.intellij.ui.UIBundle
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.event.ActionEvent
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
-import java.util.*
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
@@ -28,7 +28,7 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
       field = value
 
       firePropertyChange(PROP_OPTIONS, oldOptions, options)
-      if (!Arrays.equals(oldOptions, options)) {
+      if (!oldOptions.contentEquals(options)) {
         revalidate()
         repaint()
       }
@@ -47,10 +47,10 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
 
   val isSimpleButton: Boolean get() = options.isNullOrEmpty()
 
-  var addSeparator = true
-  var selectFirstItem = true
+  var addSeparator: Boolean = true
+  var selectFirstItem: Boolean = true
   var popupBackgroundColor: Color? = null
-  var showPopupYOffset = 6
+  var showPopupYOffset: Int = 6
   var popupHandler: ((JBPopup) -> Unit)? = null
 
   init {
@@ -62,9 +62,9 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
 
   override fun getWeight(): Double = 0.5
 
-  fun togglePopup() = getUI().togglePopup()
-  fun showPopup(actionToSelect: Action? = null, ensureSelection: Boolean = true) = getUI().showPopup(actionToSelect, ensureSelection)
-  fun closePopup() = getUI().closePopup()
+  fun togglePopup(): Unit = getUI().togglePopup()
+  fun showPopup(actionToSelect: Action? = null, ensureSelection: Boolean = true): Unit = getUI().showPopup(actionToSelect, ensureSelection)
+  fun closePopup(): Unit = getUI().closePopup()
 
   @Deprecated("Use setOptions(Action[]) instead", ReplaceWith("setOptions(options)"))
   @ApiStatus.ScheduledForRemoval
@@ -73,16 +73,16 @@ open class JBOptionButton(action: Action?, options: Array<Action>?) : JButton(ac
   }
 
   companion object {
-    const val PROP_OPTIONS = "OptionActions"
-    const val PROP_OPTION_TOOLTIP = "OptionTooltip"
-    const val PLACE = "ActionPlace"
+    const val PROP_OPTIONS: String = "OptionActions"
+    const val PROP_OPTION_TOOLTIP: String = "OptionTooltip"
+    const val PLACE: String = "ActionPlace"
 
     @JvmStatic
-    fun getDefaultShowPopupShortcut() = DEFAULT_SHOW_POPUP_SHORTCUT
+    fun getDefaultShowPopupShortcut(): CustomShortcutSet = DEFAULT_SHOW_POPUP_SHORTCUT
 
     @JvmStatic
-    fun getDefaultTooltip() = UIBundle.message("option.button.tooltip.shortcut.text",
-                                               getFirstKeyboardShortcutText(getDefaultShowPopupShortcut()))
+    fun getDefaultTooltip(): @Nls String = UIBundle.message("option.button.tooltip.shortcut.text",
+                                                            getFirstKeyboardShortcutText(getDefaultShowPopupShortcut()))
   }
 }
 

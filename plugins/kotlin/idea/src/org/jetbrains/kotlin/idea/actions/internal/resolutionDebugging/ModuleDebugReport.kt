@@ -80,9 +80,7 @@ internal class ModuleDebugReport(
 
         other as ModuleDebugReport
 
-        if (reference != other.reference) return false
-
-        return true
+        return reference == other.reference
     }
 
     override fun hashCode(): Int {

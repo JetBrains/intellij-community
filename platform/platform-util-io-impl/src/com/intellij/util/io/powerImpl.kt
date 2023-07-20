@@ -2,6 +2,7 @@
 package com.intellij.util.io
 
 import com.intellij.jna.JnaLoader
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfo
 import com.sun.jna.Library
@@ -19,7 +20,7 @@ internal interface PowerService {
   fun status(): PowerStatus
 
   companion object {
-    internal val LOG = logger<PowerStatus>()
+    internal val LOG: Logger = logger<PowerStatus>()
     val service: PowerService by lazy {
       try {
         when {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.util.TextRange;
@@ -37,8 +37,8 @@ public final class ExpandMacroToPathMap extends PathMacroMap {
     }
 
     for (Map.Entry<String, String> entry : myPlainMap.entrySet()) {
-      // when replacing macros with actual paths the replace utility may be used as always 'case-sensitive'
-      // for case-insensitive file systems there will be no unnecessary toLowerCase() transforms.
+      // when replacing macros with actual paths, the replace utility may be used as always 'case-sensitive'
+      // for case-insensitive file systems, there will be no unnecessary toLowerCase() transforms.
       text = StringUtil.replace(text, entry.getKey(), entry.getValue(), false);
     }
 

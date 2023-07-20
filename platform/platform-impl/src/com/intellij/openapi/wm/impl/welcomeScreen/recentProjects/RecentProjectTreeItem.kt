@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.recentProjects
 
 import com.intellij.CommonBundle
@@ -23,7 +23,7 @@ import com.intellij.util.BitUtil
 import com.intellij.util.SystemProperties
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.SystemIndependent
-import java.awt.event.InputEvent
+import java.awt.event.ActionEvent
 import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.SwingUtilities
@@ -98,11 +98,8 @@ internal data class RecentProjectItem(
       }
     }
 
-    val modifiers = event.modifiers
-    // Deprecated constants are used because com.intellij.openapi.actionSystem.AnActionEvent
-    // doesn't work with java.awt.event.InputEvent.getModifiersEx API
-    val forceOpenInNewFrame = BitUtil.isSet(modifiers, InputEvent.CTRL_MASK) ||
-                              BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK) ||
+    val forceOpenInNewFrame = BitUtil.isSet(event.modifiers, ActionEvent.CTRL_MASK) ||
+                              BitUtil.isSet(event.modifiers, ActionEvent.SHIFT_MASK) ||
                               event.place == ActionPlaces.WELCOME_SCREEN ||
                               LightEdit.owns(null)
     openProjectAndLogRecent(file, OpenProjectTask {

@@ -5,13 +5,14 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.ui.jcef.JBCefJSQuery.create
 import org.intellij.lang.annotations.Language
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 
-typealias JsExpression = String
+private typealias JsExpression = String
 typealias JsExpressionResult = String?
-typealias JsExpressionResultPromise = AsyncPromise<JsExpressionResult>
+private typealias JsExpressionResultPromise = AsyncPromise<JsExpressionResult>
 
 /**
  * Asynchronously runs JavaScript code in the JCEF browser.
@@ -42,9 +43,9 @@ typealias JsExpressionResultPromise = AsyncPromise<JsExpressionResult>
  *
  * @return The [Promise] that provides JS execution result or an error.
  */
-fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpression: JsExpression): Promise<JsExpressionResult> =
-  JBCefBrowserJsCall(javaScriptExpression, this)()
-
+fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpression: JsExpression): Promise<JsExpressionResult> {
+  return JBCefBrowserJsCall(javaScriptExpression, this)()
+}
 
 /**
  * Encapsulates the [javaScriptExpression] which is executed in the provided [browser] by the [invoke] method.
@@ -56,7 +57,7 @@ fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpres
  *
  * @see [executeJavaScriptAsync]
  */
-class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, val browser: JBCefBrowser) {
+class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, private val browser: JBCefBrowser) {
 
   // TODO: Ensure the related JBCefClient has a sufficient number of slots in the pool
 
@@ -123,7 +124,9 @@ class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, val bro
       }
     }
 
-  private fun createQuery(parentDisposable: Disposable) = JBCefJSQuery.create(browser).also { Disposer.register(parentDisposable, it) }
+  private fun createQuery(parentDisposable: Disposable): JBCefJSQuery {
+    return create(browser as JBCefBrowserBase).also { Disposer.register(parentDisposable, it) }
+  }
 
   private fun JsExpression.asFunctionBody(): JsExpression = let { expression ->
     when {

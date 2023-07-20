@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.core
 
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil
 import com.intellij.psi.tree.IElementType
@@ -18,8 +17,11 @@ import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.extensions.DeclarationAttributeAltererExtension
 import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.util.match
+import org.jetbrains.kotlin.idea.base.psi.*
+import org.jetbrains.kotlin.idea.base.psi.addTypeParameter
+import org.jetbrains.kotlin.idea.base.psi.appendDeclaration
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject
+import org.jetbrains.kotlin.idea.base.psi.setDefaultValue
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -52,10 +54,10 @@ import org.jetbrains.kotlin.resolve.sam.getFunctionTypeForPossibleSamType
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.typeUtil.isTypeParameter
+import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 fun KtLambdaArgument.moveInsideParentheses(bindingContext: BindingContext): KtCallExpression {
     val ktExpression = this.getArgumentExpression()
@@ -307,26 +309,25 @@ private fun deleteElementWithDelimiters(element: PsiElement) {
     parent.deleteChildRange(from, to)
 }
 
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.deleteSingle()", "org.jetbrains.kotlin.idea.base.psi.deleteSingle")
+)
 fun PsiElement.deleteSingle() {
     CodeEditUtil.removeChild(parent?.node ?: return, node ?: return)
 }
 
-fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration {
-    companionObjects.firstOrNull()?.let { return it }
-    return appendDeclaration(KtPsiFactory(project).createCompanionObject())
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.getOrCreateCompanionObject()", "org.jetbrains.kotlin.idea.base.psi.getOrCreateCompanionObject")
+)
+fun KtClass.getOrCreateCompanionObject(): KtObjectDeclaration = getOrCreateCompanionObject()
 
-inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T {
-    val body = getOrCreateBody()
-    val anchor = PsiTreeUtil.skipSiblingsBackward(body.rBrace ?: body.lastChild!!, PsiWhiteSpace::class.java)
-    val newDeclaration =
-        if (anchor?.nextSibling is PsiErrorElement)
-            body.addBefore(declaration, anchor)
-        else
-            body.addAfter(declaration, anchor)
-
-    return newDeclaration as T
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.appendDeclaration(declaration)", "org.jetbrains.kotlin.idea.base.psi.appendDeclaration")
+)
+inline fun <reified T : KtDeclaration> KtClass.appendDeclaration(declaration: T): T  = appendDeclaration(declaration)
 
 fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
     if (this is KtScriptInitializer) {
@@ -569,20 +570,11 @@ fun KtParameter.dropDefaultValue() {
     deleteChildRange(from, to)
 }
 
-fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter): KtTypeParameter? {
-    typeParameterList?.let { return it.addParameter(typeParameter) }
-
-    val list = KtPsiFactory(project).createTypeParameterList("<X>")
-    list.parameters[0].replace(typeParameter)
-    val leftAnchor = when (this) {
-        is KtClass -> nameIdentifier
-        is KtNamedFunction -> funKeyword
-        is KtProperty -> valOrVarKeyword
-        is KtTypeAlias -> nameIdentifier
-        else -> null
-    } ?: return null
-    return (addAfter(list, leftAnchor) as KtTypeParameterList).parameters.first()
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.addTypeParameter(typeParameter)", "org.jetbrains.kotlin.idea.base.psi.addTypeParameter")
+)
+fun KtTypeParameterListOwner.addTypeParameter(typeParameter: KtTypeParameter) = addTypeParameter(typeParameter)
 
 fun KtNamedFunction.getOrCreateValueParameterList(): KtParameterList {
     valueParameterList?.let { return it }
@@ -611,13 +603,11 @@ fun KtCallableDeclaration.setReceiverType(type: KotlinType) {
     ShortenReferences.DEFAULT.process(receiverTypeReference!!)
 }
 
-fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement {
-    defaultValue?.let { return it.replaced(newDefaultValue) }
-
-    val psiFactory = KtPsiFactory(project)
-    val eq = equalsToken ?: add(psiFactory.createEQ())
-    return addAfter(newDefaultValue, eq) as KtExpression
-}
+@Deprecated(
+    "Use 'org.jetbrains.kotlin.idea.base.psi.KotlinPsiModificationUtils' instead",
+    ReplaceWith("this.setDefaultValue(newDefaultValue)", "org.jetbrains.kotlin.idea.base.psi.setDefaultValue")
+)
+fun KtParameter.setDefaultValue(newDefaultValue: KtExpression): PsiElement = setDefaultValue(newDefaultValue)
 
 fun KtModifierList.appendModifier(modifier: KtModifierKeywordToken) {
     add(KtPsiFactory(project).createModifier(modifier))

@@ -2,6 +2,7 @@
 package com.intellij.openapi.externalSystem.service.ui.completion
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.observable.properties.AtomicProperty
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -12,7 +13,7 @@ import com.intellij.openapi.observable.util.whenListChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.addExtension
 import com.intellij.openapi.ui.addKeyboardAction
-import com.intellij.ui.*
+import com.intellij.ui.CollectionComboBoxModel
 import java.awt.event.KeyEvent
 import javax.swing.KeyStroke
 
@@ -44,6 +45,12 @@ class TextCompletionComboBox<T>(
     collectionModel.replaceAll(property.get())
     property.whenPropertyChanged {
       collectionModel.replaceAll(it)
+    }
+  }
+
+  fun whenItemChangedFromUi(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
+    whenTextChangedFromUi(parentDisposable) {
+      listener(converter.getItem(it))
     }
   }
 

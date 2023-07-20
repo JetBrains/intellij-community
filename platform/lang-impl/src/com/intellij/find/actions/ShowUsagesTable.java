@@ -5,6 +5,7 @@ import com.intellij.ide.util.gotoByName.ModelDiff;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.pom.Navigatable;
@@ -19,10 +20,12 @@ import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.*;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +96,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   @NotNull
   Runnable prepareTable(@NotNull Runnable appendMoreUsageRunnable, @NotNull Runnable showInMaximalScopeRunnable,
                         @NotNull ShowUsagesActionHandler actionHandler) {
-    SpeedSearchBase<JTable> speedSearch = new MySpeedSearch(this);
+    SpeedSearchBase<JTable> speedSearch = MySpeedSearch.installOn(this);
     speedSearch.setComparator(new SpeedSearchComparator(false));
 
     setRowHeight(IconManager.getInstance().getPlatformIcon(com.intellij.ui.PlatformIcons.Class).getIconHeight() + 2);
@@ -165,8 +168,10 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
               String recentSearchText = speedSearch.getComparator().getRecentSearchText();
               int numberOfLettersTyped = recentSearchText != null ? recentSearchText.length() : 0;
               Project project = selectedElement.getProject();
-              UsageViewStatisticsCollector.logItemChosenInPopupFeatures(project, myUsageView, selectedElement,
-                                                                        actionHandler.buildFinishEventData(usageInfo));
+              ReadAction.nonBlocking(() -> actionHandler.buildFinishEventData(usageInfo)).submit(AppExecutorUtil.getAppExecutorService())
+                .onSuccess(finishEventData ->
+                             UsageViewStatisticsCollector.logItemChosenInPopupFeatures(project, myUsageView, selectedElement,
+                                                                                       finishEventData));
               UsageViewStatisticsCollector.logItemChosen(project, myUsageView, CodeNavigateSource.ShowUsagesPopup, getSelectedRow(),
                                                          getRowCount(),
                                                          numberOfLettersTyped,
@@ -182,10 +187,13 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
     };
   }
 
-  public boolean isSeparatorNode(@Nullable Usage node) {
-    return node == USAGES_OUTSIDE_SCOPE_SEPARATOR
-           ||node == MORE_USAGES_SEPARATOR
-           ||node == USAGES_FILTERED_OUT_SEPARATOR;
+  public boolean isFullLineNode(UsageNode node) {
+    if (node instanceof ShowUsagesAction.StringNode) return true;
+
+    Usage usage = node.getUsage();
+    return usage == USAGES_OUTSIDE_SCOPE_SEPARATOR
+           || usage == MORE_USAGES_SEPARATOR
+           || usage == USAGES_FILTERED_OUT_SEPARATOR;
   }
 
   @Nullable
@@ -226,8 +234,15 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   }
 
   private static class MySpeedSearch extends SpeedSearchBase<JTable> {
-    MySpeedSearch(@NotNull ShowUsagesTable table) {
-      super(table);
+    private MySpeedSearch(@NotNull ShowUsagesTable table) {
+      super(table, null);
+    }
+
+    @Contract("_ -> new")
+    static @NotNull MySpeedSearch installOn(@NotNull ShowUsagesTable table) {
+      MySpeedSearch search = new MySpeedSearch(table);
+      search.setupListeners();
+      return search;
     }
 
     @Override

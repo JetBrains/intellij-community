@@ -19,7 +19,8 @@ public class EditorConfigTrailingSpacesFilterFactory extends StripTrailingSpaces
     if (project != null) {
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file != null) {
-        TrailingSpacesOptionsProvider optionsProvider = TrailingSpacesOptionsProvider.EP_NAME.findExtension(TrailingSpacesOptionsProvider.class);
+        EditorConfigTrailingSpacesOptionsProvider optionsProvider =
+          TrailingSpacesOptionsProvider.EP_NAME.findExtension(EditorConfigTrailingSpacesOptionsProvider.class);
         if (optionsProvider != null) {
           TrailingSpacesOptionsProvider.Options options = optionsProvider.getOptions(project, file.getVirtualFile());
           if (options != null && Boolean.TRUE.equals(options.getStripTrailingSpaces())) {

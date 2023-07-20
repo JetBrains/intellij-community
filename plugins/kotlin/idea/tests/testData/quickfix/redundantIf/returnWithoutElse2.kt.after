@@ -8,6 +8,5 @@ fun foo(bar: Int?): Boolean {
     /**
      * And more comment
      */
-
     bar?.let{ it + 4 }
 }

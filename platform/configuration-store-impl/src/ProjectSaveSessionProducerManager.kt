@@ -3,34 +3,28 @@ package com.intellij.configurationStore
 
 import com.intellij.notification.Notifications
 import com.intellij.notification.NotificationsManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.SaveSessionAndFile
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.UnableToSaveProjectNotification
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 open class ProjectSaveSessionProducerManager(protected val project: Project) : SaveSessionProducerManager() {
-  suspend fun saveWithAdditionalSaveSessions(extraSessions: List<SaveSession>): SaveResult {
+  suspend fun saveWithAdditionalSaveSessions(extraSessions: Collection<SaveSession>): SaveResult {
     val saveSessions = mutableListOf<SaveSession>()
     collectSaveSessions(saveSessions)
     if (saveSessions.isEmpty() && extraSessions.isEmpty()) {
       return SaveResult.EMPTY
     }
 
-    val saveResult = withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction(Computable {
-        val r = SaveResult()
-        saveSessions(extraSessions, r)
-        saveSessions(saveSessions, r)
-        r
-      })
+    val saveResult = writeAction {
+      val r = SaveResult()
+      saveSessions(extraSessions, r)
+      saveSessions(saveSessions, r)
+      r
     }
     validate(saveResult)
     return saveResult
@@ -48,7 +42,7 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
       throw UnresolvedReadOnlyFilesException(readonlyFiles.map { it.file })
     }
 
-    val status = ensureFilesWritable(project, getFilesList(readonlyFiles))
+    val status = ensureFilesWritable(project, getFileList(readonlyFiles))
     if (status.hasReadonlyFiles()) {
       val unresolvedReadOnlyFiles = status.readonlyFiles.toList()
       dropUnableToSaveProjectNotification(project, unresolvedReadOnlyFiles)
@@ -58,18 +52,16 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
 
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
-    withContext(Dispatchers.EDT) {
-      ApplicationManager.getApplication().runWriteAction(Computable {
-        val r = SaveResult()
-        for (entry in oldList) {
-          executeSave(entry.session, r)
-        }
-        r
-      })
+    writeAction {
+      val r = SaveResult()
+      for (entry in oldList) {
+        executeSave(entry.session, r)
+      }
+      r
     }.appendTo(saveResult)
 
     if (readonlyFiles.isNotEmpty()) {
-      dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
+      dropUnableToSaveProjectNotification(project, getFileList(readonlyFiles))
       saveResult.addError(UnresolvedReadOnlyFilesException(readonlyFiles.map { it.file }))
     }
   }
@@ -90,4 +82,4 @@ open class ProjectSaveSessionProducerManager(protected val project: Project) : S
   }
 }
 
-private fun getFilesList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.map { it.file }
+private fun getFileList(readonlyFiles: List<SaveSessionAndFile>) = readonlyFiles.map { it.file }

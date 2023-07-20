@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.impl.FakePsiElement
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.refactoring.suggested.startOffset
 import com.intellij.refactoring.util.NonCodeUsageInfo
@@ -52,7 +53,9 @@ class PsiSourcedWebSymbolReference(private val symbol: WebSymbol,
 
   class RenameHandler(reference: PsiSourcedWebSymbolReference) {
     private val symbol = reference.symbol
-    private val targetPointer = reference.resolve().createSmartPointer()
+    private val targetPointer = reference.resolve()
+      .let { if (it is FakePsiElement) it.context ?: it else it }
+      .createSmartPointer()
     private val rangePointer = SmartPointerManager.getInstance(reference.element.project).createSmartPsiFileRangePointer(
       reference.element.containingFile, reference.rangeInElement.shiftRight(reference.element.startOffset)
     )

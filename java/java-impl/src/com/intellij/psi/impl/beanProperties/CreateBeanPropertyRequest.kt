@@ -3,10 +3,7 @@ package com.intellij.psi.impl.beanProperties
 
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.AnnotationRequest
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.expectedParameter
-import com.intellij.lang.jvm.actions.expectedTypes
+import com.intellij.lang.jvm.actions.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
@@ -28,18 +25,18 @@ class CreateBeanPropertyRequest(
   override fun getMethodName(): String = myMethodName
 
   private val myReturnType = if (isSetter) expectedTypes(PsiTypes.voidType()) else expectedTypes
-  override fun getReturnType() = myReturnType
+  override fun getReturnType(): ExpectedTypes = myReturnType
 
   private val myModifiers = listOf(JvmModifier.PUBLIC)
-  override fun getModifiers() = myModifiers
+  override fun getModifiers(): List<JvmModifier> = myModifiers
 
-  override fun getAnnotations() = emptyList<AnnotationRequest>()
+  override fun getAnnotations(): List<AnnotationRequest> = emptyList()
 
   private val myTargetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
-  override fun getTargetSubstitutor() = myTargetSubstitutor
+  override fun getTargetSubstitutor(): PsiJvmSubstitutor = myTargetSubstitutor
 
   private val myParameters = if (isSetter) listOf(expectedParameter(type, propertyName)) else emptyList()
-  override fun getExpectedParameters() = myParameters
+  override fun getExpectedParameters(): List<ExpectedParameter> = myParameters
 
-  override fun isValid() = type.isValid
+  override fun isValid(): Boolean = type.isValid
 }

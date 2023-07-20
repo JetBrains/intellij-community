@@ -367,7 +367,7 @@
                  description="Whether to skip substitutor computation if return type doesn't depend on it"/>
     <registryKey key="groovy.assert.element.kind.in.resolve" defaultValue="true"
                  description="Whether to throw error if the element is unexpected in resolve processor"/>
-    <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="true"
+    <registryKey key="groovy.collect.method.calls.for.inference" defaultValue="false"
                  description="Allows to collect method usages for more precise type inference"/>
     <registryKey key="groovy.use.explicitly.typed.closure.in.inference" defaultValue="true"
                  description="Enable type inference with using info from explicitly typed closures"/>

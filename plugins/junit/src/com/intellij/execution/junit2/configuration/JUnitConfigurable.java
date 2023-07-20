@@ -305,7 +305,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField.getComponent().getText()));
     configuration.getPersistentData().setTags(myTagsField.getComponent().getText());
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
-    myModel.apply(getModuleSelector().getModule(), configuration);
+    myModel.apply(getModuleSelector().getModule(), configuration, null);
     applyHelpersTo(configuration);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
     if (myWholeProjectScope.isSelected()) {
@@ -610,7 +610,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     protected void onClassChosen(@NotNull PsiClass psiClass) {
       final JTextField textField = myPatternTextField.getTextField();
       final String text = textField.getText();
-      textField.setText(text + (text.length() > 0 ? "||" : "") + psiClass.getQualifiedName());
+      textField.setText(text + (!text.isEmpty() ? "||" : "") + psiClass.getQualifiedName());
     }
 
     @Override

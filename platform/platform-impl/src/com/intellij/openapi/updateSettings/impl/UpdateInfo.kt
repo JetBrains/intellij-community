@@ -5,7 +5,6 @@ package com.intellij.openapi.updateSettings.impl
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.*
-import com.intellij.util.system.CpuArch
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.ApiStatus
@@ -77,7 +76,7 @@ class BuildInfo internal constructor(node: Element, productCode: String) {
 
 class PatchInfo internal constructor(node: Element) {
   companion object {
-    val OS_SUFFIX = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) if (CpuArch.isArm64()) "mac_arm" else "mac" else if (SystemInfo.isUnix) "unix" else "unknown"  // Android Studio: mac_arm support
+    val OS_SUFFIX: String = if (SystemInfo.isWindows) "win" else if (SystemInfo.isMac) "mac" else if (SystemInfo.isUnix) "unix" else "unknown"
   }
 
   val fromBuild: BuildNumber = BuildNumber.fromString(node.getMandatoryAttributeValue("fullFrom", "from"))!!

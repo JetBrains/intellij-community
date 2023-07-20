@@ -17,16 +17,14 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiLiteralExpression;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypes;
+import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,11 +49,11 @@ public class LongLiteralsEndingWithLowercaseLInspection extends BaseInspection i
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new LongLiteralFix();
   }
 
-  private static class LongLiteralFix extends InspectionGadgetsFix {
+  private static class LongLiteralFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -64,9 +62,9 @@ public class LongLiteralsEndingWithLowercaseLInspection extends BaseInspection i
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
       final PsiExpression literal =
-        (PsiExpression)descriptor.getPsiElement();
+        (PsiExpression)startElement;
       final String text = literal.getText();
       final String newText = text.replace('l', 'L');
       PsiReplacementUtil.replaceExpression(literal, newText);

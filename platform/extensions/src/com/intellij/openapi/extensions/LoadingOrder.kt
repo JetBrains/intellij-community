@@ -96,11 +96,11 @@ class LoadingOrder {
     const val ORDER_RULE_SEPARATOR: Char = ','
 
     @JvmField
-    val ANY = LoadingOrder()
+    val ANY: LoadingOrder = LoadingOrder()
     @JvmField
-    val FIRST = LoadingOrder(FIRST_STR)
+    val FIRST: LoadingOrder = LoadingOrder(FIRST_STR)
     @JvmField
-    val LAST = LoadingOrder(LAST_STR)
+    val LAST: LoadingOrder = LoadingOrder(LAST_STR)
 
     @JvmStatic
     fun before(id: @NonNls String?): LoadingOrder {

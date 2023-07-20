@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.application.Topics;
@@ -6,7 +6,7 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actions.AboutPopup;
+import com.intellij.ide.actions.AboutDialog;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.widget.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -59,20 +59,24 @@ public final class WelcomeScreenComponentFactory {
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
     String welcomeScreenLogoUrl = appInfo.getApplicationSvgIconUrl();
-    if (welcomeScreenLogoUrl != null) {
-      Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
-      float scale = 28f / icon.getIconWidth();
-      Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
-      JLabel logo = new JLabel(smallLogoIcon);
-      logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.WEST);
-    }
+    Icon icon = IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader());
+    JLabel logo = new JLabel() {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        float scale = JBUIScale.scale(28f) / icon.getIconWidth();
+        Icon smallLogoIcon = IconUtil.scale(icon, null, scale);
+        setIcon(smallLogoIcon);
+      }
+    };
+    logo.setBorder(JBUI.Borders.empty(29, 0, 27, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.WEST);
 
     String applicationName = getAppName();
     JLabel appName = new JLabel(applicationName);
     appName.setForeground(JBColor.foreground());
-    appName.setFont(appName.getFont().deriveFont(Font.PLAIN));
+    appName.setFont(JBFont.create(appName.getFont().deriveFont(Font.PLAIN), false));
 
     ActionLink copyAbout = new ActionLink("", EmptyIcon.ICON_16, createCopyAboutAction());
     copyAbout.setHoveringIcon(AllIcons.Actions.Copy);
@@ -115,13 +119,10 @@ public final class WelcomeScreenComponentFactory {
 
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
 
-    String welcomeScreenLogoUrl = appInfo.getWelcomeScreenLogoUrl();
-    if (welcomeScreenLogoUrl != null) {
-      JLabel logo = new JLabel(IconLoader.getIcon(welcomeScreenLogoUrl, WelcomeScreenComponentFactory.class.getClassLoader()));
-      logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
-      logo.setHorizontalAlignment(SwingConstants.CENTER);
-      panel.add(logo, BorderLayout.NORTH);
-    }
+    JLabel logo = new JLabel(IconLoader.getIcon(appInfo.getApplicationSvgIconUrl(), WelcomeScreenComponentFactory.class.getClassLoader()));
+    logo.setBorder(JBUI.Borders.empty(30, 0, 10, 0));
+    logo.setHorizontalAlignment(SwingConstants.CENTER);
+    panel.add(logo, BorderLayout.NORTH);
 
     JLabel appName = new JLabel(getAppName());
     appName.setForeground(JBColor.foreground());
@@ -146,7 +147,7 @@ public final class WelcomeScreenComponentFactory {
 
   private static AnAction createCopyAboutAction() {
     return DumbAwareAction.create(e -> {
-      CopyPasteManager.getInstance().setContents(new StringSelection(AboutPopup.getAboutText()));
+      CopyPasteManager.getInstance().setContents(new StringSelection(new AboutDialog(null).getExtendedAboutText()));
     });
   }
 

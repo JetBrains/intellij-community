@@ -5,6 +5,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0.13.0/libthrift-0.13.0.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/thrift/libthrift/0.13.0/libthrift-0.13.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

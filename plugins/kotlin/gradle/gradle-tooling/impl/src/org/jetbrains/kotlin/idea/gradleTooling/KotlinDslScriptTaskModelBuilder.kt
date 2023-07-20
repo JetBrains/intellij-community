@@ -3,13 +3,19 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
+import org.gradle.api.logging.Logging
 import org.gradle.tooling.model.kotlin.dsl.KotlinDslModelsParameters.PREPARATION_TASK_NAME
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 
 class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
+
+    companion object {
+        val logger = Logging.getLogger(KotlinDslScriptTaskModelBuilder::class.java)
+    }
     override fun canBuild(modelName: String): Boolean {
         return KotlinDslScriptAdditionalTask::class.java.name == modelName
     }
@@ -33,6 +39,14 @@ class KotlinDslScriptTaskModelBuilder : AbstractModelBuilderService() {
 
     private fun kotlinDslScriptsModelImportSupported(currentGradleVersion: String): Boolean {
         return GradleVersion.version(currentGradleVersion) >= GradleVersion.version("6.0")
+    }
+
+    internal fun KotlinExtensionReflection.parseKotlinGradlePluginVersion(): KotlinGradlePluginVersion? {
+        val version = KotlinGradlePluginVersion.parse(kotlinGradlePluginVersion ?: return null)
+        if (version == null) {
+            logger.warn("[sync warning] Failed to parse KotlinGradlePluginVersion: version == null")
+        }
+        return version
     }
 
 }

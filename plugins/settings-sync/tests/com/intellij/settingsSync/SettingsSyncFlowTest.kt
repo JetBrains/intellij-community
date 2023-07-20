@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
@@ -58,7 +59,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     // emulate first session with initialization
     val fileName = "options/laf.xml"
     val file = configDir.resolve(fileName).write("LaF Initial")
-    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable,
+    val log = GitSettingsLog(settingsSyncStorage, configDir, disposable, { null },
                              initialSnapshotProvider = { MockSettingsSyncIdeMediator.getAllFilesFromSettingsAsSnapshot(configDir) })
     log.initialize()
     log.logExistingSettings()

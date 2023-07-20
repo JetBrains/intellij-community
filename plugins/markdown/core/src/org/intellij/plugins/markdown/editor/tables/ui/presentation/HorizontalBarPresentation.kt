@@ -33,7 +33,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.util.hasType
-import org.intellij.plugins.markdown.ui.floating.FloatingToolbar
+import com.intellij.openapi.actionSystem.impl.ToolbarUtils
 import java.awt.*
 import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
@@ -180,7 +180,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
 
   private fun showToolbar(columnIndex: Int) {
     val targetComponent = TableActionKeys.createDataContextComponent(editor, createDataProvider(table, columnIndex))
-    FloatingToolbar.createImmediatelyUpdatedToolbar(
+    ToolbarUtils.createImmediatelyUpdatedToolbar(
       group = columnActionGroup,
       place = TableActionPlaces.TABLE_INLAY_TOOLBAR,
       targetComponent,

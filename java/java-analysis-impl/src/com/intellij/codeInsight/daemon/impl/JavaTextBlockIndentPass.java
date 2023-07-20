@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 
 public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
-
   private static final StringContentIndentRenderer RENDERER = new StringContentIndentRenderer();
 
   private final Editor myEditor;
@@ -45,7 +44,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
   private List<StringContentIndent> myIndents = Collections.emptyList();
 
   @Contract(pure = true)
-  public JavaTextBlockIndentPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiJavaFile file) {
+  JavaTextBlockIndentPass(@NotNull Project project, @NotNull Editor editor, @NotNull PsiJavaFile file) {
     super(project, editor.getDocument());
     myEditor = editor;
     myFile = file;
@@ -101,7 +100,6 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
   }
 
   private static class StringContentIndentRenderer implements CustomHighlighterRenderer {
-
     @Override
     public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
       int indent = StringContentIndentUtil.getIndent(highlighter);
@@ -240,10 +238,7 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
 
       @Override
       public String toString() {
-        return "TextBlockModel{" +
-               "myBaseIndent=" + myBaseIndent +
-               ", myRange=" + myRange +
-               '}';
+        return "TextBlockModel{myBaseIndent=" + myBaseIndent + ", myRange=" + myRange + '}';
       }
     }
   }

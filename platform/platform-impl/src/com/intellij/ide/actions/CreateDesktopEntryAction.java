@@ -27,6 +27,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Restarter;
 import org.jetbrains.annotations.Nls;
@@ -121,7 +122,7 @@ public final class CreateDesktopEntryAction extends DumbAwareAction {
     String binPath = PathManager.getBinPath();
     assert new File(binPath).isDirectory() : "Invalid bin path: '" + binPath + "'";
 
-    String iconPath = AppUIUtil.findIcon();
+    String iconPath = AppUIUtilKt.findAppIcon();
     if (iconPath == null) {
       throw new RuntimeException(ApplicationBundle.message("desktop.entry.icon.missing", binPath));
     }

@@ -10,7 +10,7 @@ import com.intellij.ui.SimpleTextAttributes
 
 internal class ModuleNode(project: Project, bookmark: ModuleBookmark) : BookmarkNode<ModuleBookmark>(project, bookmark) {
 
-  override fun getChildren() = emptyList<AbstractTreeNode<*>>()
+  override fun getChildren(): List<AbstractTreeNode<*>> = emptyList()
 
   override fun update(presentation: PresentationData) {
     presentation.setIcon(wrapIcon(if (value.isGroup) Nodes.ModuleGroup else Nodes.Module))

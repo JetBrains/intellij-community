@@ -1,4 +1,4 @@
-// "Create actual class for module testProjectName.mpp-bottom-actual.jsJvm18Main (Native (general)/JS/JVM (1.8))" "true"
+// "Add missing actual declarations" "true"
 // ACTION: Convert to secondary constructor
 // ACTION: Create subclass
 

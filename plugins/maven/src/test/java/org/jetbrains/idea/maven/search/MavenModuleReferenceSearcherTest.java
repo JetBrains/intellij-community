@@ -32,6 +32,7 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """);
     importProject();
@@ -64,6 +65,7 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """);
     importProject();
@@ -97,6 +99,7 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """);
     importProject();
@@ -139,6 +142,7 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent2</artifactId>
+                    <version>1</version>
                     <relativePath>../parent2/pom.xml</relativePath>
                   </parent>
                   """);
@@ -173,6 +177,7 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """);
     importProject();
@@ -206,6 +211,7 @@ public class MavenModuleReferenceSearcherTest extends MavenDomTestCase {
                   <parent>
                     <groupId>group</groupId>
                     <artifactId>parent</artifactId>
+                    <version>1</version>
                   </parent>
                   """);
     importProject();

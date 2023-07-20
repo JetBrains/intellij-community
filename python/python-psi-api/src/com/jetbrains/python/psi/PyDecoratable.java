@@ -18,9 +18,9 @@ package com.jetbrains.python.psi;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * TODO: Add description
+ * Indicates a language construct that can be decorated, primarily class and function definitions.
  */
-public interface PyDecoratable {
+public interface PyDecoratable extends PyElement {
   @Nullable
   PyDecoratorList getDecoratorList();
 }

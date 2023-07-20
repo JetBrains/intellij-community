@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.util.regex.Pattern
 
-private val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
+val LOG: Logger = Logger.getInstance("#com.intellij.codeInsight.navigation")
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
 /**

@@ -30,7 +30,7 @@ class CleanStaleTargetsTest : JpsBuildTestCase() {
   }
 
   private fun doTestDeleteOldOutput(checkMappings: Boolean = true, action: (JpsModule) -> Unit) {
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = JpsPathUtil.pathToUrl(getAbsolutePath("out"))
+    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(myProject).outputUrl = getUrl("out")
     val aRoot = PathUtil.getParentPath(createFile("a/src/A.java", "class A {}"))
     val aModule = addModule("a", arrayOf(aRoot), null, null, jdk)
     val bRoot = PathUtil.getParentPath(createFile("b/src/B.java", "class B {}"))

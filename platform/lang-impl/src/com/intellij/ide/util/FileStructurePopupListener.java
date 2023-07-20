@@ -8,4 +8,6 @@ public interface FileStructurePopupListener extends EventListener {
   Topic<FileStructurePopupListener> TOPIC = new Topic<>("file structure popup events", FileStructurePopupListener.class, Topic.BroadcastDirection.NONE);
 
   void stateChanged(boolean opened);
+
+  void isLoading(boolean isLoading);
 }

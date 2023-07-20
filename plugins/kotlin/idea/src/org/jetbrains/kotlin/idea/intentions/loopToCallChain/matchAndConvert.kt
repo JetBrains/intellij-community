@@ -289,9 +289,7 @@ private fun checkSmartCastsPreserved(loop: KtForExpression, matchResult: MatchRe
 
         // not all smart cast expressions has been found in the result or have the same type after conversion, perform more expensive check
         val expression = matchResult.transformationMatch.resultTransformation.generateExpressionToReplaceLoopAndCheckErrors(callChain)
-        if (!tryChangeAndCheckErrors(loop) { it.replace(expression) }) return false
-
-        return true
+        return tryChangeAndCheckErrors(loop) { it.replace(expression) }
     } finally {
         storedUserData.forEach { it.set(null) }
         if (smartCastCount > 0) {

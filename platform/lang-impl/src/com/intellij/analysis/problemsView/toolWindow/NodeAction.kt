@@ -11,14 +11,16 @@ import java.awt.datatransfer.StringSelection
 import javax.swing.JTree
 
 internal class CopyProblemDescriptionAction : NodeAction<Problem>() {
-  override fun getData(node: Any?) = (node as? ProblemNode)?.problem
-  override fun actionPerformed(data: Problem) = CopyPasteManager.getInstance().setContents(StringSelection(data.description ?: data.text))
+  override fun getData(node: Any?): Problem? = (node as? ProblemNode)?.problem
+  override fun actionPerformed(data: Problem) {
+    CopyPasteManager.getInstance().setContents(StringSelection(data.description ?: data.text))
+  }
 }
 
 internal abstract class NodeAction<Data> : DumbAwareAction() {
   abstract fun getData(node: Any?): Data?
   abstract fun actionPerformed(data: Data)
-  open fun isEnabled(data: Data) = true
+  open fun isEnabled(data: Data): Boolean = true
 
   override fun update(event: AnActionEvent) {
     val data = getData(getSelectedNode(event))

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.icons.AllIcons;
@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -350,6 +351,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
   }
 
   protected void prepareEditor(EditorEx editor) {
+    editor.putUserData(EditorImpl.DISABLE_REMOVE_ON_DROP, Boolean.TRUE);
   }
 
   protected final void setExpandable(Editor editor) {
@@ -380,7 +382,9 @@ public abstract class XDebuggerEditorBase implements Expandable {
     editorTextField.setFont(editorTextField.getFont().deriveFont((float)getEditor().getColorsScheme().getEditorFontSize()));
 
     JComponent component = expressionEditor.getComponent();
-    component.setPreferredSize(new Dimension(getComponent().getWidth(), 100));
+    // Don't set custom width here to support expand popup in RD/CWM
+    // Component will be stretched with `setStretchToOwnerWidth`
+    component.setPreferredSize(new Dimension(0, 100));
 
     myExpandedPopup = JBPopupFactory.getInstance()
       .createComponentPopupBuilder(component, expressionEditor.getPreferredFocusedComponent())
@@ -389,6 +393,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
       .setResizable(true)
       .setRequestFocus(true)
       .setLocateByContent(true)
+      .setStretchToOwnerWidth(true)
       .setCancelOnWindowDeactivation(false)
       .setAdText(getAdText())
       .setKeyboardActions(Collections.singletonList(Pair.create(event -> {

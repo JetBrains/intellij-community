@@ -1,4 +1,4 @@
-// "Create actual function for module a_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 // TEST
 
 package test

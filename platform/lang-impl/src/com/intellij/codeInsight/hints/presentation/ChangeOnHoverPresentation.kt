@@ -48,6 +48,6 @@ open class ChangeOnHoverPresentation(
 
   companion object {
     @JvmStatic
-    val STATE_MARK = StateMark<State>("OnHover")
+    val STATE_MARK: StateMark<State> = StateMark("OnHover")
   }
 }

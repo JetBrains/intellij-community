@@ -16,7 +16,6 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiAssignmentExpression
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 

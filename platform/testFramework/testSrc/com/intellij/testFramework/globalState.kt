@@ -25,28 +25,28 @@ private const val actuallyClose = false
 // Plain JUnit 3 tests do not detect when System.our or System.err are redirected.
 // The next UsefulTestCase or the _LastInSuiteTest will notice the ongoing redirection and complain.
 class PlainJUnit3Test : TestCase() {
-  fun testCloseOut() = doCloseOut()
-  fun testCloseErr() = doCloseErr()
-  fun testRedirectOut() = doRedirectOut()
-  fun testRedirectErr() = doRedirectErr()
+  fun testCloseOut(): Unit = doCloseOut()
+  fun testCloseErr(): Unit = doCloseErr()
+  fun testRedirectOut(): Unit = doRedirectOut()
+  fun testRedirectErr(): Unit = doRedirectErr()
 }
 
 // JUnit 3 tests that derive from UsefulTestCase protect themselves by checking the system
 // streams during setUp as well as during tearDown.
 class UsefulJUnit3Test : UsefulTestCase() {
-  fun testCloseOut() = doCloseOut()
-  fun testCloseErr() = doCloseErr()
-  fun testRedirectOut() = doRedirectOut()
-  fun testRedirectErr() = doRedirectErr()
+  fun testCloseOut(): Unit = doCloseOut()
+  fun testCloseErr(): Unit = doCloseErr()
+  fun testRedirectOut(): Unit = doRedirectOut()
+  fun testRedirectErr(): Unit = doRedirectErr()
 }
 
 // JUnit 3 tests that derive from HeavyPlatformTestCase protect themselves
 // just like tests derived from UsefulTestCase.
 class HeavyJUnit3Test : HeavyPlatformTestCase() {
-  fun testCloseOut() = doCloseOut()
-  fun testCloseErr() = doCloseErr()
-  fun testRedirectOut() = doRedirectOut()
-  fun testRedirectErr() = doRedirectErr()
+  fun testCloseOut(): Unit = doCloseOut()
+  fun testCloseErr(): Unit = doCloseErr()
+  fun testRedirectOut(): Unit = doRedirectOut()
+  fun testRedirectErr(): Unit = doRedirectErr()
 }
 
 // JUnit 4 tests that derive from UsefulTestCase protect themselves,
@@ -54,16 +54,16 @@ class HeavyJUnit3Test : HeavyPlatformTestCase() {
 @RunWith(JUnit4::class)
 class UsefulJUnit4Test : UsefulTestCase() {
   @org.junit.Test
-  fun closeOut() = doCloseOut()
+  fun closeOut(): Unit = doCloseOut()
 
   @org.junit.Test
-  fun closeErr() = doCloseErr()
+  fun closeErr(): Unit = doCloseErr()
 
   @org.junit.Test
-  fun redirectOut() = doRedirectOut()
+  fun redirectOut(): Unit = doRedirectOut()
 
   @org.junit.Test
-  fun redirectErr() = doRedirectErr()
+  fun redirectErr(): Unit = doRedirectErr()
 }
 
 // JUnit 4 tests that derive from HeavyPlatformTestCase protect themselves,
@@ -71,16 +71,16 @@ class UsefulJUnit4Test : UsefulTestCase() {
 @RunWith(JUnit4::class)
 class HeavyJUnit4Test : HeavyPlatformTestCase() {
   @org.junit.Test
-  fun closeOut() = doCloseOut()
+  fun closeOut(): Unit = doCloseOut()
 
   @org.junit.Test
-  fun closeErr() = doCloseErr()
+  fun closeErr(): Unit = doCloseErr()
 
   @org.junit.Test
-  fun redirectOut() = doRedirectOut()
+  fun redirectOut(): Unit = doRedirectOut()
 
   @org.junit.Test
-  fun redirectErr() = doRedirectErr()
+  fun redirectErr(): Unit = doRedirectErr()
 }
 
 // !!!
@@ -89,16 +89,16 @@ class HeavyJUnit4Test : HeavyPlatformTestCase() {
 // !!!
 class UsefulJUnit5Test : UsefulTestCase() {
   @org.junit.jupiter.api.Test
-  fun closeOut() = doCloseOut()
+  fun closeOut(): Unit = doCloseOut()
 
   @org.junit.jupiter.api.Test
-  fun closeErr() = doCloseErr()
+  fun closeErr(): Unit = doCloseErr()
 
   @org.junit.jupiter.api.Test
-  fun redirectOut() = doRedirectOut()
+  fun redirectOut(): Unit = doRedirectOut()
 
   @org.junit.jupiter.api.Test
-  fun redirectErr() = doRedirectErr()
+  fun redirectErr(): Unit = doRedirectErr()
 }
 
 // !!!
@@ -107,16 +107,16 @@ class UsefulJUnit5Test : UsefulTestCase() {
 // !!!
 class HeavyJUnit5Test : HeavyPlatformTestCase() {
   @org.junit.jupiter.api.Test
-  fun closeOut() = doCloseOut()
+  fun closeOut(): Unit = doCloseOut()
 
   @org.junit.jupiter.api.Test
-  fun closeErr() = doCloseErr()
+  fun closeErr(): Unit = doCloseErr()
 
   @org.junit.jupiter.api.Test
-  fun redirectOut() = doRedirectOut()
+  fun redirectOut(): Unit = doRedirectOut()
 
   @org.junit.jupiter.api.Test
-  fun redirectErr() = doRedirectErr()
+  fun redirectErr(): Unit = doRedirectErr()
 }
 
 private fun doCloseOut() {

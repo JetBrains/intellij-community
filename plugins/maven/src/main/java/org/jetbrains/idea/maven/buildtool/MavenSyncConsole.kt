@@ -37,8 +37,10 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.q
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent
+import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
+import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
 import org.jetbrains.idea.maven.server.MavenServerManager
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -275,10 +277,10 @@ class MavenSyncConsole(private val myProject: Project) {
     }
   }
 
-  fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
+  fun getListener(type: MavenServerConsoleIndicator.ResolveType): ArtifactSyncListener {
     return when (type) {
-      MavenServerProgressIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
-      MavenServerProgressIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
+      MavenServerConsoleIndicator.ResolveType.PLUGIN -> ArtifactSyncListenerImpl("maven.sync.plugins")
+      MavenServerConsoleIndicator.ResolveType.DEPENDENCY -> ArtifactSyncListenerImpl("maven.sync.dependencies")
     }
   }
 
@@ -531,7 +533,6 @@ class MavenSyncConsole(private val myProject: Project) {
     @ApiStatus.Experimental
     @JvmStatic
     fun startTransaction(project: Project) {
-      debugLog("Maven sync: start sync transaction")
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = true
@@ -541,7 +542,6 @@ class MavenSyncConsole(private val myProject: Project) {
     @ApiStatus.Experimental
     @JvmStatic
     fun finishTransaction(project: Project) {
-      debugLog("Maven sync: finish sync transaction")
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = false
@@ -551,6 +551,19 @@ class MavenSyncConsole(private val myProject: Project) {
 
     private fun debugLog(s: String, exception: Throwable? = null) {
       MavenLog.LOG.debug(s, exception)
+    }
+  }
+
+  @Synchronized
+  fun handleDownloadEvents(downloadEvents: List<MavenArtifactEvent>) {
+    for (e in downloadEvents) {
+      val listener = getListener(e.resolveType)
+      val id = e.dependencyId
+      when (e.artifactEventType) {
+        ArtifactEventType.DOWNLOAD_STARTED -> listener.downloadStarted(id)
+        ArtifactEventType.DOWNLOAD_COMPLETED -> listener.downloadCompleted(id)
+        ArtifactEventType.DOWNLOAD_FAILED -> listener.downloadFailed(id, e.errorMessage, e.stackTrace)
+      }
     }
   }
 }

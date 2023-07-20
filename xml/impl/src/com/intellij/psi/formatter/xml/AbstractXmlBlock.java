@@ -8,6 +8,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.*;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -280,9 +281,29 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
         }
       );
     }
+    else if (child.getElementType() == XmlTokenType.XML_DATA_CHARACTERS
+             && child.getTreeParent().getElementType() != XmlElementType.XML_CDATA
+             && child.textContains('\n')) {
+      result.add(createRawTextChild(child, indent, wrap, alignment));
+    }
     else {
       result.add(createSimpleChild(child, indent, wrap, alignment, null));
     }
+  }
+
+  protected @NotNull XmlBlock createRawTextChild(@NotNull ASTNode child, @Nullable Indent indent,
+                                                @Nullable Wrap wrap, @Nullable Alignment alignment) {
+    var text = child.getText();
+    var textStart = StringUtil.skipWhitespaceOrNewLineForward(text, 0);
+    var textEnd = StringUtil.skipWhitespaceOrNewLineBackward(text, text.length());
+    TextRange textRange;
+    if (textStart < textEnd) {
+      textRange = child.getTextRange();
+      textRange = new TextRange(textRange.getStartOffset() + textStart, textRange.getStartOffset() + textEnd);
+    } else {
+      textRange = null;
+    }
+    return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, textRange, isPreserveSpace());
   }
 
   protected @NotNull XmlBlock createSimpleChild(@NotNull ASTNode child, @Nullable Indent indent,

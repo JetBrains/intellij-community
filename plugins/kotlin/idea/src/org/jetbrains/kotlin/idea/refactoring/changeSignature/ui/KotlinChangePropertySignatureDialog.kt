@@ -281,7 +281,7 @@ class KotlinChangePropertySignatureDialog(
                 defaultValue
             }
 
-            receiver.defaultValueForCall = AddFullQualifierIntention.addQualifiersRecursively(newElement) as? KtExpression
+            receiver.defaultValueForCall = AddFullQualifierIntention.Holder.addQualifiersRecursively(newElement) as? KtExpression
         }
     }
 }

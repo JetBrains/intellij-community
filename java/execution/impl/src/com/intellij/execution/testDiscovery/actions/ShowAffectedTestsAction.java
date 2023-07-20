@@ -360,7 +360,7 @@ public class ShowAffectedTestsAction extends AnAction {
         .setResizable(true)
         .setCommandButton(new CompositeActiveComponent(pinButton))
         .setSettingButton(new CompositeActiveComponent(runButton).getComponent())
-        .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
+        .setItemChosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, __ -> pinActionListener.run())
         .setMinSize(new JBDimension(500, 300))
         .setDimensionServiceKey(ShowAffectedTestsAction.class.getSimpleName());

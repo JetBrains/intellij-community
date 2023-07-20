@@ -17,11 +17,7 @@ import org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator
 import org.jetbrains.kotlin.idea.maven.configuration.KotlinMavenConfigurator
 
 class KotlinTestJUnitInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
-    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>?, holder: DomElementAnnotationHolder?) {
-        if (domFileElement == null || holder == null) {
-            return
-        }
-
+    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val module = domFileElement.module ?: return
         val manager = MavenProjectsManager.getInstance(module.project) ?: return
         val mavenProject = manager.findProject(module) ?: return

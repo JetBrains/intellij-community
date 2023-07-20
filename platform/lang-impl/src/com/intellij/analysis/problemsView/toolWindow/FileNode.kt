@@ -16,14 +16,14 @@ import java.util.Objects.hash
 
 class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
 
-  override val descriptor
+  override val descriptor: OpenFileDescriptor?
     get() = project?.let { OpenFileDescriptor(it, file) }
 
-  override fun getLeafState() = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
+  override fun getLeafState(): LeafState = if (parentDescriptor is Root) LeafState.NEVER else LeafState.DEFAULT
 
-  override fun getName() = file.presentableName
+  override fun getName(): String = file.presentableName
 
-  override fun getVirtualFile() = file
+  override fun getVirtualFile(): VirtualFile = file
 
   override fun update(project: Project, presentation: PresentationData) {
     presentation.addText(name, REGULAR_ATTRIBUTES)
@@ -48,7 +48,7 @@ class FileNode(parent: Node, val file: VirtualFile) : Node(parent) {
     return root?.getChildren(file) ?: super.getChildren()
   }
 
-  override fun hashCode() = hash(project, file)
+  override fun hashCode(): Int = hash(project, file)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

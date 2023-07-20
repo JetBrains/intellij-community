@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
@@ -43,7 +44,8 @@ public interface MavenServerIndexer extends Remote {
   List<IndexedMavenId> processArtifacts(MavenIndexId mavenIndexId, int startFrom, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
-  IndexedMavenId addArtifact(MavenIndexId mavenIndexId, File artifactFile, MavenToken token)
+  @NotNull
+  List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull Collection<File> artifactFiles, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
   Set<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)

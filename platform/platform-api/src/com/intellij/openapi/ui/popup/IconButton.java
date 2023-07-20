@@ -17,9 +17,9 @@
 package com.intellij.openapi.ui.popup;
 
 import com.intellij.openapi.util.NlsContexts.Tooltip;
-import com.intellij.ui.IconReplacer;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.ui.icons.IconReplacer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;

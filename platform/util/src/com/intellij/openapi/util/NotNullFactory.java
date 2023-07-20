@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * Deprecated. Use {@link java.util.function.Supplier} with {@code @NotNull} annotation on the type parameter instead.
  */
 @FunctionalInterface
-public interface NotNullFactory<T> extends Factory<T> {
+public interface NotNullFactory<T> extends Factory<@NotNull T> {
   @Override
   @NotNull
   T create();

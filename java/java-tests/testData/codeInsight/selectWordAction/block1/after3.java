@@ -1,7 +1,7 @@
 class C {
-    private void foo() <selection>{
-        {
+    private void foo() {
+        <selection>{
              <caret>
-        }
-    }</selection>
+        }</selection>
+    }
 }

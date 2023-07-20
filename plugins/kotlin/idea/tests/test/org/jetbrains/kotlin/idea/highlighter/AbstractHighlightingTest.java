@@ -9,12 +9,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.InspectionTestUtil;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
-import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
-import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
+import org.jetbrains.kotlin.idea.test.*;
 
 import java.io.File;
 import java.util.List;
@@ -28,21 +26,27 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
     public static final String NO_CHECK_WEAK_WARNINGS_PREFIX = "// NO_CHECK_WEAK_WARNINGS";
     public static final String NO_CHECK_WARNINGS_PREFIX = "// NO_CHECK_WARNINGS";
     public static final String EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX = "// EXPECTED_DUPLICATED_HIGHLIGHTING";
+    public static final String ALLOW_DOC_CHANGE_PREFIX = "// ALLOW_DOC_CHANGE";
     public static final String TOOL_PREFIX = "// TOOL:";
 
     protected void checkHighlighting(@NotNull String fileText) {
         boolean checkInfos = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_INFOS_PREFIX);
         boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WEAK_WARNINGS_PREFIX);
         boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WARNINGS_PREFIX);
+        boolean allowDocChange = InTextDirectivesUtils.isDirectiveDefined(fileText, ALLOW_DOC_CHANGE_PREFIX);
 
         KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
-                myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings));
+        {
+            ((CodeInsightTestFixtureImpl) myFixture).canChangeDocumentDuringHighlighting(allowDocChange);
+            return myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+        });
     }
 
     protected void doTest(String unused) throws Exception {
         String fileText = FileUtil.loadFile(new File(dataFilePath(fileName())), true);
         boolean expectedDuplicatedHighlighting = InTextDirectivesUtils.isDirectiveDefined(fileText, EXPECTED_DUPLICATED_HIGHLIGHTING_PREFIX);
 
+        ConfigLibraryUtil.INSTANCE.configureLibrariesByDirective(myFixture.getModule(), fileText);
         myFixture.configureByFile(fileName());
         List<String> tools = InTextDirectivesUtils.findLinesWithPrefixesRemoved(fileText, TOOL_PREFIX);
         if (!tools.isEmpty()) {

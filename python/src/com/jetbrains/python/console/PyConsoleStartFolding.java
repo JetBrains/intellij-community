@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.ImmutableList;
@@ -22,7 +22,6 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
   private boolean doNotAddFoldingAgain = false;
   private FoldRegion myStartFoldRegion;
   private final boolean myAddOnce;
-  private final String DEFAULT_FOLDING_MESSAGE = PyBundle.message("python.console");
   private static final String PYTHON_PREFIX = "Python";
   private int myStartLineOffset = 0;
   private final List<String> firstLinePrefix = ImmutableList.of("Python", "PyDev console");
@@ -66,7 +65,7 @@ public class PyConsoleStartFolding implements ConsoleCommunicationListener, Fold
       int startLine = 0;
       int finish = start;
       int finishLine = 0;
-      String placeholderText = DEFAULT_FOLDING_MESSAGE;
+      String placeholderText = PyBundle.message("python.console");
       int firstLine = document.getLineNumber(myStartLineOffset);
       for (int line = firstLine; line < document.getLineCount(); line++) {
         String lineText = document.getText(DocumentUtil.getLineTextRange(document, line));

@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.ui.selector
 
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
-import com.intellij.collaboration.ui.util.bindDisabled
-import com.intellij.collaboration.ui.util.bindVisibility
+import com.intellij.collaboration.ui.util.bindDisabledIn
+import com.intellij.collaboration.ui.util.bindVisibilityIn
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.ActionLink
 import git4idea.remote.hosting.ui.RepositoryAndAccountSelectorComponentFactory
@@ -56,8 +56,8 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           }
         }
 
-        bindVisibility(scope, vm.githubLoginAvailableState)
-        bindDisabled(scope, vm.busyState)
+        bindVisibilityIn(scope, vm.githubLoginAvailableState)
+        bindDisabledIn(scope, vm.busyState)
       },
 
       ActionLink(GithubBundle.message("action.Github.Accounts.AddGHAccountWithToken.text")) {
@@ -67,8 +67,8 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
       }.apply {
 
         autoHideOnDisable = false
-        bindVisibility(scope, vm.githubLoginAvailableState)
-        bindDisabled(scope, vm.busyState)
+        bindVisibilityIn(scope, vm.githubLoginAvailableState)
+        bindDisabledIn(scope, vm.busyState)
       },
       JButton(GithubBundle.message("action.Github.Accounts.AddGHEAccount.text")).apply {
         isDefault = true
@@ -81,8 +81,8 @@ class GHRepositoryAndAccountSelectorComponentFactory internal constructor(privat
           }
         }
 
-        bindVisibility(scope, vm.gheLoginAvailableState)
-        bindDisabled(scope, vm.busyState)
+        bindVisibilityIn(scope, vm.gheLoginAvailableState)
+        bindDisabledIn(scope, vm.busyState)
       }
     )
   }

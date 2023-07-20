@@ -33,7 +33,7 @@ import org.jetbrains.debugger.MemberFilter
  */
 abstract class JavaScriptDebugAware {
   companion object {
-    val EP_NAME: ExtensionPointName<JavaScriptDebugAware> = ExtensionPointName.create<JavaScriptDebugAware>("com.jetbrains.javaScriptDebugAware")
+    val EP_NAME: ExtensionPointName<JavaScriptDebugAware> = ExtensionPointName.create("com.jetbrains.javaScriptDebugAware")
 
     @JvmStatic
     fun isBreakpointAware(fileType: FileType): Boolean {

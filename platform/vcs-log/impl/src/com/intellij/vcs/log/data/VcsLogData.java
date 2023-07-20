@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data;
 
-import com.intellij.diagnostic.telemetry.TraceManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -16,12 +15,10 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
-import com.intellij.vcs.log.data.index.IndexDiagnosticRunner;
-import com.intellij.vcs.log.data.index.VcsLogIndex;
-import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
-import com.intellij.vcs.log.data.index.VcsLogPersistentIndex;
+import com.intellij.vcs.log.data.index.*;
 import com.intellij.vcs.log.impl.VcsLogCachesInvalidator;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
 import com.intellij.vcs.log.impl.VcsLogSharedSettings;
@@ -38,11 +35,13 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
 
-import static com.intellij.diagnostic.telemetry.TraceKt.runSpanWithScope;
+import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
+import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runSpanWithScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   private final @NotNull Project myProject;
@@ -92,13 +91,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
     if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage();
-      if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
-        myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myErrorHandler, this);
-      }
-      else {
-        LOG.info("Vcs log index is turned off for project " + myProject.getName());
-        myIndex = new EmptyIndex();
-      }
+      myIndex = createIndex(logProviders, progress);
     }
     else {
       // this is not recoverable
@@ -139,22 +132,37 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private @NotNull VcsLogStorage createStorage() {
-    VcsLogStorage vcsLogStorage;
     try {
-      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
+      if (Registry.is("vcs.log.index.sqlite.storage", false)) {
+        return new SqliteVcsLogStorageBackend(myProject, myLogProviders, myErrorHandler, this);
+      }
+      return new VcsLogStorageImpl(myProject, myLogProviders, myErrorHandler, this);
     }
     catch (IOException e) {
-      vcsLogStorage = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
+      return new InMemoryStorage();
     }
-    return vcsLogStorage;
+  }
+
+  @NotNull
+  private VcsLogModifiableIndex createIndex(@NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogProgress progress) {
+    if (!VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
+      LOG.info("Vcs log index is turned off for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+    VcsLogPersistentIndex index = VcsLogPersistentIndex.create(myProject, myStorage, logProviders, progress, myErrorHandler, this);
+    if (index == null) {
+      LOG.error("Cannot create vcs log index for project " + myProject.getName());
+      return new EmptyIndex();
+    }
+    return index;
   }
 
   public void initialize() {
     synchronized (myLock) {
       if (myState.equals(State.CREATED)) {
         myState = State.INITIALIZED;
-        Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("initialize").startSpan();
+        Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("initialize").startSpan();
         Task.Backgroundable backgroundable = new Task.Backgroundable(myProject,
                                                                      VcsLogBundle.message("vcs.log.initial.loading.process"),
                                                                      false) {
@@ -215,7 +223,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
   }
 
   private void readCurrentUser() {
-    Span span = TraceManager.INSTANCE.getTracer("vcs").spanBuilder("readCurrentUser").startSpan();
+    Span span = TelemetryManager.getInstance().getTracer(VcsScope).spanBuilder("readCurrentUser").startSpan();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
       VirtualFile root = entry.getKey();
       try {

@@ -3,10 +3,10 @@ package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.JavaModuleSettingsEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
-import com.intellij.workspaceModel.storage.url.VirtualFileUrl;
+import com.intellij.platform.workspace.storage.WorkspaceEntity;
+import com.intellij.java.workspace.entities.JavaModuleSettingsEntity;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;

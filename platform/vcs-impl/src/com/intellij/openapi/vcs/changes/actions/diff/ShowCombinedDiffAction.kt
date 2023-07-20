@@ -9,7 +9,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
@@ -21,7 +20,7 @@ class ShowCombinedDiffAction : DumbAwareAction() {
     val changes = e.getData(VcsDataKeys.CHANGES)
     val project = e.project
 
-    e.presentation.isEnabledAndVisible = Registry.`is`("enable.combined.diff") &&
+    e.presentation.isEnabledAndVisible = CombinedDiffRegistry.isEnabled() &&
                                          project != null && changes != null && changes.size > 1
   }
 
@@ -45,7 +44,9 @@ class ShowCombinedDiffAction : DumbAwareAction() {
       }.associateBy { CombinedPathBlockId(it.filePath, it.fileStatus) }
 
       val sourceId = UUID.randomUUID().toString()
-      project.service<CombinedDiffModelRepository>().registerModel(sourceId, CombinedDiffModelImpl(project, producers))
+      val model = CombinedDiffModelImpl(project)
+      project.service<CombinedDiffModelRepository>().registerModel(sourceId, model)
+      model.setBlocks(producers)
       val allInOneDiffFile = CombinedDiffVirtualFile(sourceId, VcsBundle.message("changes.combined.diff"))
 
       DiffEditorTabFilesManager.getInstance(project).showDiffFile(allInOneDiffFile, true)

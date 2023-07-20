@@ -16,8 +16,18 @@
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 
 /**
  * @author Bas Leijdekkers
@@ -25,6 +35,31 @@ import org.jetbrains.annotations.Nullable;
 public class StaticMethodOnlyUsedInOneClassInspectionTest extends LightJavaInspectionTestCase {
 
   public void testStaticMethodOnlyUsedInOneClass() {
+    doTest();
+  }
+
+  public void testStaticMethodInSourceCode() {
+    PsiFile file = myFixture.addFileToProject(
+      "genSrc/com/siyeh/igtest/abstraction/Something.java",
+      """
+        package com.siyeh.igtest.abstraction;
+        public class Something {
+            public static String s2 = StaticMethodInSourceCode.t;
+        }
+        """
+    );
+
+    myFixture.allowTreeAccessForFile(file.getVirtualFile());
+
+    Project project = myFixture.getProject();
+
+    VirtualFile genSrc = ProjectUtil.guessProjectDir(project).findChild("genSrc");
+
+    JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true);
+    PsiTestUtil.addSourceRoot(myFixture.getModule(), genSrc, JavaSourceRootType.SOURCE, properties);
+
+    PsiClass buildConfig = myFixture.findClass("com.siyeh.igtest.abstraction.Something");
+    assertTrue(JavaProjectRootsUtil.isInGeneratedCode(buildConfig.getContainingFile().getVirtualFile(), project));
     doTest();
   }
 

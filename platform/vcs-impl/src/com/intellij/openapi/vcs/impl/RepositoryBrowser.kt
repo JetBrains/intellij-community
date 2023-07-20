@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.impl.ContentManagerWatcher
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
@@ -14,7 +14,6 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.RemoteFilePath
@@ -52,6 +51,7 @@ object RepositoryBrowser {
       val component = content.component as? RepositoryBrowserPanel ?: continue
       if (component.root == root) {
         repoToolWindow.contentManager.setSelectedContent(content)
+        repoToolWindow.activate(null)
         return
       }
     }
@@ -77,10 +77,7 @@ object RepositoryBrowser {
     return toolWindow
   }
 
-  private fun getIcon(): Icon? = when {
-    ExperimentalUI.isNewUI() -> IconLoader.getIcon("expui/toolwindow/repositories.svg", AllIcons::class.java)
-    else -> null
-  }
+  private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) ExpUiIcons.Toolwindow.Repositories else null
 }
 
 class RepositoryBrowserPanel(

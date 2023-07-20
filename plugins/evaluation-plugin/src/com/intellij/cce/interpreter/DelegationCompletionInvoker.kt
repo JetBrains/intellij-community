@@ -1,5 +1,6 @@
 package com.intellij.cce.interpreter
 
+import com.intellij.cce.actions.TextRange
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
 import com.intellij.cce.core.TokenProperties
@@ -40,9 +41,9 @@ class DelegationCompletionInvoker(private val invoker: CompletionInvoker, projec
     }
   }
 
-  override fun emulateCompletionGolfSession(expectedLine: String, offset: Int, nodeProperties: TokenProperties): Session {
+  override fun emulateCompletionGolfSession(expectedLine: String, completableRanges: List<TextRange>, offset: Int): Session {
     return readActionWaitingForSize {
-      invoker.emulateCompletionGolfSession(expectedLine, offset, nodeProperties)
+      invoker.emulateCompletionGolfSession(expectedLine, completableRanges, offset)
     }
   }
 

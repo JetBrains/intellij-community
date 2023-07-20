@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
@@ -21,7 +21,7 @@ import com.intellij.util.Url
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import java.awt.event.InputEvent
+import java.awt.event.ActionEvent
 
 internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAwareAction(browser.name, null, browser.icon) {
   object Handler {
@@ -56,19 +56,13 @@ internal class BaseOpenInBrowserAction(private val browser: WebBrowser) : DumbAw
 
     internal fun openInBrowser(event: AnActionEvent, browser: WebBrowser?) {
       createRequest(event.dataContext, isForceFileUrlIfNoUrlProvider = true)?.let {
-        openInBrowser(it, BitUtil.isSet(event.modifiers, InputEvent.SHIFT_MASK), browser)
+        openInBrowser(it, BitUtil.isSet(event.modifiers, ActionEvent.SHIFT_MASK), browser)
       }
     }
   }
 
-  private fun getBrowser(): WebBrowser? {
-    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) {
-      return browser
-    }
-    else {
-      return null
-    }
-  }
+  private fun getBrowser(): WebBrowser? =
+    if (WebBrowserManager.getInstance().isActive(browser) && browser.path != null) browser else null
 
   override fun update(e: AnActionEvent) {
     val browser = getBrowser()
@@ -158,7 +152,7 @@ internal fun chooseUrl(urls: Collection<Url>): Promise<Url> {
   val result = AsyncPromise<Url>()
   JBPopupFactory.getInstance()
     .createPopupChooserBuilder(urls.toMutableList())
-    .setRenderer(SimpleListCellRenderer.create<Url> { label, value, _ ->
+    .setRenderer(SimpleListCellRenderer.create { label, value, _ ->
       // todo icons looks good, but is it really suitable for all URLs providers?
       label.icon = AllIcons.Nodes.Servlet
       label.text = (value as Url).toDecodedForm()

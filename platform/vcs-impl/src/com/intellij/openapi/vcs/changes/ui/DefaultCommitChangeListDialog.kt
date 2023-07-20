@@ -24,10 +24,8 @@ import javax.swing.border.EmptyBorder
 class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : CommitChangeListDialog(workflow) {
   private val changeListEventDispatcher = EventDispatcher.create(SingleChangeListCommitWorkflowUi.ChangeListListener::class.java)
 
-  private val browser =
-    object : MultipleLocalChangeListsBrowser(project, true, true, workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled) {
-      override fun createAdditionalRollbackActions() = workflow.vcses.mapNotNull { it.rollbackEnvironment }.flatMap { it.createCustomRollbackActions() }
-    }
+  private val browser = MultipleLocalChangeListsBrowser(project, workflow.vcses, true, true,
+                                                        workflow.isDefaultCommitEnabled, workflow.isPartialCommitEnabled)
 
   init {
     LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()

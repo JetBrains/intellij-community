@@ -43,8 +43,8 @@ import org.junit.runners.model.Statement
 import java.nio.file.Path
 
 open class ProjectModelRule : TestRule {
-  val baseProjectDir = TempDirectory()
-  val disposableRule = DisposableRule()
+  val baseProjectDir: TempDirectory = TempDirectory()
+  val disposableRule: DisposableRule = DisposableRule()
 
   lateinit var project: Project
   lateinit var projectRootDir: Path

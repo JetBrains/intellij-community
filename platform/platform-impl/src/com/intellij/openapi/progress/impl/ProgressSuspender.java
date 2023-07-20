@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -12,7 +13,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +36,7 @@ public final class ProgressSuspender implements AutoCloseable {
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
-  private final Set<ProgressIndicator> myProgresses = ContainerUtil.newConcurrentSet();
+  private final Set<ProgressIndicator> myProgresses = ConcurrentCollectionFactory.createConcurrentSet();
   private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 
@@ -70,8 +70,17 @@ public final class ProgressSuspender implements AutoCloseable {
     }
   }
 
-  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
-    return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
+  public static @NotNull ProgressSuspender markSuspendable(@NotNull ProgressIndicatorEx indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    return new ProgressSuspender(indicator, suspendedText);
+  }
+
+  @Nullable("When progress indicator cannot be made suspendable (e.g. EmptyProgressIndicator)")
+  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
+    if (indicator instanceof ProgressIndicatorEx indicatorEx) {
+      return markSuspendable(indicatorEx, suspendedText);
+    } else {
+      return null;
+    }
   }
 
   public void executeNonSuspendableSection(@NotNull ProgressIndicator indicator, @NotNull Runnable runnable) {

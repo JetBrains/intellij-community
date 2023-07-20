@@ -5,7 +5,7 @@ import com.intellij.collaboration.auth.PersistentDefaultAccountHolder
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 
-@Service
+@Service(Service.Level.PROJECT)
 @State(name = "GitLabDefaultAccount", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 internal class GitLabProjectDefaultAccountHolder(project: Project) : PersistentDefaultAccountHolder<GitLabAccount>(project) {
   override fun accountManager() = service<GitLabAccountManager>()

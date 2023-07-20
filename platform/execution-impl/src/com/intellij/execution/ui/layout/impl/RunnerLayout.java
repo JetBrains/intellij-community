@@ -185,6 +185,10 @@ public final class RunnerLayout  {
 
   public void clearStateFor(@NotNull Content content) {
     String id = getOrCreateContentId(content);
+    clearStateForId(id);
+  }
+
+  public void clearStateForId(@NotNull String id) {
     myDefaultViews.remove(id);
     final ViewImpl view = myViews.remove(id);
     if (view != null) {

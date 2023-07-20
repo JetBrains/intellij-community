@@ -9,5 +9,6 @@
         "jkk_.kt",
         "kjkk_.java",
         "kjkk_.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KT-57044"
 }

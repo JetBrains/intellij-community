@@ -21,18 +21,17 @@ import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator {
   private static final Logger LOG = Logger.getInstance(JavaCoverageClassesAnnotator.class);
 
   private final PackageAnnotator.Annotator myAnnotator;
   private final ProjectData myProjectData;
-  private Map<String, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenPackages;
-  private Map<VirtualFile, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenDirectories;
+  private final Map<String, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenPackages = new ConcurrentHashMap<>();
+  private final Map<VirtualFile, PackageAnnotator.AtomicPackageCoverageInfo> myFlattenDirectories = new ConcurrentHashMap<>();
   private ExecutorService myExecutor;
+  private int myThreadsCount;
   private final PackageAnnotator myPackageAnnotator;
 
   public JavaCoverageClassesAnnotator(@NotNull CoverageSuitesBundle suite,
@@ -51,8 +50,14 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
 
     final JavaCoverageOptionsProvider optionsProvider = JavaCoverageOptionsProvider.getInstance(myProject);
     myPackageAnnotator = new PackageAnnotator(suite, project, myProjectData, this,
-                                              optionsProvider.ignoreEmptyPrivateConstructors(),
                                               optionsProvider.ignoreImplicitConstructors());
+  }
+
+  @Override
+  public void visitSuite() {
+    var created = initExecutor();
+    super.visitSuite();
+    if (created) stopExecutor();
   }
 
   @Override
@@ -69,10 +74,10 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
   }
 
   @Override
-  public void visitRootPackage(PsiPackage psiPackage) {
+  void visitRootPackage(PsiPackage psiPackage) {
     if (myProjectData == null) return;
-    myFlattenPackages = new ConcurrentHashMap<>();
-
+    myFlattenPackages.clear();
+    var created = initExecutor();
     super.visitRootPackage(psiPackage);
 
     final Map<String, PackageAnnotator.PackageCoverageInfo> packages = new HashMap<>();
@@ -89,10 +94,11 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       }
       packages.computeIfAbsent("", k -> new PackageAnnotator.PackageCoverageInfo()).append(info);
     }
-    myFlattenPackages = null;
+    myFlattenPackages.clear();
     for (Map.Entry<String, PackageAnnotator.PackageCoverageInfo> entry : packages.entrySet()) {
       myAnnotator.annotatePackage(entry.getKey(), entry.getValue());
     }
+    if (created) stopExecutor();
   }
 
   @Override
@@ -102,16 +108,14 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
                              final String rootPackageVMName,
                              final boolean isTestSource,
                              final Set<VirtualFile> seenRoots) {
-    myFlattenDirectories = new ConcurrentHashMap<>();
-    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
-
+    myFlattenDirectories.clear();
     if (module.isDisposed()) {
       LOG.warn("Module is already disposed: " + module);
-      myFlattenDirectories = null;
       return;
     }
-
+    super.visitSource(psiPackage, module, scope, rootPackageVMName, isTestSource, seenRoots);
     final List<VirtualFile> sourceRoots = ContainerUtil.filter(prepareRoots(module, rootPackageVMName, isTestSource), Objects::nonNull);
+    syncPoolThreads();
     final Map<VirtualFile, PackageAnnotator.DirCoverageInfo> directories = new HashMap<>();
     for (Map.Entry<VirtualFile, PackageAnnotator.AtomicPackageCoverageInfo> entry : myFlattenDirectories.entrySet()) {
       final PackageAnnotator.PackageCoverageInfo info = entry.getValue().toPackageCoverageInfo();
@@ -122,7 +126,7 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
         dir = dir.getParent();
       }
     }
-    myFlattenDirectories = null;
+    myFlattenDirectories.clear();
 
     for (PackageAnnotator.DirCoverageInfo dir : directories.values()) {
       if (isTestSource) {
@@ -131,24 +135,6 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       else {
         myAnnotator.annotateSourceDirectory(dir.sourceRoot, dir, module);
       }
-    }
-  }
-
-  @Override
-  protected void visitRoot(File packageOutputRoot,
-                           String rootPackageVMName,
-                           GlobalSearchScope scope) {
-    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Coverage Loading", getWorkingThreads());
-    super.visitRoot(packageOutputRoot, rootPackageVMName, scope);
-    myExecutor.shutdown();
-    try {
-      myExecutor.awaitTermination(1, TimeUnit.HOURS);
-    }
-    catch (InterruptedException e) {
-      throw new RuntimeException(e);
-    }
-    finally {
-      myExecutor = null;
     }
   }
 
@@ -182,6 +168,41 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
     if (directory != null) {
       getOrCreateFlattenDirectory(directory).append(info);
     }
+  }
+
+  private void syncPoolThreads() {
+    var barrier = new CyclicBarrier(myThreadsCount + 1);
+    for (int i = 0; i < myThreadsCount; i++) {
+      myExecutor.execute(() -> waitBarrier(barrier));
+    }
+    waitBarrier(barrier);
+  }
+
+  private static void waitBarrier(CyclicBarrier barrier) {
+    try {
+      barrier.await();
+    }
+    catch (InterruptedException | BrokenBarrierException ignore) {
+    }
+  }
+
+  private void stopExecutor() {
+    myExecutor.shutdown();
+    try {
+      myExecutor.awaitTermination(1, TimeUnit.HOURS);
+    }
+    catch (InterruptedException ignored) {
+    }
+    finally {
+      myExecutor = null;
+    }
+  }
+
+  private boolean initExecutor() {
+    if (myExecutor != null) return false;
+    myThreadsCount = getWorkingThreads();
+    myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Coverage Loading", myThreadsCount);
+    return true;
   }
 
   private PackageAnnotator.AtomicPackageCoverageInfo getOrCreateFlattenPackage(@NotNull String packageName) {

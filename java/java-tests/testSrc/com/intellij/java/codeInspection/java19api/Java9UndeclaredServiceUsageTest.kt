@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection.java19api
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection
 import com.intellij.java.JavaBundle
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
@@ -61,6 +62,7 @@ class Java9UndeclaredServiceUsageTest : LightJavaCodeInsightFixtureTestCase() {
   private fun fix(call: String) {
     configure(call, false)
     myFixture.launchAction(myFixture.filterAvailableIntentions(fix).first())
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkHighlighting()  // no warning
     myFixture.checkResult("module-info.java", moduleText(true), false)
   }

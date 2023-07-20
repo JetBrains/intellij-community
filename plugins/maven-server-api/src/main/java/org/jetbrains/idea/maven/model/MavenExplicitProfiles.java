@@ -53,4 +53,12 @@ public class MavenExplicitProfiles implements Serializable {
     result = 31 * result + myDisabledProfiles.hashCode();
     return result;
   }
+
+  @Override
+  public String toString() {
+    return "MavenExplicitProfiles{" +
+           "myEnabledProfiles=" + myEnabledProfiles +
+           ", myDisabledProfiles=" + myDisabledProfiles +
+           '}';
+  }
 }

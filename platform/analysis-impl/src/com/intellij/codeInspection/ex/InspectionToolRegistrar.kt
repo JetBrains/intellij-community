@@ -28,7 +28,7 @@ private typealias InspectionFactory = () -> InspectionToolWrapper<*, *>?
 class InspectionToolRegistrar : InspectionToolsSupplier() {
   companion object {
     @JvmStatic
-    fun getInstance() = service<InspectionToolRegistrar>()
+    fun getInstance(): InspectionToolRegistrar = service<InspectionToolRegistrar>()
 
     @ApiStatus.Internal
     @JvmStatic

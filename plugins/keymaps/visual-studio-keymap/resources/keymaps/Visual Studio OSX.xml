@@ -210,8 +210,8 @@
     <mouse-shortcut keystroke="meta button1"/>
   </action>
   <action id="GotoImplementation">
-    <keyboard-shortcut first-keystroke="Alt END"/>
     <mouse-shortcut keystroke="meta alt button1"/>
+    <keyboard-shortcut first-keystroke="Alt END"/>
   </action>
   <action id="GotoRelated">
     <keyboard-shortcut first-keystroke="meta shift F7"/>
@@ -287,8 +287,8 @@
     <keyboard-shortcut first-keystroke="meta shift alt R"/>
   </action>
   <action id="GotoSuperMethod">
-    <keyboard-shortcut first-keystroke="alt HOME"/>
     <keyboard-shortcut first-keystroke="control alt Left"/>
+    <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
   <action id="EmmetPreviousEditPoint"/>
   <action id="HighlightUsagesInFile">

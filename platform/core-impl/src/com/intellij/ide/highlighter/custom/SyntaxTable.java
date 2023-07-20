@@ -1,13 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.ide.highlighter.custom.tokens.KeywordParser;
-import com.intellij.reference.SoftReference;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.SoftReference;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 /**
  * @author Yura Cangea
@@ -35,10 +37,10 @@ public final class SyntaxTable implements Cloneable {
   private volatile SoftReference<KeywordParser> myKeywordParser;
 
   public KeywordParser getKeywordParser() {
-    KeywordParser parser = SoftReference.dereference(myKeywordParser);
+    KeywordParser parser = dereference(myKeywordParser);
     if (parser == null) {
       synchronized (this) {
-        parser = SoftReference.dereference(myKeywordParser);
+        parser = dereference(myKeywordParser);
         if (parser == null) {
           myKeywordParser = new SoftReference<>(
             parser = new KeywordParser(Arrays.asList(myKeywords1, myKeywords2, myKeywords3, myKeywords4), myIgnoreCase));
@@ -95,8 +97,7 @@ public final class SyntaxTable implements Cloneable {
     return myKeywords4;
   }
 
-  @NotNull
-  public String getLineComment() {
+  public @NotNull String getLineComment() {
     return myLineComment;
   }
 

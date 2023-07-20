@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 val xxx = 3
 
 fun foo(xxx: Int) {

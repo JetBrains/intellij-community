@@ -57,13 +57,10 @@ package org.jdom.output;
 import org.jdom.Comment;
 import org.jdom.Document;
 import org.jdom.Element;
-import org.jdom.ProcessingInstruction;
 import org.jdom.Text;
 import org.jdom.*;
 import org.jdom.adapters.DOMAdapter;
 import org.jdom.adapters.JAXPDOMAdapter;
-import org.jdom.output.support.AbstractDOMOutputProcessor;
-import org.jdom.output.support.DOMOutputProcessor;
 import org.w3c.dom.*;
 
 import java.util.List;
@@ -253,22 +250,6 @@ public final class DOMOutputter {
    * be linked to an independent DOM Document instance supplied by the current
    * DOMAdapter
    *
-   * @param pi <code>ProcessingInstruction</code> to output.
-   * @return an <code>org.w3c.dom.Element</code> version
-   * @throws JDOMException if output failed.
-   * @since JDOM2
-   */
-  public org.w3c.dom.ProcessingInstruction output(ProcessingInstruction pi)
-    throws JDOMException {
-    return processor.process(adapter.createDocument(), format, pi);
-  }
-
-  /**
-   * This converts the JDOM <code>ProcessingInstruction</code> parameter to a
-   * DOM ProcessingInstruction, returning the DOM version. The DOM Node will
-   * be linked to an independent DOM Document instance supplied by the current
-   * DOMAdapter
-   *
    * @param comment <code>Comment</code> to output.
    * @return an <code>org.w3c.dom.Comment</code> version
    * @throws JDOMException if output failed.
@@ -369,24 +350,6 @@ public final class DOMOutputter {
   public CDATASection output(org.w3c.dom.Document basedoc,
                              CDATA cdata) throws JDOMException {
     return processor.process(basedoc, format, cdata);
-  }
-
-  /**
-   * This converts the JDOM <code>ProcessingInstruction</code> parameter to a
-   * DOM ProcessingInstruction, returning the DOM version. The DOM Node will
-   * be linked to an independent DOM Document instance supplied by the current
-   * DOMAdapter
-   *
-   * @param basedoc The DOM Document to use for creating DOM Nodes.
-   * @param pi      <code>ProcessingInstruction</code> to output.
-   * @return an <code>org.w3c.dom.Element</code> version
-   * @throws JDOMException if output failed.
-   * @since JDOM2
-   */
-  public org.w3c.dom.ProcessingInstruction output(
-    org.w3c.dom.Document basedoc, ProcessingInstruction pi)
-    throws JDOMException {
-    return processor.process(basedoc, format, pi);
   }
 
   /**

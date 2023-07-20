@@ -76,7 +76,7 @@ class ServiceSingleView extends ServiceView {
   @Override
   List<ServiceViewItem> getSelectedItems() {
     ServiceViewItem item = myRef.get();
-    return item == null ? Collections.emptyList() : Collections.singletonList(item);
+    return ContainerUtil.createMaybeSingletonList(item);
   }
 
   @Override
@@ -93,7 +93,7 @@ class ServiceSingleView extends ServiceView {
     ServiceViewItem newValue = ContainerUtil.getOnlyItem(getModel().getRoots());
     WeakReference<ServiceViewItem> newValueRef = new WeakReference<>(newValue);
     myRef.set(newValue);
-    AppUIExecutor.onUiThread().expireWith(getProject()).submit(() -> {
+    AppUIExecutor.onUiThread().expireWith(this).submit(() -> {
       if (mySelected) {
         ServiceViewItem value = newValueRef.get();
         if (value != null) {

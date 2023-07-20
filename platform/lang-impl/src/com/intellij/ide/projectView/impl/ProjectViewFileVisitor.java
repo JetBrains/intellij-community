@@ -26,6 +26,9 @@ class ProjectViewFileVisitor extends AbstractTreeNodeVisitor<VirtualFile> {
   }
 
   private static boolean contains(@NotNull ProjectViewNode node, @NotNull VirtualFile file) {
+    if (!file.isValid()) {
+      return false;
+    }
     return node.contains(file);
   }
 

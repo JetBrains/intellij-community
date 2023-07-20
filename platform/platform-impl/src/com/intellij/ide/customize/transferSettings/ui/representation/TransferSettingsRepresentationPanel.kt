@@ -5,4 +5,5 @@ import javax.swing.JComponent
 
 interface TransferSettingsRepresentationPanel {
   fun getComponent(): JComponent
+  fun block()
 }

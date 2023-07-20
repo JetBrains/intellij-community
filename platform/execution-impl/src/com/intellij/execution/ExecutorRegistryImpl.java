@@ -19,7 +19,6 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
@@ -343,7 +342,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
             SpinningProgressIcon spinningIcon = presentation.getClientProperty(spinningIconKey);
             if (spinningIcon == null) {
               spinningIcon = new SpinningProgressIcon();
-              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.FOREGROUND);
+              spinningIcon.setIconColor(JBUI.CurrentTheme.RunWidget.ICON_COLOR);
               presentation.putClientProperty(spinningIconKey, spinningIcon);
             }
             presentation.setDisabledIcon(spinningIcon);
@@ -564,7 +563,7 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return ExecutionUtil.getLiveIndicator(myExecutor.getIcon());
       }
       else {
-        return IconUtil.addText(myExecutor.getIcon(), RunToolbarWidgetKt.runCounterToString(e, runningDescriptors.size()));
+        return IconUtil.addText(myExecutor.getIcon(), RunToolbarPopupKt.runCounterToString(e, runningDescriptors.size()));
       }
     }
 
@@ -599,7 +598,6 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         return;
       }
 
-      MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
       RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(e);
       if (selectedConfiguration != null) {
         run(project, selectedConfiguration, e.getDataContext());
@@ -793,6 +791,8 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
                                        @NotNull Function<? super Executor, ? extends AnAction> childConverter) {
       myExecutorGroup = executorGroup;
       myChildConverter = childConverter;
+      getTemplatePresentation().setText(executorGroup.getStartActionText());
+      getTemplatePresentation().setIcon(executorGroup.getIcon());
     }
 
     @Override

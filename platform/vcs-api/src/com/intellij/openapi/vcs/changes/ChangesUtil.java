@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static java.util.Objects.hash;
 
@@ -392,57 +391,5 @@ public final class ChangesUtil {
     if (!changeLists.get(0).isBlank()) return true;
 
     return false;
-  }
-
-  @NotNull
-  private static Stream<FilePath> getPathsCaseSensitive(@NotNull Change change) {
-    FilePath beforePath = getBeforePath(change);
-    FilePath afterPath = getAfterPath(change);
-
-    return Stream.of(beforePath, !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath) ? afterPath : null)
-      .filter(Objects::nonNull);
-  }
-
-  /**
-   * @deprecated Use {@link #iterateFiles(Iterable)}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static Stream<VirtualFile> getFiles(@NotNull Stream<? extends Change> changes) {
-    return changes.flatMap(ChangesUtil::getPathsCaseSensitive)
-      .map(FilePath::getVirtualFile)
-      .filter(Objects::nonNull);
-  }
-
-  /**
-   * @deprecated Use {@link #iterateAfterRevisionsFiles(Iterable)}
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<? extends Change> changes) {
-    return changes
-      .map(ChangesUtil::getAfterPath)
-      .filter(Objects::nonNull)
-      .map(FilePath::getVirtualFile)
-      .filter(Objects::nonNull);
-  }
-
-  /**
-   * @deprecated Use {@link #getNavigatableArray(Project, Iterable)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, VirtualFile @NotNull [] files) {
-    return getNavigatableArray(project, Stream.of(files));
-  }
-
-  /**
-   * @deprecated Use {@link #getNavigatableArray(Project, Iterable)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Navigatable @NotNull [] getNavigatableArray(@NotNull Project project, @NotNull Stream<? extends VirtualFile> files) {
-    return files
-      .filter(file -> !file.isDirectory())
-      .map(file -> new OpenFileDescriptor(project, file))
-      .toArray(Navigatable[]::new);
   }
 }

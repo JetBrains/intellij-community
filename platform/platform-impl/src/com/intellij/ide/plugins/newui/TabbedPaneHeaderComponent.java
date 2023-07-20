@@ -159,7 +159,14 @@ public class TabbedPaneHeaderComponent extends JPanel {
     myTabbedPane.addChangeListener(e -> myListener.selectionChanged(myTabbedPane.getSelectedIndex()));
   }
 
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    if (getParent() != null) update();
+  }
+
   public void update() {
+    setPreferredSize(null);
     doLayout();
     revalidate();
     myTabbedPane.doLayout();

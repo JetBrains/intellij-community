@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.psi.*;
+import com.intellij.psi.javadoc.PsiSnippetDocTagBody;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -34,6 +35,7 @@ public enum JavaElementKind {
   PATTERN_VARIABLE("element.pattern_variable"),
   RECORD("element.record"),
   RECORD_COMPONENT("element.record_component"),
+  SNIPPET_BODY("element.snippet_body"),
   STATEMENT("element.statement"),
   UNKNOWN("element.unknown"),
   VARIABLE("element.variable"),
@@ -185,6 +187,9 @@ public enum JavaElementKind {
     }
     if (element instanceof PsiExpression) {
       return EXPRESSION;
+    }
+    if (element instanceof PsiSnippetDocTagBody) {
+      return SNIPPET_BODY;
     }
     return UNKNOWN;
   }

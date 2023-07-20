@@ -11,8 +11,8 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 
 class ToggleMinimapAction : DumbAwareToggleAction(MiniMessagesBundle.message("action.toggle"), null,
                                                   AllIcons.Actions.Minimap), RightAlignedToolbarAction {
-  override fun isSelected(e: AnActionEvent) = MinimapSettings.getInstance().state.enabled
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun isSelected(e: AnActionEvent): Boolean = MinimapSettings.getInstance().state.enabled
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     val settings = MinimapSettings.getInstance()
     settings.state.enabled = state

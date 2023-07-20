@@ -44,11 +44,11 @@ class Saul {
   val sortedActions: List<RecoveryAction>
     get() = RECOVERY_ACTION_EP_NAME.extensionList.sortedByDescending { it.performanceRate }
 
-  val modificationRecoveryActionTracker = ModificationTracker { recoveryActionModificationCounter }
+  val modificationRecoveryActionTracker: ModificationTracker = ModificationTracker { recoveryActionModificationCounter }
 
-  fun sortThingsOut(recoveryScope: RecoveryScope, actions: Collection<RecoveryAction>) = RecoveryWorker(actions).start(recoveryScope)
+  fun sortThingsOut(recoveryScope: RecoveryScope, actions: Collection<RecoveryAction>): Unit = RecoveryWorker(actions).start(recoveryScope)
 
-  fun sortThingsOut(recoveryScope: RecoveryScope) = sortThingsOut(recoveryScope, sortedActions)
+  fun sortThingsOut(recoveryScope: RecoveryScope): Unit = sortThingsOut(recoveryScope, sortedActions)
 }
 
 private class RecoveryWorker(val actions: Collection<RecoveryAction>) {

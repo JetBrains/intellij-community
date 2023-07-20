@@ -24,6 +24,8 @@ python_installations = [
     r'%s\py38_32\Scripts\python.exe' % miniconda32_envs,
     r'%s\py39_32\Scripts\python.exe' % miniconda32_envs,
     r'%s\py310_32\Scripts\python.exe' % miniconda32_envs,
+    r'%s\py311_32\Scripts\python.exe' % miniconda32_envs,
+    r'%s\py312_32\Scripts\python.exe' % miniconda32_envs,
 
     r'%s\py27_64\Scripts\python.exe' % miniconda64_envs,
     r'%s\py36_64\Scripts\python.exe' % miniconda64_envs,
@@ -31,6 +33,8 @@ python_installations = [
     r'%s\py38_64\Scripts\python.exe' % miniconda64_envs,
     r'%s\py39_64\Scripts\python.exe' % miniconda64_envs,
     r'%s\py310_64\Scripts\python.exe' % miniconda64_envs,
+    r'%s\py311_64\Scripts\python.exe' % miniconda64_envs,
+    r'%s\py312_64\Scripts\python.exe' % miniconda64_envs,
     ]
 
 

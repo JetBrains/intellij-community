@@ -32,8 +32,8 @@ internal class JavaCodeVisionConfigurable(val settings: JavaCodeVisionSettings) 
     get() = JavaBundle.message("settings.inlay.java.show.hints.for")
 
   companion object {
-    const val USAGES_CASE_ID = "usages"
-    const val INHERITORS_CASE_ID = "inheritors"
+    const val USAGES_CASE_ID: String = "usages"
+    const val INHERITORS_CASE_ID: String = "inheritors"
 
     @JvmStatic
     fun getCaseName(caseId: String): Supplier<@Nls String> =

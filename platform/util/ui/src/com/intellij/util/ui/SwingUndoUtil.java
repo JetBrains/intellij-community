@@ -11,14 +11,18 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.UndoableEditEvent;
 import javax.swing.event.UndoableEditListener;
 import javax.swing.text.AbstractDocument;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.Document;
 import javax.swing.text.JTextComponent;
+import javax.swing.undo.CompoundEdit;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.util.Objects;
 
 public final class SwingUndoUtil {
   private static final Key<UndoManager> UNDO_MANAGER = Key.create("undoManager");
@@ -97,6 +101,42 @@ public final class SwingUndoUtil {
     UndoManager undoManager = ClientProperty.get(textComponent, UNDO_MANAGER);
     if (undoManager != null) {
       undoManager.discardAllEdits();
+    }
+  }
+
+  /**
+   * Use this method to replace a text field text completely but keep the previous value in the undo stack.
+   * Ordinary {@link JTextField#setText} calls reset undo stack.
+   *
+   * @see #SET_TEXT_CHECKER
+   * @see #resetUndoRedoActions usages
+   */
+  public static void setTextWithUndo(@NotNull JTextComponent field, @NotNull String text) {
+    if (field.getText().equals(text)) return;
+    addUndoRedoActions(field);
+    Document doc = field.getDocument();
+    UndoManager undoManager = Objects.requireNonNull(ClientProperty.get(field, UNDO_MANAGER));
+    CompoundEdit edits = new CompoundEdit();
+    UndoableEditListener tempListener = new UndoableEditListener() {
+      @Override
+      public void undoableEditHappened(UndoableEditEvent e) {
+        edits.addEdit(e.getEdit());
+      }
+    };
+    doc.removeUndoableEditListener(undoManager);
+    doc.addUndoableEditListener(tempListener);
+    try {
+      doc.remove(0, doc.getLength());
+      doc.insertString(0, text, null);
+      edits.end();
+      undoManager.addEdit(edits);
+    }
+    catch (BadLocationException e) {
+      UIManager.getLookAndFeel().provideErrorFeedback(field);
+    }
+    finally {
+      doc.removeUndoableEditListener(tempListener);
+      doc.addUndoableEditListener(undoManager);
     }
   }
 }

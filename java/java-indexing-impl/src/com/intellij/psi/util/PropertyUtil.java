@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.function.Supplier;
+
 public final class PropertyUtil extends PropertyUtilBase {
   private PropertyUtil() {
   }
@@ -22,14 +24,14 @@ public final class PropertyUtil extends PropertyUtilBase {
 
   @Nullable
   private static PsiField getFieldOfGetter(PsiMethod method, boolean useIndex) {
-    return getFieldOfGetter(method, getGetterReturnExpression(method), useIndex);
+    return getFieldOfGetter(method, () -> getGetterReturnExpression(method), useIndex);
   }
 
   @Nullable
-  public static PsiField getFieldOfGetter(PsiMethod method, PsiExpression returnExpr, boolean useIndex) {
+  public static PsiField getFieldOfGetter(PsiMethod method, Supplier<? extends PsiExpression> returnExprSupplier, boolean useIndex) {
     PsiField field = useIndex && method instanceof PsiMethodImpl && method.isPhysical()
                      ? JavaSimplePropertyGistKt.getFieldOfGetter(method)
-                     : getSimplyReturnedField(returnExpr);
+                     : getSimplyReturnedField(returnExprSupplier.get());
     if (field == null || !checkFieldLocation(method, field)) return null;
     final PsiType returnType = method.getReturnType();
     return returnType != null && field.getType().equals(returnType) ? field : null;

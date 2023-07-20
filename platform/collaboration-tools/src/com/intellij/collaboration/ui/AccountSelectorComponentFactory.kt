@@ -4,8 +4,8 @@ package com.intellij.collaboration.ui
 import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.ServerAccount
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.ui.util.bind
-import com.intellij.collaboration.ui.util.getName
+import com.intellij.collaboration.ui.util.bindIn
+import com.intellij.collaboration.ui.util.name
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
@@ -38,7 +38,7 @@ class AccountSelectorComponentFactory<A : Account>(
              actions: StateFlow<List<Action>> = MutableStateFlow(emptyList())): JComponent {
 
     val comboModel = ComboBoxWithActionsModel<A>().apply {
-      bind(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
+      bindIn(scope, accountsState, selectionState, actions, Comparator.comparing { it.name })
 
       if (size > 0) {
         for (i in 0 until size) {
@@ -139,7 +139,7 @@ class AccountSelectorComponentFactory<A : Account>(
             }
           is ComboBoxWithActionsModel.Item.Action<A> ->
             value.action.let {
-              AccountMenuItem.Action(it.getName(), {}, showSeparatorAbove = value.needSeparatorAbove)
+              AccountMenuItem.Action(it.name.orEmpty(), {}, showSeparatorAbove = value.needSeparatorAbove)
             }
         }
         return delegateRenderer.getListCellRendererComponent(null, item, index, selected, focused)

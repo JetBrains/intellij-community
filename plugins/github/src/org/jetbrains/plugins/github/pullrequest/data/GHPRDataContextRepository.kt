@@ -77,7 +77,6 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
     }
   }
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   @Throws(IOException::class)
   private suspend fun loadContext(contextScope: CoroutineScope,
                                   account: GithubAccount,
@@ -127,7 +126,7 @@ internal class GHPRDataContextRepository(private val project: Project) : Disposa
                                                   account, currentUser, currentUserTeams,
                                                   repositoryInfo)
     val detailsService = GHPRDetailsServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
-    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), securityService,
+    val stateService = GHPRStateServiceImpl(ProgressManager.getInstance(), project, securityService,
                                             requestExecutor, account.server, apiRepositoryPath)
     val commentService = GHPRCommentServiceImpl(ProgressManager.getInstance(), requestExecutor, apiRepositoryCoordinates)
     val changesService = GHPRChangesServiceImpl(ProgressManager.getInstance(), project, requestExecutor,

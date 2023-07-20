@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.ide.*
+import com.intellij.ide.AppLifecycleListener
+import com.intellij.ide.DataManager
+import com.intellij.ide.GeneratedSourceFileChangeTracker
+import com.intellij.ide.GeneratedSourceFileChangeTrackerImpl
 import com.intellij.ide.impl.HeadlessDataManager
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.ide.structureView.StructureViewFactory
@@ -29,6 +32,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiManagerImpl
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings
@@ -38,6 +42,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ui.EDT
+import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -150,6 +155,26 @@ class TestApplicationManager private constructor() {
     }
 
     /**
+     * Call this method after the test to check whether project instances leak.
+     * This is done automatically on CI inside {@code _LastInSuiteTest.testProjectLeak}.
+     * However, you may want to add this check to a particular test to make sure 
+     * whether it causes the leak or not.
+     */
+    @JvmStatic
+    fun testProjectLeak() {
+      if (java.lang.Boolean.getBoolean("idea.test.guimode")) {
+        val application = ApplicationManager.getApplication()
+        application.invokeAndWait {
+          UIUtil.dispatchAllInvocationEvents()
+          application.exit(true, true, false)
+        }
+        ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS)
+        return
+      }
+      disposeApplicationAndCheckForLeaks()
+    }
+
+    /**
      * Disposes the application (it also stops some application-related threads) and checks for project leaks.
      */
     @JvmStatic
@@ -200,6 +225,7 @@ class TestApplicationManager private constructor() {
         ?.cancelAllAndWait(10, TimeUnit.SECONDS)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated(
       message = "moved to dump.kt",
       replaceWith = ReplaceWith("com.intellij.testFramework.common.publishHeapDump(fileNamePrefix)")
@@ -218,7 +244,7 @@ class TestApplicationManager private constructor() {
     dataManager.setTestDataProvider(provider, parentDisposable!!)
   }
 
-  fun getData(dataId: String) = dataManager.dataContext.getData(dataId)
+  fun getData(dataId: String): Any? = dataManager.dataContext.getData(dataId)
 
   fun dispose() {
     disposeTestApplication()

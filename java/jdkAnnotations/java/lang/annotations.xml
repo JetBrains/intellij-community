@@ -997,6 +997,11 @@
   <item name="java.lang.String boolean endsWith(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.String boolean isBlank()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.lang.String boolean matches(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
@@ -1146,6 +1151,12 @@
   <item name='java.lang.String java.lang.String format(java.util.Locale, java.lang.String, java.lang.Object...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.lang.String java.lang.String indent(int)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.String java.lang.String intern()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1206,6 +1217,30 @@
   <item name="java.lang.String java.lang.String replaceFirst(java.lang.String, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+    <item name='java.lang.String java.lang.String strip()'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+      <annotation name='org.jetbrains.annotations.Contract'>
+        <val name="pure" val="true"/>
+      </annotation>
+    </item>
+  <item name='java.lang.String java.lang.String stripIndent()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.String java.lang.String stripLeading()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.String java.lang.String stripTrailing()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.String java.lang.String substring(int)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -1245,6 +1280,13 @@
   <item name="java.lang.String java.lang.String toLowerCase(java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.String java.lang.String toString()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;-&gt; this&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.String java.lang.String toUpperCase()">
     <annotation name="org.jetbrains.annotations.NotNull" />
     <annotation name='org.jetbrains.annotations.Contract'>
@@ -1260,8 +1302,17 @@
   <item name="java.lang.String java.lang.String toUpperCase(java.util.Locale) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.lang.String java.lang.String translateEscapes()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.lang.String java.lang.String trim()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name="java.lang.String java.lang.String valueOf(boolean)">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -1341,6 +1392,12 @@
   <item name='java.lang.String java.util.stream.IntStream codePoints()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="value" val="&quot;-&gt;new&quot;"/>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.String java.util.stream.Stream&lt;java.lang.String&gt; lines()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
   </item>

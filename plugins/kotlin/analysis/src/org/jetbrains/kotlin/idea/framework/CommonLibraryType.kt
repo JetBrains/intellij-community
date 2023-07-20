@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.base.platforms.KotlinCommonLibraryKind
 import javax.swing.JComponent
 
-object CommonLibraryType : LibraryType<DummyLibraryProperties>(KotlinCommonLibraryKind) {
+internal class CommonLibraryType : LibraryType<DummyLibraryProperties>(KotlinCommonLibraryKind) {
     override fun createPropertiesEditor(editorComponent: LibraryEditorComponent<DummyLibraryProperties>) = null
 
     override fun getCreateActionName() = null

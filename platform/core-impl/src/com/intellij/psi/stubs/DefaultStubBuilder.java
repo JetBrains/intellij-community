@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -22,14 +22,12 @@ public class DefaultStubBuilder implements StubBuilder {
     return buildStubTreeFor(file.getNode(), createStubForFile(file));
   }
 
-  @NotNull
-  protected StubElement createStubForFile(@NotNull PsiFile file) {
+  protected @NotNull StubElement createStubForFile(@NotNull PsiFile file) {
     @SuppressWarnings("unchecked") PsiFileStubImpl stub = new PsiFileStubImpl(file);
     return stub;
   }
 
-  @NotNull
-  protected final StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
+  protected final @NotNull StubElement buildStubTreeFor(@NotNull ASTNode root, @NotNull StubElement parentStub) {
     new StubBuildingWalkingVisitor(root, parentStub).buildStubTree();
     return parentStub;
   }
@@ -65,13 +63,11 @@ public class DefaultStubBuilder implements StubBuilder {
       pushChildren(node, node instanceof FileElement || stub != null, stub != null ? stub : parentStub);
     }
 
-    @Nullable
-    protected final ASTNode peekNextElement() {
+    protected final @Nullable ASTNode peekNextElement() {
       return parentNodes.isEmpty() ? null : parentNodes.peek();
     }
 
-    @Nullable
-    protected StubElement createStub(StubElement parentStub, ASTNode node) {
+    protected @Nullable StubElement createStub(StubElement parentStub, ASTNode node) {
       IElementType nodeType = node.getElementType();
 
       if (nodeType instanceof IStubElementType) {

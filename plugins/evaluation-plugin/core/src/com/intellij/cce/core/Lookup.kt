@@ -2,6 +2,7 @@ package com.intellij.cce.core
 
 data class Lookup(
   val prefix: String,
+  val offset: Int,
   val suggestions: List<Suggestion>,
   val latency: Long,
   var features: Features? = null,
@@ -24,7 +25,7 @@ data class Lookup(
       val selectedPosition = suggestions.indexOfFirst { it.text == expectedText }
         .let { if (it < 0) -1 else it }
 
-      return Lookup(text, suggestions, latency, features, selectedPosition, isNew)
+      return Lookup(text, text.length, suggestions, latency, features, selectedPosition, isNew)
     }
   }
 }

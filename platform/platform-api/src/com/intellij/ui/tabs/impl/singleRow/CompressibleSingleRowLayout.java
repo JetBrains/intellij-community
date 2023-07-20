@@ -8,6 +8,10 @@ import com.intellij.ui.tabs.impl.TabLabel;
 
 import java.util.Iterator;
 
+/**
+ * @deprecated use {@link com.intellij.ui.tabs.impl.multiRow.CompressibleMultiRowLayout} with showPinnedTabsSeparately = false instead
+ */
+@Deprecated(forRemoval = true)
 public class CompressibleSingleRowLayout extends SingleRowLayout {
   public CompressibleSingleRowLayout(JBTabsImpl tabs) {
     super(tabs);
@@ -30,14 +34,14 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     int lengthEstimation = 0;
 
     for (TabInfo tabInfo : data.toLayout) {
-      lengthEstimation += Math.max(getMinTabWidth(), myTabs.myInfo2Label.get(tabInfo).getPreferredSize().width);
+      lengthEstimation += Math.max(getMinTabWidth(), myTabs.getInfoToLabel().get(tabInfo).getPreferredSize().width);
     }
 
     final int extraWidth = data.toFitLength - lengthEstimation;
     float fractionalPart = 0;
     for (Iterator<TabInfo> iterator = data.toLayout.iterator(); iterator.hasNext(); ) {
       TabInfo tabInfo = iterator.next();
-      final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
+      final TabLabel label = myTabs.getInfoToLabel().get(tabInfo);
 
       int length;
       int lengthIncrement = label.getPreferredSize().width;
@@ -65,7 +69,7 @@ public class CompressibleSingleRowLayout extends SingleRowLayout {
     }
 
     for (TabInfo eachInfo : data.toDrop) {
-      JBTabsImpl.resetLayout(myTabs.myInfo2Label.get(eachInfo));
+      JBTabsImpl.Companion.resetLayout(myTabs.getInfoToLabel().get(eachInfo));
     }
   }
 

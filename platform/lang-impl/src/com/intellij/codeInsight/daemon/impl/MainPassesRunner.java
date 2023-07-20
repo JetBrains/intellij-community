@@ -44,7 +44,7 @@ import java.util.function.Function;
 public class MainPassesRunner {
   private static final Logger LOG = Logger.getInstance(MainPassesRunner.class);
   private final Project myProject;
-  @NlsContexts.DialogTitle private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
   private final InspectionProfile myInspectionProfile;
 
   public MainPassesRunner(@NotNull Project project,
@@ -55,8 +55,7 @@ public class MainPassesRunner {
     myInspectionProfile = inspectionProfile;
   }
 
-  @NotNull
-  public Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck) {
+  public @NotNull Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck) {
     Map<Document, List<HighlightInfo>> result = new HashMap<>();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -143,7 +142,8 @@ public class MainPassesRunner {
       return;
     }
     ProperTextRange range = ProperTextRange.create(0, document.getTextLength());
-    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, CanISilentlyChange.Result.UH_UH);
+    HighlightingSessionImpl.createHighlightingSession(psiFile, daemonIndicator, null, range, CanISilentlyChange.Result.UH_UH,
+                                                      0);
     ProgressManager.getInstance().runProcess(() -> runMainPasses(daemonIndicator, result, psiFile, document), daemonIndicator);
   }
 

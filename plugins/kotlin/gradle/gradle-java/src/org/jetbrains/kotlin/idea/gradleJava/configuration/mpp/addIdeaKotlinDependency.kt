@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
-import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinBinaryDependency
@@ -28,6 +27,3 @@ fun DataNode<GradleSourceSetData>.addDependency(dependency: IdeaKotlinProjectArt
     return KotlinProjectArtifactDependencyResolver().resolve(context, this, dependency)
         .mapNotNull { sourceDependency -> addDependency(sourceDependency) }
 }
-
-var DataNode<out AbstractDependencyData<*>>.kotlinDependencies: MutableSet<IdeaKotlinDependency>
-        by FactoryCopyableDataNodeUserDataProperty(Key.create(IdeaKotlinDependency::class.java.name)) { hashSetOf() }

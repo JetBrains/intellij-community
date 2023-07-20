@@ -147,7 +147,7 @@ class D3 {
     }
 }
 
-class E1 {
+class E11 {
     val x: String
     val y: String
     val z: String
@@ -161,7 +161,7 @@ class E1 {
     }
 }
 
-class E2 {
+class E22 {
     val x: String
     val y: String
     val z: String
@@ -174,60 +174,60 @@ class E2 {
         this.z = z
     }
 }
-class A1(
+class A11(
     val x: String,
     y: String,
 )
 
-class B1(
+class B11(
     val x: String,
     val y: String
 )
 
-class C1(
+class C11(
     val x: String,
     val y: String,)
 
-class D1(
+class D11(
     val x: String,
     val y: String
     ,)
 
-class A2(
+class A22(
     val x: String,
     val y: String,
     val z: String,
 )
 
-class B2(
+class B22(
     val x: String,
     val y: String,
     val z: String
 )
 
-class C2(
+class C22(
     val x: String,
     val y: String,
     val z: String,)
 
-class D2(
+class D22(
     val x: String,
     val y: String,
     val z: String
     ,)
 
-class A3(
+class A33(
     val x: String,
 )
 
-class B3(
+class B33(
     val x: String
 )
 
-class C3(
+class C33(
     val x: String,)
 
-class D3(
+class D33(
     val x: String
     ,)
 
@@ -423,7 +423,7 @@ fun foo(
 ) {
 }
 
-class C(
+class C0(
     val x: Int =
         42
 )
@@ -433,7 +433,7 @@ class G(
     = "", /* */ val z: String
 )
 
-class G(
+class G0(
     val x: String, val y: String
     = "" /* */, /* */ val z: String
 )

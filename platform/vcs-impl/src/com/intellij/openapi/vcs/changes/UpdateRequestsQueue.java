@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.ThreadDumper;
@@ -28,7 +28,7 @@ public final class UpdateRequestsQueue {
   private static final Logger LOG = Logger.getInstance(UpdateRequestsQueue.class);
 
   private final Project myProject;
-  private final ChangeListManagerImpl.Scheduler myScheduler;
+  private final Scheduler myScheduler;
   private final BooleanSupplier myRefreshDelegate;
   private final BooleanSupplier myFastTrackDelegate;
   private final Object myLock = new Object();
@@ -42,7 +42,7 @@ public final class UpdateRequestsQueue {
   private final List<Semaphore> myWaitingUpdateCompletionSemaphores = new ArrayList<>();
 
   public UpdateRequestsQueue(@NotNull Project project,
-                             @NotNull ChangeListManagerImpl.Scheduler scheduler,
+                             @NotNull Scheduler scheduler,
                              @NotNull BooleanSupplier refreshDelegate,
                              @NotNull BooleanSupplier fastTrackDelegate) {
     myProject = project;

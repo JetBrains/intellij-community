@@ -155,15 +155,6 @@ public interface ProjectFileIndex extends FileIndex {
   boolean isInLibrarySource(@NotNull VirtualFile fileOrDir);
 
   /**
-   * @deprecated name of this method may be confusing. If you want to check if the file is excluded or ignored use {@link #isExcluded(VirtualFile)}.
-   * If you want to check if the file is ignored use {@link FileTypeRegistry#isFileIgnored(VirtualFile)}.
-   * If you want to check if the file or one of its parents is ignored use {@link #isUnderIgnored(VirtualFile)}.
-   */
-  @Deprecated(forRemoval = true)
-  @RequiresReadLock
-  boolean isIgnored(@NotNull VirtualFile file);
-
-  /**
    * Checks if the specified file or directory is located under project roots but the file itself or one of its parent directories is
    * either excluded from the project or ignored by {@link FileTypeRegistry#isFileIgnored(VirtualFile)}).
    *

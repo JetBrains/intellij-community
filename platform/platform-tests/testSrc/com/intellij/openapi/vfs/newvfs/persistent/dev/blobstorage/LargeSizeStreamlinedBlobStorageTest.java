@@ -23,6 +23,11 @@ public class LargeSizeStreamlinedBlobStorageTest extends StreamlinedBlobStorageT
   }
 
   @Override
+  protected int maxPayloadSize(int pageSize) {
+    return Math.min(LargeSizeStreamlinedBlobStorage.MAX_CAPACITY, pageSize) - 10;
+  }
+
+  @Override
   protected LargeSizeStreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
     final PagedFileStorage pagedStorage = new PagedFileStorage(
       pathToStorage,
@@ -36,6 +41,8 @@ public class LargeSizeStreamlinedBlobStorageTest extends StreamlinedBlobStorageT
       allocationStrategy
     );
   }
+
+
 
   @Override
   public void tearDown() throws Exception {

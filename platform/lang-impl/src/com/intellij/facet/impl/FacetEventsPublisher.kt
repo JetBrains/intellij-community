@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl
 
 import com.intellij.ProjectTopics
@@ -18,7 +18,7 @@ internal class FacetEventsPublisher(private val project: Project) {
   private val manuallyRegisteredListeners = ContainerUtil.createConcurrentList<Pair<FacetTypeId<*>?, ProjectFacetListener<*>>>()
 
   init {
-    val connection = project.messageBus.connect()
+    val connection = project.messageBus.simpleConnect()
     connection.subscribe(ProjectTopics.MODULES, object : ModuleListener {
       override fun modulesAdded(project: Project, modules: List<Module>) {
         for (module in modules) {
@@ -40,7 +40,7 @@ internal class FacetEventsPublisher(private val project: Project) {
     fun getInstance(project: Project): FacetEventsPublisher = project.service()
 
     @JvmField
-    internal val LISTENER_EP = ExtensionPointName<ProjectFacetListenerEP>("com.intellij.projectFacetListener")
+    internal val LISTENER_EP: ExtensionPointName<ProjectFacetListenerEP> = ExtensionPointName("com.intellij.projectFacetListener")
     private val LISTENER_EP_CACHE_KEY = java.util.function.Function<ProjectFacetListenerEP, String?> { it.facetTypeId }
     private const val ANY_TYPE = "any"
   }

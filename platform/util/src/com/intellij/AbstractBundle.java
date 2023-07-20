@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -186,8 +186,8 @@ public class AbstractBundle {
   // https://docs.oracle.com/javase/8/docs/api/java/util/PropertyResourceBundle.html for more details
 
   // For all Java version - use getResourceAsStream instead of "getResource -> openConnection" for performance reasons
-  private final static class MyResourceControl extends ResourceBundle.Control {
-    final static MyResourceControl INSTANCE = new MyResourceControl();
+  private static final class MyResourceControl extends ResourceBundle.Control {
+    static final MyResourceControl INSTANCE = new MyResourceControl();
 
     @Override
     public List<String> getFormats(String baseName) {

@@ -122,7 +122,7 @@ public final class VfsRootAccess {
 
     try {
       allowed.add(FileUtil.toSystemIndependentName(getJavaHome()));
-      allowed.add(FileUtil.toSystemIndependentName(new File(FileUtil.getTempDirectory()).getParent()));
+      allowed.add(FileUtil.toSystemIndependentName(FileUtil.getTempDirectory()));
       allowed.add(FileUtil.toSystemIndependentName(System.getProperty("java.io.tmpdir")));
 
       String userHome = FileUtil.toSystemIndependentName(SystemProperties.getUserHome());
@@ -192,6 +192,8 @@ public final class VfsRootAccess {
       allowed.addAll(ourAdditionalRoots);
     }
 
+    assert !allowed.contains("/"): "Allowed roots should not contain '/'. " +
+                                   "You can disable roots access check explicitly if you don't need it.";
     return allowed;
   }
 

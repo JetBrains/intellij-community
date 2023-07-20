@@ -31,8 +31,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NotNull;
@@ -56,10 +58,12 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
                          boolean hasChildren,
                          @NotNull PsiElement context) {
     FileType fileType = context.getContainingFile().getFileType();
+    PsiFile file = tag.getContainingFile();
     if (isTrueXml(fileType)) {
-      CommandProcessor.getInstance().runUndoTransparentAction(() -> closeUnclosingTags(tag));
+      closeUnclosingTags(tag);
     }
-    return tag.getContainingFile().getText();
+
+    return file.getText();
   }
 
   @Override
@@ -122,25 +126,18 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
         }
       }
     });
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
-      final XmlTag tag = pointer.getElement();
-      if (tag != null) {
-        final ASTNode child = XmlChildRole.START_TAG_END_FINDER.findChild(tag.getNode());
-        if (child != null) {
-          final int offset = child.getTextRange().getStartOffset();
-          VirtualFile file = tag.getContainingFile().getVirtualFile();
-          if (file != null) {
-            final Document document = FileDocumentManager.getInstance().getDocument(file);
-            if (document != null) {
-              documentManager.doPostponedOperationsAndUnblockDocument(document);
-              ApplicationManager.getApplication().runWriteAction(() -> {
-                document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-                documentManager.commitDocument(document);
-              });
-            }
-          }
-        }
+    for (SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
+      XmlTag element = pointer.getElement();
+      if (element == null) continue;
+
+      String elementText = element.getText();
+      if (!elementText.endsWith(">")) continue;
+
+      PsiFile text = PsiFileFactory.getInstance(root.getProject())
+        .createFileFromText("dummy.html", root.getLanguage(), StringUtil.trimEnd(element.getText(), ">") + "/>", false, true);
+      XmlTag newTag = PsiTreeUtil.findChildOfType(text, XmlTag.class);
+      if (newTag != null) {
+        element.replace(newTag);
       }
     }
   }

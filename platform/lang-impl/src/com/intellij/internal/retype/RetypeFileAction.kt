@@ -89,7 +89,7 @@ internal class RetypeFileAction : AnAction() {
     return true
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     val editor = e.getData(CommonDataKeys.EDITOR)
@@ -105,7 +105,7 @@ interface RetypeFileAssistant {
   }
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<RetypeFileAssistant>("com.intellij.retypeFileAssistant")
+    val EP_NAME: ExtensionPointName<RetypeFileAssistant> = ExtensionPointName.create("com.intellij.retypeFileAssistant")
   }
 }
 

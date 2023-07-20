@@ -19,6 +19,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuild
   private val buildScriptRepositories = ScriptTreeBuilder()
   private val buildScriptPostfixes = ScriptTreeBuilder()
   private val plugins = ScriptTreeBuilder()
+  private val java = ScriptTreeBuilder()
   private val prefixes = ScriptTreeBuilder()
   private val dependencies = ScriptTreeBuilder()
   private val repositories = ScriptTreeBuilder()
@@ -66,6 +67,9 @@ abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuild
   override fun withPostfix(configure: ScriptTreeBuilder.() -> Unit) = applyAndMerge(postfixes, configure)
   override fun withPostfix(configure: Consumer<ScriptTreeBuilder>) = withPostfix(configure::accept)
 
+  override fun withJava(configure: ScriptTreeBuilder.() -> Unit) = applyAndMerge(java, configure)
+  override fun withJava(configure: Consumer<ScriptTreeBuilder>) = withPostfix(configure::accept)
+
   override fun generateTree() = tree {
     join(imports).ln()
     callIfNotEmpty("buildscript") {
@@ -78,6 +82,7 @@ abstract class AbstractGradleBuildScriptBuilderCore<BSB : GradleBuildScriptBuild
     join(prefixes).ln()
     callIfNotEmpty("repositories", repositories).ln()
     callIfNotEmpty("dependencies", dependencies).ln()
+    callIfNotEmpty("java", java).ln()
     join(postfixes).ln()
   }
 }

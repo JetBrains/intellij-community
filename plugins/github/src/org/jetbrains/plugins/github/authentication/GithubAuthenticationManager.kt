@@ -11,6 +11,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -39,6 +40,7 @@ class GithubAuthenticationManager internal constructor() {
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? = GHAccountsUtil.getSingleOrDefaultAccount(project)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("replaced with stateFlow", ReplaceWith("accountManager.accountsState"))
   @RequiresEdt
   fun addListener(disposable: Disposable, listener: AccountsListener<GithubAccount>) {

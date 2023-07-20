@@ -146,7 +146,7 @@ public final class FUCounterUsageLogger {
                        @NonNls @NotNull String eventId) {
     final EventLogGroup group = findRegisteredGroupById(groupId);
     if (group != null) {
-      final Map<String, Object> data = new FeatureUsageData().addProject(project).build();
+      final Map<String, Object> data = new FeatureUsageData(group.getRecorder()).addProject(project).build();
       FeatureUsageLogger.INSTANCE.log(group, eventId, data);
     }
   }

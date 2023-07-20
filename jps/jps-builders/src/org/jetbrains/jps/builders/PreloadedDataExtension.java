@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.cmdline.PreloadedData;
 
 /**
@@ -15,7 +16,7 @@ public interface PreloadedDataExtension {
    * Called on preload phase. A jps plugin can prepare any information and store it in the passed PreloadedData object
    * @param data a data bean to store custom data. See {@link PreloadedData#putUserData} and {@link PreloadedData#getUserData}
    */
-  void preloadData(PreloadedData data);
+  void preloadData(@NotNull PreloadedData data);
 
   /**
    * Called before build starts on Buildsession initialization. At this point the project and project model are already created and data from the

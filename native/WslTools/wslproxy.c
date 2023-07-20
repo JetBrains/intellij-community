@@ -12,7 +12,8 @@
 
 // See svg file and wslproxy_test_client.py
 
-// When started, prints egress (eth0) IP addr as 4 bytes. Then, 2 bytes of ingress (loopback) port.
+// When started, prints egress (eth0) IP addr as 4 bytes (or it might use 127.0.0.1 which is possible for WSL2, see args)
+// Then, 2 bytes of ingress (loopback) port.
 // App running on WSL connects to this port.
 // Tool then opens egress (eth0) port and prints it as 2 bytes.
 // Windows client connects to it and talks to WSL app connected to the ingress port.
@@ -20,6 +21,7 @@
 
 // Threads are unbound, but it should not be a problem unless you create lots of connections
 
+// To use 127.0.0.1 instead of eth0 address (for cases like VPN on Windows side) provide arg "--loopback"
 
 // Will listen egress in this port
 #define JB_EGRESS_INTERFACE "eth0"
@@ -186,9 +188,10 @@ _Noreturn static void *jb_listen_ingress(const int *p_ingress_srv_sock_fd) {
 
 static int g_ingress_srv_sock_fd;
 
-int main(void) {
-    g_egress_ip = jb_get_wsl_public_ip();
-
+int main(int argc, char **argv) {
+    // '--loopback' means use 127.0.0.1 as egress IP
+    g_egress_ip = (argc > 1 && strcmp(&argv[1][0], "--loopback") == 0) ? htonl(INADDR_LOOPBACK)
+                                                                       : jb_get_wsl_public_ip();
     // IP address
     write(STDOUT_FILENO, &g_egress_ip, sizeof g_egress_ip);
 

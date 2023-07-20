@@ -10,12 +10,16 @@ import com.intellij.util.ExceptionUtil
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes
 import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes
 import org.apache.commons.cli.*
+import org.apache.commons.compress.archivers.examples.Archiver
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
+import org.apache.commons.io.file.PathUtils
 import org.jetbrains.annotations.Contract
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.fatal
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.info
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.setVerboseEnabled
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbose
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJavaExecutable
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJdkHome
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
@@ -27,14 +31,19 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import java.util.logging.ConsoleHandler
 import java.util.logging.Level
 import java.util.logging.Logger
 import java.util.stream.Collectors
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.createDirectories
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.readLines
 import kotlin.system.exitProcess
+
 
 class JpsBootstrapMain(args: Array<String>?) {
   private val projectHome: Path
@@ -44,10 +53,12 @@ class JpsBootstrapMain(args: Array<String>?) {
   private val buildTargetXmx: String
   private val jpsBootstrapWorkDir: Path
   private var javaArgsFileTarget: Path? = null
+  private var jarFileTarget: Path? = null
   private var mainArgsToRun: List<String>? = null
   private val additionalSystemProperties: Properties
   private val additionalSystemPropertiesFromPropertiesFile: Properties
   private val onlyDownloadJdk: Boolean
+  private val onlyPrepareArgfileForJar: Boolean
 
   init {
     initLogging()
@@ -68,17 +79,20 @@ class JpsBootstrapMain(args: Array<String>?) {
 
     projectHome = Path.of(freeArgs.first()).normalize()
     onlyDownloadJdk = cmdline.hasOption(OPT_ONLY_DOWNLOAD_JDK)
+    onlyPrepareArgfileForJar = cmdline.hasOption(OPT_ONLY_PREPARE_ARGFILE_FOR_JAR)
     if (onlyDownloadJdk) {
       moduleNameToRun = null
       classNameToRun = null
       mainArgsToRun = emptyList()
       javaArgsFileTarget = null
+      jarFileTarget = null
     }
     else {
       moduleNameToRun = freeArgs[1]
       classNameToRun = freeArgs[2]
       mainArgsToRun = freeArgs.subList(3, freeArgs.size)
       javaArgsFileTarget = Path.of(cmdline.getOptionValue(OPT_JAVA_ARGFILE_TARGET))
+      jarFileTarget = cmdline.getOptionValue(OPT_JAR_TARGET)?.let { Path.of(it) }
     }
     additionalSystemProperties = cmdline.getOptionProperties("D")
     additionalSystemPropertiesFromPropertiesFile = Properties()
@@ -127,6 +141,10 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (onlyDownloadJdk) {
       return
     }
+    if (onlyPrepareArgfileForJar) {
+      writeJavaArgfile(null, jarFileTarget)
+      return
+    }
 
     /*
      * Enable dependencies resolution retries while building buildscript.
@@ -147,7 +165,11 @@ class JpsBootstrapMain(args: Array<String>?) {
     val moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module)
     verbose("""Module ${module.name} classpath:
   ${moduleRuntimeClasspath.stream().map { file: File? -> fileDebugInfo(file) }.collect(Collectors.joining("\n  "))}""")
-    writeJavaArgfile(moduleRuntimeClasspath)
+    if (jarFileTarget != null) {
+      buildJar(moduleRuntimeClasspath)
+    } else  {
+      writeJavaArgfile(moduleRuntimeClasspath, null)
+    }
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {
@@ -185,7 +207,32 @@ class JpsBootstrapMain(args: Array<String>?) {
     }
 
   @Throws(Exception::class)
-  private fun writeJavaArgfile(moduleRuntimeClasspath: List<File?>?) {
+  private fun buildJar(moduleRuntimeClasspath: List<File>) {
+    val temp = Files.createTempDirectory("jps-bootstrap-shadow-jar")
+    temp.createDirectories()
+
+    for (file in moduleRuntimeClasspath) {
+      val path = file.toPath()
+      if (file.isDirectory) {
+        // copy to temp
+        PathUtils.copyDirectory(path, temp, StandardCopyOption.REPLACE_EXISTING)
+      }
+      else {
+        // unpack to temp
+        BuildDependenciesUtil.extractZip(path, temp, false)
+      }
+    }
+
+    temp.resolve("META-INF/MANIFEST.MF").deleteIfExists()
+
+    val destination = jarFileTarget!!
+    destination.deleteIfExists()
+    Archiver().create(ZipArchiveOutputStream(destination), temp)
+  }
+
+  @Throws(Exception::class)
+  private fun writeJavaArgfile(moduleRuntimeClasspath: List<File>?, jarFile: Path?) {
+    require((moduleRuntimeClasspath != null).xor(jarFile != null))
     val systemProperties = Properties()
     if (underTeamCity) {
       systemProperties.putAll(JpsBootstrapUtil.teamCitySystemProperties)
@@ -210,7 +257,11 @@ class JpsBootstrapMain(args: Array<String>?) {
     args.addAll(openedPackages)
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties))
     args.add("-classpath")
-    args.add(Strings.join(moduleRuntimeClasspath!!, File.pathSeparator))
+    if (moduleRuntimeClasspath != null) {
+      args.add(Strings.join(moduleRuntimeClasspath, File.pathSeparator))
+    } else if (jarFile != null) {
+      args.add(jarFile.absolutePathString())
+    }
     args.add("-Dbuild.script.launcher.main.class=$classNameToRun")
     args.add("org.jetbrains.intellij.build.impl.BuildScriptLauncher")
     args.addAll(mainArgsToRun!!)
@@ -219,10 +270,7 @@ class JpsBootstrapMain(args: Array<String>?) {
       args,
       StandardCharsets.UTF_8
     )
-    info("""
-    java argfile:
-    ${Files.readString(javaArgsFileTarget)}
-    """.trimIndent())
+    info("java argfile:\n${Files.readString(javaArgsFileTarget)}")
   }
 
   @Throws(Throwable::class)
@@ -280,8 +328,10 @@ class JpsBootstrapMain(args: Array<String>?) {
     private val OPT_PROPERTIES_FILE = Option.builder().longOpt("properties-file").hasArg().desc("Pass system properties to the build script from specified properties file https://en.wikipedia.org/wiki/.properties").build()
     private val OPT_BUILD_TARGET_XMX = Option.builder().longOpt("build-target-xmx").hasArg().desc("Specify Xmx to run build script. default: $DEFAULT_BUILD_SCRIPT_XMX").build()
     private val OPT_JAVA_ARGFILE_TARGET = Option.builder().longOpt("java-argfile-target").hasArg().desc("Write java argfile to this file").build()
+    private val OPT_JAR_TARGET = Option.builder().longOpt("jar-target").hasArg().desc("Write jar with all dependencies to be used later").build()
+    private val OPT_ONLY_PREPARE_ARGFILE_FOR_JAR = Option.builder().longOpt("prepare-argfile-for-jar").desc("Prepare java argfile for jar").build()
     private val OPT_ONLY_DOWNLOAD_JDK = Option.builder().longOpt("download-jdk").desc("Download project JDK and exit").build()
-    private val ALL_OPTIONS = listOf(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK)
+    private val ALL_OPTIONS = listOf(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_JAR_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK, OPT_ONLY_PREPARE_ARGFILE_FOR_JAR)
     val underTeamCity = isUnderTeamCity
     private fun createCliOptions(): Options {
       val opts = Options()

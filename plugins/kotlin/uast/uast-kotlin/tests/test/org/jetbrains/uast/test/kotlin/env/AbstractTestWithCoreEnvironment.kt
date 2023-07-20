@@ -1,10 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin.env
 
 import com.intellij.core.CoreApplicationEnvironment
 import com.intellij.mock.MockProject
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.platform.uast.testFramework.env.AbstractCoreEnvironment
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNameHelper
 import com.intellij.psi.impl.PsiNameHelperImpl
@@ -13,7 +14,6 @@ import org.jetbrains.uast.UastContext
 import org.jetbrains.uast.UastLanguagePlugin
 import org.jetbrains.uast.evaluation.UEvaluatorExtension
 import org.jetbrains.uast.java.JavaUastLanguagePlugin
-import org.jetbrains.uast.test.env.AbstractCoreEnvironment
 import java.io.File
 
 abstract class AbstractTestWithCoreEnvironment : TestCase() {
@@ -26,7 +26,7 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
         get() = environment.project
 
     protected val uastContext: org.jetbrains.uast.UastContext by lazy {
-        com.intellij.openapi.components.ServiceManager.getService(project, org.jetbrains.uast.UastContext::class.java)
+        project.getService(org.jetbrains.uast.UastContext::class.java)
     }
 
     protected val psiManager: PsiManager by lazy {

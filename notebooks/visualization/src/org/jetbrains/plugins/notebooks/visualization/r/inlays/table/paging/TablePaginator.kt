@@ -25,7 +25,7 @@ import javax.swing.table.AbstractTableModel
 
 class TablePaginator : JPanel(BorderLayout()) {
 
-  private val rowsNumber = ComboBox<Int>(arrayOf(10, 15, 30, 100))
+  private val rowsNumber = ComboBox(arrayOf(10, 15, 30, 100))
 
   private lateinit var toFirst: ActionButton
   private lateinit var toPrevious: ActionButton

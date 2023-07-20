@@ -5,9 +5,9 @@ abstract class SimplePersistentStateComponent<T : BaseState>(initialState: T) : 
   @Volatile
   private var state: T = initialState
 
-  final override fun getState() = state
+  final override fun getState(): T = state
 
-  final override fun getStateModificationCount() = state.modificationCount
+  final override fun getStateModificationCount(): Long = state.modificationCount
 
   override fun loadState(state: T) {
     this.state = state

@@ -3,6 +3,7 @@ package com.intellij.execution.services;
 
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
 public interface ServiceViewManager {
@@ -18,4 +19,7 @@ public interface ServiceViewManager {
 
   @NotNull
   Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass);
+
+  @Nullable
+  String getToolWindowId(@NotNull Class<?> contributorClass);
 }

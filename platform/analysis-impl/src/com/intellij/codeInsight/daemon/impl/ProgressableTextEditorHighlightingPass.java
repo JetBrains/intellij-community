@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,10 +68,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
       }
     }
     if (editor != null) {
-      if (editor.getProject() != null && editor.getProject() != project) {
-        throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") " +
-                                           "belongs to an alien project '" + editor.getProject() + "' but expected: '" + project + "'");
-      }
+      PsiUtilBase.assertEditorAndProjectConsistent(project, editor);
       if (editor.getDocument() != document) {
         throw new IllegalArgumentException("Editor '" + editor + "' (" + editor.getClass() + ") has document " +editor.getDocument()+" but expected: "+document);
       }

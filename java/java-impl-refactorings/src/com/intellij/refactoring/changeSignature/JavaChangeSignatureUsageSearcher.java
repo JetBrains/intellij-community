@@ -330,7 +330,7 @@ class JavaChangeSignatureUsageSearcher {
           result.add(new CallReferenceUsageInfo((PsiCallReference)ref));
         }
         else if (element instanceof PsiMethodReferenceExpression && MethodReferenceUsageInfo.needToExpand(myChangeInfo)) {
-          result.add(new MethodReferenceUsageInfo(element, method, isToModifyArgs, isToCatchExceptions));
+          result.add(new MethodReferenceUsageInfo(element, isToModifyArgs, isToCatchExceptions));
         }
         else {
           result.add(new MoveRenameUsageInfo(element, ref, method));

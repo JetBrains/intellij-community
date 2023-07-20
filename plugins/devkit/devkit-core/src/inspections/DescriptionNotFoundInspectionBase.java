@@ -1,14 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemHolderUtilKt;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.roots.TestSourcesFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -18,7 +17,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UAnonymousClass;
 import org.jetbrains.uast.UClass;
-import org.jetbrains.uast.UElementKt;
 
 abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBase {
 
@@ -46,10 +44,6 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
       return null;
     }
 
-    if (TestSourcesFilter.isTestSources(psiClass.getContainingFile().getVirtualFile(), manager.getProject())) {
-      return null;
-    }
-
     ProblemsHolder holder = new ProblemsHolder(manager, psiClass.getContainingFile(), isOnTheFly);
     boolean registered;
     if (myDescriptionType.isFixedDescriptionFilename()) {
@@ -61,22 +55,16 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
 
     if (registered) return holder.getResultsArray();
 
-
-    final PsiElement highlightElement = getInspectionHighlightElement(uClass);
-    if (highlightElement == null) return null;
-
-    holder.registerProblem(highlightElement, getHasNotDescriptionError(module, psiClass),
-                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                           new CreateHtmlDescriptionFix(getDescriptionDir(module, psiClass), module, myDescriptionType));
+    ProblemHolderUtilKt.registerUProblem(holder, uClass, getHasNotDescriptionError(module, psiClass),
+                                         new CreateHtmlDescriptionFix(getDescriptionDir(module, psiClass), module, myDescriptionType));
     return holder.getResultsArray();
   }
 
-  @Nullable
-  private static PsiElement getInspectionHighlightElement(UClass uClass) {
-    return UElementKt.getSourcePsiElement(uClass.getUastAnchor());
-  }
-
   protected abstract boolean skipIfNotRegistered(PsiClass epClass);
+
+  protected boolean skipOptionalBeforeAfter(PsiClass epClass) {
+    return false;
+  }
 
   protected boolean checkDynamicDescription(ProblemsHolder holder, Module module, PsiClass psiClass) {
     throw new IllegalStateException("must be implemented for " + getClass());
@@ -97,11 +85,9 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
       final PsiFile descr = dir.findFile("description.html");
       if (descr == null) continue;
 
-      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
-        final PsiElement highlightElement = getInspectionHighlightElement(uClass);
-        if (highlightElement != null) {
-          holder.registerProblem(highlightElement, getHasNotBeforeAfterError(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-        }
+      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile()) &&
+          !skipOptionalBeforeAfter(psiClass)) {
+        ProblemHolderUtilKt.registerUProblem(holder, uClass, getHasNotBeforeAfterError());
       }
       return true;
     }

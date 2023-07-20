@@ -124,7 +124,7 @@ open class StyledTextPane : JTextPane(), Disposable {
     return preferredSize
   }
 
-  override fun dispose() = Unit
+  override fun dispose(): Unit = Unit
 
   final override fun addMouseListener(l: MouseListener?) {
     super.addMouseListener(l)

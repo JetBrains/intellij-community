@@ -98,9 +98,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   }
 
   protected static void clearInlays(XDebuggerTree tree) {
-    if (Registry.is("debugger.show.values.use.inlays")) {
-      XDebuggerInlayUtil.getInstance(tree.getProject()).clearInlays();
-    }
+    XDebuggerInlayUtil.getInstance(tree.getProject()).clearInlays();
   }
 
   protected final XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {

@@ -15,12 +15,12 @@
  */
 package com.intellij.java.codeInsight.folding;
 
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 
 public class JavaFoldingGotoTest extends JavaCodeInsightFixtureTestCase {
@@ -49,7 +49,7 @@ public class JavaFoldingGotoTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
     Editor editor = myFixture.getEditor();
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(editor);
+    EditorTestUtil.buildInitialFoldingsInBackground(editor);
     FoldingModelEx foldingModel = (FoldingModelEx)editor.getFoldingModel();
     foldingModel.rebuild();
     myFixture.doHighlighting();

@@ -4,6 +4,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
@@ -27,8 +28,6 @@ import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.VisibleForTesting
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 
 data class PluginAdvertiserExtensionsData(
@@ -51,7 +50,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     private val LOG = logger<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
-    val instance
+    val instance: PluginAdvertiserExtensionsStateService
       get() = service<PluginAdvertiserExtensionsStateService>()
 
     @JvmStatic
@@ -117,7 +116,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build<String, PluginAdvertiserExtensionsData>()
 
-  fun createExtensionDataProvider(project: Project) = ExtensionDataProvider(project)
+  fun createExtensionDataProvider(project: Project): ExtensionDataProvider = ExtensionDataProvider(project)
 
   fun registerLocalPlugin(matcher: FileNameMatcher, descriptor: PluginDescriptor) {
     updateState { oldState ->
@@ -151,7 +150,7 @@ class PluginAdvertiserExtensionsStateService : SerializablePersistentStateCompon
   inner class ExtensionDataProvider(private val project: Project) {
 
     private val unknownFeaturesCollector get() = UnknownFeaturesCollector.getInstance(project)
-    private val enabledExtensionOrFileNames = Collections.newSetFromMap<String>(ConcurrentHashMap())
+    private val enabledExtensionOrFileNames = ConcurrentCollectionFactory.createConcurrentSet<String>()
 
     fun ignoreExtensionOrFileNameAndInvalidateCache(extensionOrFileName: String) {
       unknownFeaturesCollector.ignoreFeature(createUnknownExtensionFeature(extensionOrFileName))

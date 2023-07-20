@@ -102,7 +102,7 @@ class SmartCompletion(
         return postProcessedItems to postProcessedSearcher
     }
 
-    val descriptorsToSkip: Set<DeclarationDescriptor> by lazy<Set<DeclarationDescriptor>> {
+    val descriptorsToSkip: Set<DeclarationDescriptor> by lazy {
         when (val parent = expressionWithType.parent) {
             is KtBinaryExpression -> {
                 if (parent.right == expressionWithType) {

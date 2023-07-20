@@ -9,22 +9,19 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public class ProcessHandshakeBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.ProcessHandshakeBundle";
-  private static final ProcessHandshakeBundle INSTANCE = new ProcessHandshakeBundle();
+public final class ProcessHandshakeBundle {
+  private static final @NonNls String BUNDLE = "messages.ProcessHandshakeBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ProcessHandshakeBundle.class, BUNDLE);
 
   private ProcessHandshakeBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
-                                                     Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key,
+                                                              Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

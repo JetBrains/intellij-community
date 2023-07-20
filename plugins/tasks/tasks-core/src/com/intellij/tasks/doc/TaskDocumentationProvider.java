@@ -9,12 +9,13 @@ import com.intellij.psi.PsiManager;
 import com.intellij.tasks.Comment;
 import com.intellij.tasks.Task;
 import com.intellij.xml.util.XmlStringUtil;
-import com.petebevin.markdown.MarkdownProcessor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+
+import static com.intellij.markdown.utils.MarkdownToHtmlConverterKt.convertMarkdownToHtml;
 
 /**
  * @author Dennis.Ushakov
@@ -47,8 +48,7 @@ public class TaskDocumentationProvider extends AbstractDocumentationProvider imp
     }
     final String description = task.getDescription();
     if (description != null) {
-      final MarkdownProcessor processor = new MarkdownProcessor();
-      builder.append("<b>Description:</b><br>").append(processor.markdown(description));
+      builder.append("<b>Description:</b><br>").append(convertMarkdownToHtml(description));
     }
     for (Comment comment : task.getComments()) {
       comment.appendTo(builder);

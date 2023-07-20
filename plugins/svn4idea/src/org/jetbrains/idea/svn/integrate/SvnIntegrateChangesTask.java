@@ -95,7 +95,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     myHandler.setProgressIndicator(ProgressManager.getInstance().getProgressIndicator());
     myResolveWorker = new ResolveWorker(myInfo.isUnderProjectRoot(), myProject);
 
-    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges();
+    if (myProject != null) {
+      StoreReloadManager.Companion.getInstance(myProject).blockReloadingProjectOnExternalChanges();
+    }
     myProjectLevelVcsManager.startBackgroundVcsOperation();
 
     try {
@@ -158,7 +160,9 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
         afterExecution(wasCancelled);
       }
       finally {
-        StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges();
+        if (myProject != null) {
+          StoreReloadManager.Companion.getInstance(myProject).unblockReloadingProjectOnExternalChanges();
+        }
       }
     });
   }

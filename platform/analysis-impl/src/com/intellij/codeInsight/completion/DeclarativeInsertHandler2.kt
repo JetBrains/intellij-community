@@ -67,7 +67,7 @@ open class DeclarativeInsertHandler2 protected constructor(
   val popupOptions: PopupOptions
 ) : InsertHandler<LookupElement> {
   data class RelativeTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String) {
-    fun toAbsolute(baseOffset: Int) = AbsoluteTextEdit(rangeFrom + baseOffset, rangeTo + baseOffset, newText)
+    fun toAbsolute(baseOffset: Int): AbsoluteTextEdit = AbsoluteTextEdit(rangeFrom + baseOffset, rangeTo + baseOffset, newText)
   }
 
   data class AbsoluteTextEdit(val rangeFrom: Int, val rangeTo: Int, val newText: String)
@@ -115,7 +115,7 @@ open class DeclarativeInsertHandler2 protected constructor(
     object ParameterInfo : PopupOptions()
     object MemberLookup : PopupOptions()
 
-    fun showPopup() = when (this) {
+    fun showPopup(): Boolean = when (this) {
       is DoNotShow -> false
       else -> true
     }
@@ -157,8 +157,8 @@ open class DeclarativeInsertHandler2 protected constructor(
     private var postInsertHandler: InsertHandler<LookupElement>? = null
     private var popupOptions: PopupOptions = PopupOptions.DoNotShow
 
-    fun addOperation(offsetAt: Int, newText: String) = addOperation(offsetAt, offsetAt, newText)
-    fun addOperation(offsetFrom: Int, offsetTo: Int, newText: String) = addOperation(RelativeTextEdit(offsetFrom, offsetTo, newText))
+    fun addOperation(offsetAt: Int, newText: String): Builder = addOperation(offsetAt, offsetAt, newText)
+    fun addOperation(offsetFrom: Int, offsetTo: Int, newText: String): Builder = addOperation(RelativeTextEdit(offsetFrom, offsetTo, newText))
     fun addOperation(operation: RelativeTextEdit): Builder {
       val operationIsEmpty = (operation.rangeFrom == operation.rangeTo) && operation.newText.isEmpty()
       if (!operationIsEmpty)

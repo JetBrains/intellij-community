@@ -18,7 +18,7 @@ abstract class SaveAndSyncHandler {
     }
   }
 
-  protected val externalChangesModificationTracker = SimpleModificationTracker()
+  protected val externalChangesModificationTracker: SimpleModificationTracker = SimpleModificationTracker()
 
   /**
    * If project is specified - only project settings will be saved.

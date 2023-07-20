@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.WhatsNewAction;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -10,7 +11,7 @@ import com.intellij.ide.plugins.InstalledPluginsState;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.NotificationListener;
+import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -42,6 +43,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
+@SuppressWarnings("LightServiceMigrationCode")
 final class UpdateCheckerService {
   public static UpdateCheckerService getInstance() {
     return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
@@ -99,9 +101,9 @@ final class UpdateCheckerService {
       return;
     }
 
-    boolean eap = ApplicationInfoEx.getInstanceEx().isMajorEAP();
+    var appInfo = ApplicationInfoEx.getInstanceEx();
 
-    if (eap && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
+    if (appInfo.isMajorEAP() && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
       if (!ConfigImportHelper.isFirstSession()) {
@@ -114,7 +116,7 @@ final class UpdateCheckerService {
       }
     }
 
-    if (!eap && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
+    if (!appInfo.isEAP() && !appInfo.isPreview() && current == ChannelStatus.EAP && ConfigImportHelper.isConfigImported()) {
       settings.setSelectedChannelStatus(ChannelStatus.RELEASE);
       LOG.info("channel set to 'release'");
     }
@@ -162,6 +164,8 @@ final class UpdateCheckerService {
       checkIfPreviousUpdateFailed(current);
       showWhatsNew(project, current);
       showSnapUpdateNotification(project, current);
+
+      cleanupObsoleteCustomRepositories();
 
       showUpdatedPluginsNotification(project);
 
@@ -253,13 +257,15 @@ final class UpdateCheckerService {
     }
 
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    String message = blogPost == null ? IdeBundle.message("update.snap.message")
-                                      : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
-    UpdateChecker.getNotificationGroupForIdeUpdateResults()
+    String message = IdeBundle.message("update.snap.message");
+    var notification = UpdateChecker.getNotificationGroupForIdeUpdateResults()
       .createNotification(title, message, NotificationType.INFORMATION)
-      .setListener(NotificationListener.URL_OPENING_LISTENER)
-      .setDisplayId("ide.updated.by.snap")
-      .notify(project);
+      .setDisplayId("ide.updated.by.snap");
+    if (blogPost != null) {
+      var url = StringUtil.escapeXmlEntities(blogPost);
+      notification.addAction(NotificationAction.createSimpleExpiring(IdeBundle.message("update.snap.blog.post.action"), () -> BrowserUtil.browse(url)));
+    }
+    notification.notify(project);
   }
 
   private static @Nullable Product loadProductData() {
@@ -305,6 +311,7 @@ final class UpdateCheckerService {
 
     String title = IdeBundle.message("update.installed.notification.title");
     String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
+    //noinspection deprecation
     UpdateChecker.getNotificationGroupForPluginUpdateResults()
       .createNotification(title, text, NotificationType.INFORMATION)
       .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed of on project close
@@ -358,6 +365,17 @@ final class UpdateCheckerService {
         PropertiesComponent.getInstance().unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
         LOG.info("old directories scan complete");
       }
+    }
+  }
+
+  private static void cleanupObsoleteCustomRepositories() {
+    UpdateSettings settings = UpdateSettings.getInstance();
+    if (settings.isObsoleteCustomRepositoriesCleanNeeded()) {
+      boolean cleaned = settings.getStoredPluginHosts().removeIf(host -> host.startsWith("https://secure.feed.toolbox.app/plugins"));
+      if (cleaned) {
+        LOG.info("Some obsolete TBE custom repositories have been removed");
+      }
+      settings.setObsoleteCustomRepositoriesCleaned(false);
     }
   }
 }

@@ -18,14 +18,14 @@ internal class ShowUsagesPopupData(@JvmField val parameters: ShowUsagesParameter
                                    @JvmField val actionHandler: ShowUsagesActionHandler, @JvmField val usageView: UsageView) {
 
   @JvmField
-  val popupRef = AtomicReference<AbstractPopup>()
+  val popupRef: AtomicReference<AbstractPopup> = AtomicReference<AbstractPopup>()
 
   @JvmField
-  val pinGroup = DefaultActionGroup()
+  val pinGroup: DefaultActionGroup = DefaultActionGroup()
 
   @JvmField
-  val header = ShowUsagesHeader(createPinButton(parameters.project, popupRef, pinGroup, table, actionHandler::findUsages),
-                                actionHandler.presentation.searchTargetString)
+  val header: ShowUsagesHeader = ShowUsagesHeader(createPinButton(parameters.project, popupRef, pinGroup, table, actionHandler::findUsages),
+                                                  actionHandler.presentation.searchTargetString)
 
   private fun createPinButton(project: Project,
                               popupRef: AtomicReference<AbstractPopup>,

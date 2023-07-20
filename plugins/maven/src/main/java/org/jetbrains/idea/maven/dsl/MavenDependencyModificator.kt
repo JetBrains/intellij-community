@@ -154,7 +154,8 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
       dependency.artifactId.stringValue = mavenId.artifactId
       val scope = toMavenScope(descriptor.scope, managedDependency?.scope?.stringValue)
       scope?.let { dependency.scope.stringValue = it }
-      if (managedDependency == null || managedDependency.version.stringValue != mavenId.version) {
+      if ((managedDependency == null || managedDependency.version.stringValue != mavenId.version) &&
+          mavenId.version!!.isNotEmpty()) {
         dependency.version.stringValue = mavenId.version
       }
       saveFile(psiFile)

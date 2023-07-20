@@ -49,3 +49,8 @@ fun throwAlreadyDisposedError(serviceDescription: String, componentManager: Comp
 internal fun isLightService(serviceClass: Class<*>): Boolean {
   return Modifier.isFinal(serviceClass.modifiers) && serviceClass.isAnnotationPresent(Service::class.java)
 }
+
+internal fun doNotUseConstructorInjectionsMessage(where: String): String {
+  return "Please, do not use constructor injection: it slows down initialization and may lead to performance problems ($where). " +
+         "See https://plugins.jetbrains.com/docs/intellij/plugin-services.html for details."
+}

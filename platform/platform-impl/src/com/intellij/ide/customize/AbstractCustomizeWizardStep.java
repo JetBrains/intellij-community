@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.customize;
 
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -56,10 +55,6 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
     return new BorderLayout(SMALL_GAP, SMALL_GAP);
   }
 
-  public static void applyHeaderFooterStyle(@NotNull JBLabel label) {
-    label.setForeground(UIUtil.getLabelDisabledForeground());
-  }
-
   protected static JPanel createBigButtonPanel(LayoutManager layout, final JToggleButton anchorButton, final Runnable action) {
     final JPanel panel = new JPanel(layout) {
       @Override
@@ -95,9 +90,5 @@ public abstract class AbstractCustomizeWizardStep extends JPanel {
   }
 
   public void beforeShown(boolean forward) {
-  }
-
-  public boolean beforeOkAction() {
-    return true;
   }
 }

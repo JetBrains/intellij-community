@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.impl.SquareStripeButton;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.toolWindow.ToolWindowDragHelper;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.Nls;
@@ -49,19 +50,22 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
       };
     }
 
-    @NotNull
-    public static Anchor fromWindowInfo(@NotNull WindowInfo info) {
-      if (info.isSplit()) {
-        if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftBottom;
-        if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomRight;
-        if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightBottom;
-        if (info.getAnchor() == ToolWindowAnchor.TOP) return TopRight;
+    public static @NotNull Anchor fromWindowInfo(@NotNull WindowInfo info) {
+      return getAnchor(info.getAnchor(), info.isSplit());
+    }
+
+    public static @NotNull Anchor getAnchor(@NotNull ToolWindowAnchor anchor, boolean split) {
+      if (split) {
+        if (anchor == ToolWindowAnchor.LEFT) return LeftBottom;
+        if (anchor == ToolWindowAnchor.BOTTOM) return BottomRight;
+        if (anchor == ToolWindowAnchor.RIGHT) return RightBottom;
+        if (anchor == ToolWindowAnchor.TOP) return TopRight;
       }
 
-      if (info.getAnchor() == ToolWindowAnchor.LEFT) return LeftTop;
-      if (info.getAnchor() == ToolWindowAnchor.BOTTOM) return BottomLeft;
-      if (info.getAnchor() == ToolWindowAnchor.RIGHT) return RightTop;
-      /*if (info.getAnchor() == ToolWindowAnchor.TOP) */
+      if (anchor == ToolWindowAnchor.LEFT) return LeftTop;
+      if (anchor == ToolWindowAnchor.BOTTOM) return BottomLeft;
+      if (anchor == ToolWindowAnchor.RIGHT) return RightTop;
+      /*if (anchor == ToolWindowAnchor.TOP) */
       return TopLeft;
     }
 
@@ -134,7 +138,9 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
     if (component instanceof SquareStripeButton) {
       return ((SquareStripeButton)component).getToolWindow();
     }
-
+    if (component instanceof ToolWindowDragHelper.ToolWindowProvider twp) {
+      return twp.getToolWindow();
+    }
     String id = manager.getActiveToolWindowId();
     return id == null ? null : manager.getToolWindow(id);
   }

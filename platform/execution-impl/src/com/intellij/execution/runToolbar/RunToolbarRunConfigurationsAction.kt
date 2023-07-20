@@ -288,7 +288,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     }
 
     private fun showPopup() {
-      val popup: JBPopup = createPopup() {}
+      val popup: JBPopup = createPopup {}
 
       if (Registry.`is`("ide.helptooltip.enabled")) {
         HelpTooltip.setMasterPopup(this, popup)

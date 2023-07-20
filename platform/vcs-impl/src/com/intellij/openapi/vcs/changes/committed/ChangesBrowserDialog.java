@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.committed;
 
@@ -46,7 +46,7 @@ public class ChangesBrowserDialog extends DialogWrapper {
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.getCloseButtonText());
     final ModalityState currentState = ModalityState.current();
-    if ((mode != Mode.Choose) && (ModalityState.NON_MODAL.equals(currentState))) {
+    if ((mode != Mode.Choose) && (ModalityState.nonModal().equals(currentState))) {
       setModal(false);
     }
     myAppender = new AsynchConsumer<>() {

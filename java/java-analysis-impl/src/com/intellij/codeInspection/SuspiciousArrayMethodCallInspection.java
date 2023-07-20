@@ -4,13 +4,12 @@ package com.intellij.codeInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
 public class SuspiciousArrayMethodCallInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final Set<String> INTERESTING_NAMES = ContainerUtil.set("fill", "binarySearch", "equals", "mismatch");
+  private static final Set<String> INTERESTING_NAMES = Set.of("fill", "binarySearch", "equals", "mismatch");
 
   @NotNull
   @Override

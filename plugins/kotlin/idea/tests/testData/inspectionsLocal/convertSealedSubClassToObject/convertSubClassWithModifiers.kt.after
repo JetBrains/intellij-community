@@ -2,4 +2,4 @@
 
 sealed class Sealed
 
-private object SubSealed : Sealed()
+private data object SubSealed : Sealed()

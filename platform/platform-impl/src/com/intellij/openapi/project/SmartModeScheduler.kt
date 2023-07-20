@@ -2,6 +2,8 @@
 package com.intellij.openapi.project
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.captureThreadContext
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
@@ -14,9 +16,11 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.startup.StartupManager
-import org.jetbrains.annotations.ApiStatus.Experimental
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Async
 import java.util.*
@@ -35,10 +39,9 @@ import java.util.function.Consumer
  * It is important to note that while dumb mode cannot start without write action, scanning can start without write action, so by the
  * moment when runnable executes scanning can run, but it is guaranteed that initial scanning on project open has finished.
  */
-@Experimental
 @Internal
 @Service(Service.Level.PROJECT)
-class SmartModeScheduler(private val project: Project) : Disposable {
+class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Disposable {
   private class RunnableDelegate(val task: Runnable, private val executor: Consumer<in Runnable>) : Runnable {
     override fun run() {
       executor.accept(task)
@@ -52,12 +55,12 @@ class SmartModeScheduler(private val project: Project) : Disposable {
   // DumbService starts in dumb mode and then becomes smart
   private val projectDumb: AtomicBoolean = AtomicBoolean(true)
 
-  // Actual initial state for projectScanning should be `false`, but we want to make sure that IDE is not smart immediately after start.
-  // There will be mandatory "scanning on project open" that will clear the flag.
-  private val projectScanning: AtomicBoolean = AtomicBoolean(true)
+  // There is no race: scanning task is queued from "required for smart mode" dumb task, and scanner immediately becomes "running".
+  // Even if listener still has not received "running" event, direct check of the state should say that scanning executor is running
+  private val projectScanning = project.service<UnindexedFilesScannerExecutor>().isRunning
 
   init {
-    project.messageBus.simpleConnect().subscribe<DynamicPluginListener>(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    project.messageBus.simpleConnect().subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         myRunWhenSmartQueue.removeIf { runnable ->
           val unwrappedRunnable = if (runnable is RunnableDelegate) runnable.task else runnable
@@ -66,18 +69,25 @@ class SmartModeScheduler(private val project: Project) : Disposable {
         }
       }
     })
+
+    sc.launch {
+      projectScanning.collect {
+        blockingContext {
+          onFilesScanningChanged()
+        }
+      }
+    }
   }
 
   private fun addLast(runnable: Runnable) {
-    val executor = ClientId.decorateRunnable(runnable)
+    val executor = captureThreadContext(ClientId.decorateRunnable(runnable))
     myRunWhenSmartQueue.addLast(if (executor === runnable) runnable else RunnableDelegate(runnable) { executor.run() })
   }
 
-  internal fun onFilesScanningStarted() = onStateChanged { projectScanning.set(true) }
-  internal fun onFilesScanningFinished() = onStateChanged { projectScanning.set(false) }
-  internal fun onProjectOpened() = onStateChanged { projectOpening.set(false) }
-  internal fun onEnteredDumbMode() = onStateChanged { projectDumb.set(true) }
-  internal fun onExitDumbMode() = onStateChanged { projectDumb.set(false) }
+  private fun onFilesScanningChanged() = onStateChanged { }
+  internal fun onProjectOpened(): Unit = onStateChanged { projectOpening.set(false) }
+  internal fun onEnteredDumbMode(): Unit = onStateChanged { projectDumb.set(true) }
+  internal fun onExitDumbMode(): Unit = onStateChanged { projectDumb.set(false) }
 
   private fun onStateChanged(updateState: () -> Unit) {
     updateState()
@@ -114,7 +124,9 @@ class SmartModeScheduler(private val project: Project) : Disposable {
     // in this case we should quit processing pending actions and postpone them until the newly started dumb mode finishes.
     while (isSmart()) {
       val runnable = myRunWhenSmartQueue.pollFirst() ?: break
-      doRun(runnable)
+      resetThreadContext().use {
+        doRun(runnable)
+      }
     }
   }
 
@@ -133,7 +145,7 @@ class SmartModeScheduler(private val project: Project) : Disposable {
 
   private fun isSmart() = (getCurrentMode() == 0)
   fun getCurrentMode(): Int =
-    (if (projectScanning.get()) SCANNING else 0) +
+    (if (projectScanning.value) SCANNING else 0) +
     (if (projectDumb.get()) DUMB else 0) +
     (if (projectOpening.get()) OPENING else 0)
 
@@ -154,20 +166,14 @@ class SmartModeScheduler(private val project: Project) : Disposable {
   }
 
   class SmartModeSchedulerDumbModeListener(private val project: Project) : DumbService.DumbModeListener {
-    override fun enteredDumbMode() = project.service<SmartModeScheduler>().onEnteredDumbMode()
-    override fun exitDumbMode() = project.service<SmartModeScheduler>().onExitDumbMode()
-  }
-
-  class SmartModeSchedulerFilesScannerListener(private val project: Project) : FilesScanningListener {
-    override fun filesScanningStarted() = project.service<SmartModeScheduler>().onFilesScanningStarted()
-
-    override fun filesScanningFinished() = project.service<SmartModeScheduler>().onFilesScanningFinished()
+    override fun enteredDumbMode(): Unit = project.service<SmartModeScheduler>().onEnteredDumbMode()
+    override fun exitDumbMode(): Unit = project.service<SmartModeScheduler>().onExitDumbMode()
   }
 
   companion object {
     val LOG: Logger = logger<SmartModeScheduler>()
-    const val SCANNING = 1
-    const val DUMB = 1.shl(1)
-    const val OPENING = 1.shl(2)
+    const val SCANNING: Int = 1
+    const val DUMB: Int = 1.shl(1)
+    const val OPENING: Int = 1.shl(2)
   }
 }

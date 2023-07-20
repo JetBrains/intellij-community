@@ -4,8 +4,7 @@ package org.editorconfig.language.psi;
 import java.util.List;
 import org.jetbrains.annotations.*;
 import com.intellij.psi.PsiElement;
-import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement;
 
-public interface EditorConfigQuestionPattern extends EditorConfigHeaderElement {
+public interface EditorConfigQuestionPattern extends EditorConfigPattern {
 
 }

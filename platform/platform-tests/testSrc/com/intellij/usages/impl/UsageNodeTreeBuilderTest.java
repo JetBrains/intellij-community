@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.Disposable;
@@ -152,17 +152,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       return o instanceof LogUsageGroup && myPower == ((LogUsageGroup)o).myPower;
     }
     public int hashCode() { return myPower; }
-
-    @Override
-    public void navigate(boolean requestFocus) { }
-
-    @Override
-    public boolean canNavigate() { return false; }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
-    }
   }
 
   private static class OddEvenGroupingRule extends SingleParentUsageGroupingRule {
@@ -171,16 +160,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       @Override
       @NotNull
       public String getPresentableGroupText() { return "Even"; }
-
-      @Override
-      public void navigate(boolean focus) throws UnsupportedOperationException { }
-      @Override
-      public boolean canNavigate() { return false; }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == ODD ? -1 : 0; }
@@ -192,16 +171,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       @Override
       @NotNull
       public String getPresentableGroupText() { return "Odd"; }
-
-      @Override
-      public void navigate(boolean focus) throws UnsupportedOperationException { }
-      @Override
-      public boolean canNavigate() { return false; }
-
-      @Override
-      public boolean canNavigateToSource() {
-        return false;
-      }
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == EVEN ? 1 : 0; }
@@ -278,20 +247,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     public String toString() {
       return String.valueOf(myId);
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override

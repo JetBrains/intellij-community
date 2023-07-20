@@ -24,15 +24,13 @@ internal class TestCloudConfigRemoteCommunicator : TestRemoteCommunicator() {
     client.delete("*")
   }
 
-  override fun getVersionOnServer(): SettingsSnapshot? {
-    val updateResult = receiveUpdates()
-    return when (updateResult) {
+  override fun getVersionOnServer(): SettingsSnapshot? =
+    when (val updateResult = receiveUpdates()) {
       is UpdateResult.Success -> updateResult.settingsSnapshot
       UpdateResult.FileDeletedFromServer -> snapshotForDeletion()
       UpdateResult.NoFileOnServer -> null
       is UpdateResult.Error -> throw AssertionError(updateResult.message)
     }
-  }
 
   private fun snapshotForDeletion() =
     SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true), emptySet(), null, emptyMap(), emptySet())

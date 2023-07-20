@@ -7,14 +7,13 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class MavenConfigurableBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.MavenConfigurableBundle";
-  private static final MavenConfigurableBundle INSTANCE = new MavenConfigurableBundle();
+public final class MavenConfigurableBundle {
+  private static final @NonNls String BUNDLE = "messages.MavenConfigurableBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(MavenConfigurableBundle.class, BUNDLE);
 
-  private MavenConfigurableBundle() { super(BUNDLE); }
+  private MavenConfigurableBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 }

@@ -48,13 +48,13 @@ open class DynamicDelegatePresentation(delegate: InlayPresentation) : BasePresen
     return delegate.updateState(previousPresentation.delegate)
   }
 
-  override fun paint(g: Graphics2D, attributes: TextAttributes) = delegate.paint(g, attributes)
+  override fun paint(g: Graphics2D, attributes: TextAttributes): Unit = delegate.paint(g, attributes)
 
-  override fun mouseClicked(event: MouseEvent, translated: Point) = delegate.mouseClicked(event, translated)
+  override fun mouseClicked(event: MouseEvent, translated: Point): Unit = delegate.mouseClicked(event, translated)
 
-  override fun mouseMoved(event: MouseEvent, translated: Point) = delegate.mouseMoved(event, translated)
+  override fun mouseMoved(event: MouseEvent, translated: Point): Unit = delegate.mouseMoved(event, translated)
 
-  override fun mouseExited() = delegate.mouseExited()
+  override fun mouseExited(): Unit = delegate.mouseExited()
 
   override fun toString(): String = delegate.toString()
 

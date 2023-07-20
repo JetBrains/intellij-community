@@ -183,12 +183,11 @@
    matchedName: "html/attributes/slot",
    origin: "vue@3.0.0 (vue)",
    complete: true,
-   deprecated: true,
+   apiStatus: deprecated,
    priority: NORMAL,
    segments: [
     {
      name-part: "slot",
-     deprecated: true,
      symbol: <self>,
     },
    ],
@@ -204,12 +203,11 @@
    matchedName: "html/attributes/slot",
    origin: "vue@3.0.0 (vue)",
    complete: true,
-   deprecated: true,
+   apiStatus: deprecated,
    priority: NORMAL,
    segments: [
     {
      name-part: "slot",
-     deprecated: true,
      symbol: <self>,
     },
    ],
@@ -226,12 +224,11 @@
    },
    complete: true,
    virtual: true,
-   deprecated: true,
+   apiStatus: deprecated,
    priority: NORMAL,
    segments: [
     {
      name-part: "slot-scope",
-     deprecated: true,
      symbol: <self>,
     },
    ],

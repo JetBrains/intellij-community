@@ -174,7 +174,7 @@ public final class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor
   @Override
   @NotNull
   public Collection<PsiElement> getDeclarations() {
-    return ContainerUtil.map2List(myDeclarations, locator -> myElementDescriptor.getDeclaration(locator));
+    return ContainerUtil.map(myDeclarations, locator -> myElementDescriptor.getDeclaration(locator));
   }
 
   @Override

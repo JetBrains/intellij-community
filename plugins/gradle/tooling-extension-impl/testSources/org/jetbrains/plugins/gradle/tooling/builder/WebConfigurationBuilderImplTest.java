@@ -28,9 +28,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
 import static org.jetbrains.plugins.gradle.model.web.WebConfiguration.WarModel;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author Vladislav.Soroka
@@ -58,7 +58,8 @@ public class WebConfigurationBuilderImplTest extends AbstractModelBuilderTest {
     assertEquals(1, webConfiguration.getWarModels().size());
 
     final WarModel warModel = webConfiguration.getWarModels().iterator().next();
-    assertEquals("src/main/webapp", warModel.getWebAppDirName());
+    assertTrue("Expect", toSystemIndependentName(warModel.getWebAppDir().getAbsolutePath())
+      .endsWith("src/main/webapp"));
 
     assertArrayEquals(
       new String[]{"MANIFEST.MF", "additionalWebInf", "rootContent"},

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmMethod;
@@ -48,7 +48,9 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   PsiTypeElement getReturnTypeElement();
 
   /**
-   * Returns the parameter list for the method.
+   * Returns the parameter list for the method. 
+   * For Java record compact constructor, a non-physical list is returned,
+   * which contains implicitly defined parameters based on the record components.
    *
    * @return the parameter list instance.
    */
@@ -67,7 +69,8 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   /**
    * Returns the body of the method.
    *
-   * @return the method body, or null if the method belongs to a compiled class.
+   * @return the method body, or null if the method has no body (e.g., abstract or native),
+   * or belongs to a compiled class.
    */
   @Override
   @Nullable
@@ -75,6 +78,9 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
 
   /**
    * Checks if the method is a constructor.
+   * In Java PSI, the method is considered to be a constructor 
+   * if it lacks the return type; even if its name differs from the 
+   * class name (in this case, a highlighting error will be displayed).
    *
    * @return true if the method is a constructor, false otherwise
    */
@@ -176,6 +182,10 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   @NotNull
   PsiModifierList getModifierList();
 
+  /**
+   * @return the name of the method, as visible in the source code.
+   * For well-formed constructor, the name of the containing class is returned.
+   */
   @Override
   @NotNull
   @NlsSafe

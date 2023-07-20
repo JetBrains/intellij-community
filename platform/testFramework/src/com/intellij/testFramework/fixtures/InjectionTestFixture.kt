@@ -98,7 +98,7 @@ class InjectionTestFixture(private val javaFixture: CodeInsightTestFixture) {
   val topLevelFile: PsiFile
     get() = javaFixture.file!!.let { injectedLanguageManager.getTopLevelFile(it) }
 
-  val topLevelCaretPosition
+  val topLevelCaretPosition: Int
     get() = topLevelEditor.caretModel.offset
 
   val topLevelEditor: Editor
@@ -109,7 +109,7 @@ data class InjectionAssertionData(val text: String, val injectedLanguage: String
   fun hasLanguage(lang: String): InjectionAssertionData = this.copy(injectedLanguage = lang)
 }
 
-fun injectionForHost(text: String) = InjectionAssertionData(text)
+fun injectionForHost(text: String): InjectionAssertionData = InjectionAssertionData(text)
 
 fun CodeInsightTestFixture.assertInjectedLanguage(langId: String?, vararg fragmentTexts: String) {
   runReadAction {

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHServiceUtil.logEr
 import java.util.concurrent.CompletableFuture
 
 class GHPRStateServiceImpl internal constructor(private val progressManager: ProgressManager,
+                                                private val project: Project,
                                                 private val securityService: GHPRSecurityService,
                                                 private val requestExecutor: GithubApiRequestExecutor,
                                                 private val serverPath: GithubServerPath,
@@ -91,7 +93,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       requestExecutor.execute(it, GithubApiRequests.Repos.PullRequests.merge(serverPath, repoPath, pullRequestId.number,
                                                                              commitMessage.first, commitMessage.second,
                                                                              currentHeadRef))
-      GHPRStatisticsCollector.logMergedEvent(GithubPullRequestMergeMethod.merge)
+      GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.merge)
       return@submitIOTask
     }.logError(LOG, "Error occurred while merging PR ${pullRequestId.number}")
 
@@ -102,7 +104,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
       requestExecutor.execute(it,
                               GithubApiRequests.Repos.PullRequests.rebaseMerge(serverPath, repoPath, pullRequestId.number,
                                                                                currentHeadRef))
-      GHPRStatisticsCollector.logMergedEvent(GithubPullRequestMergeMethod.rebase)
+      GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.rebase)
       return@submitIOTask
     }.logError(LOG, "Error occurred while rebasing PR ${pullRequestId.number}")
 
@@ -113,7 +115,7 @@ class GHPRStateServiceImpl internal constructor(private val progressManager: Pro
                               GithubApiRequests.Repos.PullRequests.squashMerge(serverPath, repoPath, pullRequestId.number,
                                                                                commitMessage.first, commitMessage.second,
                                                                                currentHeadRef))
-      GHPRStatisticsCollector.logMergedEvent(GithubPullRequestMergeMethod.squash)
+      GHPRStatisticsCollector.logMergedEvent(project, GithubPullRequestMergeMethod.squash)
       return@submitIOTask
     }.logError(LOG, "Error occurred while squash-merging PR ${pullRequestId.number}")
 

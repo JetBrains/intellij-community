@@ -34,7 +34,7 @@ public abstract class PsiPolyVariantCachingReference implements PsiPolyVariantRe
     return false;
   }
 
-  private static class MyResolver implements ResolveCache.PolyVariantContextResolver<PsiPolyVariantReference> {
+  private static final class MyResolver implements ResolveCache.PolyVariantContextResolver<PsiPolyVariantReference> {
     private static final MyResolver INSTANCE = new MyResolver();
 
     @Override

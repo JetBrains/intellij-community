@@ -23,7 +23,7 @@ import javax.swing.JComponent
 
 open class AppFontOptionsPanel(private val scheme: EditorColorsScheme) : AbstractFontOptionsPanel() {
 
-  protected val defaultPreferences = FontPreferencesImpl()
+  protected val defaultPreferences: FontPreferencesImpl = FontPreferencesImpl()
 
   private var regularWeightCombo: FontWeightCombo? = null
   private var boldWeightCombo: FontWeightCombo? = null

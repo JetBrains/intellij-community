@@ -5,4 +5,5 @@ fun foo() {
     }
 }
 
+// IGNORE_FIR
 // TOOL: org.jetbrains.kotlin.idea.inspections.ConstantConditionIfInspection

@@ -8,7 +8,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.UUID
 
-internal const val HEAP_DUMP_IS_PUBLISHED = "Heap dump is published to "
+internal const val HEAP_DUMP_IS_PUBLISHED: String = "Heap dump is published to "
 
 @TestOnly
 fun publishHeapDump(fileNamePrefix: String): String {

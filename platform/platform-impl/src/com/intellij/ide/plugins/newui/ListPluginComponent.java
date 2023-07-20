@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.plaf.ButtonUI;
 import java.awt.*;
@@ -60,6 +61,7 @@ public final class ListPluginComponent extends JPanel {
   private final boolean myMarketplace;
   private final boolean myIsAvailable;
   private @NotNull IdeaPluginDescriptor myPlugin;
+  private PluginNode myInstalledPluginMarketplaceNode;
   private final @NotNull PluginsGroup myGroup;
   private boolean myOnlyUpdateMode;
   private boolean myAfterUpdate;
@@ -136,6 +138,8 @@ public final class ListPluginComponent extends JPanel {
       showProgress(false);
     }
     updateColors(EventHandler.SelectionType.NONE);
+
+    putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, plugin.getName());
 
     UiInspectorUtil.registerProvider(this, new PluginIdUiInspectorContextProvider());
   }
@@ -542,15 +546,8 @@ public final class ListPluginComponent extends JPanel {
           }
         }
 
-        String message;
-        if (myUpdateDescriptor instanceof PluginNode && ((PluginNode)myUpdateDescriptor).getTags().contains(Tags.Freemium.name())) {
-          message = IdeBundle.message("label.next.plugin.version.is.freemium");
-        }
-        else {
-          message = IdeBundle.message("label.next.plugin.version.is.paid.use.the.trial.for.up.to.30.days.or");
-        }
-        myUpdateLicensePanel.setText(message, true, false);
-        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor);
+        myUpdateLicensePanel.setText(IdeBundle.message("label.next.plugin.version.is"), true, false);
+        myUpdateLicensePanel.showBuyPlugin(() -> myUpdateDescriptor, true);
         myUpdateLicensePanel.setVisible(true);
       }
       if (myUpdateButton == null) {
@@ -797,7 +794,6 @@ public final class ListPluginComponent extends JPanel {
       ((JCheckBox)myEnableDisableButton).setSelected(
         myPluginModel.isEnabled(getDescriptorForActions()));
     }
-    myNameComponent.setIcon(AllIcons.General.ProjectConfigurable);
   }
 
   public void updateAfterUninstall(boolean needRestartForUninstall) {
@@ -1077,6 +1073,14 @@ public final class ListPluginComponent extends JPanel {
     myPlugin = plugin;
   }
 
+  public synchronized @Nullable PluginNode getInstalledPluginMarketplaceNode() {
+    return myInstalledPluginMarketplaceNode;
+  }
+
+  public synchronized void setInstalledPluginMarketplaceNode(@NotNull PluginNode installedPluginMarketplaceNode) {
+    myInstalledPluginMarketplaceNode = installedPluginMarketplaceNode;
+  }
+
   private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {
     Iterator<? extends ListPluginComponent> iterator = selection.iterator();
     BooleanSupplier isGloballyEnabledGenerator = () ->
@@ -1149,7 +1153,7 @@ public final class ListPluginComponent extends JPanel {
       result.add(new PropertyBean("Plugin ID", myPlugin.getPluginId(), true));
       result.add(new PropertyBean("Plugin Dependencies",
                                   StringUtil.join(myPlugin.getDependencies(),
-                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", ")));
+                                                  it -> it.getPluginId() + (it.isOptional() ? " (optional)" : ""), ", "), true));
       return result;
     }
   }

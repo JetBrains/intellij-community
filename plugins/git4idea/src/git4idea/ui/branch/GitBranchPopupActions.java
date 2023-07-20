@@ -254,11 +254,15 @@ public class GitBranchPopupActions {
     IssueNavigationConfiguration issueNavigationConfiguration = IssueNavigationConfiguration.getInstance(project);
     List<IssueNavigationConfiguration.LinkMatch> issueMatches = issueNavigationConfiguration.findIssueLinks(branchName);
     int affectedMaxBranchNameLength = maxBranchNameLength - StringUtil.ELLIPSIS.length();
-    if (issueMatches.size() != 0) {
+    if (!issueMatches.isEmpty()) {
       // never truncate the first occurrence of the issue id
       IssueNavigationConfiguration.LinkMatch firstMatch = issueMatches.get(0);
       TextRange firstMatchRange = firstMatch.getRange();
       return truncateAndSaveIssueId(firstMatchRange, branchName, affectedMaxBranchNameLength, suffixLength, delta);
+    }
+
+    if (affectedMaxBranchNameLength - suffixLength - StringUtil.ELLIPSIS.length() < 0) {
+      return branchName;
     }
 
     return StringUtil.shortenTextWithEllipsis(branchName, affectedMaxBranchNameLength, suffixLength, true);
@@ -391,7 +395,7 @@ public class GitBranchPopupActions {
                               @NotNull @NlsSafe String branchName,
                               @NotNull GitRepository selectedRepository) {
       myProject = project;
-      myRepositories = immutableList(repositories);
+      myRepositories = Collections.unmodifiableList(repositories);
       myBranchName = branchName;
       mySelectedRepository = selectedRepository;
       myGitBranchManager = project.getService(GitBranchManager.class);

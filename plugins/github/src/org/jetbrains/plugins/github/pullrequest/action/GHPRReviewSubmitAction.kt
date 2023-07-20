@@ -3,6 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.icons.AllIcons
@@ -35,8 +36,8 @@ import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.component.GHSimpleErrorPanelModel
@@ -71,7 +72,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
         null
       }
       val pendingReview = review != null
-      val comments = review?.comments?.totalCount
+      val comments = review?.commentsCount
 
       e.presentation.text = getText(comments)
       e.presentation.putClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY, pendingReview)
@@ -79,7 +80,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
   }
 
   private fun getPrefix(place: String) = if (place == ActionPlaces.DIFF_TOOLBAR) GithubBundle.message("pull.request.review.submit")
-  else GithubBundle.message("pull.request.review.submit.review")
+  else CollaborationToolsBundle.message("review.start.submit.action")
 
   @NlsSafe
   private fun getText(pendingComments: Int?): String {
@@ -230,16 +231,16 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
       }
 
       private fun createSubmitActionComponent(pendingReview: GHPullRequestPendingReview?): JComponent {
-        val titleLabel = JLabel(GithubBundle.message("pull.request.review.submit.review")).apply {
+        val titleLabel = JLabel(CollaborationToolsBundle.message("review.start.submit.action")).apply {
           font = font.deriveFont(font.style or Font.BOLD)
         }
         val titlePanel = JPanel(HorizontalLayout(0)).apply {
           isOpaque = false
           add(titleLabel, HorizontalLayout.LEFT)
           if (pendingReview != null) {
-            val commentsCount = pendingReview.comments.totalCount!!
+            val commentsCount = pendingReview.commentsCount
             add(Box.createRigidArea(JBDimension(5, 0)), HorizontalLayout.LEFT)
-            val pendingCommentsLabel = JLabel(GithubBundle.message("pull.request.review.pending.comments.count", commentsCount)).apply {
+            val pendingCommentsLabel = JLabel(CollaborationToolsBundle.message("review.pending.comments.count", commentsCount)).apply {
               foreground = UIUtil.getContextHelpForeground()
             }
             add(pendingCommentsLabel, HorizontalLayout.LEFT)
@@ -299,7 +300,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
   override fun updateButtonFromPresentation(button: JButton, presentation: Presentation) {
     super.updateButtonFromPresentation(button, presentation)
-    val prefix = presentation.getClientProperty(PROP_PREFIX) ?: GithubBundle.message("pull.request.review.submit.review")
+    val prefix = presentation.getClientProperty(PROP_PREFIX) ?: CollaborationToolsBundle.message("review.start.submit.action")
     button.text = prefix + presentation.text
     ClientProperty.put(button, DarculaButtonUI.DEFAULT_STYLE_KEY, presentation.getClientProperty(DarculaButtonUI.DEFAULT_STYLE_KEY))
   }

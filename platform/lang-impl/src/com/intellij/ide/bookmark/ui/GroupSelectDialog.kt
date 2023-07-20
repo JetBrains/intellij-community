@@ -6,6 +6,7 @@ import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarksManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.containers.map2Array
 import com.intellij.util.ui.JBUI
@@ -17,7 +18,7 @@ import javax.swing.plaf.basic.BasicComboBoxEditor
 class GroupSelectDialog(project: Project?, parent: Component?, val manager: BookmarksManager, val groups: List<BookmarkGroup>)
   : GroupInputDialog<ComboBox<String>>(project, parent) {
 
-  override val component = ComboBox(groups.map2Array { it.name })
+  override val component: ComboBox<@NlsSafe String> = ComboBox(groups.map2Array { it.name })
 
   private val groupName
     get() = component.editor?.item?.toString()?.trim() ?: ""

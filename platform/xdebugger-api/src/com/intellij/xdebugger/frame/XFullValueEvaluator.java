@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * Supports asynchronous fetching full text of a value. If full text is already computed use {@link ImmediateFullValueEvaluator}
@@ -17,7 +19,12 @@ import java.awt.*;
  */
 public abstract class XFullValueEvaluator {
   private final @Nls String myLinkText;
+
+  private final @Nullable LinkAttributes myLinkAttributes;
+
   private boolean myShowValuePopup = true;
+
+  private boolean myIsEnabled = true;
 
   protected XFullValueEvaluator() {
     this(XDebuggerBundle.message("node.test.show.full.value"));
@@ -31,16 +38,27 @@ public abstract class XFullValueEvaluator {
    * @param linkText text of the link what will be appended to a variables tree node text
    */
   protected XFullValueEvaluator(@NotNull @Nls String linkText) {
-    myLinkText = linkText;
+    this(linkText, null);
   }
 
-  public boolean isShowValuePopup() {
-    return myShowValuePopup;
+  protected XFullValueEvaluator(@NotNull @Nls String linkText, @Nullable LinkAttributes linkAttributes) {
+    myLinkText = linkText;
+    myLinkAttributes = linkAttributes;
   }
+
+  public boolean isShowValuePopup() { return myShowValuePopup; }
+
+  public boolean isEnabled() { return myIsEnabled; }
 
   @NotNull
   public XFullValueEvaluator setShowValuePopup(boolean value) {
     myShowValuePopup = value;
+    return this;
+  }
+
+  @NotNull
+  public XFullValueEvaluator setIsEnabled(boolean value) {
+    myIsEnabled = value;
     return this;
   }
 
@@ -51,13 +69,41 @@ public abstract class XFullValueEvaluator {
    */
   public abstract void startEvaluation(@NotNull XFullValueEvaluationCallback callback);
 
-  public @Nls String getLinkText() {
+  public @Nls @NotNull String getLinkText() {
     return myLinkText;
   }
+
+  public @Nullable LinkAttributes getLinkAttributes() { return myLinkAttributes; }
 
   public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
+  }
+
+  public static class LinkAttributes {
+    private final @Nullable @Nls String myLinkTooltipText;
+
+    private final @Nullable Supplier<String> myShortcutSupplier;
+
+    private final @Nullable Icon myLinkIcon;
+
+    public LinkAttributes(@Nullable @Nls String text, @Nullable Supplier<String> supplier, @Nullable Icon icon) {
+      myLinkTooltipText = text;
+      myShortcutSupplier = supplier;
+      myLinkIcon = icon;
+    }
+
+    public @Nullable Icon getLinkIcon() {
+      return myLinkIcon;
+    }
+
+    public @Nls @Nullable String getLinkTooltipText() {
+      return myLinkTooltipText;
+    }
+
+    public @Nullable Supplier<String> getShortcutSupplier() {
+      return myShortcutSupplier;
+    }
   }
 }

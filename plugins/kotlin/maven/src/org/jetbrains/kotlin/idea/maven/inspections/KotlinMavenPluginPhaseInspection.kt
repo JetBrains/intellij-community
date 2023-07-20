@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.utils.PathUtil
-import java.util.*
 
 class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java) {
     private object Holder {
@@ -42,11 +41,7 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
 
     override fun getStaticDescription() = KotlinMavenBundle.message("inspection.description")
 
-    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>?, holder: DomElementAnnotationHolder?) {
-        if (domFileElement == null || holder == null) {
-            return
-        }
-
+    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val module = domFileElement.module ?: return
         val manager = MavenProjectsManager.getInstance(module.project)
         val mavenProject = manager.findProject(module) ?: return
@@ -90,11 +85,10 @@ class KotlinMavenPluginPhaseInspection : DomElementsInspection<MavenDomProjectMo
                                 it.groupId.stringValue == "org.apache.maven.plugins" &&
                                         it.artifactId.stringValue == "maven-compiler-plugin"
                             }
-
                             if (existingJavac == null
                                 || !pom.isPluginAfter(existingJavac, kotlinPlugin)
-                                || pom.isExecutionEnabled(javacPlugin, "default-compile")
-                                || pom.isExecutionEnabled(javacPlugin, "default-testCompile")
+                                || pom.findExecution(javacPlugin, "default-compile")?.phase != "none"
+                                || pom.findExecution(javacPlugin, "default-testCompile")?.phase != "none"
                                 || pom.isPluginExecutionMissing(javacPlugin, "default-compile", "compile")
                                 || pom.isPluginExecutionMissing(javacPlugin, "default-testCompile", "testCompile")
                             ) {

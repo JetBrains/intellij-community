@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.tools.model.updater
 
 import org.jdom.Document
@@ -16,6 +16,7 @@ class GeneratorPreferences(properties: Properties) : Preferences(properties) {
     val kotlincVersion: String by Preference()
     val kotlinGradlePluginVersion: String by Preference()
     val kotlincArtifactsMode: ArtifactMode by Preference(ArtifactMode::valueOf)
+    val bootstrapWithNative: Boolean by Preference(String::toBoolean)
 
     enum class ArtifactMode {
         MAVEN, BOOTSTRAP
@@ -67,7 +68,7 @@ fun main(args: Array<String>) {
 
 private fun regenerateProjectLibraries(dotIdea: File, libraries: List<JpsLibrary>) {
     val librariesDir = dotIdea.resolve("libraries")
-    librariesDir.listFiles { file -> file.startsWith("kotlinc_") }!!.forEach { it.delete() }
+    librariesDir.listFiles { file -> file.name.startsWith("kotlinc_") }!!.forEach { it.delete() }
 
     for (library in libraries) {
         val libraryFileName = library.name.replace("\\W".toRegex(), "_") + ".xml"

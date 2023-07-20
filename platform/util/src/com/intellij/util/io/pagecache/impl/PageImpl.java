@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io.pagecache.impl;
 
 import com.intellij.openapi.util.ThrowableNotNullFunction;
@@ -156,7 +156,7 @@ public class PageImpl implements Page {
   private volatile int statePacked = 0;
 
   /** Mostly guards access to .data buffer */
-  private transient final ReentrantReadWriteLock pageLock = new ReentrantReadWriteLock();
+  private final transient ReentrantReadWriteLock pageLock = new ReentrantReadWriteLock();
 
   /**
    * The buffer position/limit shouldn't be touched, since it is hard to make that concurrent:

@@ -10,7 +10,7 @@ object EnumeratorLongDescriptor: KeyDescriptor<Long> {
 
     override fun isEqual(first: Long, second: Long): Boolean = first == second
 
-    override fun save(out: DataOutput, value: Long) = out.writeLong(value)
+    override fun save(out: DataOutput, value: Long): Unit = out.writeLong(value)
 
     override fun read(`in`: DataInput): Long = `in`.readLong()
 }

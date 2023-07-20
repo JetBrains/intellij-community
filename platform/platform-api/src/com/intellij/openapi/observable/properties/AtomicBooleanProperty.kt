@@ -18,9 +18,9 @@ class AtomicBooleanProperty(
 
   override fun get(): Boolean = value.get()
 
-  override fun set() = set(true)
+  override fun set(): Unit = set(true)
 
-  override fun reset() = set(false)
+  override fun reset(): Unit = set(false)
 
   override fun set(value: Boolean) {
     val oldValue = this.value.getAndSet(value)
@@ -52,8 +52,8 @@ class AtomicBooleanProperty(
   }
 
   //TODO: Remove with BooleanProperty
-  override fun afterSet(listener: () -> Unit) = afterSet(null, listener)
-  override fun afterSet(listener: () -> Unit, parentDisposable: Disposable) = afterSet(parentDisposable, listener)
-  override fun afterReset(listener: () -> Unit) = afterReset(null, listener)
-  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable) = afterReset(parentDisposable, listener)
+  override fun afterSet(listener: () -> Unit): Unit = afterSet(null, listener)
+  override fun afterSet(listener: () -> Unit, parentDisposable: Disposable): Unit = afterSet(parentDisposable, listener)
+  override fun afterReset(listener: () -> Unit): Unit = afterReset(null, listener)
+  override fun afterReset(listener: () -> Unit, parentDisposable: Disposable): Unit = afterReset(parentDisposable, listener)
 }

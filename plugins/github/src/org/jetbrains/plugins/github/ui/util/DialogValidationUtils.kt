@@ -22,7 +22,7 @@ object DialogValidationUtils {
    * Stateful validator that checks that contents of [textField] are unique among [records]
    */
   class RecordUniqueValidator(private val textField: JTextField, @NlsContexts.DialogMessage private val message: String) : Validator {
-    var records: Set<String> = setOf<String>()
+    var records: Set<String> = setOf()
 
     override fun invoke(): ValidationInfo? = if (records.contains(textField.text)) ValidationInfo(message, textField) else null
   }

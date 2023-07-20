@@ -300,7 +300,7 @@ public class EditorStressTest extends AbstractEditorTest {
 
   private static final Key<Integer> REGION_WIDTH = Key.create("custom.region.width");
 
-  private static class MyCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
+  private static final class MyCustomFoldRegionRenderer implements CustomFoldRegionRenderer {
     private static final MyCustomFoldRegionRenderer INSTANCE = new MyCustomFoldRegionRenderer();
 
     @Override

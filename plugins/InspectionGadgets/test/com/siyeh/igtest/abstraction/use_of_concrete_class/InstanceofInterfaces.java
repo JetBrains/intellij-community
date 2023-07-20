@@ -41,7 +41,7 @@ class InstanceofInterfaces {
   void testRecord(XYZ xyz) {
     if (xyz instanceof X x) {}
     if (xyz instanceof <warning descr="Pattern test against a concrete class 'Y'">Y</warning> y) {}
-    if (xyz instanceof (<warning descr="Pattern test against a concrete class 'Y'">Y</warning> y && y != null)) {}
+    if (xyz instanceof <warning descr="Pattern test against a concrete class 'Y'">Y</warning> y && y != null) {}
   }
 
   void testSwitch(XYZ xyz) {

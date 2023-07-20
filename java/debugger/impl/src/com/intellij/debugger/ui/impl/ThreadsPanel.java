@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.impl;
 
 import com.intellij.debugger.actions.DebuggerAction;
@@ -117,10 +117,10 @@ public class ThreadsPanel extends DebuggerTreePanel {
       private void reschedule() {
         final DebuggerSession session = getContext().getDebuggerSession();
         if (session != null && session.isAttached() && !session.isPaused() && !myUpdateLabelsAlarm.isDisposed()) {
-          myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
+          myUpdateLabelsAlarm.addRequest(this, LABELS_UPDATE_DELAY_MS, ModalityState.nonModal());
         }
       }
-    }, LABELS_UPDATE_DELAY_MS, ModalityState.NON_MODAL);
+    }, LABELS_UPDATE_DELAY_MS, ModalityState.nonModal());
   }
 
   @Override

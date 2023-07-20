@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.core.CoreProjectScopeBuilder;
@@ -22,16 +22,14 @@ import java.util.Objects;
 
 
 public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   public ProjectScopeBuilderImpl(@NotNull Project project) {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildEverythingScope() {
+  public @NotNull GlobalSearchScope buildEverythingScope() {
     return new EverythingGlobalScope(myProject) {
       final FileBasedIndexImpl myFileBasedIndex;
 
@@ -57,9 +55,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     };
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildLibrariesScope() {
+  public @NotNull GlobalSearchScope buildLibrariesScope() {
     ProjectAndLibrariesScope result = new ProjectAndLibrariesScope(myProject) {
       @Override
       public boolean contains(@NotNull VirtualFile file) {
@@ -71,9 +68,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
         return false;
       }
 
-      @NotNull
       @Override
-      public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
+      public @NotNull Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
         return Collections.emptySet();
       }
     };
@@ -81,9 +77,8 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     return result;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildAllScope() {
+  public @NotNull GlobalSearchScope buildAllScope() {
     if (myProject.isDefault() || LightEdit.owns(myProject)) {
       return new EverythingGlobalScope(myProject);
     }
@@ -99,15 +94,13 @@ public class ProjectScopeBuilderImpl extends ProjectScopeBuilder {
     };
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildProjectScope() {
+  public @NotNull GlobalSearchScope buildProjectScope() {
     return new ProjectScopeImpl(myProject, FileIndexFacade.getInstance(myProject));
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope buildContentScope() {
+  public @NotNull GlobalSearchScope buildContentScope() {
     return new CoreProjectScopeBuilder.ContentSearchScope(myProject, FileIndexFacade.getInstance(myProject));
   }
 }

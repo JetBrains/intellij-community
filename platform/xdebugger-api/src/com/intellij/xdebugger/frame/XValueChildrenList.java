@@ -80,6 +80,11 @@ public class XValueChildrenList {
     myValues.add(value);
   }
 
+  public void add(int index, @NotNull XNamedValue value) {
+    myNames.add(index, value.getName());
+    myValues.add(index, value);
+  }
+
   /**
    * Adds a node representing group of values to the top of a node children list
    */

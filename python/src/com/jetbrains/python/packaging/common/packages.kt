@@ -5,9 +5,14 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.jetbrains.python.packaging.repository.PyEmptyPackagePackageRepository
 import com.jetbrains.python.packaging.repository.PyPIPackageRepository
 import com.jetbrains.python.packaging.repository.PyPackageRepository
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation
 import org.jetbrains.annotations.Nls
 
-open class PythonPackage(val name: String, val version: String)
+open class PythonPackage(val name: String, val version: String) {
+  override fun toString(): String {
+    return "PythonPackage(name='$name', version='$version')"
+  }
+}
 
 interface PythonPackageDetails {
 
@@ -52,9 +57,10 @@ interface PythonPackageSpecification {
   val name: String
   val version: String?
   val repository: PyPackageRepository?
+  val relation: PyRequirementRelation?
 
   fun buildInstallationString(): List<String>  = buildList {
-    val versionString = if (version != null) "==$version" else ""
+    val versionString = if (version != null) "${relation?.presentableText ?: "=="}$version" else ""
     add("$name$versionString")
     if (repository == PyEmptyPackagePackageRepository) {
       thisLogger().warn("PyEmptyPackagePackageRepository used as source repository for package installation!")
@@ -75,12 +81,15 @@ interface PythonLocationBasedPackageSpecification : PythonPackageSpecification {
     get() = null
   override val repository: PyPackageRepository?
     get() = null
+  override val relation: PyRequirementRelation?
+    get() = null
   override fun buildInstallationString(): List<String> = if (editable) listOf("-e", "$prefix$location") else listOf("$prefix$location")
 }
 
 data class PythonSimplePackageSpecification(override val name: String,
                                             override val version: String?,
-                                            override val repository: PyPackageRepository?) : PythonPackageSpecification
+                                            override val repository: PyPackageRepository?,
+                                            override val relation: PyRequirementRelation? = null) : PythonPackageSpecification
 
 data class PythonLocalPackageSpecification(override val name: String,
                                            override val location: String,

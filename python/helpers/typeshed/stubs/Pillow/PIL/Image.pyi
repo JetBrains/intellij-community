@@ -1,5 +1,6 @@
 from _typeshed import Self, SupportsRead, SupportsWrite
 from collections.abc import Callable, Iterable, Iterator, MutableMapping, Sequence
+from enum import IntEnum
 from pathlib import Path
 from typing import Any, ClassVar, Protocol, SupportsBytes, Union
 from typing_extensions import Literal, TypeAlias
@@ -78,6 +79,46 @@ MAXCOVERAGE: Literal[1]
 FASTOCTREE: Literal[2]
 LIBIMAGEQUANT: Literal[3]
 
+class Transpose(IntEnum):
+    FLIP_LEFT_RIGHT: Literal[0]
+    FLIP_TOP_BOTTOM: Literal[1]
+    ROTATE_90: Literal[2]
+    ROTATE_180: Literal[3]
+    ROTATE_270: Literal[4]
+    TRANSPOSE: Literal[5]
+    TRANSVERSE: Literal[6]
+
+class Transform(IntEnum):
+    AFFINE: Literal[0]
+    EXTENT: Literal[1]
+    PERSPECTIVE: Literal[2]
+    QUAD: Literal[3]
+    MESH: Literal[4]
+
+class Resampling(IntEnum):
+    NEAREST: Literal[0]
+    LANCZOS: Literal[1]
+    BILINEAR: Literal[2]
+    BICUBIC: Literal[3]
+    BOX: Literal[4]
+    HAMMING: Literal[5]
+
+class Dither(IntEnum):
+    NONE: Literal[0]
+    ORDERED: Literal[1]
+    RASTERIZE: Literal[2]
+    FLOYDSTEINBERG: Literal[3]
+
+class Palette(IntEnum):
+    WEB: Literal[0]
+    ADAPTIVE: Literal[1]
+
+class Quantize(IntEnum):
+    MEDIANCUT: Literal[0]
+    MAXCOVERAGE: Literal[1]
+    FASTOCTREE: Literal[2]
+    LIBIMAGEQUANT: Literal[3]
+
 ID: list[str]
 OPEN: dict[str, Any]
 MIME: dict[str, str]
@@ -137,7 +178,7 @@ class Image:
         mode: _Mode | None = ...,
         matrix: _ConversionMatrix | None = ...,
         dither: int | None = ...,
-        palette: Literal[0, 1] = ...,
+        palette: Literal[Palette.WEB] = ...,
         colors: int = ...,
     ) -> Image: ...
     def quantize(
@@ -176,7 +217,7 @@ class Image:
     def resize(
         self,
         size: tuple[int, int],
-        resample: _Resample | None = ...,
+        resample: Resampling | _Resample | None = ...,
         box: tuple[float, float, float, float] | None = ...,
         reducing_gap: float | None = ...,
     ) -> Image: ...
@@ -184,7 +225,7 @@ class Image:
     def rotate(
         self,
         angle: float,
-        resample: _Resample = ...,
+        resample: Resampling | _Resample = ...,
         expand: bool = ...,
         center: tuple[float, float] | None = ...,
         translate: tuple[float, float] | None = ...,
@@ -204,17 +245,17 @@ class Image:
     def split(self) -> tuple[Image, ...]: ...
     def getchannel(self, channel: int | str) -> Image: ...
     def tell(self) -> int: ...
-    def thumbnail(self, size: tuple[int, int], resample: _Resample = ..., reducing_gap: float = ...) -> None: ...
+    def thumbnail(self, size: tuple[int, int], resample: Resampling | _Resample = ..., reducing_gap: float = ...) -> None: ...
     def transform(
         self,
         size: _Size,
-        method: Literal[0, 1, 2, 3, 4],
+        method: Transform | Literal[0, 1, 2, 3, 4],
         data=...,
-        resample: _Resample = ...,
+        resample: Resampling | _Resample = ...,
         fill: int = ...,
         fillcolor: _Color | int | None = ...,
     ) -> Image: ...
-    def transpose(self, method: Literal[0, 1, 2, 3, 4, 5, 6]) -> Image: ...
+    def transpose(self, method: Transpose | Literal[0, 1, 2, 3, 4, 5, 6]) -> Image: ...
     def effect_spread(self, distance: int) -> Image: ...
     def toqimage(self): ...
     def toqpixmap(self): ...

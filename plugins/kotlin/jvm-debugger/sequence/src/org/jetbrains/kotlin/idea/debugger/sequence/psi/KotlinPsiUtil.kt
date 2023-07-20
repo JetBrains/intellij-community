@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.psi
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
@@ -34,6 +34,7 @@ object KotlinPsiUtil {
 fun KtCallExpression.callName(): String = this.calleeExpression!!.text
 
 // Used in JAICF plugin (https://plugins.jetbrains.com/plugin/17391-jaicf/)
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Function is semantically incorrect as there might be both dispatch and extension receivers. Replace call with appropriate logic.",
     level = DeprecationLevel.ERROR
@@ -44,6 +45,7 @@ fun KtCallExpression.receiverValue(): ReceiverValue? {
 }
 
 // Used in JAICF plugin (https://plugins.jetbrains.com/plugin/17391-jaicf/)
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Function is semantically incorrect as there might be both dispatch and extension receivers. Replace call with appropriate logic.",
     level = DeprecationLevel.ERROR

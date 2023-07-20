@@ -11,7 +11,7 @@ import javax.swing.JLabel
 import javax.swing.JList
 
 private const val INLINE_BUTTON_WIDTH = 16
-const val INLINE_BUTTON_MARKER = "inlineButtonMarker"
+const val INLINE_BUTTON_MARKER: String = "inlineButtonMarker"
 
 fun createExtraButton(icon: Icon, active: Boolean): JComponent {
   val label = JLabel(icon)

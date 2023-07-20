@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -127,9 +127,8 @@ public final class ClasspathCache {
   }
 
   Loader @Nullable [] getLoadersByName(@NotNull String path) {
-    return (path.endsWith(CLASS_EXTENSION)
-            ? classPackageCacheGetter
-            : resourcePackageCacheGetter).apply(getPackageNameHash(path, path.lastIndexOf('/')));
+    return (path.endsWith(CLASS_EXTENSION) ? classPackageCacheGetter : resourcePackageCacheGetter)
+      .apply(getPackageNameHash(path, path.lastIndexOf('/')));
   }
 
   Loader @Nullable [] getLoadersByResourcePackageDir(@NotNull String resourcePath) {

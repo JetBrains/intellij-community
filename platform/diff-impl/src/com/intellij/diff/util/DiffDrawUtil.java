@@ -16,7 +16,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.*;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -26,6 +25,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +34,7 @@ import java.awt.geom.CubicCurve2D;
 import java.awt.geom.Path2D;
 import java.util.List;
 import java.util.*;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
@@ -245,10 +246,6 @@ public final class DiffDrawUtil {
     }
   }
 
-  public static int yToLine(@NotNull Editor editor, int y) {
-    return editor.xyToLogicalPosition(new Point(0, y)).line;
-  }
-
   @NotNull
   public static MarkerRange getGutterMarkerPaintRange(@NotNull Editor editor, int startLine, int endLine) {
     int y1;
@@ -274,78 +271,18 @@ public final class DiffDrawUtil {
                                                   @Nullable final Editor editor,
                                                   @NotNull BackgroundType background) {
     if (background == BackgroundType.NONE) return null;
-    return new TextAttributes() {
-      @Override
-      public Color getBackgroundColor() {
-        return background == BackgroundType.IGNORED ? type.getIgnoredColor(editor) : type.getColor(editor);
-      }
-    };
+    return new DiffTextAttributes(background, type, editor);
   }
 
   @NotNull
   private static TextAttributes getStripeTextAttributes(@NotNull final TextDiffType type,
                                                         @NotNull final Editor editor) {
-    return new TextAttributes() {
-      @Override
-      public Color getErrorStripeColor() {
-        return type.getMarkerColor(editor);
-      }
-    };
+    return new DiffStripeMarkerTextAttributes(type, editor);
   }
 
   private static void installEmptyRangeRenderer(@NotNull RangeHighlighter highlighter,
                                                 @NotNull TextDiffType type) {
     highlighter.setCustomRenderer(new DiffEmptyHighlighterRenderer(type));
-  }
-
-  @NotNull
-  private static LineSeparatorRenderer createDiffLineRenderer(@NotNull Editor editor,
-                                                              @Nullable RangeHighlighter parentHighlighter,
-                                                              @NotNull TextDiffType type,
-                                                              @NotNull SeparatorPlacement placement,
-                                                              final boolean doubleLine,
-                                                              final boolean resolved) {
-    return new LineSeparatorRenderer() {
-      @Override
-      public void drawLine(Graphics g, int x1, int x2, int y) {
-        if (parentHighlighter != null && FoldingUtil.isHighlighterFolded(editor, parentHighlighter)) return;
-        Rectangle clip = g.getClipBounds();
-        x2 = clip.x + clip.width;
-        if (placement == SeparatorPlacement.TOP) y++;
-        drawChunkBorderLine((Graphics2D)g, x1, x2, y, type.getColor(editor), doubleLine, resolved);
-      }
-    };
-  }
-
-  @NotNull
-  private static LineMarkerRenderer createFoldingGutterLineRenderer(@NotNull final TextDiffType type,
-                                                                    @NotNull final SeparatorPlacement placement,
-                                                                    final boolean doubleLine,
-                                                                    final boolean resolved) {
-    return new LineMarkerRendererEx() {
-      @Override
-      public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-        EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
-        Graphics2D g2 = (Graphics2D)g;
-
-        int x1 = gutter.getWhitespaceSeparatorOffset();
-        int x2 = gutter.getWidth();
-
-        int y = r.y;
-        if (placement == SeparatorPlacement.BOTTOM) {
-          LOG.warn("BOTTOM gutter line renderers are not supported");
-          y += editor.getLineHeight() - 1;
-        }
-
-        drawChunkBorderLine(g2, x1, x2, y, type.getColor(editor), doubleLine, resolved);
-      }
-
-      @NotNull
-      @Override
-      public Position getPosition() {
-        return Position.CUSTOM;
-      }
-    };
   }
 
   //
@@ -434,6 +371,15 @@ public final class DiffDrawUtil {
   }
 
   @NotNull
+  public static List<RangeHighlighter> createHighlighter(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type,
+                                                         @NotNull PaintMode editorMode, @NotNull PaintMode gutterMode) {
+    return new LineHighlighterBuilder(editor, startLine, endLine, type)
+      .withEditorMode(editorMode)
+      .withGutterMode(gutterMode)
+      .done();
+  }
+
+  @NotNull
   public static List<RangeHighlighter> createInlineHighlighter(@NotNull Editor editor, int start, int end, @NotNull TextDiffType type) {
     return new InlineHighlighterBuilder(editor, start, end, type).done();
   }
@@ -455,11 +401,16 @@ public final class DiffDrawUtil {
   }
 
   @NotNull
+  public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor, int offset1, int offset2) {
+    return createLineSeparatorHighlighter(editor, offset1, offset2, () -> true);
+  }
+
+  @NotNull
   public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor,
                                                                       int offset1,
                                                                       int offset2,
-                                                                      @NotNull BooleanGetter condition) {
-    return createLineSeparatorHighlighter(editor, offset1, offset2, new SimpleSeparatorPresentation(condition));
+                                                                      @NotNull BooleanSupplier visibilityCondition) {
+    return createLineSeparatorHighlighter(editor, offset1, offset2, new SimpleSeparatorPresentation(visibilityCondition));
   }
 
   @NotNull
@@ -523,6 +474,9 @@ public final class DiffDrawUtil {
 
     private int layerPriority = 0; // higher number wins
 
+    private @Nullable PaintMode fixedEditorMode;
+    private @Nullable PaintMode fixedGutterMode;
+
     public LineHighlighterBuilder(@NotNull Editor editor, int startLine, int endLine, @NotNull TextDiffType type) {
       this.editor = editor;
       this.type = type;
@@ -585,6 +539,18 @@ public final class DiffDrawUtil {
       return this;
     }
 
+    @NotNull
+    public LineHighlighterBuilder withEditorMode(@NotNull PaintMode mode) {
+      this.fixedEditorMode = mode;
+      return this;
+    }
+
+    @NotNull
+    public LineHighlighterBuilder withGutterMode(@NotNull PaintMode mode) {
+      this.fixedGutterMode = mode;
+      return this;
+    }
+
     /**
      * @see #setupLayeredRendering
      */
@@ -613,6 +579,12 @@ public final class DiffDrawUtil {
         editorMode = PaintMode.RESOLVED;
         gutterMode = PaintMode.RESOLVED;
       }
+      if (fixedEditorMode != null) {
+        editorMode = fixedEditorMode;
+      }
+      if (fixedGutterMode != null) {
+        gutterMode = fixedGutterMode;
+      }
 
       boolean isEmptyRange = startLine == endLine;
       boolean isFirstLine = startLine == 0;
@@ -623,7 +595,7 @@ public final class DiffDrawUtil {
       int end = offsets.getEndOffset();
 
       TextAttributes attributes = isEmptyRange ? null : getTextAttributes(type, editor, editorMode.background);
-      TextAttributes stripeAttributes = hideStripeMarkers || resolved || excludedInEditor
+      TextAttributes stripeAttributes = hideStripeMarkers || editorMode.background == BackgroundType.NONE
                                         ? null : getStripeTextAttributes(type, editor);
       boolean dottedLine = editorMode.border == BorderType.DOTTED;
 
@@ -753,14 +725,12 @@ public final class DiffDrawUtil {
     public LineMarkerBuilder withDefaultRenderer(@NotNull TextDiffType type, boolean doubleLine, boolean dottedLine,
                                                  @Nullable RangeHighlighter parentHighlighter) {
       RangeHighlighter parent = ObjectUtils.chooseNotNull(parentHighlighter, highlighter);
-      LineSeparatorRenderer renderer = createDiffLineRenderer(editor, parent, type, placement, doubleLine, dottedLine);
-      return withRenderer(renderer);
+      return withRenderer(new DiffDefaultBorderRenderer(parent, editor, placement, type, doubleLine, dottedLine));
     }
 
     @NotNull
     public LineMarkerBuilder withDefaultGutterRenderer(@NotNull TextDiffType type, boolean doubleLine, boolean dottedLine) {
-      LineMarkerRenderer renderer = createFoldingGutterLineRenderer(type, placement, doubleLine, dottedLine);
-      return withGutterRenderer(renderer);
+      return withGutterRenderer(new DiffFoldingGutterLineRenderer(placement, type, doubleLine, dottedLine));
     }
 
     @NotNull
@@ -784,11 +754,12 @@ public final class DiffDrawUtil {
     }
   }
 
-  static class PaintMode {
+  @ApiStatus.Internal
+  public static class PaintMode {
     @NotNull public final BackgroundType background;
     @NotNull public final BorderType border;
 
-    PaintMode(@NotNull BackgroundType background, @NotNull BorderType border) {
+    public PaintMode(@NotNull BackgroundType background, @NotNull BorderType border) {
       this.background = background;
       this.border = border;
     }
@@ -815,11 +786,13 @@ public final class DiffDrawUtil {
     public static final PaintMode EXCLUDED_GUTTER = new PaintMode(BackgroundType.IGNORED, BorderType.LINE);
   }
 
-  enum BackgroundType {
+  @ApiStatus.Internal
+  public enum BackgroundType {
     NONE, DEFAULT, IGNORED
   }
 
-  enum BorderType {
+  @ApiStatus.Internal
+  public enum BorderType {
     NONE, LINE, DOTTED
   }
 
@@ -841,6 +814,7 @@ public final class DiffDrawUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class DiffLayeredRendererMarker implements CustomHighlighterRenderer {
     @Override
     public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
@@ -848,15 +822,15 @@ public final class DiffDrawUtil {
   }
 
   private static class SimpleSeparatorPresentation implements SeparatorPresentation {
-    private final @NotNull BooleanGetter myCondition;
+    private final @NotNull BooleanSupplier myVisibilityCondition;
 
-    SimpleSeparatorPresentation(@NotNull BooleanGetter condition) {
-      myCondition = condition;
+    SimpleSeparatorPresentation(@NotNull BooleanSupplier visibilityCondition) {
+      myVisibilityCondition = visibilityCondition;
     }
 
     @Override
     public boolean isVisible() {
-      return myCondition.get();
+      return myVisibilityCondition.getAsBoolean();
     }
 
     @Override
@@ -871,6 +845,115 @@ public final class DiffDrawUtil {
 
     @Override
     public void setExpanded(boolean value) {
+    }
+  }
+
+  @ApiStatus.Internal
+  public static class DiffTextAttributes extends TextAttributes {
+    private final @NotNull BackgroundType myBackground;
+    private final @NotNull TextDiffType myType;
+    private final @Nullable Editor myEditor;
+
+    DiffTextAttributes(@NotNull BackgroundType background, @NotNull TextDiffType type, @Nullable Editor editor) {
+      myBackground = background;
+      myType = type;
+      myEditor = editor;
+    }
+
+    @Override
+    public Color getBackgroundColor() {
+      return myBackground == BackgroundType.IGNORED ? myType.getIgnoredColor(myEditor) : myType.getColor(myEditor);
+    }
+
+    public @NotNull TextDiffType getType() {
+      return myType;
+    }
+  }
+
+  private static class DiffStripeMarkerTextAttributes extends TextAttributes {
+    private final @NotNull TextDiffType myType;
+    private final @NotNull Editor myEditor;
+
+    DiffStripeMarkerTextAttributes(@NotNull TextDiffType type, @NotNull Editor editor) {
+      myType = type;
+      myEditor = editor;
+    }
+
+    @Override
+    public Color getErrorStripeColor() {
+      return myType.getMarkerColor(myEditor);
+    }
+  }
+
+  private static class DiffFoldingGutterLineRenderer implements LineMarkerRendererEx {
+    private final @NotNull SeparatorPlacement myPlacement;
+    private final @NotNull TextDiffType myType;
+    private final boolean myDoubleLine;
+    private final boolean myResolved;
+
+    DiffFoldingGutterLineRenderer(@NotNull SeparatorPlacement placement,
+                                  @NotNull TextDiffType type,
+                                  boolean doubleLine,
+                                  boolean resolved) {
+      myPlacement = placement;
+      myType = type;
+      myDoubleLine = doubleLine;
+      myResolved = resolved;
+    }
+
+    @Override
+    public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
+      EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
+      Graphics2D g2 = (Graphics2D)g;
+
+      int x1 = gutter.getWhitespaceSeparatorOffset();
+      int x2 = gutter.getWidth();
+
+      int y = r.y;
+      if (myPlacement == SeparatorPlacement.BOTTOM) {
+        LOG.warn("BOTTOM gutter line renderers are not supported");
+        y += editor.getLineHeight() - 1;
+      }
+
+      drawChunkBorderLine(g2, x1, x2, y, myType.getColor(editor), myDoubleLine, myResolved);
+    }
+
+    @NotNull
+    @Override
+    public Position getPosition() {
+      return Position.CUSTOM;
+    }
+  }
+
+  private static class DiffDefaultBorderRenderer implements LineSeparatorRenderer {
+    private final @Nullable RangeHighlighter myParentHighlighter;
+    private final @NotNull Editor myEditor;
+    private final @NotNull SeparatorPlacement myPlacement;
+    private final @NotNull TextDiffType myType;
+    private final boolean myDoubleLine;
+    private final boolean myResolved;
+
+    DiffDefaultBorderRenderer(@Nullable RangeHighlighter parentHighlighter,
+                              @NotNull Editor editor,
+                              @NotNull SeparatorPlacement placement,
+                              @NotNull TextDiffType type,
+                              boolean doubleLine,
+                              boolean resolved) {
+      myParentHighlighter = parentHighlighter;
+      myEditor = editor;
+      myPlacement = placement;
+      myType = type;
+      myDoubleLine = doubleLine;
+      myResolved = resolved;
+    }
+
+    @Override
+    public void drawLine(Graphics g, int x1, int x2, int y) {
+      if (myParentHighlighter != null && FoldingUtil.isHighlighterFolded(myEditor, myParentHighlighter)) return;
+      Rectangle clip = g.getClipBounds();
+      x2 = clip.x + clip.width;
+      if (myPlacement == SeparatorPlacement.TOP) y++;
+      drawChunkBorderLine((Graphics2D)g, x1, x2, y, myType.getColor(myEditor), myDoubleLine, myResolved);
     }
   }
 }

@@ -9,6 +9,6 @@ interface EditorOptionsPageCustomizer {
   fun shouldHideRefactoringsSection(): Boolean
 
   companion object {
-    val EP_NAME = ExtensionPointName<EditorOptionsPageCustomizer>("com.intellij.generalEditorOptionsCustomizer")
+    val EP_NAME: ExtensionPointName<EditorOptionsPageCustomizer> = ExtensionPointName("com.intellij.generalEditorOptionsCustomizer")
   }
 }

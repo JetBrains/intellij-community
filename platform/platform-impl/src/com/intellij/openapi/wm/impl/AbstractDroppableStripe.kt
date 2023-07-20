@@ -40,7 +40,7 @@ internal class LayoutData(
 internal abstract class AbstractDroppableStripe(val paneId: String, layoutManager: LayoutManager)
   : JBPanel<AbstractDroppableStripe>(layoutManager) {
   companion object {
-    const val DROP_DISTANCE_SENSITIVITY = 200
+    const val DROP_DISTANCE_SENSITIVITY: Int = 200
 
     @VisibleForTesting
     fun createButtonLayoutComparator(isNewUi: Boolean, anchor: ToolWindowAnchor): Comparator<StripeButtonManager> {
@@ -187,7 +187,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     super.invalidate()
   }
 
-  fun isDroppingButton() = dragButton != null
+  fun isDroppingButton(): Boolean = dragButton != null
 
   abstract fun getButtonFor(toolWindowId: String): StripeButtonManager?
 
@@ -228,7 +228,7 @@ internal abstract class AbstractDroppableStripe(val paneId: String, layoutManage
     return isShowing && Rectangle(locationOnScreen, size).contains(screenPoint)
   }
 
-  open fun getToolWindowDropAreaScreenBounds() = Rectangle(locationOnScreen, size)
+  open fun getToolWindowDropAreaScreenBounds(): Rectangle = Rectangle(locationOnScreen, size)
 
   protected fun recomputeBounds(setBounds: Boolean, toFitWith: Dimension?, noDrop: Boolean): LayoutData {
     val horizontalOffset = height

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.execution.process.AnsiEscapeDecoder;
@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -338,7 +339,7 @@ public abstract class GitImplBase implements Git {
     ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
     if (project != null
         && progressIndicator != null
-        && !progressIndicator.getModalityState().dominates(ModalityState.NON_MODAL)) {
+        && !progressIndicator.getModalityState().dominates(ModalityState.nonModal())) {
       GitExecutableProblemsNotifier.getInstance(project).notifyExecutionError(e);
       throw new ProcessCanceledException(e);
     }
@@ -408,7 +409,7 @@ public abstract class GitImplBase implements Git {
                 ? executionLock.readLock()
                 : executionLock.writeLock();
 
-    lock.lock();
+    ProgressIndicatorUtils.awaitWithCheckCanceled(lock);
     return new AccessToken() {
       @Override
       public void finish() {

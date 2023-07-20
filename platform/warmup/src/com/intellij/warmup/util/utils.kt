@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.warmup.util
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
@@ -25,8 +26,8 @@ fun <Y : Any> runAndCatchNotNull(errorMessage: String, action: () -> Y?): Y {
 private fun assertInnocentThreadToWait() {
   require(!ApplicationManager.getApplication().isWriteAccessAllowed) { "Must not leak write action" }
   require(!ApplicationManager.getApplication().isWriteIntentLockAcquired) { "Must not run in Write Thread" }
-  ApplicationManager.getApplication().assertIsNonDispatchThread();
-  ApplicationManager.getApplication().assertReadAccessNotAllowed();
+  ApplicationManager.getApplication().assertIsNonDispatchThread()
+  ApplicationManager.getApplication().assertReadAccessNotAllowed()
 }
 
 suspend fun yieldThroughInvokeLater() {
@@ -54,9 +55,9 @@ suspend fun yieldAndWaitForDumbModeEnd(project: Project) {
 
   runTaskAndLogTime("Awaiting smart mode") {
     suspendCancellableCoroutine { cont ->
-      DumbService.getInstance(project).runWhenSmart {
+      DumbService.getInstance(project).runWhenSmart(ContextAwareRunnable {
         cont.resume(Unit)
-      }
+      })
     }
   }
 

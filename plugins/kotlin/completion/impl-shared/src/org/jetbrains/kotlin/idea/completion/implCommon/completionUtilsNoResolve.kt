@@ -199,7 +199,9 @@ fun LookupElementPresentation.prependTailText(text: String, grayed: Boolean) {
     tails.forEach { appendTailText(it.text, it.isGrayed) }
 }
 
-fun PrefixMatcher.asNameFilter(): (Name) -> Boolean {
+typealias NameFilter = (Name) -> Boolean
+
+fun PrefixMatcher.asNameFilter(): NameFilter {
     return { name -> !name.isSpecial && prefixMatches(name.identifier) }
 }
 

@@ -194,8 +194,12 @@ public final class CoreCodeStyleUtil {
 
     private void disposePointers() {
       SmartPointerManager pointerManager = SmartPointerManager.getInstance(myFile.getProject());
-      ObjectUtils.consumeIfNotNull(startPointer, pointer -> pointerManager.removePointer(pointer));
-      ObjectUtils.consumeIfNotNull(endPointer, pointer -> pointerManager.removePointer(pointer));
+      if (startPointer != null) {
+        pointerManager.removePointer(startPointer);
+      }
+      if (endPointer != null) {
+        pointerManager.removePointer(endPointer);
+      }
     }
   }
 

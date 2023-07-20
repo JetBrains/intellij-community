@@ -1,4 +1,4 @@
-// "Create actual class for module testModule_JS (JS)" "true"
+// "Add missing actual declarations" "true"
 
 expect abstract class <caret>Abstract {
     fun foo(param: String): Int

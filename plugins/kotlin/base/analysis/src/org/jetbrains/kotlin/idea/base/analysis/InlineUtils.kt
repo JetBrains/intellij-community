@@ -28,7 +28,7 @@ private fun KtAnalysisSession.getInlineArgumentSymbol(argument: KtFunction): KtV
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null
 
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
-    val parentCall = parentCallExpression.resolveCall().successfulFunctionCallOrNull() ?: return null
+    val parentCall = parentCallExpression.resolveCall()?.successfulFunctionCallOrNull() ?: return null
     val symbol = parentCall.partiallyAppliedSymbol.symbol
 
     if ((symbol is KtFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {

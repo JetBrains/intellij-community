@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,11 +152,6 @@ public final class HgErrorUtil {
                                      @NotNull Exception e) {
     LOG.info(e);
     new HgCommandResultNotifier(project).notifyError(notificationDisplayId, null, title, e.getMessage());
-  }
-
-  @Deprecated(forRemoval = true)
-  public static void markDirtyAndHandleErrors(Project project, VirtualFile repository) {
-    HgUtil.markDirectoryDirty(project, repository);
   }
 
   public static boolean isWLockError(@Nullable HgCommandResult result) {

@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 
 class FilePathHolderImpl(private val project: Project) : FilePathHolder {
   private val files = hashSetOf<FilePath>()
@@ -26,7 +27,7 @@ class FilePathHolderImpl(private val project: Project) : FilePathHolder {
       it.files.addAll(files)
     }
 
-  override fun containsFile(file: FilePath) = file in files
+  override fun containsFile(file: FilePath, vcsRoot: VirtualFile) = file in files
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

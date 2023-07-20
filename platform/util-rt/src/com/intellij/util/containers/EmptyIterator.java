@@ -28,10 +28,12 @@ import java.util.NoSuchElementException;
 @ApiStatus.ScheduledForRemoval
 public class EmptyIterator<T> implements Iterator<T> {
   private static final EmptyIterator INSTANCE = new EmptyIterator();
+
   public static <T> EmptyIterator<T> getInstance() {
     //noinspection unchecked
     return INSTANCE;
   }
+
   public boolean hasNext() {
     return false;
   }

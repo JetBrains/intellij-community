@@ -1,7 +1,7 @@
 package com.intellij.ide.customize.transferSettings.providers.vscode.mappings
 
 object KeyBindingsMappings {
-  fun commandIdMap(commandId: String) = when (commandId) {
+  fun commandIdMap(commandId: String): String? = when (commandId) {
     "editor.action.clipboardPasteAction" -> "\$Paste"
     "editor.action.deleteLines" -> "EditorDeleteLine"
     "editor.action.insertLineAfter" -> "EditorStartNewLine"
@@ -92,7 +92,7 @@ object KeyBindingsMappings {
     else -> null
   }
 
-  fun shortcutMap(shortcut: String) = when (shortcut) {
+  fun shortcutMap(shortcut: String): String = when (shortcut) {
     "SHIFT" -> "shift"
     "ALT" -> "alt"
     "CMD" -> "meta"

@@ -54,7 +54,7 @@ public class InterfaceMayBeAnnotatedFunctionalInspectionTest extends LightJavaIn
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_20;
   }
 
   public void testAnnotationType() {

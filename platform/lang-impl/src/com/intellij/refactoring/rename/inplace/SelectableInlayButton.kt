@@ -18,7 +18,7 @@ open class SelectableInlayButton(
 
   private val selectionListeners: MutableList<SelectionListener> = mutableListOf()
 
-  override var isSelected = false
+  override var isSelected: Boolean = false
     set(value) {
       field = value
       selectionListeners.forEach { it.selectionChanged(value) }

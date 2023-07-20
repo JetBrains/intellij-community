@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -15,8 +14,7 @@ import org.jetbrains.kotlin.platform.TargetPlatformVersion
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
 
-@ApiStatus.Internal
-object IDELanguageSettingsProvider : LanguageSettingsProvider {
+internal class IDELanguageSettingsProvider : LanguageSettingsProvider {
     override fun getLanguageVersionSettings(moduleInfo: ModuleInfo, project: Project): LanguageVersionSettings {
         return when (moduleInfo) {
             is ModuleSourceInfo -> moduleInfo.module.languageVersionSettings

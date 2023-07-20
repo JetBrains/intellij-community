@@ -2,15 +2,18 @@
 package org.jetbrains.kotlin.idea.util.psi.patternMatching
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.psi.unifier.KotlinPsiRange
 import org.jetbrains.kotlin.idea.base.psi.unifier.toRange as toRangeNew
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.unifier.toRange' instead.",
     ReplaceWith("toRange(significantOnly)", "org.jetbrains.kotlin.idea.base.psi.unifier.toRange")
 )
 fun List<PsiElement>.toRange(significantOnly: Boolean = true): KotlinPsiRange = toRangeNew(significantOnly)
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Use 'org.jetbrains.kotlin.idea.base.psi.unifier.toRange' instead.",
     ReplaceWith("toRange()", "org.jetbrains.kotlin.idea.base.psi.unifier.toRange")

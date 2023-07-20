@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.components.RoamingType
@@ -46,7 +46,10 @@ interface StreamProvider {
   /**
    * `true` if provider is fully responsible and local sources must be not used.
    */
-  fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean
+  fun processChildren(path: String,
+                      roamingType: RoamingType,
+                      filter: (name: String) -> Boolean,
+                      processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean
 
   /**
    * Delete file or directory

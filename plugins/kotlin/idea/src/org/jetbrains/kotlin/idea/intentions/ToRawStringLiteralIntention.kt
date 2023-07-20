@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
-    KotlinBundle.lazyMessage("to.raw.string.literal")
+    KotlinBundle.lazyMessage("convert.to.raw.string.literal")
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
         if (PsiTreeUtil.nextLeaf(element) is PsiErrorElement) {
@@ -37,7 +37,7 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
         }
 
         val converted = convertContent(element)
-        return !converted.contains("\"\"\"") && !hasTrailingSpaces(converted)
+        return !converted.contains("\"\"\"")
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
@@ -76,16 +76,6 @@ class ToRawStringLiteralIntention : SelfTargetingOffsetIndependentIntention<KtSt
         }
 
         return StringUtilRt.convertLineSeparators(text, "\n")
-    }
-
-    private fun hasTrailingSpaces(text: String): Boolean {
-        var afterSpace = false
-        for (c in text) {
-            if ((c == '\n' || c == '\r') && afterSpace) return true
-            afterSpace = c == ' ' || c == '\t'
-        }
-
-        return false
     }
 
     private fun KtStringTemplateEntry.value() = if (this is KtEscapeStringTemplateEntry) this.unescapedValue else text

@@ -1,4 +1,4 @@
-// COMPILER_ARGUMENTS: -XXLanguage:+GenericInlineClassParameter
+// ENABLED_LANGUAGE_FEATURE: GenericInlineClassParameter
 package smartStepWithInlineClass
 
 @JvmInline

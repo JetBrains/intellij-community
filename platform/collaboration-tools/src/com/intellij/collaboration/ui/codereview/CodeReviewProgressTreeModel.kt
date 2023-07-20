@@ -16,6 +16,13 @@ fun ChangesTree.setupCodeReviewProgressModel(parent: Disposable, model: CodeRevi
   model.addChangeListener(parent) { repaint() }
 }
 
+fun ChangesTree.setupCodeReviewProgressModel(model: CodeReviewProgressTreeModel<*>) {
+  val nodeRenderer = ChangesBrowserNodeRenderer(project, { isShowFlatten }, false)
+  cellRenderer = CodeReviewProgressRenderer(nodeRenderer, model::getState)
+
+  model.addChangeListener { repaint() }
+}
+
 internal data class NodeCodeReviewProgressState(val isRead: Boolean, val discussionsCount: Int)
 
 abstract class CodeReviewProgressTreeModel<T> {
@@ -53,6 +60,10 @@ abstract class CodeReviewProgressTreeModel<T> {
 
   fun addChangeListener(parent: Disposable, listener: () -> Unit) {
     listeners.add(listener, parent)
+  }
+
+  fun addChangeListener(listener: () -> Unit) {
+    listeners.add(listener)
   }
 
   private fun getState(leafValue: T): NodeCodeReviewProgressState {

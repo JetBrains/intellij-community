@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.pom.tree.events.impl;
 
@@ -15,6 +15,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -31,8 +32,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   @Override
-  @NotNull
-  public FileASTNode getRootElement() {
+  public @NotNull FileASTNode getRootElement() {
     return myFileElement;
   }
 
@@ -98,8 +98,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   /** @return a direct child of {@code ancestor} which contains {@code change} */
-  @Nullable
-  private static ASTNode findAncestorChild(@NotNull ASTNode ancestor, @NotNull TreeChangeImpl change) {
+  private static @Nullable ASTNode findAncestorChild(@NotNull ASTNode ancestor, @NotNull TreeChangeImpl change) {
     List<ASTNode> superParents = change.getSuperParents();
     int index = superParents.indexOf(ancestor);
     return index < 0 ? null :
@@ -108,8 +107,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   @Override
-  @NotNull
-  public PomModelAspect getAspect() {
+  public @NotNull PomModelAspect getAspect() {
     return myAspect;
   }
 
@@ -133,8 +131,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
-  @NotNull
-  public List<TreeChangeImpl> getSortedChanges() {
+  public @NotNull @Unmodifiable List<TreeChangeImpl> getSortedChanges() {
     return ContainerUtil.sorted(myChangedElements.values());
   }
 

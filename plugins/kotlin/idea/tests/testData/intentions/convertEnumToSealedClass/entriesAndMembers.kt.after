@@ -7,9 +7,9 @@ sealed class <caret>MyEnum(val s: String = "") {
 
     }
 
-    object FOO : MyEnum("FOO")
-    object BAR : MyEnum("BAR")
-    object DEFAULT : MyEnum()
+    data object FOO : MyEnum("FOO")
+    data object BAR : MyEnum("BAR")
+    data object DEFAULT : MyEnum()
     companion object {
         fun values(): Array<MyEnum> {
             return arrayOf(FOO, BAR, DEFAULT)

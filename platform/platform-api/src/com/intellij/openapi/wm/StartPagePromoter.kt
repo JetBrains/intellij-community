@@ -9,13 +9,13 @@ import javax.swing.JComponent
 interface StartPagePromoter {
   companion object {
     @JvmField
-    val START_PAGE_PROMOTER_EP = ExtensionPointName<StartPagePromoter>("com.intellij.startPagePromoter")
+    val START_PAGE_PROMOTER_EP: ExtensionPointName<StartPagePromoter> = ExtensionPointName("com.intellij.startPagePromoter")
 
     @JvmField
-    val PRIORITY_LEVEL_NORMAL = 0
+    val PRIORITY_LEVEL_NORMAL: Int = 0
 
     @JvmField
-    val PRIORITY_LEVEL_HIGH = 100
+    val PRIORITY_LEVEL_HIGH: Int = 100
   }
 
   /**

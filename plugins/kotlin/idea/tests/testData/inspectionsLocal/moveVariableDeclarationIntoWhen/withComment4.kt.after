@@ -1,5 +1,6 @@
+// HIGHLIGHT: INFORMATION
 fun foo(style: Int?) {
-    when (<caret>style ?: 0) { // comment
+    when (style) { // comment
         0 -> {}
         else -> {}
     }

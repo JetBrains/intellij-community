@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.codeInsight.generation.EqualsHashCodeTemplatesManager;
+import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.psi.PsiField;
 import com.intellij.util.Functions;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 public class GenerateEquals15Test extends GenerateEqualsTestCase {
   public void testArraysFromJava15() {
@@ -77,6 +67,15 @@ public class GenerateEquals15Test extends GenerateEqualsTestCase {
     try {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(templateName);
       doTest(Functions.id(), Functions.id(), Functions.id(), true);
+    }
+    catch (Throwable throwable) {
+      try (InputStream is = GenerateMembersUtil.class.getResourceAsStream("equalsHelper.vm")) {
+        throw new RuntimeException(new String(is.readAllBytes(), StandardCharsets.UTF_8), throwable);
+      }
+      catch (Throwable t) {
+        throwable.addSuppressed(t);
+        throw throwable;
+      }
     }
     finally {
       EqualsHashCodeTemplatesManager.getInstance().setDefaultTemplate(EqualsHashCodeTemplatesManager.INTELLI_J_DEFAULT);

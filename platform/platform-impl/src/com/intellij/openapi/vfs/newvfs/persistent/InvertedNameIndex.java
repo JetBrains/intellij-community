@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataEnumeratorEx;
 import it.unimi.dsi.fastutil.ints.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -11,12 +12,11 @@ import java.util.Arrays;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.function.IntConsumer;
 import java.util.function.IntPredicate;
 
 /**
  * Index for lookup fileName -> fileId(s). Supposed to be replacement of {@link com.intellij.psi.search.FilenameIndex}?
- *
+ * <p>
  * Data layout is either single entry or multiple entries, not both:
  * <ul>
  *   <li>single {@code nameId->fileId} entry in {@link InvertedNameIndex#ourSingleData}</li>
@@ -30,20 +30,23 @@ import java.util.function.IntPredicate;
  *
  * @see InvertedNameIndex#checkConsistency
  */
-final class InvertedNameIndex {
+@ApiStatus.Internal
+public final class InvertedNameIndex {
   /**
    * id=0 used as NULL (i.e. absent) value
    */
   public static final int NULL_NAME_ID = DataEnumeratorEx.NULL_ID;
 
-  private static final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
+  private final ReadWriteLock myRwLock = new ReentrantReadWriteLock();
 
-  private static final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
-  private static final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
-  private static final boolean ourCheckConsistency = SystemProperties.getBooleanProperty("idea.vfs.name.index.check.consistency", false);
+  private final Int2IntMap ourSingleData = new Int2IntOpenHashMap();
+  private final Int2ObjectMap<int[]> ourMultiData = new Int2ObjectOpenHashMap<>();
+  private final boolean ourCheckConsistency = SystemProperties.getBooleanProperty("idea.vfs.name.index.check.consistency", false);
 
+  public InvertedNameIndex() {
+  }
 
-  static boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+  boolean processFilesWithNames(@NotNull Set<String> names, @NotNull IntPredicate processor) {
     myRwLock.readLock().lock();
     try {
       return processData(names, processor);
@@ -53,7 +56,7 @@ final class InvertedNameIndex {
     }
   }
 
-  static void updateFileName(int fileId, int newNameId, int oldNameId) {
+  void updateFileName(int fileId, int newNameId, int oldNameId) {
     myRwLock.writeLock().lock();
     try {
       if (oldNameId != NULL_NAME_ID) {
@@ -68,7 +71,7 @@ final class InvertedNameIndex {
     }
   }
 
-  static void clear() {
+  void clear() {
     myRwLock.writeLock().lock();
     try {
       ourSingleData.clear();
@@ -82,7 +85,7 @@ final class InvertedNameIndex {
   /**
    * Add fileId to the list of fileIds associated with nameId
    */
-  static void updateDataInner(int fileId, int nameId) {
+  void updateDataInner(int fileId, int nameId) {
     myRwLock.writeLock().lock();
     try {
       int single = ourSingleData.get(nameId);
@@ -117,8 +120,8 @@ final class InvertedNameIndex {
   }
 
   @VisibleForTesting
-  static boolean forEachFileIds(final @NotNull IntSet nameIds,
-                                final @NotNull IntPredicate processor) {
+  boolean forEachFileIds(final @NotNull IntSet nameIds,
+                         final @NotNull IntPredicate processor) {
     final IntIterator it = nameIds.iterator();
     while (it.hasNext()) {
       final int nameId = it.nextInt();
@@ -143,7 +146,7 @@ final class InvertedNameIndex {
     return true;
   }
 
-  private static boolean processData(@NotNull Set<String> names, @NotNull IntPredicate processor) {
+  private boolean processData(@NotNull Set<String> names, @NotNull IntPredicate processor) {
     for (String name : names) {
       //TODO RC: this will not work for non-strict names enumerator!
       int nameId = FSRecords.getNameId(name);
@@ -167,7 +170,7 @@ final class InvertedNameIndex {
     return true;
   }
 
-  private static void deleteDataInner(int fileId, int nameId) {
+  private void deleteDataInner(int fileId, int nameId) {
     int single = ourSingleData.get(nameId);
     int[] multi = ourMultiData.get(nameId);
     if (single == fileId) {
@@ -218,7 +221,7 @@ final class InvertedNameIndex {
     }
   }
 
-  static void checkConsistency() {
+  void checkConsistency() {
     myRwLock.readLock().lock();
     try {
       IntIterator keyIt1 = ourSingleData.keySet().intIterator();
@@ -235,7 +238,7 @@ final class InvertedNameIndex {
     }
   }
 
-  private static void checkConsistency(int nameId) {
+  private void checkConsistency(int nameId) {
     int single = ourSingleData.get(nameId);
     int[] multi = ourMultiData.get(nameId);
     if (single != NULL_NAME_ID && multi != null) {

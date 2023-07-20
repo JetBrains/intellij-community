@@ -35,7 +35,7 @@ public class UiDebugger extends JPanel implements Disposable {
     myTabs.getPresentation().setInnerInsets(new Insets(4, 0, 0, 0)).setActiveTabFillIn(JBColor.GRAY).setUiDecorator(new UiDecorator() {
       @Override
       public @NotNull UiDecoration getDecoration() {
-        return new UiDecoration(null, JBUI.insets(4));
+        return new UiDecoration(null, JBUI.insets(4, 0));
       }
     });
 

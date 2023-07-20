@@ -1,6 +1,7 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtProperty
 // OPTIONS: usages
 // OPTIONS: skipWrite
+// PSI_ELEMENT_AS_TITLE: "var v"
 
 
 fun foo() {

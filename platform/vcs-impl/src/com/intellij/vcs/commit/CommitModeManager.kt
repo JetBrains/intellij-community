@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.ide.ApplicationInitializedListener
@@ -83,7 +83,7 @@ class CommitModeManager(private val project: Project) : Disposable {
   private var commitMode: CommitMode = CommitMode.PendingCommitMode
 
   private fun scheduleUpdateCommitMode() {
-    getApplication().invokeLater(::updateCommitMode, ModalityState.NON_MODAL, project.disposed)
+    getApplication().invokeLater(::updateCommitMode, ModalityState.nonModal(), project.disposed)
   }
 
   @RequiresEdt

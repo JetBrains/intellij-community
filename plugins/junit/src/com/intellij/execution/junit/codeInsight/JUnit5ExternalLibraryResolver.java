@@ -20,14 +20,13 @@ import com.intellij.execution.junit.JUnitExternalLibraryDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
 public class JUnit5ExternalLibraryResolver extends ExternalLibraryResolver {
-  private static final Set<String> JUNIT5_ANNOTATIONS = ContainerUtil.set(
+  private static final Set<String> JUNIT5_ANNOTATIONS = Set.of(
     "Test", "Disabled", "TestFactory", "BeforeEach", "BeforeAll", "AfterEach", "AfterAll", "DisplayName", "Nested"
   );
   @Nullable

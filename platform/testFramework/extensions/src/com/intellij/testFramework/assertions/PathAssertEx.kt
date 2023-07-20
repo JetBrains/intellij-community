@@ -34,7 +34,7 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
     return this
   }
 
-  override fun hasContent(expected: String) = isEqualTo(expected)
+  override fun hasContent(expected: String): PathAssertEx = isEqualTo(expected)
 
   fun isEqualTo(expected: String): PathAssertEx {
     isNotNull

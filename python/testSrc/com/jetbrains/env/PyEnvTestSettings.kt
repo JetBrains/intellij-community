@@ -28,7 +28,11 @@ internal data class PyEnvTestSettings(
   /**
    * Paths to all existing python SDKs
    */
-  val pythons: List<File> = foldersWithPythons.filter(File::exists).flatMap { it.listFiles().toList() } + additionalInterpreters,
+  val pythons: List<File> = foldersWithPythons
+    .filter(File::exists)
+    .flatMap { it.listFiles().toList() }
+    .filter { !it.name.startsWith('.') }
+    .plus(additionalInterpreters),
 
   /**
    * Enabled when launched with PyEnvTests configuration.

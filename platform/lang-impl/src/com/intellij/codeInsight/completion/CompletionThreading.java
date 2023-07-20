@@ -10,15 +10,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Computable;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.Semaphore;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 interface CompletionThreading {
 
@@ -37,10 +33,7 @@ class SyncCompletion extends CompletionThreadingBase {
   @Override
   public Future<?> startThread(final ProgressIndicator progressIndicator, Runnable runnable) {
     ProgressManager.getInstance().runProcess(runnable, progressIndicator);
-
-    FutureResult<Object> result = new FutureResult<>();
-    result.set(true);
-    return result;
+    return CompletableFuture.completedFuture(true);
   }
 
   @Override

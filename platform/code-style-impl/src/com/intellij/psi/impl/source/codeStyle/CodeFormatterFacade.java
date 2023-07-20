@@ -156,7 +156,9 @@ public class CodeFormatterFacade {
     if (builder != null) {
       if (file.getTextLength() > 0) {
         LOG.assertTrue(document != null);
-        ranges.setExtendedRanges(new FormattingRangesExtender(document, file).getExtendedRanges(ranges.getTextRanges()));
+        if (ranges.isExtendToContext()) {
+          ranges.setExtendedRanges(new ContextFormattingRangesExtender(document, file).getExtendedRanges(ranges.getTextRanges()));
+        }
         try {
           ASTNode containingNode = findContainingNode(file, ranges.getBoundRange());
           if (containingNode != null) {
@@ -181,9 +183,11 @@ public class CodeFormatterFacade {
 
           FormatterEx formatter = FormatterEx.getInstanceEx();
           if (CodeStyleManager.getInstance(project).isSequentialProcessingAllowed()) {
-            ObjectUtils.consumeIfNotNull(
-              FormattingProgressCallbackFactory.getInstance().createProgressCallback(project, file, document),
-              callback -> formatter.setProgressTask(callback));
+            FormattingProgressCallback progressCallback =
+              FormattingProgressCallbackFactory.getInstance().createProgressCallback(project, file, document);
+            if (progressCallback != null) {
+              formatter.setProgressTask(progressCallback);
+            }
           }
 
           CommonCodeStyleSettings.IndentOptions indentOptions =

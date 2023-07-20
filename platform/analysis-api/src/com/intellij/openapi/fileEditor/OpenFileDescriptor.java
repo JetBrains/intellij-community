@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.DataKey;
@@ -63,8 +63,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
   }
 
   @Override
-  @NotNull
-  public VirtualFile getFile() {
+  public @NotNull VirtualFile getFile() {
     return myFile;
   }
 
@@ -137,8 +136,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     });
   }
 
-  @NotNull
-  public static TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
+  public static @NotNull TextRange getRangeToUnfoldOnNavigation(@NotNull Editor editor) {
     int offset = editor.getCaretModel().getOffset();
     int line = editor.getDocument().getLineNumber(offset);
     int start = editor.getDocument().getLineStartOffset(line);
@@ -160,13 +158,11 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return FileNavigator.getInstance().canNavigateToSource(this);
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @NotNull
-  public OpenFileDescriptor setUseCurrentWindow(boolean search) {
+  public @NotNull OpenFileDescriptor setUseCurrentWindow(boolean search) {
     myUseCurrentWindow = search;
     return this;
   }
@@ -176,8 +172,7 @@ public class OpenFileDescriptor implements FileEditorNavigatable, Comparable<Ope
     return myUseCurrentWindow;
   }
 
-  @NotNull
-  public OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
+  public @NotNull OpenFileDescriptor setUsePreviewTab(boolean usePreviewTab) {
     myUsePreviewTab = usePreviewTab;
     return this;
   }

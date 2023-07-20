@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.DocumentWindow;
@@ -56,9 +57,8 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     myReducedRanges = reducedRanges;
   }
 
-  @NotNull
   @Override
-  protected String getPresentableName() {
+  protected @NotNull String getPresentableName() {
     return IdeBundle.message("highlighting.pass.injected.presentable.name");
   }
 
@@ -164,7 +164,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     // the most expensive process is running injectors for these hosts, comparing to highlighting the resulting injected fragments,
     // so instead of showing "highlighted 1% of injected fragments", show "ran injectors for 1% of hosts"
     setProgressLimit(hosts.size());
-    Set<PsiElement> visitedInjected = ContainerUtil.newConcurrentSet(); // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
+    Set<PsiElement> visitedInjected = ConcurrentCollectionFactory.createConcurrentSet(); // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
         ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -180,10 +180,9 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  @NotNull
-  private HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
-                                               @NotNull InjectedLanguageManager injectedLanguageManager,
-                                               @NotNull Consumer<? super HighlightInfo> outInfos) {
+  private @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile injectedPsi, @NotNull DocumentWindow documentWindow,
+                                                        @NotNull InjectedLanguageManager injectedLanguageManager,
+                                                        @NotNull Consumer<? super HighlightInfo> outInfos) {
     HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
     EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
     return new HighlightInfoHolder(injectedPsi, filters) {

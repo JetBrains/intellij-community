@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.ex;
 
 import com.intellij.openapi.application.Application;
@@ -22,7 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public final class ApplicationUtil {
   // throws exception if can't grab read action right now
-  public static <T> T tryRunReadAction(@NotNull final Computable<T> computable) throws CannotRunReadActionException {
+  public static <T> T tryRunReadAction(final @NotNull Computable<T> computable) throws CannotRunReadActionException {
     final Ref<T> result = new Ref<>();
     if (!((ApplicationEx)ApplicationManager.getApplication()).tryRunReadAction(() -> result.set(computable.compute()))) {
       throw CannotRunReadActionException.create();
@@ -34,7 +34,7 @@ public final class ApplicationUtil {
    * Allows to interrupt a process which does not performs checkCancelled() calls by itself.
    * Note that the process may continue to run in background indefinitely - so <b>avoid using this method unless absolutely needed</b>.
    */
-  public static <T> T runWithCheckCanceled(@NotNull final Callable<? extends T> callable, @NotNull final ProgressIndicator indicator) throws Exception {
+  public static <T> T runWithCheckCanceled(final @NotNull Callable<? extends T> callable, final @NotNull ProgressIndicator indicator) throws Exception {
     final Ref<T> result = Ref.create();
     final Ref<Throwable> error = Ref.create();
 
@@ -64,7 +64,7 @@ public final class ApplicationUtil {
    * See also {@link com.intellij.openapi.progress.util.ProgressIndicatorUtils#awaitWithCheckCanceled(Future)} which throws no checked exceptions.
    */
   public static <T> T runWithCheckCanceled(@NotNull Future<T> future,
-                                           @NotNull final ProgressIndicator indicator) throws ExecutionException {
+                                           final @NotNull ProgressIndicator indicator) throws ExecutionException {
     while (true) {
       indicator.checkCanceled();
 

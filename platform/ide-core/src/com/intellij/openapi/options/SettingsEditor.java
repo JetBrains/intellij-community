@@ -21,7 +21,6 @@ public abstract class SettingsEditor<Settings> implements Disposable {
   private final List<SettingsEditorListener<Settings>> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private UserActivityWatcher myWatcher;
   private boolean myIsInUpdate = false;
-  private boolean myFiredDuringUpdate = false;
   private final Factory<? extends Settings> mySettingsFactory;
   private CompositeSettingsEditor<Settings> myOwner;
   private JComponent myEditorComponent;
@@ -85,14 +84,7 @@ public abstract class SettingsEditor<Settings> implements Disposable {
     finally {
       myIsInUpdate = wasInUpdate;
     }
-    if (forceChangeByBulkUpdate() || myFiredDuringUpdate) {
-      myFiredDuringUpdate = false;
-      fireEditorStateChanged();
-    }
-  }
-
-  protected boolean forceChangeByBulkUpdate() {
-    return true;
+    fireEditorStateChanged();
   }
 
   public final void applyTo(Settings s) throws ConfigurationException {
@@ -142,11 +134,18 @@ public abstract class SettingsEditor<Settings> implements Disposable {
 
   protected final void fireEditorStateChanged() {
     if (myIsInUpdate) {
-      myFiredDuringUpdate = true;
       return;
     }
     for (SettingsEditorListener<Settings> listener : myListeners) {
       listener.stateChanged(this);
     }
+  }
+
+  public boolean isSpecificallyModified() {
+    return false;
+  }
+
+  public boolean isReadyForApply() {
+    return true;
   }
 }

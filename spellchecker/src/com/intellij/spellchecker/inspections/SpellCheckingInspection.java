@@ -8,6 +8,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -71,6 +72,9 @@ public final class SpellCheckingInspection extends LocalInspectionTool {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+    if (!Registry.is("spellchecker.inspection.enabled", true)) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     final SpellCheckerManager manager = SpellCheckerManager.getInstance(holder.getProject());
 
     return new PsiElementVisitor() {

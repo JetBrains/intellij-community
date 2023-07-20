@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.PlatformDataKeys
@@ -11,6 +13,7 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.await
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.OpenSourceUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -25,7 +28,8 @@ private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager 
 
     // task must be cancelled if the project is closed
     @Suppress("DEPRECATION")
-    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope).launch(Dispatchers.EDT) {
+    (project?.coroutineScope ?: ApplicationManager.getApplication().coroutineScope)
+      .launch(Dispatchers.EDT + ClientId.current.asContextElement()) {
       PlatformDataKeys.TOOL_WINDOW.getData(asyncDataContext)
         ?.getReady(handler)
         ?.await()
@@ -40,7 +44,9 @@ private class AutoScrollToSourceTaskManagerImpl : AutoScrollToSourceTaskManager 
       }
 
       if (navigatable != null) {
-        OpenSourceUtil.navigateToSource(false, true, navigatable)
+        SlowOperations.knownIssue("IDEA-304701, EA-677533").use {
+          OpenSourceUtil.navigateToSource(false, true, navigatable)
+        }
       }
     }
   }

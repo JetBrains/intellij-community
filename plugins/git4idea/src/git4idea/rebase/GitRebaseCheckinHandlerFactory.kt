@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
+import com.intellij.util.PairConsumer
 import git4idea.GitVcs
 import git4idea.branch.GitRebaseParams
 import git4idea.i18n.GitBundle
@@ -34,16 +35,19 @@ class GitRebaseCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey())
         }.queue()
       }
 
-      override fun acceptExecutor(executor: CommitExecutor?): Boolean {
-        if (executor is GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor) {
-          active = true
-          project = executor.project
-          repository = executor.repository
-          rebaseFrom = executor.hash
-          return false
-        }
+      override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>?): ReturnResult {
+        executor as GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor
 
-        return true
+        active = true
+        project = executor.project
+        repository = executor.repository
+        rebaseFrom = executor.hash
+
+        return ReturnResult.COMMIT
+      }
+
+      override fun acceptExecutor(executor: CommitExecutor?): Boolean {
+        return executor is GitAutoSquashCommitAction.GitRebaseAfterCommitExecutor
       }
     }
   }

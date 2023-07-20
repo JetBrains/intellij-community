@@ -122,6 +122,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
         }
 
+        @TestMetadata("deprecation.kt")
+        public void testDeprecation() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/deprecation.kt");
+        }
+
         @TestMetadata("Destructuring.kt")
         public void testDestructuring() throws Exception {
             runTest("../idea/tests/testData/highlighterMetaInfo/Destructuring.kt");
@@ -160,6 +165,11 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
             runTest("../idea/tests/testData/highlighterMetaInfo/KDoc.kt");
+        }
+
+        @TestMetadata("KotlinAnnotationsInJava.kt")
+        public void testKotlinAnnotationsInJava() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/KotlinAnnotationsInJava.kt");
         }
 
         @TestMetadata("KotlinInjection.kt")
@@ -225,6 +235,29 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
         @TestMetadata("VariablesAsFunctions.kt")
         public void testVariablesAsFunctions() throws Exception {
             runTest("../idea/tests/testData/highlighterMetaInfo/VariablesAsFunctions.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/unresolved")
+    public static class Unresolved extends AbstractK2HighlightingMetaInfoTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("unresolvedImport.kt")
+        public void testUnresolvedImport() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedImport.kt");
+        }
+
+        @TestMetadata("unresolvedLabel.kt")
+        public void testUnresolvedLabel() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedLabel.kt");
+        }
+
+        @TestMetadata("unresolvedReference.kt")
+        public void testUnresolvedReference() throws Exception {
+            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedReference.kt");
         }
     }
 }

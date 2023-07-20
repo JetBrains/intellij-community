@@ -15,6 +15,9 @@ public interface StubElement<T extends PsiElement> extends Stub {
   IStubElementType getStubType();
   @Override
   StubElement getParentStub();
+
+  @Nullable PsiFileStub<?> getContainingFileStub();
+
   @Override
   @NotNull
   List<StubElement> getChildrenStubs();

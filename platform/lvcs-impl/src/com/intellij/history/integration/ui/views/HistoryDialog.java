@@ -64,6 +64,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private static final int UPDATE_DIFFS = 1;
   private static final int UPDATE_REVS = UPDATE_DIFFS + 1;
 
+  @NotNull
   protected final Project myProject;
   protected final IdeaGateway myGateway;
   protected final VirtualFile myFile;
@@ -246,7 +247,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private void doScheduleUpdate(int id, final Computable<? extends Runnable> update) {
     myUpdateQueue.queue(new Update(this, id) {
       @Override
-      public boolean canEat(Update update1) {
+      public boolean canEat(@NotNull Update update1) {
         return getPriority() >= update1.getPriority();
       }
 

@@ -19,7 +19,7 @@ class GitLabShowMergeRequestAction : DumbAwareAction(GitLabBundle.messagePointer
     val filesController = e.getData(GitLabMergeRequestsActionKeys.FILES_CONTROLLER)
     val selection: GitLabMergeRequestId? = e.getData(GitLabMergeRequestsActionKeys.SELECTED)
 
-    e.presentation.isEnabled = mergeRequestController != null && filesController != null && selection != null
+    e.presentation.isEnabledAndVisible = mergeRequestController != null && filesController != null && selection != null
   }
 
   override fun actionPerformed(e: AnActionEvent) {

@@ -1,4 +1,4 @@
 class Type {
-    void main(MainClass.Companion.T t) {
+    void main(MainClass.Companion t) {
     }
 }

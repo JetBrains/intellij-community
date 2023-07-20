@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder;
 import com.intellij.codeInsight.problems.ProblemImpl;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,7 +19,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
@@ -49,7 +53,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   private WolfTheProblemSolverImpl(@NotNull Project project) {
     myProject = project;
     myWolfListeners = new WolfListeners(project, this);
-    Disposer.register(this, myWolfListeners);
   }
 
   @Override
@@ -72,8 +75,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  private static class ProblemFileInfo {
-    private final Collection<Problem> problems = ContainerUtil.newConcurrentSet();
+  private static final class ProblemFileInfo {
+    private final Collection<Problem> problems = ConcurrentCollectionFactory.createConcurrentSet();
     private volatile boolean hasSyntaxErrors;
 
     @Override
@@ -152,9 +155,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
       HighlightingSessionImpl.getOrCreateHighlightingSession(psiFile, (DaemonProgressIndicator)progressIndicator, visibleRange);
       GeneralHighlightingPass pass = new GeneralHighlightingPass(psiFile, document, 0, document.getTextLength(),
                                                                  false, visibleRange, null, HighlightInfoProcessor.getEmpty()) {
-        @NotNull
         @Override
-        protected HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
+        protected @NotNull HighlightInfoHolder createInfoHolder(@NotNull PsiFile file) {
           return new HighlightInfoHolder(file) {
             @Override
             public boolean add(@Nullable HighlightInfo info) {
@@ -222,11 +224,6 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   @Override
-  public void addProblemListener(@NotNull WolfTheProblemSolver.ProblemListener listener, @NotNull Disposable parentDisposable) {
-    myProject.getMessageBus().connect(parentDisposable).subscribe(com.intellij.problems.ProblemListener.TOPIC, listener);
-  }
-
-  @Override
   public void queue(@NotNull VirtualFile suspiciousFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isToBeHighlighted(suspiciousFile)) return;
@@ -275,6 +272,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
 
   @Override
   public void weHaveGotNonIgnorableProblems(@NotNull VirtualFile virtualFile, @NotNull List<? extends Problem> problems) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (problems.isEmpty()) return;
     ProblemFileInfo storedProblems = myProblems.computeIfAbsent(virtualFile, __ -> new ProblemFileInfo());
     boolean fireListener = storedProblems.problems.isEmpty();
@@ -291,6 +289,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
   }
 
   private void fireProblemsAppeared(@NotNull VirtualFile file) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
     myProject.getMessageBus().syncPublisher(com.intellij.problems.ProblemListener.TOPIC).problemsAppeared(file);
   }
 
@@ -357,7 +356,7 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     ApplicationManager.getApplication().assertIsNonDispatchThread();
     if (!isToBeHighlighted(file)) return;
 
-    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ContainerUtil.newConcurrentSet());
+    Set<Object> problems = myProblemsFromExternalSources.computeIfAbsent(file, __ -> ConcurrentCollectionFactory.createConcurrentSet());
     boolean isNewFileForExternalSource = problems.isEmpty();
     problems.add(source);
 
@@ -391,10 +390,13 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     }
   }
 
-  @NotNull
-  private static TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
+  private static @NotNull TextRange getTextRange(@NotNull VirtualFile virtualFile, int line, int column) {
     Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
-    if (line > document.getLineCount()) line = document.getLineCount();
+    assert document != null;
+    int lineCount = document.getLineCount();
+    if (line > lineCount) {
+      line = lineCount;
+    }
     line = line <= 0 ? 0 : line - 1;
     int offset = document.getLineStartOffset(line) + (column <= 0 ? 0 : column - 1);
     return new TextRange(offset, offset);
@@ -407,9 +409,8 @@ public final class WolfTheProblemSolverImpl extends WolfTheProblemSolver impleme
     return ContainerUtil.process(myProblemsFromExternalSources.keySet(), processor);
   }
 
-  @NotNull
   @TestOnly
-  public static WolfTheProblemSolver createTestInstance(@NotNull Project project){
+  public static @NotNull WolfTheProblemSolver createTestInstance(@NotNull Project project){
     assert ApplicationManager.getApplication().isUnitTestMode();
     return new WolfTheProblemSolverImpl(project);
   }

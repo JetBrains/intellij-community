@@ -19,16 +19,14 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.RejectedExecutionException
-import kotlin.coroutines.EmptyCoroutineContext
 
-class ElevationServiceImpl : ElevationService, Disposable {
-  private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
+class ElevationServiceImpl(private val cs: CoroutineScope) : ElevationService, Disposable {
 
   private val connectionManager = ProcessMediatorConnectionManager {
-    val clientBuilder = ProcessMediatorClient.Builder(coroutineScope, ElevationSettings.getInstance().quotaOptions)
+    val clientBuilder = ProcessMediatorClient.Builder(cs, ElevationSettings.getInstance().quotaOptions)
 
     val debug = false
-    if (debug) ProcessMediatorConnection.startInProcessServer(coroutineScope, clientBuilder = clientBuilder)
+    if (debug) ProcessMediatorConnection.startInProcessServer(cs, clientBuilder = clientBuilder)
     else ElevationDaemonProcessLauncher(clientBuilder)
       .launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
   }.apply {

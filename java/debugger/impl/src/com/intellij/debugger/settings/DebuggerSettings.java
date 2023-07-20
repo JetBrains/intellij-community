@@ -90,6 +90,9 @@ public class DebuggerSettings implements Cloneable, PersistentStateComponent<Ele
 
   public String EVALUATE_FINALLY_ON_POP_FRAME = EVALUATE_FINALLY_ASK;
 
+  /**
+   * Whether we resume only current thread during the stepping.
+   */
   public boolean RESUME_ONLY_CURRENT_THREAD = false;
 
   private ClassFilter[] mySteppingFilters = DEFAULT_STEPPING_FILTERS;

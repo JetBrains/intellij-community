@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -74,7 +75,8 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     final PsiClass myClass = field.getContainingClass();
     if (myClass == null) return;
     if (myClass.getConstructors().length == 0) {
-      createDefaultConstructor(myClass, project, editor, file);
+      ApplicationManager.getApplication().runWriteAction(
+        (Computable<PsiMethod>)() -> AddDefaultConstructorFix.addDefaultConstructor(myClass));
     }
 
     PsiMethod[] ctors = CreateConstructorParameterFromFieldFix.filterConstructorsIfFieldAlreadyAssigned(myClass.getConstructors(), field)
@@ -91,7 +93,7 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
     final PsiClass myClass = field.getContainingClass();
     if (myClass == null) return IntentionPreviewInfo.EMPTY;
     if (myClass.getConstructors().length == 0) {
-      new AddDefaultConstructorFix(myClass).invoke(project, editor, file);
+      AddDefaultConstructorFix.addDefaultConstructor(myClass);
     }
 
     PsiMethod[] ctors = CreateConstructorParameterFromFieldFix.filterConstructorsIfFieldAlreadyAssigned(myClass.getConstructors(), field)
@@ -197,11 +199,6 @@ public class InitializeFinalFieldInConstructorFix extends LocalQuickFixAndIntent
       result[i++] = methodMember.getElement();
     }
     return result;
-  }
-
-  private static void createDefaultConstructor(PsiClass psiClass, @NotNull final Project project, final Editor editor, final PsiFile file) {
-    final AddDefaultConstructorFix defaultConstructorFix = new AddDefaultConstructorFix(psiClass);
-    ApplicationManager.getApplication().runWriteAction(() -> defaultConstructorFix.invoke(project, editor, file));
   }
 
   @Nullable

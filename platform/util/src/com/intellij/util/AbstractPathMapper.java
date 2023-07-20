@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +13,7 @@ import java.util.List;
  */
 public abstract class AbstractPathMapper implements PathMapper {
 
-  @Nullable
-  public static String convertToLocal(@NotNull String remotePath, @NotNull Iterable<? extends PathMappingSettings.PathMapping> mappings) {
+  public static @Nullable String convertToLocal(@NotNull String remotePath, @NotNull Iterable<? extends PathMappingSettings.PathMapping> mappings) {
     PathMappingSettings.BestMappingSelector selector = new PathMappingSettings.BestMappingSelector();
     for (PathMappingSettings.PathMapping mapping : mappings) {
       if (mapping.canReplaceRemote(remotePath)) {
@@ -28,8 +27,7 @@ public abstract class AbstractPathMapper implements PathMapper {
     return null;
   }
 
-  @Nullable
-  public static String convertToRemote(@NotNull String localPath, @NotNull Collection<? extends PathMappingSettings.PathMapping> pathMappings) {
+  public static @Nullable String convertToRemote(@NotNull String localPath, @NotNull Collection<? extends PathMappingSettings.PathMapping> pathMappings) {
     PathMappingSettings.BestMappingSelector selector = new PathMappingSettings.BestMappingSelector();
     for (PathMappingSettings.PathMapping mapping : pathMappings) {
       if (mapping != null && mapping.canReplaceLocal(localPath)) {
@@ -44,9 +42,8 @@ public abstract class AbstractPathMapper implements PathMapper {
     return null;
   }
 
-  @NotNull
   @Override
-  public final List<String> convertToRemote(@NotNull Collection<String> paths) {
+  public final @NotNull List<String> convertToRemote(@NotNull Collection<String> paths) {
     List<String> result = new ArrayList<>();
     for (String p : paths) {
       result.add(convertToRemote(p));
@@ -74,6 +71,5 @@ public abstract class AbstractPathMapper implements PathMapper {
     return false;
   }
 
-  @NotNull
-  protected abstract Collection<PathMappingSettings.PathMapping> getAvailablePathMappings();
+  protected abstract @NotNull Collection<PathMappingSettings.PathMapping> getAvailablePathMappings();
 }

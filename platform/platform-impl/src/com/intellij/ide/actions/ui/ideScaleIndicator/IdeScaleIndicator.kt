@@ -12,11 +12,10 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.gridLayout.GridLayout
-import com.intellij.ui.dsl.gridLayout.HorizontalGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGapsX
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.hover.HoverListener
-import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.JPanel
@@ -31,7 +30,7 @@ class IdeScaleIndicator(percentage: Int) : JPanel() {
 
     AnActionLink(this, ActionPlaces.POPUP).also {
       it.text = UIBundle.message("ide.scale.indicator.reset.scale.format",
-                                 UISettingsUtils.instance.currentDefaultScale.percentValue)
+                                 UISettingsUtils.getInstance().currentDefaultScale.percentValue)
     }
   }
   var isHovered: Boolean = false
@@ -43,9 +42,9 @@ class IdeScaleIndicator(percentage: Int) : JPanel() {
     RowsGridBuilder(this).row(resizable = true)
       .cell(component = titleLabel, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
       .cell(component = resetLink, verticalAlign = VerticalAlign.CENTER, resizableColumn = true)
-      .columnsGaps(listOf(HorizontalGaps.EMPTY, HorizontalGaps(JBUIScale.scale(18))))
+      .columnsGaps(listOf(UnscaledGapsX.EMPTY, UnscaledGapsX(18)))
 
-    if (percentage == UISettingsUtils.instance.currentDefaultScale.percentValue) resetLink.isVisible = false
+    if (percentage == UISettingsUtils.getInstance().currentDefaultScale.percentValue) resetLink.isVisible = false
 
     val hoverListener: HoverListener = object : HoverListener() {
       override fun mouseEntered(component: Component, x: Int, y: Int) {

@@ -30,9 +30,9 @@ interface ConfigFileItemSerializer {
     }
   }
 
-  fun deserializeConfigFiles(rootElement: Element): MutableList<ConfigFileItem> {
+  fun deserializeConfigFiles(rootElement: Element?): MutableList<ConfigFileItem> {
     val configFiles = mutableListOf<ConfigFileItem>()
-    val descriptorsElement = rootElement.getChild(DESCRIPTORS_ELEMENT)
+    val descriptorsElement = rootElement?.getChild(DESCRIPTORS_ELEMENT)
     if (descriptorsElement != null) {
       val children: List<Element> = descriptorsElement.getChildren(ELEMENT_NAME)
       for (child in children) {

@@ -26,9 +26,10 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierPr
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.addTypeArguments
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.createStarTypeArgumentsList
-import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertSymbol
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertString
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
+import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -40,7 +41,7 @@ internal class FirWhenWithSubjectConditionContributor(
     basicContext: FirBasicCompletionContext,
     priority: Int,
 ) : FirCompletionContributorBase<FirWithSubjectEntryPositionContext>(basicContext, priority) {
-    override fun KtAnalysisSession.complete(positionContext: FirWithSubjectEntryPositionContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirWithSubjectEntryPositionContext, weighingContext: WeighingContext) {
         val whenCondition = positionContext.whenCondition
         val whenExpression = whenCondition.parentOfType<KtWhenExpression>() ?: return
         val subject = whenExpression.subjectExpression ?: return
@@ -90,7 +91,8 @@ internal class FirWhenWithSubjectConditionContributor(
     ) {
         val availableFromScope = mutableSetOf<KtClassifierSymbol>()
         getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
-            .forEach { classifier ->
+            .forEach { classifierWithScopeKind ->
+                val classifier = classifierWithScopeKind.symbol
                 if (classifier !is KtNamedSymbol) return@forEach
                 availableFromScope += classifier
 
@@ -129,7 +131,6 @@ internal class FirWhenWithSubjectConditionContributor(
         }
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun KtAnalysisSession.completeSubClassesOfSealedClass(
         classSymbol: KtNamedClassOrObjectSymbol,
         conditions: List<KtWhenCondition>,
@@ -246,7 +247,6 @@ internal class FirWhenWithSubjectConditionContributor(
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .also { it.availableWithoutImport = availableWithoutImport }
             .let(sink::addElement)
     }
 }
@@ -271,7 +271,7 @@ private object WhenConditionInsertionHandler : InsertionHandlerBase<WhenConditio
         lookupObject: WhenConditionLookupObject
     ) {
         if (lookupObject.isSingleCondition && completionChar != ',') {
-            insertSymbol(" -> ")
+            insertString(" -> ")
             commitDocument()
         }
     }

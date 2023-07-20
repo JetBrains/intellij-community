@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
@@ -95,19 +95,6 @@ public interface AnnotationHolder {
    */
   @Deprecated
   Annotation createWeakWarningAnnotation(@NotNull PsiElement elt,
-                                         @Nullable @InspectionMessage String message);
-
-  /**
-   * Creates an annotation with severity {@link HighlightSeverity#WEAK_WARNING} ('weak warning') with the specified
-   * message over the specified AST node.
-   *
-   * @param node    the node over which the annotation is created.
-   * @param message the info message.
-   * @return the annotation (which can be modified to set additional annotation parameters)
-   * @deprecated Use {@link #newAnnotation(HighlightSeverity, String)} instead
-   */
-  @Deprecated(forRemoval = true)
-  Annotation createWeakWarningAnnotation(@NotNull ASTNode node,
                                          @Nullable @InspectionMessage String message);
 
   /**
@@ -218,8 +205,7 @@ public interface AnnotationHolder {
    * @return builder instance you can use to further customize your annotation
    */
   @Contract(pure = true)
-  @NotNull
-  default AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
+  default @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
                                           @NotNull @InspectionMessage String message) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
@@ -236,8 +222,7 @@ public interface AnnotationHolder {
    * @return builder instance you can use to further customize your annotation
    */
   @Contract(pure = true)
-  @NotNull
-  default AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+  default @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
     throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
   }
 }

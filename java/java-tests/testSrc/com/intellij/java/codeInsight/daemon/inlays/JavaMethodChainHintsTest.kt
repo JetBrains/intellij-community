@@ -29,9 +29,9 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()<# B #>
-                .c()<# C #>
-                .a()<# A #>
+      .b()/*<# B #>*/
+                .c()/*<# C #>*/
+                .a()/*<# A #>*/
                 .c();
   }
 }""")
@@ -59,10 +59,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# A #>
-     .b()<# B #>
+     .a()/*<# A #>*/
+     .b()/*<# B #>*/
      .a() // comment
-     .c()<# C #>
+     .c()/*<# C #>*/
      .b();
   }
 }
@@ -89,11 +89,11 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     A a = new A();
-    a.b().c()<# C #>
-     .a()<# A #>
-     .b()<# B #>
-     .a()<# A #>
-     .c()<# C #>
+    a.b().c()/*<# C #>*/
+     .a()/*<# A #>*/
+     .b()/*<# B #>*/
+     .a()/*<# A #>*/
+     .c()/*<# C #>*/
      .b();
   }
 }
@@ -121,10 +121,10 @@ public class Chains {
   public static void main(String[] args) {
     A a = new A();
     a.b().c() // comment
-     .a()<# A #>
-     .b()<# B #>
+     .a()/*<# A #>*/
+     .b()/*<# B #>*/
      .a() // comment
-     .c()<# C #>
+     .c()/*<# C #>*/
      .b();
   }
 }
@@ -151,15 +151,15 @@ public class Chains {
   @SuppressWarnings("UnusedLabel")
   public static void main(String[] args) {
     new A()
-      .b()<# B #>
-                .c()<# C #>
-                .a()<# A #>
+      .b()/*<# B #>*/
+                .c()/*<# C #>*/
+                .a()/*<# A #>*/
                 .c();
 
     new A()
-      .b()<# B #>
-                .c()<# C #>
-                .a()<# A #>
+      .b()/*<# B #>*/
+                .c()/*<# C #>*/
+                .a()/*<# A #>*/
                 .c();
   }
 }
@@ -194,13 +194,13 @@ public class Chains {
     new A()
       .b(() -> {
         new B()
-          .a()<# A #>
-          .c()<# C #>
-          .b()<# B #>
+          .a()/*<# A #>*/
+          .c()/*<# C #>*/
+          .b()/*<# B #>*/
           .a();
-      })<# B #>
-      .c()<# C #>
-      .a()<# A #>
+      })/*<# B #>*/
+      .c()/*<# C #>*/
+      .a()/*<# A #>*/
       .c();
   }
 }
@@ -209,23 +209,15 @@ public class Chains {
 
   fun testPreview() {
     doTestPreview("""
-abstract class Foo<T> {
-  void main() {
-    listOf(1, 2, 3).filter(it -> it % 2 == 0)<# Foo<Integer> #>
-      .map(it -> it * 2)<# Foo<int> #>
-      .map(it -> "item: " + it)<# Foo<Object> #>
-      .forEach(this::println);
+import java.util.stream.*;
+class Foo {
+  {
+    Stream.of(1, 2, 3).filter(x -> x % 2 == 0)/*<# Stream<Integer> #>*/
+      .map(x -> x * 2)/*<# Stream<Integer> #>*/
+      .map(x -> "item: " + x)/*<# Stream<String> #>*/
+      .forEach(System.out::println);
   }
-
-  abstract Void println(Object any);
-  abstract Foo<Integer> listOf(int... args);
-  abstract Foo<T> filter(Function<T, Boolean> isAccepted);
-  abstract <R> Foo<R> map(Function<T, R> mapper);
-  abstract void forEach(Function<T, Void> fun);
-  interface Function<T, R> {
-    R call(T t);
-  }
-}
+} 
     """.trimIndent(), JavaMethodChainsDeclarativeInlayProvider.PROVIDER_ID, JavaMethodChainsDeclarativeInlayProvider(),
                   JavaLanguage.INSTANCE)
   }

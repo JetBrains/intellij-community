@@ -9,10 +9,8 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.util.ui.ExtendableHTMLViewFactory
-import com.intellij.util.ui.HTMLEditorKitBuilder
-import com.intellij.util.ui.JBEmptyBorder
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.system.OS
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Container
@@ -61,7 +59,10 @@ internal class IntentionPreviewComponent(parent: Disposable) :
           if (prefHeight == null) {
             val pos = modelToView2D(document.endPosition.offset.coerceAtLeast(1) - 1)
             if (pos != null) {
-              prefHeight = pos.maxY.toInt() + 5
+              prefHeight = pos.maxY.toInt() + when (OS.CURRENT) {
+                OS.Windows -> 5
+                else -> 0
+              }
             }
           }
           return Dimension(targetSize, prefHeight ?: Integer.MAX_VALUE)
@@ -75,6 +76,7 @@ internal class IntentionPreviewComponent(parent: Disposable) :
         .build()
       editor.text = content.toString()
       editor.size = Dimension(targetSize, Integer.MAX_VALUE)
+      editor.background = JBUI.CurrentTheme.Popup.BACKGROUND
       return wrapToPanel(editor)
     }
   }
@@ -86,8 +88,9 @@ internal class IntentionPreviewComponent(parent: Disposable) :
   }
 
   companion object {
-    const val NO_PREVIEW = -1
-    const val LOADING_PREVIEW = -2
+    const val NO_PREVIEW: Int = -1
+    const val LOADING_PREVIEW: Int = -2
+    val BORDER: JBEmptyBorder = JBUI.Borders.empty(6, 10)
 
     private fun setupLabel(text: @Nls String): JComponent {
       val label = SimpleColoredComponent()
@@ -99,7 +102,7 @@ internal class IntentionPreviewComponent(parent: Disposable) :
       val panel = JPanel(BorderLayout())
       panel.background = component.background
       panel.add(component, BorderLayout.CENTER)
-      panel.border = JBEmptyBorder(5)
+      panel.border = BORDER
       return panel
     }
 

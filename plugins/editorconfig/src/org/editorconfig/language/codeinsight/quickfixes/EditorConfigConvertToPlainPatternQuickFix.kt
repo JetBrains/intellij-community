@@ -6,14 +6,14 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.editorconfig.language.messages.EditorConfigBundle
-import org.editorconfig.language.psi.EditorConfigCharClass
+import org.editorconfig.language.psi.EditorConfigCharClassPattern
 import org.editorconfig.language.services.EditorConfigElementFactory
 
 class EditorConfigConvertToPlainPatternQuickFix : LocalQuickFix {
   override fun getFamilyName() = EditorConfigBundle.get("quickfix.charclass.convert.to.plain.pattern.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-    val charClass = descriptor.psiElement as? EditorConfigCharClass ?: return
+    val charClass = descriptor.psiElement as? EditorConfigCharClassPattern ?: return
     val header = charClass.header
     val letter = charClass.charClassLetterList.first()
 

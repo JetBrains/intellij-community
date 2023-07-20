@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.util.PsiFormatUtil
@@ -10,10 +11,12 @@ import com.intellij.psi.util.PsiFormatUtilBase
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
+import org.jetbrains.kotlin.idea.search.usagesSearch.calculateInModalWindow
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.idea.util.KotlinPsiDeclarationRenderer
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.ClassifierNamePolicy
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.renderer.ParameterNameRenderingPolicy
@@ -69,11 +72,14 @@ fun formatPsiMethod(
 }
 
 fun formatJavaOrLightMethod(method: PsiMethod): String {
-    val originalDeclaration = method.unwrapped
-    return if (originalDeclaration is KtDeclaration) {
-        formatFunctionDescriptor(originalDeclaration.unsafeResolveToDescriptor())
-    } else {
-        formatPsiMethod(method, showContainingClass = false, inCode = false)
+    val declaration: PsiElement = method.unwrapped ?: return ""
+    return when (declaration) {
+        is KtDeclaration -> KotlinPsiDeclarationRenderer.render(declaration) ?:
+            formatFunctionDescriptor(declaration.unsafeResolveToDescriptor())
+        else -> calculateInModalWindow(
+          declaration,
+          KotlinBundle.message("find.usages.prepare.dialog.progress")
+        ) { formatPsiMethod(method, showContainingClass = false, inCode = false) }
     }
 }
 

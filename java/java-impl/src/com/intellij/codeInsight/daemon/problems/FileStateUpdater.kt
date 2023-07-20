@@ -21,13 +21,13 @@ internal class FileStateUpdater(private val prevState: FileState?) : JavaElement
   private val snapshot = mutableMapOf<SmartPsiElementPointer<PsiMember>, ScopedMember>()
   private val changes = mutableMapOf<PsiMember, ScopedMember?>()
 
-  override fun visitEnumConstant(psiEnumConstant: PsiEnumConstant) = visitMember(psiEnumConstant)
+  override fun visitEnumConstant(psiEnumConstant: PsiEnumConstant): Unit = visitMember(psiEnumConstant)
 
-  override fun visitClass(psiClass: PsiClass) = visitMember(psiClass)
+  override fun visitClass(psiClass: PsiClass): Unit = visitMember(psiClass)
 
-  override fun visitField(psiField: PsiField) = visitMember(psiField)
+  override fun visitField(psiField: PsiField): Unit = visitMember(psiField)
 
-  override fun visitMethod(psiMethod: PsiMethod) = visitMember(psiMethod)
+  override fun visitMethod(psiMethod: PsiMethod): Unit = visitMember(psiMethod)
 
   private fun visitMember(psiMember: PsiMember) {
     val member = ScopedMember.create(psiMember) ?: return

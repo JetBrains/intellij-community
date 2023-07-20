@@ -1,6 +1,7 @@
 package sample;
 
 import static sample.KotlinEnum0.values;
+import lib.LibEnumWithoutEntries;
 
 enum JavaEnum {}
 
@@ -16,6 +17,7 @@ class Test {
         JavaEnum[] javaEnumValues = JavaEnum.values();
         KotlinEnum0[] anotherMethodCalledValues = KotlinEnum0.values(true);
         int anotherValuesWithoutArgs = KotlinEnum2.Companion.values();
+        LibEnumWithoutEntries[] libEnumWithoutEntriesValues = LibEnumWithoutEntries.values();
     }
 
     public static void doesntCompileSoItDoesntMatterWhetherToReportOrNot() {

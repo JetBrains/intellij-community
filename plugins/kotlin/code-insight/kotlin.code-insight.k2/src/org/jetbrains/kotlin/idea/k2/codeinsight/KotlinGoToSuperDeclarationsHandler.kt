@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight
 
 import com.intellij.codeInsight.generation.actions.PresentableCodeInsightActionHandler
-import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.navigation.actions.GotoSuperAction
+import com.intellij.codeInsight.navigation.getPsiElementPopup
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.Presentation
@@ -70,7 +70,7 @@ class KotlinGoToSuperDeclarationsHandler : PresentableCodeInsightActionHandler {
                         .toTypedArray()
 
                     if (superDeclarationsArray.isNotEmpty()) {
-                        return NavigationUtil.getPsiElementPopup(superDeclarationsArray, result.title)
+                        return getPsiElementPopup(superDeclarationsArray, result.title)
                     }
                 }
 

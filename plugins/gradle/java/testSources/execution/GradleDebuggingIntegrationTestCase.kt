@@ -126,11 +126,11 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     vararg taskNames: String,
     modulePath: String = ".",
     scriptParameters: String = "",
-    isScriptDebugEnabled: Boolean = false,
+    isDebugServerProcess: Boolean = false,
     isDebugAllEnabled: Boolean = false
   ): String {
     val runConfiguration = createEmptyGradleRunConfiguration("run-configuration")
-    runConfiguration.isScriptDebugEnabled = isScriptDebugEnabled
+    runConfiguration.isDebugServerProcess = isDebugServerProcess
     runConfiguration.isDebugAllEnabled = isDebugAllEnabled
     runConfiguration.settings.externalProjectPath = FileUtil.toCanonicalPath("$projectPath/$modulePath")
     runConfiguration.settings.taskNames = taskNames.toList()

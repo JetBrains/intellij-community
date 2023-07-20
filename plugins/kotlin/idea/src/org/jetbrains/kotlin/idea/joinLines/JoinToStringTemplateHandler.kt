@@ -6,12 +6,12 @@ import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.base.psi.getLineCount
-import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
     override fun tryJoinRawLines(document: Document, file: PsiFile, start: Int, end: Int): Int {
@@ -34,12 +34,12 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
             parent = parent.parent
         }
 
-        var rightText = ConvertToStringTemplateIntention.buildText(binaryExpr.right, false)
+        var rightText = ConvertToStringTemplateIntention.Holder.buildText(binaryExpr.right, false)
         var left = binaryExpr.left
         while (left is KtBinaryExpression && left.joinable()) {
             val leftLeft = (left as? KtBinaryExpression)?.left ?: break
             if (leftLeft.getLineCount() < lineCount - 1) break
-            rightText = ConvertToStringTemplateIntention.buildText(left.right, false) + rightText
+            rightText = ConvertToStringTemplateIntention.Holder.buildText(left.right, false) + rightText
             left = left.left
         }
 
@@ -65,7 +65,7 @@ class JoinToStringTemplateHandler : JoinRawLinesHandlerDelegate {
     }
 
     private fun createStringTemplate(left: KtStringTemplateExpression, rightText: String): KtStringTemplateExpression {
-        val leftText = ConvertToStringTemplateIntention.buildText(left, false)
+        val leftText = ConvertToStringTemplateIntention.Holder.buildText(left, false)
         return KtPsiFactory(left.project).createExpression("\"$leftText$rightText\"") as KtStringTemplateExpression
     }
 

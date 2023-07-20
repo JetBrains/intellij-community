@@ -24,7 +24,7 @@ class AddRunConfigurationTypeAction : DumbAwareAction() {
     t1.displayName.compareTo(t2.displayName, ignoreCase = true)
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = e.project != null

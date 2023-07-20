@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -116,7 +116,12 @@ public final class VariableNameGenerator {
     List<String> result = new ArrayList<>();
     final @NonNls String defaultVariableName = "v";
     for (String candidate : candidates.isEmpty() ? Collections.singleton(defaultVariableName) : candidates) {
-      String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
+      String name;
+      if (myContext instanceof PsiNameIdentifierOwner owner && candidate.equals(owner.getName())) {
+        name = candidate;
+      } else {
+        name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
+      }
       if (name.equals(candidate)) result.add(name);
       else suffixed.add(name);
     }

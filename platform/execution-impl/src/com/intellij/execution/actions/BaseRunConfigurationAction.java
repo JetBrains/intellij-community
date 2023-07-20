@@ -11,7 +11,6 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.lineMarker.ExecutorAction;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
@@ -115,7 +114,6 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, e.getPlace());
     final RunnerAndConfigurationSettings existing = findExisting(context);
     if (existing == null || dataContext.getData(ExecutorAction.getOrderKey()) != null) {

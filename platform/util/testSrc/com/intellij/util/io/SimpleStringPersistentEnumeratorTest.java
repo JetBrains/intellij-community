@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import static org.hamcrest.CoreMatchers.startsWith;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
+
 public class SimpleStringPersistentEnumeratorTest {
   @Rule
   public TempDirectory myTempDirectory = new TempDirectory();
@@ -28,10 +32,13 @@ public class SimpleStringPersistentEnumeratorTest {
     SimpleStringPersistentEnumerator enumerator = new SimpleStringPersistentEnumerator(enumPath);
     try {
       enumerator.enumerate("qwe\nasd");
-      Assert.fail();
+      fail("SimpleStringPersistentEnumerator must throw exception on multi-line strings");
     }
     catch (RuntimeException e) {
-      Assert.assertEquals("SimpleStringPersistentEnumerator doesn't support multi-line strings", e.getMessage());
+      assertThat(
+        e.getMessage(),
+        startsWith("SimpleStringPersistentEnumerator doesn't support multi-line strings")
+      );
     }
   }
 

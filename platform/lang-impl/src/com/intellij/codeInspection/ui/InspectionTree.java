@@ -101,7 +101,7 @@ public class InspectionTree extends Tree {
       EditSourceOnEnterKeyHandler.install(this);
       TreeUtil.installActions(this);
       PopupHandler.installPopupMenu(this, IdeActions.INSPECTION_TOOL_WINDOW_TREE_POPUP, ActionPlaces.CODE_INSPECTION);
-      new TreeSpeedSearch(this, false, o -> InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString()));
+      TreeSpeedSearch.installOn(this, false, o -> InspectionsConfigTreeComparator.getDisplayTextToSort(o.getLastPathComponent().toString()));
     }
 
     getModel().addTreeModelListener(new TreeModelAdapter() {
@@ -156,10 +156,13 @@ public class InspectionTree extends Tree {
 
   @Nullable
   public InspectionToolWrapper<?,?> getSelectedToolWrapper(boolean allowDummy) {
+    return getSelectedToolWrapper(allowDummy, getSelectionPaths());
+  }
+
+  @Nullable InspectionToolWrapper<?,?> getSelectedToolWrapper(boolean allowDummy, TreePath @Nullable [] paths) {
     InspectionProfileImpl profile = myView.getCurrentProfile();
     if (profile == null) return null;
     String singleToolName = profile.getSingleTool();
-    final TreePath[] paths = getSelectionPaths();
     if (paths == null) {
       if (singleToolName != null) {
         InspectionToolWrapper<?,?> tool = profile.getInspectionTool(singleToolName, myView.getProject());
@@ -277,18 +280,19 @@ public class InspectionTree extends Tree {
 
   public RefEntity @NotNull [] getSelectedElements() {
     TreePath[] selectionPaths = getSelectionPaths();
-    if (selectionPaths != null) {
-      InspectionToolWrapper<?,?> toolWrapper = getSelectedToolWrapper(true);
-      if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    if (selectionPaths == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    return getElementsFromSelection(selectionPaths);
+  }
 
-      Set<RefEntity> result = new LinkedHashSet<>();
-      for (TreePath selectionPath : selectionPaths) {
-        final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
-        addElementsInNode(node, result);
-      }
-      return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
+  RefEntity @NotNull [] getElementsFromSelection(TreePath @NotNull [] selectionPaths) {
+    InspectionToolWrapper<?,?> toolWrapper = getSelectedToolWrapper(true, selectionPaths);
+    if (toolWrapper == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    Set<RefEntity> result = new LinkedHashSet<>();
+    for (TreePath selectionPath : selectionPaths) {
+      final InspectionTreeNode node = (InspectionTreeNode)selectionPath.getLastPathComponent();
+      addElementsInNode(node, result);
     }
-    return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    return ArrayUtil.reverseArray(result.toArray(RefEntity.EMPTY_ELEMENTS_ARRAY));
   }
 
   @NotNull

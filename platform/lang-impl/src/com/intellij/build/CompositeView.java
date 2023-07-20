@@ -75,7 +75,7 @@ public class CompositeView<T extends ComponentContainer> extends JPanel implemen
     }
     if (requestFocus) {
       ComponentContainer view = getView(viewName);
-      new UiNotifyConnector.Once(view.getComponent(), new Activatable() {
+      UiNotifyConnector.Once.installOn(view.getComponent(), new Activatable() {
         @Override
         public void showNotify() {
           view.getPreferredFocusableComponent().requestFocusInWindow();

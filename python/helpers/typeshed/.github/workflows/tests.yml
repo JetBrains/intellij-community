@@ -9,12 +9,17 @@ on:
   pull_request:
     paths-ignore:
       - '**/*.md'
+      - 'scripts/**'
 
 permissions:
   contents: read
 
 env:
   PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 jobs:
   file-consistency:
@@ -46,7 +51,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - run: pip install $(grep flake8 requirements-tests.txt)
+      - run: pip install -r requirements-tests.txt
       - run: flake8
 
   pytype:
@@ -61,7 +66,7 @@ jobs:
       - run: ./tests/pytype_test.py --print-stderr
 
   mypy:
-    name: Run mypy against typeshed
+    name: Run mypy against the stubs
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -76,8 +81,19 @@ jobs:
       - run: pip install -r requirements-tests.txt
       - run: ./tests/mypy_test.py --platform=${{ matrix.platform }} --python-version=${{ matrix.python-version }}
 
+  regression-tests:
+    name: Run mypy on the test cases
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements-tests.txt
+      - run: python ./tests/regr_test.py --all
+
   pyright:
-    name: Run pyright against typeshed
+    name: Test the stubs with pyright
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -85,7 +101,7 @@ jobs:
         python-version: ["3.7", "3.8", "3.9", "3.10", "3.11"]
       fail-fast: false
     env:
-      PYRIGHT_VERSION: 1.1.255 # Must match pyright_test.py.
+      PYRIGHT_VERSION: 1.1.266 # Must match pyright_test.py.
     steps:
       - uses: actions/checkout@v3
       - uses: jakebailey/pyright-action@v1
@@ -101,6 +117,13 @@ jobs:
           python-platform: ${{ matrix.python-platform }}
           python-version: ${{ matrix.python-version }}
           no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }} # Having each job create the same comment is too noisy.
+          project: ./pyrightconfig.testcases.json
+      - uses: jakebailey/pyright-action@v1
+        with:
+          version: ${{ env.PYRIGHT_VERSION }}
+          python-platform: ${{ matrix.python-platform }}
+          python-version: ${{ matrix.python-version }}
+          no-comments: ${{ matrix.python-version != '3.10' || matrix.python-platform != 'Linux' }}  # Having each job create the same comment is too noisy.
 
   stubtest-third-party:
     name: Check third party stubs with stubtest
@@ -130,7 +153,7 @@ jobs:
               echo "Installing apt packages: $APT_PACKAGES"
               sudo apt update && sudo apt install -y $APT_PACKAGES
             fi
-            python tests/stubtest_third_party.py $STUBS
+            xvfb-run python tests/stubtest_third_party.py $STUBS
           else
             echo "Nothing to test"
           fi

@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.io.FileChannelInterruptsRetryer.FileChannelIdempotentOperation;
+import com.intellij.util.io.OpenChannelsCache.FileChannelOperation;
 import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.Page;
 import com.intellij.util.io.pagecache.PagedStorage;
@@ -13,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.InterruptedIOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Files;
@@ -22,8 +26,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-
-import static com.intellij.util.io.PageCacheUtils.CHANNELS_CACHE;
 
 public class PagedFileStorageLockFree implements PagedStorage {
   private static final Logger LOG = Logger.getInstance(PagedFileStorageLockFree.class);
@@ -357,8 +359,13 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
+  /**
+   * Synchronous close: i.e. tries to reclaim all the pages in a current thread, and waits until {@link FilePageCacheLockFree}
+   * cleans up everything associated with this storage. After this method terminates, it is safe to try to create
+   * new storage from the same file.
+   */
   @Override
-  public void close() throws IOException, InterruptedException {
+  public void close() throws IOException {
     if (isClosed()) {
       return;
     }
@@ -381,8 +388,23 @@ public class PagedFileStorageLockFree implements PagedStorage {
         throw new IOException("Can't close storage for " + file, cause);
       }
     }
+    catch (InterruptedException e) {
+      //RC: storage.close() method throwing InterruptedException is a lot of pain, because in many places only IO
+      //    exceptions are expected, and there is no better way to deal with IE other then rethrow it as some kind
+      //    of IO exception. So finally I decided to do it right here, instead of repeating it in 10s places around
+      //    the codebase:
+      final InterruptedIOException ioEx = new InterruptedIOException("Closing storage for " + file + " was interrupted");
+      ioEx.addSuppressed(e);
+      throw ioEx;
+    }
   }
 
+  /**
+   * Enqueues storage backing structures cleanup, but do not wait for completion.
+   * Storage {@link #isClosed()}=true after this method, but an attempt to open new storage
+   * from the same file may fail, since {@link FilePageCacheLockFree} may not yet cleans up
+   * everything related to the current storage.
+   */
   public synchronized Future<?> closeAsync() {
     if (!isClosed()) {
       final CompletableFuture<Object> closingProgress = new CompletableFuture<>();
@@ -391,6 +413,15 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
     return closingInProgress;
   }
+
+  public void closeAndRemoveAllFiles() throws IOException, InterruptedException {
+    if (!isClosed()) {
+      close();
+    }
+
+    FileUtil.delete(file);
+  }
+
 
   @Override
   public int toOffsetInPage(final long offsetInFile) {
@@ -438,17 +469,14 @@ public class PagedFileStorageLockFree implements PagedStorage {
     return pages;
   }
 
-  <R> R useChannel(final @NotNull OpenChannelsCache.ChannelProcessor<R> processor,
-                   final boolean read) throws IOException {
-    if (storageLockContext.useChannelCache()) {
-      return CHANNELS_CACHE.useChannel(file, processor, read);
-    }
-    else {
-      storageLockContext.getBufferCache().incrementUncachedFileAccess();
-      try (OpenChannelsCache.ChannelDescriptor desc = new OpenChannelsCache.ChannelDescriptor(file, read)) {
-        return processor.process(desc.getChannel());
-      }
-    }
+  <R> R executeOp(final @NotNull FileChannelOperation<R> operation,
+                  final boolean readOnly) throws IOException {
+    return storageLockContext.executeOp(file, operation, readOnly);
+  }
+
+  <R> R executeIdempotentOp(final @NotNull FileChannelIdempotentOperation<R> operation,
+                            final boolean readOnly) throws IOException {
+    return storageLockContext.executeIdempotentOp(file, operation, readOnly);
   }
 
   private PageImpl createUninitializedPage(final int pageIndex) {
@@ -467,7 +495,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     final long startedAtNs = statistics.startTimestampNs();
     final ByteBuffer pageBuffer = pageCache.allocatePageBuffer(pageSize);
     pageBuffer.order(nativeBytesOrder ? ByteOrder.nativeOrder() : ByteOrder.BIG_ENDIAN);
-    useChannel(ch -> {
+    executeIdempotentOp(ch -> {
       final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
       if (readBytes < pageSize) {
         final int startFrom = Math.max(0, readBytes);
@@ -484,7 +512,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     final FilePageCacheStatistics statistics = pageCache.getStatistics();
     final long startedAtNs = statistics.startTimestampNs();
     final int bytesToStore = bufferToSave.remaining();
-    useChannel(ch -> {
+    executeIdempotentOp(ch -> {
       ch.write(bufferToSave, offsetInFile);
       return null;
     }, isReadOnly());
@@ -508,8 +536,7 @@ public class PagedFileStorageLockFree implements PagedStorage {
     }
   }
 
-  @NotNull
-  private static StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
+  private static @NotNull StorageLockContext findOutAppropriateContext(final @Nullable StorageLockContext storageLockContext) {
     final StorageLockContext threadContext = THREAD_LOCAL_STORAGE_LOCK_CONTEXT.get();
     if (threadContext != null) {
       if (storageLockContext != null && storageLockContext != threadContext) {

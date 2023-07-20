@@ -8,38 +8,40 @@ import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.concurrency.SynchronizedClearableLazy
-import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 
 // A way to remove obsolete component data.
 internal val OBSOLETE_STORAGE_EP = ExtensionPointName<ObsoleteStorageBean>("com.intellij.obsoleteStorage")
 
 abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
-  @Suppress("DEPRECATION")
-  private val settingsSavingComponents = ContainerUtil.createLockFreeCopyOnWriteList<com.intellij.openapi.components.SettingsSavingComponent>()
-
   protected abstract val serviceContainer: ComponentManagerImpl
 
   private val asyncSettingsSavingComponents = SynchronizedClearableLazy {
     val result = mutableListOf<SettingsSavingComponent>()
-    serviceContainer.processComponentsAndServices(createIfNeeded = false) {
-      if (it is SettingsSavingComponent) {
-        result.add(it)
+    for (instance in serviceContainer.instances()) {
+      if (instance is SettingsSavingComponent) {
+        result.add(instance)
+      }
+      else if (instance is @Suppress("DEPRECATION") com.intellij.openapi.components.SettingsSavingComponent) {
+        result.add(object : SettingsSavingComponent {
+          override suspend fun save() {
+            withContext(Dispatchers.EDT) {
+              blockingContext {
+                instance.save()
+              }
+            }
+          }
+        })
       }
     }
     result
   }
 
   final override fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?) {
-    if (component is @Suppress("DEPRECATION") com.intellij.openapi.components.SettingsSavingComponent) {
-      settingsSavingComponents.add(component)
-    }
-    else if (component is SettingsSavingComponent) {
+    if (component is SettingsSavingComponent) {
       asyncSettingsSavingComponents.drop()
     }
 
@@ -57,17 +59,8 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
                                                                        forceSavingAllSettings: Boolean,
                                                                        saveSessionProducerManager: SaveSessionProducerManager) {
     coroutineScope {
-      // expects EDT
-      launch(Dispatchers.EDT) {
-        for (settingsSavingComponent in settingsSavingComponents) {
-          runAndCollectException(result) {
-            settingsSavingComponent.save()
-          }
-        }
-      }
-
-      launch {
-        for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
+      for (settingsSavingComponent in asyncSettingsSavingComponents.value) {
+        launch {
           runAndCollectException(result) {
             settingsSavingComponent.save()
           }
@@ -75,12 +68,12 @@ abstract class ComponentStoreWithExtraComponents : ComponentStoreImpl() {
       }
     }
 
-    // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components (component state uses scheme manager in an ipr project, so, we must save it before)
-    // so, call it sequentially, not inside coroutineScope
-    commitComponentsOnEdt(result, forceSavingAllSettings, saveSessionProducerManager)
+    // SchemeManager (asyncSettingsSavingComponent) must be saved before saving components
+    // (component state uses scheme manager in an ipr project, so, we must save it before) so, call it sequentially
+    commitComponents(isForce = forceSavingAllSettings, session = saveSessionProducerManager, saveResult = result)
   }
 
-  override fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
+  override suspend fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, saveResult: SaveResult) {
     // ensure that this task will not interrupt regular saving
     runCatching {
       commitObsoleteComponents(session = session, isProjectLevel = false)

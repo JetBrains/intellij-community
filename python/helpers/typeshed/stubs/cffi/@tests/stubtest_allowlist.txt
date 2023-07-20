@@ -1,0 +1,20 @@
+# technically exists on all OSs, but crashes on all but windows
+cffi.(api.)?FFI.getwinerror
+
+# added dynamically and not detected by stubtest
+cffi.(api.)?FFI.CData
+cffi.(api.)?FFI.CType
+cffi.(api.)?FFI.buffer
+
+# Exists at runtime, but missing from stubs
+cffi.vengine_cpy.__warningregistry__
+
+# Alias to io.StringIO, which has the same allowlist
+cffi.recompiler.NativeIO.seek
+cffi.recompiler.NativeIO.truncate
+cffi.verifier.NativeIO.seek
+cffi.verifier.NativeIO.truncate
+
+# Unnecessary re-exports
+cffi.cparser.COMMON_TYPES
+cffi.verifier.__version_verifier_modules__

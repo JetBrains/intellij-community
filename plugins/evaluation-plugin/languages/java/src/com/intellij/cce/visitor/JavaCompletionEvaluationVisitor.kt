@@ -21,7 +21,7 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
   }
 
   override fun visitKeyword(keyword: PsiKeyword) {
-    val token = CodeToken(keyword.text, keyword.textOffset, keyword.textLength, keywordProperties())
+    val token = CodeToken(keyword.text, keyword.textOffset, keywordProperties())
     codeFragment?.addChild(token)
   }
 
@@ -32,7 +32,7 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
   override fun visitReferenceElement(reference: PsiJavaCodeReferenceElement) {
     val name = reference.referenceName
     if (name != null) {
-      val token = CodeToken(name, reference.textOffset, name.length, createTokenProperties(reference))
+      val token = CodeToken(name, reference.textOffset, createTokenProperties(reference))
       codeFragment?.addChild(token)
     }
     super.visitReferenceElement(reference)
@@ -41,7 +41,7 @@ class JavaCompletionEvaluationVisitor : CompletionEvaluationVisitor, JavaRecursi
   override fun visitLiteralExpression(expression: PsiLiteralExpression) {
     if (expression is PsiLiteralExpressionImpl &&
         (expression.type == PsiTypes.booleanType() || expression.type == PsiTypes.nullType())) {
-      val token = CodeToken(expression.text, expression.textOffset, expression.textLength, keywordProperties())
+      val token = CodeToken(expression.text, expression.textOffset, keywordProperties())
       codeFragment?.addChild(token)
     }
   }

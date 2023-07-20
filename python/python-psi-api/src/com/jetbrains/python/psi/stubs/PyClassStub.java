@@ -22,6 +22,7 @@ package com.jetbrains.python.psi.stubs;
 import com.intellij.psi.stubs.NamedStub;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,11 +53,8 @@ public interface PyClassStub extends NamedStub<PyClass> {
   @NotNull
   List<String> getSuperClassesText();
 
-  /**
-   * @deprecated It is our internal API, try to avoid using it.
-   * It is planned to be removed sooner or later, so please don't rely on this method.
-   */
-  @Deprecated(forRemoval = true)
+
+  @ApiStatus.Internal
   @Nullable
   default <T> T getCustomStub(@NotNull Class<T> stubClass) {
     return null;

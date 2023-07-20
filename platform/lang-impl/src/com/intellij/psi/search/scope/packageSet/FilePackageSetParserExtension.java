@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.search.scope.packageSet;
 
@@ -25,8 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class FilePackageSetParserExtension implements PackageSetParserExtension {
 
   @Override
-  @Nullable
-  public String parseScope(Lexer lexer) {
+  public @Nullable String parseScope(Lexer lexer) {
     if (lexer.getTokenType() != ScopeTokenTypes.IDENTIFIER) return null;
     String id = getTokenText(lexer);
     if (FilePatternPackageSet.SCOPE_FILE.equals(id) || FilePatternPackageSet.SCOPE_EXT.equals(id)) {
@@ -46,8 +31,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
   }
 
   @Override
-  @Nullable
-  public PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
+  public @Nullable PackageSet parsePackageSet(final Lexer lexer, final String scope, final String modulePattern) throws ParsingException {
     if (!FilePatternPackageSet.SCOPE_FILE.equals(scope) && !FilePatternPackageSet.SCOPE_EXT.equals(scope)) return null;
     return new FilePatternPackageSet(modulePattern, parseFilePattern(lexer), FilePatternPackageSet.SCOPE_FILE.equals(scope));
   }

@@ -11,7 +11,6 @@ import com.intellij.ui.components.JBList
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
@@ -65,7 +64,7 @@ class CommitsBrowserComponentBuilder(private val project: Project,
       ListUiUtil.Selection.installSelectionOnFocus(list)
       ListUiUtil.Selection.installSelectionOnRightClick(list)
 
-      ListSpeedSearch(list) { commit -> commit.subject }
+      ListSpeedSearch.installOn(list) { commit -> commit.subject }
 
       popupActions?.let { pair ->
         PopupHandler.installSelectionListPopup(list, pair.first, pair.second)

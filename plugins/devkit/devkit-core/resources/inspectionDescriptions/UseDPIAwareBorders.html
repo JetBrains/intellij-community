@@ -8,7 +8,7 @@ Reports usages of <code>javax.swing.border.EmptyBorder</code> and <code>JBUI.Bor
   Quick fix performs replacement with <code>JBUI.Borders.empty()</code> or simplifies the expression.
 </p>
 <p>Example:</p>
-<pre>
+<pre><code lang="java">
 // bad:
 Border border1 = new EmptyBorder(1, 2, 3, 4);
 Border border2 = new EmptyBorder(1, 2, 1, 2);
@@ -18,6 +18,6 @@ Border border3 = new EmptyBorder(1, 0, 0, 0);
 Border border1 = JBUI.Borders.empty(1, 2, 3, 4);
 Border border2 = JBUI.Borders.empty(1, 2);
 Border border3 = JBUI.Borders.emptyTop(1);
-</pre>
+</code></pre>
 </body>
 </html>

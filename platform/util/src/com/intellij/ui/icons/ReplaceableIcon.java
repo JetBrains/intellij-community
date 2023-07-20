@@ -2,7 +2,6 @@
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.ui.IconReplacer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

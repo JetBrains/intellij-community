@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -17,13 +17,13 @@ public abstract class CompletionStatistician extends Statistician<LookupElement,
   protected static final Function<@NotNull LookupElement, @Nullable StatisticsInfo> NULL_SERIALIZER = e -> null;
 
   @Override
-  public abstract StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location);
+  public abstract StatisticsInfo serialize(final @NotNull LookupElement element, final @NotNull CompletionLocation location);
 
   /**
    * @param location location to apply the statistician for
    * @return partially evaluated statistician; can be used for optimization
    */
-  public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(@NotNull final CompletionLocation location) {
+  public @NotNull Function<@NotNull LookupElement, @Nullable StatisticsInfo> forLocation(final @NotNull CompletionLocation location) {
     return element -> serialize(element, location);
   }
 }

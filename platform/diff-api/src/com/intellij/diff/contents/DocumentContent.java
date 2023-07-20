@@ -29,7 +29,9 @@ import java.nio.charset.Charset;
 
 public interface DocumentContent extends DiffContent {
   /**
-   * Represents this content as Document
+   * Represents this content as Document.
+   * <p>
+   * Typically, files are converted into {@link LineSeparator#LF} for comparison. Use {@link #getLineSeparator()} to indicate original separators.
    */
   @NotNull
   Document getDocument();
@@ -48,19 +50,23 @@ public interface DocumentContent extends DiffContent {
   default Navigatable getNavigatable(@NotNull LineCol position) { return null; }
 
   /**
-   * @return original file line separator
+   * @return original file line separator, used to display differences in separators.
+   * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
    */
   @Nullable
   default LineSeparator getLineSeparator() { return null; }
 
   /**
-   * @return original file charset
+   * @return original file charset, used to display differences in files charsets.
+   * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
+   * @see #hasBom()
    */
   @Nullable
   default Charset getCharset() { return null; }
 
   /**
-   * @return original file byte order mark
+   * @return original file byte order mark, used to display differences in files charsets.
+   * {@code null} means it is 'Undefined/Not applicable' and will not be compared.
    */
   @Nullable
   default Boolean hasBom() { return null; }

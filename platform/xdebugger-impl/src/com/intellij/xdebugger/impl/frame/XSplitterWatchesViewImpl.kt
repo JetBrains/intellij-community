@@ -41,9 +41,7 @@ class XSplitterWatchesViewImpl(
     val splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
 
     splitter.firstComponent = localsPanelComponent
-
-    if (PropertiesComponent.getInstance().getBoolean("debugger.immediate.window.in.watches", true))
-      splitter.secondComponent = evaluatorComponent
+    splitter.secondComponent = evaluatorComponent
 
     return BorderLayoutPanel().addToCenter(splitter)
   }

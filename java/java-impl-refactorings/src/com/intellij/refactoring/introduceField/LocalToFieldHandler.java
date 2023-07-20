@@ -6,8 +6,7 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPreselectionUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -87,15 +86,15 @@ public abstract class LocalToFieldHandler {
       final PsiClass preselection = AnonymousTargetClassPreselectionUtil.getPreselection(classes, firstClass);
       String title = myIsConstant ? JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.constant")
                                   : JavaRefactoringBundle.message("local.to.field.popup.title.choose.class.to.introduce.field");
-      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
-                                        title, new PsiElementProcessor<>() {
+      new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(preselection).createPopup(myProject,
+                                                title, new PsiElementProcessor<>() {
           @Override
           public boolean execute(@NotNull PsiClass aClass) {
             AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, aClass);
             convertLocalToField(local, aClass, editor, isStatic);
             return false;
           }
-        }, preselection).showInBestPositionFor(editor);
+        }).showInBestPositionFor(editor);
     }
 
     return true;

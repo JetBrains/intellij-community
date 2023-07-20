@@ -4,6 +4,7 @@ package com.intellij.ide.navbar.ide
 import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
+import com.intellij.ide.navbar.impl.PsiNavBarItem
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
@@ -151,6 +152,10 @@ internal suspend fun contextModel(ctx: DataContext, project: Project): List<NavB
 private fun contextModelInner(ctx: DataContext): List<NavBarVmItem> {
   val contextItem = NavBarItem.NAVBAR_ITEM_KEY.getData(ctx)
                     ?: return emptyList()
+  if (contextItem is PsiNavBarItem && !contextItem.data.isValid) {
+    LOG.warn("Data rule [${NavBarItem.NAVBAR_ITEM_KEY.name}] returned invalid context item of type [${(contextItem.data)::class.java}]")
+    return emptyList()
+  }
   return contextItem.pathToItem().toVmItems()
 }
 

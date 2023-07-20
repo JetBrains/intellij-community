@@ -11,7 +11,7 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import org.jetbrains.kotlin.search.assertWithExpectedScope
 
 @SkipSlowTestLocally
-class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
+open class SearchScopeHumanReadableStringTest : KotlinCompilerReferenceTestBase() {
     override fun setUp() {
         super.setUp()
         myFixture.addFileToProject(

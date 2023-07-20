@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Conditions;
@@ -63,10 +63,9 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     return old;
   }
 
-  @Nullable
-  private static ArchiveHandler.EntryInfo put(@NotNull String relativePath,
-                                              @NotNull ArchiveHandler.EntryInfo value,
-                                              ArchiveHandler.EntryInfo @NotNull [] entries) {
+  private static @Nullable ArchiveHandler.EntryInfo put(@NotNull String relativePath,
+                                                        @NotNull ArchiveHandler.EntryInfo value,
+                                                        ArchiveHandler.EntryInfo @NotNull [] entries) {
     int index = index(relativePath, entries);
     ArchiveHandler.EntryInfo entry;
     int i = index;
@@ -116,8 +115,7 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     entries = newEntries;
   }
 
-  @NotNull
-  private static String getRelativePath(@NotNull ArchiveHandler.EntryInfo entry) {
+  private static @NotNull String getRelativePath(@NotNull ArchiveHandler.EntryInfo entry) {
     StringBuilder result = new StringBuilder(entry.shortName.length() + 10);
     for (ArchiveHandler.EntryInfo e = entry; e != null; e = e.parent) {
       if (result.length() != 0 && e.shortName.length() != 0) {
@@ -151,9 +149,8 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
   }
 
   private EntrySet entrySet;
-  @NotNull
   @Override
-  public EntrySet entrySet() {
+  public @NotNull EntrySet entrySet() {
     EntrySet es;
     return (es = entrySet) == null ? (entrySet = new EntrySet()) : es;
   }
@@ -191,9 +188,8 @@ final class ZipEntryMap extends AbstractMap<String, ArchiveHandler.EntryInfo> {
     }
   }
 
-  @NotNull
   @Override
-  public Collection<ArchiveHandler.EntryInfo> values() {
+  public @NotNull Collection<ArchiveHandler.EntryInfo> values() {
     return ContainerUtil.filter(entries, Conditions.notNull());
   }
 }

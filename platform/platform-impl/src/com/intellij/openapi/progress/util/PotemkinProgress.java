@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 public final class PotemkinProgress extends ProgressWindow implements PingProgress {
   private final Application myApp = ApplicationManager.getApplication();
   private final EventStealer myEventStealer;
-  private final PerformanceWatcher myWatcher = PerformanceWatcher.getInstanceOrNull();
+  private final PerformanceWatcher myWatcher = PerformanceWatcher.Companion.getInstanceIfCreated();
   private long myLastUiUpdate = System.currentTimeMillis();
   private long myLastInteraction = myLastUiUpdate;
   private long myLastWatcherPing = myLastUiUpdate;

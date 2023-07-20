@@ -1,0 +1,11 @@
+// "Add initializer" "true"
+// ERROR: Val cannot be reassigned
+// COMPILER_ARGUMENTS: -XXLanguage:+ProhibitOpenValDeferredInitialization
+open class Foo {
+    open val foo: Int = 0
+        get() = field
+
+    init {
+        foo = 2
+    }
+}

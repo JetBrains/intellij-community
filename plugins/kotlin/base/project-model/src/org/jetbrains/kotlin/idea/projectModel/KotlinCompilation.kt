@@ -19,27 +19,9 @@ interface KotlinCompilation : KotlinComponent, HasMutableExtras {
      * (like 'jvm().compilations["main"].source(mySourceSet)' )
      */
     val declaredSourceSets: Set<KotlinSourceSet>
-
     val associateCompilations: Set<KotlinCompilationCoordinates>
-
     val output: KotlinCompilationOutput
-
-    @Suppress("DEPRECATION_ERROR")
-    @Deprecated(
-        "Raw compiler arguments are not available anymore",
-        ReplaceWith("cachedArgsInfo#currentCompilerArguments or cachedArgsInfo#defaultCompilerArguments"),
-        level = DeprecationLevel.ERROR
-    )
-    val arguments: KotlinCompilationArguments
-
-    @Deprecated(
-        "Raw dependency classpath is not available anymore",
-        ReplaceWith("cachedArgsInfo#dependencyClasspath"),
-        level = DeprecationLevel.ERROR
-    )
-    val dependencyClasspath: Array<String>
-
-    val cachedArgsInfo: CachedArgsInfo<*>
+    val compilerArguments: List<String>?
     val disambiguationClassifier: String?
     val platform: KotlinPlatform
     val kotlinTaskProperties: KotlinTaskProperties

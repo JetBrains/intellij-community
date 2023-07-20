@@ -16,9 +16,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -36,7 +36,7 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
   private static final Logger LOG = Logger.getInstance(StreamToLoopInspection.class);
 
   // To quickly filter out most of the non-interesting method calls
-  private static final Set<String> SUPPORTED_TERMINALS = ContainerUtil.set(
+  private static final Set<String> SUPPORTED_TERMINALS = Set.of(
     "count", "sum", "summaryStatistics", "reduce", "collect", "findFirst", "findAny", "anyMatch", "allMatch", "noneMatch", "toArray",
     "average", "forEach", "forEachOrdered", "min", "max", "toList", "toSet", "toImmutableList", "toImmutableSet");
 
@@ -291,24 +291,26 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
         for (OperationRecord or : StreamEx.ofReversed(operations)) {
           replacement = or.myOperation.wrap(or.myInVar, or.myOutVar, replacement, context);
         }
-        PsiElement firstAdded = null;
+        PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
+        PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(statement);
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         for (PsiStatement addedStatement : ((PsiBlockStatement)factory.createStatementFromText("{" + replacement + "}", statement))
           .getCodeBlock().getStatements()) {
-          PsiElement res = addStatement(project, statement, addedStatement);
-          if (firstAdded == null) {
-            firstAdded = res;
-          }
+          addStatement(statement, addedStatement);
         }
         PsiElement result = context.makeFinalReplacement();
-        if(result != null) {
-          result = normalize(project, result);
-          if (firstAdded == null) {
-            firstAdded = result;
-          }
+        if (result != null) {
+          normalize(result);
         }
-        if (firstAdded != null) {
-          ct.insertCommentsBefore(firstAdded);
+        if (previous != null) {
+          PsiElement firstAdded = PsiTreeUtil.skipWhitespacesAndCommentsForward(previous);
+          if (firstAdded != null) {
+            ct.insertCommentsBefore(firstAdded);
+            JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+            for (PsiElement e = firstAdded; e != null && e != next; e = e.getNextSibling()) {
+              codeStyleManager.shortenClassReferences(e);
+            }
+          }
         }
       }
       catch (Exception ex) {
@@ -316,16 +318,15 @@ public class StreamToLoopInspection extends AbstractBaseJavaLocalInspectionTool 
       }
     }
 
-    private static PsiElement addStatement(@NotNull Project project, PsiStatement statement, PsiStatement context) {
+    private static void addStatement(PsiStatement statement, PsiStatement context) {
       PsiElement element = statement.getParent().addBefore(context, statement);
-      return normalize(project, element);
+      normalize(element);
     }
 
-    private static PsiElement normalize(@NotNull Project project, PsiElement element) {
-      element = JavaCodeStyleManager.getInstance(project).shortenClassReferences(element);
+    private static void normalize(@NotNull PsiElement element) {
       RemoveRedundantTypeArgumentsUtil.removeRedundantTypeArguments(element);
       RedundantCastUtil.getRedundantCastsInside(element).forEach(RemoveRedundantCastUtil::removeCast);
-      return element;
+      TrivialFunctionalExpressionUsageInspection.simplifyAllLambdas(element);
     }
 
     private static StreamEx<OperationRecord> allOperations(List<OperationRecord> operations) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.customization
 
 import com.intellij.icons.AllIcons
@@ -25,11 +25,11 @@ import javax.swing.JComponent
 import javax.swing.JList
 
 /**
- * An actions list with search field and control buttons: add, remove, move and reset.
+ * An action list with search field and control buttons: add, remove, move and reset.
  *
- * @param [groupId] id of group that is used to show actions
+ * @param [groupId] id of a group that is used to show actions
  * @param [addActionGroupIds] ids of groups that are shown when Add action is called.
- * If empty all actions are shown by default.
+ * If empty, all actions are shown by default.
  * Use [addActionHandler] to override default dialog.
  *
  * @see showDialog
@@ -38,7 +38,6 @@ class CustomizeActionGroupPanel(
   val groupId: String,
   private val addActionGroupIds: List<String> = emptyList(),
 ) : BorderLayoutPanel() {
-
   private val list: JBList<Any>
 
   /**
@@ -110,7 +109,7 @@ class CustomizeActionGroupPanel(
   }
 
   private fun createSearchComponent(): Component {
-    val speedSearch = object : ListSpeedSearch<Any>(list, Function {
+    val speedSearch = object : ListSpeedSearch<Any>(list, null, Function {
       when (it) {
         is String -> ActionManager.getInstance().getAction(it).templateText
         else -> null
@@ -121,6 +120,7 @@ class CustomizeActionGroupPanel(
       override fun isSpeedSearchEnabled() = false
       override fun showPopup() {}
     }
+    speedSearch.setupListeners()
     val filterComponent = object : FilterComponent("CUSTOMIZE_ACTIONS", 5) {
       override fun filter() {
         speedSearch.findAndSelectElement(filter)
@@ -233,7 +233,7 @@ class CustomizeActionGroupPanel(
     icon: Icon
   ) : DumbAwareAction(text, Presentation.NULL_STRING, icon) {
 
-    private val defaultActions = collectActions(groupId, CustomActionsSchema())
+    private val defaultActions = collectActions(groupId, CustomActionsSchema(null))
 
     override fun actionPerformed(e: AnActionEvent) {
       list.model = CollectionListModel(defaultActions)

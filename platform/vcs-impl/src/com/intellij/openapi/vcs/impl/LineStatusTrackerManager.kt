@@ -121,6 +121,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     connection.subscribe(ChangeListListener.TOPIC, MyChangeListListener())
     connection.subscribe(ChangeListAvailabilityListener.TOPIC, MyChangeListAvailabilityListener())
     connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
+    connection.subscribe(VcsBaseContentProviderListener.TOPIC, BaseContentProviderListener())
 
     ApplicationManager.getApplication().messageBus.connect(this)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
@@ -411,7 +412,9 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     if (isDisposed) return null
     if (trackers[document] != null) return null
 
-    val tracker = provider.createTracker(project, virtualFile) ?: return null
+    val tracker = SlowOperations.allowSlowOperations("vcs.line-status-tracker-provider").use {
+      provider.createTracker(project, virtualFile) ?: return null
+    }
     tracker.mode = getTrackingMode()
 
     val data = TrackerData(tracker)
@@ -659,6 +662,20 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
     override fun fileStatusChanged(virtualFile: VirtualFile) {
       onFileChanged(virtualFile)
+    }
+  }
+
+  private inner class BaseContentProviderListener : VcsBaseContentProviderListener {
+    override fun onFileBaseContentChanged(file: VirtualFile) {
+      runInEdt {
+        onFileChanged(file)
+      }
+    }
+
+    override fun onEverythingChanged() {
+      runInEdt {
+        onEverythingChanged()
+      }
     }
   }
 
@@ -1161,6 +1178,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
   private var isScheduled: Boolean = false
   private var isDisposed: Boolean = false
+
   @Suppress("DEPRECATION")
   private val scope = ApplicationManager.getApplication().coroutineScope.childScope()
 
@@ -1384,15 +1402,7 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
 private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
   override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
     if (!LineStatusTrackerBaseContentUtil.isSupported(project, file)) return false
-
-    val status = FileStatusManager.getInstance(project).getStatus(file)
-    if (status == FileStatus.ADDED ||
-        status == FileStatus.DELETED ||
-        status == FileStatus.UNKNOWN ||
-        status == FileStatus.IGNORED) {
-      return false
-    }
-    return true
+    return LineStatusTrackerBaseContentUtil.isTracked(project, file)
   }
 
   override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
@@ -1439,6 +1449,7 @@ private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTracke
  * information on a pooled thread.
  *
  * @see LineStatusTrackerSettingListener
+ * @see VcsBaseContentProvider
  */
 interface LocalLineStatusTrackerProvider {
   fun isTrackedFile(project: Project, file: VirtualFile): Boolean

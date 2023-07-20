@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-
 public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost> {
   private static final RegExpLanguageHosts INSTANCE = new RegExpLanguageHosts();
   private final DefaultRegExpPropertiesProvider myDefaultProvider;
@@ -28,8 +27,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   }
 
   @Contract("null -> null")
-  @Nullable
-  private static RegExpLanguageHost findRegExpHost(@Nullable final PsiElement element) {
+  private static @Nullable RegExpLanguageHost findRegExpHost(final @Nullable PsiElement element) {
     if (element == null) {
       return null;
     }
@@ -44,7 +42,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return null;
   }
 
-  public boolean isRedundantEscape(@NotNull final RegExpChar ch, @NotNull final String text) {
+  public boolean isRedundantEscape(final @NotNull RegExpChar ch, final @NotNull String text) {
     if (text.length() <= 1) {
       return false;
     }
@@ -83,12 +81,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host == null || host.supportsPropertySyntax(context);
   }
 
-  public boolean supportsNamedGroupSyntax(@Nullable final RegExpGroup group) {
+  public boolean supportsNamedGroupSyntax(final @Nullable RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host == null || host.supportsNamedGroupSyntax(group);
   }
 
-  public boolean supportsNamedGroupRefSyntax(@Nullable final RegExpNamedGroupRef ref) {
+  public boolean supportsNamedGroupRefSyntax(final @Nullable RegExpNamedGroupRef ref) {
     final RegExpLanguageHost host = findRegExpHost(ref);
     try {
       return host == null || host.supportsNamedGroupRefSyntax(ref);
@@ -106,22 +104,22 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.getSupportedNamedGroupTypes(context);
   }
 
-  public boolean isValidGroupName(String name, @Nullable final RegExpGroup group) {
+  public boolean isValidGroupName(String name, final @Nullable RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host == null || host.isValidGroupName(name, group);
   }
 
-  public boolean isDuplicateGroupNamesAllowed(@NotNull final RegExpGroup group) {
+  public boolean isDuplicateGroupNamesAllowed(final @NotNull RegExpGroup group) {
     final RegExpLanguageHost host = findRegExpHost(group);
     return host == null || host.isDuplicateGroupNamesAllowed(group);
   }
 
-  public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {
+  public boolean supportsPerl5EmbeddedComments(final @Nullable PsiComment comment) {
     final RegExpLanguageHost host = findRegExpHost(comment);
     return host == null || host.supportsPerl5EmbeddedComments();
   }
 
-  public boolean supportsConditionals(@Nullable final RegExpConditional conditional) {
+  public boolean supportsConditionals(final @Nullable RegExpConditional conditional) {
     final RegExpLanguageHost host = findRegExpHost(conditional);
     return host == null || host.supportsPythonConditionalRefs();
   }
@@ -131,22 +129,22 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host == null || host.supportConditionalCondition(condition);
   }
 
-  public boolean supportsPossessiveQuantifiers(@Nullable final RegExpElement context) {
+  public boolean supportsPossessiveQuantifiers(final @Nullable RegExpElement context) {
     final RegExpLanguageHost host = findRegExpHost(context);
     return host == null || host.supportsPossessiveQuantifiers();
   }
 
-  public boolean supportsBoundary(@Nullable final RegExpBoundary boundary) {
+  public boolean supportsBoundary(final @Nullable RegExpBoundary boundary) {
     final RegExpLanguageHost host = findRegExpHost(boundary);
     return host == null || host.supportsBoundary(boundary);
   }
 
-  public boolean supportsSimpleClass(@Nullable final RegExpSimpleClass simpleClass) {
+  public boolean supportsSimpleClass(final @Nullable RegExpSimpleClass simpleClass) {
     final RegExpLanguageHost host = findRegExpHost(simpleClass);
     return host == null || host.supportsSimpleClass(simpleClass);
   }
 
-  public boolean isValidCategory(@NotNull final PsiElement element, @NotNull String category) {
+  public boolean isValidCategory(final @NotNull PsiElement element, @NotNull String category) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.isValidCategory(category) : myDefaultProvider.isValidCategory(category);
   }
@@ -161,12 +159,12 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host == null || host.isValidPropertyValue(propertyName, propertyValue);
   }
 
-  public boolean supportsNamedCharacters(@NotNull final RegExpNamedCharacter namedCharacter) {
+  public boolean supportsNamedCharacters(final @NotNull RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
     return host == null || host.supportsNamedCharacters(namedCharacter);
   }
 
-  public boolean isValidNamedCharacter(@NotNull final RegExpNamedCharacter namedCharacter) {
+  public boolean isValidNamedCharacter(final @NotNull RegExpNamedCharacter namedCharacter) {
     final RegExpLanguageHost host = findRegExpHost(namedCharacter);
     return host == null || host.isValidNamedCharacter(namedCharacter);
   }
@@ -179,8 +177,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.supportsLookbehind(group);
   }
 
-  @Nullable
-  public Number getQuantifierValue(@NotNull RegExpNumber valueElement) {
+  public @Nullable Number getQuantifierValue(@NotNull RegExpNumber valueElement) {
     final RegExpLanguageHost host = findRegExpHost(valueElement);
     if (host == null) {
       return Double.valueOf(valueElement.getText());
@@ -188,7 +185,7 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.getQuantifierValue(valueElement);
   }
 
-  public String[] @NotNull [] getAllKnownProperties(@NotNull final PsiElement element) {
+  public String[] @NotNull [] getAllKnownProperties(final @NotNull PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getAllKnownProperties() : myDefaultProvider.getAllKnownProperties();
   }
@@ -199,17 +196,17 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
   }
 
   @Nullable
-  String getPropertyDescription(@NotNull final PsiElement element, @Nullable final String name) {
+  String getPropertyDescription(final @NotNull PsiElement element, final @Nullable String name) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ?  host.getPropertyDescription(name) : myDefaultProvider.getPropertyDescription(name);
   }
 
-  String[] @NotNull [] getKnownCharacterClasses(@NotNull final PsiElement element) {
+  String[] @NotNull [] getKnownCharacterClasses(final @NotNull PsiElement element) {
     final RegExpLanguageHost host = findRegExpHost(element);
     return host != null ? host.getKnownCharacterClasses() : myDefaultProvider.getKnownCharacterClasses();
   }
 
-  String[][] getPosixCharacterClasses(@NotNull final PsiElement element) {
+  String[][] getPosixCharacterClasses(final @NotNull PsiElement element) {
     return myDefaultProvider.getPosixCharacterClasses();
   }
 

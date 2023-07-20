@@ -62,7 +62,7 @@ fun <X: Number, Y: Number> Grid<X, Y>.yPainter(converter: GridLine<X, Y, Y>.() -
   yPainter = Consumer { converter(it) }
 }
 
-fun <X: Number, Y: Number, T: Number> Grid<X, Y>.format(str: String) = Consumer<GridLine<X, Y, T>> {
+fun <X: Number, Y: Number, T: Number> Grid<X, Y>.format(str: String): Consumer<GridLine<X, Y, T>> = Consumer<GridLine<X, Y, T>> {
   it.label = str.format(it.value)
 }
 
@@ -80,7 +80,7 @@ class XYDataGenerator<X: Number, Y: Number> {
   lateinit var y: (x: X) -> Y
 }
 
-fun <X: Number, Y: Number> lineChart(ink: XYLineChart<X, Y>.() -> Unit) = XYLineChart<X, Y>().apply(ink)
+fun <X: Number, Y: Number> lineChart(ink: XYLineChart<X, Y>.() -> Unit): XYLineChart<X, Y> = XYLineChart<X, Y>().apply(ink)
 
 fun <X: Number, Y: Number> XYLineChart<X, Y>.datasets(body: XYDataHolder<X, Y>.() -> Unit) {
   datasets = XYDataHolder(mutableListOf<XYLineDataset<X, Y>>()).apply(body).data
@@ -120,7 +120,7 @@ fun <X: Number, Y: Number> XYLineDataset<X, Y>.generate(generator: XYDataGenerat
 
 class CategoryDataHolder<X: Number>(val data: MutableList<CategoryLineDataset<X>>)
 
-fun <X: Number> lineChart(ink: CategoryLineChart<X>.() -> Unit) = CategoryLineChart<X>().apply(ink)
+fun <X: Number> lineChart(ink: CategoryLineChart<X>.() -> Unit): CategoryLineChart<X> = CategoryLineChart<X>().apply(ink)
 
 fun <X: Number> CategoryLineChart<X>.datasets(body: CategoryDataHolder<X>.() -> Unit) {
   datasets = CategoryDataHolder(mutableListOf<CategoryLineDataset<X>>()).apply(body).data
@@ -147,7 +147,7 @@ class BarDataGenerator<R: Number> {
 
 class BarDataHolder<T: Number>(val data: MutableList<BarDataset<T>>)
 
-fun <T: Number> barChart(ink: HorizontalBarChart<T>.() -> Unit) = HorizontalBarChart<T>().apply(ink)
+fun <T: Number> barChart(ink: HorizontalBarChart<T>.() -> Unit): HorizontalBarChart<T> = HorizontalBarChart<T>().apply(ink)
 
 fun <T: Number> HorizontalBarChart<T>.datasets(body: BarDataHolder<T>.() -> Unit) {
   datasets = BarDataHolder(mutableListOf<BarDataset<T>>()).apply(body).data
@@ -174,7 +174,7 @@ fun <R: Number> generate(generator: BarDataGenerator<R>.() -> Unit): Iterable<R>
 
 // Timeline helpers
 
-val times = arrayOf(
+val times: Array<Int> = arrayOf(
   1, 2, 5, 10, 25, 50, 100, 200, 500, // milliseconds
   1_000, 2_000, 5_000, 15_000, 30_000, // seconds
   60_000, 120_000, 300_000, 600_000, 900_000, 1_800_000, // minutes

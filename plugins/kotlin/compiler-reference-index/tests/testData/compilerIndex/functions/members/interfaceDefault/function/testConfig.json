@@ -6,5 +6,6 @@
         "TypeAliasUsage.kt",
         "Usage.java",
         "Usage.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KTIJ-24828"
 }

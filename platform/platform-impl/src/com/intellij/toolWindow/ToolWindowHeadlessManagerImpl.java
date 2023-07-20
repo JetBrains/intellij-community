@@ -169,6 +169,12 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     return Collections.emptyList();
   }
 
+  @NotNull
+  @Override
+  public ToolWindowAnchor getMoreButtonSide() {
+    return ToolWindowAnchor.LEFT;
+  }
+
   public static class MockToolWindow implements ToolWindowEx {
     final ContentManager myContentManager = new MockContentManager();
     private final Project project;

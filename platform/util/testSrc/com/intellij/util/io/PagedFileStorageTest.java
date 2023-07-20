@@ -5,10 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ThrowableRunnable;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -73,6 +70,8 @@ public class PagedFileStorageTest {
 
   @Test
   public void testResizeableMappedFile() throws IOException {
+    long freeSpace = Files.getFileStore(f).getUsableSpace();
+    Assume.assumeTrue("test requires at least 2Gb of empty disk space", 2L * IOUtil.GiB < freeSpace);
     withLock(lock, () -> {
       ResizeableMappedFile file = new ResizeableMappedFile(f, 2000000, lock, -1, false);
 

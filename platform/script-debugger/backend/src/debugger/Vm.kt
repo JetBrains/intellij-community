@@ -47,6 +47,4 @@ interface Vm : UserDataHolderEx {
 
   val presentableName: String
     @Nls get() = ScriptDebuggerBundle.message("debug.vm.title.main.thread")
-
-  val childVMs: MutableList<Vm>
 }

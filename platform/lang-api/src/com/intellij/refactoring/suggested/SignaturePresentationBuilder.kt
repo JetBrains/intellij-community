@@ -29,7 +29,7 @@ abstract class SignaturePresentationBuilder(
   protected val otherSignature: Signature,
   protected val isOldSignature: Boolean
 ) {
-  protected val fragments = mutableListOf<TextFragment>()
+  protected val fragments: MutableList<TextFragment> = mutableListOf()
 
   val result: List<TextFragment>
     get() = fragments

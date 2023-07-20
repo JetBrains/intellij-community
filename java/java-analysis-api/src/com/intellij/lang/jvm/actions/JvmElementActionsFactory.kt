@@ -2,10 +2,9 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmMethod
-import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.JvmParameter
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.lang.jvm.*
 
 /**
  * This extension point provides language-abstracted code modifications for JVM-based languages.
@@ -24,6 +23,14 @@ abstract class JvmElementActionsFactory {
 
   open fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
 
+  open fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                                  attributeIndex: Int,
+                                                  request: AnnotationAttributeRequest,
+                                                  @IntentionName text: String,
+                                                  @IntentionFamilyName familyName: String): List<IntentionAction> = emptyList()
+
   open fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> = emptyList()
 
   open fun createAddMethodActions(targetClass: JvmClass, request: CreateMethodRequest): List<IntentionAction> = emptyList()
@@ -35,4 +42,6 @@ abstract class JvmElementActionsFactory {
   open fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 
   open fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
+
+  open fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> = emptyList()
 }

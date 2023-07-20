@@ -93,9 +93,10 @@ public class JUnit4IntegrationTest extends AbstractTestFrameworkIntegrationTest 
     String testOutput = processOutput.out.toString();
     assertEmpty(processOutput.err);
     switch (myJUnitVersion) {
-      case "4.4": case "4.5": break; //shouldn't work for old versions
-      default:
-      {
+      case "4.4", "4.5" -> {
+        //shouldn't work for old versions
+      }
+      default -> {
         assertTrue(testOutput, testOutput.contains("Test1"));
         for (ServiceMessage message : processOutput.messages) {
           assertFalse(message.toString().contains("Ignored"));

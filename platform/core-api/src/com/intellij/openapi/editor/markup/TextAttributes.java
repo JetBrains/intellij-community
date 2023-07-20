@@ -37,7 +37,12 @@ public class TextAttributes implements Cloneable {
   private static final AttributesFlyweight DEFAULT_FLYWEIGHT = AttributesFlyweight
     .create(null, null, Font.PLAIN, null, EffectType.BOXED, Collections.emptyMap(), null);
 
-  public static final TextAttributes ERASE_MARKER = new TextAttributes();
+  public static final TextAttributes ERASE_MARKER = new TextAttributes() {
+    @Override
+    public String toString() {
+      return "[ERASE_MARKER]";
+    }
+  };
 
   @SuppressWarnings("NotNullFieldNotInitialized")
   @NotNull

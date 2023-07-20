@@ -8,5 +8,5 @@ fun use() {
     foo<caret>
 }
 
-// EXIST: { lookupString: foo, module: testModule_JVM }
-// ABSENT: { lookupString: foo, module: testModule_Common }
+// EXIST: { lookupString: foo, module: jvm }
+// ABSENT: { lookupString: foo, module: common }

@@ -3,16 +3,15 @@ package com.intellij.ui
 
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationsManagerImpl
-import com.intellij.notification.impl.NotificationsToolWindowFactory
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
@@ -145,13 +144,13 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
     val info = collapsedData[oldBalloon]
     if (info == null) {
       remove(oldBalloon)
-      return createCollapsedData(newBalloon, newLayoutData)
+      return createCollapsedData(newBalloon, newLayoutData).updateHost(newBalloon)
     }
 
     collapsedData.remove(oldBalloon)
     remove(oldBalloon)
 
-    collapsedData[newBalloon] = info
+    collapsedData[newBalloon] = info.updateHost(newBalloon)
 
     return info
   }
@@ -191,15 +190,31 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
   }
 
   override fun setBounds(balloons: List<Balloon>, startX: Int, startY: Int) {
-    val shadowVerticalOffset = JBUI.scale(8)
-    var verticalOffset = JBUI.scale(2)
+    val javaShadow = ShadowJava2DPainter.enabled()
+    val shadowVerticalOffset = if (javaShadow) 0 else JBUI.scale(8)
+    var verticalOffset = if (javaShadow) 0 else JBUI.scale(2)
+    var startX = startX
     var y = startY
+
+    if (javaShadow) {
+      val startOffset = JBUI.scale(10)
+      val insets = ShadowJava2DPainter.getInsets("Notification")
+      val rightOffset = startOffset - insets.right
+      val bottomOffset = startOffset - insets.bottom
+      if (bottomOffset > 0) {
+        y -= bottomOffset
+      }
+      if (rightOffset > 0) {
+        startX -= rightOffset
+      }
+    }
 
     for (balloon in balloons) {
       val bounds = Rectangle(super.getSize(balloon))
       val info = collapsedData[balloon]
       if (info != null) {
-        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight, bounds.width, info.fullHeight))
+        val offset = if (verticalOffset != shadowVerticalOffset) 0 else shadowVerticalOffset
+        info.balloon.setBounds(Rectangle(startX - bounds.width, y - info.fullHeight + offset, bounds.width, info.fullHeight))
         y -= info.height
       }
 
@@ -236,7 +251,7 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(titleLabel))
         if (project != null) {
           closeAll()
-          ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)?.show()
+          ActionCenter.getToolWindow(project)?.show()
         }
       }, null)
 
@@ -263,8 +278,10 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
         balloon.setAnimationEnabled(false)
         balloon.setZeroPositionInLayer(false)
 
-        balloon.setShadowBorderProvider(
-          NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(), NotificationsManagerImpl.BORDER_COLOR))
+        val provider = NotificationBalloonRoundShadowBorderProvider(NotificationsUtil.getMoreButtonBackground(),
+                                                                    NotificationsManagerImpl.BORDER_COLOR)
+        balloon.setShadowBorderProvider(provider)
+        provider.hideSide(true, false)
 
         balloon.setActionProvider(object : BalloonImpl.ActionProvider {
           override fun createActions(): List<BalloonImpl.ActionButton> {
@@ -275,6 +292,16 @@ internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : 
           }
         })
       }
+    }
+
+    fun updateHost(hostBalloon: Balloon): CollapseInfo {
+      if (hostBalloon is BalloonImpl) {
+        val provider = hostBalloon.shadowBorderProvider
+        if (provider is NotificationBalloonRoundShadowBorderProvider) {
+          provider.hideSide(false, true)
+        }
+      }
+      return this
     }
 
     fun addBalloon() {

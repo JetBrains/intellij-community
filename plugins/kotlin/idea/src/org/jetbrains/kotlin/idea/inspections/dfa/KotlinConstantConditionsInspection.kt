@@ -211,6 +211,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                             } else if (cv == ConstantValue.TRUE) {
                                 condition.siblings(forward = true, withSelf = false)
                                     .filterIsInstance<KtWhenCondition>()
+                                    .filter { cond -> cond.text.isNotEmpty() }
                                     .forEach { cond -> holder.registerProblem(cond, message) }
                                 val nextEntry = condition.parent as? KtWhenEntry ?: return@forEach
                                 nextEntry.siblings(forward = true, withSelf = false)

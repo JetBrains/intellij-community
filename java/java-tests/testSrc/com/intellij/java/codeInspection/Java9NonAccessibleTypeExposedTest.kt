@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -107,9 +107,9 @@ public class Highlighted {
     highlight("""package apiPkg;
 @SuppressWarnings("ProtectedMemberInFinalClass")      
 public final class Highlighted {
-  protected PackageLocal myVar;
-  protected PackageLocal getVar() {return myVar;}
-  protected void setVar(PackageLocal var) {myVar = var;}
+  protected <warning descr="Class 'PackageLocal' is exposed outside its defined visibility scope">PackageLocal</warning> myVar;
+  protected <warning descr="Class 'PackageLocal' is exposed outside its defined visibility scope">PackageLocal</warning> getVar() {return myVar;}
+  protected void setVar(<warning descr="Class 'PackageLocal' is exposed outside its defined visibility scope">PackageLocal</warning> var) {myVar = var;}
 }
 """)
   }

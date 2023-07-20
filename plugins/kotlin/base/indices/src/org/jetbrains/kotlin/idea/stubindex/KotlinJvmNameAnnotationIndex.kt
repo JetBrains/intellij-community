@@ -4,16 +4,19 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 
-object KotlinJvmNameAnnotationIndex : KotlinStringStubIndexExtension<KtAnnotationEntry>(KtAnnotationEntry::class.java) {
-    private val KEY: StubIndexKey<String, KtAnnotationEntry> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex")
+class KotlinJvmNameAnnotationIndex internal constructor() : StringStubIndexExtension<KtAnnotationEntry>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtAnnotationEntry>(KtAnnotationEntry::class.java) {
+        override val indexKey: StubIndexKey<String, KtAnnotationEntry> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinJvmNameAnnotationIndex")
+    }
 
-    override fun getKey(): StubIndexKey<String, KtAnnotationEntry> = KEY
+    override fun getKey(): StubIndexKey<String, KtAnnotationEntry> = indexKey
 
-    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> =
-        StubIndex.getElements(KEY, key, project, scope, KtAnnotationEntry::class.java)
+    override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtAnnotationEntry> {
+        return Helper[key, project, scope]
+    }
 }

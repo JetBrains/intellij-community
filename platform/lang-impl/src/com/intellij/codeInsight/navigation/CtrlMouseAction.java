@@ -24,10 +24,4 @@ public interface CtrlMouseAction {
    * @return info instance, which will be used to draw highlighting and show tooltip near the mouse pointer
    */
   @Nullable CtrlMouseData getCtrlMouseData(@NotNull Editor editor, @NotNull PsiFile file, int offset);
-
-  /**
-   * @deprecated implement {@link #getCtrlMouseData}
-   */
-  @Deprecated
-  @Nullable CtrlMouseInfo getCtrlMouseInfo(@NotNull Editor editor, @NotNull PsiFile file, int offset);
 }

@@ -10,17 +10,28 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import com.intellij.util.childScope
+import kotlinx.coroutines.cancel
 
 internal class IcsConfigurable : BoundSearchableConfigurable(icsMessage("ics.settings"), "reference.settings.ics", "ics"),
-   Disposable {
+                                 Disposable {
+  @Suppress("DEPRECATION")
+  private val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
 
-  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) IcsManager(PathManager.getConfigDir().resolve("settingsRepository"), this) else org.jetbrains.settingsRepository.icsManager
+  private val icsManager = if (ApplicationManager.getApplication().isUnitTestMode) {
+    IcsManager(PathManager.getConfigDir().resolve("settingsRepository"), coroutineScope)
+  }
+  else {
+    org.jetbrains.settingsRepository.icsManager
+  }
+
   private val settings = if (ApplicationManager.getApplication().isUnitTestMode) IcsSettings() else icsManager.settings
 
   private val readOnlySourcesEditor = createReadOnlySourcesEditor()
 
   override fun dispose() {
     icsManager.autoSyncManager.enabled = true
+    coroutineScope.cancel()
   }
 
   override fun reset() {

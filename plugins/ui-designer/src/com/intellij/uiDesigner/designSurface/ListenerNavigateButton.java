@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -59,7 +59,7 @@ public class ListenerNavigateButton extends JButton implements ActionListener {
 
   public static void showNavigatePopup(final RadComponent component, final boolean showIfEmpty) {
     ReadAction.nonBlocking(() -> prepareActionGroup(component))
-      .finishOnUiThread(ModalityState.NON_MODAL, actionGroup -> {
+      .finishOnUiThread(ModalityState.nonModal(), actionGroup -> {
         if (actionGroup != null && actionGroup.getChildrenCount() == 0 && showIfEmpty) {
           actionGroup.add(new MyNavigateAction(UIDesignerBundle.message("navigate.to.listener.empty"), null));
         }

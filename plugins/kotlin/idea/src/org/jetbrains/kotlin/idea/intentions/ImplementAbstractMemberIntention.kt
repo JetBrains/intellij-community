@@ -133,11 +133,11 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         member.toLightMethods().forEach { OverrideImplementUtil.overrideOrImplement(targetClass, it) }
     }
 
-    private fun implementInClass(member: KtNamedDeclaration, targetClasses: List<PsiElement>) {
+    private fun implementInClass(member: KtNamedDeclaration, targetClasses: Collection<PsiElement>) {
         val project = member.project
-        project.executeCommand<Unit>(JavaBundle.message("intention.implement.abstract.method.command.name")) {
+        project.executeCommand(JavaBundle.message("intention.implement.abstract.method.command.name")) {
             if (!FileModificationService.getInstance().preparePsiElementsForWrite(targetClasses)) return@executeCommand
-            runWriteAction<Unit> {
+            runWriteAction {
                 for (targetClass in targetClasses) {
                     try {
                         val descriptor = OpenFileDescriptor(project, targetClass.containingFile.virtualFile)
@@ -218,15 +218,12 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
             selectionMode = ListSelectionModel.MULTIPLE_INTERVAL_SELECTION
             cellRenderer = renderer
         }
-        val builder = PopupChooserBuilder<PsiElement>(list)
+        val builder = PopupChooserBuilder(list)
         renderer.installSpeedSearch(builder as IPopupChooserBuilder<*>)
         builder
             .setTitle(CodeInsightBundle.message("intention.implement.abstract.method.class.chooser.title"))
-            .setItemChoosenCallback {
-                val index = list.selectedIndex
-                if (index < 0) return@setItemChoosenCallback
-                @Suppress("UNCHECKED_CAST")
-                implementInClass(element, list.selectedValues.toList() as List<KtClassOrObject>)
+            .setItemsChosenCallback {
+                implementInClass(element, it)
             }
             .createPopup()
             .showInBestPositionFor(editor)

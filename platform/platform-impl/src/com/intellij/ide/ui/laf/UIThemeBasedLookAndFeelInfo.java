@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.util.PropertiesComponent;
@@ -71,13 +72,17 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
   }
 
   protected void installEditorScheme() {
-    String name = myTheme.getEditorSchemeName();
-    if (name != null) {
-      EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
-      EditorColorsScheme scheme = editorColorManager.getScheme(name);
-      if (scheme != null) {
-        editorColorManager.setGlobalScheme(scheme);
+    EditorColorsScheme scheme = LafManager.getInstance().getPreviousSchemeForLaf(this);
+    EditorColorsManager editorColorManager = EditorColorsManager.getInstance();
+    if (scheme == null) {
+      String name = myTheme.getEditorSchemeName();
+      if (name != null) {
+        scheme = editorColorManager.getScheme(name);
       }
+    }
+
+    if (scheme != null) {
+      editorColorManager.setGlobalScheme(scheme);
     }
   }
 

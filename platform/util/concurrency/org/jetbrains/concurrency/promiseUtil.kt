@@ -3,13 +3,12 @@
 @file:JvmName("Promises")
 package org.jetbrains.concurrency
 
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.suspendCancellableCoroutine
+import com.intellij.openapi.progress.ProcessCanceledException
+import kotlinx.coroutines.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -60,12 +59,12 @@ internal fun <T> Promise<T>.asDeferredInternal(): Deferred<T> {
       deferred.complete(this.getResultOrThrowError())
     }
     catch (e: Throwable) {
-      deferred.completeExceptionally(e)
+      deferred.completeExceptionallyOrCancel(e)
     }
   }
   else {
     onSuccess { deferred.complete(it) }
-    onError { deferred.completeExceptionally(it) }
+    onError { deferred.completeExceptionallyOrCancel(it) }
     if (this is Future<*>) deferred.invokeOnCompletion { this.cancel(false) }
   }
   return deferred
@@ -91,7 +90,7 @@ internal suspend fun <T> Promise<T>.awaitInternal(): T {
   else { // slow path -- suspend
     suspendCancellableCoroutine { cont ->
       onSuccess { cont.resume(it) }
-      onError { cont.resumeWithException(it) }
+      onError { cont.resumeWithExceptionOrCancel(it) }
       if (this is Future<*>) cont.invokeOnCancellation { this.cancel(false) }
     }
   }
@@ -104,5 +103,21 @@ private fun <T> Future<*>.getResultOrThrowError(): T {
   }
   catch (e: ExecutionException) {
     throw e.cause ?: e // unwrap original cause from ExecutionException
+  }
+}
+
+private fun CompletableDeferred<*>.completeExceptionallyOrCancel(t: Throwable) {
+  when (t) {
+    is ProcessCanceledException -> this.cancel(CancellationException(t))
+    is CancellationException -> this.cancel(t)
+    else -> this.completeExceptionally(t)
+  }
+}
+
+private fun CancellableContinuation<*>.resumeWithExceptionOrCancel(t: Throwable) {
+  when (t) {
+    is ProcessCanceledException -> this.cancel(t)
+    is CancellationException -> this.cancel(t)
+    else -> this.resumeWithException(t)
   }
 }

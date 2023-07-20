@@ -5,5 +5,3 @@ fun foo(a: String?) {
         b<caret>.length
     }
 }
-
-/* IGNORE_FIR */

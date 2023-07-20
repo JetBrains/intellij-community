@@ -23,10 +23,10 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.PackageVersionR
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 internal class MavenPackageVersionRangeInspection : PackageVersionRangeInspection() {
-
-    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.range.description.maven")
-    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes) =
-        dependencyDeclarationIndexes.versionStartIndex
+    override fun getStaticDescription(): String = PackageSearchBundle.message("packagesearch.inspection.range.description.maven")
+    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes): Int? {
+        return dependencyDeclarationIndexes.versionStartIndex
+    }
 
     override fun shouldCheckFile(file: PsiFile) = MavenUtil.isPomFile(file.project, file.virtualFile)
 }

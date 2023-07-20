@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.listeners;
 
 import com.intellij.openapi.util.Key;
@@ -11,8 +11,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class RefactoringEventData extends UserDataHolderBase {
-  public static final Key<Collection<? extends String>> CONFLICTS_KEY = Key.create("conflicts");
+public final class RefactoringEventData extends UserDataHolderBase {
+  public static final Key<Collection<String>> CONFLICTS_KEY = Key.create("conflicts");
   public static final Key<PsiElement> PSI_ELEMENT_KEY = Key.create("element");
   public static final Key<String[]> STRING_PROPERTIES = Key.create("stringProperties");
   public static final Key<PsiElement[]> PSI_ELEMENT_ARRAY_KEY = Key.create("elementArray");

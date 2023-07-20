@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -26,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.ui.impl.DialogWrapperPeerImpl.isDisableAutoRequestFocus;
+import static com.intellij.openapi.wm.impl.WindowManagerImplKt.IDE_FRAME_EVENT_LOG;
 
 public abstract class IdeFrameDecorator {
   static final String FULL_SCREEN = "ide.frame.full.screen";
@@ -108,6 +109,9 @@ public abstract class IdeFrameDecorator {
         JRootPane rootPane = frame.getRootPane();
         if (state && extendedState == Frame.NORMAL) {
           frame.setNormalBounds(bounds);
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved normal bounds of the frame before entering full screen: " + frame.getNormalBounds());
+          }
         }
         GraphicsDevice device = ScreenUtil.getScreenDevice(bounds);
         if (device == null) {
@@ -116,8 +120,14 @@ public abstract class IdeFrameDecorator {
         }
         Component toFocus = frame.getMostRecentFocusOwner();
         Rectangle defaultBounds = device.getDefaultConfiguration().getBounds();
+        if (state) {
+          frame.setScreenBounds(defaultBounds);
+          if (IDE_FRAME_EVENT_LOG.isDebugEnabled()) { // avoid unnecessary concatenation
+            IDE_FRAME_EVENT_LOG.debug("Saved screen bounds of the frame before entering full screen: " + frame.getScreenBounds());
+          }
+        }
         try {
-          frame.setTogglingFullScreenInProgress(true);
+          frame.togglingFullScreenInProgress = true;
           rootPane.putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
           frame.dispose();
           frame.setUndecorated(state);
@@ -148,7 +158,7 @@ public abstract class IdeFrameDecorator {
           }
         }
         EventQueue.invokeLater(() -> {
-          frame.setTogglingFullScreenInProgress(false);
+          frame.togglingFullScreenInProgress = false;
         });
         promise.complete(state);
       });
@@ -216,7 +226,7 @@ public abstract class IdeFrameDecorator {
   }
 
   public static boolean isCustomDecorationAvailable() {
-    return (SystemInfoRt.isMac || SystemInfoRt.isWindows) && JBR.isCustomWindowDecorationSupported();
+    return (SystemInfoRt.isMac || SystemInfo.isWin8OrNewer) && JBR.isWindowDecorationsSupported();
   }
 
   private static final AtomicReference<Boolean> isCustomDecorationActiveCache = new AtomicReference<>();

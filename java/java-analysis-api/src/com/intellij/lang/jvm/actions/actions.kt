@@ -4,10 +4,9 @@
 package com.intellij.lang.jvm.actions
 
 import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmMethod
-import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.JvmParameter
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.codeInspection.util.IntentionName
+import com.intellij.lang.jvm.*
 import com.intellij.openapi.extensions.ExtensionPointName
 
 val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create(
@@ -35,6 +34,22 @@ fun createConstructorActions(target: JvmClass, request: CreateConstructorRequest
 fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
   return createActions {
     it.createAddAnnotationActions(target, request)
+  }
+}
+
+fun createRemoveAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+  return createActions {
+    it.createRemoveAnnotationActions(target, request)
+  }
+}
+
+fun createChangeAnnotationAttributeActions(annotation: JvmAnnotation,
+                                           attributeIndex: Int,
+                                           request: AnnotationAttributeRequest,
+                                           @IntentionName text: String,
+                                           @IntentionFamilyName familyName: String): List<IntentionAction> {
+  return createActions {
+    it.createChangeAnnotationAttributeActions(annotation, attributeIndex, request, text, familyName)
   }
 }
 
@@ -70,6 +85,11 @@ fun createChangeTypeActions(target: JvmMethod, request: ChangeTypeRequest): List
 }
 
 fun createChangeTypeActions(target: JvmParameter, request: ChangeTypeRequest): List<IntentionAction> {
+  return createActions {
+    it.createChangeTypeActions(target, request)
+  }
+}
+fun createChangeTypeActions(target: JvmField, request: ChangeTypeRequest): List<IntentionAction> {
   return createActions {
     it.createChangeTypeActions(target, request)
   }

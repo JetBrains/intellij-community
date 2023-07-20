@@ -19,10 +19,6 @@ import java.util.List;
 public class ShowCertificateInfoAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCertificateInfoAction.class);
 
-  public ShowCertificateInfoAction() {
-    super("Show certificate information dialog");
-  }
-
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
     try {

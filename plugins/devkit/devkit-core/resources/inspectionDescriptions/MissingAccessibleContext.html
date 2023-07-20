@@ -6,7 +6,8 @@ Reports Swing components that do not provide accessibility context.
   visually impaired users.
 </p>
 <p><b>Example:</b></p>
-<pre><code>  ListCellRenderer&lt;String&gt; renderer = (list, val, index, sel, cell) -> {
+<pre><code lang="java">
+  ListCellRenderer&lt;String&gt; renderer = (list, val, index, sel, cell) -> {
     JPanel panel = new JPanel();
     return panel;
   };

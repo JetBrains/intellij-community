@@ -41,17 +41,17 @@ public class GradleResourceRootDescriptor extends BuildRootDescriptor {
   }
 
   @Override
-  public String getRootId() {
+  public @NotNull String getRootId() {
     return myId;
   }
 
   @Override
-  public File getRootFile() {
+  public @NotNull File getRootFile() {
     return myFile;
   }
 
   @Override
-  public GradleResourcesTarget getTarget() {
+  public @NotNull GradleResourcesTarget getTarget() {
     return myTarget;
   }
 

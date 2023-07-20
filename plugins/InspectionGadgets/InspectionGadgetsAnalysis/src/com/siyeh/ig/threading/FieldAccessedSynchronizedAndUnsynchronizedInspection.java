@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -59,7 +60,7 @@ public class FieldAccessedSynchronizedAndUnsynchronizedInspection extends BaseIn
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return MakeFieldFinalFix.buildFix((PsiField)infos[0]);
   }
 

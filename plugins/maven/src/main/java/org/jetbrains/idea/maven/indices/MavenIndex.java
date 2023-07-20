@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
@@ -20,16 +21,14 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenIndexId;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.server.IndexedMavenId;
-import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
-import org.jetbrains.idea.maven.server.MavenIndicesProcessor;
-import org.jetbrains.idea.maven.server.MavenServerIndexerException;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -49,22 +48,21 @@ public final class MavenIndex implements MavenSearchIndex {
   private final MavenIndexerWrapper myNexusIndexer;
   private final File myDir;
   /**
-   *  @deprecated not used
+   * @deprecated not used
    */
   @Deprecated(forRemoval = true)
   private final Set<String> myRegisteredRepositoryIds;
 
   private final String myRepositoryPathOrUrl;
   private final Kind myKind;
-
+  private final AtomicBoolean myDataClosed = new AtomicBoolean(false);
+  private final Lock indexUpdateLock = new ReentrantLock();
   private volatile Long myUpdateTimestamp;
   private volatile IndexData myData;
   private volatile String myFailureMessage;
   private volatile boolean isBroken;
   private volatile boolean isClose;
-
   private String myDataDirName;
-  private final Lock indexUpdateLock = new ReentrantLock();
 
   public MavenIndex(MavenIndexerWrapper indexer,
                     MavenIndexUtils.IndexPropertyHolder propertyHolder) throws MavenIndexException {
@@ -259,7 +257,8 @@ public final class MavenIndex implements MavenSearchIndex {
     }
     catch (Exception e) {
       handleUpdateException(e);
-    } finally {
+    }
+    finally {
       indexUpdateLock.unlock();
     }
 
@@ -381,14 +380,22 @@ public final class MavenIndex implements MavenSearchIndex {
     }
   }
 
-  private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    return map.computeIfAbsent(key, k -> new TreeSet<>());
+  private void closeAndClean(PersistentHashMap<String, Set<String>> map) {
+    try {
+      map.closeAndClean();
+    }
+    catch (IOException e) {
+      MavenLog.LOG.error(e);
+    }
   }
 
-  private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
-    for (Map.Entry<String, T> each : map.entrySet()) {
-      persistentMap.put(each.getKey(), each.getValue());
-    }
+  public void closeAndClean() {
+    if (myDataClosed.compareAndSet(false, true)) {
+      closeAndClean(myData.groupToArtifactMap);
+      closeAndClean(myData.groupWithArtifactToVersionMap);
+      closeAndClean(myData.archetypeIdToDescriptionMap);
+      close(false);
+    } 
   }
 
   public File getDir() {
@@ -405,54 +412,47 @@ public final class MavenIndex implements MavenSearchIndex {
     return new File(getCurrentDataDir(), "context");
   }
 
-  private static File getDataContextDir(File dataDir) {
-    return new File(dataDir, "context");
-  }
-
   @NotNull
   private File createNewDataDir() {
     return MavenIndices.createNewDir(myDir, DATA_DIR_PREFIX, 100);
   }
 
   /**
-   * Trying to add artifact to index.
+   * Trying to add artifacts to index.
    *
-   * @return true if artifact added to index else need retry
+   * @return list of artifact responses; indexed id is not null if artifact added; indexed id is null if retry is needed
    */
-  public boolean tryAddArtifact(final File artifactFile) {
+  @NotNull
+  public List<AddArtifactResponse> tryAddArtifacts(@NotNull Collection<File> artifactFiles) {
+    var failedResponses = ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));
     return doIndexAndRecoveryTask(() -> {
       boolean locked = indexUpdateLock.tryLock();
-      if (!locked) return false;
+      if (!locked) return failedResponses;
       try {
         IndexData indexData = myData;
-        if (indexData == null) return false;
-        IndexedMavenId id = indexData.addArtifact(artifactFile);
-        if (id == null) return true;
-
-        String groupWithArtifact = id.groupId + ":" + id.artifactId;
-
-        addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
-        addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
-        if ("maven-archetype".equals(id.packaging)) {
-          addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact, id.version + ":" + StringUtil.notNullize(id.description));
+        if (indexData != null) {
+          var addArtifactResponses = indexData.addArtifacts(artifactFiles);
+          for (var addArtifactResponse : addArtifactResponses) {
+            var id = addArtifactResponse.indexedMavenId();
+            if (id != null) {
+              String groupWithArtifact = id.groupId + ":" + id.artifactId;
+              addToCache(indexData.groupToArtifactMap, id.groupId, id.artifactId);
+              addToCache(indexData.groupWithArtifactToVersionMap, groupWithArtifact, id.version);
+              if ("maven-archetype".equals(id.packaging)) {
+                addToCache(indexData.archetypeIdToDescriptionMap, groupWithArtifact,
+                           id.version + ":" + StringUtil.notNullize(id.description));
+              }
+            }
+          }
+          indexData.flush();
+          return addArtifactResponses;
         }
-        indexData.flush();
-        return true;
-      } finally {
+        return failedResponses;
+      }
+      finally {
         indexUpdateLock.unlock();
       }
-    }, true);
-  }
-
-  private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
-    if(key == null || value == null || cache == null) return;
-    synchronized (cache) {
-      Set<String> values = cache.get(key);
-      if (values == null) values = new TreeSet<>();
-      if (values.add(value)) {
-        cache.put(key, values);
-      }
-    }
+    }, failedResponses);
   }
 
   public Collection<String> getGroupIds() {
@@ -583,9 +583,74 @@ public final class MavenIndex implements MavenSearchIndex {
     isBroken = true;
   }
 
+  @NotNull
+  private Collection<String> getGroupIdsRaw() throws IOException {
+    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
+    myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
+    return processor.getResults();
+  }
+
+  @Override
+  public String toString() {
+    return "MavenIndex{" +
+           "myKind=" + myKind + '\'' +
+           ", myRepositoryPathOrUrl='" + myRepositoryPathOrUrl +
+           ", ids=" + myRegisteredRepositoryIds +
+           '}';
+  }
+
+  private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
+    return map.computeIfAbsent(key, k -> new TreeSet<>());
+  }
+
+  private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
+    for (Map.Entry<String, T> each : map.entrySet()) {
+      persistentMap.put(each.getKey(), each.getValue());
+    }
+  }
+
+  private static File getDataContextDir(File dataDir) {
+    return new File(dataDir, "context");
+  }
+
+  private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
+    if (key == null || value == null || cache == null) return;
+    synchronized (cache) {
+      Set<String> values = cache.get(key);
+      if (values == null) values = new TreeSet<>();
+      if (values.add(value)) {
+        cache.put(key, values);
+      }
+    }
+  }
+
   @FunctionalInterface
   private interface IndexTask<T> {
     T doTask() throws Exception;
+  }
+
+  private static class SetDescriptor implements DataExternalizer<Set<String>> {
+    @Override
+    public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
+      s.writeInt(set.size());
+      for (String each : set) {
+        s.writeUTF(each);
+      }
+    }
+
+    @Override
+    public Set<String> read(@NotNull DataInput s) throws IOException {
+      int count = s.readInt();
+      Set<String> result = new TreeSet<>();
+      try {
+        while (count-- > 0) {
+          result.add(s.readUTF());
+        }
+      }
+      catch (EOFException ignore) {
+      }
+      return result;
+    }
   }
 
   private class IndexData {
@@ -647,50 +712,13 @@ public final class MavenIndex implements MavenSearchIndex {
       archetypeIdToDescriptionMap.force();
     }
 
-    IndexedMavenId addArtifact(File artifactFile) throws MavenServerIndexerException {
-      return myNexusIndexer.addArtifact(mavenIndexId, artifactFile);
+    @NotNull
+    List<AddArtifactResponse> addArtifacts(Collection<File> artifactFiles) {
+      return myNexusIndexer.addArtifacts(mavenIndexId, artifactFiles);
     }
 
     Set<MavenArtifactInfo> search(String pattern, int maxResult) throws MavenServerIndexerException {
       return myNexusIndexer.search(mavenIndexId, pattern, maxResult);
     }
-  }
-
-  @NotNull
-  private Collection<String> getGroupIdsRaw() throws IOException {
-    CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<>();
-    myData.groupToArtifactMap.processKeysWithExistingMapping(processor);
-    return processor.getResults();
-  }
-
-  private static class SetDescriptor implements DataExternalizer<Set<String>> {
-    @Override
-    public void save(@NotNull DataOutput s, Set<String> set) throws IOException {
-      s.writeInt(set.size());
-      for (String each : set) {
-        s.writeUTF(each);
-      }
-    }
-
-    @Override
-    public Set<String> read(@NotNull DataInput s) throws IOException {
-      int count = s.readInt();
-      Set<String> result = new TreeSet<>();
-      try {
-        while (count-- > 0) {
-          result.add(s.readUTF());
-        }
-      } catch (EOFException ignore){}
-      return result;
-    }
-  }
-
-  @Override
-  public String toString() {
-    return "MavenIndex{" +
-           "myKind=" + myKind + '\'' +
-           ", myRepositoryPathOrUrl='" + myRepositoryPathOrUrl +
-           ", ids=" + myRegisteredRepositoryIds +
-           '}';
   }
 }

@@ -1,4 +1,3 @@
-// FIR_COMPARISON
 package test.test1
 
 fun foo() {

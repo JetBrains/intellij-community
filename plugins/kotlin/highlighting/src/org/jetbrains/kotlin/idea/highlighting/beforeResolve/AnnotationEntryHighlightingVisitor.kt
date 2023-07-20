@@ -2,20 +2,19 @@
 
 package org.jetbrains.kotlin.idea.highlighting
 
-import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.base.highlighting.isNameHighlightingEnabled
 import org.jetbrains.kotlin.idea.base.highlighting.visitor.AbstractHighlightingVisitor
-import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors
-import org.jetbrains.kotlin.idea.highlighting.beforeResolve.AbstractBeforeResolveHighlightingVisitor
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 internal class AnnotationEntryHighlightingVisitor(
-    holder: AnnotationHolder
-) : AbstractBeforeResolveHighlightingVisitor(holder) {
+    holder: HighlightInfoHolder
+) : AbstractHighlightingVisitor(holder) {
     override fun visitAnnotationEntry(annotationEntry: KtAnnotationEntry) {
         if (!annotationEntry.project.isNameHighlightingEnabled) return
         val range = annotationEntry.getTextRangeToHiglight() ?: return
@@ -30,6 +29,6 @@ internal class AnnotationEntryHighlightingVisitor(
 }
 
 class AnnotationsHighlightingExtension : BeforeResolveHighlightingExtension {
-    override fun createVisitor(holder: AnnotationHolder): AbstractHighlightingVisitor =
+    override fun createVisitor(holder: HighlightInfoHolder): AbstractHighlightingVisitor =
         AnnotationEntryHighlightingVisitor(holder)
 }

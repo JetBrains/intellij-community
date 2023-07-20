@@ -17,9 +17,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.borderPanel
 import org.jetbrains.kotlin.tools.projectWizard.wizard.ui.icon
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.awt.Component
-import java.awt.Graphics2D
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JTree
 import javax.swing.tree.*
 
@@ -35,11 +33,14 @@ class ModulesEditorTree(
     object PROJECT_USER_OBJECT
 
     fun reload() {
+        /* This functionality is only needed to keep the tree nodes expanded when
+           adding a new module. Since this functionality was removed and a recent
+           change caused this function to error, these parts were commented out.
         val openPaths = (0 until rowCount).mapNotNull { row ->
             getPathForRow(row).takeIf { isExpanded(it) }
-        }
+        }*/
         model.reload()
-        openPaths.forEach(::expandPath)
+        // openPaths.forEach(::expandPath)
     }
 
     fun selectModule(moduleToSelect: Module) {

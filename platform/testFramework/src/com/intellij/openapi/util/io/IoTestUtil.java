@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.execution.ExecutionException;
@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.impl.wsl.WslConstants;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
@@ -23,7 +24,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -122,9 +122,9 @@ public final class IoTestUtil {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 
-  public static @NotNull Path createWslTempDir(@NotNull String wsl, @NotNull String testName) throws IOException {
-    return Files.createTempDirectory(Paths.get("\\\\wsl$\\" + wsl + "\\tmp"),
-                                     UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
+  public static @NotNull Path createWslTempDir(@NotNull String wslVm, @NotNull String testName) throws IOException {
+    var parent = Path.of(WslConstants.UNC_PREFIX + wslVm + "\\tmp");
+    return Files.createTempDirectory(parent, UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
   }
 
   public static @NotNull File createJunction(@NotNull String target, @NotNull String junction) {

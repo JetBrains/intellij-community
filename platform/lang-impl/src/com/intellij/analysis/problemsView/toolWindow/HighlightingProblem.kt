@@ -10,8 +10,7 @@ import com.intellij.codeInsight.daemon.impl.AsyncDescriptionSupplier
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.editor.ex.RangeHighlighterEx
+import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.AnimatedIcon
@@ -22,8 +21,7 @@ import javax.swing.Icon
 internal class HighlightingProblem(
   override val provider: ProblemsProvider,
   override val file: VirtualFile,
-  val highlighter: RangeHighlighterEx
-) : FileProblem {
+  val highlighter: RangeHighlighter) : FileProblem {
 
   private fun getIcon(level: HighlightDisplayLevel): Icon? = when {
     text.isEmpty() || asyncDescriptionRequested.get() -> AnimatedIcon.Default.INSTANCE
@@ -93,9 +91,9 @@ internal class HighlightingProblem(
   val severity: Int
     get() = info?.severity?.myVal ?: -1
 
-  override fun hashCode() = highlighter.hashCode()
+  override fun hashCode(): Int = highlighter.hashCode()
 
-  override fun equals(other: Any?) = other is HighlightingProblem && other.highlighter == highlighter
+  override fun equals(other: Any?): Boolean = other is HighlightingProblem && other.highlighter == highlighter
 
   override val line: Int
     get() = position?.line ?: -1
@@ -111,7 +109,7 @@ internal class HighlightingProblem(
 
   private fun computePosition(offset: Int): CachedPosition? {
     if (offset < 0) return null
-    val document = ProblemsView.getDocument(provider.project, file) ?: return null
+    val document = highlighter.document
     if (offset > document.textLength) return null
     val line = document.getLineNumber(offset)
     return CachedPosition(offset, line, offset - document.getLineStartOffset(line))

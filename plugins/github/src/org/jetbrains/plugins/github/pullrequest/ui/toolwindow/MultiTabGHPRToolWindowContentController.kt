@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.util.childScope
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
@@ -18,6 +19,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryConnection
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.selector.GHRepositoryAndAccountSelectorComponentFactory
@@ -67,6 +69,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
               _contentController = CompletableFuture()
             }
             showSelectorsTab(requestFocus)
+            GHPRStatisticsCollector.logSelectorsOpened(project)
           }
           else {
             val controller = showRepositoryContent(conn, requestFocus)
@@ -124,6 +127,7 @@ internal class MultiTabGHPRToolWindowContentController(parentDisposable: Disposa
 
     val selector = GHRepositoryAndAccountSelectorComponentFactory(project, selectorVm, accountManager).create(cs.childScope())
     val component = JPanel(BorderLayout()).apply {
+      background = UIUtil.getListBackground()
       add(selector, BorderLayout.NORTH)
     }
     val content = contentManager.factory.createContent(component, GithubBundle.message("toolwindow.stripe.Pull_Requests"), false).apply {

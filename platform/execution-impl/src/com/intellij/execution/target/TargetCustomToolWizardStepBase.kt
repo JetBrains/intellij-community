@@ -49,7 +49,7 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
 
     // TODO [targets] get rid of `!!` in `model.languageConfigForIntrospection!!`
     customToolPanel = TargetCustomToolPanel(model.project, model.subject.getTargetType(), ::editingTargetConfiguration,
-                                            model.languageConfigForIntrospection!!)
+                                            model.languageConfigForIntrospection!!, createIntrospectable())
       .also {
         mainPanel.addToCenter(it.component)
       }
@@ -66,6 +66,8 @@ abstract class TargetCustomToolWizardStepBase<M : TargetWizardModel>(@NlsContext
   }
 
   protected abstract fun getInitStepDescription(): String
+
+  protected open fun createIntrospectable(): LanguageRuntimeType.Introspectable? = null
 
   private fun forceMainPanelLayout() {
     with(component) {

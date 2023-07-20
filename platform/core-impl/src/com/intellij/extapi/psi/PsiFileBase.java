@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.extapi.psi;
 
@@ -15,8 +15,8 @@ import java.util.ArrayList;
 import java.util.Set;
 
 public abstract class PsiFileBase extends PsiFileImpl {
-  @NotNull private final Language myLanguage;
-  @NotNull private final ParserDefinition myParserDefinition;
+  private final @NotNull Language myLanguage;
+  private final @NotNull ParserDefinition myParserDefinition;
 
   protected PsiFileBase(@NotNull FileViewProvider viewProvider, @NotNull Language language) {
     super(viewProvider);
@@ -50,8 +50,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
   }
 
   @Override
-  @NotNull
-  public final Language getLanguage() {
+  public final @NotNull Language getLanguage() {
     return myLanguage;
   }
 
@@ -60,8 +59,7 @@ public abstract class PsiFileBase extends PsiFileImpl {
     visitor.visitFile(this);
   }
 
-  @NotNull
-  public ParserDefinition getParserDefinition() {
+  public @NotNull ParserDefinition getParserDefinition() {
     return myParserDefinition;
   }
 }

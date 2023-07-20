@@ -3,19 +3,18 @@
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
 import com.intellij.testFramework.common.runAll
+import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractKeywordCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.jetbrains.kotlin.test.utils.withExtension
-import java.io.File
 
 abstract class AbstractFirKeywordCompletionHandlerTest : AbstractKeywordCompletionHandlerTest() {
     override val captureExceptions: Boolean = false
 
     override fun isFirPlugin(): Boolean = true
 
-    override fun handleTestPath(path: String): File =
-        IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after")
+    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory, ".after")
 
     override fun tearDown() {
         runAll(

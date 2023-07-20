@@ -17,6 +17,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Files
+import java.nio.file.attribute.BasicFileAttributes
 
 internal fun getNodeElement(userObject: Any?): Any? {
   return when (userObject) {
@@ -107,4 +109,15 @@ fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
   val module = grandParentObject!!.value as Module?
                ?: return null
   return ModuleRootManager.getInstance(module).fileIndex.getOrderEntryForFile(directory.virtualFile) as? LibraryOrderEntry
+}
+
+internal fun getFileAttributes(file: VirtualFile?): BasicFileAttributes? {
+  val ioFile = if (file == null || file.isDirectory || !file.isInLocalFileSystem) null else file.toNioPath()
+  val fileAttributes = try {
+    if (ioFile == null) null else Files.readAttributes(ioFile, BasicFileAttributes::class.java)
+  }
+  catch (ignored: Exception) {
+    null
+  }
+  return fileAttributes
 }

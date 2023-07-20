@@ -9,7 +9,7 @@ interface FileOpenedSyncListener {
   companion object {
     @Topic.ProjectLevel
     @JvmField
-    val TOPIC = Topic(FileOpenedSyncListener::class.java, Topic.BroadcastDirection.TO_PARENT, true)
+    val TOPIC: Topic<FileOpenedSyncListener> = Topic(FileOpenedSyncListener::class.java, Topic.BroadcastDirection.TO_PARENT, true)
   }
 
   /**

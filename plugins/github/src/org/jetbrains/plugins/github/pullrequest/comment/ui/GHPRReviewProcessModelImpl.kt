@@ -2,8 +2,8 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import com.intellij.collaboration.ui.SimpleEventListener
+import org.jetbrains.plugins.github.pullrequest.data.GHPullRequestPendingReview
 
 class GHPRReviewProcessModelImpl : GHPRReviewProcessModel {
 

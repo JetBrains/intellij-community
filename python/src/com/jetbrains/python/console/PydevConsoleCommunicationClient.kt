@@ -13,6 +13,7 @@ import com.jetbrains.python.console.protocol.PythonConsoleFrontendService
 import com.jetbrains.python.console.transport.client.TNettyClientTransport
 import com.jetbrains.python.console.transport.server.TNettyServer
 import com.jetbrains.python.debugger.PyDebugValueExecutionService
+import com.jetbrains.python.debugger.PyFrameAccessor
 import com.jetbrains.python.debugger.PyFrameListener
 import org.apache.thrift.protocol.TBinaryProtocol
 import java.util.concurrent.CompletableFuture
@@ -85,7 +86,7 @@ class PydevConsoleCommunicationClient(project: Project,
       val serverTransport = clientTransport.serverTransport
 
       val serverHandler = createPythonConsoleFrontendHandler()
-      val serverProcessor = PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface>(serverHandler)
+      val serverProcessor = PythonConsoleFrontendService.Processor(serverHandler)
 
       val server = TNettyServer(serverTransport, serverProcessor)
 
@@ -107,7 +108,7 @@ class PydevConsoleCommunicationClient(project: Project,
           executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationClient)
         }
 
-        override fun sessionStopped() {
+        override fun sessionStopped(communication: PyFrameAccessor?) {
           executionService.cancelSubmittedTasks(this@PydevConsoleCommunicationClient)
         }
       })

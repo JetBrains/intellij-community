@@ -97,7 +97,7 @@ class ActionsCollectorImpl : ActionsCollector() {
   }
 
   companion object {
-    const val DEFAULT_ID = "third.party"
+    const val DEFAULT_ID: String = "third.party"
     private val ourAllowedList = ActionsBuiltInAllowedlist.getInstance()
     private val ourStats: MutableMap<AnActionEvent, Stats> = WeakHashMap()
 
@@ -199,7 +199,7 @@ class ActionsCollectorImpl : ActionsCollector() {
       else {
         data.add(ActionsEventLogGroup.ACTION_CLASS.with(actionClassName))
       }
-      data.add(ActionsEventLogGroup.ACTION_ID.with(actionId))
+      data.add(ActionsEventLogGroup.ACTION_ID.with(StringUtil.substringBeforeLast(actionId, "$\$Lambda$", true)))
       return actionId
     }
 

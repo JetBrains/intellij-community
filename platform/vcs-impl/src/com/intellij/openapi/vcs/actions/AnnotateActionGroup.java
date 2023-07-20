@@ -30,7 +30,7 @@ public class AnnotateActionGroup extends ActionGroup implements DumbAware {
   /**
    * @deprecated It is an internal API, try to avoid using it.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public AnnotateActionGroup(@NotNull List<? extends AnnotationFieldGutter> gutters,
                              @Nullable Couple<Map<VcsRevisionNumber, Color>> bgColorMap) {
     this(null, gutters, bgColorMap);

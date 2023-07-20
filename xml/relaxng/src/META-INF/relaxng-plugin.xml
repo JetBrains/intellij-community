@@ -56,7 +56,7 @@
 
   <actions resource-bundle="messages.RelaxngBundle">
     <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction">
-      <add-to-group group-id="ToolsXmlGroup" anchor="after" relative-to-action="GenerateDTD" />
+      <add-to-group group-id="ToolsXmlGroup"/>
     </action>
   </actions>
 </idea-plugin>

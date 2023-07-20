@@ -21,6 +21,8 @@ import com.intellij.execution.testframework.TestTreeView;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerNodeDescriptor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.openapi.actionSystem.DataKey;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,10 +37,13 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   public static final DataKey<SMTRunnerTestTreeView> SM_TEST_RUNNER_VIEW  = DataKey.create("SM_TEST_RUNNER_VIEW");
 
   @Nullable private TestResultsViewer myResultsViewer;
+  @Nullable @Nls private String myAccessibleStatus;
 
   @Override
   protected TreeCellRenderer getRenderer(final TestConsoleProperties properties) {
-    return new TestTreeRenderer(properties);
+    TestTreeRenderer renderer = new TestTreeRenderer(properties);
+    renderer.setAccessibleStatus(() -> myAccessibleStatus);
+    return renderer;
   }
 
   @Override
@@ -80,5 +85,10 @@ public class SMTRunnerTestTreeView extends TestTreeView {
   @Override
   protected String getPresentableName(AbstractTestProxy testProxy) {
     return ((SMTestProxy)testProxy).getPresentableName();
+  }
+
+  @ApiStatus.Experimental
+  public void setAccessibleStatus(@Nls @Nullable String accessibleStatus) {
+    myAccessibleStatus = accessibleStatus;
   }
 }

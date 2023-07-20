@@ -21,29 +21,26 @@ import java.util.TreeMap;
 
 import static com.intellij.ide.actions.runAnything.RunAnythingUtil.fetchProject;
 
-public class RunAnythingRunConfigurationProvider extends com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationProvider {
-  @NotNull
+public final class RunAnythingRunConfigurationProvider extends com.intellij.ide.actions.runAnything.activity.RunAnythingRunConfigurationProvider {
   @Override
-  public Collection<ItemWrapper> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @NotNull Collection<ItemWrapper> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return sort(fetchProject(dataContext), pattern);
   }
 
-  @Nullable
   @Override
-  public String getHelpGroupTitle() {
+  public @Nullable String getHelpGroupTitle() {
     return null;
   }
 
-  @NotNull
   @Override
-  public String getCompletionGroupTitle() {
+  public @NotNull String getCompletionGroupTitle() {
     return IdeBundle.message("run.anything.run.configurations.group.title");
   }
 
   private static Collection<ItemWrapper> sort(@NotNull Project project, @NotNull String pattern) {
     MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
-    List<ItemWrapper> list = ChooseRunConfigurationPopup.createFlatSettingsList(project);
-    TreeMap<Integer, ItemWrapper> map = new TreeMap<Integer, ItemWrapper>(Comparator.reverseOrder());
+    List<ItemWrapper<?>> list = ChooseRunConfigurationPopup.createFlatSettingsList(project);
+    TreeMap<Integer, ItemWrapper> map = new TreeMap<>(Comparator.reverseOrder());
     for (ItemWrapper wrapper : list) {
       String name = wrapper.getText();
       FList<TextRange> fragments = matcher.matchingFragments(name);
@@ -55,9 +52,8 @@ public class RunAnythingRunConfigurationProvider extends com.intellij.ide.action
     return map.values();
   }
 
-  @NotNull
   @Override
-  public List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return ContainerUtil.emptyList();
   }
 }

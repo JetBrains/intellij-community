@@ -1,4 +1,4 @@
-import static foo.OverloadKt.overloadNew;
+import static foo.OverloadNewKt.overloadNew;
 
 public class OverloadJava {
     public void useOverload() {

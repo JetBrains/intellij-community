@@ -28,7 +28,7 @@ import java.nio.file.Paths
 
 //private class MyApp : CommandLineApplication(true, false, true)
 
-val packages = arrayOf(
+val packages: Array<String> = arrayOf(
   "platform/platform-api/src/com/intellij/util/io",
   "platform/util/src/com/intellij/util/xmlb/annotations"
 )
@@ -37,7 +37,7 @@ class PackageDocGenerator {
   companion object {
     @ClassRule
     @JvmField
-    val appRule = ProjectRule()
+    val appRule: ProjectRule = ProjectRule()
   }
 
   @Test

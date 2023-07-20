@@ -14,5 +14,5 @@ public final class PropertiesIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PropertiesIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon XmlProperties = load("icons/xmlProperties.svg", 956717219, 0);
+  /** 16x16 */ public static final @NotNull Icon XmlProperties = load("icons/xmlProperties.svg", -1667669570, 0);
 }

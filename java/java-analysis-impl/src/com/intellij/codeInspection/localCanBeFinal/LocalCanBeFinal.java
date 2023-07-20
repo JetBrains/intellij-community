@@ -4,12 +4,14 @@ package com.intellij.codeInspection.localCanBeFinal;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.MathUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -255,6 +257,8 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
         else {
           return;
         }
+        from = MathUtil.clamp(from, 0, flow.getInstructions().size());
+        end = MathUtil.clamp(end, from, flow.getInstructions().size());
         if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(variable)) {
           writtenVariables.remove(variable);
           result.add(variable);
@@ -391,7 +395,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     return SHORT_NAME;
   }
 
-  private static class AcceptSuggested implements LocalQuickFix {
+  private static class AcceptSuggested extends PsiUpdateModCommandQuickFix {
     @Override
     @NotNull
     public String getFamilyName() {
@@ -399,9 +403,7 @@ public class LocalCanBeFinal extends AbstractBaseJavaLocalInspectionTool impleme
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
-      PsiElement nameIdentifier = problem.getPsiElement();
-      if (nameIdentifier == null) return;
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement nameIdentifier, @NotNull ModPsiUpdater updater) {
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
       if (psiVariable == null) return;
       psiVariable.normalizeDeclaration();

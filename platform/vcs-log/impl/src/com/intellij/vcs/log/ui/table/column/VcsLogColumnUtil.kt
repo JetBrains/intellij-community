@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.impl.CommonUiProperties
@@ -15,6 +15,18 @@ internal fun VcsLogUiProperties.supportsColumnsToggling(): Boolean {
 
 internal fun isValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): Boolean {
   return Root in columnOrder && Commit in columnOrder
+}
+
+internal fun makeValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): List<VcsLogColumn<*>> {
+  val result = mutableListOf<VcsLogColumn<*>>()
+  if (Root !in columnOrder) {
+    result.add(Root)
+  }
+  if (Commit !in columnOrder) {
+    result.add(Commit)
+  }
+  result.addAll(columnOrder)
+  return result
 }
 
 /**

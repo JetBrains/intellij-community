@@ -63,11 +63,13 @@ public final class ThreadReferenceProxyImpl extends ObjectReferenceProxyImpl imp
     return (VirtualMachineProxyImpl)myTimer;
   }
 
+  @NotNull
   public String name() {
     checkValid();
     if (myName == null) {
       try {
         myName = getThreadReference().name();
+        LOG.assertTrue(myName != null);
       }
       catch (ObjectCollectedException ignored) {
         myName = "";

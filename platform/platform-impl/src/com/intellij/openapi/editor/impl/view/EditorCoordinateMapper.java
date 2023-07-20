@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.IntPair;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,10 +41,10 @@ final class EditorCoordinateMapper {
     int lineHeight = myView.getLineHeight();
     FoldingModelImpl foldingModel = myView.getEditor().getFoldingModel();
     int idx = foldingModel.getLastCollapsedRegionBefore(offset);
-    int[] adjustment = foldingModel.getCustomRegionsYAdjustment(offset, idx);
-    int startY = myView.getInsets().top + line * lineHeight + adjustment[0] +
+    IntPair adjustment = foldingModel.getCustomRegionsYAdjustment(offset, idx);
+    int startY = myView.getInsets().top + line * lineHeight + adjustment.first +
                  myView.getEditor().getInlayModel().getHeightOfBlockElementsBeforeVisualLine(line, offset, idx);
-    return new int[] {startY, startY + lineHeight + adjustment[1]};
+    return new int[] {startY, startY + lineHeight + adjustment.second};
   }
 
   int visualLineToY(int line) {

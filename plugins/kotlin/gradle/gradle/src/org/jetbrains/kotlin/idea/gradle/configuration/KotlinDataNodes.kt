@@ -12,9 +12,8 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.serialization.PropertyMapping
-import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
-import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.Serializable
 
@@ -49,14 +48,9 @@ val DataNode<KotlinGradleProjectData>.kotlinGradleSourceSetDataNodes: Collection
 class KotlinGradleSourceSetData @PropertyMapping("sourceSetName") constructor(val sourceSetName: String?) :
     AbstractExternalEntityData(GradleConstants.SYSTEM_ID), ImplementedModulesAware {
 
-    lateinit var cachedArgsInfo: CachedExtractedArgsInfo
-
-    var isProcessed: Boolean = false
     var kotlinPluginVersion: String? = null
 
-    @Suppress("DEPRECATION")
-    @Deprecated("Use cachedArgsInfo instead", level = DeprecationLevel.ERROR)
-    lateinit var compilerArguments: ArgsInfo
+    var compilerArguments: CommonCompilerArguments? = null
     lateinit var additionalVisibleSourceSets: Set<String>
     override var implementedModuleNames: List<String> = emptyList()
 

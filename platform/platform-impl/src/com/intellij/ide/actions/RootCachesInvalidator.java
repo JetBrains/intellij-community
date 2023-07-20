@@ -5,7 +5,7 @@ import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.util.gist.GistManager;
 import com.intellij.util.indexing.FileBasedIndex;
 
-class RootCachesInvalidator extends CachesInvalidator {
+final class RootCachesInvalidator extends CachesInvalidator {
   @Override
   public void invalidateCaches() {
     FileBasedIndex.getInstance().invalidateCaches();

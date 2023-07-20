@@ -2,6 +2,7 @@
 package com.intellij.openapi.startup
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.ApiStatus.Obsolete
 interface StartupActivity {
   companion object {
     @Internal
-    val POST_STARTUP_ACTIVITY = ExtensionPointName<Any>("com.intellij.postStartupActivity")
+    val POST_STARTUP_ACTIVITY: ExtensionPointName<Any> = ExtensionPointName("com.intellij.postStartupActivity")
   }
 
   fun runActivity(project: Project)
@@ -45,6 +46,8 @@ interface StartupActivity {
 
 /**
  * Runs an activity after project open.
+ * Coroutine scope: from project opening to project closing (or plugin unloading).
+ * Flow and any other long-running activities are allowed and natural.
  *
  * @see StartupManager
  * @see com.intellij.ide.util.RunOnceUtil
@@ -69,5 +72,7 @@ interface InitProjectActivity {
 abstract class InitProjectActivityJavaShim : InitProjectActivity {
   abstract fun runActivity(project: Project)
 
-  override suspend fun run(project: Project) = runActivity(project)
+  override suspend fun run(project: Project) : Unit = blockingContext {
+    runActivity(project)
+  }
 }

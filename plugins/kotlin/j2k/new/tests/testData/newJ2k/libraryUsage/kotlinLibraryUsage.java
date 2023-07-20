@@ -1,4 +1,4 @@
-// WITH_LIBRARY: /simple/kotlin
+// WITH_LIBRARY: ../../libSources/simple/kotlin
 
 import library.kotlin.test.LibraryKt;
 

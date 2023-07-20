@@ -2,10 +2,12 @@
 
 package org.jetbrains.kotlin.idea.fir.completion
 
+import com.intellij.testFramework.common.runAll
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
+import org.jetbrains.kotlin.idea.completion.test.firFileName
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
-import java.io.File
 
 abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicCompletionTest() {
     override val captureExceptions: Boolean = false
@@ -15,13 +17,19 @@ abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicComplet
     override val ignoreProperties: Collection<String> =
         listOf(ExpectedCompletionUtils.CompletionProposal.PRESENTATION_TEXT_ATTRIBUTES)
 
-    override fun handleTestPath(path: String): File =
-        IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON)
+    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 
     override fun executeTest(test: () -> Unit) {
         IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
             super.executeTest(test)
             IgnoreTests.cleanUpIdenticalFirTestFile(dataFile())
         }
+    }
+
+    override fun tearDown() {
+        runAll(
+            { project.invalidateCaches() },
+            { super.tearDown() }
+        )
     }
 }

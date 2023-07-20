@@ -6,6 +6,7 @@ import com.intellij.debugger.engine.DebugProcess.JAVA_STRATUM
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.util.Range
+import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.StackFrame
 import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
@@ -27,17 +28,17 @@ data class StepOverCallerInfo(val declaringType: String, val methodName: String?
     }
 }
 
-data class LocationToken(val lineNumber: Int, val inlineVariables: List<String>) {
+data class LocationToken(val lineNumber: Int, val inlineVariables: List<LocalVariable>) {
     companion object {
         fun from(stackFrame: StackFrame): LocationToken {
             val location = stackFrame.location()
             val lineNumber = location.safeLineNumber(JAVA_STRATUM)
-            val methodVariables = ArrayList<String>(0)
+            val methodVariables = ArrayList<LocalVariable>(0)
 
             for (variable in location.safeMethod()?.safeVariables() ?: emptyList()) {
                 val name = variable.name()
                 if (variable.isVisible(stackFrame) && isFakeLocalVariableForInline(name)) {
-                    methodVariables += name
+                    methodVariables += variable
                 }
             }
 

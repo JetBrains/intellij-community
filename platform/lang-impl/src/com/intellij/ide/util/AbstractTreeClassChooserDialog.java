@@ -174,7 +174,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     myTree.addTreeSelectionListener(__ -> handleSelectionChanged());
 
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
     myTabbedPane = new TabbedPaneWrapper(getDisposable());
 

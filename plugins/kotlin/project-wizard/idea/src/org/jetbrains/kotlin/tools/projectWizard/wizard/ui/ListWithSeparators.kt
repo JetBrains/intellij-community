@@ -17,7 +17,6 @@ class ListWithSeparators<V>(
 ) : JBList<V>() {
     private val values: List<V> = groups.flatMap { it.values }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private val elementIndexToPreviousSeparator: Map<Int, ListGroup<V>> = groups
         .scan(0) { startElement, group -> startElement + group.values.size }
         .dropLast(1)

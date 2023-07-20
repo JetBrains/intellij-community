@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
@@ -8,7 +9,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +24,8 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final Map<String, Node> myNodeByIdMap = new ConcurrentHashMap<>();
-  private final Set<Node> myRunningTestNodes = ContainerUtil.newConcurrentSet();
-  private final Set<Node> myRunningSuiteNodes = ContainerUtil.newConcurrentSet();
+  private final Set<Node> myRunningTestNodes = ConcurrentCollectionFactory.createConcurrentSet();
+  private final Set<Node> myRunningSuiteNodes = ConcurrentCollectionFactory.createConcurrentSet();
   private final Node myTestsRootNode;
 
   private boolean myIsTestingFinished = false;

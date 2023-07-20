@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalInspectionTool;
@@ -17,12 +17,13 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 /**
  * Highlights all unresolved {@link PluginConfigReference}s in code.
  */
-public class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
+public final class UnresolvedPluginConfigReferenceInspection extends LocalInspectionTool {
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    final Module module = ModuleUtilCore.findModuleForFile(holder.getFile());
-    if (module == null || !PsiUtil.isPluginModule(module)) return PsiElementVisitor.EMPTY_VISITOR;
+    if (!DevKitInspectionUtil.isAllowed(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
 
     return new PsiElementVisitor() {
       @Override

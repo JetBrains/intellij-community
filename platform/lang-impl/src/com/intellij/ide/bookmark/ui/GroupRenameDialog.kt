@@ -11,7 +11,7 @@ import javax.swing.JTextField
 class GroupRenameDialog(project: Project?, parent: Component?, val manager: BookmarksManager, val group: BookmarkGroup)
   : GroupInputDialog<JTextField>(project, parent) {
 
-  override val component = JTextField(group.name, 30)
+  override val component: JTextField = JTextField(group.name, 30)
 
   fun showAndGetGroup(): BookmarkGroup? {
     GroupInputValidator(manager, listOf(group))

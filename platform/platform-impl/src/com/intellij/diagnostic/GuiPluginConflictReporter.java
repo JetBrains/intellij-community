@@ -29,12 +29,7 @@ final class GuiPluginConflictReporter implements PluginConflictReporter {
       task.run();
     }
     else {
-      try {
-        EventQueue.invokeAndWait(task);
-      }
-      catch (InterruptedException | InvocationTargetException e) {
-        PluginManagerCore.getLogger().error(e);
-      }
+      EventQueue.invokeLater(task);
     }
   }
 }

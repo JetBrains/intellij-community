@@ -21,7 +21,7 @@ class RecentColorsPalette(private val pickerModel: ColorPickerModel,
                           private val recentColors: List<Color>) : JPanel() {
 
   @get:TestOnly
-  val colorButtons = Array(COLOR_BUTTON_ROW * COLOR_BUTTON_COLUMN) {
+  val colorButtons: Array<ColorButton> = Array(COLOR_BUTTON_ROW * COLOR_BUTTON_COLUMN) {
     ColorButton(recentColors.getOrElse(it) { _ -> Color.WHITE }).apply {
       background = PICKER_BACKGROUND_COLOR
       addActionListener { pickerModel.setColor(color, this@RecentColorsPalette) }
@@ -51,7 +51,7 @@ class ColorButton(var color: Color = Color.WHITE): JButton() {
 
   enum class Status { NORMAL, HOVER, PRESSED }
 
-  var status = Status.NORMAL
+  var status: Status = Status.NORMAL
 
   init {
     preferredSize = JBUI.size(28)

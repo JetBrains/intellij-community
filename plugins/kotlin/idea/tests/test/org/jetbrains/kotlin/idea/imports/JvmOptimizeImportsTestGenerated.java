@@ -28,11 +28,6 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
-            @TestMetadata("AnnotationWithSingleArgumentIsProperlyResolved.kt")
-            public void testAnnotationWithSingleArgumentIsProperlyResolved() throws Exception {
-                runTest("testData/editor/optimizeImports/jvm/allUnderImports/AnnotationWithSingleArgumentIsProperlyResolved.kt");
-            }
-
             @TestMetadata("ClassNameConflict.kt")
             public void testClassNameConflict() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ClassNameConflict.kt");
@@ -81,6 +76,16 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             @TestMetadata("ConflictWithAnnotation.kt")
             public void testConflictWithAnnotation() throws Exception {
                 runTest("testData/editor/optimizeImports/jvm/allUnderImports/ConflictWithAnnotation.kt");
+            }
+
+            @TestMetadata("JavaAnnotationWithValueParameterIsProperlyResolved.kt")
+            public void testJavaAnnotationWithValueParameterIsProperlyResolved() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/JavaAnnotationWithValueParameterIsProperlyResolved.kt");
+            }
+
+            @TestMetadata("KotlinAnnotationWithSingleArgumentIsProperlyResolved.kt")
+            public void testKotlinAnnotationWithSingleArgumentIsProperlyResolved() throws Exception {
+                runTest("testData/editor/optimizeImports/jvm/allUnderImports/KotlinAnnotationWithSingleArgumentIsProperlyResolved.kt");
             }
 
             @TestMetadata("NameCountSetting.kt")
@@ -652,6 +657,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             @TestMetadata("WithAlias2.kt")
             public void testWithAlias2() throws Exception {
                 runTest("testData/editor/optimizeImports/common/WithAlias2.kt");
+            }
+
+            @TestMetadata("WithoutFormatter.kt")
+            public void testWithoutFormatter() throws Exception {
+                runTest("testData/editor/optimizeImports/common/WithoutFormatter.kt");
             }
         }
     }

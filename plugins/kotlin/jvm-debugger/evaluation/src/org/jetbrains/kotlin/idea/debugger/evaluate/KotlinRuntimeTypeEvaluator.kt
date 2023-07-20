@@ -48,7 +48,7 @@ abstract class KotlinRuntimeTypeEvaluator(
     override fun evaluate(evaluationContext: EvaluationContextImpl): KotlinType? {
         val project = evaluationContext.project
 
-        val evaluator = DebuggerInvocationUtil.commitAndRunReadAction<ExpressionEvaluator>(project) {
+        val evaluator = DebuggerInvocationUtil.commitAndRunReadAction(project) {
             val codeFragment = KtPsiFactory(myElement.project).createExpressionCodeFragment(
                 myElement.text, myElement.containingFile.context
             )

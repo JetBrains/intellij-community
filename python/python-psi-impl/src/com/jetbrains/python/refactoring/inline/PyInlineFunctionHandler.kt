@@ -113,8 +113,7 @@ class PyInlineFunctionHandler : InlineActionHandler() {
     ifStatement.elifParts.forEach { if (checkLastStatement(it.statementList, cache)) return true }
 
     val parentIfStatement = PsiTreeUtil.getParentOfType(ifStatement, PyIfStatement::class.java)
-    if (parentIfStatement != null && checkInterruptsControlFlow(parentIfStatement, cache)) return true
-    return false
+    return parentIfStatement != null && checkInterruptsControlFlow(parentIfStatement, cache)
   }
 
   private fun checkLastStatement(statementList: PyStatementList, cache: MutableSet<PyIfStatement>): Boolean {

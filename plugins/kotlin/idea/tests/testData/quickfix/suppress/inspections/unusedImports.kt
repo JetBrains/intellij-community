@@ -2,4 +2,5 @@
 
 import<caret> java.io.*
 
-// TOOL: org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection
+// K1_TOOL: org.jetbrains.kotlin.idea.inspections.KotlinUnusedImportInspection
+// K2_TOOL: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.KotlinUnusedImportInspection

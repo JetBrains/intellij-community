@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.increment;
 
 import com.intellij.openapi.project.Project;
@@ -9,13 +9,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class InlineIncrementIntention extends MutablyNamedIntention {
+public class InlineIncrementIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -23,7 +23,7 @@ public class InlineIncrementIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final String operator = IncrementUtil.getOperatorText(element);
     return operator != null ? IntentionPowerPackBundle.message("inline.increment.intention.name", operator) : null;
   }

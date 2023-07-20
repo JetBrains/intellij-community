@@ -59,12 +59,12 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
       return
     }
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
-    val mavenPath = wslDistribution.resolveMavenHomeDirectory(null);
+    val mavenPath = wslDistribution.resolveMavenHomeDirectory(null)
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
     val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.path) }
-    dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath);
+    dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)
     val mavenVersion = MavenUtil.getMavenVersion(mavenPath)
-    dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion);
+    dataHolder.putUserData(MAVEN_HOME_VERSION, mavenVersion)
     val jdkPath = getJdkPath(project, wslDistribution)
     dataHolder.putUserData(JDK_PATH, jdkPath)
 
@@ -92,7 +92,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
                                        dataHolder: UserDataHolder,
                                        wslDistribution: WSLDistribution): MavenRuntimeTargetConfiguration? {
     val mavenConfig = MavenRuntimeTargetConfiguration()
-    val targetMavenPath = dataHolder.getUserData(MAVEN_TARGET_PATH);
+    val targetMavenPath = dataHolder.getUserData(MAVEN_TARGET_PATH)
 
     if (targetMavenPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),
@@ -101,7 +101,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
       return null
     }
 
-    val mavenVersion = dataHolder.getUserData(MAVEN_HOME_VERSION);
+    val mavenVersion = dataHolder.getUserData(MAVEN_HOME_VERSION)
     mavenConfig.homePath = targetMavenPath
     mavenConfig.versionString = mavenVersion ?: ""
     configuration.addLanguageRuntime(mavenConfig)
@@ -113,7 +113,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
                                       dataHolder: UserDataHolder,
                                       wslDistribution: WSLDistribution): JavaLanguageRuntimeConfiguration? {
     val javaConfig = JavaLanguageRuntimeConfiguration()
-    val jdkPath = dataHolder.getUserData(JDK_PATH);
+    val jdkPath = dataHolder.getUserData(JDK_PATH)
 
     if (jdkPath == null) {
       MavenProjectsManager.getInstance(project).syncConsole.addWarning(MavenProjectBundle.message("wsl.misconfigured.title"),

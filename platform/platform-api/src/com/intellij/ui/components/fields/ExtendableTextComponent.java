@@ -4,8 +4,10 @@ package com.intellij.ui.components.fields;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.Collection;
 import java.util.List;
@@ -55,13 +57,24 @@ public interface ExtendableTextComponent {
     }
 
     /**
-     * @deprecated Use {@link #getActionOnClick(InputEvent)} instead.
+     * Returns null if default button size calculation should be used
      */
-    @Deprecated
+    default @Nullable Dimension getButtonSize() {
+      return null;
+    }
+
     default Runnable getActionOnClick() {
       return null;
     }
 
+    default boolean isSelected() {
+      return false;
+    }
+
+    /**
+     * @deprecated Use {@link #getActionOnClick()} instead.
+     */
+    @Deprecated(forRemoval = true)
     default Runnable getActionOnClick(@NotNull InputEvent inputEvent) {
       return getActionOnClick();
     }

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -21,8 +22,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function0;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -57,7 +56,7 @@ public final class PopupMenuPreloader implements HierarchyListener {
   private int myRetries;
   private boolean myDisposed;
 
-  private Function0<Unit> removeIdleListener;
+  private AccessToken removeIdleListener;
 
   public static void install(@NotNull JComponent component,
                              @NotNull String actionPlace,
@@ -133,7 +132,7 @@ public final class PopupMenuPreloader implements HierarchyListener {
     long start = System.nanoTime();
     myRetries ++;
     CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
-      actionGroup, new PresentationFactory(), dataContext, myPlace, false, true);
+      actionGroup, new PresentationFactory(), dataContext, myPlace, false, -1);
     promise.onSuccess(__ -> dispose(TimeoutUtil.getDurationMillis(start)));
     promise.onError(__ -> {
       int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
@@ -151,7 +150,7 @@ public final class PopupMenuPreloader implements HierarchyListener {
 
     myDisposed = true;
     if (removeIdleListener != null) {
-      removeIdleListener.invoke();
+      removeIdleListener.close();
       removeIdleListener = null;
     }
 

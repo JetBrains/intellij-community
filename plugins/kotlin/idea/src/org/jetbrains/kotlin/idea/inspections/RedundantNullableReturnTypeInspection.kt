@@ -44,6 +44,7 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection(), Cleanu
             check(property)
         }
 
+        @OptIn(FrontendInternals::class)
         private fun check(declaration: KtCallableDeclaration) {
             val typeReference = declaration.typeReference ?: return
             val typeElement = typeReference.typeElement as? KtNullableType ?: return
@@ -52,30 +53,47 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection(), Cleanu
 
             if (declaration.isOverridable() || declaration.isExpectDeclaration() || declaration.isEffectivelyActual()) return
 
-            val (body, targetDeclaration) = when (declaration) {
+            val dataFlowValueFactory: DataFlowValueFactory = declaration.getResolutionFacade().frontendService<DataFlowValueFactory>()
+            val moduleDescriptor: ModuleDescriptor = declaration.findModuleDescriptor()
+            val languageVersionSettings: LanguageVersionSettings = declaration.languageVersionSettings
+
+            val declarationDescriptor: DeclarationDescriptor
+            val actualReturnTypes = when (declaration) {
                 is KtNamedFunction -> {
-                    val body = declaration.bodyExpression
-                    if (body != null) body to declaration else null
+                    val context = declaration.bodyExpression?.analyze() ?: return
+                    declarationDescriptor = declaration.descriptor(context) ?: return
+                    declaration.bodyExpression?.actualReturnTypes(
+                        context, declarationDescriptor, dataFlowValueFactory, moduleDescriptor, languageVersionSettings
+                    ) ?: return
                 }
 
                 is KtProperty -> {
                     val initializer = declaration.initializer
                     val getter = declaration.accessors.singleOrNull { it.isGetter }
                     val getterBody = getter?.bodyExpression
-                    when {
-                        initializer != null -> initializer to declaration
-                        getterBody != null -> getterBody to getter
-                        else -> null
+                    val context = getterBody?.analyze() ?: initializer?.analyze() ?: return
+                    declarationDescriptor = declaration.descriptor(context) ?: return
+                    buildList {
+                        if (initializer != null) {
+                            val actualReturnTypes = initializer.actualReturnTypes(
+                                context, declarationDescriptor, dataFlowValueFactory, moduleDescriptor, languageVersionSettings
+                            )
+                            addAll(actualReturnTypes)
+                        }
+                        if (getterBody != null) {
+                            val getterDescriptor = getter.descriptor(context) ?: return
+                            val actualReturnTypes = getterBody.actualReturnTypes(
+                                context, getterDescriptor, dataFlowValueFactory, moduleDescriptor, languageVersionSettings
+                            )
+                            addAll(actualReturnTypes)
+                        }
                     }
                 }
 
-                else -> null
-            } ?: return
-            val context = body.analyze()
-            val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, targetDeclaration] ?: return
-            if (declarationDescriptor.hasJvmTransientAnnotation()) return
-            val actualReturnTypes = body.actualReturnTypes(context, declarationDescriptor)
+                else -> return
+            }
             if (actualReturnTypes.isEmpty() || actualReturnTypes.any { it.isNullable() }) return
+            if (declarationDescriptor.hasJvmTransientAnnotation()) return
 
             val declarationName = declaration.nameAsSafeName.asString()
             val description = if (declaration is KtProperty) {
@@ -92,14 +110,19 @@ class RedundantNullableReturnTypeInspection : AbstractKotlinInspection(), Cleanu
         }
     }
 
+    private fun KtDeclaration.descriptor(context: BindingContext): DeclarationDescriptor? =
+        context[BindingContext.DECLARATION_TO_DESCRIPTOR, this]
+
     private fun DeclarationDescriptor.hasJvmTransientAnnotation() =
         (this as? PropertyDescriptor)?.backingField?.annotations?.findAnnotation(TRANSIENT_ANNOTATION_FQ_NAME) != null
 
-    @OptIn(FrontendInternals::class)
-    private fun KtExpression.actualReturnTypes(context: BindingContext, declarationDescriptor: DeclarationDescriptor): List<KotlinType> {
-        val dataFlowValueFactory = getResolutionFacade().frontendService<DataFlowValueFactory>()
-        val moduleDescriptor = findModuleDescriptor()
-        val languageVersionSettings = languageVersionSettings
+    private fun KtExpression.actualReturnTypes(
+        context: BindingContext,
+        declarationDescriptor: DeclarationDescriptor,
+        dataFlowValueFactory: DataFlowValueFactory,
+        moduleDescriptor: ModuleDescriptor,
+        languageVersionSettings: LanguageVersionSettings
+    ): List<KotlinType> {
         val returnTypes = collectDescendantsOfType<KtReturnExpression> {
             it.getTargetFunctionDescriptor(context) == declarationDescriptor
         }.flatMap {

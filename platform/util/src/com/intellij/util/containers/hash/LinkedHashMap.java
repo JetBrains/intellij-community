@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers.hash;
 
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +85,7 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
   }
 
   @Override
-  public V put(final K key, @NotNull final V value) {
+  public V put(final K key, final @NotNull V value) {
     final Entry<K, V>[] table = this.table;
     final int hash = HashUtil.hash(key, hashingStrategy);
     final int index = hash % table.length;
@@ -159,21 +159,18 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     return e.value;
   }
 
-  @NotNull
   @Override
-  public Set<K> keySet() {
+  public @NotNull Set<K> keySet() {
     return new KeySet();
   }
 
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     return new Values();
   }
 
-  @NotNull
   @Override
-  public Set<Map.Entry<K, V>> entrySet() {
+  public @NotNull Set<Map.Entry<K, V>> entrySet() {
     return new EntrySet();
   }
 
@@ -199,18 +196,15 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
     size = 0;
   }
 
-  @Nullable
-  public K getLastKey() {
+  public @Nullable K getLastKey() {
     return top != null ? top.key : null;
   }
 
-  @Nullable
-  public V getLastValue() {
+  public @Nullable V getLastValue() {
     return top != null ? top.value : null;
   }
 
-  @Nullable
-  public K getFirstKey() {
+  public @Nullable K getFirstKey() {
     return back != null ? back.key :  null;
   }
 
@@ -331,9 +325,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private final class EntrySet extends AbstractSet<Map.Entry<K, V>> {
 
-    @NotNull
     @Override
-    public Iterator<Map.Entry<K, V>> iterator() {
+    public @NotNull Iterator<Map.Entry<K, V>> iterator() {
       return new LinkedHashIterator<Map.Entry<K, V>>() {
         @Override
         public Map.Entry<K, V> next() {
@@ -374,9 +367,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private final class KeySet extends AbstractSet<K> {
 
-    @NotNull
     @Override
-    public Iterator<K> iterator() {
+    public @NotNull Iterator<K> iterator() {
       return new LinkedHashIterator<K>() {
         @Override
         public K next() {
@@ -408,9 +400,8 @@ public class LinkedHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> 
 
   private final class Values extends AbstractCollection<V> {
 
-    @NotNull
     @Override
-    public Iterator<V> iterator() {
+    public @NotNull Iterator<V> iterator() {
       return new LinkedHashIterator<V>() {
         @Override
         public V next() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring;
 
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -18,7 +18,6 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
 import com.intellij.openapi.module.ModuleManager;
@@ -31,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsContexts.Command;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
@@ -210,8 +210,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     };
 
-    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"),
-                                                                           true, myProject)) {
+    long findUsagesStart = System.currentTimeMillis();
+    boolean isProgressFinished = ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(findUsagesRunnable, RefactoringBundle.message("progress.text"), true, myProject);
+    long findUsagesDuration = System.currentTimeMillis() - findUsagesStart;
+    RefactoringUsageCollector.USAGES_SEARCHED.log(this.getClass(), !isProgressFinished, findUsagesDuration);
+    if (!isProgressFinished) {
       return;
     }
 
@@ -244,6 +248,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("readonly.occurences.found"));
       }
     }
+    long executeStart = System.currentTimeMillis();
     if (isPreview) {
       for (UsageInfo usage : usages) {
         LOG.assertTrue(usage != null, getClass());
@@ -253,6 +258,8 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     else {
       execute(usages);
     }
+    long executeDuration = System.currentTimeMillis() - executeStart;
+    RefactoringUsageCollector.EXECUTED.log(this.getClass(), executeDuration);
   }
 
   @TestOnly
@@ -410,7 +417,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
    * @param conflicts map with conflict messages and locations
    * @return true if refactoring could proceed or false if refactoring should be cancelled
    */
-  public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflicts) {
+  public static boolean processConflicts(@NotNull Project project, @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (conflicts.isEmpty()) return true;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -491,7 +498,16 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
 
     final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(UsageInfo.EMPTY_ARRAY);
+    final String refactoringId = getRefactoringId();
     try {
+      if (refactoringId != null) {
+        RefactoringEventData data = getBeforeData();
+        if (data != null) {
+          data.addUsages(Arrays.asList(writableUsageInfos));
+        }
+        myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
+      }
+
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
       myTransaction = listenerManager.startTransaction();
@@ -509,18 +525,21 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(prepareHelpersRunnable,
                                                                         RefactoringBundle.message("refactoring.prepare.progress"), false, myProject);
 
+      if (refactoringId != null) {
+        UndoManager.getInstance(myProject).undoableActionPerformed(new UndoRefactoringAction(myProject, refactoringId));
+      }
+
       ApplicationEx app = ApplicationManagerEx.getApplicationEx();
       boolean inBranch = Registry.is("run.refactorings.in.model.branch") && canPerformRefactoringInBranch();
       if (inBranch) {
-        callPerformRefactoring(writableUsageInfos, () -> performInBranch(writableUsageInfos));
+        performInBranch(writableUsageInfos);
       }
       else if (Registry.is("run.refactorings.under.progress")) {
         app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null,
-                                                                     indicator -> callPerformRefactoring(writableUsageInfos,
-                                                                                                         () -> performRefactoring(writableUsageInfos)));
+                                                                     indicator -> performRefactoring(writableUsageInfos));
       }
       else {
-        app.runWriteAction(() -> callPerformRefactoring(writableUsageInfos, () -> performRefactoring(writableUsageInfos)));
+        app.runWriteAction(() -> performRefactoring(writableUsageInfos));
       }
 
       DumbService.getInstance(myProject).completeJustSubmittedTasks();
@@ -540,6 +559,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
     finally {
+      if (refactoringId != null) {
+        myProject.getMessageBus()
+          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(writableUsageInfos));
+      }
       action.finish();
       myUsageView = null;
     }
@@ -551,32 +574,6 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     else {
       if (!isPreviewUsages(writableUsageInfos)) {
         RefactoringUiService.getInstance().setStatusBarInfo(myProject, RefactoringBundle.message("statusBar.noUsages"));
-      }
-    }
-  }
-
-  private void callPerformRefactoring(UsageInfo[] usageInfos, Runnable perform) {
-    final String refactoringId = getRefactoringId();
-    if (refactoringId != null) {
-      RefactoringEventData data = getBeforeData();
-      if (data != null) {
-        data.addUsages(Arrays.asList(usageInfos));
-      }
-      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(refactoringId, data);
-    }
-
-    try {
-      if (refactoringId != null) {
-        UndoableAction action1 = new UndoRefactoringAction(myProject, refactoringId);
-        UndoManager.getInstance(myProject).undoableActionPerformed(action1);
-      }
-
-      perform.run();
-    }
-    finally {
-      if (refactoringId != null) {
-        myProject.getMessageBus()
-          .syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(refactoringId, getAfterData(usageInfos));
       }
     }
   }
@@ -688,7 +685,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
   }
 
-  protected boolean showConflicts(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
+  protected boolean showConflicts(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
     if (!conflicts.isEmpty() && ApplicationManager.getApplication().isUnitTestMode()) {
       if (!ConflictsInTestsException.isTestIgnore()) throw new ConflictsInTestsException(conflicts.values());
       return true;
@@ -714,7 +711,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   @NotNull
-  protected ConflictsDialogBase prepareConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
+  protected ConflictsDialogBase prepareConflictsDialog(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
     final ConflictsDialogBase conflictsDialog = createConflictsDialog(conflicts, usages);
     conflictsDialog.setCommandName(getCommandName());
     return conflictsDialog;
@@ -737,7 +734,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   @NotNull
-  protected ConflictsDialogBase createConflictsDialog(@NotNull MultiMap<PsiElement, String> conflicts, final UsageInfo @Nullable [] usages) {
+  protected ConflictsDialogBase createConflictsDialog(@NotNull MultiMap<PsiElement, @DialogMessage String> conflicts, UsageInfo @Nullable [] usages) {
     return RefactoringUiService.getInstance().createConflictsDialog(myProject, conflicts, usages == null ? null : () -> execute(usages), false, true);
   }
 
@@ -775,6 +772,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
     @Override
     public void redo() {
+      myProject.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).redoRefactoring(myRefactoringId);
     }
   }
 }

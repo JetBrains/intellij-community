@@ -14,7 +14,7 @@ internal class GHRepositoryHostingService : GitRepositoryHostingService() {
   @RequiresBackgroundThread
   override fun getInteractiveAuthDataProvider(project: Project, url: String)
     : InteractiveGitHttpAuthDataProvider? = runBlocking {
-    GHHttpAuthDataProvider.getAccountsWithTokens(project, url).takeIf { it.isNotEmpty() }?.let {
+    GHSilentHttpAuthDataProvider.getAccountsWithTokens(project, url).takeIf { it.isNotEmpty() }?.let {
       GHSelectAccountHttpAuthDataProvider(project, it)
     }
   }
@@ -22,9 +22,9 @@ internal class GHRepositoryHostingService : GitRepositoryHostingService() {
   @RequiresBackgroundThread
   override fun getInteractiveAuthDataProvider(project: Project, url: String, login: String)
     : InteractiveGitHttpAuthDataProvider? = runBlocking {
-    GHHttpAuthDataProvider.getAccountsWithTokens(project, url).mapNotNull { (acc, token) ->
+    GHSilentHttpAuthDataProvider.getAccountsWithTokens(project, url).mapNotNull { (acc, token) ->
       if (token == null) return@mapNotNull null
-      val details = GHHttpAuthDataProvider.getAccountDetails(acc, token) ?: return@mapNotNull null
+      val details = GHSilentHttpAuthDataProvider.getAccountDetails(acc, token) ?: return@mapNotNull null
       if (details.login != login) return@mapNotNull null
       acc to token
     }.takeIf { it.isNotEmpty() }?.let {

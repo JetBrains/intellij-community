@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
@@ -23,9 +24,11 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 class CliKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     private val Project.analysisCompletedHandler: UastAnalysisHandlerExtension?
-        get() = getExtensions(AnalysisHandlerExtension.extensionPointName)
+        get() {
+            return extensionArea.getExtensionPoint(AnalysisHandlerExtension.extensionPointName).extensionList
                 .filterIsInstance<UastAnalysisHandlerExtension>()
                 .firstOrNull()
+        }
 
     @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     override fun getTypeMapper(element: KtElement): KotlinTypeMapper? {
@@ -57,6 +60,7 @@ class UastAnalysisHandlerExtension : AnalysisHandlerExtension {
 
     fun getLanguageVersionSettings() = languageVersionSettings
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("For binary compatibility, please, use KotlinUastTypeMapper")
     fun getTypeMapper(): KotlinTypeMapper? {
         if (typeMapper != null) return typeMapper

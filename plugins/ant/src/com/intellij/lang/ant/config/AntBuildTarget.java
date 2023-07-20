@@ -19,6 +19,7 @@ package com.intellij.lang.ant.config;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +43,7 @@ public interface AntBuildTarget {
   @NotNull
   default List<@NlsSafe String> getTargetNames() {
     final String name = getName();
-    return name == null? Collections.emptyList() : Collections.singletonList(name);
+    return ContainerUtil.createMaybeSingletonList(name);
   }
 
   @Nullable

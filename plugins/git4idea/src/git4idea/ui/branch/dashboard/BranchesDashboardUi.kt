@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch.dashboard
 
 import com.intellij.dvcs.branch.GroupingKey
@@ -37,13 +37,9 @@ import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy
 import com.intellij.vcs.log.VcsLogBranchLikeFilter
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.data.VcsLogData
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings
-import com.intellij.vcs.log.impl.VcsLogContentProvider.MAIN_LOG_ID
-import com.intellij.vcs.log.impl.VcsLogManager
+import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
-import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
@@ -372,7 +368,7 @@ internal class BranchesVcsLogUi(id: String, logData: VcsLogData, colorManager: V
 @ApiStatus.Internal
 val SHOW_GIT_BRANCHES_LOG_PROPERTY =
   object : VcsLogProjectTabsProperties.CustomBooleanTabProperty("Show.Git.Branches") {
-    override fun defaultValue(logId: String) = logId == MAIN_LOG_ID
+    override fun defaultValue(logId: String) = logId == VcsLogContentProvider.MAIN_LOG_ID
   }
 
 @ApiStatus.Internal

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -10,7 +10,6 @@ import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
 import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -47,6 +46,7 @@ import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 import static com.intellij.ide.startup.StartupActionScriptManager.*;
 
 public final class PluginInstaller {
@@ -267,7 +267,7 @@ public final class PluginInstaller {
         MessagesEx.showErrorDialog(parent, error.getDetailedMessage(), CommonBundle.getErrorTitle());
         return false;
       }
-      if (PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
+      if (isBrokenPlugin(pluginDescriptor)) {
         String message =
           CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
         MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
@@ -439,15 +439,11 @@ public final class PluginInstaller {
       shutdownOrRestartAppAfterInstall(descriptor);
     }
     else {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        boolean loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
+      boolean loaded = installAndLoadDynamicPlugin(callbackData.getFile(), descriptor);
 
-        if (!loaded) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            shutdownOrRestartAppAfterInstall(descriptor);
-          });
-        }
-      }, IdeBundle.message("action.InstallFromDiskAction.progress.text"), false, project, parentComponent);
+      if (!loaded) {
+        shutdownOrRestartAppAfterInstall(descriptor);
+      }
     }
   }
 

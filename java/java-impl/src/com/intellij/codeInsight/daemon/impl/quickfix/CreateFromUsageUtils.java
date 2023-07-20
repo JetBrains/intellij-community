@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.*;
@@ -26,7 +26,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorModificationUtil;
+import com.intellij.openapi.editor.EditorModificationUtilEx;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -97,17 +97,6 @@ public final class CreateFromUsageUtils {
     catch (ClassCastException cce) {
       // rear case
       return false;
-    }
-  }
-
-  static boolean shouldCreateConstructor(PsiClass targetClass, PsiExpressionList argList, PsiMethod candidate) {
-    if (argList == null) return false;
-    if (candidate == null) {
-      return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
-    }
-    else {
-      return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
     }
   }
 
@@ -210,8 +199,8 @@ public final class CreateFromUsageUtils {
         final String lineIndent = styleManager.getLineIndent(containingFile, end);
         PsiDocumentManager manager = PsiDocumentManager.getInstance(body.getProject());
         manager.doPostponedOperationsAndUnblockDocument(newEditor.getDocument());
-        EditorModificationUtil.insertStringAtCaret(newEditor, lineIndent);
-        EditorModificationUtil.insertStringAtCaret(newEditor, "\n", false, false);
+        EditorModificationUtilEx.insertStringAtCaret(newEditor, lineIndent);
+        EditorModificationUtilEx.insertStringAtCaret(newEditor, "\n", false, false);
       }
       else {
         //correct position caret for groovy and java methods
@@ -234,7 +223,7 @@ public final class CreateFromUsageUtils {
 
   public static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                            final PsiSubstitutor substitutor, final PsiExpression[] arguments) {
-    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map2List(arguments, Pair.createFunction(null)));
+    setupMethodParameters(method, builder, contextElement, substitutor, ContainerUtil.map(arguments, Pair.createFunction(null)));
   }
 
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,

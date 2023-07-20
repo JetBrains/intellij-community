@@ -23,7 +23,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
 class CollectRootReasonsVisitor(private val threadsMap: Long2ObjectMap<ThreadInfo>) : HProfVisitor() {
-  val roots = Long2ObjectOpenHashMap<RootReason>()
+  val roots: Long2ObjectOpenHashMap<RootReason> = Long2ObjectOpenHashMap<RootReason>()
 
   override fun preVisit() {
     disableAll()

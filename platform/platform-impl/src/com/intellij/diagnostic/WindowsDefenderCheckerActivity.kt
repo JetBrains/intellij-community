@@ -3,6 +3,7 @@ package com.intellij.diagnostic
 
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.actions.ShowLogAction
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
@@ -15,18 +16,21 @@ import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
 internal class WindowsDefenderCheckerActivity : ProjectActivity {
   init {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || PluginManagerCore.isRunningFromSources()) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
   override suspend fun execute(project: Project) {
+    if (!Registry.`is`("ide.check.windows.defender.rules")) return
+
     val checker = WindowsDefenderChecker.getInstance()
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
@@ -47,6 +51,8 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       val auto = DiagnosticBundle.message("defender.config.auto")
       val manual = DiagnosticBundle.message("defender.config.manual")
       notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
+        .setSuggestionType(true)
+        .setImportantSuggestion(true)
         .addAction(createSimpleExpiring(auto) { updateDefenderConfig(checker, project, paths) })
         .addAction(createSimple(manual) { showInstructions(checker, project) })
     }

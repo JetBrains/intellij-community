@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.formatting.*;
@@ -37,7 +37,7 @@ public class SimpleTemplateLanguageFormattingModelBuilder implements FormattingM
       }
 
       @Override
-      public Spacing getSpacing(final Block child1, @NotNull final Block child2) {
+      public Spacing getSpacing(final Block child1, final @NotNull Block child2) {
         return Spacing.getReadOnlySpacing();
       }
 

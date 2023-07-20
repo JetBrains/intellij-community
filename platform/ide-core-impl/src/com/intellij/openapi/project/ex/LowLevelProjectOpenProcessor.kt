@@ -21,6 +21,6 @@ interface LowLevelProjectOpenProcessor {
   }
 
   companion object {
-    val EP_NAME = ExtensionPointName<LowLevelProjectOpenProcessor>("com.intellij.lowLevelProjectOpenProcessor")
+    val EP_NAME: ExtensionPointName<LowLevelProjectOpenProcessor> = ExtensionPointName("com.intellij.lowLevelProjectOpenProcessor")
   }
 }

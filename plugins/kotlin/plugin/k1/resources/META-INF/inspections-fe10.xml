@@ -1055,7 +1055,22 @@
       <className>org.jetbrains.kotlin.idea.codeInsight.hints.KotlinInlayHintToggleAction</className>
     </intentionAction>
 
-    <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinInspectionSuppressor"/>
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.intentions.ReplaceUnderscoreWithTypeArgumentIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
+      <language>kotlin</language>
+      <className>org.jetbrains.kotlin.idea.intentions.ReplaceTypeArgumentWithUnderscoreIntention</className>
+      <bundleName>messages.KotlinBundle</bundleName>
+      <categoryKey>group.names.kotlin</categoryKey>
+    </intentionAction>
+
+    <applicationService serviceInterface="org.jetbrains.kotlin.idea.inspections.suppress.KotlinSuppressionChecker"
+                        serviceImplementation="org.jetbrains.kotlin.idea.inspections.KotlinK1SuppressionChecker"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.ObjectLiteralToLambdaInspection"
                      groupPath="Kotlin"
@@ -2709,14 +2724,6 @@
                      level="WARNING"
                      language="kotlin"
                      key="inspection.logger.initialized.with.foreign.class.display.name" bundle="messages.KotlinBundle"/>
-
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.logging.KotlinPlaceholderCountMatchesArgumentCountInspection"
-                     groupPath="Kotlin"
-                     groupBundle="messages.KotlinBundle" groupKey="group.names.logging"
-                     enabledByDefault="true"
-                     level="WARNING"
-                     language="kotlin"
-                     key="inspection.logger.placeholder.count.matches.argument.count.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.ReplaceWithIgnoreCaseEqualsInspection"
                      groupPath="Kotlin"

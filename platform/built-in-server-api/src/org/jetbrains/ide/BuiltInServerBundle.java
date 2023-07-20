@@ -9,21 +9,18 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class BuiltInServerBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.BuiltInServerBundle";
-  private static final BuiltInServerBundle INSTANCE = new BuiltInServerBundle();
+public final class BuiltInServerBundle {
+  private static final @NonNls String BUNDLE = "messages.BuiltInServerBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(BuiltInServerBundle.class, BUNDLE);
 
   private BuiltInServerBundle() {
-    super(BUNDLE);
   }
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

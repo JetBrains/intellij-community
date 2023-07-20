@@ -99,6 +99,7 @@ object NativeForCurrentSystemTarget : NativeTargetConfigurator, SingleCoexistenc
 
         return irsList {
             "hostOs" createValue raw("System.getProperty(\"os.name\")")
+            "isArm64" createValue raw("System.getProperty(\"os.arch\") == \"aarch64\"")
             "isMingwX64" createValue raw("hostOs.startsWith(\"Windows\")")
 
             addRaw {
@@ -107,16 +108,20 @@ object NativeForCurrentSystemTarget : NativeTargetConfigurator, SingleCoexistenc
                         +"val $variableName = when "
                         inBrackets {
                             indent()
-                            +"""hostOs == "Mac OS X" -> macosX64("$moduleName")"""; nlIndented()
-                            +"""hostOs == "Linux" -> linuxX64("$moduleName")"""; nlIndented()
+                            +"""hostOs == "Mac OS X" && isArm64 -> macosArm64("$moduleName")"""; nlIndented()
+                            +"""hostOs == "Mac OS X" && !isArm64 -> macosX64("$moduleName")"""; nlIndented()
+                            +"""hostOs == "Linux" && isArm64 -> linuxArm64("$moduleName")"""; nlIndented()
+                            +"""hostOs == "Linux" && !isArm64 -> linuxX64("$moduleName")"""; nlIndented()
                             +"""isMingwX64 -> mingwX64("$moduleName")"""; nlIndented()
                             +"""else -> throw GradleException("Host OS is not supported in Kotlin/Native.")"""
                         }
                     }
                     GradlePrinter.GradleDsl.GROOVY -> {
                         +"""def $variableName"""; nlIndented()
-                        +"""if (hostOs == "Mac OS X") $variableName = macosX64('$moduleName')"""; nlIndented()
-                        +"""else if (hostOs == "Linux") $variableName = linuxX64("$moduleName")"""; nlIndented()
+                        +"""if (hostOs == "Mac OS X" && isArm64) $variableName = macosArm64('$moduleName')"""; nlIndented()
+                        +"""else if (hostOs == "Mac OS X" && !isArm64) $variableName = macosX64('$moduleName')"""; nlIndented()
+                        +"""else if (hostOs == "Linux" && isArm64) $variableName = linuxArm64("$moduleName")"""; nlIndented()
+                        +"""else if (hostOs == "Linux" && !isArm64) $variableName = linuxX64("$moduleName")"""; nlIndented()
                         +"""else if (isMingwX64) $variableName = mingwX64("$moduleName")"""; nlIndented()
                         +"""else throw new GradleException("Host OS is not supported in Kotlin/Native.")"""
                     }

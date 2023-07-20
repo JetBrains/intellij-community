@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
@@ -23,10 +24,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
+
 public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, String> {
   public static final ID<String, String> INDEX_ID = ID.create("json.file.root.values");
   private static final int VERSION = 5;
   public static final String NULL = "$NULL$";
+  public static final String SCHEMA_PROPERTY_NAME = "$schema";
 
   @NotNull
   @Override
@@ -69,7 +73,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> file.getFileType() instanceof JsonFileType;
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> fileType instanceof JsonFileType);
   }
 
   @Override
@@ -113,7 +117,7 @@ public class JsonSchemaFileValuesIndex extends FileBasedIndexExtension<String, S
         switch (lexer.getTokenText()) {
           case "$id", "\"$id\"", "'$id'" -> idFound |= captureValueIfString(lexer, map, JsonCachedValues.ID_CACHE_KEY);
           case "id", "\"id\"", "'id'" -> obsoleteIdFound |= captureValueIfString(lexer, map, JsonCachedValues.OBSOLETE_ID_CACHE_KEY);
-          case "$schema", "\"$schema\"", "'$schema'" -> schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
+          case SCHEMA_PROPERTY_NAME, "\"$schema\"", "'$schema'" -> schemaFound |= captureValueIfString(lexer, map, JsonCachedValues.URL_CACHE_KEY);
         }
       }
       lexer.advance();

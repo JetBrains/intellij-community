@@ -13,7 +13,7 @@ import org.jetbrains.annotations.TestOnly
 
 @TestOnly
 @Internal
-var isTestEnvironmentInitialized = false
+var isTestEnvironmentInitialized: Boolean = false
   private set
 
 /**

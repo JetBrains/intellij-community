@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.editor;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
@@ -60,25 +60,15 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
   }
 
   private static Pair<String,String> effectTypeToTextStyle(@NotNull EffectType effectType) {
-    switch (effectType) {
-      case LINE_UNDERSCORE:
-        return Pair.create("underline", "");
-      case BOLD_LINE_UNDERSCORE:
-        return Pair.create("underline", "bold");
-      case STRIKEOUT:
-        return Pair.create("line-through", "");
-      case BOXED:
-        return Pair.create("boxed", "");
-      case WAVE_UNDERSCORE:
-        return Pair.create("underline", "wavy");
-      case BOLD_DOTTED_LINE:
-        return Pair.create("underline", "dotted");
-      case SEARCH_MATCH:
-        break;
-      case ROUNDED_BOX:
-        break;
-    }
-    return Pair.create("??", "");
+    return switch (effectType) {
+      case LINE_UNDERSCORE -> Pair.create("underline", "");
+      case BOLD_LINE_UNDERSCORE -> Pair.create("underline", "bold");
+      case STRIKEOUT -> Pair.create("line-through", "");
+      case BOXED -> Pair.create("boxed", "");
+      case WAVE_UNDERSCORE -> Pair.create("underline", "wavy");
+      case BOLD_DOTTED_LINE -> Pair.create("underline", "dotted");
+      default -> Pair.create("??", "");
+    };
   }
 
   private static void appendFontType(@NotNull StringBuilder builder, @NotNull TextAttributes attributes) {
@@ -234,7 +224,7 @@ public class JavaEditorTextAttributesTest extends LightPlatformTestCase {
     EditorColorsScheme editorScheme = (EditorColorsScheme)defaultScheme.clone();
     TextAttributes localVarAttrs = defaultScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
     editorScheme.setAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES, localVarAttrs);
-    TextAttributes changedAttrs = new TextAttributes(Color.BLUE, Color.WHITE, null, EffectType.BOXED, 0);
+    TextAttributes changedAttrs = new TextAttributes(Color.BLUE, Color.WHITE, null, EffectType.BOXED, Font.PLAIN);
     editorScheme.setAttributes(DefaultLanguageHighlighterColors.LOCAL_VARIABLE, changedAttrs);
     TextAttributes attributes = editorScheme.getAttributes(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);
     assertNotEquals(attributes, changedAttrs);

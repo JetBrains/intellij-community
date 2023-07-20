@@ -1,4 +1,5 @@
 // WITH_STDLIB
+// COMPILER_ARGUMENTS: -XXLanguage:-RangeUntilOperator
 
 fun example() {
     val max = 5

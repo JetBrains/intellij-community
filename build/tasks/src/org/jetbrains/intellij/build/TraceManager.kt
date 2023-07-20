@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("LiftReturnOrAssignment")
+
 package org.jetbrains.intellij.build
 
-import com.intellij.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.diagnostic.telemetry.BatchSpanProcessor
-import com.intellij.diagnostic.telemetry.JaegerJsonSpanExporter
-import com.intellij.diagnostic.telemetry.OtlpSpanExporter
+import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
+import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
+import com.intellij.platform.diagnostic.telemetry.impl.JaegerJsonSpanExporter
+import com.intellij.platform.diagnostic.telemetry.impl.OtlpSpanExporter
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
@@ -22,24 +24,23 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 
-internal val tracer: Tracer by lazy { TraceManager.tracer }
+var traceManagerInitializer: () -> Tracer = {
+  @Suppress("OPT_IN_USAGE")
+  val tracerProvider = SdkTracerProvider.builder()
+    .addSpanProcessor(BatchSpanProcessor(coroutineScope = GlobalScope, spanExporters = TracerProviderManager.spanExporterProvider()))
+    .setResource(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "builder")))
+    .build()
+  val openTelemetry = OpenTelemetrySdk.builder()
+    .setTracerProvider(tracerProvider)
+    .build()
+  val tracer = openTelemetry.getTracer("build-script")
+  TracerProviderManager.tracerProvider = tracerProvider
+  BuildDependenciesDownloader.TRACER = tracer
+  tracer
+}
 
 object TraceManager {
-  internal val tracer: Tracer
-
-  init {
-    @Suppress("OPT_IN_USAGE")
-    val tracerProvider = SdkTracerProvider.builder()
-      .addSpanProcessor(BatchSpanProcessor(mainScope = GlobalScope, spanExporters = TracerProviderManager.spanExporterProvider()))
-      .setResource(Resource.create(Attributes.of(ResourceAttributes.SERVICE_NAME, "builder")))
-      .build()
-    val openTelemetry = OpenTelemetrySdk.builder()
-      .setTracerProvider(tracerProvider)
-      .build()
-    tracer = openTelemetry.getTracer("build-script")
-    TracerProviderManager.tracerProvider = tracerProvider
-    BuildDependenciesDownloader.TRACER = tracer
-  }
+  internal val tracer: Tracer = traceManagerInitializer()
 
   @JvmStatic
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
@@ -89,17 +90,17 @@ object TracerProviderManager {
   }
 
   fun finish(): Path? {
-    return try {
+    try {
       tracerProvider?.forceFlush()?.join(10, TimeUnit.SECONDS)
-      jaegerJsonSpanExporter.getAndSet(null)?.let {
+      return jaegerJsonSpanExporter.getAndSet(null)?.let {
         val file = it.file
         it.shutdown()
         file
       }
     }
-    catch (io: IOException) {
-      io.printStackTrace(System.err)
-      null
+    catch (e: IOException) {
+      e.printStackTrace(System.err)
+      return null
     }
   }
 

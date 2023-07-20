@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -167,6 +167,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
   }
 
   public void testArrayInitializer() {
+    doTest(false, false);
+  }
+
+  public void testArrayInitializer2() {
     doTest(false, false);
   }
 

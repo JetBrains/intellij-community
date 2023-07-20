@@ -172,7 +172,7 @@ public class RenameHandlerRegistry {
         bg.add(rb);
         radioPanel.add(rb);
       }
-      new RadioUpDownListener(myRButtons);
+      RadioUpDownListener.installOn(myRButtons);
       return radioPanel;
     }
 

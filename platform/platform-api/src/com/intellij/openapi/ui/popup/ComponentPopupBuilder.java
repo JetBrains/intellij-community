@@ -83,6 +83,24 @@ public interface ComponentPopupBuilder {
   ComponentPopupBuilder setMinSize(Dimension minSize);
 
   /**
+   * Use this method if you need the popup to have the same width as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getWidth() to popup beforehand won't work in remote development scenario
+   */
+  @NotNull
+  ComponentPopupBuilder setStretchToOwnerWidth(boolean stretchToOwnerWidth);
+
+  /**
+   * Use this method if you need the popup to have the same height as the owner
+   * @see JBPopup#show(Component) for the meaning of the owner
+   *
+   * Note that setting owner.getHeight() to popup beforehand won't work in remote development scenario
+   */
+  @NotNull
+  ComponentPopupBuilder setStretchToOwnerHeight(boolean stretchToOwnerHeight);
+
+  /**
    * Use this method to customize shape of popup window (e.g. to use bounded corners).
    */
   @SuppressWarnings("UnusedDeclaration")//used in 'Presentation Assistant' plugin

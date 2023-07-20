@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit
  */
 interface InputHandle : Closeable {
   val inputStream: InputStream
-  override fun close() = inputStream.close()
+  override fun close(): Unit = inputStream.close()
 }
 
 
@@ -29,7 +29,7 @@ class SocketInputHandle(port: Int = 0) : InputHandle {
   private val serverSocket = ServerSocket(port).also(cleanup::registerCloseable)
 
   override val inputStream: InputStream by lazy { serverSocket.accept().getInputStream().also(cleanup::registerCloseable) }
-  override fun close() = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
+  override fun close(): Unit = cleanup.close()  // don't call super.close() to avoid computing inputStream Lazy.
 }
 
 class StreamInputHandle(override val inputStream: InputStream) : InputHandle
@@ -56,7 +56,7 @@ class UnixFifoInputHandle(path: Path) : FileInputHandle(path) {
 
   override val inputStream: InputStream = Files.newInputStream(path, StandardOpenOption.READ)
 
-  override fun close() = cleanup.close()
+  override fun close(): Unit = cleanup.close()
 
   companion object {
     private const val MKFIFO_PROCESS_TIMEOUT_MS = 3000L

@@ -6,7 +6,9 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import org.jetbrains.kotlin.builtins.getReceiverTypeFromFunctionType
 import org.jetbrains.kotlin.builtins.getReturnTypeFromFunctionType
+import org.jetbrains.kotlin.builtins.getValueParameterTypesFromFunctionType
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalType
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.completion.handlers.*
@@ -107,30 +109,50 @@ class InsertHandlerProvider(
 
         val potentiallyInferred = HashSet<TypeParameterDescriptor>()
 
-        fun addPotentiallyInferred(type: KotlinType) {
+        /**
+         * @param onlyCollectReturnTypeOfFunctionalType if true, then only the return type of functional type is considered inferred.
+         * For example, in the following case:
+         * ```
+         * fun <T1, T2> T1.foo(handler: (T2) -> Boolean) {}
+         *
+         * fun f() {
+         *     "".foo<String> { <caret> }
+         * }
+         * ```
+         * we can't rely on the inference from `handler`, because lambda input types may not be inferred without explicit type arguments.
+         */
+        fun addPotentiallyInferred(type: KotlinType, onlyCollectReturnTypeOfFunctionalType: Boolean) {
             val descriptor = type.constructor.declarationDescriptor as? TypeParameterDescriptor
             if (descriptor != null && descriptor in typeParameters && descriptor !in potentiallyInferred) {
                 potentiallyInferred.add(descriptor)
                 // Add possible inferred by type-arguments of upper-bound of parameter
                 // e.g. <T, C: Iterable<T>>, so T inferred from C
-                descriptor.upperBounds.filter { it.arguments.isNotEmpty() }.forEach(::addPotentiallyInferred)
+                descriptor.upperBounds.filter { it.arguments.isNotEmpty() }.forEach {
+                    addPotentiallyInferred(it, onlyCollectReturnTypeOfFunctionalType = false)
+                }
             }
 
             if (type.isBuiltinFunctionalType && getValueParametersCountFromFunctionType(type) <= 1) {
-                // do not rely on inference from input of function type with one or no arguments - use only return type of functional type
-                addPotentiallyInferred(type.getReturnTypeFromFunctionType())
+                val typesToProcess = if (onlyCollectReturnTypeOfFunctionalType) {
+                    listOf(type.getReturnTypeFromFunctionType())
+                } else {
+                    listOfNotNull(type.getReceiverTypeFromFunctionType()) +
+                            type.getReturnTypeFromFunctionType() +
+                            type.getValueParameterTypesFromFunctionType().map { it.type }
+                }
+                typesToProcess.forEach { addPotentiallyInferred(it, onlyCollectReturnTypeOfFunctionalType) }
                 return
             }
 
             for (argument in type.arguments) {
                 if (!argument.isStarProjection) { // otherwise we can fall into infinite recursion
-                    addPotentiallyInferred(argument.type)
+                    addPotentiallyInferred(argument.type, onlyCollectReturnTypeOfFunctionalType)
                 }
             }
         }
 
-        originalFunction.extensionReceiverParameter?.type?.let(::addPotentiallyInferred)
-        originalFunction.valueParameters.forEach { addPotentiallyInferred(it.type) }
+        originalFunction.extensionReceiverParameter?.type?.let { addPotentiallyInferred(it, onlyCollectReturnTypeOfFunctionalType = false) }
+        originalFunction.valueParameters.forEach { addPotentiallyInferred(it.type, onlyCollectReturnTypeOfFunctionalType = true) }
 
         fun allTypeParametersPotentiallyInferred() = originalFunction.typeParameters.all { it in potentiallyInferred }
 
@@ -139,7 +161,7 @@ class InsertHandlerProvider(
         val returnType = originalFunction.returnType
         // check that there is an expected type and return value from the function can potentially match it
         if (returnType != null) {
-            addPotentiallyInferred(returnType)
+            addPotentiallyInferred(returnType, onlyCollectReturnTypeOfFunctionalType = false)
 
             if (allTypeParametersPotentiallyInferred() && expectedInfos.any {
                     it.fuzzyType?.checkIsSuperTypeOf(originalFunction.fuzzyReturnType()!!) != null

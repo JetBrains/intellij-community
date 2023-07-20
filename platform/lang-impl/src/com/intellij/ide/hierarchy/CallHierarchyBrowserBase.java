@@ -22,12 +22,12 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   /**
    * @deprecated use {@link #getCalleeType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NonNls public static final String CALLEE_TYPE = "Callees of {0}";
   /**
    * @deprecated use {@link #getCallerType()}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NonNls public static final String CALLER_TYPE = "Callers of {0}";
 
   public CallHierarchyBrowserBase(@NotNull Project project, @NotNull PsiElement method) {

@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 import org.jetbrains.kotlin.types.expressions.DoubleColonLHS
 import org.jetbrains.kotlin.util.supertypesWithAny
+import org.jetbrains.kotlin.util.unwrapIfTypeAlias
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.util.*
 
@@ -103,12 +104,15 @@ sealed class CallType<TReceiver : KtElement?>(val descriptorKindFilter: Descript
     }
 
     private object NonAnnotationClassifierExclude : DescriptorKindExclude() {
+
         override fun excludes(descriptor: DeclarationDescriptor): Boolean {
-            if (descriptor !is ClassifierDescriptor) return false
-            return descriptor !is ClassDescriptor || descriptor.kind != ClassKind.ANNOTATION_CLASS
+            val descriptorToCheck = descriptor.unwrapIfTypeAlias()
+            if (descriptorToCheck !is ClassifierDescriptor) return false
+            return descriptorToCheck !is ClassDescriptor || descriptorToCheck.kind != ClassKind.ANNOTATION_CLASS
         }
 
         override val fullyExcludedDescriptorKinds: Int get() = 0
+
     }
 
     private object AbstractMembersExclude : DescriptorKindExclude() {
@@ -160,21 +164,22 @@ sealed class CallTypeAndReceiver<TReceiver : KtElement?, out TCallType : CallTyp
 
             val receiverExpression = expression.getReceiverExpression()
 
-            if (expression.isImportDirectiveExpression()) {
-                return IMPORT_DIRECTIVE(receiverExpression)
-            }
-
-            if (expression.isPackageDirectiveExpression()) {
-                return PACKAGE_DIRECTIVE(receiverExpression)
-            }
-
-            if (parent is KtUserType) {
-                val constructorCallee = (parent.parent as? KtTypeReference)?.parent as? KtConstructorCalleeExpression
-                if (constructorCallee != null && constructorCallee.parent is KtAnnotationEntry) {
-                    return ANNOTATION(receiverExpression)
+            if (parent != null) {
+                if (expression.isImportDirectiveExpression()) {
+                    return IMPORT_DIRECTIVE(receiverExpression)
                 }
 
-                return TYPE(receiverExpression)
+                if (expression.isPackageDirectiveExpression()) {
+                    return PACKAGE_DIRECTIVE(receiverExpression)
+                }
+                if (parent is KtUserType) {
+                    val constructorCallee = (parent.parent as? KtTypeReference)?.parent as? KtConstructorCalleeExpression
+                    if (constructorCallee != null && constructorCallee.parent is KtAnnotationEntry) {
+                        return ANNOTATION(receiverExpression)
+                    }
+
+                    return TYPE(receiverExpression)
+                }
             }
 
             when (expression) {

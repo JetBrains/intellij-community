@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
@@ -30,7 +31,7 @@ public class ExtendsThreadInspection extends BaseInspection {
    * @see com.siyeh.ig.inheritance.ExtendsConcreteCollectionInspection#buildFix(Object...)
    */
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (aClass instanceof PsiAnonymousClass) {
       return null;

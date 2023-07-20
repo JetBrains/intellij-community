@@ -9,14 +9,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayDeque;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
-import java.util.stream.Stream;
 
 public final class DialogAppender extends Handler {
   private static final ErrorLogger[] LOGGERS = {new DefaultIdeaErrorLogger()};
@@ -118,13 +115,15 @@ public final class DialogAppender extends Handler {
     if (message == null && messageObject != null) {
       message = messageObject.toString();
     }
-    if (!withAttachments.isEmpty()) {
-      return LogMessage.createEvent(
-        throwable, message,
-        withAttachments.stream().flatMap(e -> Stream.of(e.getAttachments())).toArray(Attachment[]::new));
+    if (withAttachments.isEmpty()) {
+      return new IdeaLoggingEvent(message, throwable);
     }
     else {
-      return new IdeaLoggingEvent(message, throwable);
+      List<Attachment> list = new ArrayList<>();
+      for (ExceptionWithAttachments e : withAttachments) {
+        Collections.addAll(list, e.getAttachments());
+      }
+      return LogMessage.eventOf(throwable, message, list);
     }
   }
 

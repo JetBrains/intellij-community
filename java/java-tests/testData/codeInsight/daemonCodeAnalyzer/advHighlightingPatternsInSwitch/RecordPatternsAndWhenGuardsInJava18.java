@@ -1,10 +1,10 @@
 class RecordPatternsAndWhenGuardsInJava18 {
   void test(Object o) {
     switch (o) {
-      case <error descr="Pattern guards and record patterns are not supported at language level '18'">MyRecord(int x) r</error> -> {
+      case MyRecord(int <error descr="Patterns in switch are not supported at language level '18'">x</error>) <error descr="Patterns in switch are not supported at language level '18'">r</error> -> {
 
       }
-      case <error descr="Pattern guards and record patterns are not supported at language level '18'">String s when s.length() > 10</error> -> {
+      case String <error descr="Patterns in switch are not supported at language level '18'">s</error> when s.length() > 10 -> {
 
       }
       default -> {

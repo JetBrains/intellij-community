@@ -7,6 +7,7 @@ import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.idea.base.externalSystem.KotlinGradleFacade
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel
@@ -15,7 +16,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KlibInfoProvider
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil
 import org.jetbrains.kotlin.idea.gradle.configuration.mpp.KotlinDependenciesPreprocessor
-import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradleJava.findKotlinPluginVersion
 import org.jetbrains.kotlin.konan.library.KONAN_STDLIB_NAME
 import org.jetbrains.plugins.gradle.ExternalDependencyId
 import org.jetbrains.plugins.gradle.model.*
@@ -73,7 +74,7 @@ internal class KotlinNativeLibrariesDependencySubstitutor(
     private val kotlinVersion: IdeKotlinVersion? by lazy {
         // first, try to figure out Kotlin plugin version by classpath (the default approach)
         val classpathData = buildClasspathData(gradleModule, resolverCtx)
-        val versionFromClasspath = KotlinGradleFacadeImpl.findKotlinPluginVersion(classpathData)
+        val versionFromClasspath = findKotlinPluginVersion(classpathData)
 
         if (versionFromClasspath == null) {
             // then, examine Kotlin MPP Gradle model

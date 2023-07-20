@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.lang.Language;
@@ -140,22 +140,19 @@ class MarkerCache {
     return updated == null ? null : new UnfairTextRange(updated.getStartOffset(), updated.getEndOffset());
   }
 
-  @Nullable
-  static Segment getUpdatedRange(@NotNull PsiFile containingFile,
-                                 @NotNull Segment segment,
-                                 boolean isSegmentGreedy,
-                                 @NotNull FrozenDocument frozen,
-                                 @NotNull List<? extends DocumentEvent> events) {
+  static @Nullable Segment getUpdatedRange(@NotNull PsiFile containingFile,
+                                           @NotNull Segment segment,
+                                           boolean isSegmentGreedy,
+                                           @NotNull FrozenDocument frozen,
+                                           @NotNull List<? extends DocumentEvent> events) {
     SelfElementInfo info = new SelfElementInfo(ProperTextRange.create(segment), new Identikit() {
-      @Nullable
       @Override
-      public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
+      public @Nullable PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
         return null;
       }
 
-      @NotNull
       @Override
-      public Language getFileLanguage() {
+      public @NotNull Language getFileLanguage() {
         throw new IllegalStateException();
       }
 

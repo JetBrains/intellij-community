@@ -60,7 +60,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   private static final Logger LOG = Logger.getInstance(TipPanel.class);
 
   private @Nullable final Project myProject;
-  private @NotNull final JPanel myContentPanel;
   private @NotNull final JLabel mySubSystemLabel;
   private final StyledTextPane myTextPane;
   final AbstractAction myPreviousTipAction;
@@ -78,9 +77,9 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     setLayout(new BorderLayout());
     myProject = project;
 
-    myContentPanel = new JPanel();
-    myContentPanel.setBackground(TipUiSettings.getPanelBackground());
-    myContentPanel.setLayout(new BoxLayout(myContentPanel, BoxLayout.Y_AXIS));
+    @NotNull JPanel contentPanel = new JPanel();
+    contentPanel.setBackground(TipUiSettings.getPanelBackground());
+    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
 
     mySubSystemLabel = new JLabel() {
       @Override
@@ -92,7 +91,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     mySubSystemLabel.setForeground(UIUtil.getLabelInfoForeground());
     mySubSystemLabel.setBorder(JBUI.Borders.emptyBottom((int)TextParagraph.SMALL_INDENT));
     mySubSystemLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    myContentPanel.add(mySubSystemLabel);
+    contentPanel.add(mySubSystemLabel);
 
     myTextPane = new MyTextPane();
     myTextPane.putClientProperty("caretWidth", 0);
@@ -100,7 +99,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myTextPane.setMargin(JBInsets.emptyInsets());
     myTextPane.setAlignmentX(Component.LEFT_ALIGNMENT);
     Disposer.register(parentDisposable, myTextPane);
-    myContentPanel.add(myTextPane);
+    contentPanel.add(myTextPane);
 
     JPanel centerPanel = new JPanel();
     centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
@@ -110,8 +109,8 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     centerPanel.setBackground(TipUiSettings.getPanelBackground());
 
     // scroll will not be shown in a regular case
-    // it is required only for technical writers to test whether the content of the new do not exceed the bounds
-    JBScrollPane scrollPane = new JBScrollPane(myContentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+    // it is required only for technical writers to test whether the content of the new does not exceed the bounds
+    JBScrollPane scrollPane = new JBScrollPane(contentPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
     scrollPane.setBorder(JBUI.Borders.empty());
     centerPanel.add(scrollPane);
 
@@ -159,7 +158,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
         ActionButton button = new ActionButton(action, presentation, place, getFeedbackButtonSize()) {
           @Override
           protected void paintButtonLook(Graphics g) {
-            // do not paint icon background
+            // do not paint an icon background
             getButtonLook().paintIcon(g, this, getIcon());
           }
 
@@ -238,14 +237,14 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   void setTips(@NotNull TipsSortingResult sortingResult) {
-    myTips = sortingResult.getTips();
-    myAlgorithm = sortingResult.getAlgorithm();
-    myAlgorithmVersion = sortingResult.getVersion();
+    myTips = sortingResult.tips;
+    myAlgorithm = sortingResult.algorithm;
+    myAlgorithmVersion = sortingResult.version;
     showNext(true);
   }
 
   private void showNext(boolean forward) {
-    if (myTips.size() == 0) {
+    if (myTips.isEmpty()) {
       setTipsNotFoundText();
       return;
     }
@@ -386,10 +385,6 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     return TipsFeedback.getInstance().getLikenessState(tipId);
   }
 
-  @NotNull JPanel getContentPanel() {
-    return myContentPanel;
-  }
-
   @Override
   public boolean canBeHidden() {
     return true;
@@ -421,7 +416,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     public void redraw() {
       super.redraw();
       View root = getRootView();
-      // request layout the text with the width according to scroll bar is shown
+      // request layout the text with the width, according to scroll bar, is shown
       // it will be extended if scroll bar is not required in a result
       int width = TipUiSettings.getImageMaxWidth() - JBUI.scale(14);
       root.setSize(width, root.getPreferredSpan(View.Y_AXIS));
@@ -430,7 +425,7 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     @Override
     public Dimension getPreferredSize() {
       // take size from the root view directly, because base implementation is resetting the root view size
-      // if current bounds is empty (component is not added to screen)
+      // if current bounds are empty (component is not added to screen)
       View root = getRootView();
       Dimension dim = new Dimension((int)root.getPreferredSpan(View.X_AXIS), (int)root.getPreferredSpan(View.Y_AXIS));
       JBInsets.addTo(dim, getInsets());

@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
-@file:OptIn(FlowPreview::class)
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "LiftReturnOrAssignment")
 
 package com.intellij.openapi.wm.impl.status.widget
 
@@ -29,7 +28,8 @@ import kotlinx.coroutines.flow.*
 import javax.swing.JComponent
 
 @Service(Service.Level.PROJECT)
-class StatusBarWidgetsManager(private val project: Project) : SimpleModificationTracker(), Disposable {
+class StatusBarWidgetsManager(private val project: Project,
+                              private val parentScope: CoroutineScope) : SimpleModificationTracker(), Disposable {
   companion object {
     private val LOG = logger<StatusBarWidgetsManager>()
 
@@ -52,16 +52,13 @@ class StatusBarWidgetsManager(private val project: Project) : SimpleModification
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
-  @Suppress("DEPRECATION")
-  private val parentScope = project.coroutineScope.childScope()
-
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
 
     override val currentFileEditor: StateFlow<FileEditor?> by lazy {
       flow {
-        emit(project.serviceAsync<FileEditorManager>().await() as FileEditorManagerEx)
+        emit(project.serviceAsync<FileEditorManager>() as FileEditorManagerEx)
       }
         .take(1)
         .flatMapConcat { it.currentFileEditorFlow }

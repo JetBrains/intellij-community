@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.graph.impl;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,22 +43,19 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
     return neighbourhood;
   }
 
-  @Nullable
   @Override
-  public <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish) {
+  public @Nullable <Node> List<Node> findShortestPath(@NotNull InboundSemiGraph<Node> graph, @NotNull Node start, @NotNull Node finish) {
     return new ShortestPathFinder<>(graph).findPath(start, finish);
   }
 
-  @NotNull
   @Override
-  public <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
-                                                    @NotNull ProgressIndicator progressIndicator) {
+  public @NotNull <Node> List<List<Node>> findKShortestPaths(@NotNull Graph<Node> graph, @NotNull Node start, @NotNull Node finish, int k,
+                                                             @NotNull ProgressIndicator progressIndicator) {
     return new KShortestPathsFinder<>(graph, start, finish, progressIndicator).findShortestPaths(k);
   }
 
-  @NotNull
   @Override
-  public <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node) {
+  public @NotNull <Node> Set<List<Node>> findCycles(@NotNull Graph<Node> graph, @NotNull Node node) {
     return new CycleFinder<>(graph).getNodeCycles(node);
   }
 
@@ -67,33 +64,28 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
     new SimpleCyclesIterator<>(graph).iterateSimpleCycles(cycleConsumer);
   }
 
-  @NotNull
   @Override
-  public <Node> Graph<Node> invertEdgeDirections(@NotNull final Graph<Node> graph) {
+  public @NotNull <Node> Graph<Node> invertEdgeDirections(final @NotNull Graph<Node> graph) {
     return new Graph<Node>() {
       @Override
-      @NotNull
-      public Collection<Node> getNodes() {
+      public @NotNull Collection<Node> getNodes() {
         return graph.getNodes();
       }
 
       @Override
-      @NotNull
-      public Iterator<Node> getIn(final Node n) {
+      public @NotNull Iterator<Node> getIn(final Node n) {
         return graph.getOut(n);
       }
 
       @Override
-      @NotNull
-      public Iterator<Node> getOut(final Node n) {
+      public @NotNull Iterator<Node> getOut(final Node n) {
         return graph.getIn(n);
       }
     };
   }
 
-  @NotNull
   @Override
-  public <Node> Graph<Chunk<Node>> computeSCCGraph(@NotNull final Graph<Node> graph) {
+  public @NotNull <Node> Graph<Chunk<Node>> computeSCCGraph(final @NotNull Graph<Node> graph) {
     final DFSTBuilder<Node> builder = new DFSTBuilder<>(graph);
 
     final Collection<Collection<Node>> components = builder.getComponents();
@@ -111,15 +103,13 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
     }
 
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Chunk<Node>>() {
-      @NotNull
       @Override
-      public Collection<Chunk<Node>> getNodes() {
+      public @NotNull Collection<Chunk<Node>> getNodes() {
         return chunks;
       }
 
-      @NotNull
       @Override
-      public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
+      public @NotNull Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();
         final Set<Chunk<Node>> ins = new LinkedHashSet<>();
         for (final Node node : chunkNodes) {
@@ -155,15 +145,13 @@ public final class GraphAlgorithmsImpl extends GraphAlgorithms {
     }
   }
 
-  @NotNull
   @Override
-  public <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph) {
+  public @NotNull <Node> Collection<Chunk<Node>> computeStronglyConnectedComponents(@NotNull Graph<Node> graph) {
     return computeSCCGraph(graph).getNodes();
   }
 
-  @NotNull
   @Override
-  public <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths) {
+  public @NotNull <Node> List<List<Node>> removePathsWithCycles(@NotNull List<? extends List<Node>> paths) {
     final List<List<Node>> result = new ArrayList<>();
     for (List<Node> path : paths) {
       if (!containsCycle(path)) {

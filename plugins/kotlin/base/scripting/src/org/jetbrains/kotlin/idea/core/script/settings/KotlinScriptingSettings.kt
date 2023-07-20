@@ -2,10 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.script.settings
 
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.util.addOptionTag
 import org.jdom.Element
@@ -16,7 +13,10 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 
 @State(
     name = "KotlinScriptingSettings",
-    storages = [Storage("kotlinScripting.xml")]
+    storages = [
+        Storage("kotlinScripting.xml", deprecated = true),
+        Storage(StoragePathMacros.WORKSPACE_FILE)
+    ]
 )
 class KotlinScriptingSettings(private val project: Project) : PersistentStateComponent<Element> {
     /**

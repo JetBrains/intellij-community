@@ -22,6 +22,6 @@ data class EncodingReference(val charset: Charset?) {
 
   companion object {
     @JvmField
-    val DEFAULT = EncodingReference(charset = null)
+    val DEFAULT: EncodingReference = EncodingReference(charset = null)
   }
 }

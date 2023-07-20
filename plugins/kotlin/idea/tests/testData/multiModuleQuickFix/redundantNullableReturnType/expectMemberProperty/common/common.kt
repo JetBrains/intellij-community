@@ -2,5 +2,5 @@
 // TOOL: org.jetbrains.kotlin.idea.inspections.RedundantNullableReturnTypeInspection
 
 expect class MyClass {
-    actual val prop: Any?<caret>
+    val prop: Any?<caret>
 }

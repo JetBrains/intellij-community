@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogOptions;
@@ -61,7 +61,7 @@ public class EventLogStatisticsService implements StatisticsService {
    * @deprecated Use {@link EventLogStatisticsService#send(EventLogSendConfig, EventLogSettingsService, EventLogResultDecorator)}
    * Kept for compatibility with TBE.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static StatisticsResult send(@NotNull DeviceConfiguration device,
                                       @NotNull EventLogRecorderConfig config,
                                       @NotNull EventLogSettingsService settings,
@@ -130,7 +130,7 @@ public class EventLogStatisticsService implements StatisticsService {
         String deviceId = config.getDeviceId();
         LogEventRecordRequest recordRequest =
           LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger,
-                                                 machineId);
+                                                 machineId, config.isEscapingEnabled());
         ValidationErrorInfo error = validate(recordRequest, file);
         if (error != null) {
           if (logger.isTraceEnabled()) {

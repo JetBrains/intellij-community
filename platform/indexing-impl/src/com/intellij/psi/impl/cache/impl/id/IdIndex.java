@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -22,6 +23,8 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Map;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION;
 
 /**
  * An implementation of identifier index where key is a identifier hash and value is occurrence mask {@link UsageSearchContext}.
@@ -127,7 +130,7 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return file -> isIndexable(file.getFileType());
+    return new FileTypeInputFilterPredicate(BEFORE_SUBSTITUTION, fileType -> isIndexable(fileType));
   }
 
   public static boolean isIndexable(FileType fileType) {

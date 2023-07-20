@@ -3,10 +3,14 @@
 
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.annotations.ApiStatus.Obsolete
+import org.jetbrains.intellij.build.BuildContext
+import java.util.function.BiConsumer
+
 sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   /**
    * Register an additional module to be included into the plugin distribution. Module-level libraries from
-   * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
+   * [moduleName] with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   fun withModule(moduleName: String) {
     layout.withModule(moduleName)
@@ -17,8 +21,8 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   /**
-   * Register an additional module to be included into the plugin distribution. If {@code relativeJarPath} doesn't contain '/' (i.e. the
-   * JAR will be added to the plugin's classpath) this will also cause modules library from {@code moduleName} with scopes 'Compile' and
+   * Register an additional module to be included into the plugin distribution. If [relativeJarPath] doesn't contain '/' (i.e. the
+   * JAR will be added to the plugin's classpath) this will also cause modules library from [moduleName] with scopes 'Compile' and
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
@@ -34,6 +38,10 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    */
   fun withProjectLibrary(libraryName: String) {
     layout.withProjectLibrary(libraryName)
+  }
+
+  fun withProjectLibraries(libraryNames: Iterable<String>) {
+    layout.withProjectLibraries(libraryNames)
   }
 
   fun withProjectLibrary(libraryName: String, outPath: String) {
@@ -54,12 +62,12 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
    * their module libraries are included into the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
-  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String) {
-    layout.withModuleLibrary(libraryName = libraryName, moduleName = moduleName, relativeOutputPath = relativeOutputPath)
+  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String, extraCopy: Boolean = false) {
+    layout.withModuleLibrary(libraryName = libraryName, moduleName = moduleName, relativeOutputPath = relativeOutputPath, extraCopy = extraCopy)
   }
 
   /**
-   * Exclude the specified files when {@code moduleName} is packed into JAR file.
+   * Exclude the specified files when [moduleName] is packed into JAR file.
    * <strong>This is a temporary method added to keep layout of some old plugins. If some files from a module shouldn't be included into the
    * module JAR it's strongly recommended to move these files outside the module source roots.</strong>
    * @param excludedPattern Ant-like pattern describing files to be excluded (relatively to the module output root); e.g. foo&#47;**
@@ -83,9 +91,18 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   }
 
   /**
-   * Include contents of JARs of the project library {@code libraryName} into JAR {@code jarName}
+   * Include contents of JARs of the project library [libraryName] into JAR [jarName]
    */
   fun withProjectLibraryUnpackedIntoJar(libraryName: String, jarName: String) {
     layout.withProjectLibrary(libraryName, jarName)
+  }
+
+  fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
+    layout.withPatch(patcher)
+  }
+
+  @Obsolete
+  fun withSyncPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
+    layout.withPatch(patcher::accept)
   }
 }

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 interface ProjectViewCurrentPaneProvider {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.serviceOrNull<ProjectViewCurrentPaneProvider>()
+    fun getInstance(project: Project): ProjectViewCurrentPaneProvider? = project.serviceOrNull<ProjectViewCurrentPaneProvider>()
   }
 
   fun getCurrentPaneId(): String?

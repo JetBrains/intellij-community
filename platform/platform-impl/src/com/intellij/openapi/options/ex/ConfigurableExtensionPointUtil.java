@@ -21,8 +21,9 @@ import java.text.MessageFormat;
 import java.util.*;
 
 public final class ConfigurableExtensionPointUtil {
-  private static final @NonNls String CONFIGURABLE_ID_PREFIX = "configurable.group.";
+  public static final @NonNls String CONFIGURABLE_ID_PREFIX = "configurable.group.";
   private static final @NonNls String ROOT_ID = "root";
+  private static final @NonNls String OTHER_ID = "other";
   public static final @NonNls String ROOT_CONFIGURABLE_ID = CONFIGURABLE_ID_PREFIX + ROOT_ID;
   private static final Logger LOG = Logger.getInstance(ConfigurableExtensionPointUtil.class);
 
@@ -208,8 +209,8 @@ public final class ConfigurableExtensionPointUtil {
       bundle = OptionsBundle.INSTANCE.getResourceBundle();
       if (!root) {
         LOG.warn("use other group instead of unexpected one: " + groupId);
-        groupId = "other";
-        id = CONFIGURABLE_ID_PREFIX + groupId;
+        groupId = OTHER_ID;
+        id = CONFIGURABLE_ID_PREFIX + OTHER_ID;
       }
     }
     Node<SortedConfigurableGroup> node = Node.get(tree, groupId);
@@ -262,7 +263,7 @@ public final class ConfigurableExtensionPointUtil {
     Map<String, Node<HierarchicalConfigurable>> tree = new HashMap<>();
     for (Configurable configurable : configurables) {
       if (!(configurable instanceof HierarchicalConfigurable hierarchical)) {
-        Node.add(tree, "other", configurable);
+        Node.add(tree, OTHER_ID, configurable);
         continue;
       }
 
@@ -299,7 +300,7 @@ public final class ConfigurableExtensionPointUtil {
         }
       }
 
-      parentId = Node.cyclic(tree, parentId, "other", id, node);
+      parentId = Node.cyclic(tree, parentId, OTHER_ID, id, node);
       node.myParent = Node.add(tree, parentId, node);
       node.myValue = hierarchical;
     }

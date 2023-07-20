@@ -9,11 +9,14 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.asSafely
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.core.*
+import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
+import org.jetbrains.kotlin.idea.core.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.intentions.ImportAllMembersIntention
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
@@ -140,6 +143,13 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
         body.addBefore(assignmentExpression, body.rBrace)
         return assignmentExpression.toUElementOfType()
     }
+
+    override fun changeLabel(returnExpression: UReturnExpression, context: PsiElement): UReturnExpression {
+        if (returnExpression is KotlinUImplicitReturnExpression) return returnExpression
+        val factory = getElementFactory(context.project)
+
+        return factory.createReturnExpression(expression = returnExpression.returnExpression, inLambda = true, context) ?: returnExpression
+    }
 }
 
 private fun hasBraces(oldPsi: KtBlockExpression): Boolean = oldPsi.lBrace != null && oldPsi.rBrace != null
@@ -184,6 +194,11 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
                     append("a")
                     (receiver.sourcePsi?.nextSibling as? PsiWhiteSpace)?.let { whitespaces ->
                         append(whitespaces.text)
+                    }
+
+                    receiver.comments.takeIf { it.isNotEmpty() }?.let {
+                        append(receiver.comments.joinToString { it.text })
+                        append("\n")
                     }
                     append(".")
                 }
@@ -279,6 +294,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return blockExpression
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createIfExpression(condition: UExpression, thenBranch: UExpression, elseBranch: UExpression?): UIfExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -307,6 +323,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         )
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createParenthesizedExpression(expression: UExpression): UParenthesizedExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -319,6 +336,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUParenthesizedExpression(parenthesized, null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createSimpleReference(name: String): USimpleNameReferenceExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -329,6 +347,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUSimpleReferenceExpression(psiFactory(context).createSimpleName(name), null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createSimpleReference(variable: UVariable): USimpleNameReferenceExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -339,6 +358,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return createSimpleReference(variable.name ?: return null, context)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createReturnExpresion(expression: UExpression?, inLambda: Boolean): UReturnExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -357,16 +377,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUReturnExpression(returnExpression, null)
     }
 
-    private fun getParentLambdaLabelName(context: PsiElement): String? {
-        val lambdaExpression = context.getNonStrictParentOfType<KtLambdaExpression>() ?: return null
-        lambdaExpression.parentAs<KtLabeledExpression>()?.let { return it.getLabelName() }
-        val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
-        callExpression.valueArguments.find {
-            it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
-        } ?: return null
-        return callExpression.getCallNameExpression()?.text
-    }
-
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createBinaryExpression(
         leftOperand: UExpression,
@@ -402,6 +413,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return binaryExpression
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createFlatBinaryExpression(
         leftOperand: UExpression,
@@ -431,6 +443,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return psiFactory(context).createExpression(binaryExpression.text).toUElementOfType()!!
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createBlockExpression(expressions: List<UExpression>): UBlockExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -438,7 +451,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
     }
 
     override fun createBlockExpression(expressions: List<UExpression>, context: PsiElement?): UBlockExpression {
-        val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAware() }
+        val sourceExpressions = expressions.flatMap { it.toSourcePsiFakeAndCommentsAware() }
         val block = psiFactory(context).createBlock(
             sourceExpressions.joinToString(separator = "\n") { "println()" }
         )
@@ -448,6 +461,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return KotlinUBlockExpression(block, null)
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createDeclarationExpression(declarations: List<UDeclaration>): UDeclarationsExpression {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -498,6 +512,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return ktLambdaExpression.toUElementOfType()!!
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createLambdaExpression(parameters: List<UParameterInfo>, body: UExpression): ULambdaExpression? {
         logger<KotlinUastElementFactory>().error("Please switch caller to the version with a context parameter")
@@ -533,6 +548,7 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
         return newVariable.toUElementOfType<UVariable>() as ULocalVariable
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("use version with context parameter")
     fun createLocalVariable(
         suggestedName: String?,
@@ -548,4 +564,15 @@ class KotlinUastElementFactory(project: Project) : UastElementFactory {
 private fun usedNamesFilter(context: KtElement): (String) -> Boolean {
     val scope = context.getResolutionScope()
     return { name: String -> scope.findClassifier(Name.identifier(name), NoLookupLocation.FROM_IDE) == null }
+}
+
+
+private fun getParentLambdaLabelName(context: PsiElement): String? {
+    val lambdaExpression = context.getNonStrictParentOfType<KtLambdaExpression>() ?: return null
+    lambdaExpression.parentAs<KtLabeledExpression>()?.let { return it.getLabelName() }
+    val callExpression = lambdaExpression.getStrictParentOfType<KtCallExpression>() ?: return null
+    callExpression.valueArguments.find {
+        it.getArgumentExpression()?.unpackFunctionLiteral(allowParentheses = false) === lambdaExpression
+    } ?: return null
+    return callExpression.getCallNameExpression()?.text
 }

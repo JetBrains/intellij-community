@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
@@ -22,7 +22,7 @@ public abstract class FoldingRegionWindow extends RangeMarkerWindow implements F
     myEditorWindow = editorWindow;
   }
   @Override
-  @NotNull abstract RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange);
+  abstract @NotNull RangeMarker createHostRangeMarkerToTrack(@NotNull TextRange hostRange, boolean surviveOnExternalChange);
 
   @Override
   public boolean isExpanded() {
@@ -35,8 +35,7 @@ public abstract class FoldingRegionWindow extends RangeMarkerWindow implements F
   }
 
   @Override
-  @NotNull
-  public String getPlaceholderText() {
+  public @NotNull String getPlaceholderText() {
     return getDelegate().getPlaceholderText();
   }
 

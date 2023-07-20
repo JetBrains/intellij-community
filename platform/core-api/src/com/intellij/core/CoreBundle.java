@@ -15,6 +15,10 @@ public final class CoreBundle {
     return INSTANCE.getMessage(key, params);
   }
 
+  public static @Nls String messageOrNull(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+    return INSTANCE.messageOrNull(key, params);
+  }
+
   @ApiStatus.Internal
   public static void clearCache() {
     INSTANCE.clearLocaleCache();

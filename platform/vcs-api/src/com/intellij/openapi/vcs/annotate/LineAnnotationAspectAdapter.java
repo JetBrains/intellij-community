@@ -16,14 +16,6 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   @NlsContexts.ListItem @Nullable private final String myDisplayName;
   private final boolean myShowByDefault;
 
-  /**
-   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  protected LineAnnotationAspectAdapter() {
-    this(null, null, false);
-  }
-
   protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
     this(id, displayName, false);
   }
@@ -69,7 +61,7 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
 
   protected abstract void showAffectedPaths(int lineNum);
 
-  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter() {
+  public static final LineAnnotationAspect NULL_ASPECT = new LineAnnotationAspectAdapter(null, null, false) {
     @Override
     protected void showAffectedPaths(int lineNum) {
       throw new UnsupportedOperationException();

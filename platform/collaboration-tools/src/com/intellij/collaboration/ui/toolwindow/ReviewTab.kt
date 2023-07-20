@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.toolwindow
 
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -22,6 +23,12 @@ interface ReviewTab {
    * Toolwindow tab title
    */
   val displayName: @Nls String
+
+  /**
+   * Toolwindow tab tooltip
+   */
+  val description: @NlsContexts.Tooltip String
+    get() = displayName
 
   /**
    * If [true] open requests to [ReviewTabsController] will select opened tabs if tabs with the same [id] exists,

@@ -105,7 +105,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       }
     });
 
-    new UiNotifyConnector(this, new Activatable() {
+    UiNotifyConnector.installOn(this, new Activatable() {
       @Override
       public void hideNotify() {
         disposeContextPopup();

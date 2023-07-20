@@ -79,21 +79,12 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
   }
 
   /**
-   * @deprecated override {@link #getCopyDialogTitle()}, {@link #getCreateNewDialogTitle()}, {@link #getNewLabelText()} instead
-   */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "HardCodedStringLiteral"})
-  @Deprecated(forRemoval = true)
-  protected String subjDisplayName() {
-    return "item";
-  }
-
-  /**
    * Returns title for "Copy" dialog. The method must be overriden in the implementations because the default implementation isn't friendly
    * for localization.
    */
   protected @NlsContexts.DialogTitle String getCopyDialogTitle() {
     //noinspection HardCodedStringLiteral
-    return "Copy " + subjDisplayName();
+    return "Copy item";
   }
 
   /**
@@ -102,7 +93,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    */
   protected @NlsContexts.Label String getNewLabelText() {
     //noinspection HardCodedStringLiteral
-    return "New " + subjDisplayName() + " name:";
+    return "New item name:";
   }
 
   /**
@@ -111,7 +102,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
    */
   protected @NlsContexts.DialogTitle String getCreateNewDialogTitle() {
     //noinspection HardCodedStringLiteral
-    return "Create New " + subjDisplayName();
+    return "Create New item";
   }
 
 

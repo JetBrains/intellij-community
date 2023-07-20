@@ -34,8 +34,8 @@ final class LibraryTablesRegistrarImpl extends LibraryTablesRegistrar implements
 
   @Override
   public @NotNull LibraryTable getLibraryTable() {
-    if (GlobalLibraryTableBridge.isEnabled()) {
-      return GlobalLibraryTableBridge.getInstance();
+    if (GlobalLibraryTableBridge.Companion.isEnabled()) {
+      return GlobalLibraryTableBridge.Companion.getInstance();
     }
     return ApplicationLibraryTable.getApplicationTable();
   }

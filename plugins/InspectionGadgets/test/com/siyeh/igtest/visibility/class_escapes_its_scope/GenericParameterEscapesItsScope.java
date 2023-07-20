@@ -16,26 +16,26 @@
 import java.util.*;
 public class GenericParameterEscapesItsScope {
   public List<A> as;
-  public List<<warning descr="Class 'B' is exposed outside its defined scope">B</warning>> bs;
+  public List<<warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning>> bs;
 
-  public List<<warning descr="Class 'B' is exposed outside its defined scope">B</warning>> getBs() { return bs; }
-  public void setBs(List<<warning descr="Class 'B' is exposed outside its defined scope">B</warning>> bs) { this.bs = bs; }
+  public List<<warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning>> getBs() { return bs; }
+  public void setBs(List<<warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning>> bs) { this.bs = bs; }
 
   public List<A> getAs() { return as; }
   public void setAs(List<A> as) { this.as = as; }
 
   public class Inner extends B implements Getter<B>, Setter<B> {
-    public <warning descr="Class 'B' is exposed outside its defined scope">B</warning> b;
+    public <warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning> b;
     @Override
-    public <warning descr="Class 'B' is exposed outside its defined scope">B</warning> get() {
+    public <warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning> get() {
       return b;
     }
     @Override
-    public void set(<warning descr="Class 'B' is exposed outside its defined scope">B</warning> b) {
+    public void set(<warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning> b) {
       this.b = b;
     }
   }
-  public Data<<warning descr="Class 'B' is exposed outside its defined scope">B</warning>> foo() {
+  public Data<<warning descr="Class 'B' is exposed outside its defined visibility scope">B</warning>> foo() {
     class Local extends B implements Data<B> {
       public B b;
       @Override

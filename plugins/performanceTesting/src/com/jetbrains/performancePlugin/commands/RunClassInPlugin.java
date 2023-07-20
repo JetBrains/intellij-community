@@ -14,6 +14,7 @@ import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -25,11 +26,10 @@ import java.util.List;
 
 public class RunClassInPlugin extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "runClassInPlugin";
-
-  private final String myPluginId;
-  private final String myClazzName;
-  private final String myMethodName;
-  private final List<File> myClasspath;
+  protected final String myPluginId;
+  protected final String myClazzName;
+  protected final String myMethodName;
+  protected final List<File> myClasspath;
 
   private static String nextArg(Iterator<String> args, @NotNull String text) {
     if (!args.hasNext()) throw new RuntimeException("Too few arguments in " + text);
@@ -75,7 +75,11 @@ public class RunClassInPlugin extends AbstractCommand {
     ClassLoader loader = plugin.getClassLoader();
     URL[] cp = myClasspath.stream().map(f -> {
       try {
-        return f.toURI().toURL();
+        URL fileURL = f.toURI().toURL();
+        if (!fileURL.getProtocol().equals("file")) {
+          throw new RuntimeException("Remote resources are not allowed in the classpath: " + fileURL);
+        }
+        return fileURL;
       }
       catch (MalformedURLException e) {
         throw new RuntimeException("Failed to get URL for " + f + ". " + e.getMessage(), e);
@@ -83,25 +87,36 @@ public class RunClassInPlugin extends AbstractCommand {
     }).toArray(sz -> new URL[sz]);
 
     URLClassLoader classLoader = new URLClassLoader(cp, loader);
+    runWithClassLoader(project, classLoader);
+  }
+
+  protected void runWithClassLoader(@NotNull Project project, URLClassLoader classLoader) throws ReflectiveOperationException {
     ClassLoaderUtil.runWithClassLoader(classLoader, () -> {
       Class<?> aClass = classLoader.loadClass(myClazzName);
       Object newInstance = aClass.getDeclaredConstructor().newInstance();
-
-      try {
-        Method method = aClass.getMethod(myMethodName, Project.class);
-        method.invoke(newInstance, project);
-        return;
-      }
-      catch (NoSuchMethodException ignored) { }
-
-      try {
-        Method method = aClass.getMethod(myMethodName);
-        method.invoke(newInstance);
-        return;
-      }
-      catch (NoSuchMethodException ignored) { }
-
-      throw new RuntimeException("Class " + myClazzName + " does not have " + myMethodName + " with with no or Project parameter");
+      invokeMethod(project, aClass, newInstance);
     });
+  }
+
+  protected void invokeMethod(@NotNull Project project,
+                              @NotNull Class<?> aClass,
+                              Object instance) throws IllegalAccessException, InvocationTargetException {
+    try {
+      Method method = aClass.getMethod(myMethodName, Project.class);
+      method.invoke(instance, project);
+      return;
+    }
+    catch (NoSuchMethodException ignored) {
+    }
+
+    try {
+      Method method = aClass.getMethod(myMethodName);
+      method.invoke(instance);
+      return;
+    }
+    catch (NoSuchMethodException ignored) {
+    }
+
+    throw new RuntimeException("Class " + myClazzName + " does not have " + myMethodName + " with no or Project parameter");
   }
 }

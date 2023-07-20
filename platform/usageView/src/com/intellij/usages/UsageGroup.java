@@ -4,6 +4,7 @@ package com.intellij.usages;
 import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +49,10 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
 
   default boolean isValid() {
     return true;
+  }
+
+  default SimpleTextAttributes getTextAttributes(boolean isSelected) {
+    return SimpleTextAttributes.REGULAR_ATTRIBUTES;
   }
 
   default void update() {

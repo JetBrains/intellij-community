@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.application.options.CodeStyle
@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.util.Key
@@ -20,9 +21,11 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
 interface ReaderModeSettings : Disposable {
   companion object {
@@ -66,7 +69,9 @@ interface ReaderModeSettings : Disposable {
 
             if (matchMode || forceUpdate) {
               withContext(Dispatchers.EDT) {
-                applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
+                blockingContext {
+                  applyModeChanged(project, editor, matchMode, fileIsOpenAlready)
+                }
               }
             }
           }
@@ -94,14 +99,6 @@ interface ReaderModeSettings : Disposable {
       }
     }
 
-    @Internal
-    @Deprecated("Method is not used anymore", ReplaceWith("matchMode(project, file, editor)"))
-    @ScheduledForRemoval
-    @JvmStatic
-    fun matchModeForStats(project: Project, file: VirtualFile, editor: Editor? = null): Boolean {
-      return getInstance(project).enabled && matchMode(project, file, editor)
-    }
-
     @RequiresReadLock
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
       if (project == null || file == null) return false
@@ -123,8 +120,7 @@ interface ReaderModeSettings : Disposable {
       if (ApplicationManager.getApplication().isHeadlessEnvironment) return false
 
       val inFileInLibraries by lazy {
-        FileIndexFacade.getInstance(project).isInLibraryClasses(file)
-        || FileIndexFacade.getInstance(project).isInLibrarySource(file)
+        FileIndexFacade.getInstance(project).isInLibrary(file)
       }
       val isWritable = file.isWritable
 

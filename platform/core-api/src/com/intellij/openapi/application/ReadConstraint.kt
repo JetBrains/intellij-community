@@ -24,11 +24,11 @@ interface ReadConstraint {
   companion object {
 
     fun inSmartMode(project: Project): ReadConstraint {
-      return ApplicationManager.getApplication().getService(ReadActionSupport::class.java).smartModeConstraint(project)
+      return ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java).smartModeConstraint(project)
     }
 
     fun withDocumentsCommitted(project: Project): ReadConstraint {
-      return ApplicationManager.getApplication().getService(ReadActionSupport::class.java).committedDocumentsConstraint(project)
+      return ApplicationManager.getApplication().getService(ReadWriteActionSupport::class.java).committedDocumentsConstraint(project)
     }
   }
 }

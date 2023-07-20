@@ -6,27 +6,21 @@ import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
-import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.analyzer.moduleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
-import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateActualClassFix
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.oldFashionedDescription
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.quickfix.expectactual.CreateMissedActualsFix
+import org.jetbrains.kotlin.idea.util.actualsForExpected
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.classOrObjectVisitor
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
-import org.jetbrains.kotlin.resolve.checkers.ExpectedActualDeclarationChecker.Companion.allStrongIncompatibilities
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
 import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
-import org.jetbrains.kotlin.resolve.multiplatform.onlyFromThisModule
-
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
 class OptionalExpectationInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -41,37 +35,20 @@ class OptionalExpectationInspection : AbstractKotlinInspection() {
             val implementingModules = classOrObject.findModuleDescriptor().implementingDescriptors
             if (implementingModules.isEmpty()) return
 
-            for (actualModuleDescriptor in implementingModules) {
-                val compatibility = ExpectedActualResolver.findActualForExpected(
-                    descriptor, actualModuleDescriptor, onlyFromThisModule(actualModuleDescriptor)
-                ) ?: continue
-
-                if (!compatibility.allStrongIncompatibilities() &&
-                    (ExpectActualCompatibility.Compatible in compatibility ||
-                            !compatibility.values.flatMapTo(
-                                hashSetOf()
-                            ) { it }.all { actual ->
-                                val expectedOnes = ExpectedActualResolver.findExpectedForActual(
-                                    actual, onlyFromThisModule(descriptor.module)
-                                )
-                                expectedOnes != null && ExpectActualCompatibility.Compatible in expectedOnes.keys
-                            })
-                ) continue
-                val platform = actualModuleDescriptor.platform ?: continue
-                if (platform.isCommon()) continue
-
-                val displayedName = actualModuleDescriptor.getCapability(ModuleInfo.Capability)?.displayedName ?: ""
-                val actualModule = (actualModuleDescriptor.getCapability(ModuleInfo.Capability) as? ModuleSourceInfo)?.module ?: continue
-                holder.registerProblem(
-                    classOrObject.nameIdentifier ?: classOrObject,
-                    KotlinBundle.message(
-                        "optionally.expected.annotation.has.no.actual.annotation.in.module.0.for.platform.1",
-                        displayedName,
-                        platform.oldFashionedDescription
-                    ),
-                    IntentionWrapper(CreateActualClassFix(classOrObject, actualModule, platform))
-                )
-            }
+            val actualizedLeafModules = descriptor.actualsForExpected()
+                .flatMap { it.module.implementingDescriptors.plus(it.module) } //all actualized modules
+                .filter { it.implementingDescriptors.isEmpty() } //only leafs
+                .toSet()
+            val notActualizedLeafModules = implementingModules
+                .filter { it.implementingDescriptors.isEmpty() && it !in actualizedLeafModules }
+                .mapNotNull { (it.moduleInfo as? ModuleSourceInfo)?.module }
+                .toSet()
+            if (notActualizedLeafModules.isEmpty()) return
+            holder.registerProblem(
+                classOrObject.nameIdentifier ?: classOrObject,
+                KotlinBundle.message("fix.create.missing.actual.declarations"),
+                IntentionWrapper(CreateMissedActualsFix(classOrObject, notActualizedLeafModules))
+            )
         })
     }
 }

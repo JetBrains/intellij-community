@@ -5,8 +5,8 @@ import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
-import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.ui.scale.TestScaleHelper;
+import com.intellij.util.ui.StartupUiUtil;
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -33,13 +33,13 @@ public class EffectPainter2DThicknessTest {
 
     overrideJreHiDPIEnabled(false);
     for (int usrScale : new int[] {1, 2, 3}) {
-      test(ScaleContext.create(SYS_SCALE.of(1), USR_SCALE.of(usrScale)));
+      test(ScaleContext.Companion.of(SYS_SCALE.of(1), USR_SCALE.of(usrScale)));
     }
 
     overrideJreHiDPIEnabled(true);
     for (int sysScale : new int[] {1, 2, 3}) {
       for (int usrScale : new int[] {1, 2, 3}) {
-        test(ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)));
+        test(ScaleContext.Companion.of(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale)));
       }
     }
   }

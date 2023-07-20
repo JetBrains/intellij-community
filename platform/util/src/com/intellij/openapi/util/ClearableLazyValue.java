@@ -6,8 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Supplier;
 
 /**
- * Lazy value with ability to reset (and recompute) the (not-null) value.
- * Thread-safe version: {@link AtomicClearableLazyValue}.
+ * Use {@link com.intellij.util.concurrency.SynchronizedClearableLazy} instead.
  */
 public abstract class ClearableLazyValue<T> implements Supplier<T> {
   public static @NotNull <T> ClearableLazyValue<T> create(@NotNull Supplier<? extends @NotNull T> computable) {

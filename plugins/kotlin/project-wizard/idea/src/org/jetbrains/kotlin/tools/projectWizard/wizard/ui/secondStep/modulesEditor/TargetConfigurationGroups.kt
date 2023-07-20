@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.secondStep.modulesEditor
 
+import com.intellij.openapi.options.advanced.AdvancedSettings
+import org.jetbrains.kotlin.tools.projectWizard.core.buildList
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizardBundle
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
@@ -14,8 +16,8 @@ object TargetConfigurationGroups {
         ModuleType.js,
         KotlinIcons.Wizard.JS,
         listOf(
-          JsBrowserTargetConfigurator,
-          JsNodeTargetConfigurator
+            JsBrowserTargetConfigurator,
+            JsNodeTargetConfigurator
         )
     )
 
@@ -87,12 +89,14 @@ object TargetConfigurationGroups {
     }
 
     val FIRST = FirstStepTargetConfiguratorGroup(
-        listOf(
-            CommonTargetConfigurator,
-            JvmTargetConfigurator,
-            NATIVE.ALL,
-            JS,
-            AndroidTargetConfigurator
-        )
+        buildList {
+            +CommonTargetConfigurator
+            +JvmTargetConfigurator
+            +NATIVE.ALL
+            if (AdvancedSettings.getBoolean("kotlin.mpp.experimental")) {
+                +JS
+            }
+            +AndroidTargetConfigurator
+        }
     )
 }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.CacheSwitcher;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.mock.MockVirtualFile;
@@ -34,7 +35,6 @@ import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -599,7 +599,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = ContainerUtil.newConcurrentSet();
+    Collection<Job<?>> reads = ConcurrentCollectionFactory.createConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -791,7 +791,8 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       for (int it = 0; it < nThreads; it++) {
         jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
       }
-      ready.await();
+      boolean isReady = ready.await(10, TimeUnit.SECONDS);
+      assumeTrue("It took too long to start all jobs", isReady);
 
       myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 

@@ -184,25 +184,26 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
     }
 
     val editor = e.getData(CommonDataKeys.EDITOR)
-    val viewer = e.getData(DiffDataKeys.DIFF_VIEWER)
-    if (viewer is TwosideTextDiffViewer) {
-      val side = Side.fromValue(viewer.editors, editor)
-      val currentContent = side?.select(helper.chain.content1, helper.chain.content2)
-      e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
-    }
-    else if (viewer is ThreesideTextDiffViewer) {
-      val side = ThreeSide.fromValue(viewer.editors, editor)
-      val currentContent = side?.select(helper.chain.content1, helper.chain.baseContent, helper.chain.content2)
-      e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
-    }
-    else if (viewer is UnifiedDiffViewer) {
-      val line = viewer.editor.caretModel.logicalPosition.line
-      val side = viewer.transferLineFromOneside(line).second
-      val currentContent = side?.select(helper.chain.content1, helper.chain.content2)
-      e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
-    }
-    else {
-      e.presentation.isEnabledAndVisible = false
+    when (val viewer = e.getData(DiffDataKeys.DIFF_VIEWER)) {
+      is TwosideTextDiffViewer -> {
+        val side = Side.fromValue(viewer.editors, editor)
+        val currentContent = side?.select(helper.chain.content1, helper.chain.content2)
+        e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
+      }
+      is ThreesideTextDiffViewer -> {
+        val side = ThreeSide.fromValue(viewer.editors, editor)
+        val currentContent = side?.select(helper.chain.content1, helper.chain.baseContent, helper.chain.content2)
+        e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
+      }
+      is UnifiedDiffViewer -> {
+        val line = viewer.editor.caretModel.logicalPosition.line
+        val side = viewer.transferLineFromOneside(line).second
+        val currentContent = side?.select(helper.chain.content1, helper.chain.content2)
+        e.presentation.isEnabledAndVisible = currentContent != null && isEnabled(currentContent)
+      }
+      else -> {
+        e.presentation.isEnabledAndVisible = false
+      }
     }
   }
 
@@ -218,21 +219,23 @@ internal abstract class BlankSwitchContentActionBase : DumbAwareAction() {
   }
 
   fun perform(editor: Editor, viewer: DiffViewer, helper: MutableDiffRequestChain.Helper) {
-    if (viewer is TwosideTextDiffViewer) {
-      val side = Side.fromValue(viewer.editors, editor) ?: return
-      val newContent = createNewContent(viewer.project, viewer.component) ?: return
-      helper.setContent(newContent, side)
-    }
-    else if (viewer is ThreesideTextDiffViewer) {
-      val side = ThreeSide.fromValue(viewer.editors, editor) ?: return
-      val newContent = createNewContent(viewer.project, viewer.component) ?: return
-      helper.setContent(newContent, side)
-    }
-    else if (viewer is UnifiedDiffViewer) {
-      val line = viewer.editor.caretModel.logicalPosition.line
-      val side = viewer.transferLineFromOneside(line).second
-      val newContent = createNewContent(viewer.project, viewer.component) ?: return
-      helper.setContent(newContent, side)
+    when (viewer) {
+      is TwosideTextDiffViewer -> {
+        val side = Side.fromValue(viewer.editors, editor) ?: return
+        val newContent = createNewContent(viewer.project, viewer.component) ?: return
+        helper.setContent(newContent, side)
+      }
+      is ThreesideTextDiffViewer -> {
+        val side = ThreeSide.fromValue(viewer.editors, editor) ?: return
+        val newContent = createNewContent(viewer.project, viewer.component) ?: return
+        helper.setContent(newContent, side)
+      }
+      is UnifiedDiffViewer -> {
+        val line = viewer.editor.caretModel.logicalPosition.line
+        val side = viewer.transferLineFromOneside(line).second
+        val newContent = createNewContent(viewer.project, viewer.component) ?: return
+        helper.setContent(newContent, side)
+      }
     }
 
     helper.fireRequestUpdated()
@@ -291,17 +294,19 @@ class ShowBlankDiffWindowDiffExtension : DiffExtension() {
     val helper = MutableDiffRequestChain.createHelper(context, request) ?: return
     if (helper.chain.getUserData(BlankDiffWindowUtil.BLANK_KEY) != true) return
 
-    if (viewer is TwosideTextDiffViewer) {
-      DnDHandler2(viewer, helper, Side.LEFT).install()
-      DnDHandler2(viewer, helper, Side.RIGHT).install()
-    }
-    else if (viewer is ThreesideTextDiffViewer) {
-      DnDHandler3(viewer, helper, ThreeSide.LEFT).install()
-      DnDHandler3(viewer, helper, ThreeSide.BASE).install()
-      DnDHandler3(viewer, helper, ThreeSide.RIGHT).install()
-    }
-    else if (viewer is UnifiedDiffViewer) {
-      DnDHandlerUnified(viewer, helper).install()
+    when (viewer) {
+      is TwosideTextDiffViewer -> {
+        DnDHandler2(viewer, helper, Side.LEFT).install()
+        DnDHandler2(viewer, helper, Side.RIGHT).install()
+      }
+      is ThreesideTextDiffViewer -> {
+        DnDHandler3(viewer, helper, ThreeSide.LEFT).install()
+        DnDHandler3(viewer, helper, ThreeSide.BASE).install()
+        DnDHandler3(viewer, helper, ThreeSide.RIGHT).install()
+      }
+      is UnifiedDiffViewer -> {
+        DnDHandlerUnified(viewer, helper).install()
+      }
     }
 
     if (viewer is DiffViewerBase) {

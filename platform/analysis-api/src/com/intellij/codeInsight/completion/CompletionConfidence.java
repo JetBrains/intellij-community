@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.PsiElement;
@@ -15,8 +15,7 @@ public abstract class CompletionConfidence {
    * Invoked first when a completion autopopup is scheduled. Extensions are able to cancel this completion process based on location.
    * For example, in string literals or comments, completion autopopup may do more harm than good.
    */
-  @NotNull
-  public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+  public @NotNull ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
     return ThreeState.UNSURE;
   }
 }

@@ -9,6 +9,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.fields.valueEditors.CommaSeparatedIntegersValueEditor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,7 +31,9 @@ final class MarginOptionsUtil {
   }
 
   static @NlsContexts.Label String getDefaultWrapOnTypingText(@NotNull CodeStyleSettings settings) {
-    return getDefaultValueText(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN ? "Yes" : "No");
+    return getDefaultValueText(settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN
+                               ? ApplicationBundle.message("wrapping.wrap.on.typing.wrap")
+                               : ApplicationBundle.message("wrapping.wrap.on.typing.no.wrap"));
   }
 
   static void customizeWrapOnTypingCombo(@NotNull JComboBox<String> wrapOnTypingCombo, @NotNull CodeStyleSettings settings) {
@@ -46,7 +49,7 @@ final class MarginOptionsUtil {
     }));
   }
 
-  static @NlsContexts.Label String getDefaultValueText(@NotNull String value) {
+  static @NlsContexts.Label String getDefaultValueText(@NotNull @Nls String value) {
     return ApplicationBundle.message("settings.default.value.prefix", value);
   }
 }

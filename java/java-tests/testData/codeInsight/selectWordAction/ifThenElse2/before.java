@@ -10,7 +10,7 @@ public class TestClass {
           System.out.println();
       }
       else {
-<caret>         System.out.println();
+<selection><caret>         </selection>System.out.println();
 	  }
   }
 }

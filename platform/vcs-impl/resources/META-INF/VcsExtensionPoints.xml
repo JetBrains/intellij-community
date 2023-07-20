@@ -77,7 +77,7 @@
     <extensionPoint name="vcsSelectionProvider"
                     interface="com.intellij.vcsUtil.VcsSelectionProvider"
                     dynamic="true"/>
-    <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.LocalCommitExecutor"
+    <extensionPoint name="vcs.changes.localCommitExecutor" interface="com.intellij.openapi.vcs.changes.CommitExecutor"
                     area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint name="vcsConfigurableProvider"
@@ -204,10 +204,6 @@
     <extensionPoint name="vcs.changeListChangeAssigner"
                     interface="com.intellij.openapi.vcs.changes.ChangeListChangeAssigner"
                     area="IDEA_PROJECT"
-                    dynamic="true"/>
-
-    <extensionPoint name="vcs.delayedCommitMessageProvider"
-                    interface="com.intellij.vcs.commit.DelayedCommitMessageProvider"
                     dynamic="true"/>
 
     <extensionPoint name="vcs.envCustomizer"

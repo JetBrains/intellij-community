@@ -2,7 +2,7 @@
 // "Import" "false"
 // ERROR: Type 'String' has no method 'getValue(Nothing?, KProperty<*>)' and thus it cannot serve as a delegate
 // ACTION: Convert to 'buildString' call
-// ACTION: To raw string literal
+// ACTION: Convert to raw string literal
 
 package b
 

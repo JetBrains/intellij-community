@@ -1,10 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -73,7 +73,7 @@ public final class UITestUtil {
     AWTAutoShutdown.getInstance().notifyThreadBusy(Thread.currentThread());
 
     // in JDK 1.6, `EventQueue#push` causes slow painful death of current EDT, so we have to wait through its agony to termination
-    UIUtil.pump();
+    StartupUiUtil.INSTANCE.pump();
     try {
       //noinspection ResultOfMethodCallIgnored
       EventQueue.invokeAndWait(IdeEventQueue::getInstance);

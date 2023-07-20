@@ -26,13 +26,20 @@ public class ProjectNameStep extends ModuleWizardStep {
   protected final JPanel myAdditionalContentPanel;
   protected NamePathComponent myNamePathComponent;
   protected final WizardContext myWizardContext;
-  @Nullable
-  protected final WizardMode myMode;
   private final ProjectFormatPanel myFormatPanel = new ProjectFormatPanel();
 
+  /**
+   * @see <a href="https://youtrack.jetbrains.com/issue/IDEA-302097"/>IDEA-302097</a>
+   * @deprecated WizardMode hasn't usages, only implementations
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
   public ProjectNameStep(WizardContext wizardContext, @Nullable final WizardMode mode) {
+    this(wizardContext);
+  }
+
+  public ProjectNameStep(WizardContext wizardContext) {
     myWizardContext = wizardContext;
-    myMode = mode;
     myNamePathComponent = new NamePathComponent(
       IdeBundle.message("label.project.name"),
       IdeBundle.message("label.project.files.location"),

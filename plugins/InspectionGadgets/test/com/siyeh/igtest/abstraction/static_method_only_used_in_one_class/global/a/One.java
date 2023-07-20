@@ -30,4 +30,6 @@ public class One {
   enum Resistence {
     FUTILE, TRAINING, OHM
   }
+
+  public static String t = "1";
 }

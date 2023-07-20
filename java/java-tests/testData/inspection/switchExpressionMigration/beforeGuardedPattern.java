@@ -1,4 +1,4 @@
-// "Replace with enhanced 'switch' statement" "true"
+// "Replace with enhanced 'switch' statement" "true-preview"
 import org.jetbrains.annotations.NotNull;
 
 class X {

@@ -24,11 +24,11 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class FlipComparisonIntention extends MutablyNamedIntention {
+public class FlipComparisonIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -36,16 +36,11 @@ public class FlipComparisonIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public String getTextForElement(PsiElement element) {
-    String operatorText = "";
-    String flippedOperatorText = "";
+  public String getTextForElement(@NotNull PsiElement element) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)element;
-    if (expression != null) {
-      final PsiJavaToken sign = expression.getOperationSign();
-      operatorText = sign.getText();
-      flippedOperatorText =
-        ComparisonUtils.getFlippedComparison(sign.getTokenType());
-    }
+    final PsiJavaToken sign = expression.getOperationSign();
+    String operatorText = sign.getText();
+    String flippedOperatorText = ComparisonUtils.getFlippedComparison(sign.getTokenType());
     if (operatorText.equals(flippedOperatorText)) {
       return IntentionPowerPackBundle.message("flip.smth.intention.name",
                                               operatorText);

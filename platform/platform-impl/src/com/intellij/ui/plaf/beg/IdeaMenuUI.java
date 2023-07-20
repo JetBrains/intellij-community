@@ -7,7 +7,6 @@ import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
@@ -87,7 +86,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       myMaxGutterIconWidth2 = myMaxGutterIconWidth = integer.intValue();
     }
 
-    selectionBackground = JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+    selectionBackground = getDefaultSelectionBackground();
     if (isHeaderMenu()) {
       menuItem.setBackground(getMenuBackgroundColor());
       menuItem.setForeground(JBColor.namedColor("MainMenu.foreground", UIManager.getColor("Menu.foreground")));
@@ -97,12 +96,22 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   @ApiStatus.Internal
+  public static Color getDefaultSelectionBackground() {
+    return JBColor.namedColor("Menu.selectionBackground", UIUtil.getListSelectionBackground(true));
+  }
+
+  @ApiStatus.Internal
+  public void setSelectionBackground(Color selectionBackground) {
+    this.selectionBackground = selectionBackground;
+  }
+
+  @ApiStatus.Internal
   static public @NotNull Color getMenuBackgroundColor() {
     return JBColor.namedColor("MainMenu.background", UIManager.getColor("Menu.background"));
   }
 
   private boolean isHeaderMenu() {
-    return menuItem instanceof ActionMenu && ((ActionMenu)menuItem).isHeaderMenuItem();
+    return menuItem instanceof ActionMenu actionMenu && actionMenu.isHeaderMenuItem();
   }
 
   private void checkEmptyIcon(JComponent comp) {
@@ -148,11 +157,7 @@ public class IdeaMenuUI extends BasicMenuUI {
       defaultTextIconGap
     );
     Color mainColor = g.getColor();
-    if (comp.isOpaque()){
-      fillOpaque(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
-    } else {
-      fillOpaqueFalse(g, comp, jMenu, buttonmodel, allowedIcon, mainColor);
-    }
+    fillBackground(g, comp, jMenu, buttonmodel, allowedIcon);
     if (allowedIcon != null){
       if (buttonmodel.isArmed() || buttonmodel.isSelected()){
         g.setColor(selectionForeground);
@@ -224,21 +229,13 @@ public class IdeaMenuUI extends BasicMenuUI {
     g.setFont(font);
   }
 
-  protected void fillOpaque(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
-    g.setColor(jMenu.getBackground());
-    g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+  private void fillBackground(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon) {
+    if (comp.isOpaque()) {
+      g.setColor(jMenu.getBackground());
+      g.fillRect(0, 0, jMenu.getWidth(), jMenu.getHeight());
+    }
     if (buttonmodel.isArmed() || buttonmodel.isSelected()){
       paintHover(g, comp, jMenu, allowedIcon);
-    }
-    g.setColor(mainColor);
-  }
-
-  protected void fillOpaqueFalse(Graphics g, JComponent comp, JMenu jMenu, ButtonModel buttonmodel, Icon allowedIcon, Color mainColor) {
-    if(IdeFrameDecorator.isCustomDecorationActive()) {
-      if (buttonmodel.isArmed() || buttonmodel.isSelected()) {
-        paintHover(g, comp, jMenu, allowedIcon);
-      }
-      g.setColor(mainColor);
     }
   }
 

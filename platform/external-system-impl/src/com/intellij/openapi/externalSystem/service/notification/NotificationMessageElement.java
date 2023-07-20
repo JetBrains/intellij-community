@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.notification;
 
 import com.intellij.icons.AllIcons;
@@ -63,7 +63,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
       }
 
       @NotNull
-      private Icon getIcon(@NotNull ErrorTreeElementKind kind) {
+      private static Icon getIcon(@NotNull ErrorTreeElementKind kind) {
         return switch (kind) {
           case INFO -> AllIcons.General.Information;
           case ERROR -> AllIcons.General.Error;
@@ -151,7 +151,7 @@ public class NotificationMessageElement extends NavigatableMessageElement {
      * that eventually ends up in a tree view node makes the user
      * experience confusing for visually impaired users.
      */
-    private class MyEditorPane extends JEditorPane {
+    private static class MyEditorPane extends JEditorPane {
       @Override
       public AccessibleContext getAccessibleContext() {
         if (accessibleContext == null) {

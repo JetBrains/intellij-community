@@ -2,6 +2,14 @@
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
+
 abstract class AbstractIrKotlinSteppingTest : AbstractKotlinSteppingTest() {
     override fun useIrBackend() = true
+}
+
+abstract class AbstractK1IdeK2CodeKotlinSteppingTest : AbstractIrKotlinSteppingTest() {
+    override val compileWithK2 = true
+
+    override fun lambdasGenerationScheme() = JvmClosureGenerationScheme.INDY
 }

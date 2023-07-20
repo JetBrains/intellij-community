@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.spellchecker
@@ -17,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.Messages
@@ -40,6 +41,7 @@ import com.intellij.spellchecker.state.ProjectDictionaryState
 import com.intellij.spellchecker.util.SpellCheckerBundle
 import com.intellij.util.EventDispatcher
 import com.intellij.util.application
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.Nls
 import java.io.File
@@ -457,6 +459,12 @@ private class StreamLoader(private val name: String, private val loaderClass: Cl
 
     try {
       stream.reader().useLines { it.forEach(consumer::accept) }
+    }
+    catch (exception: ProcessCanceledException) {
+      throw exception
+    }
+    catch (exception: CancellationException) {
+      throw exception
     }
     catch (e: Exception) {
       LOG.error(e)

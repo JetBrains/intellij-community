@@ -60,14 +60,12 @@ import javax.swing.table.AbstractTableModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeNode
 
-
 open class MultipleFileMergeDialog(
   private val project: Project?,
   files: List<VirtualFile>,
   private val mergeProvider: MergeProvider,
   private val mergeDialogCustomizer: MergeDialogCustomizer
 ) : DialogWrapper(project) {
-
   private var unresolvedFiles = files.toMutableList()
   private val mergeSession = (mergeProvider as? MergeProvider2)?.createMergeSession(files)
   val processedFiles: MutableList<VirtualFile> = mutableListOf()
@@ -95,7 +93,7 @@ open class MultipleFileMergeDialog(
   }
 
   init {
-    StoreReloadManager.getInstance().blockReloadingProjectOnExternalChanges()
+    project?.let { StoreReloadManager.getInstance(project).blockReloadingProjectOnExternalChanges() }
     title = mergeDialogCustomizer.getMultipleFileDialogTitle()
     virtualFileRenderer.font = UIUtil.getListFont()
 
@@ -119,7 +117,7 @@ open class MultipleFileMergeDialog(
       }
     }.installOn(table.tree)
 
-    TableSpeedSearch(table, Convertor { (it as? VirtualFile)?.name })
+    TableSpeedSearch.installOn(table, Convertor { (it as? VirtualFile)?.name })
 
     val modalityState = ModalityState.stateForComponent(descriptionLabel)
     BackgroundTaskUtil.executeOnPooledThread(disposable, Runnable {
@@ -169,7 +167,7 @@ open class MultipleFileMergeDialog(
                 showMergeDialog()
               }
             }
-            mergeAction.putValue(DEFAULT_ACTION, java.lang.Boolean.TRUE)
+            mergeAction.putValue(DEFAULT_ACTION, true)
             mergeButton = createJButtonForAction(mergeAction)
             cell(mergeButton)
               .align(AlignX.FILL)
@@ -180,12 +178,15 @@ open class MultipleFileMergeDialog(
       if (project != null) {
         row {
           checkBox(VcsBundle.message("multiple.file.merge.group.by.directory.checkbox"))
+            .selected(groupByDirectory)
             .applyToComponent {
-              isSelected = groupByDirectory
               addChangeListener { toggleGroupByDirectory(isSelected) }
             }
         }
       }
+    }.also {
+      // Temporary workaround for IDEA-302779
+      it.minimumSize = JBUI.size(200, 150)
     }
   }
 
@@ -261,7 +262,7 @@ open class MultipleFileMergeDialog(
   }
 
   override fun dispose() {
-    StoreReloadManager.getInstance().unblockReloadingProjectOnExternalChanges()
+    project?.let { StoreReloadManager.getInstance(project).unblockReloadingProjectOnExternalChanges() }
     super.dispose()
   }
 

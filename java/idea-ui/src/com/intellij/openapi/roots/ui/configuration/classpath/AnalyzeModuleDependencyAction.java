@@ -71,7 +71,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
         if (usedScopes.contains(mainScope)) {
           Messages.showInfoMessage(myProject,
                                    JavaUiBundle
-                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.DEPENDENCIES),
+                                     .message("message.text.dependencies.were.successfully.collected.in.0.toolwindow", ToolWindowId.ANALYZE_DEPENDENCIES),
                                    getTemplateText());
           return true;
         }

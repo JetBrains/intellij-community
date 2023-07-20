@@ -8,10 +8,10 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.ValuedEntityContext
 
 class PropertyContext : ValuedEntityContext<Property<Any>>() {
     @Suppress("UNCHECKED_CAST")
-    operator fun <V : Any> get(entity: PropertyReference<V>) =
+    operator fun <V : Any> get(entity: PropertyEntityReference<V>) =
         values[entity.path] as? V
 
-    operator fun <V : Any> set(entity: PropertyReference<V>, value: Any) {
+    operator fun <V : Any> set(entity: PropertyEntityReference<V>, value: Any) {
         values[entity.path] = value
     }
 }

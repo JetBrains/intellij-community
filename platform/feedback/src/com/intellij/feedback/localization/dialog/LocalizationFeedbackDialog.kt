@@ -2,18 +2,22 @@
 package com.intellij.feedback.localization.dialog
 
 import com.intellij.feedback.common.*
-import com.intellij.feedback.common.dialog.*
+import com.intellij.feedback.common.bundle.CommonFeedbackBundle
+import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.feedback.common.dialog.CommonFeedbackSystemInfoData
+import com.intellij.feedback.common.dialog.adjustBehaviourForFeedbackForm
+import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.common.notification.ThanksForFeedbackNotification
 import com.intellij.feedback.localization.bundle.LocalizationFeedbackBundle
 import com.intellij.feedback.localization.service.LocalizationFeedbackNotificationService
 import com.intellij.feedback.localization.service.LocalizationFeedbackService
-import com.intellij.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.dsl.builder.*
@@ -27,11 +31,11 @@ import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 class LocalizationFeedbackDialog(
-  project: Project?,
+  private val myProject: Project?,
   private val forTest: Boolean
-) : BaseFeedbackDialog(project) {
-  override val feedbackJsonVersion = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0 // different version for the form itself
-  override val feedbackReportId = "localization_feedback"
+) : DialogWrapper(myProject) {
+  private val feedbackJsonVersion = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0 // different version for the form itself
+  private val feedbackReportId = "localization_feedback"
 
   private var ratingComponent: RatingComponent? = null
   private var missingRatingTooltip: JComponent? = null
@@ -72,7 +76,7 @@ class LocalizationFeedbackDialog(
           .label(LocalizationFeedbackBundle.message("dialog.rating.label"), LabelPosition.TOP)
       }
 
-      missingRatingTooltip = label(NewUIFeedbackBundle.message("dialog.rating.required")).applyToComponent {
+      missingRatingTooltip = label(CommonFeedbackBundle.message("dialog.feedback.rating.required")).applyToComponent {
         border = JBUI.Borders.compound(PopupBorder.Factory.createColored(JBUI.CurrentTheme.Validator.errorBorderColor()),
                                        JBUI.Borders.empty(JBUI.scale(4), JBUI.scale(8)))
         background = JBUI.CurrentTheme.Validator.errorBackgroundColor()
@@ -108,12 +112,13 @@ class LocalizationFeedbackDialog(
   override fun doOKAction() {
     super.doOKAction()
     val feedbackData = FeedbackRequestData(feedbackReportId, createCollectedDataJsonString())
-    submitFeedback(myProject, feedbackData,
+    submitFeedback(feedbackData,
                    { }, { },
                    if (forTest || System.getProperty(
                        "ide.feedback.localization.test")?.toBoolean() == true) FeedbackRequestType.TEST_REQUEST
-                   else FeedbackRequestType.PRODUCTION_REQUEST,
-                   ThanksForFeedbackNotification(description = LocalizationFeedbackBundle.message("notification.thanks.feedback.content")))
+                   else FeedbackRequestType.PRODUCTION_REQUEST)
+    ThanksForFeedbackNotification(description = LocalizationFeedbackBundle.message("notification.thanks.feedback.content")).notify(
+      myProject)
   }
 
   private fun createCollectedDataJsonString(): JsonObject {

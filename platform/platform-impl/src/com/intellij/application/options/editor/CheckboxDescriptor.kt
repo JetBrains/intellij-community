@@ -34,12 +34,6 @@ class CheckboxDescriptor(val name: @NlsContexts.Checkbox String,
               groupName: @Nls String? = null)
     : this(name, { mutableProperty.get() }, { mutableProperty.set(it) }, comment, groupName)
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("PropertyBinding is deprecated")
-  fun getBinding(): PropertyBinding<Boolean> {
-    return PropertyBinding(getter, setter)
-  }
-
   fun asUiOptionDescriptor(): BooleanOptionDescription {
     return asOptionDescriptor {
       UISettings.getInstance().fireUISettingsChanged()

@@ -2,9 +2,12 @@
 package com.intellij.util.io
 
 import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Path
+import java.util.jar.Attributes
+import java.util.jar.JarInputStream
 import kotlin.test.fail
 
 class DirectoryContentSpecTest {
@@ -216,6 +219,44 @@ class DirectoryContentSpecTest {
     zip.assertNotMatches(directoryContent {
       file("a.txt", "b")
     }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `jar file without manifest`() {
+    val jar = jarFile {
+      file("a.txt", "a")
+    }.generateInTempDir()
+    assertTrue(jar.isFile())
+    Assertions.assertThat(jar.fileName.toString()).endsWith(".jar")
+    jar.assertMatches(jarFile {
+      file("a.txt", "a")
+    })
+    jar.assertNotMatches(jarFile {
+      file("b.txt", "a")
+    }, FileTextMatcher.ignoreBlankLines())
+    jar.assertNotMatches(jarFile {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+    jar.assertNotMatches(directoryContent {
+      file("a.txt", "b")
+    }, FileTextMatcher.ignoreBlankLines())
+  }
+  
+  @Test
+  fun `jar file with manifest`() {
+    val jar = jarFile {
+      file("a.txt", "a")
+      dir("META-INF") {
+        file("MANIFEST.MF", """
+          |Manifest-Version: 1.0
+          |Implementation-Version: 1.0
+        """.trimMargin() + "\n")
+      }
+    }.generateInTempDir()
+    val manifest = JarInputStream(jar.inputStream()).use {
+      it.manifest
+    }
+    assertThat(manifest.mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION)).isEqualTo("1.0")
   }
 
   @Test

@@ -13,13 +13,16 @@ import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.util.ui.StatusText
@@ -27,13 +30,13 @@ import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
 import javax.swing.tree.TreePath
 
-internal val TreePath.asAbstractTreeNode
+internal val TreePath.asAbstractTreeNode: AbstractTreeNode<*>?
   get() = TreeUtil.getAbstractTreeNode(this)
 
-internal val TreePath.findFolderNode
+internal val TreePath.findFolderNode: FolderNode?
   get() = TreeUtil.findObjectInPath(this, FolderNode::class.java)
 
-internal val AbstractTreeNode<*>.bookmarkOccurrence
+internal val AbstractTreeNode<*>.bookmarkOccurrence: BookmarkOccurrence?
   get() = (this as? BookmarkNode<*>)?.run { bookmarkGroup?.let { BookmarkOccurrence(it, value) } }
 
 internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
@@ -44,7 +47,7 @@ internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
     return descriptor ?: asVirtualFile?.let { OpenFileDescriptor(project, it) }
   }
 
-internal val AbstractTreeNode<*>.asVirtualFile
+internal val AbstractTreeNode<*>.asVirtualFile: VirtualFile?
   get() = (this as? ProjectViewNode<*>)?.virtualFile
 
 internal val AbstractTreeNode<*>.module: Module?
@@ -78,11 +81,12 @@ internal val AbstractTreeNode<*>.location: Location<*>?
     val endOffset = doc.getLineEndOffset(lineNum)
 
     var elementAtLine: PsiElement? = null
-    while (offset <= endOffset) {
-      elementAtLine = psiFile.findElementAt(offset)
+    var nextElement: PsiElement? = psiFile.findElementAt(offset)
+    while (offset <= endOffset && nextElement != null) {
+      elementAtLine = nextElement
       if (elementAtLine !is PsiWhiteSpace) break
-      val length = elementAtLine.getTextLength()
-      offset += if (length > 1) length - 1 else 1
+      offset += elementAtLine.getTextLength()
+      nextElement = PsiTreeUtil.nextLeaf(elementAtLine)
     }
 
     if (elementAtLine is PsiPlainText && offset > 0) {
@@ -107,7 +111,7 @@ internal fun StatusText.initialize(owner: Component) {
              })
   appendLine(message("status.text.add.bookmark.next.line"))
   ActionUtil.getAction("BookmarksView.Create")?.let { action ->
-    appendLine(message("bookmark.group.create.action.text"), LINK_PLAIN_ATTRIBUTES) {
+    appendLine(ActionsBundle.message("action.BookmarksView.Create.text"), LINK_PLAIN_ATTRIBUTES) {
       ActionUtil.invokeAction(action, owner, "BookmarksView", null, null)
     }
   }

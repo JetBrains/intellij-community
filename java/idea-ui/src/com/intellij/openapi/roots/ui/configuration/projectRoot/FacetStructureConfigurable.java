@@ -317,7 +317,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
 
   @Override
   @Nullable
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return null;
   }
 

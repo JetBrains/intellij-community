@@ -8,7 +8,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <lang.syntaxHighlighterFactory language="kotlin" implementationClass="org.jetbrains.kotlin.idea.base.highlighting.KotlinSyntaxHighlighterFactory"/>
-
+    <syntaxHighlighter factoryClass="org.jetbrains.kotlin.idea.base.highlighting.KotlinSyntaxHighlighterProviderForDecompiledBuiltIns"/>
     <additionalTextAttributes scheme="Default" file="colorScheme/Default_Kotlin.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
   </extensions>

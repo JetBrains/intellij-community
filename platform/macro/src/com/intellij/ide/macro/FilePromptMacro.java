@@ -33,9 +33,4 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
     final VirtualFile[] result = IdeUiService.getInstance().chooseFiles(descriptor, project, null);
     return result.length == 1? FileUtil.toSystemDependentName(result[0].getPath()) : null;
   }
-
-  @Override
-  public void cachePreview(@NotNull DataContext dataContext) {
-    myCachedPreview = "<filename>";
-  }
 }

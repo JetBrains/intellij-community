@@ -1,7 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor
 
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
@@ -50,7 +50,7 @@ class NewDocumentHistoryTest : HeavyFileEditorManagerTestCase() {
     manager.openFile(file1!!, true)
     val file2 = getFile("/src/2.txt")
     manager.openFile(file2!!, true)
-    NavigationUtil.activateFileWithPsiElement(PsiManager.getInstance(project).findFile(file1)!!)
+    activateFileWithPsiElement(PsiManager.getInstance(project).findFile(file1)!!)
     val files = manager.selectedFiles
     assertEquals(1, files.size)
     assertEquals("1.txt", files[0].name)

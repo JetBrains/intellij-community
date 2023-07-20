@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -38,19 +38,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class MavenShortcutsManager implements Disposable {
   private final Project myProject;
 
-  private static final String ACTION_ID_PREFIX = "Maven_";
+  static final String ACTION_ID_PREFIX = "Maven_";
 
   private final AtomicBoolean isInitialized = new AtomicBoolean();
 
   private final DisposableWrapperList<Listener> myListeners = new DisposableWrapperList<>();
 
-  @NotNull
-  public static MavenShortcutsManager getInstance(Project project) {
+  public static @NotNull MavenShortcutsManager getInstance(Project project) {
     return project.getService(MavenShortcutsManager.class);
   }
 
-  @Nullable
-  public static MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
+  public static @Nullable MavenShortcutsManager getInstanceIfCreated(@NotNull Project project) {
     return project.getServiceIfCreated(MavenShortcutsManager.class);
   }
 
@@ -97,8 +95,7 @@ public final class MavenShortcutsManager implements Disposable {
     myListeners.clear();
   }
 
-  @NotNull
-  public String getActionId(@Nullable String projectPath, @Nullable String goal) {
+  public @NotNull String getActionId(@Nullable String projectPath, @Nullable String goal) {
     StringBuilder result = new StringBuilder(ACTION_ID_PREFIX);
     result.append(myProject.getLocationHash());
 
@@ -118,6 +115,11 @@ public final class MavenShortcutsManager implements Disposable {
     Shortcut[] shortcuts = getShortcuts(project, goal);
     if (shortcuts.length == 0) return "";
     return KeymapUtil.getShortcutsText(shortcuts);
+  }
+
+  boolean hasShortcuts() {
+    Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
+    return ContainerUtil.exists(activeKeymap.getActionIds(), id -> id.startsWith(ACTION_ID_PREFIX));
   }
 
   boolean hasShortcuts(MavenProject project, String goal) {

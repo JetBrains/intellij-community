@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.containers;
 
@@ -134,9 +134,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       return key;
     }
 
-    @NotNull
     @Override
-    public final V getValue() {
+    public final @NotNull V getValue() {
       return val;
     }
 
@@ -747,9 +746,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    *
    * @return the collection view
    */
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     ValuesView<V> vs;
     return (vs = values) != null ? vs : (values = new ValuesView<>(this));
   }
@@ -770,8 +768,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @return the set view
    */
   @Override
-  @NotNull
-  public Set<Entry<V>> entrySet() {
+  public @NotNull Set<Entry<V>> entrySet() {
     EntrySetView<V> es;
     return (es = entrySet) != null ? es : (entrySet = new EntrySetView<>(this));
   }
@@ -970,9 +967,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @return an enumeration of the values in this table
    * @see #values()
    */
-  @NotNull
   @Override
-  public Enumeration<V> elements() {
+  public @NotNull Enumeration<V> elements() {
     Node<V>[] t;
     int f = (t = table) == null ? 0 : t.length;
     return new ValueIterator<>(t, f, 0, f, this);
@@ -2448,9 +2444,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
      *
      * @return an iterator over the elements in this collection
      */
-    @NotNull
     @Override
-    public abstract Iterator<E> iterator();
+    public abstract @NotNull Iterator<E> iterator();
 
     @Override
     public abstract boolean contains(Object o);
@@ -2617,9 +2612,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
       return false;
     }
 
-    @NotNull
     @Override
-    public Iterator<V> iterator() {
+    public @NotNull Iterator<V> iterator() {
       ConcurrentIntObjectHashMap<V> m = map;
       Node<V>[] t;
       int f = (t = m.table) == null ? 0 : t.length;
@@ -2670,9 +2664,8 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
     /**
      * @return an iterator over the entries of the backing map
      */
-    @NotNull
     @Override
-    public Iterator<Entry<V>> iterator() {
+    public @NotNull Iterator<Entry<V>> iterator() {
       ConcurrentIntObjectHashMap<V> m = map;
       Node<V>[] t;
       int f = (t = m.table) == null ? 0 : t.length;
@@ -2749,8 +2742,7 @@ final class ConcurrentIntObjectHashMap<V> implements ConcurrentIntObjectMap<V> {
    * @return value if there is no entry in the map, or corresponding value if entry already exists
    */
   @Override
-  @NotNull
-  public V cacheOrGet(final int key, @NotNull final V defaultValue) {
+  public @NotNull V cacheOrGet(final int key, final @NotNull V defaultValue) {
     V v = get(key);
     if (v != null) return v;
     V prev = putIfAbsent(key, defaultValue);

@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  * @deprecated To remove in IDEA 2017.
  */
-@Deprecated(forRemoval = true)
+@Deprecated
 public class GitTask {
 
   private static final Logger LOG = Logger.getInstance(GitTask.class);

@@ -6,9 +6,7 @@ import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.codereview.comment.CommentInputActionsComponentFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.CommentTextFieldFactory
 import com.intellij.collaboration.ui.codereview.timeline.comment.getMarkdownLanguage
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.collaboration.ui.util.bindTextIn
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.ui.LanguageTextField
@@ -29,20 +27,7 @@ object GitLabNoteEditorComponentFactory {
       LanguageTextField.SimpleDocumentCreator()
     )
 
-    document.addDocumentListener(object : DocumentListener {
-      override fun documentChanged(event: DocumentEvent) {
-        vm.text.value = document.text
-      }
-    })
-    cs.launch {
-      vm.text.collect {
-        if (document.text != it) {
-          runWriteAction {
-            document.setText(it)
-          }
-        }
-      }
-    }
+    document.bindTextIn(cs, vm.text)
 
     val textField = CommentTextFieldFactory.create(project, document)
 

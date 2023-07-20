@@ -4,13 +4,11 @@ package com.siyeh.ig.migration;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.EnhancedSwitchMigrationInspection;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.pom.java.LanguageLevel;
@@ -26,7 +24,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
 import org.jdom.Element;
@@ -65,7 +62,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new IfCanBeSwitchFix();
   }
 
@@ -88,7 +85,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     return CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
   }
 
-  private static class IfCanBeSwitchFix extends InspectionGadgetsFix {
+  private static class IfCanBeSwitchFix extends PsiUpdateModCommandQuickFix {
 
     IfCanBeSwitchFix() {}
 
@@ -99,8 +96,8 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiElement element = startElement.getParent();
       if (!(element instanceof PsiIfStatement ifStatement)) {
         return;
       }
@@ -109,7 +106,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
           replaceCastsWithPatternVariable(ifStatementInChain);
         }
       }
-      replaceIfWithSwitch(ifStatement);
+      replaceIfWithSwitch(ifStatement, updater);
     }
   }
 
@@ -182,7 +179,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     return expression;
   }
 
-  public static void replaceIfWithSwitch(PsiIfStatement ifStatement) {
+  private static void replaceIfWithSwitch(PsiIfStatement ifStatement, @NotNull ModPsiUpdater updater) {
     boolean breaksNeedRelabeled = false;
     PsiStatement breakTarget = null;
     String newLabel = "";
@@ -268,6 +265,7 @@ public class IfCanBeSwitchInspection extends BaseInspection {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
     final PsiStatement newStatement = factory.createStatementFromText(switchStatementText.toString(), ifStatement);
     final PsiSwitchStatement replacement = (PsiSwitchStatement)statementToReplace.replace(newStatement);
+    updater.moveTo(replacement);
     if (HighlightingFeature.ENHANCED_SWITCH.isAvailable(replacement)) {
       final EnhancedSwitchMigrationInspection.SwitchReplacer replacer = EnhancedSwitchMigrationInspection.findSwitchReplacer(replacement);
       if (replacer != null) {

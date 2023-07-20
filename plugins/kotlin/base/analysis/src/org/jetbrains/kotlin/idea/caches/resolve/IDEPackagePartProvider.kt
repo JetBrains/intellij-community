@@ -20,11 +20,11 @@ class IDEPackagePartProvider(val scope: GlobalSearchScope) : PackagePartProvider
         getPackageParts(packageFqName).flatMap(PackageParts::metadataParts).distinct()
 
     private fun getPackageParts(packageFqName: String): MutableList<PackageParts> =
-        FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.KEY, packageFqName, scope)
+        FileBasedIndex.getInstance().getValues(KotlinModuleMappingIndex.NAME, packageFqName, scope)
 
     // Note that in case of several modules with the same name, we return all annotations on all of them, which is probably incorrect
     override fun getAnnotationsOnBinaryModule(moduleName: String): List<ClassId> =
-        FileBasedIndex.getInstance().getValues(KotlinJvmModuleAnnotationsIndex.KEY, moduleName, scope).flatten()
+        FileBasedIndex.getInstance().getValues(KotlinJvmModuleAnnotationsIndex.NAME, moduleName, scope).flatten()
 
     // Optional annotations are not needed in IDE because they can only be used in common module sources, and they are loaded via the
     // standard common module resolution there. (In the CLI compiler the situation is different because we compile common+platform
@@ -32,8 +32,10 @@ class IDEPackagePartProvider(val scope: GlobalSearchScope) : PackagePartProvider
     override fun getAllOptionalAnnotationClasses(): List<ClassData> =
         emptyList()
 
+    override fun mayHaveOptionalAnnotationClasses(): Boolean = false
+
     // NB: It's ok even to return a little more than actual packages for non-class entities
     override fun computePackageSetWithNonClassDeclarations(): Set<String> = buildSet {
-        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.KEY, { name -> add(name); true }, scope, null)
+        FileBasedIndex.getInstance().processAllKeys(KotlinModuleMappingIndex.NAME, { name -> add(name); true }, scope, null)
     }
 }

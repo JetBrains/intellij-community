@@ -15,15 +15,15 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
+public class MakeInitializerExplicitFix extends PsiUpdateModCommandQuickFix {
 
   @Override
   @NotNull
@@ -33,8 +33,7 @@ public class MakeInitializerExplicitFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement fieldName = descriptor.getPsiElement();
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement fieldName, @NotNull ModPsiUpdater updater) {
     final PsiElement parent = fieldName.getParent();
     if (!(parent instanceof PsiField field)) return;
     if (field.getInitializer() != null) {

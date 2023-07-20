@@ -7,6 +7,9 @@ package org.jetbrains.kotlin.idea.base.highlighting
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
@@ -40,6 +43,16 @@ fun KtFile.shouldHighlightErrors(): Boolean {
 
 @ApiStatus.Internal
 fun KtFile.shouldHighlightFile(): Boolean {
+    val file = this
+    return CachedValuesManager.getManager(project).getCachedValue(file) {
+        CachedValueProvider.Result.create(
+            file.calculateShouldHighlightFile(),
+            ProjectRootModificationTracker.getInstance(project)
+        )
+    }
+}
+
+private fun KtFile.calculateShouldHighlightFile(): Boolean {
     if (this is KtCodeFragment && context != null) {
         return true
     }

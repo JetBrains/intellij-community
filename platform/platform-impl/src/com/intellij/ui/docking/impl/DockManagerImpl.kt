@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.ui.docking.impl
@@ -20,7 +20,10 @@ import com.intellij.openapi.fileEditor.impl.*
 import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer.DockableEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.FrameWrapper
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.ActionCallback
+import com.intellij.openapi.util.BusyObject
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
@@ -54,11 +57,10 @@ import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
-import java.util.*
 import java.util.function.Predicate
 import javax.swing.*
 
-@State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
+@State(name = "DockManager", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], getStateRequiresEdt = true)
 class DockManagerImpl(private val project: Project) : DockManager(), PersistentStateComponent<Element?> {
   private val factories = HashMap<String, DockContainerFactory>()
   private val containers = HashSet<DockContainer>()
@@ -73,12 +75,12 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
   private var loadedState: Element? = null
 
   companion object {
-    val SHOW_NORTH_PANEL = Key.create<Boolean>("SHOW_NORTH_PANEL")
-    val WINDOW_DIMENSION_KEY = Key.create<String>("WINDOW_DIMENSION_KEY")
+    val SHOW_NORTH_PANEL: Key<Boolean> = Key.create("SHOW_NORTH_PANEL")
+    val WINDOW_DIMENSION_KEY: Key<String> = Key.create("WINDOW_DIMENSION_KEY")
     @JvmField
-    val REOPEN_WINDOW = Key.create<Boolean>("REOPEN_WINDOW")
+    val REOPEN_WINDOW: Key<Boolean> = Key.create("REOPEN_WINDOW")
     @JvmField
-    val ALLOW_DOCK_TOOL_WINDOWS = Key.create<Boolean>("ALLOW_DOCK_TOOL_WINDOWS")
+    val ALLOW_DOCK_TOOL_WINDOWS: Key<Boolean> = Key.create("ALLOW_DOCK_TOOL_WINDOWS")
 
     @JvmStatic
     fun isSingletonEditorInWindow(editors: List<FileEditor>): Boolean {
@@ -388,15 +390,20 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
     SwingUtilities.invokeLater { window.uiContainer.preferredSize = null }
   }
 
-  fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
+  internal fun createNewDockContainerFor(file: VirtualFile, openFile: (EditorWindow) -> FileEditorComposite): FileEditorComposite {
     val container = getFactory(DockableEditorContainerFactory.TYPE)!!.createContainer(null)
 
-    // Order is important here. Create the dock window, then create the editor window. That way, any listeners can check to see if the
-    // parent window is floating.
-    val window = createWindowFor(getWindowDimensionKey(file), null, container, REOPEN_WINDOW.get(file, true))
+    // Order is important here.
+    // Create the dock window, then create the editor window.
+    // That way, any listeners can check to see if the parent window is floating.
+    val window = createWindowFor(dimensionKey = getWindowDimensionKey(file = file),
+                                 id = null,
+                                 container = container,
+                                 canReopenWindow = REOPEN_WINDOW.get(file, true))
     if (!ApplicationManager.getApplication().isHeadlessEnvironment && !ApplicationManager.getApplication().isUnitTestMode) {
       window.show(true)
     }
+
     val editorWindow = (container as DockableEditorTabbedContainer).splitters.getOrCreateCurrentWindow(file)
     val result = openFile(editorWindow)
     if (!isSingletonEditorInWindow(result.allEditors)) {
@@ -469,7 +476,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
         if (mainStatusBar != null) {
           val frame = getFrame()
           if (frame is IdeFrame) {
-            statusBar = mainStatusBar.createChild(frame) {
+            statusBar = mainStatusBar.createChild(this@DockWindow, frame) {
               (container as? DockableEditorTabbedContainer)?.splitters?.currentWindow?.selectedComposite?.selectedWithProvider?.fileEditor
             }
           }
@@ -640,7 +647,7 @@ class DockManagerImpl(private val project: Project) : DockManager(), PersistentS
 
     private fun installListeners(frame: Window) {
       val uiNotifyConnector = if (container is Activatable) {
-        UiNotifyConnector((frame as RootPaneContainer).contentPane, (container as Activatable))
+        UiNotifyConnector.installOn((frame as RootPaneContainer).contentPane, (container as Activatable))
       }
       else {
         null

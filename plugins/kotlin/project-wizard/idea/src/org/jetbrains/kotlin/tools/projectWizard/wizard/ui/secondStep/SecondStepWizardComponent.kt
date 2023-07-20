@@ -47,7 +47,7 @@ class ProjectStructureEditorComponent(
         context,
         uiEditorUsagesStats,
         needBorder = true,
-        editable = true,
+        editable = false,
         oneEntrySelected = onNodeSelected
     ).asSubComponent()
 

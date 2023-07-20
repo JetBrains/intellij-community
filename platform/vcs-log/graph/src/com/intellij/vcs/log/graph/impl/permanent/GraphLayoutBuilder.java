@@ -23,7 +23,7 @@ public final class GraphLayoutBuilder {
   public static GraphLayoutImpl build(@NotNull LinearGraph graph, @NotNull IntComparator headNodeIndexComparator) {
     IntList heads = new IntArrayList();
     for (int i = 0; i < graph.nodesCount(); i++) {
-      if (getUpNodes(graph, i).size() == 0) {
+      if (getUpNodes(graph, i).isEmpty()) {
         heads.add(i);
       }
     }

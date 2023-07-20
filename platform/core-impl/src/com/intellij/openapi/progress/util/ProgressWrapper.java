@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.progress.util;
 
@@ -55,9 +55,8 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     }
   }
 
-  @Nullable
   @Override
-  protected Throwable getCancellationTrace() {
+  protected @Nullable Throwable getCancellationTrace() {
     if (myOriginal instanceof AbstractProgressIndicatorBase) {
       return ((AbstractProgressIndicatorBase)myOriginal).getCancellationTrace();
     }
@@ -113,15 +112,13 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
     return myOriginal.isIndeterminate();
   }
 
-  @NotNull
   @Override
-  public ModalityState getModalityState() {
+  public @NotNull ModalityState getModalityState() {
     return myOriginal.getModalityState();
   }
 
   @Override
-  @NotNull
-  public ProgressIndicator getOriginalProgressIndicator() {
+  public @NotNull ProgressIndicator getOriginalProgressIndicator() {
     return myOriginal;
   }
 
@@ -136,8 +133,7 @@ public class ProgressWrapper extends AbstractProgressIndicatorBase implements Wr
            ((WrappedProgressIndicator)indicator).getOriginalProgressIndicator() : indicator;
   }
 
-  @NotNull
-  public static ProgressIndicator unwrapAll(@NotNull ProgressIndicator indicator) {
+  public static @NotNull ProgressIndicator unwrapAll(@NotNull ProgressIndicator indicator) {
     while (indicator instanceof ProgressWrapper) {
       indicator = ((ProgressWrapper)indicator).getOriginalProgressIndicator();
     }

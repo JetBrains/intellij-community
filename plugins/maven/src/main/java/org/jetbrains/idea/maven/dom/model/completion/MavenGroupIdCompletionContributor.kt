@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.dom.model.completion.insert.MavenDependencyInser
 import org.jetbrains.idea.maven.indices.IndicesBundle
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenRepositoryArtifactInfo
 import org.jetbrains.idea.reposearch.DependencySearchService
+import org.jetbrains.idea.reposearch.PoisonedRepositoryArtifactData
 import org.jetbrains.idea.reposearch.RepositoryArtifactData
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Consumer
@@ -55,6 +56,7 @@ class MavenGroupIdCompletionContributor : MavenCoordinateCompletionContributor("
             .also { it.putUserData(MAVEN_COORDINATE_COMPLETION_PREFIX_KEY, completionPrefix) }
         )
       }
+      if (item === PoisonedRepositoryArtifactData.INSTANCE) break
     }
   }
 }

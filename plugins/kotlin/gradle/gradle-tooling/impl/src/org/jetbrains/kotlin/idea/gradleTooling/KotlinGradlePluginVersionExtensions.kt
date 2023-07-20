@@ -10,3 +10,8 @@ fun KotlinGradlePluginVersion?.supportsKotlinAndroidSourceSetInfo(): Boolean {
     if (this == null) return false
     return this >= "1.8.0-dev-1593"
 }
+
+fun KotlinGradlePluginVersion?.supportsFusMetricsWeight(): Boolean {
+    if (this == null) return false
+    return this >= "1.8.20-dev-4812"
+}

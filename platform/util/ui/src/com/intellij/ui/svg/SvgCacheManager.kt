@@ -4,232 +4,256 @@
 package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.mvstore.openOrRecreateStore
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
-import org.h2.mvstore.DataUtils
-import org.h2.mvstore.MVMap
-import org.h2.mvstore.MVStore
-import org.h2.mvstore.WriteBuffer
-import org.h2.mvstore.type.BasicDataType
+import com.intellij.ui.seededHasher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.xxh3.Xxh3
+import org.jetbrains.sqlite.LongBinder
+import org.jetbrains.sqlite.ObjectBinder
+import org.jetbrains.sqlite.SqliteConnection
+import org.jetbrains.sqlite.SqlitePreparedStatement
 import sun.awt.image.SunWritableRaster
-import java.awt.Image
 import java.awt.Point
+import java.awt.Transparency
+import java.awt.color.ColorSpace
 import java.awt.image.*
 import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.file.Files
 import java.nio.file.Path
-import java.util.*
-import java.util.concurrent.ConcurrentHashMap
+import kotlin.time.Duration.Companion.seconds
 
-private val LOG: Logger
-  get() = logger<SvgCacheManager>()
-
+@JvmInline
 @ApiStatus.Internal
-class SvgCacheMapper(
-  @JvmField internal val scale: Float,
-  @JvmField internal val isDark: Boolean,
-  @JvmField internal val isStroke: Boolean,
-) {
-  constructor(scale: Float) : this(scale = scale, isDark = false, isStroke = false)
+value class SvgCacheClassifier(internal val key: Int) {
+  constructor(scale: Float) : this(scale.toBits())
 
-  internal val key: Float
-    get() = scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0)
+  constructor(scale: Float, isDark: Boolean, isStroke: Boolean) :
+    this((scale + (if (isDark) 1_000 else 0) + (if (isStroke) 1_100 else 0)).toBits())
 
-  internal val name: String
-    get() = "icons@$scale${if (isDark) "_d" else ""}${if (isStroke) "_s" else ""}"
+  constructor(scale: Float, size: Int) : this((scale + (10_000 + size)).toBits())
 }
 
-@ApiStatus.Internal
-class SvgCacheManager(dbFile: Path) {
-  private val store: MVStore
-  private val classifierToMap = ConcurrentHashMap<Float, MVMap<LongArray, ImageValue>>(10)
-  private val mapBuilder: MVMap.Builder<LongArray, ImageValue>
+fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
 
-  init {
-    store = openOrRecreateStore(dbFile) { LOG }
-    val mapBuilder = MVMap.Builder<LongArray, ImageValue>()
-    mapBuilder.keyType(ImageKeyDescriptor)
-    mapBuilder.valueType(ImageValueExternalizer)
-    this.mapBuilder = mapBuilder
+suspend fun createSvgCacheManager(cacheFile: Path): SvgCacheManager? {
+  if (!java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))) {
+    return null
   }
+
+  try {
+    return withTimeout(30.seconds) {
+      withContext(Dispatchers.IO) {
+        SvgCacheManager(connectToSvgCache(cacheFile))
+      }
+    }
+  }
+  catch (e: TimeoutCancellationException) {
+    logger<SvgCacheManager>().error("Cannot create SvgCacheManager in 30 seconds", e)
+    return null
+  }
+  catch (e: Throwable) {
+    logger<SvgCacheManager>().error("Cannot create SvgCacheManager", e)
+    return null
+  }
+}
+
+private fun connectToSvgCache(dbFile: Path): SqliteConnection {
+  val markerFile = getSvgIconCacheInvalidMarkerFile(dbFile)
+  if (Files.exists(markerFile)) {
+    Files.deleteIfExists(dbFile)
+    Files.deleteIfExists(markerFile)
+  }
+
+  var isNew = Files.notExists(dbFile)
+  val connection = try {
+    SqliteConnection(dbFile)
+  }
+  catch (e: Exception) {
+    logger<SvgCacheManager>().warn("Cannot open database, will be recreated", e)
+    Files.deleteIfExists(dbFile)
+    isNew = true
+    SqliteConnection(dbFile)
+  }
+  if (isNew) {
+    connection.execute(TABLE_SCHEMA)
+  }
+  return connection
+}
+
+@Suppress("SqlResolve")
+@ApiStatus.Internal
+class SvgCacheManager(private val connection: SqliteConnection) {
+  private val selectStatementPool = connection.statementPool(sql = "select data, w, h from image where key1 = ? and key2 = ? and kind = ? and theme = ?") { LongBinder(4) }
+  private val selectPrecomputedStatementPool = connection.statementPool(sql = "select data, w, h from precomputed_image where key = ? and theme = ?") { LongBinder(2) }
+  private val insertStatementPool = connection.statementPool(sql = "insert or replace into image (key1, key2, kind, theme, w, h, data) values(?, ?, ?, ?, ?, ?, ?) ") { ObjectBinder(7) }
+  private val insertPrecomputedStatementPool = connection.statementPool(sql = "insert or replace into precomputed_image (key, theme, w, h, data) values(?, ?, ?, ?, ?) ") { ObjectBinder(5) }
+
+  internal fun isActive(): Boolean = !connection.isClosed
 
   fun close() {
-    store.close()
+    connection.close()
+    logger<SvgCacheManager>().info("SVG icon cache is closed")
   }
 
-  fun save() {
-    store.commit()
-  }
+  fun loadPrecomputedFromCache(precomputedCacheKey: Int, themeKey: Long, compoundKey: SvgCacheClassifier): BufferedImage? {
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    val key = precomputeKeyAndKindToCacheKey(precomputedCacheKey = precomputedCacheKey, compoundKey = compoundKey)
+    return selectPrecomputedStatementPool.use { statement, binder ->
+      binder.bind(v1 = key, v2 = themeKey)
 
-  fun loadFromCache(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper): BufferedImage? {
-    val key = getCacheKey(imageBytes = imageBytes, themeDigest = themeDigest)
-    val map = getMap(mapper = mapper, classifierToMap = classifierToMap, store = store, mapBuilder = mapBuilder)
-    try {
-      val start = StartUpMeasurer.getCurrentTimeIfEnabled()
-      val data = map.get(key) ?: return null
-      val image = readImage(data)
+      val result = readImage(statement)
       IconLoadMeasurer.svgCacheRead.end(start)
-      return image
-    }
-    catch (e: Throwable) {
-      LOG.error(e)
-      try {
-        map.remove(key)
-      }
-      catch (e1: Exception) {
-        LOG.error("Cannot remove invalid entry", e1)
-      }
-      return null
+      result
     }
   }
 
-  fun storeLoadedImage(themeDigest: ByteArray, imageBytes: ByteArray, mapper: SvgCacheMapper, image: BufferedImage) {
-    val key = getCacheKey(imageBytes = imageBytes, themeDigest = themeDigest)
-    val map = getMap(mapper = mapper, classifierToMap = classifierToMap, store = store, mapBuilder = mapBuilder)
-    map.put(key, writeImage(image))
+  fun loadFromCache(imageBytes: ByteArray, themeKey: Long, compoundKey: SvgCacheClassifier): BufferedImage? {
+    val start = StartUpMeasurer.getCurrentTimeIfEnabled()
+    return selectStatementPool.use { statement, binder ->
+      val kind = compoundKey.key.toLong()
+
+      binder.bind(v1 = hasher.hashBytesToLong(imageBytes), v2 = seededHasher.hashBytesToLong(imageBytes), v3 = kind, v4 = themeKey)
+      val result = readImage(statement)
+      IconLoadMeasurer.svgCacheRead.end(start)
+      result
+    }
+  }
+
+  fun storeLoadedImage(precomputedCacheKey: Int,
+                       themeKey: Long,
+                       imageBytes: ByteArray,
+                       compoundKey: SvgCacheClassifier,
+                       image: BufferedImage) {
+    val data = writeImage(image)
+    if (precomputedCacheKey == 0) {
+      val key1 = hasher.hashBytesToLong(imageBytes)
+      val key2 = seededHasher.hashBytesToLong(imageBytes)
+      insertStatementPool.use { statement, binder ->
+        binder.bind(v1 = key1,
+                    v2 = key2,
+                    v3 = compoundKey.key.toLong(),
+                    v4 = themeKey,
+                    v5 = image.width,
+                    v6 = image.height,
+                    v7 = data)
+        statement.executeUpdate()
+      }
+    }
+    else {
+      val key = precomputeKeyAndKindToCacheKey(precomputedCacheKey = precomputedCacheKey, compoundKey = compoundKey)
+      insertPrecomputedStatementPool.use { statement, binder ->
+        binder.bind(v1 = key, v2 = themeKey, v3 = image.width, v4 = image.height, v5 = data)
+        statement.executeUpdate()
+      }
+    }
   }
 }
+
+internal fun themeDigestToCacheKey(themeDigest: LongArray): Long {
+  return when (themeDigest.size) {
+    0 -> 0
+    1 -> themeDigest.first()
+    else -> hasher.hashStream().putLongArray(themeDigest).asLong
+  }
+}
+
+// BGRA order
+private val bgraBandOffsets = intArrayOf(2, 1, 0, 3)
+
+private val colorModel = ComponentColorModel(
+  ColorSpace.getInstance(ColorSpace.CS_sRGB),
+  true,
+  false,
+  Transparency.TRANSLUCENT,
+  DataBuffer.TYPE_BYTE
+)
 
 private val ZERO_POINT = Point(0, 0)
 
-private fun getCacheKey(imageBytes: ByteArray, themeDigest: ByteArray): LongArray {
-  return longArrayOf(
-    Xxh3.hash(imageBytes),
-    // and another hash with seed to reduce the chance of collision
-    // (https://github.com/Cyan4973/xxHash/wiki/Collision-ratio-comparison#testing-128-bit-hashes-)
-    Xxh3.seededHash(imageBytes, 4812324275),
-    Xxh3.hash(themeDigest)
-  )
+private fun writeImage(image: BufferedImage): ByteArray {
+  val w = image.width
+  val h = image.height
+
+  when (image.type) {
+    BufferedImage.TYPE_4BYTE_ABGR -> {
+      return SunWritableRaster.stealData(image.raster.dataBuffer as DataBufferByte, 0)
+    }
+    BufferedImage.TYPE_INT_ARGB -> {
+      val data = SunWritableRaster.stealData(image.raster.dataBuffer as DataBufferInt, 0)
+      val buffer = ByteBuffer.allocate(data.size * Int.SIZE_BYTES).order(ByteOrder.LITTLE_ENDIAN)
+      buffer.asIntBuffer().put(data)
+      return buffer.array()
+    }
+    else -> {
+      @Suppress("UndesirableClassUsage")
+      val convertedImage = BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR)
+      val g = convertedImage.createGraphics()
+      g.drawImage(image, 0, 0, null)
+      g.dispose()
+      return SunWritableRaster.stealData(convertedImage.raster.dataBuffer as DataBufferByte, 0)
+    }
+  }
 }
 
-private fun createImage(w: Int, h: Int, dataBuffer: DataBufferInt): BufferedImage {
-  val colorModel = ColorModel.getRGBdefault() as DirectColorModel
-  val raster = Raster.createPackedRaster(dataBuffer, w, h, w, colorModel.masks, ZERO_POINT)
+private fun readImage(statement: SqlitePreparedStatement<LongBinder>): BufferedImage? {
+  val result = statement.executeQuery()
+  if (!result.next()) {
+    return null
+  }
+
+  val data = result.getBytes(0)!!
+  val dataBuffer = DataBufferByte(data, data.size)
+  SunWritableRaster.makeTrackable(dataBuffer)
+  val w = result.getInt(1)
+  val h = result.getInt(2)
+  val raster = Raster.createInterleavedRaster(
+    dataBuffer,
+    w,
+    h,
+    w * 4, 4,
+    bgraBandOffsets,
+    ZERO_POINT
+  )
   @Suppress("UndesirableClassUsage")
   return BufferedImage(colorModel, raster, false, null)
 }
 
-private fun readImage(value: ImageValue): BufferedImage {
-  val dataBuffer = DataBufferInt(value.data, value.data.size)
-  SunWritableRaster.makeTrackable(dataBuffer)
-  return createImage(value.w, value.h, dataBuffer)
+private fun precomputeKeyAndKindToCacheKey(precomputedCacheKey: Int, compoundKey: SvgCacheClassifier): Long {
+  return (precomputedCacheKey.toLong() shl 32) or (compoundKey.key.toLong() and 0xffffffffL)
 }
 
-internal fun readImage(buffer: ByteBuffer, w: Int, h: Int): Image {
-  val dataBuffer = DataBufferInt(w * h)
-  buffer.asIntBuffer().get(SunWritableRaster.stealData(dataBuffer, 0))
-  SunWritableRaster.makeTrackable(dataBuffer)
-  return createImage(w = w, h = h, dataBuffer = dataBuffer)
-}
-
-private fun writeImage(image: BufferedImage): ImageValue {
-  val w = image.width
-  val h = image.height
-
-  val dataBuffer = if (image.type == BufferedImage.TYPE_INT_ARGB) {
-    image.raster.dataBuffer
-  }
-  else {
-    @Suppress("UndesirableClassUsage")
-    val convertedImage = BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB)
-    val g = convertedImage.createGraphics()
-    g.drawImage(image, 0, 0, null)
-    g.dispose()
-    convertedImage.raster.dataBuffer
-  }
-  return ImageValue(data = SunWritableRaster.stealData(dataBuffer as DataBufferInt, 0), w = w, h = h)
-}
-
-private object ImageKeyDescriptor : BasicDataType<LongArray>() {
-  override fun getMemory(obj: LongArray?): Int = 3 * Long.SIZE_BYTES
-
-  override fun compare(a: LongArray, b: LongArray): Int {
-    return Arrays.compare(a, b)
-  }
-
-  override fun createStorage(size: Int): Array<LongArray?> = arrayOfNulls(size)
-
-  override fun read(buff: ByteBuffer): LongArray {
-    return longArrayOf(buff.getLong(), buff.getLong(), buff.getLong())
-  }
-
-  override fun read(buff: ByteBuffer, storage: Any?, len: Int) {
-    val longBuffer = buff.asLongBuffer()
-    @Suppress("UNCHECKED_CAST")
-    val result = storage as Array<LongArray>
-    for (i in 0 until len) {
-      result[i] = longArrayOf(longBuffer.get(), longBuffer.get(), longBuffer.get())
-    }
-    buff.position(buff.position() + (longBuffer.position() * Long.SIZE_BYTES))
-  }
-
-  override fun write(buff: WriteBuffer, obj: LongArray) {
-    buff.putLong(obj[0])
-    buff.putLong(obj[1])
-    buff.putLong(obj[2])
-  }
-}
-
-private object ImageValueExternalizer : BasicDataType<ImageValue>() {
-  override fun getMemory(obj: ImageValue): Int = (obj.data.size + 2) * Int.SIZE_BYTES
-
-  override fun createStorage(size: Int): Array<ImageValue?> = arrayOfNulls(size)
-
-  override fun read(buff: ByteBuffer): ImageValue {
-    val actualWidth: Int
-    val actualHeight: Int
-    val format = buff.get().toInt() and 0xFF
-    @Suppress("DuplicatedCode")
-    if (format < 254) {
-      actualWidth = format
-      actualHeight = format
-    }
-    else if (format == 255) {
-      actualWidth = DataUtils.readVarInt(buff)
-      actualHeight = actualWidth
-    }
-    else {
-      actualWidth = DataUtils.readVarInt(buff)
-      actualHeight = DataUtils.readVarInt(buff)
-    }
-
-    val ints = IntArray(actualWidth * actualHeight)
-    buff.asIntBuffer().get(ints)
-    buff.position(buff.position() + (ints.size * Int.SIZE_BYTES))
-    return ImageValue(data = ints, w = actualWidth, h = actualHeight)
-  }
-
-  override fun write(buff: WriteBuffer, obj: ImageValue) {
-    if (obj.w == obj.h) {
-      if (obj.w < 254) {
-        buff.put(obj.w.toByte())
-      }
-      else {
-        buff.put(255.toByte())
-        buff.putVarInt(obj.w)
-      }
-    }
-    else {
-      buff.put(254.toByte())
-      buff.putVarInt(obj.w)
-      buff.putVarInt(obj.h)
-    }
-    buff.put(obj.data)
-  }
-}
-
-private class ImageValue(@JvmField val data: IntArray, @JvmField val w: Int, @JvmField val h: Int)
-
-private fun <K, V> getMap(mapper: SvgCacheMapper,
-                          classifierToMap: MutableMap<Float, MVMap<K, V>>,
-                          store: MVStore,
-                          mapBuilder: MVMap.MapBuilder<MVMap<K, V>, K, V>): MVMap<K, V> {
-  return classifierToMap.computeIfAbsent(mapper.key) {
-    synchronized(store) {
-      store.openMap(mapper.name, mapBuilder)
-    }
-  }
-}
+@Language("SQLite")
+private const val TABLE_SCHEMA = """
+  begin transaction;
+  
+  -- key2 is 0 for precomputed cache key
+  create table image (
+    key1 integer not null,
+    key2 integer not null,
+    kind integer not null,
+    theme integer not null,
+    w integer not null,
+    h integer not null,
+    data blob not null,
+    primary key (key1, key2, theme, kind)
+  ) strict;
+  
+  -- key2 is 0 for precomputed cache key
+  create table precomputed_image (
+    key integer not null,
+    theme integer not null,
+    w integer not null,
+    h integer not null,
+    data blob not null,
+    primary key (key, theme)
+  ) strict;
+  
+  commit transaction;
+"""

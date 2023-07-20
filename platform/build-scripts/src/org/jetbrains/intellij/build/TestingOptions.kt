@@ -133,6 +133,13 @@ open class TestingOptions {
   var isPerformanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
   /**
+   * When running on TeamCity and this option is true, cancel the build (instead of failing it) in case
+   * the build problem occurred while preparing for the test run, for example, if we failed to download
+   * the compilation cache for some reason.
+   */
+  var isCancelBuildOnTestPreparationFailure = SystemProperties.getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
+
+  /**
    * Terminate execution immediately if any test fails. Both build script and test JVMs are terminated.
    */
   var isFailFast = SystemProperties.getBooleanProperty("intellij.build.test.failFast", false)

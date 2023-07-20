@@ -1,7 +1,7 @@
 package com.intellij.ide.customize.transferSettings.providers.vswin.mappings
 
 object KeyBindingsMappings {
-  val newTokens = hashMapOf(
+  val newTokens: HashMap<String, String> = hashMapOf(
     "," to "COMMA",
     "`" to "BACK_QUOTE",
     "/" to "SLASH",

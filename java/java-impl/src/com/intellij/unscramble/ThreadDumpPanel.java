@@ -144,7 +144,7 @@ public final class ThreadDumpPanel extends JPanel implements DataProvider {
     splitter.setSecondComponent(consoleView.getComponent());
     add(splitter, BorderLayout.CENTER);
 
-    new ListSpeedSearch<>(myThreadList).setComparator(new SpeedSearchComparator(false, true));
+    ListSpeedSearch.installOn(myThreadList).setComparator(new SpeedSearchComparator(false, true));
 
     updateThreadList();
 

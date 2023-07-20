@@ -82,7 +82,7 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
                             toAdd: Collection<FilePath>,
                             exceptions: MutableList<VcsException>,
                             containsIgnored: Boolean) {
-    VcsUtil.groupByRoots(project, toAdd, identity<FilePath, FilePath>()).forEach { (vcsRoot, paths) ->
+    VcsUtil.groupByRoots(project, toAdd, identity()).forEach { (vcsRoot, paths) ->
       try {
         val actionExtension = getExtensionFor(project, vcsRoot.vcs) ?: return
 

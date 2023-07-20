@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -54,8 +54,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   protected final @NlsSafe String myNewFileName;
   protected final List<TargetDirectory> myDirectories;
   protected final String[] mySubPath;
-  @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE)
-  protected final @NotNull String myKey;
+  protected final @PropertyKey(resourceBundle = CodeInsightBundle.BUNDLE) @NotNull String myKey;
 
   protected boolean myIsAvailable;
   protected long myIsAvailableTimeStamp;
@@ -76,7 +75,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
    * Must be implemented, as default implementation won't work anyway
    */
   @Override
-  abstract public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
+  public abstract @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file);
 
   @Override
   public boolean isAvailable(@NotNull Project project,
@@ -195,8 +194,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return builder.toFragment();
   }
 
-  @Nullable
-  private static PsiDirectory findOrCreateSubdirectory(@Nullable PsiDirectory directory, @NotNull String subDirectoryName) {
+  private static @Nullable PsiDirectory findOrCreateSubdirectory(@Nullable PsiDirectory directory, @NotNull String subDirectoryName) {
     if (directory == null) {
       return null;
     }
@@ -261,8 +259,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
       .showInBestPositionFor(editor);
   }
 
-  @NotNull
-  private static List<TargetDirectoryListItem> getTargetDirectoryListItems(List<? extends TargetDirectory> directories) {
+  private static @NotNull List<TargetDirectoryListItem> getTargetDirectoryListItems(List<? extends TargetDirectory> directories) {
     return ContainerUtil.map(directories, targetDirectory -> {
       PsiDirectory d = targetDirectory.getDirectory();
       assert d != null : "Invalid PsiDirectory instances found";
@@ -274,8 +271,7 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     });
   }
 
-  @NotNull
-  private static Icon getContentRootIcon(@NotNull PsiDirectory directory) {
+  private static @NotNull Icon getContentRootIcon(@NotNull PsiDirectory directory) {
     VirtualFile file = directory.getVirtualFile();
 
     Project project = directory.getProject();
@@ -288,9 +284,8 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
     return IconUtil.getIcon(file, 0, project);
   }
 
-  @NotNull
-  private static @NlsSafe String getPresentableContentRootPath(@NotNull PsiDirectory directory,
-                                                               String @NotNull [] pathToCreate) {
+  private static @NotNull @NlsSafe String getPresentableContentRootPath(@NotNull PsiDirectory directory,
+                                                                        String @NotNull [] pathToCreate) {
     VirtualFile f = directory.getVirtualFile();
     Project project = directory.getProject();
 

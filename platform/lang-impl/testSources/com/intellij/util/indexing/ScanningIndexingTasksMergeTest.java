@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.FilesScanningTaskAsDumbModeTaskWrapper;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.UnindexedFilesScannerExecutor;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
@@ -13,6 +15,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.indexing.diagnostic.ScanningType;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -51,8 +54,8 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
     map2.put(iter2, f2);
     map2.put(iterShared, fShared.subList(1, 3));
 
-    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1");
-    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2");
+    task1 = new UnindexedFilesIndexer(getProject(), map1, "test task1", LongSet.of());
+    task2 = new UnindexedFilesIndexer(getProject(), map2, "test task2", LongSet.of());
   }
 
   public void testTryMergeIndexingTasks() {
@@ -141,7 +144,7 @@ public class ScanningIndexingTasksMergeTest extends LightPlatformTestCase {
       mergedDumb.getClass(), dumb1.getClass()
     );
 
-    return ((UnindexedFilesScannerAsDumbModeTaskWrapper)mergedDumb).getTask();
+    return (UnindexedFilesScanner)((FilesScanningTaskAsDumbModeTaskWrapper)mergedDumb).getTask();
   }
 
   @NotNull

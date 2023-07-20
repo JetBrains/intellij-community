@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.actions;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -81,7 +81,7 @@ public class CompileAction extends CompileActionBase {
     }
     else {
       files = getCompilableFiles(project, e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY));
-      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace())) {
+      if (files.length == 0 && !ActionPlaces.isShortcutPlace(e.getPlace()) && !ActionPlaces.isPopupPlace(e.getPlace())) {
         module = e.getData(PlatformCoreDataKeys.MODULE); // fallback to any module available from the context
       }
     }

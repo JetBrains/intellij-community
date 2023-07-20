@@ -3,9 +3,8 @@ package com.intellij.ide.customize.transferSettings.ui
 
 import com.intellij.ide.customize.transferSettings.TransferSettingsConfiguration
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
-import com.intellij.ide.customize.transferSettings.models.BaseIdeVersion
-import com.intellij.ide.customize.transferSettings.models.FailedIdeVersion
-import com.intellij.ide.customize.transferSettings.models.TransferSettingsModel
+import com.intellij.ide.customize.transferSettings.models.*
+import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRepresentationPanel
 import com.intellij.ide.customize.transferSettings.ui.representation.TransferSettingsRightPanelChooser
 import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.panel
@@ -15,16 +14,15 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class TransferSettingsView(private val config: TransferSettingsConfiguration) {
-  val panel by lazy { initPanel() }
+class TransferSettingsView(private val config: TransferSettingsConfiguration, private val model: TransferSettingsModel) {
   val selectedIde: BaseIdeVersion? get() = leftPanel.list.selectedValue
-
-  val model = TransferSettingsModel(config)
 
   private val leftPanel = TransferSettingsLeftPanel(model.listModel)
   private val contentPanel = JPanel(MigLayout("ins 0, novisualpadding, fill"))
 
-  private val cachedViews = mutableMapOf<BaseIdeVersion, JComponent>()
+  private val cachedViews = mutableMapOf<BaseIdeVersion, TransferSettingsRepresentationPanel>()
+
+  val panel = initPanel()
 
   init {
     config.controller.addListener(object : TransferSettingsListener {
@@ -32,29 +30,41 @@ class TransferSettingsView(private val config: TransferSettingsConfiguration) {
         cachedViews.remove(ideVersion)
         performRefresh(ideVersion.id)
       }
+
+      override fun importStarted(ideVersion: IdeVersion, settings: Settings) {
+        cachedViews[selectedIde]?.block()
+        leftPanel.list.isEnabled = false
+      }
     })
   }
 
   private fun initPanel() = JPanel().apply {
     layout = MigLayout("ins 0, novisualpadding, fill")
 
-    add(leftPanel, "west, width 250px, wmax 250px, wmin 250px, growy, pushy, spany")
+    if (model.shouldShowLeftPanel) {
+      add(leftPanel, "west, width 250px, wmax 250px, wmin 250px, growy, pushy, spany")
+    }
     add(contentPanel, "east, grow, push, span")
     contentPanel.add(JLabel())
 
     border = JBUI.Borders.customLineBottom(JBColor.border())
 
+    var previousSelected: BaseIdeVersion? = null
+
     leftPanel.addListSelectionListener {
       if (selectedValue == null) return@addListSelectionListener
+      if (previousSelected == selectedValue) return@addListSelectionListener
+      previousSelected = selectedValue
       val view = cachedViews.getOrPut(selectedValue) {
-        TransferSettingsRightPanelChooser(selectedValue, config).select().getComponent()
+        TransferSettingsRightPanelChooser(selectedValue, config).select()
       }
       contentPanel.apply {
         removeAll()
-        add(view, "grow, push, span")
+        add(view.getComponent(), "grow, push, span")
         revalidate()
         repaint()
       }
+      config.controller.itemSelected(selectedValue)
     }
 
     performRefresh(null)

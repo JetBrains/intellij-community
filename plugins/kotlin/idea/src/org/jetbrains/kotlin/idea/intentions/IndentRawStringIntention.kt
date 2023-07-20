@@ -24,8 +24,7 @@ class IndentRawStringIntention : SelfTargetingOffsetIndependentIntention<KtStrin
         if (element.parents.any { it is KtAnnotationEntry || (it as? KtProperty)?.hasModifier(KtTokens.CONST_KEYWORD) == true }) return false
         if (element.getQualifiedExpressionForReceiver() != null) return false
         val entries = element.entries
-        if (entries.size <= 1 || entries.any { it.text.startsWith(" ") || it.text.startsWith("\t") }) return false
-        return true
+        return !(entries.size <= 1 || entries.any { it.text.startsWith(" ") || it.text.startsWith("\t") })
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {

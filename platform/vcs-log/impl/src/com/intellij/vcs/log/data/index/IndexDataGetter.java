@@ -35,13 +35,14 @@ import java.util.function.IntConsumer;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static com.intellij.vcs.log.data.index.PhmVcsLogStorageBackendKt.getHashes;
 import static com.intellij.vcs.log.history.FileHistoryKt.FILE_PATH_HASHING_STRATEGY;
 
 public final class IndexDataGetter {
   private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   private final @NotNull Project myProject;
   private final @NotNull Map<VirtualFile, VcsLogProvider> myProviders;
-  private final @NotNull VcsLogPersistentIndex.IndexStorage myIndexStorage;
+  private final @NotNull VcsLogStorageBackend myIndexStorageBackend;
   private final @NotNull VcsLogStorage myLogStorage;
   private final @NotNull VcsLogErrorHandler myErrorHandler;
   private final @NotNull VcsDirectoryRenamesProvider myDirectoryRenamesProvider;
@@ -49,12 +50,12 @@ public final class IndexDataGetter {
 
   public IndexDataGetter(@NotNull Project project,
                          @NotNull Map<VirtualFile, VcsLogProvider> providers,
-                         @NotNull VcsLogPersistentIndex.IndexStorage indexStorage,
+                         @NotNull VcsLogStorageBackend indexStorageBackend,
                          @NotNull VcsLogStorage logStorage,
                          @NotNull VcsLogErrorHandler errorHandler) {
     myProject = project;
     myProviders = providers;
-    myIndexStorage = indexStorage;
+    myIndexStorageBackend = indexStorageBackend;
     myLogStorage = logStorage;
     myErrorHandler = errorHandler;
 
@@ -71,52 +72,63 @@ public final class IndexDataGetter {
   //
 
   public @Nullable VcsUser getAuthor(int commit) {
-    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
+    return executeAndCatch(() -> myIndexStorageBackend.getAuthorForCommit(commit));
+  }
+
+  public @Nullable Map<Integer, VcsUser> getAuthor(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getAuthorForCommits(commitIds));
   }
 
   public @Nullable VcsUser getCommitter(int commit) {
     return executeAndCatch(() -> {
-      return myIndexStorage.store.getCommitterOrAuthor(commit,
-                                                       myIndexStorage.users::getUserById,
-                                                       myIndexStorage.users::getAuthorForCommit);
+      return myIndexStorageBackend.getCommitterOrAuthorForCommit(commit);
     });
+  }
+
+  public @NotNull Map<Integer, VcsUser> getCommitter(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getCommitterForCommits(commitIds), Collections.emptyMap());
   }
 
   public @Nullable Long getAuthorTime(int commit) {
     return executeAndCatch(() -> {
-      long[] time = myIndexStorage.store.getTimestamp(commit);
+      long[] time = myIndexStorageBackend.getTimestamp(commit);
       return time == null ? null : time[0];
     });
   }
 
+  public @Nullable Map<Integer, Long> getAuthorTime(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getAuthorTime(commitIds));
+  }
+
   public @Nullable Long getCommitTime(int commit) {
     return executeAndCatch(() -> {
-      long[] time = myIndexStorage.store.getTimestamp(commit);
+      long[] time = myIndexStorageBackend.getTimestamp(commit);
       return time == null ? null : time[1];
     });
   }
 
+  public @Nullable Map<Integer, Long> getCommitTime(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getCommitTime(commitIds));
+  }
+
   public @Nullable String getFullMessage(int index) {
-    return executeAndCatch(() -> myIndexStorage.store.getMessage(index));
+    return executeAndCatch(() -> myIndexStorageBackend.getMessage(index));
+  }
+
+  public @Nullable Map<Integer, String> getFullMessage(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getMessages(commitIds));
   }
 
   public @Nullable List<Hash> getParents(int index) {
     return executeAndCatch(() -> {
-      int[] parentsIndexes = myIndexStorage.store.getParent(index);
-      if (parentsIndexes == null) {
-        return null;
-      }
-
-      List<Hash> result = new ArrayList<>(parentsIndexes.length);
-      for (int parentIndex : parentsIndexes) {
-        CommitId id = myLogStorage.getCommitId(parentIndex);
-        if (id == null) {
-          return null;
-        }
-        result.add(id.getHash());
-      }
-      return result;
+      int[] parentsIndexes = myIndexStorageBackend.getParents(index);
+      if (parentsIndexes == null) return null;
+      return getHashes(myLogStorage, parentsIndexes);
     });
+  }
+
+  public @Nullable Map<Integer, List<Hash>> getParents(@NotNull Collection<Integer> commitIds) {
+    return executeAndCatch(() -> myIndexStorageBackend.getParents(commitIds));
   }
 
   //
@@ -171,7 +183,7 @@ public final class IndexDataGetter {
   }
 
   private @NotNull IntSet filterUsers(@NotNull Set<? extends VcsUser> users) {
-    return executeAndCatch(() -> myIndexStorage.users.getCommitsForUsers(users), new IntOpenHashSet());
+    return executeAndCatch(() -> myIndexStorageBackend.getCommitsForUsers(users), new IntOpenHashSet());
   }
 
   private @NotNull IntSet filterPaths(@NotNull Collection<? extends FilePath> paths) {
@@ -202,7 +214,7 @@ public final class IndexDataGetter {
                                       Collections.singletonList(filter.getText());
         List<String> noTrigramSources = new ArrayList<>();
         for (String string : trigramSources) {
-          myIndexStorage.store.getCommitsForSubstring(string, candidates, noTrigramSources, consumer, filter);
+          myIndexStorageBackend.getCommitsForSubstring(string, candidates, noTrigramSources, consumer, filter);
         }
 
         if (!noTrigramSources.isEmpty()) {
@@ -221,9 +233,8 @@ public final class IndexDataGetter {
   private void filter(@Nullable IntIterable candidates,
                       @NotNull Predicate<String> condition,
                       @NotNull IntConsumer consumer) throws IOException {
-    VcsLogStorageBackend store = myIndexStorage.store;
     if (candidates == null) {
-      store.processMessages((commit, message) -> {
+      myIndexStorageBackend.processMessages((commit, message) -> {
         if (message != null && condition.test(message)) {
           consumer.accept(commit);
         }
@@ -233,7 +244,7 @@ public final class IndexDataGetter {
     else {
       for (IntIterator iterator = candidates.iterator(); iterator.hasNext(); ) {
         int commit = iterator.nextInt();
-        String value = store.getMessage(commit);
+        String value = myIndexStorageBackend.getMessage(commit);
         if (value != null && condition.test(value)) {
           consumer.accept(commit);
         }
@@ -251,8 +262,8 @@ public final class IndexDataGetter {
     VirtualFile root = getRoot(path);
     if (myProviders.containsKey(root) && root != null) {
       executeAndCatch(() -> {
-        myIndexStorage.paths.iterateCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
-          int[] parents = myIndexStorage.store.getParent(commit);
+        myIndexStorageBackend.iterateChangesInCommits(root, path, (changes, commit) -> executeAndCatch(() -> {
+          int[] parents = myIndexStorageBackend.getParents(commit);
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
           }
@@ -310,7 +321,7 @@ public final class IndexDataGetter {
     public @Nullable EdgeData<FilePath> findRename(int parent, int child, @NotNull FilePath path, boolean isChildPath) {
       VirtualFile root = Objects.requireNonNull(getRoot(path));
       return executeAndCatch(() -> {
-        return myIndexStorage.paths.findRename(parent, child, root, path, isChildPath);
+        return myIndexStorageBackend.findRename(parent, child, root, path, isChildPath);
       });
     }
   }
@@ -412,7 +423,7 @@ public final class IndexDataGetter {
       return computable.compute();
     }
     catch (IOException | UncheckedIOException | StorageException | CorruptedDataException e) {
-      myIndexStorage.markCorrupted();
+      myIndexStorageBackend.markCorrupted();
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     catch (RuntimeException e) {
@@ -425,7 +436,7 @@ public final class IndexDataGetter {
     if (e instanceof ProcessCanceledException) throw e;
 
     if (e.getCause() instanceof IOException || e.getCause() instanceof StorageException) {
-      myIndexStorage.markCorrupted();
+      myIndexStorageBackend.markCorrupted();
       myErrorHandler.handleError(VcsLogErrorHandler.Source.Index, e);
     }
     else {

@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.tabActions
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.Disposable
@@ -14,12 +15,15 @@ import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.*
+import com.intellij.ui.BadgeDotProvider
+import com.intellij.ui.BadgeIcon
+import com.intellij.ui.ComponentUtil
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.ui.tabs.impl.JBEditorTabs
 import com.intellij.ui.tabs.impl.MorePopupAware
 import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.BitUtil
-import com.intellij.util.ObjectUtils
 import com.intellij.util.ui.JBUI
 import java.awt.*
 import java.awt.event.InputEvent
@@ -41,7 +45,9 @@ internal class CloseTab(component: JComponent,
 
   override fun update(e: AnActionEvent) {
     val pinned = isPinned()
-    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && isModified())
+    val modified = isModified()
+    e.presentation.putClientProperty(JBEditorTabs.MARK_MODIFIED_KEY, modified)
+    e.presentation.isVisible = UISettings.getInstance().showCloseButton || pinned || (ExperimentalUI.isNewUI() && modified)
     e.presentation.icon = getIcon(isHovered = false)
     e.presentation.hoveredIcon = getIcon(isHovered = true)
 
@@ -55,7 +61,7 @@ internal class CloseTab(component: JComponent,
         e.presentation.text = TextWithMnemonic.parse(IdeBundle.message("action.unpin.tab")).dropMnemonic(true).text
       }
       else {
-        shortcutSet = ObjectUtils.notNull(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE), CustomShortcutSet.EMPTY)
+        shortcutSet = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_CLOSE)
         e.presentation.setText(IdeBundle.messagePointer("action.presentation.EditorTabbedContainer.text"))
       }
     }
@@ -88,7 +94,7 @@ internal class CloseTab(component: JComponent,
     val fileEditorManager = editorWindow.manager
     val window = if (ActionPlaces.EDITOR_TAB == e.place) editorWindow else fileEditorManager.currentWindow
     if (window != null) {
-      if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
+      if (e.inputEvent is MouseEvent && BitUtil.isSet(e.inputEvent!!.modifiersEx, InputEvent.ALT_DOWN_MASK)) {
         window.closeAllExcept(file)
       }
       else {
@@ -172,21 +178,7 @@ private class DotIcon(private val color: Color) : Icon {
  }
 
 private val CLOSE_ICON: Icon
-  get() {
-    return if (ExperimentalUI.isNewUI()) {
-      IconManager.getInstance().getIcon("expui/general/closeSmall.svg", AllIcons::class.java)
-    }
-    else {
-      AllIcons.Actions.Close
-    }
-  }
+  get() = if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmall else AllIcons.Actions.Close
 
 private val CLOSE_HOVERED_ICON: Icon
-  get() {
-    return if (ExperimentalUI.isNewUI()) {
-      IconManager.getInstance().getIcon("expui/general/closeSmallHovered.svg", AllIcons::class.java)
-    }
-    else {
-      AllIcons.Actions.CloseHovered
-    }
-  }
+  get() = (if (ExperimentalUI.isNewUI()) ExpUiIcons.General.CloseSmallHovered else AllIcons.Actions.CloseHovered)

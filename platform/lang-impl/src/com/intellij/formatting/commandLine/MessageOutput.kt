@@ -20,9 +20,9 @@ import java.io.PrintWriter
 
 open class MessageOutput(private val infoOut: PrintWriter, private val errorOut: PrintWriter) {
 
-  fun info(message: String) = infoOut.printAndFlush(message)
+  fun info(message: String): Unit = infoOut.printAndFlush(message)
 
-  fun error(message: String) = errorOut.printAndFlush(message)
+  fun error(message: String): Unit = errorOut.printAndFlush(message)
 
   private fun PrintWriter.printAndFlush(message: String) {
     print(message)

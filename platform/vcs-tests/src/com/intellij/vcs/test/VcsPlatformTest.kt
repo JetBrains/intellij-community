@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.test
 
 import com.intellij.notification.Notification
@@ -168,7 +168,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     val files = testRoot.listFiles()
     if (!files.isNullOrEmpty()) {
       LOG.warn("Test root was not cleaned up during some previous test run. " + "testRoot: " + testRoot +
-          ", files: " + Arrays.toString(files))
+               ", files: " + files.contentToString())
       for (file in files) {
         LOG.assertTrue(FileUtil.delete(file))
       }

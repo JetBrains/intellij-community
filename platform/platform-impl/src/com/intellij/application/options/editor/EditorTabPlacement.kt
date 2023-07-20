@@ -18,11 +18,11 @@ import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
 import javax.swing.SwingConstants.*
 
-internal val TAB_PLACEMENTS = arrayOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
+internal val TAB_PLACEMENTS: Array<Int> = arrayOf(TOP, LEFT, BOTTOM, RIGHT, TABS_NONE)
 
-internal val TAB_PLACEMENT = ApplicationBundle.message("combobox.editor.tab.placement")
+internal val TAB_PLACEMENT: @Nls String = ApplicationBundle.message("combobox.editor.tab.placement")
 
-internal val tabPlacementsOptionDescriptors = TAB_PLACEMENTS.map { i -> asOptionDescriptor(i) }
+internal val tabPlacementsOptionDescriptors: List<BooleanOptionDescription> = TAB_PLACEMENTS.map { i -> asOptionDescriptor(i) }
 
 internal fun Row.tabPlacementComboBox(): Cell<ComboBox<Int>> {
   val ui = UISettings.getInstance().state

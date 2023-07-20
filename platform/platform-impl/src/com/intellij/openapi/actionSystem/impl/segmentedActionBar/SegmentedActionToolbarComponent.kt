@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl.segmentedActionBar
 
 import com.intellij.openapi.actionSystem.*
@@ -21,17 +21,17 @@ open class SegmentedActionToolbarComponent(place: String,
                                            group: ActionGroup,
                                            private val paintBorderForSingleItem: Boolean = true) : ActionToolbarImpl(place, group, true) {
   companion object {
-    internal const val CONTROL_BAR_PROPERTY = "CONTROL_BAR_PROPERTY"
-    internal const val CONTROL_BAR_FIRST = "CONTROL_BAR_PROPERTY_FIRST"
-    internal const val CONTROL_BAR_LAST = "CONTROL_BAR_PROPERTY_LAST"
-    internal const val CONTROL_BAR_MIDDLE = "CONTROL_BAR_PROPERTY_MIDDLE"
-    internal const val CONTROL_BAR_SINGLE = "CONTROL_BAR_PROPERTY_SINGLE"
+    internal const val CONTROL_BAR_PROPERTY: String = "CONTROL_BAR_PROPERTY"
+    internal const val CONTROL_BAR_FIRST: String = "CONTROL_BAR_PROPERTY_FIRST"
+    internal const val CONTROL_BAR_LAST: String = "CONTROL_BAR_PROPERTY_LAST"
+    internal const val CONTROL_BAR_MIDDLE: String = "CONTROL_BAR_PROPERTY_MIDDLE"
+    internal const val CONTROL_BAR_SINGLE: String = "CONTROL_BAR_PROPERTY_SINGLE"
 
-    const val RUN_TOOLBAR_COMPONENT_ACTION = "RUN_TOOLBAR_COMPONENT_ACTION"
+    const val RUN_TOOLBAR_COMPONENT_ACTION: String = "RUN_TOOLBAR_COMPONENT_ACTION"
 
     private val LOG = Logger.getInstance(SegmentedActionToolbarComponent::class.java)
 
-    val segmentedButtonLook = object : ActionButtonLook() {
+    val segmentedButtonLook: ActionButtonLook = object : ActionButtonLook() {
       override fun paintBorder(g: Graphics, c: JComponent, state: Int) {
       }
 
@@ -159,7 +159,7 @@ open class SegmentedActionToolbarComponent(place: String,
     component.putClientProperty(CONTROL_BAR_PROPERTY, property)
   }
 
-  protected open fun logNeeded() = false
+  protected open fun logNeeded(): Boolean = false
 
   protected fun forceUpdate() {
     if (logNeeded()) LOG.info("RunToolbar MAIN SLOT forceUpdate")
@@ -182,8 +182,9 @@ open class SegmentedActionToolbarComponent(place: String,
   private fun update(forced: Boolean, newVisibleActions: List<AnAction>) {
     val filtered = newVisibleActions.filter { isSuitableAction(it) }
 
-    val ides = newVisibleActions.map { ActionManager.getInstance().getId(it) }.toList()
-    val filteredIds = filtered.map { ActionManager.getInstance().getId(it) }.toList()
+    val actionManager = ActionManager.getInstance()
+    val ides = newVisibleActions.map { actionManager.getId(it)!! }
+    val filteredIds = filtered.map { actionManager.getId(it)!! }
 
     traceState(lastIds, filteredIds, ides)
 

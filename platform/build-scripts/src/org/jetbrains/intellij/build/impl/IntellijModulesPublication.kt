@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency
@@ -11,18 +12,21 @@ import java.nio.file.Files
 import java.nio.file.Path
 
 /**
- * Publishes specified nightly versions of Intellij modules as a Maven artifacts using the output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}.
+ * Publishes specified nightly versions of Intellij modules as a Maven artifacts using the output of [org.jetbrains.intellij.build.impl.MavenArtifactsBuilder].
  *
  * <p>
  * Note: Requires installed `mvn`.
  * </p>
  */
-@SuppressWarnings("unused")
 class IntellijModulesPublication(
   private val context: CompilationContext,
   private val options: Options,
-) {
+) : AutoCloseable {
   private val mavenSettings: File = mavenSettings()
+
+  override fun close() {
+    mavenSettings.delete()
+  }
 
   constructor(context: CompilationContext) : this(context = context, options = Options(version = context.options.buildNumber!!))
 
@@ -30,7 +34,7 @@ class IntellijModulesPublication(
     val version: String,
     var modulesToPublish: List<String> = listProperty("intellij.modules.publication.list"),
     /**
-     * Output of {@link org.jetbrains.intellij.build.impl.MavenArtifactsBuilder}
+     * Output of [org.jetbrains.intellij.build.impl.MavenArtifactsBuilder]
      */
     var outputDir: Path = property("intellij.modules.publication.prebuilt.artifacts.dir")!!.let { Path.of(it).normalize() },
   ) {
@@ -45,6 +49,7 @@ class IntellijModulesPublication(
     var uploadRetryCount = 3
     var repositoryUser: String? = property("intellij.modules.publication.repository.user")
     var repositoryPassword: String? = property("intellij.modules.publication.repository.password")
+
     /**
      * URL where the artifacts will be deployed
      *
@@ -53,13 +58,14 @@ class IntellijModulesPublication(
      *  </p>
      */
     var repositoryUrl: String? = property("intellij.modules.publication.repository.url")
+
     /**
      * Base for url to check if an artifact was already published.
-     * Check {@link org.jetbrains.intellij.build.impl.IntellijModulesPublication#artifactExists} for the details.
+     * Check [artifactExists] for the details.
      */
     var checkArtifactExistsUrl = property("intellij.modules.publication.repository.existsUrl").trimEnd('/')
 
-    var modulesToExclude = listProperty("intellij.modules.publication.excluded", listOf("fleet"))
+    var modulesToExclude = listProperty("intellij.modules.publication.excluded", listOf("fleet", "multiplatform-tests"))
   }
 
   fun publish() {
@@ -98,13 +104,13 @@ class IntellijModulesPublication(
       deployJar(jar, pom, coordinates)
     }
     else {
-      context.messages.warning("${coordinates.toString()} $jar is not found")
+      context.messages.warning("$coordinates $jar is not found")
     }
     if (sources.exists()) {
       deploySources(sources, coordinates)
     }
     else {
-      context.messages.warning("${coordinates.toString()} $sources is not found")
+      context.messages.warning("$coordinates $sources is not found")
     }
   }
 
@@ -121,44 +127,44 @@ class IntellijModulesPublication(
   }
 
   private fun deployJar(jar: File, pom: File, coordinates: MavenCoordinates) {
-    deployFile(jar, coordinates, "", listOf("-DpomFile=${pom.absolutePath}"))
+    deployFile(jar, coordinates, "", "-DpomFile=${pom.absolutePath}")
   }
 
   private fun deploySources(sources: File, coordinates: MavenCoordinates) {
-    deployFile(sources, coordinates, "sources", listOf(
-      "-DgroupId=${coordinates.groupId}",
-      "-DartifactId=${coordinates.artifactId}",
-      "-Dversion=${coordinates.version}",
-      "-Dpackaging=java-source",
-      "-DgeneratePom=false"
-    ))
+    deployFile(sources, coordinates, "sources",
+               "-DgroupId=${coordinates.groupId}",
+               "-DartifactId=${coordinates.artifactId}",
+               "-Dversion=${coordinates.version}",
+               "-Dpackaging=java-source",
+               "-DgeneratePom=false"
+    )
   }
 
-  private fun deployFile(file: File, coordinates: MavenCoordinates, classifier: String, args: Collection<String>) {
+  private fun deployFile(file: File, coordinates: MavenCoordinates, classifier: String, vararg args: String) {
     if (artifactExists(coordinates, classifier, file.name.split('.').last())) {
       context.messages.info("Artifact $coordinates was already published.")
     }
     else {
-      context.messages.info("Upload of $file.name")
-      val process = ProcessBuilder(listOf("mvn", "--settings", mavenSettings.absolutePath,
-                       "deploy:deploy-file",
-                       "-DrepositoryId=server-id",
-                      "-Dfile=${file.absolutePath}",
-                      "-Durl=${options.repositoryUrl}",
-                      "-DretryFailedDeploymentCount=${options.uploadRetryCount}"
-      ) + args)
-        .redirectError(ProcessBuilder.Redirect.INHERIT)
+      context.messages.info("Upload of ${file.name}")
+      val process = ProcessBuilder(
+        "mvn", "--settings", mavenSettings.absolutePath,
+        "deploy:deploy-file",
+        "-DrepositoryId=server-id",
+        "-Dfile=${file.absolutePath}",
+        "-Durl=${options.repositoryUrl}",
+        "-DretryFailedDeploymentCount=${options.uploadRetryCount}",
+        *args)
+        .inheritIO()
         .start()
-      val output = process.inputStream.readAllBytes()
       val exitCode = process.waitFor()
       if (exitCode != 0) {
-        context.messages.error("Upload of $file.name failed with exit code $exitCode: $output")
+        context.messages.error("Upload of ${file.name} failed with exit code $exitCode")
       }
     }
   }
 
   private fun artifactExists(coordinates: MavenCoordinates, classifier: String, packaging: String): Boolean {
-    val url = URL("${options.checkArtifactExistsUrl}/$coordinates.directoryPath/${coordinates.getFileName(classifier, packaging)}")
+    val url = URL("${options.checkArtifactExistsUrl}/${coordinates.directoryPath}/${coordinates.getFileName(classifier, packaging)}")
 
     val connection = url.openConnection() as HttpURLConnection
     connection.requestMethod = "HEAD"
@@ -184,8 +190,7 @@ class IntellijModulesPublication(
       </server>"""
     }
 
-    val file = File.createTempFile("settings", ".xml")
-    file.deleteOnExit()
+    val file = FileUtil.createTempFile("settings", ".xml")
     Files.writeString(file.toPath(), """
       <settings xmlns="https://maven.apache.org/SETTINGS/1.0.0"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"

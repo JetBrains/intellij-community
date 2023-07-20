@@ -1,6 +1,10 @@
 // FIR_COMPARISON
 // FIR_IDENTICAL
-class Generic1<T>
+
+@Target(AnnotationTarget.TYPE_PARAMETER)
+annotation class Annotation
+
+class Generic1<@Annotation T>
 
 class Generic2<T1, T2>
 

@@ -96,17 +96,6 @@ public final class FilenameIndex {
   }
 
   /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
-  @Deprecated(forRemoval = true)
-  public static boolean processFilesByName(@NotNull String name,
-                                           boolean directories,
-                                           boolean caseSensitively,
-                                           @NotNull Processor<? super PsiFileSystemItem> processor,
-                                           @NotNull GlobalSearchScope scope,
-                                           @NotNull Project project) {
-    return processFilesByName(name, directories, caseSensitively, processor, scope, project, null);
-  }
-
-  /** @deprecated Use {@link #processFilesByName(String, boolean, GlobalSearchScope, Processor)} **/
   @Deprecated
   public static boolean processFilesByName(@NotNull String name,
                                            boolean directories,

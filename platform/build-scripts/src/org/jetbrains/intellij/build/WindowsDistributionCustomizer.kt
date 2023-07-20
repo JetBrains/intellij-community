@@ -13,22 +13,22 @@ abstract class WindowsDistributionCustomizer {
   var icoPath: String? = null
 
   /**
-   * Path to ico file for EAP builds (if {@code null} {@link #icoPath} will be used)
+   * Path to ico file for EAP builds (if `null` [icoPath] will be used)
    */
   var icoPathForEAP: String? = null
 
   /**
-   * If {@code true} *.bat files (productName.bat and inspect.bat) will be included into the distribution
+   * If `true` *.bat files (productName.bat and inspect.bat) will be included into the distribution
    */
   var includeBatchLaunchers = true
 
   /**
-   * If {@code true} build a zip archive with JetBrains Runtime
+   * If `true` build a zip archive with JetBrains Runtime
    */
   var buildZipArchiveWithBundledJre = true
 
   /**
-   * If {@code true} build a zip archive without JetBrains Runtime
+   * If `true` build a zip archive without JetBrains Runtime
    */
   var buildZipArchiveWithoutBundledJre = false
 
@@ -36,7 +36,7 @@ abstract class WindowsDistributionCustomizer {
   var zipArchiveWithoutBundledJreSuffix = "-no-jbr.win"
 
   /**
-   * If {@code true} Windows Installer will associate *.ipr files with the IDE in Registry
+   * If `true` Windows Installer will associate *.ipr files with the IDE in Registry
    */
   var associateIpr = true
 

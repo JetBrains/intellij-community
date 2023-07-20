@@ -2,6 +2,7 @@
 package com.intellij.packaging.impl.artifacts.workspacemodel
 
 import com.intellij.configurationStore.serialize
+import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier
 import com.intellij.openapi.project.Project
@@ -18,10 +19,9 @@ import com.intellij.packaging.elements.PackagingElementType
 import com.intellij.packaging.impl.artifacts.ArtifactLoadingErrorDescription
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.mutableArtifactsMap
 import com.intellij.packaging.impl.elements.*
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
 import org.jetbrains.annotations.Nls
 
 internal fun addBridgesToDiff(newBridges: List<ArtifactBridge>, builder: MutableEntityStorage) {

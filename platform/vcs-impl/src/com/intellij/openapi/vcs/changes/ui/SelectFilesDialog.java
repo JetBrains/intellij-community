@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import java.util.Collection;
 import java.util.List;
 
@@ -100,7 +101,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           super.actionPerformed(e);
-          myFileList.refresh();
+          myFileList.rebuildTree();
         }
       };
       setupAction(deleteAction, IdeActions.ACTION_DELETE, getFileList());
@@ -109,12 +110,12 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
     return defaultGroup;
   }
 
-  public static class VirtualFileList extends ChangesTreeImpl.VirtualFiles {
+  public static class VirtualFileList extends AsyncChangesTreeImpl.VirtualFiles {
     @Nullable private final DeleteProvider myDeleteProvider;
 
     public VirtualFileList(Project project, boolean selectableFiles, boolean deletableFiles, @NotNull List<? extends VirtualFile> files) {
       super(project, selectableFiles, true, files);
-      myDeleteProvider = (deletableFiles ?  new VirtualFileDeleteProvider() : null);
+      myDeleteProvider = (deletableFiles ? new VirtualFileDeleteProvider() : null);
     }
 
     @Nullable
@@ -130,8 +131,10 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
       return super.getData(dataId);
     }
 
-    public void refresh() {
-      setChangesToDisplay(ContainerUtil.filter(getChanges(), VirtualFile::isValid));
+    @Override
+    protected @NotNull DefaultTreeModel buildTreeModel(@NotNull ChangesGroupingPolicyFactory grouping,
+                                                       @NotNull List<? extends VirtualFile> changes) {
+      return super.buildTreeModel(grouping, ContainerUtil.filter(changes, VirtualFile::isValid));
     }
   }
 }

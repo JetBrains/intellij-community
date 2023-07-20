@@ -13,7 +13,7 @@ import org.snakeyaml.engine.v2.nodes.ScalarNode
 
 internal class ExternallyConfigurableProjectInspectionProfileManager(project: Project) : ProjectInspectionProfileManager(project) {
   companion object {
-    const val KEY = "inspections"
+    const val KEY: String = "inspections"
   }
 
   private val profileFromFile = SynchronizedClearableLazy {
@@ -38,13 +38,17 @@ internal class ExternallyConfigurableProjectInspectionProfileManager(project: Pr
     }
 
     toEnable?.let {
-      updateTools(it, true, profile, project)
+      updateTools(list = it, value = true, profile = profile, project = project)
     }
     toDisable?.let {
-      updateTools(it, false, profile, project)
+      updateTools(list = it, value = false, profile = profile, project = project)
     }
 
     profile
+  }
+
+  init {
+    ConfigurationFileManager.getInstance(project).registerClearableLazyValue(profileFromFile)
   }
 
   private fun updateTools(list: List<Node>, value: Boolean, profile: InspectionProfileImpl, project: Project) {
@@ -55,23 +59,12 @@ internal class ExternallyConfigurableProjectInspectionProfileManager(project: Pr
     }
   }
 
-  init {
-    ConfigurationFileManager.getInstance(project).registerClearableLazyValue(profileFromFile)
-  }
-
   override fun getProfiles(): Collection<InspectionProfileImpl> {
-    val value = profileFromFile.value
-    if (value != null) {
-      return listOf(value)
+    profileFromFile.value?.let {
+      return listOf(it)
     }
     return super.getProfiles()
   }
 
-  override fun getCurrentProfile(): InspectionProfileImpl {
-    val value = profileFromFile.value
-    if (value != null) {
-      return value
-    }
-    return super.getCurrentProfile()
-  }
+  override fun getCurrentProfile(): InspectionProfileImpl = profileFromFile.value ?: super.getCurrentProfile()
 }

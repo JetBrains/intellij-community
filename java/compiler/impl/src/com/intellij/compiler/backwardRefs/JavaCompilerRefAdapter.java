@@ -11,7 +11,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +29,7 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
   @NotNull
   @Override
   public Set<FileType> getFileTypes() {
-    return ContainerUtil.set(JavaFileType.INSTANCE, JavaClassFileType.INSTANCE);
+    return Set.of(JavaFileType.INSTANCE, JavaClassFileType.INSTANCE);
   }
 
   @Override
@@ -68,6 +67,19 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
     return null;
   }
 
+  @Override
+  public boolean isTooCommonLibraryElement(@NotNull PsiElement element) {
+    String qualifiedName = ReadAction.compute(
+      () -> {
+        PsiClass value = element instanceof PsiClass ? (PsiClass)element : ((PsiMember)element).getContainingClass();
+        PsiClass baseClass = Objects.requireNonNull(value);
+        return baseClass.getQualifiedName();
+      }
+    );
+
+    return CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName);
+  }
+
   @NotNull
   @Override
   public List<CompilerRef> getHierarchyRestrictedToLibraryScope(@NotNull CompilerRef baseRef,
@@ -99,7 +111,6 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       throw exception[0];
     }
     return overridden;
-
   }
 
   @NotNull
@@ -144,12 +155,14 @@ public class JavaCompilerRefAdapter implements LanguageCompilerRefAdapter {
       return PsiElement.EMPTY_ARRAY;
     }
 
-    return Stream.of(theClass.getConstructors()).filter(c -> !c.hasModifierProperty(PsiModifier.PRIVATE)).toArray(s -> PsiElement.ARRAY_FACTORY.create(s));
+    return Stream.of(theClass.getConstructors())
+      .filter(c -> !c.hasModifierProperty(PsiModifier.PRIVATE))
+      .toArray(s -> PsiElement.ARRAY_FACTORY.create(s));
   }
 
   @Override
   public boolean isDirectInheritor(PsiElement candidate, PsiNamedElement baseClass) {
-    return ((PsiClass) candidate).isInheritor((PsiClass) baseClass, false);
+    return ((PsiClass)candidate).isInheritor((PsiClass)baseClass, false);
   }
 
   private static boolean mayBeVisibleOutsideOwnerFile(@NotNull PsiElement element) {

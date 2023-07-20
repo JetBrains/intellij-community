@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 
 interface ProblemsProvider : Disposable {
-  override fun dispose() = Unit
+  override fun dispose() {}
 
   /**
    * The project that the problems provider belongs to.

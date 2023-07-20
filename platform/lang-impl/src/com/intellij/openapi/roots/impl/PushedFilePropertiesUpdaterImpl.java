@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
@@ -28,6 +28,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
+import com.intellij.platform.backend.workspace.WorkspaceModel;
+import com.intellij.platform.workspace.jps.entities.ModuleEntity;
+import com.intellij.platform.workspace.storage.EntityStorage;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.util.ModalityUiUtil;
@@ -41,10 +44,8 @@ import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleEntityUtils;
-import com.intellij.workspaceModel.storage.EntityStorage;
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.ApiStatus;
@@ -69,7 +70,8 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
   public PushedFilePropertiesUpdaterImpl(@NotNull Project project) {
     myProject = project;
 
-    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(@NotNull ModuleRootEvent event) {
         if (LOG.isTraceEnabled()) {
@@ -82,7 +84,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       }
     });
 
-    project.getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void beforePluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         myTasks.clear();
@@ -95,6 +97,12 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     List<Runnable> syncTasks = new ArrayList<>();
     List<Runnable> delayedTasks = new ArrayList<>();
     List<FilePropertyPusher<?>> filePushers = getFilePushers();
+
+    // this is useful for debugging. Especially in integration tests: it is often clear why large file sets have changed
+    // (e.g. imported modules or jdk), but it is often unclear why small file sets change and what these files are.
+    if (LOG.isDebugEnabled() && events.size() < 20) {
+      for (VFileEvent event : events) LOG.debug("File changed: " + event.getPath() + ".\nevent:" + event);
+    }
 
     for (VFileEvent event : events) {
       if (event instanceof VFileCreateEvent) {
@@ -306,6 +314,10 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   @Override
   public void pushAll(FilePropertyPusher<?> @NotNull ... pushers) {
+    if (!UnindexedFilesScanner.isFirstProjectScanningRequested(myProject)) {
+      LOG.info("Ignoring push request, as project is not yet initialized");
+      return;
+    }
     queueTasks(Collections.singletonList(() -> doPushAll(Arrays.asList(pushers))), "Push all on " + Arrays.toString(pushers));
   }
 

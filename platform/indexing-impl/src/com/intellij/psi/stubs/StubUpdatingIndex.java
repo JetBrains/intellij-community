@@ -8,26 +8,22 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
-import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
-import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
-import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.ExceptionUtil;
-import com.intellij.util.KeyedLazyInstance;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ThreeState;
 import com.intellij.util.indexing.*;
+import com.intellij.util.indexing.hints.BaseFileTypeInputFilter;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
@@ -47,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import java.util.function.Consumer;
+
+import static com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy.AFTER_SUBSTITUTION;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
@@ -79,39 +76,64 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   public static boolean canHaveStub(@NotNull VirtualFile file) {
     Project project = ProjectLocator.getInstance().guessProjectForFile(file);
-    FileType fileType = SubstitutedFileType.substituteFileType(file, file.getFileType(), project);
-    return canHaveStub(file, fileType);
+    IndexedFile indexedFile = new IndexedFileImpl(file, project);
+    return INPUT_FILTER.acceptInput(indexedFile);
   }
 
-  private static boolean canHaveStub(@NotNull VirtualFile file, @NotNull FileType fileType) {
-    if (fileType instanceof LanguageFileType) {
-      Language l = ((LanguageFileType)fileType).getLanguage();
-      ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
-      FileBasedIndexEx fileBasedIndex = ObjectUtils.tryCast(FileBasedIndex.getInstance(), FileBasedIndexEx.class);
-
-      if (parserDefinition == null) {
-        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(INDEX_ID)) {
-          fileBasedIndex.getLogger().info("No parser definition for " + file.getName());
-        }
-        return false;
-      }
-
-      final IFileElementType elementType = parserDefinition.getFileNodeType();
-      if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file)) {
-        if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(INDEX_ID)) {
-          fileBasedIndex.getLogger().info("Should build stub for " + file.getName());
-        }
-        return true;
-      }
-
-      if (fileBasedIndex != null && fileBasedIndex.doTraceStubUpdates(INDEX_ID)) {
-        fileBasedIndex.getLogger().info("Can't build stub using stub file element type " + file.getName() +
-                                        ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file));
+  private static final FileBasedIndex.ProjectSpecificInputFilter INPUT_FILTER = new BaseFileTypeInputFilter(AFTER_SUBSTITUTION) {
+    private static void logIfStubTraceEnabled(@NotNull String logText) {
+      if (FileBasedIndex.getInstance() instanceof FileBasedIndexEx fileBasedIndex && fileBasedIndex.doTraceStubUpdates(INDEX_ID)) {
+        fileBasedIndex.getLogger().info(logText);
       }
     }
-    final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
-    return builder != null && builder.acceptsFile(file);
+
+    private static @Nullable ParserDefinition getParserDefinition(@NotNull FileType fileType, @NotNull String logText) {
+      ParserDefinition parserDefinition = null;
+      if (fileType instanceof LanguageFileType) {
+        Language l = ((LanguageFileType)fileType).getLanguage();
+        parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(l);
+        if (parserDefinition == null) {
+          logIfStubTraceEnabled("No parser definition for " + logText);
+        }
+      }
+      return parserDefinition;
+    }
+
+    @Override
+    public boolean slowPathIfFileTypeHintUnsure(@NotNull IndexedFile file) {
+      if (file.getFileType() instanceof LanguageFileType) {
+        ParserDefinition parserDefinition = getParserDefinition(file.getFileType(), file.getFileName());
+        if (parserDefinition == null) return false;
+
+        final IFileElementType elementType = parserDefinition.getFileNodeType();
+        if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file.getFile())) {
+          logIfStubTraceEnabled("Should build stub for " + file.getFileName());
+          return true;
+        }
+
+        logIfStubTraceEnabled("Can't build stub using stub file element type " + file.getFileName() +
+                              ", properties: " + PushedFilePropertiesRetriever.getInstance().dumpSortedPushedProperties(file.getFile()));
+      }
+
+      BinaryFileStubBuilder builder = getBinaryStubBuilder(file.getFileType());
+      return builder != null && builder.acceptsFile(file.getFile());
   }
+
+    private static @Nullable BinaryFileStubBuilder getBinaryStubBuilder(@NotNull FileType fileType) {
+      return BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
+    }
+
+    @NotNull
+    @Override
+    public ThreeState acceptFileType(@NotNull FileType fileType) {
+      if (getParserDefinition(fileType, fileType.toString()) == null && getBinaryStubBuilder(fileType) == null) {
+        return ThreeState.NO;
+      }
+      else {
+        return ThreeState.UNSURE;
+      }
+    }
+  };
 
   @NotNull
   @Override
@@ -305,12 +327,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @NotNull
   @Override
   public FileBasedIndex.InputFilter getInputFilter() {
-    return new FileBasedIndex.ProjectSpecificInputFilter() {
-      @Override
-      public boolean acceptInput(@NotNull IndexedFile file) {
-        return canHaveStub(file.getFile(), file.getFileType());
-      }
-    };
+    return INPUT_FILTER;
   }
 
   @Override

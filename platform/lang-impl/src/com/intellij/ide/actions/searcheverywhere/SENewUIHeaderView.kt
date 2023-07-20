@@ -7,7 +7,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBTabbedPane
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.util.function.Function
@@ -27,7 +27,7 @@ internal class SENewUIHeaderView(tabs: List<SearchEverywhereHeader.SETab>, short
     panel = panel {
       row {
         tabbedPane = tabbedPaneHeader()
-          .customize(Gaps.EMPTY)
+          .customize(UnscaledGaps.EMPTY)
           .applyToComponent {
             font = JBFont.regular()
             background = JBUI.CurrentTheme.ComplexPopup.HEADER_BACKGROUND

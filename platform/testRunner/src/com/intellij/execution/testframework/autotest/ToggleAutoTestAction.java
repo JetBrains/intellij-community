@@ -18,7 +18,7 @@ public class ToggleAutoTestAction extends ToggleAction {
     super(IdeBundle.messagePointer("action.ToggleAction.text.toggle.auto.test"),
           IdeBundle.messagePointer("action.ToggleAction.description.toggle.auto.test"),
           AllIcons.Actions.SwapPanels);
-    getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.MORE_GROUP);
+    getTemplatePresentation().putClientProperty(RunTab.PREFERRED_PLACE, PreferredPlace.TOOLBAR);
   }
 
   @Override

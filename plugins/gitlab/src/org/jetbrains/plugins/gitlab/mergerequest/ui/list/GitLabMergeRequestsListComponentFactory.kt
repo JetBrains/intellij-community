@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.list
 
-import com.intellij.collaboration.ui.codereview.list.NamedCollection
-import com.intellij.collaboration.ui.codereview.list.ReviewListComponentFactory
-import com.intellij.collaboration.ui.codereview.list.ReviewListItemPresentation
-import com.intellij.collaboration.ui.codereview.list.UserPresentation
+import com.intellij.collaboration.ui.codereview.Avatar
+import com.intellij.collaboration.ui.codereview.list.*
 import com.intellij.collaboration.ui.icon.IconsProvider
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionListModel
@@ -17,8 +15,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeStatus
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
 
 internal object GitLabMergeRequestsListComponentFactory {
-  private const val AVATAR_SIZE = 20
-
   fun create(
     listModel: CollectionListModel<GitLabMergeRequestDetails>,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
@@ -29,7 +25,10 @@ internal object GitLabMergeRequestsListComponentFactory {
         id = "!${mergeRequest.iid}",
         createdDate = mergeRequest.createdAt,
         author = userPresentation(mergeRequest.author, avatarIconsProvider),
-        tagGroup = null,
+        tagGroup = NamedCollection.create(
+          GitLabBundle.message("merge.request.list.renderer.labels.popup", mergeRequest.labels.size),
+          mergeRequest.labels.map(::getLabelPresentation)
+        ),
         mergeableStatus = getMergeableStatus(mergeRequest.mergeStatus),
         buildStatus = null,
         state = getMergeStateText(mergeRequest.state, mergeRequest.draft),
@@ -46,11 +45,15 @@ internal object GitLabMergeRequestsListComponentFactory {
     }
   }
 
+  private fun getLabelPresentation(label: String): TagPresentation {
+    return TagPresentation.Simple(label, null)
+  }
+
   private fun userPresentation(user: GitLabUserDTO, avatarIconsProvider: IconsProvider<GitLabUserDTO>): UserPresentation {
     return UserPresentation.Simple(
       username = user.username,
       fullName = user.name,
-      avatarIcon = avatarIconsProvider.getIcon(user, AVATAR_SIZE)
+      avatarIcon = avatarIconsProvider.getIcon(user, Avatar.Sizes.BASE)
     )
   }
 

@@ -1,13 +1,13 @@
 <html>
 <body>
 Reports issues essential to this file (e.g., syntax errors) in the result of a batch code inspection run.
-These kinds of issues are usually always highlighted when you open the file in the editor and can't be configured (unlike inspections).
-The options below are controlling the analysis level of this inspection:
+These issues are usually always highlighted in the editor and can't be configured, unlike inspections.
+These options control the scope of checks performed by this inspection:
 <ul>
-  <li>Option "<b>Highlight syntax errors</b>" allows to report parser-related issues.</li>
-  <li>Option "<b>Run language annotators</b>" allows to report issues found by annotators configured for this language.
+  <li>Option "<b>Report syntax errors</b>": report parser-related issues.</li>
+  <li>Option "<b>Report issues from language-specific annotators</b>": report issues found by annotators configured for the relevant language.
     See <a href="https://plugins.jetbrains.com/docs/intellij/annotator.html">Custom Language Support: Annotators</a> for details.</li>
-  <li>Option "<b>Run language-specific highlight visitors</b>" allows to report issues inherent to this file language (e.g., type mismatches or unreported exceptions etc.).
+  <li>Option "<b>Report other highlighting problems</b>": report issues specific to the language of the current file (e.g., type mismatches or unreported exceptions).
     See <a href="https://plugins.jetbrains.com/docs/intellij/syntax-highlighting-and-error-highlighting.html#semantic-highlighting">Custom Language Support: Highlighting</a> for details.</li>
 </ul>
 </body>

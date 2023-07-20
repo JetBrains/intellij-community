@@ -14,7 +14,7 @@ import java.util.Objects;
 abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(AbstractEditIntentionSettingsAction.class);
 
-  @NotNull final String myFamilyName;
+  final @NotNull String myFamilyName;
   private final boolean myEnabled;
 
   protected AbstractEditIntentionSettingsAction(@NotNull IntentionAction action) {
@@ -26,9 +26,8 @@ abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
                 !Objects.equals(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());
   }
 
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @NotNull String getFamilyName() {
     return getText();
   }
 

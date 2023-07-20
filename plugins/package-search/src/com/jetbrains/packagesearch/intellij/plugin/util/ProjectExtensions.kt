@@ -2,6 +2,7 @@
 package com.jetbrains.packagesearch.intellij.plugin.util
 
 import com.intellij.ProjectTopics
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.externalSystem.DependencyModifierService
 import com.intellij.facet.FacetManager
 import com.intellij.ide.impl.isTrusted
@@ -140,7 +141,7 @@ val Project.dumbService: DumbService
 
 suspend fun DumbService.awaitSmart() {
     suspendCoroutine {
-        runWhenSmart { it.resume(Unit) }
+        runWhenSmart(ContextAwareRunnable { it.resume(Unit) })
     }
 }
 

@@ -19,8 +19,10 @@ val jdomSerializer: JdomSerializer = run {
 }
 
 @JvmOverloads
-fun <T : Any> serialize(obj: T, filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(), createElementIfEmpty: Boolean = false): Element? {
-  return jdomSerializer.serialize(obj, filter, createElementIfEmpty)
+fun <T : Any> serialize(obj: T,
+                        filter: SerializationFilter? = jdomSerializer.getDefaultSerializationFilter(),
+                        createElementIfEmpty: Boolean = false): Element? {
+  return jdomSerializer.serialize(obj = obj, filter = filter, createElementIfEmpty = createElementIfEmpty)
 }
 
 inline fun <reified T: Any> deserialize(element: Element): T = jdomSerializer.deserialize(element, T::class.java)

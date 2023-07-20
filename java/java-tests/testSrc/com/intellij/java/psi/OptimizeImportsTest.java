@@ -3,6 +3,7 @@ package com.intellij.java.psi;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.formatting.MockCodeStyleSettingsModifier;
 import com.intellij.ide.scratch.ScratchFileService;
@@ -33,6 +34,12 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   @Override
   protected String getTestDataPath() {
     return BASE_PATH;
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myFixture.enableInspections(new UnusedDeclarationInspection());
   }
 
   public void testSCR6138() { doTest(); }

@@ -394,7 +394,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
 private class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
   init {
-    font = StartupUiUtil.getLabelFont()
+    font = StartupUiUtil.labelFont
   }
 
   override fun paint(g: Graphics?) {

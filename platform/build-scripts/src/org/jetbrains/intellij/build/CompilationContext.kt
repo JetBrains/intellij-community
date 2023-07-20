@@ -49,8 +49,7 @@ interface CompilationContext {
 
   fun getModuleRuntimeClasspath(module: JpsModule, forTests: Boolean = false): List<String>
 
-  // "Was" added due to Groovy bug (compilation error - cannot find method with same name but different parameter type)
-  fun notifyArtifactWasBuilt(artifactPath: Path)
+  fun notifyArtifactBuilt(artifactPath: Path)
 }
 
 interface CompilationTasks {
@@ -75,5 +74,7 @@ interface CompilationTasks {
   fun buildProjectArtifacts(artifactNames: Set<String>)
 
   fun resolveProjectDependencies()
+  
+  fun generateRuntimeModuleRepository()
 }
 

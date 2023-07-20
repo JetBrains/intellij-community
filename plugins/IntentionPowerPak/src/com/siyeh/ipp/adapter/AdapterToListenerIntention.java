@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.adapter;
 
 import com.intellij.openapi.project.Project;
@@ -7,14 +7,14 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class AdapterToListenerIntention extends MutablyNamedIntention {
+public class AdapterToListenerIntention extends MCIntention {
 
   @NotNull
   @Override
@@ -23,7 +23,7 @@ public class AdapterToListenerIntention extends MutablyNamedIntention {
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
     final String text = element.getText();
     return IntentionPowerPackBundle.message("adapter.to.listener.intention.name", text);
   }

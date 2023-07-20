@@ -97,7 +97,7 @@ private fun skipActivityEvent(e: AWTEvent): Boolean {
 internal suspend fun dataContext(window: Window, panel: JComponent): DataContext? = suspendCancellableCoroutine {
   IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(Runnable {
     it.resume(dataContextInner(window, panel))
-  }, it.context.contextModality() ?: ModalityState.NON_MODAL)
+  }, it.context.contextModality() ?: ModalityState.nonModal())
 }
 
 private fun dataContextInner(window: Window, panel: JComponent): DataContext? {

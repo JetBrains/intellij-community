@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="package-search-api-models" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.packagesearch:pkgs-api-models:2.2.8" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.packagesearch:pkgs-api-models:2.5.1" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.2.8/pkgs-api-models-2.2.8.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.5.1/pkgs-api-models-2.5.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.2.8/pkgs-api-models-2.2.8-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/packagesearch/pkgs-api-models/2.5.1/pkgs-api-models-2.5.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

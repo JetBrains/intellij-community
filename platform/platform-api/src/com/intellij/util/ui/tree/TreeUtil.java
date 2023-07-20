@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.tree;
 
 import com.intellij.ide.ui.UISettings;
@@ -1802,12 +1802,15 @@ public final class TreeUtil {
 
     TreePath path = new TreePath(root);
     switch (visitor.visit(path)) {
-      case INTERRUPT:
+      case INTERRUPT -> {
         return path; // root path is found
-      case CONTINUE:
-        break; // visit children
-      default:
+      }
+      case CONTINUE -> {
+        // visit children
+      }
+      default -> {
         return null; // skip children
+      }
     }
     Deque<Deque<TreePath>> stack = new ArrayDeque<>();
     stack.push(children(model, path));
@@ -1822,17 +1825,15 @@ public final class TreeUtil {
       }
       else {
         switch (visitor.visit(next)) {
-          case INTERRUPT:
+          case INTERRUPT -> {
             return next; // path is found
-          case CONTINUE:
+          }
+          case CONTINUE -> {
             path = next;
             stack.push(children(model, path));
-            break;
-          case SKIP_SIBLINGS:
-            siblings.clear();
-            break;
-          case SKIP_CHILDREN:
-            break;
+          }
+          case SKIP_SIBLINGS -> siblings.clear();
+          case SKIP_CHILDREN -> {}
         }
       }
     }

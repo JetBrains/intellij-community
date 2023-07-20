@@ -31,6 +31,8 @@ public abstract class ActionPlaces {
   public static final String MAIN_TOOLBAR = "MainToolbar";
   public static final String EDITOR_POPUP = "EditorPopup";
   public static final String EDITOR_TOOLBAR = "EditorToolbar";
+
+  public static final String EDITOR_FLOATING_TOOLBAR = "EditorFloatingToolbar";
   public static final String EDITOR_TAB_POPUP = "EditorTabPopup";
   public static final String EDITOR_TAB = "EditorTab";
   public static final String TABS_MORE_TOOLBAR = "TabsMoreToolbar";
@@ -247,6 +249,10 @@ public abstract class ActionPlaces {
 
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
+  }
+
+  public static boolean isNewUiToolbarPlace(@NotNull String place) {
+    return place.startsWith(NEW_UI_RUN_TOOLBAR);
   }
 
   public static boolean isCommonPlace(@NotNull String place) {

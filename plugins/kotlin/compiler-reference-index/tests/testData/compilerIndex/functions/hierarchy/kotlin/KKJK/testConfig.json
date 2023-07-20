@@ -3,5 +3,6 @@
     "usages": [
         "kkjk_.java",
         "kkjk_.kt"
-    ]
+    ],
+    "ignoreK2Compiler": "KT-57044"
 }

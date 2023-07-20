@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -15,12 +15,15 @@ import com.intellij.debugger.engine.managerThread.DebuggerCommand
 import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.JvmSteppingCommandProvider
 import com.intellij.debugger.impl.PositionUtil
+import com.intellij.debugger.ui.impl.watch.MethodsTracker
+import com.intellij.debugger.ui.impl.watch.StackFrameDescriptorImpl
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.ui.OrderRoot
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.runInEdtAndWait
@@ -82,12 +85,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     private fun SuspendContextImpl.getKotlinStackFrames(): List<KotlinStackFrame> {
-        val proxy = frameProxy ?: return emptyList()
         if (myInProgress) {
-            val positionManager = KotlinPositionManager(debugProcess)
-            return positionManager.createStackFrames(
-                proxy, debugProcess, proxy.location()
-            ).filterIsInstance<KotlinStackFrame>()
+            val proxy = frameProxy ?: return emptyList()
+            return KotlinPositionManager(debugProcess)
+              .createStackFrames(StackFrameDescriptorImpl(proxy, MethodsTracker()))
+              .filterIsInstance<KotlinStackFrame>()
         }
         return emptyList()
     }
@@ -232,8 +234,11 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
 
             val sourcePosition = PositionUtil.getSourcePosition(this)
             println(sourcePosition?.render() ?: "null", ProcessOutputTypes.SYSTEM)
+            extraPrintContext(this)
         }
     }
+
+    protected open fun extraPrintContext(context: SuspendContextImpl) {}
 
     private fun SuspendContextImpl.doSmartStepInto(chooseFromList: Int, ignoreFilters: Boolean) {
         val filters = createSmartStepIntoFilters()
@@ -340,10 +345,14 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     }
 
     override fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String) {
+        addMavenDependency(compilerFacility, library, module)
+    }
+
+    fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, library: String, module: Module) {
         val regex = Regex(MAVEN_DEPENDENCY_REGEX)
         val result = regex.matchEntire(library) ?: return
         val (_, groupId: String, artifactId: String, version: String) = result.groupValues
-        addMavenDependency(compilerFacility, groupId, artifactId, version)
+        addMavenDependency(compilerFacility, groupId, artifactId, version, module)
     }
 
     override fun createJavaParameters(mainClass: String?): JavaParameters {
@@ -354,14 +363,19 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         return params
     }
 
-    protected fun addMavenDependency(compilerFacility: DebuggerTestCompilerFacility, groupId: String, artifactId: String, version: String) {
+    protected fun addMavenDependency(
+        compilerFacility: DebuggerTestCompilerFacility,
+        groupId: String, artifactId: String,
+        version: String,
+        module: Module
+    ) {
         val description = JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version)
         val artifacts = loadDependencies(description)
         compilerFacility.addDependencies(artifacts.map { it.file.presentableUrl })
-        addLibraries(artifacts)
+        addLibraries(artifacts, module)
     }
 
-    private fun addLibraries(artifacts: MutableList<OrderRoot>) {
+    private fun addLibraries(artifacts: MutableList<OrderRoot>, module: Module) {
         runInEdtAndWait {
             ConfigLibraryUtil.addLibrary(module, "ARTIFACTS") {
                 for (artifact in artifacts) {

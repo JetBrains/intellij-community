@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.visibility;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
@@ -41,7 +42,7 @@ public class InnerClassVariableHidesOuterClassVariableInspection
   public boolean m_ignoreInvisibleFields = true;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new RenameFix();
   }
 

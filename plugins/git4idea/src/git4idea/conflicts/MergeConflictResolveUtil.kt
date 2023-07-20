@@ -101,10 +101,15 @@ object MergeConflictResolveUtil {
     }
   }
 
-  internal fun hasActiveMergeWindow(file: VirtualFile) = file.getUserData(ACTIVE_MERGE_WINDOW) != null
+  private fun getActiveMergeWindow(file: VirtualFile): WindowWrapper? {
+    return file.getUserData(ACTIVE_MERGE_WINDOW)?.takeIf { !it.isDisposed }
+  }
+
+  internal fun hasActiveMergeWindow(file: VirtualFile) = getActiveMergeWindow(file) != null
 
   private fun focusActiveMergeWindow(file: VirtualFile?): Boolean {
-    val wrapper = file?.getUserData(ACTIVE_MERGE_WINDOW) ?: return false
+    if (file == null) return false
+    val wrapper = getActiveMergeWindow(file) ?: return false
     UIUtil.toFront(wrapper.window)
     return true
   }
@@ -142,11 +147,16 @@ object MergeConflictResolveUtil {
     }
 
     private fun createNotificationPanel(file: VirtualFile): EditorNotificationPanel? {
-      val wrapper = file.getUserData(ACTIVE_MERGE_WINDOW) ?: return null
+      if (!hasActiveMergeWindow(file)) return null
+
       val panel = EditorNotificationPanel(LightColors.SLIGHTLY_GREEN, EditorNotificationPanel.Status.Info)
-      panel.setText(GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress"))
-      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) { UIUtil.toFront(wrapper.window) }
-      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) { wrapper.close() }
+      panel.text = GitBundle.message("link.label.editor.notification.merge.conflicts.resolve.in.progress")
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.focus.window")) {
+        UIUtil.toFront(getActiveMergeWindow(file)?.window)
+      }
+      panel.createActionLabel(GitBundle.message("link.label.merge.conflicts.resolve.in.progress.cancel.resolve")) {
+        getActiveMergeWindow(file)?.close()
+      }
       return panel
     }
   }

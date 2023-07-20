@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.command
 
@@ -45,7 +45,7 @@ class CoroutineDumpAction : AnAction() {
                             val coroutines = states.cache.map { it.toCompleteCoroutineInfoData() }
                             addCoroutineDump(project, coroutines, ui, session.searchScope)
                         }
-                        ApplicationManager.getApplication().invokeLater(f, ModalityState.NON_MODAL)
+                        ApplicationManager.getApplication().invokeLater(f, ModalityState.nonModal())
                     } else {
                         val message = KotlinDebuggerCoroutinesBundle.message("coroutine.dump.failed")
                         XDebuggerManagerImpl.getNotificationGroup().createNotification(message, MessageType.ERROR).notify(project)

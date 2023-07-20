@@ -48,4 +48,5 @@ class AfterClasses {
 // EXIST:  expect
 // EXIST:  actual
 // EXIST:  lateinit var
+// EXIST: data object
 // NOTHING_ELSE

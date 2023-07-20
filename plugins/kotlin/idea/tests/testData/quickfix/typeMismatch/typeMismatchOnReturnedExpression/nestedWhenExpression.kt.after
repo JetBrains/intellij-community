@@ -9,6 +9,3 @@ fun test(b: Boolean): Any =
             true -> O(); else -> P()
         }
     }
-
-/* IGNORE_FIR */
-

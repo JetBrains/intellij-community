@@ -41,6 +41,7 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
   // https://github.com/gradle/gradle/commit/b435112d1baba787fbe4a9a6833401e837df9246
   private static boolean is2_14_1_OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("2.14.1")
   private static is6OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("6.0")
+  private static is82OrBetter = GradleVersion.current().baseVersion >= GradleVersion.version("8.2")
 
   @Override
   boolean canBuild(String modelName) {
@@ -56,8 +57,6 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
 
     if (mySourceSetFinder == null) mySourceSetFinder = new SourceSetCachedFinder(context)
 
-    final String appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
-                              "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
     List<? extends EarConfiguration.EarModel> earModels = []
 
     def deployConfiguration = project.configurations.findByName(EarPlugin.DEPLOY_CONFIGURATION_NAME)
@@ -71,6 +70,16 @@ class EarModelBuilderImpl extends AbstractModelBuilderService {
 
     for (task in project.tasks) {
       if (task instanceof Ear) {
+
+        String appDirName;
+        if (is82OrBetter) {
+          def appDirectoryLocation = reflectiveGetProperty(task, "getAppDirectory", Object)
+          appDirName = reflectiveCall(appDirectoryLocation, "getAsFile", File).absolutePath
+        } else {
+          appDirName = !project.hasProperty(APP_DIR_PROPERTY) ?
+                       "src/main/application" : String.valueOf(project.property(APP_DIR_PROPERTY))
+        }
+
         final EarModelImpl earModel =
           is6OrBetter ? new EarModelImpl(reflectiveGetProperty(task, "getArchiveFileName", String), appDirName, task.getLibDirName()) :
           new EarModelImpl(reflectiveCall(task, "getArchiveName", String), appDirName, task.getLibDirName())

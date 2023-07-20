@@ -17,7 +17,6 @@ import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.TargetEnvironment;
 import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetedCommandLine;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
@@ -28,6 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -210,7 +210,11 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    return myConfig.emulateTerminal() && !PythonSdkUtil.isRemote(getSdk());
+    if (PythonSdkUtil.isRemote(getSdk()) && !Registry.is("python.use.targets.api")) {
+      // do not allow to emulate terminal for legacy non-target remote interpreters logic
+      return false;
+    }
+    return myConfig.emulateTerminal();
   }
 
   @Override
@@ -247,24 +251,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     }
     else {
       return super.doCreateProcess(commandLine);
-    }
-  }
-
-  @Override
-  protected @NotNull ProcessHandler createProcessHandler(@NotNull Process process,
-                                                         @NotNull String commandLineString,
-                                                         @NotNull TargetEnvironment targetEnvironment,
-                                                         @NotNull TargetedCommandLine commandLine) {
-    if (emulateTerminal()) {
-      return new OSProcessHandler(process, commandLineString, commandLine.getCharset()) {
-        @Override
-        protected @NotNull BaseOutputReader.Options readerOptions() {
-          return BaseOutputReader.Options.forTerminalPtyProcess();
-        }
-      };
-    }
-    else {
-      return super.createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
     }
   }
 

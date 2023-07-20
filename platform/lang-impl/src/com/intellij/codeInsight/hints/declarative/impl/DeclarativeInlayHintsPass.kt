@@ -56,8 +56,8 @@ class DeclarativeInlayHintsPass(
     val inlayDatas = sinks.flatMap { it.finish() }
     val inlayModel = editor.inlayModel
     val document = editor.document
-    val existingInlineElements = inlayModel.getInlineElementsInRange(0, document.textLength - 1, DeclarativeInlayRenderer::class.java)
-    val existingEolElements = inlayModel.getAfterLineEndElementsInRange(0, document.textLength - 1, DeclarativeInlayRenderer::class.java)
+    val existingInlineElements = inlayModel.getInlineElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
+    val existingEolElements = inlayModel.getAfterLineEndElementsInRange(0, document.textLength, DeclarativeInlayRenderer::class.java)
     val offsetToExistingInlineElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
     val offsetToExistingEolElements = Int2ObjectOpenHashMap<SmartList<Inlay<out DeclarativeInlayRenderer>>>() // either inlay or list of inlays
     for (inlineElement in existingInlineElements) {

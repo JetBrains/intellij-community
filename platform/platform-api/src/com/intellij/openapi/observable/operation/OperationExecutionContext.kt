@@ -20,7 +20,7 @@ interface OperationExecutionContext {
   @ApiStatus.NonExtendable
   interface Builder : OperationExecutionContext {
 
-    fun <T> putData(key: ContextKey<T>, data: T) = putData(key, data, null)
+    fun <T> putData(key: ContextKey<T>, data: T): Unit = putData(key, data, null)
     fun <T> putData(key: ContextKey<T>, data: T, parentDisposable: Disposable?)
   }
 

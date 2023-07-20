@@ -176,6 +176,6 @@ internal fun createKtFile(
     return file
 }
 
-internal fun refreshHints() {
-    InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+internal fun refreshHints(project: Project) {
+    InlayHintsPassFactory.restartDaemonUpdatingHints(project)
 }

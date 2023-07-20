@@ -58,7 +58,7 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
   @Override
   protected void initTree() {
     super.initTree();
-    new TreeSpeedSearch(myTree, true, treePath -> {
+    TreeSpeedSearch.installOn(myTree, true, treePath -> {
       MasterDetailsComponent.MyNode obj = (MyNode)treePath.getLastPathComponent();
       return obj == null ? null : obj.getDisplayName();
     });

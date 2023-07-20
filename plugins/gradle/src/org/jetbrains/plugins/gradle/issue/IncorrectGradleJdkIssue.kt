@@ -20,9 +20,12 @@ class IncorrectGradleJdkIssue(projectPath: String,
   override fun getNavigatable(project: Project): Navigatable? = null
 
   init {
-    val gradleSettingsFix = GradleSettingsQuickFix(projectPath, isResolveProjectTask,
-                                                   { oldSettings, currentSettings -> oldSettings.gradleJvm != currentSettings.gradleJvm },
-                                                   GradleBundle.message("gradle.settings.text.jvm.path"))
+    val gradleSettingsFix = GradleSettingsQuickFix(
+      projectPath,
+      isResolveProjectTask,
+      GradleSettingsQuickFix.GradleJvmChangeDetector,
+      GradleBundle.message("gradle.settings.text.jvm.path")
+    )
     quickFixes = listOf(gradleSettingsFix)
     val fixLink = "<a href=\"${gradleSettingsFix.id}\">${GradleBundle.message("gradle.open.gradle.settings")}</a>"
     description = "$title: '$jdkHome'.\n$message\n$fixLink\n"

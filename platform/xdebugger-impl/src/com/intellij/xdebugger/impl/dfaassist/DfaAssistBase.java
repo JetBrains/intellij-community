@@ -62,14 +62,13 @@ public abstract class DfaAssistBase implements Disposable {
     AssistMode mode = myMode;
     if (!hints.isEmpty() && mode.displayInlays()) {
       InlayModel model = editor.getInlayModel();
-      AnAction turnOffDfaProcessor = new TurnOffDfaProcessorAction();
       hints.forEach((expr, hint) -> {
         Segment range = expr.getTextRange();
         if (range == null) return;
         PresentationFactory factory = new PresentationFactory(editor);
         MenuOnClickPresentation presentation = new MenuOnClickPresentation(
           factory.roundWithBackground(factory.smallText(hint.getTitle())), myProject,
-          () -> Collections.singletonList(turnOffDfaProcessor));
+          () -> getInlayHintActions());
         newInlays.add(model.addInlineElement(range.getEndOffset(), new PresentationRenderer(presentation)));
       });
     }
@@ -85,6 +84,10 @@ public abstract class DfaAssistBase implements Disposable {
     if (!newInlays.isEmpty() || !ranges.isEmpty()) {
       myMarkup = new DfaAssistMarkup(editor, newInlays, ranges);
     }
+  }
+
+  protected @NotNull List<@NotNull AnAction> getInlayHintActions() {
+    return Collections.singletonList(new TurnOffDfaProcessorAction());
   }
 
   @Override

@@ -11,6 +11,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.pyi.PyiUtil
 
 object PyCollectionTypeUtil {
 
@@ -201,7 +202,7 @@ object PyCollectionTypeUtil {
     val strKeysToValueTypes = LinkedHashMap<String, Pair<PyExpression?, PyType?>>()
     var allStrKeys = true
 
-    if (keyType is PyClassType && "str" == keyType.name) {
+    if (keyType is PyLiteralStringType || keyType is PyClassType && ("str" == keyType.name)) {
       when (tuple) {
         is PyKeyValueExpression -> {
           if (tuple.key is PyStringLiteralExpression) {
@@ -528,10 +529,7 @@ object PyCollectionTypeUtil {
           for (arg in arguments) {
             if (arg is PyKeywordArgument) {
               if (!keyStrAdded) {
-                val strType = PyBuiltinCache.getInstance(myElement).strType
-                if (strType != null) {
-                  keyTypes.add(strType)
-                }
+                keyTypes.add(PyLiteralStringType.create(arg, true))
                 keyStrAdded = true
               }
               val value = PyUtil.peelArgument(arg)

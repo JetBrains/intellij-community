@@ -23,7 +23,7 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @SuppressWarnings({"DuplicatedCode", "CommentedOutCode"})
 @ApiStatus.Internal
-final class Xxh3Impl {
+public final class Xxh3Impl {
   private Xxh3Impl() {
   }
 
@@ -147,7 +147,7 @@ final class Xxh3Impl {
     return block_len;
   }
 
-  public static  <T> long hash(final T input, final Access<T> access, final int off, final int length, final long seed) {
+  public static <T> long hash(final T input, final Access<T> access, final int off, final int length, final long seed) {
     if (length <= 16) {
       // len_0to16_64b
       if (length > 8) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.util.containers;
 
@@ -136,9 +136,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       return key;
     }
 
-    @NotNull
     @Override
-    public final V getValue() {
+    public final @NotNull V getValue() {
       return val;
     }
 
@@ -723,9 +722,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    *
    * @return the collection view
    */
-  @NotNull
   @Override
-  public Collection<V> values() {
+  public @NotNull Collection<V> values() {
     ValuesView<V> vs;
     return (vs = values) != null ? vs : (values = new ValuesView<>(this));
   }
@@ -946,8 +944,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    * @see #values()
    */
   @Override
-  @NotNull
-  public Enumeration<V> elements() {
+  public @NotNull Enumeration<V> elements() {
     Node<V>[] t;
     int f = (t = table) == null ? 0 : t.length;
     return new ValueIterator<>(t, f, 0, f, this);
@@ -2370,9 +2367,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
           return k;
         }
 
-        @NotNull
         @Override
-        public V getValue() {
+        public @NotNull V getValue() {
           return v;
         }
       };
@@ -2432,9 +2428,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
      *
      * @return an iterator over the elements in this collection
      */
-    @NotNull
     @Override
-    public abstract Iterator<E> iterator();
+    public abstract @NotNull Iterator<E> iterator();
 
     @Override
     public abstract boolean contains(Object o);
@@ -2600,9 +2595,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
       return false;
     }
 
-    @NotNull
     @Override
-    public Iterator<V> iterator() {
+    public @NotNull Iterator<V> iterator() {
       ConcurrentLongObjectHashMap<V> m = map;
       Node<V>[] t;
       int f = (t = m.table) == null ? 0 : t.length;
@@ -2620,9 +2614,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
     }
   }
 
-  @NotNull
   @Override
-  public Iterable<LongEntry<V>> entries() {
+  public @NotNull Iterable<LongEntry<V>> entries() {
     return new EntrySetView<>(this);
   }
 
@@ -2659,9 +2652,8 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
     /**
      * @return an iterator over the entries of the backing map
      */
-    @NotNull
     @Override
-    public Iterator<LongEntry<V>> iterator() {
+    public @NotNull Iterator<LongEntry<V>> iterator() {
       ConcurrentLongObjectHashMap<V> m = map;
       Node<V>[] t;
       int f = (t = m.table) == null ? 0 : t.length;
@@ -2742,8 +2734,7 @@ final class ConcurrentLongObjectHashMap<V> implements ConcurrentLongObjectMap<V>
    * @return value if there is no entry in the map, or corresponding value if entry already exists
    */
   @Override
-  @NotNull
-  public V cacheOrGet(final long key, @NotNull final V defaultValue) {
+  public @NotNull V cacheOrGet(final long key, final @NotNull V defaultValue) {
     V v = get(key);
     if (v != null) return v;
     V prev = putIfAbsent(key, defaultValue);

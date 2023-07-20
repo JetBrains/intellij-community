@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -17,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class Macro {
   public static final ExtensionPointName<Macro> EP_NAME = ExtensionPointName.create("com.intellij.liveTemplateMacro");
 
-  @NonNls
-  public abstract String getName();
+  public abstract @NonNls String getName();
 
   /**
    * @return a presentable string that will be shown in the combobox in <em>Edit Template Variables</em> dialog
@@ -28,17 +27,13 @@ public abstract class Macro {
     return getName() + "()";
   }
 
-  @NonNls
-  @NotNull
-  public String getDefaultValue() {
+  public @NonNls @NotNull String getDefaultValue() {
     return "";
   }
 
-  @Nullable
-  public abstract Result calculateResult(Expression @NotNull [] params, ExpressionContext context);
+  public abstract @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context);
 
-  @Nullable
-  public Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
+  public @Nullable Result calculateQuickResult(Expression @NotNull [] params, ExpressionContext context) {
     return null;
   }
 
@@ -54,8 +49,7 @@ public abstract class Macro {
    * @return focus degree to use for macro's lookup.
    * @see LookupFocusDegree
    */
-  @NotNull
-  public LookupFocusDegree getLookupFocusDegree() {
+  public @NotNull LookupFocusDegree getLookupFocusDegree() {
     return LookupFocusDegree.FOCUSED;
   }
 }

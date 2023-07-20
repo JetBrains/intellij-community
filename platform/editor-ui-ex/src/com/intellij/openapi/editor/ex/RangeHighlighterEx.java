@@ -8,7 +8,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -99,14 +98,6 @@ public interface RangeHighlighterEx extends RangeHighlighter, RangeMarkerEx {
     setLineSeparatorRenderer(other.getLineSeparatorRenderer());
 
     setEditorFilter(other.getEditorFilter());
-  }
-
-  /**
-   * Put user data and call {@link MarkupModelEx#fireAttributesChanged(RangeHighlighterEx, boolean, boolean)}
-   */
-  @ApiStatus.Experimental
-  default <T> void putUserDataAndFireChanged(@NotNull Key<T> key, @Nullable T value) {
-    putUserData(key, value);
   }
 
   Comparator<RangeHighlighterEx> BY_AFFECTED_START_OFFSET = Comparator.comparingInt(RangeHighlighterEx::getAffectedAreaStartOffset);

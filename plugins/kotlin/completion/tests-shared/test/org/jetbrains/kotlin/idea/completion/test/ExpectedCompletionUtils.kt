@@ -55,7 +55,7 @@ object ExpectedCompletionUtils {
         }
 
         constructor(json: JsonObject) {
-            map = HashMap<String, String?>()
+            map = HashMap()
             for (entry in json.entrySet()) {
                 val key = entry.key
                 if (key !in validKeys) {

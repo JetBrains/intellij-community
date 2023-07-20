@@ -333,7 +333,7 @@ public final class NewMappings implements Disposable {
         }
       }
 
-      List<MappedRoot> result = Collections.unmodifiableList(ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR));
+      List<MappedRoot> result = ContainerUtil.sorted(mappedRoots.values(), ROOT_COMPARATOR);
 
       for (MappedRoot root : result) {
         if (myVcsManager.isIgnored(VcsUtil.getFilePath(root.root))) {
@@ -711,23 +711,18 @@ public final class NewMappings implements Disposable {
   }
 
   private static final class RootMapping {
-    private final Map<VirtualFile, MappedRoot> myVFMap = new HashMap<>();
+    private final VirtualFileMapping<MappedRoot> myVFMap = new VirtualFileMapping<>();
     private final FilePathMapping<MappedRoot> myPathMapping = new FilePathMapping<>(SystemInfo.isFileSystemCaseSensitive);
 
     private RootMapping(@NotNull List<MappedRoot> mappedRoots) {
       for (MappedRoot root : mappedRoots) {
-        myVFMap.put(root.root, root);
+        myVFMap.add(root.root, root);
         myPathMapping.add(root.root.getPath(), root);
       }
     }
 
     public @Nullable MappedRoot getRootFor(@NotNull VirtualFile file) {
-      while (file != null) {
-        MappedRoot root = myVFMap.get(file);
-        if (root != null) return root;
-        file = file.getParent();
-      }
-      return null;
+      return myVFMap.getMappingFor(file);
     }
 
     public @Nullable MappedRoot getRootFor(@NotNull FilePath filePath) {

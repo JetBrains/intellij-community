@@ -1,0 +1,2 @@
+/* Doc comment */
+class Some

@@ -2,10 +2,10 @@
 package com.intellij.feedback.common.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.JBFont
 
-class TopLabelBlock(@NlsContexts.Label val myText: String) : BaseFeedbackBlock() {
+class TopLabelBlock(@NlsContexts.Label private val myText: String) : FeedbackBlock, TextDescriptionProvider {
 
   override fun addToPanel(panel: Panel) {
     panel.apply {
@@ -15,6 +15,13 @@ class TopLabelBlock(@NlsContexts.Label val myText: String) : BaseFeedbackBlock()
             font = JBFont.h1()
           }
       }
+    }
+  }
+
+  override fun collectBlockTextDescription(stringBuilder: StringBuilder) {
+    stringBuilder.apply {
+      appendLine(myText)
+      appendLine()
     }
   }
 }

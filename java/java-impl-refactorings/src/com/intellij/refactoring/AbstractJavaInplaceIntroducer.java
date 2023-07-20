@@ -67,17 +67,6 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   @Override
-  public void finish(boolean success) {
-    if (success) {
-      PsiVariable variable = getVariable();
-      if (variable != null) {
-        mySuggestedNameInfo.nameChosen(variable.getName());
-      }
-    }
-    super.finish(success);
-  }
-
-  @Override
   protected PsiVariable createFieldToStartTemplateOn(boolean replaceAll, String[] names) {
     myTypeSelectorManager.setAllOccurrences(replaceAll);
     return createFieldToStartTemplateOn(names, getType());
@@ -118,8 +107,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
   }
 
   @Override
-  protected void saveSettings(@NotNull PsiVariable psiVariable) {
-    TypeSelectorManagerImpl.typeSelected(psiVariable.getType(), getType());//myDefaultType.getType());
+  protected void saveSettings(@NotNull PsiVariable variable) {
+    mySuggestedNameInfo.nameChosen(variable.getName());
+    TypeSelectorManagerImpl.typeSelected(variable.getType(), getType());
     myTypeSelectorManager = null;
   }
 

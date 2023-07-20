@@ -105,7 +105,14 @@ public class LegacyCompletionContributor extends CompletionContributor implement
     final PsiReference ref = parameters.getPosition().getContainingFile().findReferenceAt(startOffset);
     if (ref instanceof PsiMultiReference) {
       for (final PsiReference reference : CompletionData.getReferences((PsiMultiReference)ref)) {
-        processReference(result, startOffset, consumer, reference);
+        if (reference instanceof PsiReferencesWrapper) {
+          for (PsiReference r : ((PsiReferencesWrapper)reference).getReferences()) {
+            processReference(result, startOffset, consumer, r);
+          }
+        }
+        else {
+          processReference(result, startOffset, consumer, reference);
+        }
       }
     }
     else if (ref instanceof PsiDynaReference) {

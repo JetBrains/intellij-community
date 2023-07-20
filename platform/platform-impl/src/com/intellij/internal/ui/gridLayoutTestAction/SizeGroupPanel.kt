@@ -8,7 +8,7 @@ import javax.swing.JPanel
 
 class SizeGroupPanel {
 
-  val panel = createTabPanel("Cells in same size groups should have the same sizes", createContent())
+  val panel: JPanel = createTabPanel("Cells in same size groups should have the same sizes", createContent())
 
   private fun createContent(): JPanel {
     val result = JPanel(GridLayout())

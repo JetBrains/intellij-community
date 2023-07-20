@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.diagnostic.LoadingState;
@@ -58,7 +58,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private Stack<State> myStateStack; // guarded by getLock()
 
   private volatile ProgressIndicator myModalityProgress;
-  private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
+  private volatile ModalityState myModalityState = ModalityState.nonModal();
   private volatile int myNonCancelableSectionCount;
   @SuppressWarnings("SpellCheckingInspection") private final Object lock = ObjectUtils.sentinel("APIB lock");
 

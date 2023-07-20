@@ -28,7 +28,7 @@ import kotlin.io.path.isExecutable
 import kotlin.io.path.name
 
 class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
-  private fun generateCommandForPowerShell(sdk: Sdk, sdkHomePath: VirtualFile): Array<out String>? {
+  private fun generateCommandForPowerShell(sdk: Sdk, sdkHomePath: VirtualFile, powershellName: String): Array<out String>? {
     // TODO: This should be migrated to Targets API: each target provides terminal
     if ((sdk.sdkAdditionalData as? PythonSdkAdditionalData)?.flavor is CondaEnvSdkFlavor) {
       // Activate conda
@@ -43,12 +43,14 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
         condaActivationCommand = PyTerminalBundle.message("powershell.conda.not.activated", "conda")
       }
       // To activate conda we need to allow code execution
-      return arrayOf("powershell.exe", "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-Command", condaActivationCommand)
+      return arrayOf(powershellName, "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-Command", condaActivationCommand)
     }
 
     // Activate convenient virtualenv
     val virtualEnvProfile = sdkHomePath.parent.findChild("activate.ps1") ?: return null
-    return if (virtualEnvProfile.exists()) arrayOf("powershell.exe", "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-File", virtualEnvProfile.path) else null
+    return if (virtualEnvProfile.exists()) arrayOf(powershellName, "-ExecutionPolicy", "RemoteSigned", "-NoExit", "-File",
+                                                   virtualEnvProfile.path)
+    else null
   }
 
   /**
@@ -93,12 +95,13 @@ class PyVirtualEnvTerminalCustomizer : LocalTerminalCustomizer() {
       if (sdkHomePath != null && command.isNotEmpty()) {
         val shellPath = command[0]
 
-        if (Path(shellPath).name == "powershell.exe") {
-          return generateCommandForPowerShell(sdk, sdkHomePath) ?: command
+        val shellName = Path(shellPath).name
+        if (shellName in arrayOf("powershell.exe", "pwsh.exe")) {
+          return generateCommandForPowerShell(sdk, sdkHomePath, shellName) ?: command
         }
 
         if (isShellIntegrationAvailable(shellPath)) { //fish shell works only for virtualenv and not for conda
-          //for bash we pass activate script to jediterm shell integration (see jediterm-bash.in) to source it there
+          //for bash we pass activate script to shell integration (see bash-integration.bash) to source it there
           //TODO: fix conda for fish [also in fleet.language.python.PythonVirtualEnvTerminalPreprocessor#preprocess]
 
           findActivateScript(sdkHomePath.path, shellPath)?.let { activate ->

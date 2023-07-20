@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
 
@@ -53,7 +52,15 @@ interface ClientSession : ComponentManager {
  */
 @ApiStatus.Experimental
 @ApiStatus.Internal
-interface ClientAppSession : ClientSession
+interface ClientAppSession : ClientSession {
+  /**
+   * Clients may have access only to some of the projects.
+   * Currently, there's a limitation in Code With Me (CWM-2149) because of the complexity with permissions and calls.
+   *
+   * For remote-dev having several projects, or not having one open is natural same as in a local setup
+   */
+  val projectSessions: List<ClientProjectSession>
+}
 
 /**
  * Project level [ClientSession]
@@ -61,6 +68,15 @@ interface ClientAppSession : ClientSession
 @ApiStatus.Experimental
 @ApiStatus.Internal
 interface ClientProjectSession : ClientSession {
+  /**
+   * Project this session belongs to. Unlike sessions there's only one project,
+   * independently of how many active users is operating with it.
+   */
   val project: Project
+
+  /**
+   * Some features live on app-level (e.g., UI, actions, popups) this allows to get from project-level to app-level.
+   * It's recommended to get session instead on manual [ClientId] manipulation
+   */
   val appSession: ClientAppSession
 }

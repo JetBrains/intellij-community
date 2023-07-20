@@ -197,7 +197,7 @@ class AnnotationConverter(private val converter: Converter) {
                 componentGenerators
             } else {
                 listOf { codeConverter ->
-                    convertArrayInitializerValue(codeConverter, value.text, componentGenerators, expectedType, isVararg)
+                    convertArrayInitializerValue(codeConverter, value.text, componentGenerators, expectedType)
                         .assignPrototype(value)
                 }
             }
@@ -210,7 +210,7 @@ class AnnotationConverter(private val converter: Converter) {
             }
             if (expectedType is PsiArrayType) {
                 listOf { codeConverter ->
-                    convertArrayInitializerValue(codeConverter, value.text, annotationConstructor, expectedType, isVararg)
+                    convertArrayInitializerValue(codeConverter, value.text, annotationConstructor, expectedType)
                         .assignPrototype(value)
                 }
 
@@ -234,19 +234,17 @@ class AnnotationConverter(private val converter: Converter) {
             return convertArrayInitializerValue(codeConverter,
                                                 value.text,
                                                 listOf { expression },
-                                                expectedType,
-                                                false
+                                                expectedType
             ).assignPrototype(value)
         }
         return expression
     }
 
     private fun convertArrayInitializerValue(
-            codeConverter: CodeConverter,
-            valueText: String,
-            componentGenerators: List<(CodeConverter) -> Expression>,
-            expectedType: PsiType?,
-            isVararg: Boolean
+      codeConverter: CodeConverter,
+      valueText: String,
+      componentGenerators: List<(CodeConverter) -> Expression>,
+      expectedType: PsiType?
     ): Expression {
         val expectedTypeConverted = converter.typeConverter.convertType(expectedType)
         return if (expectedTypeConverted is ArrayType) {

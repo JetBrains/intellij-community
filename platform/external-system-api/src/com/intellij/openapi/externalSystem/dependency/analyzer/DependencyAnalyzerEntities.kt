@@ -5,16 +5,16 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.UserDataHolderBase
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import org.jetbrains.annotations.Nls
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 class DAProject(
   override val module: Module,
   override val title: @Nls String
 ) : UserDataHolderBase(), DependencyAnalyzerProject {
-  override fun equals(other: Any?) = other is DependencyAnalyzerProject && module == other.module
-  override fun hashCode() = module.hashCode()
-  override fun toString() = title
+  override fun equals(other: Any?): Boolean = other is DependencyAnalyzerProject && module == other.module
+  override fun hashCode(): Int = module.hashCode()
+  override fun toString(): @Nls String = title
 }
 
 data class DADependency(
@@ -23,13 +23,13 @@ data class DADependency(
   override val parent: Dependency?,
   override val status: List<Dependency.Status>
 ) : UserDataHolderBase(), Dependency {
-  override fun toString() = "($scope) $data -> $parent"
+  override fun toString(): String = "($scope) $data -> $parent"
 }
 
 data class DAModule(
   override val name: @Nls String
 ) : UserDataHolderBase(), Dependency.Data.Module {
-  override fun toString() = name
+  override fun toString(): @Nls String = name
 }
 
 data class DAArtifact(
@@ -37,14 +37,14 @@ data class DAArtifact(
   override val artifactId: @Nls String,
   override val version: @Nls String
 ) : UserDataHolderBase(), Dependency.Data.Artifact {
-  override fun toString() = "$groupId:$artifactId:$version"
+  override fun toString(): String = "$groupId:$artifactId:$version"
 }
 
 data class DAScope(
   override val name: @Nls String,
   override val title: @Nls(capitalization = Nls.Capitalization.Title) String
 ) : UserDataHolderBase(), Dependency.Scope {
-  override fun toString() = title
+  override fun toString(): @Nls(capitalization = Nls.Capitalization.Title) String = title
 }
 
 object DAOmitted : UserDataHolderBase(), Dependency.Status.Omitted

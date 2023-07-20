@@ -4,13 +4,11 @@ package com.intellij.ui.scale;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.OffsetIcon;
-import com.intellij.ui.scale.CompositeIconPaintTestHelper;
-import com.intellij.ui.scale.ScaleContext;
-import org.junit.Test;
+import com.intellij.ui.RestoreScaleExtension;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import javax.swing.*;
-
-import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.OffsetIcon} painting.
@@ -18,6 +16,9 @@ import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
  * @author tav
  */
 public class OffsetIconPaintTest extends CompositeIconPaintTestHelper {
+  @RegisterExtension
+  public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
+
   @Test
   @Override
   public void test() {
@@ -31,7 +32,7 @@ public class OffsetIconPaintTest extends CompositeIconPaintTestHelper {
 
   @Override
   protected String getGoldImagePath(ScaleContext ctx) {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_OffsetIcon@" + (int)ctx.getScale(PIX_SCALE) + "x.png";
+    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_OffsetIcon@" + (int)ctx.getScale(DerivedScaleType.PIX_SCALE) + "x.png";
   }
 
   @Override

@@ -9,19 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class TasksBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.MavenTasksBundle";
-  private static final TasksBundle INSTANCE = new TasksBundle();
+public final class TasksBundle {
+  public static final @NonNls String BUNDLE = "messages.MavenTasksBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(TasksBundle.class, BUNDLE);
 
-  private TasksBundle() { super(BUNDLE); }
+  private TasksBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
   }
 }

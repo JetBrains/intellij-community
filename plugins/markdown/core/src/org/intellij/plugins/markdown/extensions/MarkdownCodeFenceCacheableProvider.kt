@@ -5,9 +5,12 @@ import com.intellij.openapi.application.PathManager
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
 
+@ApiStatus.Obsolete
+@ApiStatus.Internal
 abstract class MarkdownCodeFenceCacheableProvider(var collector: MarkdownCodeFencePluginCacheCollector?)
   : CodeFenceGeneratingProvider {
 

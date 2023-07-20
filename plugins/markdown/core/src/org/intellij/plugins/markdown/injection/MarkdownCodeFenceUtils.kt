@@ -17,6 +17,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.lang.psi.util.hasType
 import org.intellij.plugins.markdown.lang.psi.util.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Utility functions used to work with Markdown Code Fences
@@ -39,6 +40,7 @@ object MarkdownCodeFenceUtils {
    * @return non-empty list of elements or null
    */
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use getContent(MarkdownCodeFence) instead.")
   fun getContent(host: MarkdownCodeFenceImpl, withWhitespaces: Boolean): List<PsiElement>? {
     val children = host.firstChild?.siblings(forward = true, withSelf = true) ?: return null
@@ -78,6 +80,7 @@ object MarkdownCodeFenceUtils {
    * one line (even empty) of text.
    */
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use isAbleToAcceptInjections(MarkdownCodeFence) instead.")
   fun isAbleToAcceptInjections(host: MarkdownCodeFenceImpl): Boolean {
     if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
@@ -103,6 +106,7 @@ object MarkdownCodeFenceUtils {
    * returns null
    */
   @JvmStatic
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use getEmptyRange(MarkdownCodeFence) instead.")
   fun getEmptyRange(host: MarkdownCodeFenceImpl): TextRange {
     val start = host.children.find { it.hasType(MarkdownTokenTypes.FENCE_LANG) }

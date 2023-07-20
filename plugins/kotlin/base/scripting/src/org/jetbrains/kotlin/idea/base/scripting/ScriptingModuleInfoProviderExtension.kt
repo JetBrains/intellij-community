@@ -10,22 +10,19 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.asJava.classes.runReadAction
-import org.jetbrains.kotlin.idea.base.projectStructure.ModuleInfoProviderExtension
-import org.jetbrains.kotlin.idea.base.projectStructure.register
+import org.jetbrains.kotlin.idea.base.projectStructure.*
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptDependenciesSourceInfo
 import org.jetbrains.kotlin.idea.base.scripting.projectStructure.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
+import org.jetbrains.kotlin.idea.base.util.SeqScope
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
-import org.jetbrains.kotlin.idea.base.projectStructure.isKotlinBinary
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptDependenciesSourcesScope
-import org.jetbrains.kotlin.idea.core.script.ucache.getAllScriptsDependenciesClassFilesScope
+import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
-import org.jetbrains.kotlin.utils.yieldIfNotNull
 
 internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtension {
-    override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByElement(
+    override fun SeqScope<Result<IdeaModuleInfo>>.collectByElement(
         element: PsiElement,
         file: PsiFile,
         virtualFile: VirtualFile
@@ -41,14 +38,14 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
         }
     }
 
-    override suspend fun SequenceScope<Result<IdeaModuleInfo>>.collectByFile(
+    override fun SeqScope<Result<IdeaModuleInfo>>.collectByFile(
         project: Project,
         virtualFile: VirtualFile,
         isLibrarySource: Boolean
     ) {
         val isBinary = virtualFile.fileType.isKotlinBinary
 
-        if (isBinary && virtualFile in getAllScriptsDependenciesClassFilesScope(project)) {
+        if (isBinary && virtualFile in ScriptConfigurationManager.getInstance(project).getAllScriptsDependenciesClassFilesScope()) {
             if (isLibrarySource) {
                 register(ScriptDependenciesSourceInfo.ForProject(project))
             } else {
@@ -56,17 +53,24 @@ internal class ScriptingModuleInfoProviderExtension : ModuleInfoProviderExtensio
             }
         }
 
-        if (!isBinary && virtualFile in getAllScriptDependenciesSourcesScope(project)) {
-            register(ScriptDependenciesSourceInfo.ForProject(project))
+        register {
+            if (!isBinary && virtualFile in ScriptConfigurationManager.getInstance(project).getAllScriptDependenciesSourcesScope()) {
+                ScriptDependenciesSourceInfo.ForProject(project)
+            } else {
+                null
+            }
         }
     }
 
-    override suspend fun SequenceScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {
-        if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
-            val scratchModuleName = ScriptRelatedModuleNameFile[project, virtualFile]
-            if (scratchModuleName != null) {
-                val moduleManager = ModuleManager.getInstance(project)
-                yieldIfNotNull(moduleManager.findModuleByName(scratchModuleName))
+    override fun SeqScope<Module>.findContainingModules(project: Project, virtualFile: VirtualFile) {
+        yield {
+            if (ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType) {
+                ScriptRelatedModuleNameFile[project, virtualFile]?.let { scratchModuleName ->
+                    val moduleManager = ModuleManager.getInstance(project)
+                    moduleManager.findModuleByName(scratchModuleName)
+                }
+            } else {
+                null
             }
         }
     }

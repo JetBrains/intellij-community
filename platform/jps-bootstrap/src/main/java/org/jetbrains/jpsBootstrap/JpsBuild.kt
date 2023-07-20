@@ -27,13 +27,13 @@ import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 import java.util.stream.Collectors
 
-class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myModel: JpsModel?, jpsBootstrapWorkDir: Path, kotlincHome: Path?) {
+class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myModel: JpsModel, jpsBootstrapWorkDir: Path, kotlincHome: Path?) {
   private val myModuleNames: Set<String>
   private val myDataStorageRoot: Path
   private val myJpsLogDir: Path
 
   init {
-    myModuleNames = myModel!!.project.modules.stream().map { obj: JpsModule -> obj.name }.collect(Collectors.toUnmodifiableSet())
+    myModuleNames = myModel.project.modules.stream().map { obj: JpsModule -> obj.name }.collect(Collectors.toUnmodifiableSet())
     myDataStorageRoot = jpsBootstrapWorkDir.resolve("jps-build-data")
     System.setProperty("aether.connector.resumeDownloads", "false")
     System.setProperty("jps.kotlin.home", kotlincHome.toString())
@@ -116,11 +116,11 @@ class JpsBuild(communityRoot: BuildDependenciesCommunityRoot, private val myMode
     )
     println("Finished building '" + java.lang.String.join(" ", modules) + "' in " + (System.currentTimeMillis() - buildStart) + " ms")
     val errors: List<String> = ArrayList(messageHandler.myErrors)
-    if (!errors.isEmpty() && !rebuild) {
+    if (!errors.isEmpty() && !rebuild && System.getProperty("intellij.build.incremental.compilation.fallback.rebuild", "true") == "true") {
       warn("""
-    Incremental build finished with errors. Forcing rebuild. Compilation errors:
-    ${java.lang.String.join("\n", errors)}
-    """.trimIndent())
+        Incremental build finished with errors. Forcing rebuild. Compilation errors:
+        ${java.lang.String.join("\n", errors)}
+        """.trimIndent())
       cleanDirectory(myDataStorageRoot)
       runBuild(modules, true)
     }

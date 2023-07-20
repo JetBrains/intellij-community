@@ -15,9 +15,7 @@ sealed class GHRepositoryListItem(
 
     other as GHRepositoryListItem
 
-    if (account != other.account) return false
-
-    return true
+    return account == other.account
   }
 
   override fun hashCode(): Int {
@@ -60,9 +58,7 @@ sealed class GHRepositoryListItem(
 
       other as Error
 
-      if (error != other.error) return false
-
-      return true
+      return error == other.error
     }
 
     override fun hashCode(): Int {

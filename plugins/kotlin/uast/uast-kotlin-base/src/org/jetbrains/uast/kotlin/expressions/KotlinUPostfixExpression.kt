@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.PsiType
 import com.intellij.psi.ResolveResult
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -40,4 +41,9 @@ class KotlinUPostfixExpression(
 
     override fun multiResolve(): Iterable<ResolveResult> =
         getResolveResultVariants(baseResolveProviderService, sourcePsi)
+
+    override fun getExpressionType(): PsiType? =
+        super<KotlinUElementWithType>.getExpressionType()
+        // For overloaded operator (from binary dependency), we may need call resolution.
+            ?: resolveOperator()?.returnType
 }

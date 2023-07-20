@@ -23,7 +23,7 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
       childrenCache.getCachedOrUpdatedArray(AnAction.EMPTY_ARRAY)
     }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -44,10 +44,11 @@ class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
     override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
     override fun update(e: AnActionEvent) {
-      e.presentation.text = if (manager.activeLayoutName == layoutName)
+      val text = if (manager.activeLayoutName == layoutName)
         ActionsBundle.message("group.CustomLayoutActionsGroup.current.text", layoutName)
       else
         layoutName
+      e.presentation.setText(text, false)
       e.presentation.isVisible = layoutName.isNotBlank() // Just in case the layout name is corrupted somehow.
     }
 

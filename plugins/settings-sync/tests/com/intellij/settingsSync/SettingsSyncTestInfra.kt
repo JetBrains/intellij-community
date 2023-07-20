@@ -10,7 +10,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState.PluginData
-import com.intellij.util.toBufferExposingByteArray
+import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.Constants
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -68,7 +68,7 @@ internal fun PersistentStateComponent<*>.serialize(): ByteArray {
 
   val appElement = Element("application")
   appElement.addContent(compElement)
-  return appElement.toBufferExposingByteArray().toByteArray()
+  return appElement.toByteArray()
 }
 
 internal fun settingsSnapshot(metaInfo: MetaInfo = MetaInfo(Instant.now(), getLocalApplicationInfo()),

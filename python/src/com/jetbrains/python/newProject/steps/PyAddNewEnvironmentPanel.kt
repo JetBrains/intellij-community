@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.util.ui.FormBuilder
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
@@ -76,6 +77,10 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
     val createdSdk = selectedPanel.getOrCreateSdk()
     PySdkSettings.instance.preferredEnvironmentType = selectedPanel.envName
     return createdSdk
+  }
+
+  override fun getStatisticInfo(): InterpreterStatisticsInfo? {
+    return selectedPanel.getStatisticInfo();
   }
 
   override fun validateAll(): List<ValidationInfo> = selectedPanel.validateAll()

@@ -10,9 +10,9 @@ import java.awt.event.ActionEvent
 
 class ProblemsViewProjectErrorsPanelProvider(private val project: Project) : ProblemsViewPanelProvider {
   companion object {
-    const val ID = "ProjectErrors"
+    const val ID: String = "ProjectErrors"
   }
-  private val ACTION_IDS = listOf("CompileDirty", "InspectCode")
+  private val ACTION_IDS: List<String> = listOf("CompileDirty", "InspectCode")
 
   override fun create(): ProblemsViewTab {
     val state = ProblemsViewState.getInstance(project)

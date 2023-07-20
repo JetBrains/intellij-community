@@ -1,17 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.decls;
 
 import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ChangeVariableTypeToRhsTypeIntention extends MutablyNamedIntention {
+public class ChangeVariableTypeToRhsTypeIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -25,7 +25,7 @@ public class ChangeVariableTypeToRhsTypeIntention extends MutablyNamedIntention 
   }
 
   @Override
-  protected String getTextForElement(PsiElement element) {
+  protected String getTextForElement(@NotNull PsiElement element) {
     final PsiVariable variable = (PsiVariable)element.getParent();
     final PsiExpression initializer = variable.getInitializer();
     assert initializer != null;

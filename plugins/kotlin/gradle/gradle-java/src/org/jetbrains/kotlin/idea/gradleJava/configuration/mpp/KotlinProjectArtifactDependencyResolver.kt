@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.configuration.mpp
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinProjectArtifactDependency
 import org.jetbrains.kotlin.gradle.idea.tcs.IdeaKotlinSourceDependency
@@ -52,7 +53,8 @@ private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifac
         val modulesOutputsMap = context.projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
         return dependency.artifactsClasspath.flatMap { artifactFile ->
-            val id = artifactsMap[artifactFile.path] ?: modulesOutputsMap[artifactFile.path]?.first ?: return@flatMap emptySet()
+            val artifactPath = ExternalSystemApiUtil.normalizePath(artifactFile.path)
+            val id = artifactsMap[artifactPath] ?: modulesOutputsMap[artifactPath]?.first ?: return@flatMap emptySet()
             val sourceSetDataNode = sourceSetMap[id]?.first ?: return@flatMap emptySet()
             val sourceSet = sourceSetMap[id]?.second ?: return@flatMap emptySet()
             val sourceSetNames = sourceSetDataNode.kotlinSourceSetData?.sourceSetInfo?.dependsOn.orEmpty()

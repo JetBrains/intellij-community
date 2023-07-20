@@ -3,21 +3,20 @@ package com.intellij.cce.processor
 import com.intellij.cce.actions.CompletionGolfSession
 import com.intellij.cce.actions.DeleteRange
 import com.intellij.cce.actions.MoveCaret
+import com.intellij.cce.actions.TextRange
 import com.intellij.cce.core.*
 
 class CompletionGolfProcessor : GenerateActionsProcessor() {
   override fun process(code: CodeFragment) {
     code.getChildren().forEach {
-      addActions(it)
+      addActions(it as CodeLine)
     }
   }
 
-  private fun addActions(token: CodeToken) {
-    if (token.text.isNotEmpty()) {
-      val nodeProperties = SimpleTokenProperties.create(TypeProperty.LINE, SymbolLocation.UNKNOWN) {}
-      addAction(DeleteRange(token.offset, token.offset + token.length))
-      addAction(MoveCaret(token.offset))
-      addAction(CompletionGolfSession(token.text, nodeProperties))
+  private fun addActions(line: CodeLine) {
+    if (line.text.isNotEmpty()) {
+      addAction(MoveCaret(line.offset))
+      addAction(CompletionGolfSession(line.text, line.getChildren().map { TextRange(it.offset, it.offset + it.text.length) }))
     }
   }
 }

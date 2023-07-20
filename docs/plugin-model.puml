@@ -3,7 +3,7 @@
 
 ' https://www.augmentedmind.de/2021/01/17/plantuml-layout-tutorial-styles/
 
-component "[[https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md plugin]]" as P
+component "[[https://youtrack.jetbrains.com/articles/IJPL-A-31/Plugin-Model plugin]]" as P
 
 folder content as PluginContent {
   [module name="…" 0…N] as M

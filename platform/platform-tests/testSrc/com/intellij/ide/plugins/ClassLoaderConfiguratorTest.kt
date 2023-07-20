@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 package com.intellij.ide.plugins
 
@@ -16,7 +16,6 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestName
 import java.nio.file.Path
-import java.util.*
 
 private val buildNumber = BuildNumber.fromString("2042.0")!!
 
@@ -72,7 +71,6 @@ internal class ClassLoaderConfiguratorTest {
   }
 
   @Test
-  @Suppress("PluginXmlValidity")
   fun `inject content module if another plugin specifies dependency in old format`() {
     val rootDir = inMemoryFs.fs.getPath("/")
 
@@ -108,12 +106,11 @@ internal class ClassLoaderConfiguratorTest {
       .containsExactly("com.example.sub.xml", null)
   }
 
-  @Suppress("PluginXmlValidity")
   private fun loadPlugins(modulePackage: String?): PluginLoadingResult {
     val rootDir = inMemoryFs.fs.getPath("/")
 
     // toUnsignedLong - avoid `-` symbol
-    val pluginIdSuffix = Integer.toUnsignedLong(Xxh3.hashUnencodedChars32(javaClass.name + name.methodName)).toString(36)
+    val pluginIdSuffix = Integer.toUnsignedLong(Xxh3.hashUnencodedChars(javaClass.name + name.methodName).toInt()).toString(36)
     val dependencyId = "p_dependency_$pluginIdSuffix"
     plugin(rootDir, """
       <idea-plugin package="com.bar">

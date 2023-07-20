@@ -23,6 +23,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.geom.Point2D;
+import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 
 public class TextComponentEditorImpl extends UserDataHolderBase implements TextComponentEditor {
@@ -310,8 +312,61 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     return new EmptyIndentsModel();
   }
 
+  private static final AtomicBoolean classesLoaded = new AtomicBoolean();
+
   @ApiStatus.Internal
   public static void ensureRequiredClassesAreLoaded() {
-    new TextComponentEditorImpl(null, new JTextArea());
+    if (!classesLoaded.compareAndSet(false, true)) {
+      return;
+    }
+    var classLoader = TextComponentEditorImpl.class.getClassLoader();
+    for (var c : Arrays.asList(
+      Border.class,
+      CaretModel.class,
+      Document.class,
+      EditorColorsScheme.class,
+      EditorGutter.class,
+      EditorKind.class,
+      EditorMouseEventArea.class,
+      EditorMouseListener.class,
+      EditorMouseMotionListener.class,
+      EditorSettings.class,
+      EmptyIndentsModel.class,
+      EmptyInlayModel.class,
+      EmptySoftWrapModel.class,
+      FoldingModel.class,
+      IndentsModel.class,
+      InlayModel.class,
+      Insets.class,
+      JBInsets.class,
+      JComponent.class,
+      JTextArea.class,
+      JTextComponent.class,
+      LogicalPosition.class,
+      MarkupModel.class,
+      MouseEvent.class,
+      Point.class,
+      Point2D.class,
+      Project.class,
+      ScrollingModel.class,
+      SettingsImpl.class,
+      SoftWrapModel.class,
+      TextAreaDocument.class,
+      TextComponentCaretModel.class,
+      TextComponentDocument.class,
+      TextComponentEditor.class,
+      TextComponentFoldingModel.class,
+      TextComponentScrollingModel.class,
+      TextComponentSelectionModel.class,
+      UserDataHolderBase.class,
+      VisualPosition.class
+    )) {
+      try {
+        Class.forName(c.getName(), true, classLoader);
+      }
+      catch (ClassNotFoundException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 }

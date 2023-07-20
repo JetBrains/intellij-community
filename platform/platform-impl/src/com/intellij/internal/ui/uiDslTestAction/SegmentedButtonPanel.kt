@@ -47,9 +47,7 @@ internal class SegmentedButtonPanel(parentDisposable: Disposable) {
 
       row {
         checkBox("Enabled")
-          .applyToComponent {
-            isSelected = true
-          }
+          .selected(true)
           .actionListener { _, component -> segmentedButtonRow.enabled(component.isSelected) }
       }
 

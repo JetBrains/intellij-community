@@ -3,7 +3,7 @@ package com.intellij.openapi.module.impl;
 
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.workspaceModel.storage.MutableEntityStorage;
+import com.intellij.platform.workspace.storage.MutableEntityStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 

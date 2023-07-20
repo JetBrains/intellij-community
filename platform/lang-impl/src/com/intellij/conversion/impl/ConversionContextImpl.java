@@ -494,6 +494,12 @@ public final class ConversionContextImpl implements ConversionContext {
         xmlFile.save();
       }
     }
+    if (files.contains(myWorkspaceFile.getPath())) {
+      myWorkspaceFile.save();
+    }
+    if (files.contains(myProjectFile.getPath())) {
+      myProjectFile.save();
+    }
   }
 
   @NotNull SettingsXmlFile getOrCreateFile(@NotNull Path file) throws CannotConvertException {

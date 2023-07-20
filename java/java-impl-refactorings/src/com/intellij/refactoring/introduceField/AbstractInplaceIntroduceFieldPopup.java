@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -86,6 +87,10 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
     }
   }
 
+  protected void updateVariable(PsiVariable variable) {
+    myFieldRangeStart = myEditor.getDocument().createRangeMarker(variable.getTextRange());
+  }
+
   @Override
   protected PsiVariable getVariable() {
     if (myFieldRangeStart == null) return null;
@@ -104,5 +109,23 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
 
   protected PsiClass getParentClass() {
     return myParentClass.getElement();
+  }
+
+  protected void performIntroduce(BaseExpressionToFieldHandler.Settings settings) {
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+      if (getLocalVariable() != null) {
+        final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
+        fieldRunnable.run();
+        updateVariable(fieldRunnable.getField());
+      }
+      else {
+        final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+          new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(), myOccurrences,
+                                                                  getAnchorElementIfAll(), getAnchorElement(), myEditor, getParentClass());
+        convertToFieldRunnable.run();
+        updateVariable(convertToFieldRunnable.getField());
+      }
+    });
   }
 }

@@ -187,7 +187,7 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
   public static String getBestDocumentation(boolean preferShort, @NotNull final JsonSchemaObject schema) {
     String htmlDescription = schema.getHtmlDescription();
     if (htmlDescription != null && hasNonTrustedProjects()) {
-      htmlDescription = cutHtmlAnchor(htmlDescription);
+      htmlDescription = StringUtil.escapeXmlEntities(htmlDescription);
     }
     final String description = schema.getDescription();
     final String title = schema.getTitle();
@@ -203,16 +203,6 @@ public class JsonSchemaDocumentationProvider implements DocumentationProvider {
       return desc;
     }
     return null;
-  }
-
-  private static @NotNull String cutHtmlAnchor(@NotNull String html) {
-    String current;
-    String next = html;
-    do {
-      current = next;
-      next = current.replaceAll("<\\s*a[^>]*>", "").replaceAll("<\\s*/\\s*a\\s*>", "");
-    } while (!next.equals(current));
-    return next;
   }
 
   private static boolean hasNonTrustedProjects() {

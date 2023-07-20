@@ -60,9 +60,8 @@ public class Java9UndeclaredServiceUsageInspection extends AbstractBaseJavaLocal
           if (qualifiedName != null) {
             PsiJavaModule module = JavaModuleGraphUtil.findDescriptorByElement(argument);
             if (module != null && isUndeclaredUsage(module, psiClass)) {
-              holder.registerProblem(
-                argument, JavaBundle.message("inspection.undeclared.service.usage.message", qualifiedName),
-                new AddUsesDirectiveFix(module, qualifiedName));
+              holder.problem(argument, JavaBundle.message("inspection.undeclared.service.usage.message", qualifiedName))
+                .fix(new AddUsesDirectiveFix(module, qualifiedName)).register();
             }
           }
       }

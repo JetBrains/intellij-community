@@ -10,7 +10,7 @@ class StatisticsCachedConfigTest {
   @Test
   fun `test cached value`() {
     var counter = 0
-    val supplier = StatisticsCachingSupplier<Int>({ ++counter }, 50)
+    val supplier = StatisticsCachingSupplier({ ++counter }, 50)
 
     assertEquals(1, supplier.get())
     assertEquals(1, supplier.get())
@@ -25,7 +25,7 @@ class StatisticsCachedConfigTest {
   @Test
   fun `test value re-calculated on short timeout`() {
     var counter = 0
-    val supplier = StatisticsCachingSupplier<Int>({ ++counter }, 4)
+    val supplier = StatisticsCachingSupplier({ ++counter }, 4)
 
     assertEquals(1, supplier.get())
     Thread.sleep(5)
@@ -39,7 +39,7 @@ class StatisticsCachedConfigTest {
   @Test
   fun `test value re-calculated on exception`() {
     var counter = 0
-    val supplier = StatisticsCachingSupplier<Int>(
+    val supplier = StatisticsCachingSupplier(
       { ++counter; if (counter % 2 == 0) throw RuntimeException() else counter },
       4
     )

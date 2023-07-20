@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.structureView
 import com.intellij.ide.util.FileStructurePopup
 import com.intellij.ide.util.InheritedMembersNodeProvider
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import java.io.File
@@ -19,7 +19,7 @@ abstract class AbstractKotlinFileStructureTest : KotlinFileStructureTestBase() {
     override val treeFileName: String get() = getFileName("after")
 
     fun doTest(path: String) {
-        myFixture.configureWithExtraFile(path)
+        myFixture.configureByFilesWithSuffixes(dataFile(), testDataDirectory, ".Data")
 
         popupFixture.popup.setup()
 

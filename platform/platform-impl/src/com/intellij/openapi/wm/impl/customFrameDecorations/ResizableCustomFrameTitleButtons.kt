@@ -12,14 +12,14 @@ internal class ResizableCustomFrameTitleButtons(closeAction: Action,
                                                 private val myMaximizeAction: Action
 ) : CustomFrameTitleButtons(closeAction) {
   companion object{
-    private val restoreIcon = freezeIconUserSize(AllIcons.Windows.Restore)
-    private val restoreInactiveIcon = freezeIconUserSize(AllIcons.Windows.RestoreInactive)
+    private val restoreIcon = AllIcons.Windows.Restore
+    private val restoreInactiveIcon = AllIcons.Windows.RestoreInactive
 
-    private val maximizeIcon = freezeIconUserSize(AllIcons.Windows.Maximize)
-    private val maximizeInactiveIcon = freezeIconUserSize(AllIcons.Windows.MaximizeInactive)
+    private val maximizeIcon = AllIcons.Windows.Maximize
+    private val maximizeInactiveIcon = AllIcons.Windows.MaximizeInactive
 
-    private val minimizeIcon = freezeIconUserSize(AllIcons.Windows.Minimize)
-    private val minimizeInactiveIcon = freezeIconUserSize(AllIcons.Windows.MinimizeInactive)
+    private val minimizeIcon = AllIcons.Windows.Minimize
+    private val minimizeInactiveIcon = AllIcons.Windows.MinimizeInactive
 
     fun create(myCloseAction: Action, myRestoreAction: Action, myIconifyAction: Action, myMaximizeAction: Action) : ResizableCustomFrameTitleButtons {
       val darculaTitleButtons = ResizableCustomFrameTitleButtons(myCloseAction, myRestoreAction, myIconifyAction, myMaximizeAction)

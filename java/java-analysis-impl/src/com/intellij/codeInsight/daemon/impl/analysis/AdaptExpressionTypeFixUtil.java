@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
@@ -236,7 +237,7 @@ final class AdaptExpressionTypeFixUtil {
       info.registerFix(action1, null, null, null, null);
       PsiType castToType = suggestCastTo(expectedType, actualType);
       if (castToType != null) {
-        IntentionAction action = new AddTypeCastFix(castToType, expression, role);
+        ModCommandAction action = new AddTypeCastFix(castToType, expression, role);
         info.registerFix(action, null, null, null, null);
       }
     }

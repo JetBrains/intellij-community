@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ListenerUiUtil")
 @file:Suppress("unused")
 
@@ -192,6 +192,16 @@ fun JComponent.whenSizeChanged(parentDisposable: Disposable? = null, listener: (
   addComponentListener(parentDisposable, object : ComponentAdapter() {
     override fun componentResized(e: ComponentEvent) = listener(size)
   })
+}
+
+inline fun <reified T> Component.whenPropertyChanged(
+  propertyName: String,
+  parentDisposable: Disposable? = null,
+  crossinline listener: (T) -> Unit
+) {
+  addPropertyChangeListener(propertyName, parentDisposable) { event ->
+    listener(event.newValue as T)
+  }
 }
 
 @Experimental

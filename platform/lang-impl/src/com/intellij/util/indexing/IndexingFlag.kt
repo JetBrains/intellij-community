@@ -15,10 +15,10 @@ object IndexingFlag {
   private val hashes = StripedIndexingStampLock()
 
   @JvmStatic
-  val nonExistentHash = StripedIndexingStampLock.NON_EXISTENT_HASH
+  val nonExistentHash: Long = StripedIndexingStampLock.NON_EXISTENT_HASH
 
   @JvmStatic
-  fun cleanupProcessedFlag() = VirtualFileSystemEntry.markAllFilesAsUnindexed()
+  fun cleanupProcessedFlag(): Unit = VirtualFileSystemEntry.markAllFilesAsUnindexed()
 
   @JvmStatic
   fun cleanProcessedFlagRecursively(file: VirtualFile) {

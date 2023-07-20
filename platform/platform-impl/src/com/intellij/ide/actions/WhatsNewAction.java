@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.jcef.JBCefApp;
@@ -30,6 +31,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -57,6 +59,13 @@ public class WhatsNewAction extends AnAction implements DumbAware {
   public void actionPerformed(@NotNull AnActionEvent e) {
     var whatsNewUrl = ApplicationInfoEx.getInstanceEx().getWhatsNewUrl();
     if (whatsNewUrl == null) throw new IllegalStateException();
+
+    if (ApplicationManager.getApplication().isInternal() && (e.getModifiers() & ActionEvent.SHIFT_MASK) != 0) {
+      var title = IdeBundle.message("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().getFullProductName());
+      var prompt = IdeBundle.message("browser.url.popup");
+      whatsNewUrl = Messages.showInputDialog(e.getProject(), prompt, title, null, whatsNewUrl, null);
+      if (whatsNewUrl == null) return;
+    }
 
     var project = e.getProject();
     if (project != null && JBCefApp.isSupported()) {
@@ -118,10 +127,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
       theme += "-new-ui";
     }
     parameters.put("theme", theme);
-    var locale = Locale.getDefault();
-    if (locale != null) {
-      parameters.put("lang", locale.toLanguageTag().toLowerCase(Locale.ENGLISH));
-    }
+    parameters.put("lang", Locale.getDefault().toLanguageTag().toLowerCase(Locale.ENGLISH));
     var request = HTMLEditorProvider.Request.url(Urls.newFromEncoded(url).addParameters(parameters).toExternalForm());
 
     try (var stream = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {

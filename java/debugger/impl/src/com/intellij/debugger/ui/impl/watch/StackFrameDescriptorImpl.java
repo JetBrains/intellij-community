@@ -18,6 +18,7 @@ import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
@@ -145,6 +146,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myMethodOccurrence.isRecursive();
   }
 
+  public boolean canDrop() {
+    return !myFrame.isBottom() && myMethodOccurrence.canDrop();
+  }
+
   @Nullable
   public ValueMarkup getValueMarkup() {
     Map<?, ValueMarkup> markers = getValueMarkers();
@@ -188,6 +193,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
     if (settings.SHOW_LINE_NUMBER) {
       label.append(':').append(DebuggerUtilsEx.getLineNumber(myLocation, false));
+      if (Registry.is("debugger.stack.frame.show.code.index")) {
+        label.append(':').append(DebuggerUtilsEx.getCodeIndex(myLocation));
+      }
     }
     if (settings.SHOW_CLASS_NAME) {
       String name;

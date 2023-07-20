@@ -6,13 +6,15 @@ import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
 
-internal fun isUnderTeamCity() = BUILD_SERVER != null
+internal fun isUnderTeamCity(): Boolean = BUILD_SERVER != null
 private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
 private val BUILD_ID = System.getProperty("teamcity.build.id")
 
-private fun teamCityGet(path: String) = loadUrl("$BUILD_SERVER/httpAuth/app/rest/$path") {
-  teamCityAuth()
+private fun teamCityGet(path: String): String {
+  val requestBuilder = Request.Builder().url("$BUILD_SERVER/httpAuth/app/rest/$path")
+  requestBuilder.teamCityAuth()
+  return rest(requestBuilder.build())
 }
 
 private val XML: MediaType by lazy { "application/xml".toMediaType() }

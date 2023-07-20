@@ -39,7 +39,7 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
     return JAVA_11;
   }
 
-  @SuppressWarnings({"unchecked", "rawtypes"})
+  @SuppressWarnings({"unchecked", "rawtypes", "NonFinalUtilityClass"})
   @Override
   protected String[] getEnvironmentClasses() {
     return new String[] {"""
@@ -74,6 +74,12 @@ public class EqualsWithItselfInspectionTest extends LightJavaInspectionTestCase 
       public AbstractAssert anotherTest(Object expected) {
        return this;
       }
+     }
+     """,
+      """
+     package org.testng;
+     public class Assert{
+     	public static void assertEquals(Object expected, Object actual) {}
      }
      """,
     };

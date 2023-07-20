@@ -1327,7 +1327,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         }
       }
       if (words.isEmpty()) return Collections.emptyList();
-      return ContainerUtil.map2List(words, word -> new IdIndexEntry(word, caseSensitively));
+      return ContainerUtil.map(words, word -> new IdIndexEntry(word, caseSensitively));
     }
   }
 }

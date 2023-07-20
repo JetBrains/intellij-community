@@ -1,12 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.SensitiveProgressWrapper;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.ThreadDumper;
-import com.intellij.diagnostic.telemetry.TraceManager;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
@@ -18,14 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.util.CheckedDisposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,15 +35,16 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import io.opentelemetry.api.metrics.Meter;
+import kotlin.Pair;
+import kotlin.coroutines.CoroutineContext;
 import kotlin.reflect.KClass;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.annotations.VisibleForTesting;
+import kotlinx.coroutines.CompletableJob;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promises;
@@ -54,6 +57,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.EDT;
 import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -77,7 +81,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   /** Computation to be executed -- possible, wrapped into some monitoring */
   private final Callable<? extends T> myActualComputation;
 
-  private static final Set<Submission<?>> ourTasks = ContainerUtil.newConcurrentSet();
+  private static final Set<Submission<?>> ourTasks = ConcurrentCollectionFactory.createConcurrentSet();
   private static final Map<List<?>, Submission<?>> ourTasksByEquality = new HashMap<>();
   private static final SubmissionTracker ourUnboundedSubmissionTracker = new SubmissionTracker();
 
@@ -88,7 +92,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
   static {
     LOG.info("OTel monitoring for NonBlockingReadAction is " + (ENABLE_OTEL_MONITORING ? "enabled" : "disabled"));
     if (ENABLE_OTEL_MONITORING) {
-      final Meter meter = TraceManager.INSTANCE.getMeter("EDT");
+      Meter meter = TelemetryManager.getMeter(EDT);
       MONITOR = new OTelMonitor(meter);
     }
     else {
@@ -238,8 +242,10 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     @Nullable private Submission<?> myReplacement;
     @Nullable private final ProgressIndicator myProgressIndicator;
     @NotNull private final NonBlockingReadActionImpl<T> builder;
+    @NotNull private final CoroutineContext myContext;
+    @Nullable private final CompletableJob myJob;
 
-    // a sum composed of: 1 for non-done promise, 1 for each currently running thread
+    // a sum composed of: 1 for non-done promise, 1 for each currently running thread,
     // so 0 means that the process is marked completed or canceled, and it has no running not-yet-finished threads
     private int myUseCount;
 
@@ -249,6 +255,9 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     Submission(@NotNull NonBlockingReadActionImpl<T> builder,
                @NotNull Executor backgroundThreadExecutor,
                @Nullable ProgressIndicator outerIndicator) {
+      Pair<CoroutineContext, CompletableJob> pair = Propagation.createChildContext();
+      myContext = pair.getFirst();
+      myJob = pair.getSecond();
       backendExecutor = backgroundThreadExecutor;
       this.builder = builder;
       if (builder.myCoalesceEquality != null) {
@@ -275,10 +284,20 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           cancel();
           break;
         }
-        Disposable child = new Disposable() { // not a lambda to create a separate object for each parent
+        Disposable child = new CheckedDisposable() {
+          private volatile boolean disposed;
+          @Override
+          public boolean isDisposed() {
+            return disposed;
+          }
+
           @Override
           public void dispose() {
-            cancel();
+            disposed = true;
+            // NB: We call here `super.cancel()` directly instead of `cancel()`
+            // The reason is that `Job` is needed to cover the scheduling of `myUiThreadAction`,
+            // so its lifetime is bigger than the lifetime of computation in NBRA, hence `Job` should not be cancelled in `dispose`.
+            Submission.super.cancel();
           }
         };
         //noinspection TestOnlyProblems
@@ -390,8 +409,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         else {
           if (!current.getComputationOrigin().equals(getComputationOrigin())) {
             //RC: Sort of fool-proofing: sometimes it _could_ be OK to invoke 2 ReadActions with different .computable
-            //    from different places in code, but with same .coalesceBy -- but it is much more likely an error. Hence we
-            //    prefer to prohibit it completely:
+            //    from different places in code, but with same .coalesceBy -- but it is much more likely an error.
+            //    Hence, we prefer to prohibit it completely:
             reportCoalescingConflict(current);
           }
           if (current.myReplacement != null) {
@@ -436,12 +455,20 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         acquire();
       }
       try {
-        backendExecutor.execute(ClientId.decorateRunnable(() -> {
+        Runnable r = ClientId.decorateRunnable(() -> {
           if (LOG.isTraceEnabled()) {
             LOG.trace("Running in background " + this);
           }
           try {
-            if (!attemptComputation()) {
+            boolean computationSuccessful;
+            if (AppExecutorUtil.propagateContextOrCancellation()) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+                computationSuccessful = attemptComputation();
+              }
+            } else {
+              computationSuccessful = attemptComputation();
+            }
+            if (!computationSuccessful) {
               rescheduleLater();
             }
           }
@@ -450,7 +477,8 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
               release();
             }
           }
-        }));
+        });
+        backendExecutor.execute((ContextAwareRunnable)() -> r.run());
       }
       catch (RejectedExecutionException e) {
         LOG.warn("Rejected: " + this);
@@ -479,7 +507,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           ContextConstraint[] constraints = builder.myConstraints;
           if (shouldFinishOnEdt() || constraints.length != 0) {
             Semaphore semaphore = new Semaphore(1);
-            invokeLater(() -> {
+            invokeLater((ContextAwareRunnable) () -> {
               if (checkObsolete()) {
                 semaphore.up();
               }
@@ -516,7 +544,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       currentIndicator = indicator;
       try {
         Ref<ContextConstraint> unsatisfiedConstraint = Ref.create();
-        final boolean success;
+        boolean success;
         if (ApplicationManager.getApplication().isReadAccessAllowed()) {
           insideReadAction(indicator, unsatisfiedConstraint);
           success = true;
@@ -527,7 +555,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
         else {
           if (myProgressIndicator != null) {
             try {
-              //Give ProgressSuspender a chance to suspend now, it can't do it under a read-action
+              // Give ProgressSuspender a chance to suspend now. It can't do it under a read-action
               myProgressIndicator.checkCanceled();
             }
             catch (ProcessCanceledException e) {
@@ -546,7 +574,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
     private void rescheduleLater() {
       if (Promises.isPending(this)) {
-        invokeLater(() -> reschedule());
+        invokeLater((ContextAwareRunnable) () -> reschedule());
       }
     }
 
@@ -562,6 +590,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private void insideReadAction(@NotNull ProgressIndicator indicator, @NotNull Ref<? super ContextConstraint> outUnsatisfiedConstraint) {
       try {
         if (checkObsolete()) {
+          cancelJob(null);
           return;
         }
         ContextConstraint constraint = builder.findUnsatisfiedConstraint();
@@ -576,29 +605,68 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
           safeTransferToEdt(result);
         }
         else {
-          setResult(result);
+          try {
+            setResult(result);
+          } finally {
+            completeJob();
+          }
         }
       }
       catch (ServiceNotReadyException e) {
+        failJob(e);
         throw e;
       }
       catch (ProcessCanceledException e) {
         if (!indicator.isCanceled()) {
+          failJob(e);
           setError(e); // don't restart after a manually thrown PCE
         }
         throw e;
       }
       catch (Throwable e) {
+        failJob(e);
         setError(e);
       }
+    }
+
+    @Override
+    public void cancel() {
+      super.cancel();
+      cancelJob(null);
+    }
+
+    @Override
+    public boolean isCancelled() {
+      return super.isCancelled() || (myJob != null && myJob.isCancelled());
     }
 
     private boolean shouldFinishOnEdt() {
       return builder.myModalityState != null;
     }
 
+    private void cancelJob(@Nullable CancellationException e) {
+      if (myJob != null) {
+        myJob.cancel(e);
+      }
+    }
+
+    private void completeJob() {
+      if (myJob != null) {
+        myJob.complete();
+      }
+    }
+
+    private void failJob(@NotNull Throwable reason) {
+      if (myJob != null) {
+        myJob.completeExceptionally(reason);
+      }
+    }
+
     private boolean checkObsolete() {
-      if (Promises.isRejected(this)) return true;
+      if (Promises.isRejected(this)) {
+        cancelJob(new CancellationException("Cancelled by rejection"));
+        return true;
+      }
       for (BooleanSupplier condition : builder.myCancellationConditions) {
         if (condition.getAsBoolean()) {
           cancel();
@@ -613,24 +681,38 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     }
 
     private void safeTransferToEdt(T result) {
-      if (Promises.isRejected(this)) return;
+      if (Promises.isRejected(this)) {
+        cancelJob(null);
+        return;
+      }
 
       long stamp = AsyncExecutionServiceImpl.getWriteActionCounter();
 
-      ApplicationManager.getApplication().invokeLater(() -> {
+      ApplicationManager.getApplication().invokeLater((ContextAwareRunnable) () -> {
         if (stamp != AsyncExecutionServiceImpl.getWriteActionCounter()) {
           reschedule();
           return;
         }
 
         if (checkObsolete()) {
+          cancelJob(null);
           return;
         }
 
         setResult(result);
 
-        if (isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
-          builder.myUiThreadAction.accept(result);
+        if (isSucceeded()) { // in case when another thread managed to cancel it just before `setResult`
+          try {
+            if (AppExecutorUtil.propagateContextOrCancellation()) {
+              try (AccessToken ignored = ThreadContext.installThreadContext(myContext, false)) {
+                builder.myUiThreadAction.accept(result);
+              }
+            } else {
+              builder.myUiThreadAction.accept(result);
+            }
+          } finally {
+            completeJob();
+          }
         }
       }, builder.myModalityState, __ -> isCancelled());
     }
@@ -653,6 +735,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
    */
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
     for (Submission<?> task : ourTasks) {
       waitForTask(task);
@@ -661,6 +744,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
 
   @TestOnly
   private static void waitForTask(@NotNull Submission<?> task) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     for (ContextConstraint constraint : task.builder.myConstraints) {
       if (constraint instanceof InSmartMode && !constraint.isCorrectContext()) {
         return;
@@ -707,7 +791,7 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
      */
     private final AtomicInteger failedExecutionsCount = new AtomicInteger();
     /**
-     * Total time (in microseconds) of successful executions -- i.e. those that run to the end
+     * Total time (in microseconds) of successful executions -- i.e., those that run to the end
      */
     private final AtomicLong finalizedExecutionTimeUs = new AtomicLong();
     /**
@@ -717,11 +801,11 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private final AtomicLong failedExecutionTimeUs = new AtomicLong();
     private final AutoCloseable otelSubscription;
 
-    private OTelMonitor(final @NotNull Meter meter) {
-      final var finalizedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionsCount").buildObserver();
-      final var failedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionsCount").buildObserver();
-      final var finalizedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionTimeUs").buildObserver();
-      final var failedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionTimeUs").buildObserver();
+    private OTelMonitor(@NotNull Meter meter) {
+      var finalizedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionsCount").buildObserver();
+      var failedExecutionsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionsCount").buildObserver();
+      var finalizedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.finalizedExecutionTimeUs").buildObserver();
+      var failedExecutionTimeUsCounter = meter.counterBuilder("NonBlockingReadAction.failedExecutionTimeUs").buildObserver();
 
       otelSubscription = meter.batchCallback(
         () -> {
@@ -736,26 +820,28 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
       );
     }
 
-    public <V> Callable<V> wrap(final @NotNull Callable<V> computation) {
+    @NotNull
+    <V> Callable<V> wrap(@NotNull Callable<V> computation) {
       return new MonitoredComputation<>(computation);
     }
 
-    private <V> V callWrapped(final @NotNull Callable<V> computation) throws Exception {
-      final long startedAtNs = System.nanoTime();
+    @Contract(pure = true)
+    private <V> V callWrapped(@NotNull Callable<V> computation) throws Exception {
+      long startedAtNs = System.nanoTime();
       try {
-        final V result = computation.call();
+        V result = computation.call();
 
         finalizedExecutionsCount.incrementAndGet();
-        final long finishedAtNs = System.nanoTime();
-        final long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
+        long finishedAtNs = System.nanoTime();
+        long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
         finalizedExecutionTimeUs.addAndGet(durationUs);
 
         return result;
       }
       catch (Throwable t) {
         failedExecutionsCount.incrementAndGet();
-        final long finishedAtNs = System.nanoTime();
-        final long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
+        long finishedAtNs = System.nanoTime();
+        long durationUs = NANOSECONDS.toMicros(finishedAtNs - startedAtNs);
         failedExecutionTimeUs.addAndGet(durationUs);
         throw t;
       }
@@ -769,17 +855,13 @@ public final class NonBlockingReadActionImpl<T> implements NonBlockingReadAction
     private class MonitoredComputation<V> implements Callable<V> {
       private final Callable<V> wrappedComputation;
 
-      private MonitoredComputation(final @NotNull Callable<V> wrappedComputation) {
+      private MonitoredComputation(@NotNull Callable<V> wrappedComputation) {
         this.wrappedComputation = wrappedComputation;
       }
 
       @Override
       public V call() throws Exception {
         return callWrapped(wrappedComputation);
-      }
-
-      public Callable<V> wrappedComputation() {
-        return wrappedComputation;
       }
     }
   }

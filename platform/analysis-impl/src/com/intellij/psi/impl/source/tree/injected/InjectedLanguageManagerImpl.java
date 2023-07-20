@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -240,6 +240,56 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
     return text.toString();
   }
 
+  @Override
+  public int mapInjectedOffsetToUnescaped(@NotNull PsiFile injectedFile, int injectedOffset) {
+    if (injectedOffset < 0) return injectedOffset;
+    var visitor = new PsiRecursiveElementWalkingVisitor() {
+      int unescapedOffset = 0;
+      int escapedOffset = 0;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        String leafText = InjectedLanguageUtilBase.getUnescapedLeafText(element, false);
+        if (leafText != null) {
+          unescapedOffset += leafText.length();
+          escapedOffset += element.getTextLength();
+          if (escapedOffset >= injectedOffset) {
+            unescapedOffset -= escapedOffset - injectedOffset;
+            stopWalking();
+          }
+        }
+        super.visitElement(element);
+      }
+    };
+    injectedFile.accept(visitor);
+    return visitor.unescapedOffset;
+  }
+
+  @Override
+  public int mapUnescapedOffsetToInjected(@NotNull PsiFile injectedFile, int offset) {
+    if (offset < 0) return offset;
+    var visitor = new PsiRecursiveElementWalkingVisitor() {
+      int unescapedOffset = 0;
+      int escapedOffset = 0;
+
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        String leafText = InjectedLanguageUtilBase.getUnescapedLeafText(element, false);
+        if (leafText != null) {
+          unescapedOffset += leafText.length();
+          escapedOffset += element.getTextLength();
+          if (unescapedOffset >= offset) {
+            escapedOffset -= unescapedOffset - offset;
+            stopWalking();
+          }
+        }
+        super.visitElement(element);
+      }
+    };
+    injectedFile.accept(visitor);
+    return visitor.escapedOffset;
+  }
+
   /**
    *  intersection may spread over several injected fragments
    *  @param rangeToEdit range in encoded(raw) PSI
@@ -291,9 +341,9 @@ public final class InjectedLanguageManagerImpl extends InjectedLanguageManager i
   }
 
   @Override
-  public boolean isInjectedFragment(@NotNull PsiFile injectedFile) {
+  public boolean isInjectedViewProvider(@NotNull FileViewProvider viewProvider) {
     //noinspection removal
-    return injectedFile.getViewProvider() instanceof InjectedFileViewProvider;
+    return viewProvider instanceof InjectedFileViewProvider;
   }
 
   @Override

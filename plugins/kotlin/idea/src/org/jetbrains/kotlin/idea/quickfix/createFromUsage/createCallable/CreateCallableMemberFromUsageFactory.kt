@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.quickfix.createFromUsage.createCallable
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.UnresolvedReferenceQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionFactoryWithDelegate
 import org.jetbrains.kotlin.idea.quickfix.QuickFixWithDelegateFactory
@@ -14,7 +15,7 @@ import org.jetbrains.kotlin.psi.KtElement
 
 abstract class CreateCallableMemberFromUsageFactory<E : KtElement>(
     private val extensionsSupported: Boolean = true
-) : KotlinIntentionActionFactoryWithDelegate<E, List<CallableInfo>>() {
+) : KotlinIntentionActionFactoryWithDelegate<E, List<CallableInfo>>(), UnresolvedReferenceQuickFixFactory {
 
     private fun newCallableQuickFix(
         originalElementPointer: SmartPsiElementPointer<E>,

@@ -55,21 +55,6 @@ public abstract class MavenRemoteObjectWrapper<T> extends RemoteObjectWrapper<T>
     }
 
     @Override
-    public void startedDownload(ResolveType type, String dependencyId) {
-      myProcess.startedDownload(type, dependencyId);
-    }
-
-    @Override
-    public void completedDownload(ResolveType type, String dependencyId) {
-      myProcess.completedDownload(type, dependencyId);
-    }
-
-    @Override
-    public void failedDownload(ResolveType type, String dependencyId, String errorMessage, String stackTrace) {
-      myProcess.failedDownload(type, dependencyId, errorMessage, stackTrace);
-    }
-
-    @Override
     public boolean isCanceled() {
       return myProcess.isCanceled();
     }

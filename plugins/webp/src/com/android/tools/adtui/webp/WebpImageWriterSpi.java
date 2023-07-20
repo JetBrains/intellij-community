@@ -34,7 +34,7 @@ import java.util.Locale;
 /**
  * Encoder for WebP. This needs the webp jni library loaded to function.
  */
-public class WebpImageWriterSpi extends ImageWriterSpi {
+public final class WebpImageWriterSpi extends ImageWriterSpi {
   WebpImageWriterSpi() {
     vendorName = WebpMetadata.WEBP_VENDOR;
     version = WebpNativeLibHelper.getEncoderVersion();
@@ -98,8 +98,8 @@ public class WebpImageWriterSpi extends ImageWriterSpi {
     return "WebP Image Encoder";
   }
 
-  private static class WebpWriter extends ImageWriter {
-    public WebpWriter(ImageWriterSpi originatingProvider) {
+  private static final class WebpWriter extends ImageWriter {
+    private WebpWriter(ImageWriterSpi originatingProvider) {
       super(originatingProvider);
     }
 

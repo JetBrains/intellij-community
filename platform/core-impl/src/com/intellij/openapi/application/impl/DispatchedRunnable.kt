@@ -1,44 +1,57 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
+import com.intellij.concurrency.ContextAwareRunnable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.util.Conditions
+import kotlinx.coroutines.CompletionHandler
+import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.Job
-import java.util.concurrent.atomic.AtomicReference
+import java.util.concurrent.atomic.AtomicReferenceFieldUpdater
 
-internal class DispatchedRunnable(job: Job, runnable: Runnable) : Runnable {
+@OptIn(InternalCoroutinesApi::class)
+internal class DispatchedRunnable(job: Job, runnable: Runnable) : ContextAwareRunnable, CompletionHandler {
 
-  private val runnableRef: AtomicReference<Runnable> = AtomicReference(runnable)
+  private companion object {
 
-  init {
-    @OptIn(InternalCoroutinesApi::class)
-    job.invokeOnCompletion(onCancelling = true) { cause ->
-      if (cause != null) {
-        handleCancellation()
-      }
-      else {
-        // Sanity check: completed means the `run` was executed => the reference must be cleared.
-        check(runnableRef.get() == null)
-      }
-    }
+    @JvmStatic
+    private val runnableUpdater: AtomicReferenceFieldUpdater<DispatchedRunnable, Runnable> = AtomicReferenceFieldUpdater.newUpdater(
+      DispatchedRunnable::class.java,
+      Runnable::class.java,
+      "_runnable",
+    )
   }
+
+  @Volatile
+  private var _runnable: Runnable? = runnable
+
+  @Volatile
+  private var _completionHandle: DisposableHandle? = job.invokeOnCompletion(onCancelling = true, handler = this)
 
   override fun run() {
     // Clear the reference to avoid scheduling the runnable again when cancelled.
-    val runnable = runnableRef.getAndSet(null)
+    val runnable = runnableUpdater.getAndSet(this, null)
     if (runnable == null) {
-      // Cleared in `handleCancellation`.
+      // Cleared in `invoke`.
       // This code path means that the coroutine was cancelled externally after being scheduled.
     }
     else {
+      checkNotNull(_completionHandle).dispose()
+      _completionHandle = null
       runnable.run()
     }
   }
 
-  private fun handleCancellation() {
+  override fun invoke(cause: Throwable?) {
+    if (cause == null) {
+      // Sanity check: completed means the `run` was executed => the reference must be cleared.
+      check(_runnable == null)
+      return
+    }
     // Clear the reference so this runnable does nothing in `run`.
-    val runnable = runnableRef.getAndSet(null)
+    val runnable = runnableUpdater.getAndSet(this, null)
     if (runnable == null) {
       // Cleared in `run`.
       // This code path means that the cancellation happened concurrently with `run`,
@@ -47,7 +60,9 @@ internal class DispatchedRunnable(job: Job, runnable: Runnable) : Runnable {
     else {
       // Reschedule the original runnable ignoring the modality state
       // to give the cancelled coroutine a chance to clean its resources and complete.
-      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+      ApplicationManager.getApplication().invokeLater(
+        ContextAwareRunnable(runnable::run), ModalityState.any(), Conditions.alwaysFalse<Nothing?>()
+      )
     }
   }
 }

@@ -36,7 +36,7 @@ class A {
             return true
         }
 
-    @JvmName("doStuff")
+
     val isFalse: Boolean
         get() {
             return false

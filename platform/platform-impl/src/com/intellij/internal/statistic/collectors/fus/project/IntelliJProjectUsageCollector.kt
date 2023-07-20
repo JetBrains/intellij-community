@@ -18,7 +18,7 @@ class IntelliJProjectUsageCollector : ProjectUsagesCollector() {
   private val GROUP = EventLogGroup("project.intellij.monorepo", 1)
   private val INTELLIJ_PROJECT: EventId1<Boolean> = GROUP.registerEvent("is.intellij", EventFields.Enabled)
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     return mutableSetOf<MetricEvent>().apply {

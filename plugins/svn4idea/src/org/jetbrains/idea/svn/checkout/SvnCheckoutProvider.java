@@ -52,7 +52,6 @@ import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
@@ -62,15 +61,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     // TODO: Several dialogs is invoked while dialog.show() - seems code should be rewritten to be more transparent
     CheckoutDialog dialog = new CheckoutDialog(project, listener);
     dialog.show();
-  }
-
-  /**
-   * @deprecated use {@link #doCheckout(Project, File, Url, Revision, Depth, boolean, Listener)}
-   */
-  @Deprecated(forRemoval = true)
-  public static void doCheckout(@NotNull Project project, @NotNull File target, final String url, final Revision revision,
-                                final Depth depth, final boolean ignoreExternals, @Nullable final Listener listener) {
-    doCheckout(project, target, parseUrl(url), revision, depth, ignoreExternals, listener);
   }
 
   public static void doCheckout(@NotNull Project project,

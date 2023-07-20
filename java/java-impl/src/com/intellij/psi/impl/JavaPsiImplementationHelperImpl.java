@@ -1,12 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.codeInsight.javadoc.SnippetMarkup;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.model.Pointer;
+import com.intellij.model.Symbol;
+import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -19,10 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.JavaLanguageLevelPusher;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.platform.backend.documentation.DocumentationTarget;
+import com.intellij.platform.backend.navigation.NavigationRequest;
+import com.intellij.platform.backend.navigation.NavigationTarget;
+import com.intellij.platform.backend.presentation.TargetPresentation;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -32,6 +43,9 @@ import com.intellij.psi.codeStyle.arrangement.MemberOrderService;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.compiled.ClsElementImpl;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
+import com.intellij.psi.impl.source.javadoc.PsiSnippetAttributeValueImpl;
+import com.intellij.psi.javadoc.PsiSnippetAttributeValue;
+import com.intellij.psi.javadoc.PsiSnippetDocTagValue;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -334,6 +348,76 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     }
     catch (Exception e) {
       throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
+    }
+  }
+
+  @Override
+  public @NotNull PsiSymbolReference getSnippetRegionSymbol(@NotNull PsiSnippetAttributeValue value) {
+    return new PsiSymbolReference() {
+      @Override
+      public @NotNull PsiElement getElement() {
+        return value;
+      }
+
+      @Override
+      public @NotNull TextRange getRangeInElement() {
+        return ((PsiSnippetAttributeValueImpl)value).getValueRange();
+      }
+
+      @Override
+      public @NotNull Collection<? extends Symbol> resolveReference() {
+        PsiSnippetDocTagValue snippet = PsiTreeUtil.getParentOfType(value, PsiSnippetDocTagValue.class);
+        if (snippet == null) return List.of();
+        SnippetMarkup markup = SnippetMarkup.fromSnippet(snippet);
+        if (markup == null) return List.of();
+        String region = value.getValue();
+        SnippetMarkup.MarkupNode start = markup.getRegionStart(region);
+        if (start == null) return List.of();
+        PsiElement markupContext = markup.getContext();
+        PsiFile file = markupContext.getContainingFile();
+        if (file == null) return List.of();
+        return List.of(
+          new SnippetRegionSymbol(file,
+                                  start.range().shiftRight(markupContext.getTextRange().getStartOffset())));
+      }
+    };
+  }
+
+  public static final class SnippetRegionSymbol implements Symbol, DocumentationTarget, NavigationTarget {
+
+    private final @NotNull PsiFile myFile;
+    private final @NotNull TextRange myRangeInFile;
+
+    private SnippetRegionSymbol(@NotNull PsiFile file, @NotNull TextRange rangeInFile) {
+      myFile = file;
+      myRangeInFile = rangeInFile;
+    }
+
+    @Override
+    public @NotNull Pointer<SnippetRegionSymbol> createPointer() {
+      return Pointer.fileRangePointer(myFile, myRangeInFile, SnippetRegionSymbol::new);
+    }
+
+    private @NlsSafe @NotNull String getText() {
+      return myRangeInFile.substring(myFile.getText());
+    }
+
+    @Override
+    public @NotNull TargetPresentation computePresentation() {
+      VirtualFile virtualFile = myFile.getVirtualFile();
+      return TargetPresentation.builder(getText())
+        .locationText(virtualFile.getName(), virtualFile.getFileType().getIcon())
+        .presentation();
+    }
+
+    @Override
+    public @NotNull @NlsContexts.HintText String computeDocumentationHint() {
+      return getText();
+    }
+
+    @Override
+    public @Nullable NavigationRequest navigationRequest() {
+      return NavigationRequest.sourceNavigationRequest(myFile, myRangeInFile);
     }
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.*;
@@ -172,8 +173,7 @@ public final class ModifierKeyDoubleClickHandler {
           resetState();
         }
 
-        handleModifier(event);
-        return false;
+        return handleModifier(event);
       }
       else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get() && myActionKeyCode != -1) {
         if (keyCode == myActionKeyCode && !hasOtherModifiers(event)) {
@@ -205,10 +205,10 @@ public final class ModifierKeyDoubleClickHandler {
       return false;
     }
 
-    private void handleModifier(KeyEvent event) {
+    private boolean handleModifier(KeyEvent event) {
       if (ourPressed.first.get() && event.getWhen() - ourLastTimePressed.get() > 300) {
         resetState();
-        return;
+        return false;
       }
 
       if (event.getID() == KeyEvent.KEY_PRESSED) {
@@ -216,13 +216,13 @@ public final class ModifierKeyDoubleClickHandler {
           resetState();
           ourPressed.first.set(true);
           ourLastTimePressed.set(event.getWhen());
-          return;
+          return false;
         }
         else {
           if (ourPressed.first.get() && ourReleased.first.get()) {
             ourPressed.second.set(true);
             ourLastTimePressed.set(event.getWhen());
-            return;
+            return false;
           }
         }
       }
@@ -230,17 +230,23 @@ public final class ModifierKeyDoubleClickHandler {
         if (ourPressed.first.get() && !ourReleased.first.get()) {
           ourReleased.first.set(true);
           ourLastTimePressed.set(event.getWhen());
-          return;
+          return false;
         }
         else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
           resetState();
           if (myActionKeyCode == -1 && !shouldSkipIfActionHasShortcut()) {
+            if (!ClientId.isCurrentlyUnderLocalId()) {
+              return false;
+            }
+
             run(event);
+            return true;
           }
-          return;
+          return false;
         }
       }
       resetState();
+      return false;
     }
 
     private void resetState() {

@@ -228,11 +228,6 @@ public enum SpecialField implements DerivedVariableDescriptor {
       }
       return "";
     }
-
-    @Override
-    boolean isMyAccessor(PsiMember accessor) {
-      return false;
-    }
   },
   ENUM_ORDINAL("ordinal", "special.field.enum.ordinal", true) {
     private static final CallMatcher ENUM_ORDINAL_METHOD = CallMatcher.instanceCall(JAVA_LANG_ENUM, "ordinal").parameterCount(0);
@@ -289,13 +284,28 @@ public enum SpecialField implements DerivedVariableDescriptor {
     }
 
     @Override
-    boolean isMyAccessor(PsiMember accessor) {
-      return false;
+    public @NotNull DfType getDefaultValue() {
+      return DfStreamStateType.UNKNOWN;
+    }
+  },
+  INSTANTIABLE_CLASS("instantiable", "special.field.instantiable.class", true) {
+    @Override
+    public @NotNull DfType fromConstant(@Nullable Object obj) {
+      if (obj instanceof PsiType type) {
+        return DfTypes.booleanValue(TypeConstraints.exact(type) != TypeConstraints.BOTTOM);
+      }
+      return super.fromConstant(obj);
+    }
+
+    @Override
+    public boolean isMyQualifierType(DfType type) {
+      TypeConstraint constraint = TypeConstraint.fromDfType(type);
+      return constraint.isExact(JAVA_LANG_CLASS);
     }
 
     @Override
     public @NotNull DfType getDefaultValue() {
-      return DfStreamStateType.UNKNOWN;
+      return DfTypes.BOOLEAN;
     }
   };
 
@@ -323,7 +333,9 @@ public enum SpecialField implements DerivedVariableDescriptor {
    * @param accessor accessor to test
    * @return true if supplied accessor can be used to read this special field
    */
-  abstract boolean isMyAccessor(PsiMember accessor);
+  boolean isMyAccessor(PsiMember accessor) {
+    return false;
+  }
 
   public @Nls String getPresentationText(@NotNull DfType dfType, @Nullable PsiType type) {
     if (getDefaultValue().equals(dfType)) {

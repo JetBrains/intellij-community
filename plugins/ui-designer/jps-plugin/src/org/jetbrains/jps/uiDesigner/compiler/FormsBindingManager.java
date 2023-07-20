@@ -109,7 +109,7 @@ public final class FormsBindingManager extends FormsBuilder {
 
     dirtyFilesHolder.processDirtyFiles(new FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget>() {
       @Override
-      public boolean apply(ModuleBuildTarget target, File file, JavaSourceRootDescriptor descriptor) throws IOException {
+      public boolean apply(@NotNull ModuleBuildTarget target, @NotNull File file, @NotNull JavaSourceRootDescriptor descriptor) throws IOException {
         if (JAVA_SOURCES_FILTER.accept(file)) {
           filesToCompile.put(file, target);
         }

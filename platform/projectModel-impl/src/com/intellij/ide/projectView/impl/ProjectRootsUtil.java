@@ -125,15 +125,6 @@ public final class ProjectRootsUtil {
     return !projectFileIndex.isInSource(file) && !projectFileIndex.isInLibraryClasses(file);
   }
 
-  /**
-   * @deprecated use {@link #getModuleSourceRoot} instead
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static SourceFolder findSourceFolder(@NotNull Module module, @NotNull VirtualFile root) {
-    return getModuleSourceRoot(root, module.getProject());
-  }
-
   @Nullable
   public static ExcludeFolder findExcludeFolder(@NotNull Module module, @NotNull VirtualFile root) {
     for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {

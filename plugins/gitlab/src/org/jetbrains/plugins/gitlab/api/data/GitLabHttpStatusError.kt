@@ -2,10 +2,11 @@
 package org.jetbrains.plugins.gitlab.api.data
 
 import com.intellij.collaboration.api.HttpStatusErrorException
+import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer
 import java.io.StringReader
 
-class GitLabHttpStatusError(val error: String) {
+data class GitLabHttpStatusError(val error: @NlsSafe String) {
   val statusErrorType: HttpStatusErrorType = parseStatusError(error)
 
   enum class HttpStatusErrorType {
@@ -25,5 +26,10 @@ class GitLabHttpStatusError(val error: String) {
 
 fun HttpStatusErrorException.asGitLabStatusError(): GitLabHttpStatusError? {
   val actualBody = body ?: return null
-  return GitLabRestJsonDataDeSerializer.fromJson(StringReader(actualBody), GitLabHttpStatusError::class.java)
+  return try {
+    GitLabRestJsonDataDeSerializer.fromJson(StringReader(actualBody), GitLabHttpStatusError::class.java)
+  }
+  catch (e: Exception) {
+    null
+  }
 }

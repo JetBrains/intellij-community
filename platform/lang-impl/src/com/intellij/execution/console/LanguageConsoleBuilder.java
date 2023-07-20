@@ -315,7 +315,7 @@ public final class LanguageConsoleBuilder {
       private final ConsoleGutterComponent lineEndGutter;
 
       private Task gutterSizeUpdater;
-      private RangeHighlighter lineSeparatorPainter;
+      private volatile RangeHighlighter lineSeparatorPainter;
 
       private final CustomHighlighterRenderer renderer = new CustomHighlighterRenderer() {
         @Override
@@ -348,7 +348,7 @@ public final class LanguageConsoleBuilder {
         // console view can invoke markupModel.removeAllHighlighters(), so, we must be aware of it
         getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener() {
           @Override
-          public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+          public void afterRemoved(@NotNull RangeHighlighterEx highlighter) {
             if (lineSeparatorPainter == highlighter) {
               lineSeparatorPainter = null;
             }

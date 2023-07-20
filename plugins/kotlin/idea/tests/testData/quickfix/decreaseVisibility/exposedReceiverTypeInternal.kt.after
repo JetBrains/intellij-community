@@ -1,0 +1,4 @@
+// "Make 'foo' internal" "true"
+internal class A
+
+internal fun A.foo() {}

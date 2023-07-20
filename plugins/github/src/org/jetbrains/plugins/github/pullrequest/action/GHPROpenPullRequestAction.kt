@@ -18,7 +18,7 @@ class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("p
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
-    e.presentation.isEnabled = controller != null && (selection != null || dataProvider != null)
+    e.presentation.isEnabledAndVisible = controller != null && (selection != null || dataProvider != null)
   }
 
   override fun actionPerformed(e: AnActionEvent) {

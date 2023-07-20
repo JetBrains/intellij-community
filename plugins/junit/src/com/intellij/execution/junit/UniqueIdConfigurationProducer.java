@@ -8,6 +8,7 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -73,9 +74,19 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     DataContext dataContext = context.getDataContext();
     AbstractTestProxy[] testProxies = dataContext.getData(AbstractTestProxy.DATA_KEYS);
     if (testProxies == null) return null;
+    Module module;
     RunConfiguration runConfiguration = dataContext.getData(RunConfiguration.DATA_KEY);
-    if (!(runConfiguration instanceof JUnitConfiguration)) return null;
-    Module module = ((JUnitConfiguration)runConfiguration).getConfigurationModule().getModule();
+    if (runConfiguration instanceof JUnitConfiguration) {
+      module = ((JUnitConfiguration)runConfiguration).getConfigurationModule().getModule();
+    }
+    else if (runConfiguration == null) {
+      module = dataContext.getData(PlatformCoreDataKeys.MODULE);
+      if (module == null) return null;
+    }
+    else {
+      return null;
+    }
+
 
     Project project = context.getProject();
     GlobalSearchScope searchScope =

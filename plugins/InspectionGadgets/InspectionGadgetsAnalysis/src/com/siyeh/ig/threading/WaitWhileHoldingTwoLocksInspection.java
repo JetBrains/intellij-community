@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,7 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "wait.while.holding.two.locks.problem.descriptor");
+    return InspectionGadgetsBundle.message("wait.while.holding.two.locks.problem.descriptor");
   }
 
   @Override
@@ -37,8 +36,7 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
     return new WaitWhileHoldingTwoLocksVisitor();
   }
 
-  private static class WaitWhileHoldingTwoLocksVisitor
-    extends BaseInspectionVisitor {
+  private static class WaitWhileHoldingTwoLocksVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -60,15 +58,18 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
         }
 
         @Override
+        public void visitLambdaExpression(@NotNull PsiLambdaExpression expression) {
+          // Ignore
+        }
+
+        @Override
         public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
           if (m_numLocksHeld < 2) {
             return;
           }
-          final PsiReferenceExpression methodExpression =
-            expression.getMethodExpression();
-          @NonNls final String methodName =
-            methodExpression.getReferenceName();
+          final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+          @NonNls final String methodName = methodExpression.getReferenceName();
           if (!HardcodedMethodConstants.WAIT.equals(methodName)) {
             return;
           }
@@ -76,8 +77,7 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
           if (method == null) {
             return;
           }
-          final PsiParameterList parameterList =
-            method.getParameterList();
+          final PsiParameterList parameterList = method.getParameterList();
           final int numParams = parameterList.getParametersCount();
           if (numParams > 2) {
             return;
@@ -116,7 +116,8 @@ public class WaitWhileHoldingTwoLocksInspection extends BaseInspection {
         @Override
         protected void elementFinished(@NotNull PsiElement element) {
           super.elementFinished(element);
-          if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.SYNCHRONIZED) || element instanceof PsiSynchronizedStatement) {
+          if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.SYNCHRONIZED) ||
+              element instanceof PsiSynchronizedStatement) {
             m_numLocksHeld--;
           }
         }

@@ -53,7 +53,6 @@ internal class ActionsRecorder(private val project: Project,
     private set
 
   private var timer: Timer? = null
-  private val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
 
   /** Currently registered command listener */
   private var commandListener: CommandListener? = null
@@ -66,7 +65,8 @@ internal class ActionsRecorder(private val project: Project,
   init {
     Disposer.register(lessonExecutor, this)
 
-    // We could not unregister a listener (it will be done in dispose)
+    val busConnection = ApplicationManager.getApplication().messageBus.connect(this)
+    // We could not unregister a listener (it will be done in dispose).
     // So the simple solution is to use a proxy
 
     busConnection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
@@ -83,7 +83,7 @@ internal class ActionsRecorder(private val project: Project,
       }
     })
 
-    // This listener allows to track a lot of IDE state changes
+    // This listener allows tracking a lot of IDE state changes
     busConnection.subscribe(CommandListener.TOPIC, object : CommandListener {
       override fun commandStarted(event: CommandEvent) {
         commandListener?.commandStarted(event)
@@ -110,9 +110,8 @@ internal class ActionsRecorder(private val project: Project,
       }
     })
     busConnection.subscribe(FileOpenedSyncListener.TOPIC, object : FileOpenedSyncListener {
-      override fun fileOpenedSync(source: FileEditorManager,
-                                  file: VirtualFile,
-                                  editorsWithProviders: List<FileEditorWithProvider>) {
+      override fun fileOpenedSync(source: FileEditorManager, file: VirtualFile, editorsWithProviders: List<FileEditorWithProvider>) {
+        @Suppress("DEPRECATION")
         editorListener?.fileOpenedSync(source, file, editorsWithProviders)
       }
     })
@@ -137,7 +136,7 @@ internal class ActionsRecorder(private val project: Project,
   }
 
   fun futureActionOnStart(actionId: String, check: () -> Boolean): CompletableFuture<Boolean> {
-    val future: CompletableFuture<Boolean> = CompletableFuture()
+    val future = CompletableFuture<Boolean>()
     val actionListener = object : AnActionListener {
       override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
         checkAndCancelForException(future) { getActionId(action) == actionId && check() }

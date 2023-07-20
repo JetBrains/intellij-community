@@ -30,6 +30,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.PyUtil;
@@ -108,6 +109,13 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     else {
       return null;
     }
+  }
+
+  @Nullable
+  public InterpreterStatisticsInfo getInterpreterInfoForStatistics() {
+    if (myInterpreterPanel == null) return null;
+    PyAddSdkPanel panel = myInterpreterPanel.getSelectedPanel();
+    return panel.getStatisticInfo();
   }
 
   @Nullable

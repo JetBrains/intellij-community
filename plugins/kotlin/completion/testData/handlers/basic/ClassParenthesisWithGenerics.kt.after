@@ -1,0 +1,9 @@
+package foo
+
+class Some<T>
+
+fun foo() {
+    val some = Some<<caret>>()
+}
+
+// ELEMENT: Some

@@ -1,21 +1,18 @@
 fragment pullRequestReviewComment on PullRequestReviewComment {
-    ...comment
-    databaseId
-    url
-    state
-    commit {
-        ...commitHash
-    }
-    originalCommit {
-        ...commitHash
-    }
-    replyTo {
-        ...nodeInfo
-    }
-    diffHunk
-    pullRequestReview {
-        ...nodeInfo
-    }
-    viewerCanDelete
-    viewerCanUpdate
+  ...comment
+  databaseId
+  url
+  state
+  commit {
+    ...commitHash
+  }
+  originalCommit {
+    ...commitHash
+  }
+  diffHunk
+  pullRequestReview {
+    ...nodeInfo
+  }
+  viewerCanDelete
+  viewerCanUpdate
 }

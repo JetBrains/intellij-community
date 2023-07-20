@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull
 import java.util.*
 import java.util.function.Consumer
 
-class TransferSettingsDownloadPluginsTask(project: Project, private val plugins: List<PluginNode>,
+class TransferSettingsDownloadPluginsTask(project: Project?, private val plugins: List<PluginNode>,
                                           private val customPlugins: Collection<PluginNode>,
                                           private val allowInstallWithoutRestart: Boolean,
                                           private val pluginEnabler: PluginEnabler,
@@ -36,7 +36,7 @@ class TransferSettingsDownloadPluginsTask(project: Project, private val plugins:
       }
     }
     finally {
-      ApplicationManager.getApplication().invokeLater({ function?.accept(success) }, ModalityState.current())
+      ApplicationManager.getApplication().invokeLater({ function?.accept(success) }, modalityState)
     }
   }
 }

@@ -15,11 +15,11 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiModifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,7 +34,7 @@ public class NonSynchronizedMethodOverridesSynchronizedMethodInspection
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ChangeModifierFix(PsiModifier.SYNCHRONIZED);
   }
 

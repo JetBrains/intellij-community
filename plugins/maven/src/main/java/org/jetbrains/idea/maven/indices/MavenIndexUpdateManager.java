@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -33,7 +34,7 @@ import java.util.concurrent.TimeoutException;
 
 /**
  * Internal api class for update maven indices state.
- *
+ * <p>
  * Contains logic for schedule async tasks for update index list or index.
  */
 @ApiStatus.Internal
@@ -66,7 +67,7 @@ public final class MavenIndexUpdateManager implements Disposable {
       MavenIndexHolder indexHolder = indicesManager.getIndex();
       MavenIndex localIndex = indexHolder.getLocalIndex();
       if (localIndex != null) {
-        if (localIndex.getUpdateTimestamp() == -1) {
+        if (localIndex.getUpdateTimestamp() == -1 && Registry.is("maven.auto.update.local.index")) {
           scheduleUpdateContent(project, List.of(localIndex.getRepositoryPathOrUrl()));
         }
       }
@@ -155,6 +156,27 @@ public final class MavenIndexUpdateManager implements Disposable {
     }
   }
 
+  IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
+    synchronized (myUpdatingIndicesLock) {
+      if (Objects.equals(myCurrentUpdateIndexUrl, index.getRepositoryPathOrUrl())) return IndexUpdatingState.UPDATING;
+      if (myWaitingIndicesUrl.contains(index.getRepositoryPathOrUrl())) return IndexUpdatingState.WAITING;
+      return IndexUpdatingState.IDLE;
+    }
+  }
+
+  @TestOnly
+  void waitForBackgroundTasksInTests() {
+    while (!myUpdatingQueue.isEmpty()) {
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    try {
+      myUpdateQueueList.waitForAllExecuted(1, TimeUnit.MINUTES);
+    }
+    catch (ExecutionException | InterruptedException | TimeoutException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static MavenGeneralSettings getMavenSettings(@NotNull final Project project, @NotNull MavenProgressIndicator indicator)
     throws MavenProcessCanceledException {
     MavenGeneralSettings settings;
@@ -171,28 +193,7 @@ public final class MavenIndexUpdateManager implements Disposable {
     return settings;
   }
 
-  IndexUpdatingState getUpdatingState(@NotNull MavenSearchIndex index) {
-    synchronized (myUpdatingIndicesLock) {
-      if (Objects.equals(myCurrentUpdateIndexUrl, index.getRepositoryPathOrUrl())) return IndexUpdatingState.UPDATING;
-      if (myWaitingIndicesUrl.contains(index.getRepositoryPathOrUrl())) return IndexUpdatingState.WAITING;
-      return IndexUpdatingState.IDLE;
-    }
-  }
-
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
-  }
-
-  @TestOnly
-  void waitForBackgroundTasksInTests() {
-    while (!myUpdatingQueue.isEmpty()) {
-      UIUtil.dispatchAllInvocationEvents();
-    }
-    try {
-      myUpdateQueueList.waitForAllExecuted(1, TimeUnit.MINUTES);
-    }
-    catch (ExecutionException | InterruptedException | TimeoutException e) {
-      throw new RuntimeException(e);
-    }
   }
 }

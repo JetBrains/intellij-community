@@ -2,17 +2,15 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.ChronoUtil;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.*;
 
@@ -20,48 +18,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-import static com.siyeh.ig.callMatcher.CallMatcher.*;
-
 public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final CallMatcher PATTERN_METHODS = anyOf(
-    instanceCall("java.text.SimpleDateFormat", "applyPattern", "applyLocalizedPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING),
-    staticCall("java.time.format.DateTimeFormatter", "ofPattern"),
-    instanceCall("java.time.format.DateTimeFormatterBuilder", "appendPattern").parameterTypes(CommonClassNames.JAVA_LANG_STRING)
-  );
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
-        if (PATTERN_METHODS.test(call)) {
-          ExpressionUtils.nonStructuralChildren(call.getArgumentList().getExpressions()[0]).forEach(this::processExpression);
-        }
-      }
-
-      @Override
-      public void visitNewExpression(@NotNull PsiNewExpression expression) {
-        if (ConstructionUtils.isReferenceTo(expression.getClassReference(), "java.text.SimpleDateFormat")) {
-          PsiExpressionList args = expression.getArgumentList();
-          if (args != null) {
-            PsiExpression patternArg = ArrayUtil.getFirstElement(args.getExpressions());
-            if (patternArg != null) {
-              ExpressionUtils.nonStructuralChildren(patternArg).forEach(this::processExpression);
-            }
-          }
-        }
-      }
-
-      private void processExpression(@NotNull PsiExpression expression) {
-        if (expression instanceof PsiLiteralExpression) {
-          processLiteral((PsiLiteralExpression)expression);
-        }
-        if (expression instanceof PsiPolyadicExpression &&
-            ((PsiPolyadicExpression)expression).getOperationTokenType().equals(JavaTokenType.PLUS)) {
-          for (PsiExpression operand : ((PsiPolyadicExpression)expression).getOperands()) {
-            ExpressionUtils.nonStructuralChildren(operand).forEach(this::processExpression);
-          }
+      public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
+        if (ChronoUtil.isPatternForDateFormat(expression)) {
+          processLiteral(expression);
         }
       }
 
@@ -103,7 +69,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       }
 
       @Contract("null, _, _ -> null")
-      private Problem getProblem(@Nullable Token token, @Nullable Token prev, @Nullable Token next) {
+      private static Problem getProblem(@Nullable Token token, @Nullable Token prev, @Nullable Token next) {
         if (token == null) return null;
         switch (token.character) {
           case 'Y' -> {

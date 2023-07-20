@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -8,12 +8,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
@@ -30,12 +28,6 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
     return DevkitJavaTestsUtil.TESTDATA_PATH + "util/extensionLocator";
-  }
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
   }
 
   public void testByExtensionPoint() {
@@ -67,12 +59,12 @@ public class ExtensionLocatorTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.copyFileToProject("SomeClass.java");
 
     PsiClass arrayListPsiClass = myFixture.findClass("java.util.ArrayList");
-    PsiClass linkedListPsiClass = myFixture.findClass(CommonClassNames.JAVA_UTIL_LINKED_LIST);
+    PsiClass hashMapPsiClass = myFixture.findClass(CommonClassNames.JAVA_UTIL_HASH_MAP);
     PsiClass myList1PsiClass = myFixture.findClass("SomeClass.MyList1");
     PsiClass myList2PsiClass = myFixture.findClass("SomeClass.MyList2");
 
     verifyLocator(locateExtensionsByPsiClass(arrayListPsiClass), 2);
-    verifyLocator(locateExtensionsByPsiClass(linkedListPsiClass), 1);
+    verifyLocator(locateExtensionsByPsiClass(hashMapPsiClass), 1);
     verifyLocator(locateExtensionsByPsiClass(myList1PsiClass), 1);
     verifyLocator(locateExtensionsByPsiClass(myList2PsiClass), 0);
   }

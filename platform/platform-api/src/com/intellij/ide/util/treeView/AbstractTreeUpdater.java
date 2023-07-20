@@ -42,7 +42,7 @@ public class AbstractTreeUpdater implements Disposable, Activatable {
     myUpdateQueue = new MergingUpdateQueue("UpdateQueue", 100, component.isShowing(), component);
     myUpdateQueue.setRestartTimerOnAdd(false);
 
-    final UiNotifyConnector uiNotifyConnector = new UiNotifyConnector(component, myUpdateQueue);
+    final UiNotifyConnector uiNotifyConnector = UiNotifyConnector.installOn(component, myUpdateQueue);
     Disposer.register(this, myUpdateQueue);
     Disposer.register(this, uiNotifyConnector);
   }

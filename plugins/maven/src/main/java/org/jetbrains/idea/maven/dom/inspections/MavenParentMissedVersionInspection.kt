@@ -15,7 +15,7 @@ import com.intellij.util.xml.highlighting.DomElementAnnotationHolder
 import com.intellij.util.xml.highlighting.DomElementsInspection
 import org.jetbrains.idea.maven.dom.MavenDomBundle
 import org.jetbrains.idea.maven.dom.MavenDomUtil
-import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isConsumerPomResolutionApplicable
+import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 
 class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProjectModel?>(MavenDomProjectModel::class.java) {
@@ -27,8 +27,7 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
       return
     }
 
-    val project = domFileElement.file.project
-    if (!parent.version.exists() && !isConsumerPomResolutionApplicable(project)) {
+    if (!parent.version.exists() && !isAutomaticVersionFeatureEnabled(domFileElement.file.virtualFile, domFileElement.file.project)) {
       val version = getParentVersion(domFileElement.file, model)
       listOf(
         holder.createProblem(

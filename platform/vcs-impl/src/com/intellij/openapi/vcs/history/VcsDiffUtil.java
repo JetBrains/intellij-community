@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
-import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
+import com.intellij.openapi.vcs.changes.ui.SimpleAsyncChangesBrowser;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -94,11 +94,12 @@ public final class VcsDiffUtil {
 
     dialogBuilder.setTitle(title);
     dialogBuilder.setActionDescriptors(new DialogBuilder.CloseDialogAction());
-    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(project, false, true);
+    final SimpleAsyncChangesBrowser changesBrowser = new SimpleAsyncChangesBrowser(project, false, true);
     changesBrowser.setChangesToDisplay(changes);
     dialogBuilder.setCenterPanel(changesBrowser);
     dialogBuilder.setPreferredFocusComponent(changesBrowser.getPreferredFocusedComponent());
     dialogBuilder.setDimensionServiceKey("VcsDiffUtil.ChangesDialog");
+    dialogBuilder.addDisposable(() -> changesBrowser.shutdown());
     dialogBuilder.showNotModal();
   }
 

@@ -17,7 +17,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.util.List;
 
-import static com.intellij.ui.dsl.gridLayout.GapsKt.toGaps;
+import static com.intellij.ui.dsl.gridLayout.UnscaledGapsKt.toUnscaledGaps;
 
 public class RawCommandLineEditor extends JPanel implements TextAccessor, FragmentWrapper {
   private final ExpandableTextField myEditor;
@@ -30,11 +30,13 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor, Fragme
   public RawCommandLineEditor(final Function<? super String, ? extends List<String>> lineParser, final Function<? super List<String>, String> lineJoiner) {
     super(new BorderLayout());
     myEditor = new ExpandableTextField(lineParser, lineJoiner);
+    // required! otherwise JPanel will occasionally gain focus instead of the component
+    setFocusable(false);
     add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEditor);
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toGaps(myEditor.getInsets()));
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, toUnscaledGaps(myEditor.getInsets()));
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {

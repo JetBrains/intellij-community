@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.application.ModalityState;
@@ -22,7 +22,7 @@ public interface ChangesViewEx extends ChangesViewI {
   void resetViewImmediatelyAndRefreshLater();
 
   default @NotNull Promise<?> promiseRefresh() {
-    return promiseRefresh(ModalityState.NON_MODAL);
+    return promiseRefresh(ModalityState.nonModal());
   }
 
   /**
@@ -35,7 +35,7 @@ public interface ChangesViewEx extends ChangesViewI {
   /**
    * @deprecated Use {@link ChangesViewWorkflowManager#getCommitWorkflowHandler}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   ChangesViewCommitWorkflowHandler getCommitWorkflowHandler();
 }

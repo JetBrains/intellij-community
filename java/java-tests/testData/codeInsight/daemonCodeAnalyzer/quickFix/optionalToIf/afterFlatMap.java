@@ -82,7 +82,7 @@ class Test {
   }
 
   String flatMapWithOrInside() {
-      Object o1 = null;
+      Object object = null;
       String empty = null;
       throw new NoSuchElementException("No value present");
   }

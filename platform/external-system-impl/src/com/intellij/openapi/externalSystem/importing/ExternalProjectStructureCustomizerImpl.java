@@ -24,7 +24,6 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.util.Couple;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +75,6 @@ public class ExternalProjectStructureCustomizerImpl extends ExternalProjectStruc
 
   @NotNull
   private static Set<? extends Key<? extends AbstractNamedData>> getDataKeys() {
-    return ContainerUtil.set(ProjectKeys.PROJECT, ProjectKeys.MODULE);
+    return Set.of(ProjectKeys.PROJECT, ProjectKeys.MODULE);
   }
 }

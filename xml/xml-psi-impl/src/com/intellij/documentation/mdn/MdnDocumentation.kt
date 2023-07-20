@@ -75,7 +75,7 @@ fun getHtmlMdnDocumentation(element: PsiElement, context: XmlTag?): MdnSymbolDoc
       PsiTreeUtil.getParentOfType(element, XmlAttribute::class.java, false)?.let { attr ->
         symbolName = attr.localName
         getAttributeDocumentation(getHtmlApiNamespace(attr.namespace, attr, toLowerCase(symbolName)),
-          attr.parent.localName, toLowerCase(symbolName))
+                                  attr.parent.localName, toLowerCase(symbolName))
       }
     }
     else -> {
@@ -174,7 +174,7 @@ private fun innerGetEventDoc(eventName: String): Pair<MdnDocumentation, MdnDomEv
 
 interface MdnSymbolDocumentation {
   val name: String
-  val url: String
+  val url: String?
   val isDeprecated: Boolean
   val isExperimental: Boolean
   val description: String
@@ -193,8 +193,8 @@ private const val defaultBcdContext = "default_context"
 class MdnSymbolDocumentationAdapter(override val name: String,
                                     private val source: MdnDocumentation,
                                     private val doc: MdnRawSymbolDocumentation) : MdnSymbolDocumentation {
-  override val url: String
-    get() = fixMdnUrls(doc.url, source.lang)
+  override val url: String?
+    get() = doc.url?.let { fixMdnUrls(it, source.lang) }
 
   override val isDeprecated: Boolean
     get() = doc.status?.contains(MdnApiStatus.Deprecated) == true
@@ -242,7 +242,7 @@ class MdnSymbolDocumentationAdapter(override val name: String,
     buildDoc(this, withDefinition, additionalSectionsContent)
 
   private fun String.fixUrls(): String =
-    fixMdnUrls(replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url)}#$1\""),
+    fixMdnUrls(replace(Regex("<a[ \n\t]+href=[ \t]*['\"]#([^'\"]*)['\"]"), "<a href=\"${escapeReplacement(doc.url ?: "")}#$1\""),
                source.lang)
 
 }
@@ -250,14 +250,14 @@ class MdnSymbolDocumentationAdapter(override val name: String,
 typealias CompatibilityMap = Map<String, Map<MdnJavaScriptRuntime, String>>
 
 interface MdnRawSymbolDocumentation {
-  val url: String
+  val url: String?
   val status: Set<MdnApiStatus>?
   val compatibility: CompatibilityMap?
   val doc: String?
   val sections: Map<String, String> get() = emptyMap()
 }
 
-interface MdnDocumentation {
+sealed interface MdnDocumentation {
   val lang: String
 }
 
@@ -280,7 +280,7 @@ data class MdnCssDocumentation(override val lang: String,
                                val functions: Map<String, MdnCssBasicSymbolDocumentation>,
                                val dataTypes: Map<String, MdnCssBasicSymbolDocumentation>) : MdnDocumentation
 
-data class MdnHtmlElementDocumentation(override val url: String,
+data class MdnHtmlElementDocumentation(override val url: String?,
                                        override val status: Set<MdnApiStatus>?,
                                        @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                        override val compatibility: CompatibilityMap?,
@@ -288,19 +288,23 @@ data class MdnHtmlElementDocumentation(override val url: String,
                                        val details: Map<String, String>?,
                                        val attrs: Map<String, MdnHtmlAttributeDocumentation>?) : MdnRawSymbolDocumentation
 
-data class MdnHtmlAttributeDocumentation(override val url: String,
+data class MdnHtmlAttributeDocumentation(override val url: String?,
                                          override val status: Set<MdnApiStatus>?,
                                          @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                          override val compatibility: CompatibilityMap?,
-                                         override val doc: String?) : MdnRawSymbolDocumentation
+                                         override val doc: String?,
+                                         val details: Map<String, String>? = null) : MdnRawSymbolDocumentation {
+  override val sections: Map<String, String>
+    get() = details ?: emptyMap()
+}
 
-data class MdnDomEventDocumentation(override val url: String,
+data class MdnDomEventDocumentation(override val url: String?,
                                     override val status: Set<MdnApiStatus>?,
                                     @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                     override val compatibility: CompatibilityMap?,
                                     override val doc: String?) : MdnRawSymbolDocumentation
 
-data class MdnJsSymbolDocumentation(override val url: String,
+data class MdnJsSymbolDocumentation(override val url: String?,
                                     override val status: Set<MdnApiStatus>?,
                                     @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                     override val compatibility: CompatibilityMap?,
@@ -322,20 +326,40 @@ data class MdnJsSymbolDocumentation(override val url: String,
     }
 }
 
-data class MdnCssBasicSymbolDocumentation(override val url: String,
+data class MdnCssBasicSymbolDocumentation(override val url: String?,
                                           override val status: Set<MdnApiStatus>?,
                                           @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                           override val compatibility: CompatibilityMap?,
-                                          override val doc: String?) : MdnRawSymbolDocumentation
+                                          override val doc: String?,
+                                          val formalSyntax: String?) : MdnRawSymbolDocumentation{
+  override val sections: Map<String, String>
+    get() {
+      val result = mutableMapOf<String, String>()
+      formalSyntax?.takeIf { it.isNotEmpty() }?.let {
+        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+      }
+      return result
+    }
+}
 
-data class MdnCssAtRuleSymbolDocumentation(override val url: String,
+data class MdnCssAtRuleSymbolDocumentation(override val url: String?,
                                            override val status: Set<MdnApiStatus>?,
                                            @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                            override val compatibility: CompatibilityMap?,
                                            override val doc: String?,
-                                           val properties: Map<String, MdnCssPropertySymbolDocumentation>?) : MdnRawSymbolDocumentation
+                                           val properties: Map<String, MdnCssPropertySymbolDocumentation>?,
+                                           val formalSyntax: String?) : MdnRawSymbolDocumentation{
+  override val sections: Map<String, String>
+    get() {
+      val result = mutableMapOf<String, String>()
+      formalSyntax?.takeIf { it.isNotEmpty() }?.let {
+        result.put(XmlPsiBundle.message("mdn.documentation.section.syntax"), "<pre><code>$it</code></pre>")
+      }
+      return result
+    }
+}
 
-data class MdnCssPropertySymbolDocumentation(override val url: String,
+data class MdnCssPropertySymbolDocumentation(override val url: String?,
                                              override val status: Set<MdnApiStatus>?,
                                              @JsonDeserialize(using = CompatibilityMapDeserializer::class)
                                              override val compatibility: CompatibilityMap?,
@@ -376,11 +400,12 @@ enum class MdnJavaScriptRuntime(displayName: String? = null, mdnId: String? = nu
   ChromeAndroid(displayName = "Chrome Android", mdnId = "chrome_android", firstVersion = "18"),
   Edge(firstVersion = "12"),
   Firefox,
-  IE,
   Opera,
   Safari,
   SafariIOS(displayName = "Safari iOS", mdnId = "safari_ios"),
-  Nodejs(displayName = "Node.js", firstVersion = "0.10.0");
+  Nodejs(displayName = "Node.js", firstVersion = "0.10.0"),
+  Deno(firstVersion = "1.0")
+  ;
 
   val mdnId: String = mdnId ?: toLowerCase(name)
   val displayName: String = displayName ?: name
@@ -507,9 +532,14 @@ private fun loadDocumentation(namespace: MdnApiNamespace, segment: Char?): MdnDo
     else -> MdnHtmlDocumentation::class.java
   })
 
-private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace, segment: Char?, clazz: Class<T>): T =
-  MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")!!
-    .let { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it, clazz) }
+private fun <T : MdnDocumentation> loadDocumentation(namespace: MdnApiNamespace, segment: Char?, clazz: Class<T>): T {
+  val mainFile = MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}.json")
+  val obsoleteFile = MdnHtmlDocumentation::class.java.getResource("${namespace.name}${segment?.let { "-$it" } ?: ""}-obsolete.json")
+  return sequenceOf(mainFile, obsoleteFile)
+    .filterNotNull()
+    .map { jacksonObjectMapper().disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES).readValue(it, clazz) }
+    .reduce(::mergeDocumentation)
+}
 
 private fun buildDoc(doc: MdnSymbolDocumentation,
                      withDefinition: Boolean,
@@ -577,3 +607,26 @@ private val UPPER_CASE = Regex("(?=\\p{Upper})")
 private fun String.toKebabCase() =
   this.split(UPPER_CASE).joinToString("-") { it.lowercase(Locale.US) }
 
+
+@Suppress("UNCHECKED_CAST")
+private fun <T : MdnDocumentation> mergeDocumentation(doc1: T, doc2: T): T =
+  when (val src = doc1 as MdnDocumentation) {
+    is MdnHtmlDocumentation -> src.copy(
+      attrs = src.attrs + (doc2 as MdnHtmlDocumentation).attrs,
+      tags = src.tags + doc2.tags
+    ) as T
+    is MdnCssDocumentation -> src.copy(
+      atRules = src.atRules + (doc2 as MdnCssDocumentation).atRules,
+      properties = src.properties + doc2.properties,
+      pseudoClasses = src.pseudoClasses + doc2.pseudoClasses,
+      pseudoElements = src.pseudoElements + doc2.pseudoElements,
+      functions = src.functions + doc2.functions,
+      dataTypes = src.dataTypes + doc2.dataTypes,
+    ) as T
+    is MdnDomEventsDocumentation -> src.copy(
+      events = src.events + (doc2 as MdnDomEventsDocumentation).events,
+    ) as T
+    is MdnJsDocumentation -> src.copy(
+      symbols = src.symbols + (doc2 as MdnJsDocumentation).symbols,
+    ) as T
+  }

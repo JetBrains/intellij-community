@@ -11,13 +11,19 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.usageView.UsageViewLongNameLocation
 import com.intellij.util.Query
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtClass
 import java.nio.file.Paths
 
 abstract class AbstractKotlinSearchersTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin(): Boolean = true
+
+    override fun getDefaultProjectDescriptor(): KotlinLightProjectDescriptor {
+        return KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    }
 
     abstract fun searchClass(ktClass: KtClass): Query<PsiElement>
     abstract fun searchCallable(ktFunction: KtCallableDeclaration): Query<PsiElement>

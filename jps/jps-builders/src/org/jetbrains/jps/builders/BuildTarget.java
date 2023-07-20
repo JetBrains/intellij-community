@@ -52,7 +52,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @return id of the target which must be unique among all targets of the same type
    * @see BuildTargetLoader#createTarget(String)
    */
-  public abstract String getId();
+  public abstract @NotNull String getId();
 
   @NotNull
   public final BuildTargetType<? extends BuildTarget<R>> getTargetType() {
@@ -65,7 +65,8 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param targetRegistry the registry of all targets existing in the project.
    * @param outputIndex    the index of output files by target.
    */
-  public abstract Collection<BuildTarget<?>> computeDependencies(BuildTargetRegistry targetRegistry, TargetOutputIndex outputIndex);
+  public abstract @NotNull Collection<BuildTarget<?>> computeDependencies(@NotNull BuildTargetRegistry targetRegistry, 
+                                                                          @NotNull TargetOutputIndex outputIndex);
 
   /**
    * Allows the build target to tag the current project settings relevant to the build of this target
@@ -76,7 +77,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @param out the print writer to which the project settings can be written (the settings are compared with the ones
    *            written during the invocation of the same method in a previous compilation).
    */
-  public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
+  public void writeConfiguration(@NotNull ProjectDescriptor pd, @NotNull PrintWriter out) {
   }
 
   /**
@@ -86,10 +87,10 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @see org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider
    */
   @NotNull
-  public abstract List<R> computeRootDescriptors(JpsModel model,
-                                                 ModuleExcludeIndex index,
-                                                 IgnoredFileIndex ignoredFileIndex,
-                                                 BuildDataPaths dataPaths);
+  public abstract List<R> computeRootDescriptors(@NotNull JpsModel model,
+                                                 @NotNull ModuleExcludeIndex index,
+                                                 @NotNull IgnoredFileIndex ignoredFileIndex,
+                                                 @NotNull BuildDataPaths dataPaths);
 
   /**
    * Finds a source root by its serialized ID.
@@ -99,7 +100,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @return the build root or null if no root with this ID exists.
    */
   @Nullable
-  public abstract R findRootDescriptor(String rootId, BuildRootIndex rootIndex);
+  public abstract R findRootDescriptor(@NotNull String rootId, @NotNull BuildRootIndex rootIndex);
 
   @NotNull
   public abstract String getPresentableName();
@@ -113,7 +114,7 @@ public abstract class BuildTarget<R extends BuildRootDescriptor> {
    * @return the collection of output roots.
    */
   @NotNull
-  public abstract Collection<File> getOutputRoots(CompileContext context);
+  public abstract Collection<File> getOutputRoots(@NotNull CompileContext context);
 
   @Override
   public String toString() {

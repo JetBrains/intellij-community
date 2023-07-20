@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Version
 import com.intellij.testFramework.UsefulTestCase
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GroovyDslGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedJavaLibraryPlugin
-import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isSupportedTaskConfigurationAvoidance
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isJavaLibraryPluginSupported
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isTaskConfigurationAvoidanceSupported
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
 import java.io.File
@@ -40,7 +40,7 @@ open class TestGradleBuildScriptBuilder(
     }
 
   fun registerTask(name: String, configure: ScriptTreeBuilder.() -> Unit) = apply {
-    assert(isSupportedTaskConfigurationAvoidance(gradleVersion))
+    assert(isTaskConfigurationAvoidanceSupported(gradleVersion))
     withPostfix {
       call("tasks.register", name, configure = configure)
     }
@@ -157,7 +157,7 @@ open class TestGradleBuildScriptBuilder(
       applyPlugin("java")
 
     override fun withJavaLibraryPlugin() =
-      if (isSupportedJavaLibraryPlugin(gradleVersion))
+      if (isJavaLibraryPluginSupported(gradleVersion))
         applyPlugin("java-library")
       else
         applyPlugin("java")

@@ -1,9 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.core.CoreFileTypeRegistry
+import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.highlighter.ArchiveFileType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -28,8 +28,7 @@ internal class PathChooserDialogHelper(private val descriptor: FileChooserDescri
   }
 
   private val localFileSystem by lazy {
-    val app = ApplicationManager.getApplication()
-    if (app == null) CoreLocalFileSystem() else LocalFileSystem.getInstance()
+    if (LoadingState.COMPONENTS_LOADED.isOccurred) LocalFileSystem.getInstance() else CoreLocalFileSystem()
   }
 
   fun getChosenFiles(files: Array<File>): List<VirtualFile> {

@@ -65,8 +65,8 @@ public final class ToolWindowCollector {
   private static final Map<String, PluginInfo> ourToolwindowAllowList = new HashMap<>();
 
   static {
-    Arrays.asList(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES, EXTRACT_METHOD,
-                  DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS")
+    Arrays.asList(MESSAGES_WINDOW, DEBUG, RUN, FIND, HIERARCHY, ANALYZE_DEPENDENCIES, MODULES_DEPENDENCIES, DUPLICATES, EXTRACT_METHOD,
+                  DOCUMENTATION, PREVIEW, SERVICES, ENDPOINTS, BuildContentManager.TOOL_WINDOW_ID, "CVS", BUILD_DEPENDENCIES)
       .forEach(id -> ourToolwindowAllowList.put(id, getPlatformPlugin()));
   }
 

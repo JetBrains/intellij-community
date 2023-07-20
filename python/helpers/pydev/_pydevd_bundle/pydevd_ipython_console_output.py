@@ -10,7 +10,7 @@ class PyDevDebugDisplayHook(DisplayHook):
 
 
 class PyDevDebugDisplayPub(DisplayPublisher):
-    def publish(self, data, *args, **kwargs) -> None:
+    def publish(self, data, *args, **kwargs):
         print_text_from_dict(data)
 
 

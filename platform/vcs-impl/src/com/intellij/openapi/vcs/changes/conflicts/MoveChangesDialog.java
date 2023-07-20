@@ -11,17 +11,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ui.ChangesTree;
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
+import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBCheckBox;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
@@ -32,23 +29,29 @@ import java.util.Set;
  */
 public class MoveChangesDialog extends DialogWrapper {
   private static final String MOVE_CHANGES_CURRENT_ONLY = "move.changes.current.only";
-  private final ChangesTree myTreeList;
+  private final AsyncChangesTree myTreeList;
   private final Collection<? extends Change> mySelected;
   private final JBCheckBox myCheckBox;
 
-  public MoveChangesDialog(final Project project, Collection<? extends Change> selected, final Set<ChangeList> changeLists, VirtualFile current) {
+  public MoveChangesDialog(final Project project,
+                           Collection<? extends Change> selected,
+                           final Set<ChangeList> changeLists,
+                           VirtualFile current) {
     super(project, true);
     mySelected = selected;
     setTitle(VcsBundle.message("dialog.title.move.changes.to.active.changelist"));
-    myTreeList = new ChangesTree(project, true, false) {
+    myTreeList = new AsyncChangesTree(project, true, false) {
+      @NotNull
       @Override
-      public void rebuildTree() {
-        DefaultTreeModel model = TreeModelBuilder.buildFromChangeLists(project, getGrouping(), changeLists);
-        updateTreeModel(model);
+      protected AsyncChangesTreeModel getChangesTreeModel() {
+        return SimpleAsyncChangesTreeModel.create(grouping -> {
+          return TreeModelBuilder.buildFromChangeLists(project, grouping, changeLists);
+        });
       }
     };
-    myTreeList.rebuildTree();
-    myTreeList.selectFile(current);
+    myTreeList.requestRefresh(() -> {
+      myTreeList.selectFile(current);
+    });
 
     myCheckBox = new JBCheckBox(VcsBundle.message("checkbox.select.current.file.only"));
     myCheckBox.addActionListener(e -> setSelected(myCheckBox.isSelected()));

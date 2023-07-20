@@ -45,7 +45,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
     fun testConfigurationForScript() {
         configureByFile("run/simpleScript.kts")
-        val script = KotlinScriptFqnIndex.get("foo.SimpleScript", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex["foo.SimpleScript", project, project.allScope()].single()
         val runConfiguration = createConfigurationFromElement(script) as KotlinStandaloneScriptRunConfiguration
 
         assertEqualPaths(script.containingFile.virtualFile.canonicalPath, runConfiguration.filePath)
@@ -70,7 +70,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
     fun testOnFileRename() {
         configureByFile("renameFile/simpleScript.kts")
-        val script = KotlinScriptFqnIndex.get("foo.SimpleScript", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex["foo.SimpleScript", project, project.allScope()].single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("simpleScript.kts", runConfiguration.name)
@@ -97,7 +97,7 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
 
-        val script = KotlinScriptFqnIndex.get("foo.Script", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex["foo.Script", project, project.allScope()].single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
@@ -124,11 +124,11 @@ class StandaloneScriptRunConfigurationTest : KotlinCodeInsightTestCase() {
 
         ScriptConfigurationManager.updateScriptDependenciesSynchronously(myFile)
 
-        val script = KotlinScriptFqnIndex.get("foo.Script", project, project.allScope()).single()
+        val script = KotlinScriptFqnIndex["foo.Script", project, project.allScope()].single()
         val runConfiguration = createConfigurationFromElement(script, save = true) as KotlinStandaloneScriptRunConfiguration
 
         Assert.assertEquals("script.kts", runConfiguration.name)
-        runConfiguration.workingDirectory = runConfiguration.workingDirectory + "/customWorkingDirectory"
+        runConfiguration.workingDirectory += "/customWorkingDirectory"
         val scriptVirtualFileBefore = script.containingFile.virtualFile
         val originalPath = scriptVirtualFileBefore.canonicalPath
         val originalWorkingDirectory = scriptVirtualFileBefore.parent.canonicalPath + "/customWorkingDirectory"

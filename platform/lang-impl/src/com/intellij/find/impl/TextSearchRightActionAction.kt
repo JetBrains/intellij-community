@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider
 import com.intellij.openapi.actionSystem.ex.TooltipLinkProvider
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAwareToggleAction
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 import javax.swing.JComponent
 
@@ -21,7 +22,7 @@ sealed class TextSearchRightActionAction(message: String,
                                          private val myTooltipLink: TooltipLinkProvider.TooltipLink? = null) :
   DumbAwareToggleAction(FindBundle.message(message), null, icon), TooltipLinkProvider, TooltipDescriptionProvider {
 
-  val tooltipText = FindBundle.message(message)
+  val tooltipText: @Nls String = FindBundle.message(message)
 
 
   init {
@@ -29,13 +30,13 @@ sealed class TextSearchRightActionAction(message: String,
     templatePresentation.selectedIcon = selectedIcon
   }
 
-  override fun getTooltipLink(owner: JComponent?) = myTooltipLink
+  override fun getTooltipLink(owner: JComponent?): TooltipLinkProvider.TooltipLink? = myTooltipLink
 
-  fun isSelected() = state.get()
+  fun isSelected(): Boolean = state.get()
 
-  override  fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override  fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isSelected(e: AnActionEvent) = isSelected()
+  override fun isSelected(e: AnActionEvent): Boolean = isSelected()
 
   override fun setSelected(e: AnActionEvent, selected: Boolean) {
     state.set(selected)

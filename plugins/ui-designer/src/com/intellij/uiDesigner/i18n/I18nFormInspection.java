@@ -101,7 +101,7 @@ public class I18nFormInspection extends StringDescriptorInspection {
 
   interface FixesProvider extends EditorQuickFixProvider, LocalQuickFixProvider {
     @Override
-    default LocalQuickFix @Nullable [] getQuickFixes() {
+    default @NotNull LocalQuickFix @Nullable [] getQuickFixes() {
       return createBatchFixes();
     }
   }

@@ -5,12 +5,12 @@ Reports classes that implement <code>Serializable</code> and do not declare a <c
   Without a <code>serialVersionUID</code> field, any change to the class will make previously serialized versions unreadable.
 </p>
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   class Main implements Serializable {
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   class Main implements Serializable {
     private static final long serialVersionUID = -1446398935944895849L;
   }

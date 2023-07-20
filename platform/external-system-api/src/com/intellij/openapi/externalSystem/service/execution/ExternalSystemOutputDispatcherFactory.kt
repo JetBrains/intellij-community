@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.execution
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.output.BuildOutputParser
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 
 /**
@@ -32,4 +33,9 @@ interface ExternalSystemOutputDispatcherFactory {
              buildProgressListener: BuildProgressListener,
              appendOutputToMainConsole: Boolean,
              parsers: List<BuildOutputParser>): ExternalSystemOutputMessageDispatcher
+
+  companion object {
+
+    val EP_NAME: ExtensionPointName<ExternalSystemOutputDispatcherFactory> = ExtensionPointName.create<ExternalSystemOutputDispatcherFactory>("com.intellij.externalSystemOutputDispatcher")
+  }
 }

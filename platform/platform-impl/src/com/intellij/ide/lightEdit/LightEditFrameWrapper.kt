@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit
 
+import com.apple.eawt.event.FullScreenEvent
 import com.intellij.diagnostic.IdeMessagePanel
 import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
@@ -15,8 +16,9 @@ import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.project.impl.applyBoundsOrDefault
-import com.intellij.openapi.project.impl.createNewProjectFrame
+import com.intellij.openapi.project.impl.createNewProjectFrameProducer
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs
@@ -24,6 +26,9 @@ import com.intellij.openapi.wm.impl.ProjectFrameBounds.Companion.getInstance
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.openapi.wm.impl.status.adaptV2Widget
 import com.intellij.toolWindow.ToolWindowPane
+import com.intellij.ui.mac.MacFullScreenControlsManager
+import com.intellij.ui.mac.MacMainFrameDecorator
+import com.intellij.ui.mac.MacMainFrameDecorator.FSAdapter
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,7 +54,7 @@ internal class LightEditFrameWrapper(
       return runBlockingModalWithRawProgressReporter(project, "") {
         withContext(Dispatchers.EDT) {
           val wrapper = allocateLightEditFrame(project) { frame ->
-            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrame(frameInfo).create(), closeHandler = closeHandler)
+            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create(), closeHandler = closeHandler)
           } as LightEditFrameWrapper
           (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
           wrapper
@@ -94,6 +99,21 @@ internal class LightEditFrameWrapper(
         }
       }
 
+      if (SystemInfoRt.isMac) {
+        val decorator = frame.getDecorator()
+        if (decorator is MacMainFrameDecorator) {
+          decorator.dispatcher.addListener(object : FSAdapter() {
+            override fun windowEnteringFullScreen(e: FullScreenEvent?) {
+              MacFullScreenControlsManager.configureForLightEdit(true)
+            }
+
+            override fun windowExitedFullScreen(e: FullScreenEvent?) {
+              MacFullScreenControlsManager.configureForLightEdit(false)
+            }
+          })
+        }
+      }
+
       windowManager.lightFrameAssign(project, frame)
       val uiFrame = frame.frame
       if (frameInfo != null) {
@@ -103,7 +123,7 @@ internal class LightEditFrameWrapper(
       if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
         frame.toggleFullScreen(true)
       }
-      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper, frame))
+      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
       IdeMenuBar.installAppMenuIfNeeded(uiFrame)
 
       @Suppress("DEPRECATION")
@@ -119,7 +139,9 @@ internal class LightEditFrameWrapper(
   val lightEditPanel: LightEditPanel
     get() = editPanel!!
 
-  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane = LightEditRootPane(frame = frame, parentDisposable = this)
+  override fun createIdeRootPane(loadingState: FrameLoadingState?): IdeRootPane {
+    return LightEditRootPane(frame = frame, parentDisposable = this)
+  }
 
   override suspend fun installDefaultProjectStatusBarWidgets(project: Project) {
     val editorManager = LightEditService.getInstance().editorManager
@@ -159,32 +181,25 @@ internal class LightEditFrameWrapper(
 
   override fun getTitleInfoProviders(): List<TitleInfoProvider> = emptyList()
 
-  override fun windowClosing(project: Project) {
-    if (closeHandler.asBoolean) {
-      super.windowClosing(project)
-    }
-  }
-
   override fun dispose() {
-    Disposer.dispose(editPanel!!)
-  }
-
-  fun closeAndDispose(lightEditServiceImpl: LightEditServiceImpl) {
     val frameInfo = getInstance(project).getActualFrameInfoInDeviceSpace(
       frameHelper = this,
       frame = frame,
       windowManager = (WindowManager.getInstance() as WindowManagerImpl)
     )
-
+    val lightEditServiceImpl = LightEditService.getInstance() as LightEditServiceImpl
     lightEditServiceImpl.setFrameInfo(frameInfo)
-    frame.isVisible = false
-    Disposer.dispose(this)
+    lightEditServiceImpl.frameDisposed()
+    Disposer.dispose(editPanel!!)
+    super.dispose()
   }
 
   private inner class LightEditRootPane(frame: JFrame,
                                         parentDisposable: Disposable) : IdeRootPane(frame = frame,
                                                                                     parentDisposable = parentDisposable,
                                                                                     loadingState = null), LightEditCompatible {
+    override val isLightEdit: Boolean get() = true
+
     override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
       val panel = LightEditPanel(LightEditUtil.requireProject())
       editPanel = panel
@@ -199,7 +214,7 @@ internal class LightEditFrameWrapper(
       get() = LightEditMainMenuHelper.getMainMenuActionGroup()
 
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
-      return object : IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false) {
+      return object : IdeStatusBarImpl(disposable = frameHelper, frameHelper = frameHelper, addToolWindowWidget = false) {
         override fun updateUI() {
           setUI(LightEditStatusBarUI())
         }
@@ -209,7 +224,9 @@ internal class LightEditFrameWrapper(
     }
 
     override fun updateNorthComponents() {}
-    override fun installNorthComponents(project: Project) {}
+
+    override suspend fun installNorthComponents(project: Project) {}
+
     override fun deinstallNorthComponents(project: Project) {}
   }
 

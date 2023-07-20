@@ -26,7 +26,8 @@ public class PyAnnotatingVisitor implements Annotator {
     GlobalAnnotator.class,
     ImportAnnotator.class,
     PyBuiltinAnnotator.class,
-    UnsupportedFeatures.class
+    UnsupportedFeatures.class,
+    PyAsyncAwaitAnnotator.class
   };
 
   private final PyAnnotator[] myAnnotators;

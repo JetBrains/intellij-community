@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.adjustLineIndent
 import org.jetbrains.kotlin.idea.core.setType
+import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention.Holder.convert
+import org.jetbrains.kotlin.idea.intentions.ConvertToBlockBodyIntention.Holder.returnType
 import org.jetbrains.kotlin.idea.util.resultingWhens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -52,7 +54,7 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
         convert(element, true)
     }
 
-    companion object {
+    object Holder {
         fun convert(declaration: KtDeclarationWithBody, withReformat: Boolean = false): KtDeclarationWithBody {
             val body = declaration.bodyExpression!!
             val prevComments = body.comments(next = false)
@@ -118,7 +120,7 @@ class ConvertToBlockBodyIntention : SelfTargetingIntention<KtDeclarationWithBody
             return declaration
         }
 
-        private fun KtNamedFunction.returnType(): KotlinType? {
+        internal fun KtNamedFunction.returnType(): KotlinType? {
             val descriptor = resolveToDescriptorIfAny()
             val returnType = descriptor?.returnType ?: return null
             if (returnType.isNullabilityFlexible()

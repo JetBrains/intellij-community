@@ -8,8 +8,8 @@ import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.elements.PackagingElementFactory
 import com.intellij.packaging.impl.artifacts.InvalidArtifact
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ArtifactId
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.java.workspace.entities.ArtifactId
 import org.jetbrains.annotations.Nls
 
 class InvalidArtifactBridge(

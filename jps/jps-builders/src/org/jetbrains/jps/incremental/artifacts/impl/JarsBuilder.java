@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -96,14 +96,19 @@ public final class JarsBuilder {
     }
   }
 
-  private void copyJars() throws IOException {
+  private void copyJars() {
     for (Map.Entry<JarInfo, File> entry : myBuiltJars.entrySet()) {
       File fromFile = entry.getValue();
       final JarInfo jarInfo = entry.getKey();
       DestinationInfo destination = jarInfo.getDestination();
       if (destination instanceof ExplodedDestinationInfo) {
         File toFile = new File(FileUtil.toSystemDependentName(destination.getOutputPath()));
-        FileUtil.rename(fromFile, toFile);
+        try {
+          FileUtil.rename(fromFile, toFile);
+        }
+        catch (IOException e) {
+          myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+        }
       }
     }
   }

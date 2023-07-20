@@ -9,6 +9,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.createExtensionDisposable
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
 import org.jetbrains.annotations.ApiStatus
 
 
@@ -35,7 +37,8 @@ internal suspend fun <Extension : Any> ExtensionPointName<Extension>.withEachExt
   addExtensionPointListener(object : ExtensionPointListener<Extension> {
     override fun extensionAdded(extension: Extension, pluginDescriptor: PluginDescriptor) {
       val extensionDisposable = createExtensionDisposable(extension, parentDisposable)
-      launch(extensionDisposable) {
+      @OptIn(DelicateCoroutinesApi::class)
+      GlobalScope.launch(extensionDisposable) {
         runCatching { action(extension, extensionDisposable) }
           .getOrLogException(logger<ExtensionPointImpl<*>>())
       }

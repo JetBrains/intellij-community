@@ -20,12 +20,12 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   val presentationString: String
     get() = "Visual Studio ${productVersionTextRepresentation()}"
 
-  val registry by lazy { VSRegistryParserNew.create(this) }
-  val isolation by lazy { VSIsolationIniParser.create(this) }
+  val registry: VSRegistryParserNew? by lazy { VSRegistryParserNew.create(this) }
+  val isolation: VSIsolationIniParser? by lazy { VSIsolationIniParser.create(this) }
 
-  val isInstalled by lazy { registry?.envPath?.second.let { it != null && it.exists() } }
-  val lastUsage by lazy { registry?.settingsFile?.lastModified().let { Date(it ?: 0) } }
-  val edition by lazy { isolation?.edition }
+  val isInstalled: Boolean by lazy { registry?.envPath?.second.let { it != null && it.exists() } }
+  val lastUsage: Date by lazy { registry?.settingsFile?.lastModified().let { Date(it ?: 0) } }
+  val edition: String? by lazy { isolation?.edition }
 
   init {
     if (version.major >= 15 && instanceId?.length != 8) {
@@ -50,9 +50,9 @@ class VSHive(val version: Version2, val instanceId: String? = null, val rootSuff
   }
 
   companion object {
-    const val LATEST_VS_VERSION = 16
+    const val LATEST_VS_VERSION: Int = 16
 
-    val regex = Regex("\\b(?:(?:([0-9]{1,2}).([0-9]))(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*))\\b")
+    val regex: Regex = Regex("\\b(?:(?:([0-9]{1,2}).([0-9]))(?:_([a-fA-F0-9]{8}))?([a-zA-Z0-9]*))\\b")
 
     fun parse(hive: String, type: Types = Types.All): VSHive? {
       logger.info("Starting $hive on type $type")

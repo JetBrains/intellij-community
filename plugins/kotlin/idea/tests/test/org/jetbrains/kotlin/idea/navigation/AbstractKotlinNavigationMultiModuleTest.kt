@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.codeInsight.navigation.GotoTargetHandler
-import com.intellij.codeInsight.navigation.NavigationUtil
+import com.intellij.codeInsight.navigation.collectRelatedItems
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.psi.PsiDocumentManager
@@ -57,7 +57,7 @@ abstract class AbstractKotlinGotoRelatedSymbolMultiModuleTest : AbstractKotlinNa
 
     override fun doNavigate(editor: Editor, file: PsiFile): GotoTargetHandler.GotoData {
         val source = file.findElementAt(editor.caretModel.offset)!!
-        val relatedItems = NavigationUtil.collectRelatedItems(source, null)
+        val relatedItems = collectRelatedItems(contextElement = source, dataContext = null)
         return GotoTargetHandler.GotoData(source, relatedItems.map { it.element }.toTypedArray(), emptyList())
     }
 }

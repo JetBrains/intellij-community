@@ -6,6 +6,8 @@ import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightTestCase
 import org.jetbrains.plugins.gradle.service.resolve.GradleCommonClassNames.GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradlePublishingTest : GradleCodeInsightTestCase() {
@@ -31,6 +33,14 @@ class GradlePublishingTest : GradleCodeInsightTestCase() {
   }
 
   companion object {
-    val FIXTURE_BUILDER = GradleTestFixtureBuilder.plugin("maven-publish")
+
+    private val FIXTURE_BUILDER = GradleTestFixtureBuilder.create("GradlePublishingTest") { gradleVersion ->
+      withSettingsFile {
+        setProjectName("GradlePublishingTest")
+      }
+      withBuildFile(gradleVersion) {
+        withPlugin("maven-publish")
+      }
+    }
   }
 }

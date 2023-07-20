@@ -40,7 +40,7 @@ public class WelcomePane extends JPanel {
     actionsPanel.setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
 
     JPanel recentsPanel = new JPanel(new BorderLayout(30, 30));
-    recentsPanel.add(new RecentProjectPanel(screen));
+    recentsPanel.add(new RecentProjectPanel(screen, true));
 
     GridBagConstraints c = new GridBagConstraints();
     c.gridx = 0;

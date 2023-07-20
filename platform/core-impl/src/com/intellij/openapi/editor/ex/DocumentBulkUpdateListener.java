@@ -26,7 +26,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link DocumentListener} instead
+ * @deprecated Use {@link DocumentListener#bulkUpdateStarting(Document)}/{@link DocumentListener#bulkUpdateFinished(Document)} instead
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval
@@ -35,16 +35,4 @@ public interface DocumentBulkUpdateListener {
 
   void updateStarted(@NotNull Document doc);
   void updateFinished(@NotNull Document doc);
-
-  /**
-   * @deprecated Use {@link DocumentListener} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  abstract class Adapter implements DocumentBulkUpdateListener {
-    @Override
-    public void updateFinished(@NotNull final Document doc) {}
-    @Override
-    public void updateStarted(@NotNull final Document doc) {}
-  }
 }

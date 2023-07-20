@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.repo;
 
 import com.intellij.openapi.Disposable;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
- * VcsRepositoryManager creates,stores and updates all repository's information using registered {@link VcsRepositoryCreator}
+ * VcsRepositoryManager creates, stores and updates all repository's information using registered {@link VcsRepositoryCreator}
  * extension point in a thread safe way.
  */
 @Service(Service.Level.PROJECT)
@@ -122,12 +122,12 @@ public final class VcsRepositoryManager implements Disposable {
   private void scheduleUpdate() {
     if (!myStarted || myDisposed) return;
     myUpdateAlarm.cancelAllRequests();
-    myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoriesCollection(null), 100);
+    myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoryCollection(null), 100);
   }
 
   private void initManager() {
     myStarted = true;
-    checkAndUpdateRepositoriesCollection(null);
+    checkAndUpdateRepositoryCollection(null);
   }
 
   @RequiresBackgroundThread
@@ -241,10 +241,10 @@ public final class VcsRepositoryManager implements Disposable {
       REPO_LOCK.readLock().unlock();
     }
 
-    // if we didn't find appropriate repository, request update mappings if needed and try again
-    // may be this should not be called  from several places (for example: branch widget updating from edt).
+    // if we didn't find the appropriate repository, request update mappings if needed and try again
+    // may be this should not be called from several places (for example, branch widget updating from edt).
     if (updateIfNeeded && ArrayUtil.contains(root, myVcsManager.getAllVersionedRoots())) {
-      checkAndUpdateRepositoriesCollection(root);
+      checkAndUpdateRepositoryCollection(root);
 
       REPO_LOCK.readLock().lock();
       try {
@@ -312,7 +312,7 @@ public final class VcsRepositoryManager implements Disposable {
   }
 
   @RequiresBackgroundThread
-  private void checkAndUpdateRepositoriesCollection(@Nullable VirtualFile checkedRoot) {
+  private void checkAndUpdateRepositoryCollection(@Nullable VirtualFile checkedRoot) {
     MODIFY_LOCK.lock();
     try {
       Map<VirtualFile, Repository> repositories;
@@ -403,11 +403,6 @@ public final class VcsRepositoryManager implements Disposable {
 
   public @NotNull String toString() {
     return "RepositoryManager(repositories=" + myRepositories + ')'; // NON-NLS
-  }
-
-  @TestOnly
-  public void checkAndUpdateRepositories() {
-    checkAndUpdateRepositoriesCollection(null);
   }
 
   @TestOnly

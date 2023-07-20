@@ -105,7 +105,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
     val gitIgnore = file("$DIRECTORY_STORE_FOLDER/$GITIGNORE").assertNotExists().file
 
     runBlocking {
-      GitIgnoreInStoreDirGenerator(project).run()
+      GitIgnoreInStoreDirGenerator(project, project.coroutineScope).run()
     }
 
     assertGitignoreValid(gitIgnore,

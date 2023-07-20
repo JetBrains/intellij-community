@@ -155,9 +155,10 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
   }
 
   public void installSimple() {
-    SpeedSearchSupply supply =
+    TreeSpeedSearch supply =
       new TreeSpeedSearch(myTree,
                           true,
+                          null,
                           p -> StringUtil.notNullize(getText(p == null ? null : getUserObject((TreeNode)p.getLastPathComponent())))) {
         @Override
         protected void onSearchFieldUpdated(String pattern) {
@@ -174,6 +175,7 @@ public abstract class FilteringTree<T extends DefaultMutableTreeNode, U> {
           }
         }
       };
+    supply.setupListeners();
     getSearchModel().setSpeedSearch(supply);
   }
 

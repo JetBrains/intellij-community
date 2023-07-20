@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.vfs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,8 +11,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.reference.SoftReference;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.ui.scale.ScaleContextCache;
 import com.intellij.util.SVGLoader;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
@@ -32,10 +32,12 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.ref.SoftReference;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Iterator;
 
+import static com.intellij.reference.SoftReference.dereference;
 import static com.intellij.ui.scale.ScaleType.OBJ_SCALE;
 
 /**
@@ -65,7 +67,7 @@ public final class IfsUtil {
     Pair<Long, Long> loadedTimeModificationStamp = file.getUserData(TIME_MODIFICATION_STAMP_KEY);
     Pair<Long, Long> actualTimeModificationStamp = Pair.create(file.getTimeStamp(), file.getModificationStamp());
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
-    if (!actualTimeModificationStamp.equals(loadedTimeModificationStamp) || SoftReference.dereference(imageProviderRef) == null) {
+    if (!actualTimeModificationStamp.equals(loadedTimeModificationStamp) || dereference(imageProviderRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
         file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
@@ -100,7 +102,7 @@ public final class IfsUtil {
 
           file.putUserData(FORMAT_KEY, SVG_FORMAT);
           file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(new ImageDocument.CachedScaledImageProvider() {
-            final ScaleContext.Cache<Image> cache = new ScaleContext.Cache<>((ctx) -> {
+            final ScaleContextCache<Image> cache = new ScaleContextCache<>((ctx) -> {
               try {
                 return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
               }
@@ -167,7 +169,7 @@ public final class IfsUtil {
   public static ScaledImageProvider getImageProvider(@NotNull VirtualFile file) throws IOException {
     refresh(file);
     SoftReference<ScaledImageProvider> imageProviderRef = file.getUserData(IMAGE_PROVIDER_REF_KEY);
-    return SoftReference.dereference(imageProviderRef);
+    return dereference(imageProviderRef);
   }
 
   public static boolean isSVG(@Nullable VirtualFile file) {

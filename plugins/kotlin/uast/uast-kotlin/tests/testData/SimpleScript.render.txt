@@ -1,4 +1,4 @@
-public class SimpleScript {
+public final class SimpleScript {
     public fun SimpleScript(args: java.lang.String[]) {
         println("Hello World!")
         getBarOrNull(true)

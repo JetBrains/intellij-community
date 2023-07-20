@@ -1,20 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
+import com.intellij.modcommand.ModCommandAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiJavaModule
 
 class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
-  fun testNewRequires() = doRequiresTest(
+  fun testNewRequires(): Unit = doRequiresTest(
     "module M { }",
     "module M {\n" +
     "    requires M2;\n" +
     "}")
 
-  fun testRequiresAfterOther() = doRequiresTest(
+  fun testRequiresAfterOther(): Unit = doRequiresTest(
     "module M {\n" +
     "    requires other;\n" +
     "}",
@@ -23,22 +23,22 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "    requires M2;\n" +
     "}")
 
-  fun testNoDuplicateRequires() = doRequiresTest(
+  fun testNoDuplicateRequires(): Unit = doRequiresTest(
     "module M { requires M2; }",
     "module M { requires M2; }")
 
-  fun testRequiresInIncompleteModule() = doRequiresTest(
+  fun testRequiresInIncompleteModule(): Unit = doRequiresTest(
     "module M {",
     "module M {\n" +
     "    requires M2;")
 
-  fun testNewExports() = doExportsTest(
+  fun testNewExports(): Unit = doExportsTest(
     "module M { }",
     "module M {\n" +
     "    exports pkg.m;\n" +
     "}")
 
-  fun testExportsAfterOther() = doExportsTest(
+  fun testExportsAfterOther(): Unit = doExportsTest(
     "module M {\n" +
     "    exports pkg.other;\n" +
     "}",
@@ -47,20 +47,20 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "    exports pkg.m;\n" +
     "}")
 
-  fun testNoNarrowingExports() = doExportsTest(
+  fun testNoNarrowingExports(): Unit = doExportsTest(
     "module M { exports pkg.m; }",
     "module M { exports pkg.m; }")
 
-  fun testNoDuplicateExports() = doExportsTest(
+  fun testNoDuplicateExports(): Unit = doExportsTest(
     "module M { exports pkg.m to M1, M2; }",
     "module M { exports pkg.m to M1, M2; }")
 
-  fun testNoExportsToUnnamed() = doExportsTest(
+  fun testNoExportsToUnnamed(): Unit = doExportsTest(
     "module M { exports pkg.m to M1; }",
     "module M { exports pkg.m to M1; }",
     target = "")
 
-  fun testExportsExtendsOther() = doExportsTest(
+  fun testExportsExtendsOther(): Unit = doExportsTest(
     "module M {\n" +
     "    exports pkg.m to M1;\n" +
     "}",
@@ -68,7 +68,7 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "    exports pkg.m to M1, M2;\n" +
     "}")
 
-  fun testExportsExtendsIncompleteOther() = doExportsTest(
+  fun testExportsExtendsIncompleteOther(): Unit = doExportsTest(
     "module M {\n" +
     "    exports pkg.m to M1\n" +
     "}",
@@ -76,13 +76,13 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "    exports pkg.m to M1, M2\n" +
     "}")
 
-  fun testNewUses() = doUsesTest(
+  fun testNewUses(): Unit = doUsesTest(
     "module M { }",
     "module M {\n" +
     "    uses pkg.m.C;\n" +
     "}")
 
-  fun testUsesAfterOther() = doUsesTest(
+  fun testUsesAfterOther(): Unit = doUsesTest(
     "module M {\n" +
     "    uses pkg.m.B;\n" +
     "}",
@@ -91,7 +91,7 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     "    uses pkg.m.C;\n" +
     "}")
 
-  fun testNoDuplicateUses() = doUsesTest(
+  fun testNoDuplicateUses(): Unit = doUsesTest(
     "module M { uses pkg.m.C; }",
     "module M { uses pkg.m.C; }")
 
@@ -99,9 +99,9 @@ class AddModuleDirectiveTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun doExportsTest(text: String, expected: String, target: String = "M2") = doTest(text, { AddExportsDirectiveFix(it, "pkg.m", target) }, expected)
   private fun doUsesTest(text: String, expected: String) = doTest(text, { AddUsesDirectiveFix(it, "pkg.m.C") }, expected)
 
-  private fun doTest(text: String, fix: (PsiJavaModule) -> IntentionAction, expected: String) {
+  private fun doTest(text: String, fix: (PsiJavaModule) -> ModCommandAction, expected: String) {
     val file = myFixture.configureByText("module-info.java", text) as PsiJavaFile
-    val action = fix(file.moduleDeclaration!!)
+    val action = fix(file.moduleDeclaration!!).asIntention()
     WriteCommandAction.writeCommandAction(file).run<RuntimeException> { action.invoke(project, editor, file) }
     assertEquals(expected, file.text)
   }

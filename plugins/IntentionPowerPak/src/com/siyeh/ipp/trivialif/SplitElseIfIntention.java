@@ -15,15 +15,16 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class SplitElseIfIntention extends Intention {
+public class SplitElseIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -31,7 +32,7 @@ public class SplitElseIfIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("split.else.if.intention.name");
   }
 

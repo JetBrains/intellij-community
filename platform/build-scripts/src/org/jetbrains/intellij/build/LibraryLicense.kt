@@ -9,24 +9,24 @@ package org.jetbrains.intellij.build
  */
 data class LibraryLicense(
   /**
-   * Presentable full name of the library. If {@code null} {@link #libraryName} will be used instead.
+   * Presentable full name of the library. If `null` [libraryName] will be used instead.
    */
   val name: String? = null,
 
   /**
-   * URL of the library site, may be {@code null} if the library doesn't have a site
+   * URL of the library site, may be `null` if the library doesn't have a site
    */
   val url: String? = null,
 
   /**
-   * Version of the library. If {@link #libraryName} points to a Maven library version is taken from the library configuration so it must
+   * Version of the library. If [libraryName] points to a Maven library version is taken from the library configuration so it must
    * not be specified explicitly.
    */
   val version: String? = null,
 
   /**
-   * Name of the library in IDEA Project Configuration (for unnamed module libraries it's a name of its JAR file). May be {@code null} if
-   * the library isn't explicitly added to dependencies of a module, in that case {@link #attachedTo} must be specified instead. This property
+   * Name of the library in IDEA Project Configuration (for unnamed module libraries it's a name of its JAR file). May be `null` if
+   * the library isn't explicitly added to dependencies of a module, in that case [attachedTo] must be specified instead. This property
    * is used to automatically generate list of libraries used in a particular project.
    */
   val libraryName: String? = null,
@@ -41,23 +41,23 @@ data class LibraryLicense(
   /**
    * Specifies name of the module in IDEA Project configuration the library is implicitly attached to. It makes sense to use this property
    * only for libraries which cannot be added to a module dependencies as a regular dependency (e.g. if it isn't a Java library). For regular
-   * cases specify {@link #libraryName} instead.
+   * cases specify [libraryName] instead.
    */
   val attachedTo: String? = null,
 
   /**
-   * Set to {@code true} if this entry describes license for a transitive dependency included into the library specified by {@link #libraryName}
+   * Set to `true` if this entry describes license for a transitive dependency included into the library specified by [libraryName]
    */
   val transitiveDependency: Boolean = false,
 
   /**
-   * Type of a license (e.g. {@code 'Apache 2.0'})
+   * Type of a license (e.g. `"Apache 2.0"`)
    */
   val license: String? = null,
 
   /**
-   * URL of a page on the library site (or a generic site) containing the license text, may be {@code null} for standard licenses
-   * (see {@link #PREDEFINED_LICENSE_URLS}) or if there is no such page.
+   * URL of a page on the library site (or a generic site) containing the license text, may be `null` for standard licenses
+   * (see [PREDEFINED_LICENSE_URLS]) or if there is no such page.
    */
   val licenseUrl: String? = null,
 ) {
@@ -79,7 +79,7 @@ data class LibraryLicense(
 
     /**
      * Use this method only for JetBrains's own libraries which are available as part of IntelliJ-based IDEs only so there is no way to
-     * give link to their sites. For other libraries please fill all necessary fields of {@link LibraryLicense} instead of using this method.
+     * give link to their sites. For other libraries please fill all necessary fields of [LibraryLicense] instead of using this method.
      */
     @JvmStatic
     fun jetbrainsLibrary(libraryName: String): LibraryLicense {

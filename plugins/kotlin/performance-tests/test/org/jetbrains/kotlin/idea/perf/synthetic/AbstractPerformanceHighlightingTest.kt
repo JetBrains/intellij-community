@@ -88,7 +88,7 @@ abstract class AbstractPerformanceHighlightingTest : KotlinLightCodeInsightFixtu
     }
 
     private fun innerPerfTest(name: String, setUpBody: (TestData<Unit, MutableList<HighlightInfo>>) -> Unit) {
-        performanceTest<Unit, MutableList<HighlightInfo>> {
+        performanceTest {
             name(name)
             stats(stats())
             setUp {

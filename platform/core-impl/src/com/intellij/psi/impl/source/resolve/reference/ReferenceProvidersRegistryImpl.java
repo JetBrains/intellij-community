@@ -207,6 +207,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     for (PsiReference ref : lowerPriorityRefs) {
       if (ref != null) {
         for (PsiReference reference : higherPriorityRefs) {
+          if (reference instanceof PsiReferencesWrapper) continue;
           if (reference != null && ReferenceRange.containsRangeInElement(reference, ref.getRangeInElement())) {
             return false;
           }

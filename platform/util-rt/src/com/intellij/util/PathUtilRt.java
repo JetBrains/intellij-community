@@ -25,7 +25,7 @@ public final class PathUtilRt {
     if (isWindowsUNCRoot(path, start)) {
       start = -1;
     }
-    return path.substring(start + 1, end+1);
+    return path.substring(start + 1, end + 1);
   }
 
   @Nullable("null means no extension (e.g. 'xxx'), empty string means empty extension (e.g. 'xxx.')")
@@ -37,8 +37,8 @@ public final class PathUtilRt {
     int end = lastNonSeparatorIndex(path);
     if (end == -1) return null;
     int start = lastSeparatorIndex(path, end) + 1;
-    int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end+1);
-    return index < 0 ? null : path.substring(index + 1, end+1);
+    int index = StringUtilRt.lastIndexOf(path, '.', Math.max(start, 0), end + 1);
+    return index < 0 ? null : path.substring(index + 1, end + 1);
   }
 
   private static int lastNonSeparatorIndex(@NotNull String path) {
@@ -53,23 +53,37 @@ public final class PathUtilRt {
 
   @NotNull
   public static String getParentPath(@NotNull String path) {
-    if (path.isEmpty()) return "";
-    int end = lastSeparatorIndex(path, path.length()-1);
+    int end = getParentPathEndOffset(path);
+    if (end == 0) return "";
+    return path.substring(0, end);
+  }
+
+  @NotNull
+  public static CharSequence getParentPathSequence(@NotNull CharSequence path) {
+    int end = getParentPathEndOffset(path);
+    if (end == 0) return "";
+    return path.subSequence(0, end);
+  }
+
+  private static int getParentPathEndOffset(@NotNull CharSequence path) {
+    //noinspection SizeReplaceableByIsEmpty
+    if (path.length() == 0) return 0;
+    int end = lastSeparatorIndex(path, path.length() - 1);
     if (end == path.length() - 1 && end >= 1) {
-      end = lastSeparatorIndex(path, end-1);
+      end = lastSeparatorIndex(path, end - 1);
     }
     if (end == -1 || end == 0) {
-      return "";
+      return 0;
     }
     if (isWindowsUNCRoot(path, end)) {
-      return "";
+      return 0;
     }
     // parent of '//host' is root
     char prev = path.charAt(end - 1);
     if (isSeparator(prev)) {
       end--;
     }
-    return path.substring(0, end);
+    return end;
   }
 
   public static boolean isWindowsUNCRoot(@NotNull CharSequence path, int lastPathSeparatorPosition) {
@@ -83,7 +97,7 @@ public final class PathUtilRt {
       char c = path.charAt(i);
       if (isSeparator(c)) return true;
       // contains '.' or '..' surrounded by slashes
-      if (c == '.' && (i==2 || i==3 && path.charAt(2)=='.')) return true;
+      if (c == '.' && (i == 2 || i == 3 && path.charAt(2) == '.')) return true;
     }
     return false;
   }
@@ -110,6 +124,7 @@ public final class PathUtilRt {
 
   /**
    * Checks whether a file with the given name can be created on a current platform.
+   *
    * @see #isValidFileName(String, Platform, boolean, Charset)
    */
   public static boolean isValidFileName(@NotNull String fileName, boolean strict) {
@@ -181,6 +196,7 @@ public final class PathUtilRt {
     "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9"));
 
   private static final Charset FS_CHARSET = fsCharset();
+
   private static Charset fsCharset() {
     if (!SystemInfoRt.isWindows && !SystemInfoRt.isMac) {
       String property = System.getProperty("sun.jnu.encoding");

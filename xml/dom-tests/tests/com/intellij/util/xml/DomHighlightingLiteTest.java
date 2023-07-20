@@ -176,7 +176,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
         s.append("visited");
       }
     };
@@ -216,7 +216,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
       }
     };
     registerInspectionKey(inspection);
@@ -244,7 +244,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
 
       @Override
-      public void checkFileElement(final DomFileElement fileElement, final DomElementAnnotationHolder holder) {
+      public void checkFileElement(final @NotNull DomFileElement fileElement, final @NotNull DomElementAnnotationHolder holder) {
       }
     };
     registerInspectionKey(inspection);
@@ -299,7 +299,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
     }
 
     @Override
-    protected void checkDomElement(final DomElement element, final DomElementAnnotationHolder holder, final DomHighlightingHelper helper) {
+    protected void checkDomElement(final @NotNull DomElement element, final @NotNull DomElementAnnotationHolder holder, final @NotNull DomHighlightingHelper helper) {
       super.checkDomElement(element, holder, helper);
     }
 

@@ -44,7 +44,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
     myModule = setup.getSecond();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(this::getCurrentCodeStyleSettings);
+    myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(() -> getCurrentCodeStyleSettings());
 
     application.setDataProvider(new TestDataProvider(getProject()));
     myOldSdks = new SdkLeakTracker();

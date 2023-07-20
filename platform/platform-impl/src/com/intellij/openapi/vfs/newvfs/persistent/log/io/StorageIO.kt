@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 import com.intellij.openapi.Forceable
 import java.io.Closeable
 
-interface StorageIO : RandomAccessBufferIO, Forceable, Closeable
-{
+interface StorageIO : RandomAccessBufferIO, Forceable, Closeable {
   fun offsetOutputStream(startPosition: Long): OutputStreamWithValidation
 }

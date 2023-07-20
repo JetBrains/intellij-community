@@ -45,8 +45,7 @@ open class KotlinDirectInheritorsSearcher : QueryExecutorBase<PsiClass, DirectCl
 
         fun searchForTypeAliasesRecursively(typeName: String) {
             ProgressManager.checkCanceled()
-            KotlinTypeAliasByExpansionShortNameIndex
-                .get(typeName, project, scope)
+            KotlinTypeAliasByExpansionShortNameIndex[typeName, project, scope]
                 .asSequence()
                 .map { it.name }
                 .filterNotNull()

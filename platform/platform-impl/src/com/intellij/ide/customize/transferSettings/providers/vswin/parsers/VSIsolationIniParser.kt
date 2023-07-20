@@ -71,9 +71,9 @@ class VSIsolationIniParser private constructor(val lifetime: Lifetime, val hive:
 
   private val ini: Ini
 
-  val isPreview by lazy { get("ChannelTitle")?.lowercase() == "preview" }
+  val isPreview: Boolean by lazy { get("ChannelTitle")?.lowercase() == "preview" }
   val edition: String? by lazy { vsShortIdToEdition(get("SKU")) }
-  val wasSetupFinished by lazy { get("SetupFinished")?.toBoolean() == true }
+  val wasSetupFinished: Boolean by lazy { get("SetupFinished")?.toBoolean() == true }
   val installationVersion: String? by lazy { get("InstallationVersion") }
 
   init {

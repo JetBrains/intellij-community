@@ -1,20 +1,33 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.kotlin.idea.base.indices.getByKeyAndMeasure
 import org.jetbrains.kotlin.psi.KtFile
 
-object KotlinExactPackagesIndex : StringStubIndexExtension<KtFile>() {
-    private val KEY: StubIndexKey<String, KtFile> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex")
+class KotlinExactPackagesIndex internal constructor() : StringStubIndexExtension<KtFile>() {
+    companion object {
+        @JvmStatic
+        private val LOG = Logger.getInstance(KotlinExactPackagesIndex::class.java)
 
-    override fun getKey(): StubIndexKey<String, KtFile> = KEY
+        @JvmField
+        val NAME: StubIndexKey<String, KtFile> = StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex")
+
+        @JvmStatic
+        @JvmName("getFiles")
+        fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
+            return getByKeyAndMeasure(NAME, LOG) { StubIndex.getElements (NAME, fqName, project, scope, KtFile::class.java) }
+        }
+    }
+
+    override fun getKey(): StubIndexKey<String, KtFile> = NAME
 
     override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtFile> {
-        return StubIndex.getElements(KEY, fqName, project, scope, KtFile::class.java)
+        return Companion.get(fqName, project, scope)
     }
 }

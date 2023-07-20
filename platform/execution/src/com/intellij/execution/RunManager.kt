@@ -34,7 +34,7 @@ abstract class RunManager {
 
     @JvmField
     @ApiStatus.Internal
-    val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
+    val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create("RunManagerInitialized")
 
     private val LOG = logger<RunManager>()
 
@@ -149,7 +149,7 @@ abstract class RunManager {
   }
 
   @Deprecated("", ReplaceWith("createConfiguration(name, factory)"))
-  fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
+  fun createRunConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings = createConfiguration(name, factory)
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
@@ -237,9 +237,9 @@ abstract class RunManager {
 
   abstract fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings?
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
-  fun findConfigurationByTypeAndName(type: ConfigurationType, name: String) = allSettings.firstOrNull { type === it.type && name == it.name }
+  fun findConfigurationByTypeAndName(type: ConfigurationType, name: String): RunnerAndConfigurationSettings? = allSettings.firstOrNull { type === it.type && name == it.name }
 
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 

@@ -69,9 +69,7 @@ open class MarkdownDefaultMarkerProcessor(
       add(ListMarkerProvider())
       add(HtmlBlockProvider())
       add(DefinitionListMarkerProvider())
-      if (FrontMatterHeaderMarkerProvider.isFrontMatterSupportEnabled()) {
-        add(FrontMatterHeaderMarkerProvider())
-      }
+      add(FrontMatterHeaderMarkerProvider())
       add(HorizontalRuleProvider())
       add(GitHubTableMarkerProvider())
       add(AtxHeaderProvider())

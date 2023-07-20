@@ -76,6 +76,12 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     else if (info.getMember() instanceof PsiClass) {
       doMoveClass(substitutor, info);
     }
+    else if (info.getMember() instanceof PsiClassInitializer initializer) {
+      PsiClassInitializer copy = (PsiClassInitializer)initializer.copy();
+      final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(copy);
+      myMembersAfterMove.add(movedElement);
+      initializer.delete();
+    }
   }
 
   @Override
@@ -191,7 +197,7 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
     field.delete();
   }
 
-  private  void doMoveMethod(PsiSubstitutor substitutor, MemberInfo info) {
+  private void doMoveMethod(PsiSubstitutor substitutor, MemberInfo info) {
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     PsiMethod method = (PsiMethod)info.getMember();
     PsiMethod sibling = method;

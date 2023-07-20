@@ -32,7 +32,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.util.Producer;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -252,9 +251,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     // For the `CopyPasteFoldingProcessor` it means that folding data is not valid and cannot be applied.
     final Ref<Boolean> skipIndentation = new Ref<>(pastedTextWasChanged ? Boolean.FALSE : null);
     for (ProcessorAndData<?> data : extraData) {
-      SlowOperations.allowSlowOperations(() -> {
-        data.process(project, editor, bounds, caretOffset, skipIndentation);
-      });
+      data.process(project, editor, bounds, caretOffset, skipIndentation);
     }
 
     boolean pastedTextContainsWhiteSpacesOnly =

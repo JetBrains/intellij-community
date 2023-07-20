@@ -342,7 +342,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
                                                                 "    super();\n" +
                                                                 "  }\n" +
                                                                 "}");
-      ContainerUtil.addAll(result, tempClass.getCodeConstructors());
+      result = ContainerUtil.append(result, tempClass.getCodeConstructors());
     }
     return result;
   }

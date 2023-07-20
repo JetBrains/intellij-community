@@ -7,11 +7,5 @@ Every unchecked warning may potentially trigger <code>ClassCastException</code> 
   List items = Arrays.asList("string", "string");
   List&lt;Integer&gt; numbers = Collections.unmodifiableList(items); // unchecked assignment
 </code></pre>
-<p>The quick-fix tries to generify the containing file,
-  which may expose any problems in the editor and during compilation that previously only appeared at runtime:</p>
-<pre><code>
-  List&lt;String&gt; items = Arrays.asList("string", "string");
-  List&lt;Integer&gt; numbers = Collections.unmodifiableList(items); // incompatible types
-</code></pre>
 </body>
 </html>

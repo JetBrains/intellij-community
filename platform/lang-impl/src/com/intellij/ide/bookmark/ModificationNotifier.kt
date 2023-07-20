@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong
 
 internal class ModificationNotifier(private val project: Project) : BookmarksListener {
   private val modification = AtomicLong()
-  val count
+  val count: Long
     get() = modification.get()
 
   private val publisher
@@ -19,7 +19,7 @@ internal class ModificationNotifier(private val project: Project) : BookmarksLis
       else -> project.messageBus.syncPublisher(BookmarksListener.TOPIC)
     }
 
-  internal fun selectLater(select: (BookmarksView) -> Unit) = invokeLater {
+  internal fun selectLater(select: (BookmarksView) -> Unit): Unit = invokeLater {
     val window = if (project.isDisposed) null else ToolWindowManager.getInstance(project).getToolWindow(BOOKMARKS)
     val view = window?.contentManagerIfCreated?.selectedContent?.component as? BookmarksView
     view?.let { if (it.isShowing) select(it) }
@@ -33,14 +33,14 @@ internal class ModificationNotifier(private val project: Project) : BookmarksLis
     invokeLater { publisher?.let(notify) }
   }
 
-  override fun groupsSorted() = notifyLater { it.groupsSorted() }
-  override fun groupAdded(group: BookmarkGroup) = notifyLater { it.groupAdded(group) }
-  override fun groupRemoved(group: BookmarkGroup) = notifyLater { it.groupRemoved(group) }
-  override fun groupRenamed(group: BookmarkGroup) = notifyLater { it.groupRenamed(group) }
-  override fun bookmarksSorted(group: BookmarkGroup) = notifyLater { it.bookmarksSorted(group) }
-  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark) = notifyLater { it.bookmarkAdded(group, bookmark) }
-  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark) = notifyLater { it.bookmarkRemoved(group, bookmark) }
-  override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark) = notifyLater { it.bookmarkChanged(group, bookmark) }
-  override fun bookmarkTypeChanged(bookmark: Bookmark) = notifyLater { it.bookmarkTypeChanged(bookmark) }
-  override fun defaultGroupChanged(old: BookmarkGroup?, new: BookmarkGroup?) = notifyLater { it.defaultGroupChanged(old, new) }
+  override fun groupsSorted(): Unit = notifyLater { it.groupsSorted() }
+  override fun groupAdded(group: BookmarkGroup): Unit = notifyLater { it.groupAdded(group) }
+  override fun groupRemoved(group: BookmarkGroup): Unit = notifyLater { it.groupRemoved(group) }
+  override fun groupRenamed(group: BookmarkGroup): Unit = notifyLater { it.groupRenamed(group) }
+  override fun bookmarksSorted(group: BookmarkGroup): Unit = notifyLater { it.bookmarksSorted(group) }
+  override fun bookmarkAdded(group: BookmarkGroup, bookmark: Bookmark): Unit = notifyLater { it.bookmarkAdded(group, bookmark) }
+  override fun bookmarkRemoved(group: BookmarkGroup, bookmark: Bookmark): Unit = notifyLater { it.bookmarkRemoved(group, bookmark) }
+  override fun bookmarkChanged(group: BookmarkGroup, bookmark: Bookmark): Unit = notifyLater { it.bookmarkChanged(group, bookmark) }
+  override fun bookmarkTypeChanged(bookmark: Bookmark): Unit = notifyLater { it.bookmarkTypeChanged(bookmark) }
+  override fun defaultGroupChanged(old: BookmarkGroup?, new: BookmarkGroup?): Unit = notifyLater { it.defaultGroupChanged(old, new) }
 }

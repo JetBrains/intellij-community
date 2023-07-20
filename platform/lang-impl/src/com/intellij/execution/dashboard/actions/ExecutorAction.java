@@ -73,6 +73,7 @@ public abstract class ExecutorAction extends DumbAwareAction {
       presentation.putClientProperty(RUNNABLE_LEAVES_KEY, runnableLeaves);
     }
     presentation.setEnabled(!runnableLeaves.isEmpty());
+    presentation.setVisible(targetNodes.isNotEmpty());
   }
 
   private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {

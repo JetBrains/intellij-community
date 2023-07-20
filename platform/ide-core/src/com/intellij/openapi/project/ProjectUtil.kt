@@ -40,7 +40,7 @@ import java.util.*
 import javax.swing.JComponent
 import kotlin.io.path.exists
 
-val NOTIFICATIONS_SILENT_MODE = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
+val NOTIFICATIONS_SILENT_MODE: Key<Boolean> = Key.create("NOTIFICATIONS_SILENT_MODE")
 
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
@@ -124,7 +124,7 @@ fun isProjectDirectoryExistsUsingIo(parent: VirtualFile): Boolean {
   }
 }
 
-private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName.create<BaseDirectorySuggester>("com.intellij.baseDirectorySuggester")
+private val BASE_DIRECTORY_SUGGESTER_EP_NAME = ExtensionPointName<BaseDirectorySuggester>("com.intellij.baseDirectorySuggester")
 
 /**
  *  Tries to guess the "main project directory" of the project.
@@ -272,25 +272,6 @@ fun clearCachesForAllProjectsStartingWith(@NonNls prefix: String) {
   }
 }
 
-@ApiStatus.Experimental
-fun hasCacheForAnyProjectStartingWith(@NonNls prefix: String): Boolean {
-  require(!prefix.isEmpty())
-  projectsDataDir.directoryStreamIfExists { projectDirs ->
-    for (projectDir in projectDirs) {
-      if (!Files.isDirectory(projectDir)) {
-        continue
-      }
-
-      projectDir.directoryStreamIfExists { files ->
-        if (files.any { it.fileName.toString().startsWith(prefix) }) {
-          return true
-        }
-      }
-    }
-  }
-  return false
-}
-
 /**
  * Returns the root directory for all caches related to [project].
  */
@@ -315,13 +296,12 @@ fun Project.getProjectCachePath(baseDir: Path, forceNameUse: Boolean = false, ha
   return baseDir.resolve(getProjectCacheFileName(forceNameUse, hashSeparator))
 }
 
-inline fun processOpenedProjects(processor: (Project) -> Unit) {
-  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: return)) {
+fun getOpenedProjects(): Sequence<Project> = sequence {
+  for (project in (ProjectManager.getInstanceIfCreated()?.openProjects ?: emptyArray())) {
     if (project.isDisposed || !project.isInitialized) {
       continue
     }
-
-    processor(project)
+    yield(project)
   }
 }
 

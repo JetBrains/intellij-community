@@ -17,10 +17,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
+import java.nio.file.Path;
 
-public class DumpThreadsAction extends AnAction implements DumbAware {
-
+public final class DumpThreadsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     dumpThreads(e.getProject());
@@ -28,16 +27,16 @@ public class DumpThreadsAction extends AnAction implements DumbAware {
 
   public static void dumpThreads(@Nullable Project project) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      File dumpDir = PerformanceWatcher.getInstance().dumpThreads("", false, false);
+      Path dumpDir = PerformanceWatcher.getInstance().dumpThreads("", false, false);
       Notification notification = createNotification(dumpDir);
       notification.notify(project);
     });
   }
 
-  private static @NotNull Notification createNotification(@Nullable File file) {
+  private static @NotNull Notification createNotification(@Nullable Path file) {
     NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("Dump Threads Group");
     if (file != null) {
-      String url = FileUtil.getUrl(file);
+      String url = FileUtil.getUrl(file.toFile());
       return group.createNotification(IdeBundle.message("thread.dump.is.taken", url), NotificationType.INFORMATION)
         .setListener(RevealFileAction.FILE_SELECTING_LISTENER);
     }

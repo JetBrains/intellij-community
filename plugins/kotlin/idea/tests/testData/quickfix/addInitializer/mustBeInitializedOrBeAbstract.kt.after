@@ -1,0 +1,4 @@
+// "Add initializer" "true"
+class Foo {
+    var foo: Int = 0
+}

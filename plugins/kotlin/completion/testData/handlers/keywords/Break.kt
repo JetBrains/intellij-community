@@ -5,3 +5,4 @@ fun t() {
         brea<caret>
     }
 }
+// AUTOCOMPLETE_SETTING: true

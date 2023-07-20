@@ -15,7 +15,6 @@ import org.jetbrains.kotlin.test.TestMetadata
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.nio.file.Path
-import java.util.*
 import kotlin.io.path.exists
 
 @TestRoot("idea/tests")

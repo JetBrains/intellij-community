@@ -171,20 +171,6 @@ public final class ChunkExtractor {
     });
   }
 
-  /**
-   * @deprecated use {@link #appendTextChunks(UsageInfo2UsageAdapter, CharSequence, int, int, boolean, List)}
-   */
-  @Deprecated(forRemoval = true)
-  public TextChunk @NotNull [] createTextChunks(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
-                                                @NotNull CharSequence chars,
-                                                int start,
-                                                int end,
-                                                boolean selectUsageWithBold,
-                                                @NotNull List<? super TextChunk> result) {
-    appendTextChunks(usageInfo2UsageAdapter, chars, start, end, selectUsageWithBold, result);
-    return result.toArray(TextChunk.EMPTY_ARRAY);
-  }
-
   @FunctionalInterface
   private interface TokenHighlightProcessor {
     boolean process(int startOffset, int endOffset, @NotNull TextAttributesKey @NotNull [] textAttributesKeys);

@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.codeInsight.daemon.impl.Divider
+import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
@@ -14,11 +15,13 @@ import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.diagnostics.Severity
 import org.jetbrains.kotlin.diagnostics.rendering.RenderingContext
 import org.jetbrains.kotlin.diagnostics.rendering.parameters
 import org.jetbrains.kotlin.idea.base.fe10.highlighting.suspender.KotlinHighlightingSuspender
 import org.jetbrains.kotlin.idea.base.highlighting.shouldHighlightErrors
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
+import org.jetbrains.kotlin.idea.statistics.compilationError.KotlinCompilationErrorFrequencyStatsCollector
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -75,7 +78,7 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
 
         // annotate diagnostics on fly: show diagnostics as soon as front-end reports them
         // don't create quick fixes as it could require some resolve
-        val diagnosticHighlighted = mutableSetOf<Diagnostic>()
+        val highlightInfoByDiagnostic = HashMap<Diagnostic, HighlightInfo>()
 
         // render of on-fly diagnostics with descriptors could lead to recursion
         fun checkIfDescriptor(candidate: Any?): Boolean =
@@ -89,17 +92,19 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                     {
                         val element = it.psiElement
                         if (element in elements &&
-                            it !in diagnosticHighlighted &&
+                            it !in highlightInfoByDiagnostic &&
                             !RenderingContext.parameters(it).any(::checkIfDescriptor)
                         ) {
-                            annotateDiagnostic(element, holder, it, diagnosticHighlighted)
+                            annotateDiagnostic(
+                                element, holder, listOf(it), highlightInfoByDiagnostic, calculatingInProgress = true
+                            )
                         }
                     }
                 )
-            }
-            else {
+            } else {
                 file.analyzeWithAllCompilerChecks()
             }
+
         // resolve is done!
 
         val bindingContext =
@@ -111,39 +116,52 @@ abstract class AbstractKotlinHighlightVisitor : HighlightVisitor {
                 { BindingContext.EMPTY }
             )
 
-
         afterAnalysisVisitor = getAfterAnalysisVisitor(holder, bindingContext)
 
         //cleanUpCalculatingAnnotations(highlightInfoByTextRange)
         if (!shouldHighlightErrors) return
 
-        for (diagnostic in bindingContext.diagnostics) {
-            val psiElement = diagnostic.psiElement
-            if (psiElement !in elements) continue
-            // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
-            //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
-            if (diagnostic in diagnosticHighlighted) continue
+        val diagnostics = bindingContext.diagnostics
+        diagnostics
+            .filter { diagnostic ->
+                diagnostic.psiElement in elements
+                        // has been processed earlier e.g. on-fly or for some reasons it could be duplicated diagnostics for the same factory
+                        //  see [PsiCheckerTestGenerated$Checker.testRedeclaration]
+                        && diagnostic !in highlightInfoByDiagnostic
+            }
+            .groupBy { it.psiElement }
+            .forEach { (psiElement, diagnostics) ->
+                // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
+                annotateDiagnostic(psiElement, holder, diagnostics, highlightInfoByDiagnostic, calculatingInProgress = false)
+            }
 
-            // annotate diagnostics those were not possible to report (and therefore render) on-the-fly
-            annotateDiagnostic(psiElement, holder, diagnostic, diagnosticHighlighted)
-        }
+        // apply quick fixes for all diagnostics grouping by element
+        highlightInfoByDiagnostic.keys
+            .groupBy { it.psiElement }
+            .forEach {
+                annotateDiagnostic(it.key, holder, it.value, highlightInfoByDiagnostic, calculatingInProgress = false)
+            }
+        KotlinCompilationErrorFrequencyStatsCollector.recordCompilationErrorsHappened(
+            diagnostics.asSequence().filter { it.severity == Severity.ERROR }.map(Diagnostic::factoryName),
+            file
+        )
     }
 
     private fun annotateDiagnostic(
         element: PsiElement,
         holder: HighlightInfoHolder,
-        diagnostic: Diagnostic,
-        diagnosticHighlighted: MutableSet<Diagnostic>
+        diagnostics: List<Diagnostic>,
+        highlightInfoByDiagnostic: MutableMap<Diagnostic, HighlightInfo>? = null,
+        calculatingInProgress: Boolean = true
     ) {
         if (element.getUserData(DO_NOT_HIGHLIGHT_KEY) != null) return
-        val diagnostics = listOf(diagnostic)
         assertBelongsToTheSameElement(element, diagnostics)
         if (element is KtNameReferenceExpression) {
             val unresolved = diagnostics.any { it.factory == Errors.UNRESOLVED_REFERENCE }
             element.putUserData(UNRESOLVED_KEY, if (unresolved) Unit else null)
         }
         ElementAnnotator(element) { shouldSuppressUnusedParameter(it) }
-            .registerDiagnosticsAnnotations(holder, diagnostics, diagnosticHighlighted)
+            .registerDiagnosticsAnnotations(holder, diagnostics, highlightInfoByDiagnostic, calculatingInProgress)
     }
 
     protected open fun shouldSuppressUnusedParameter(parameter: KtParameter): Boolean = false

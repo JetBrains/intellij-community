@@ -1,0 +1,3 @@
+package interfaceDeclaration
+
+actual interface interfaceDeclarationJvm

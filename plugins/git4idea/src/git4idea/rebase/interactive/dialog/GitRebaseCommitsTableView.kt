@@ -81,7 +81,7 @@ internal open class GitRebaseCommitsTableView(
   }
 
   private fun installSpeedSearch() {
-    TableSpeedSearch(this) { o, cell -> o.toString().takeIf { cell.column == GitRebaseCommitsTableModel.SUBJECT_COLUMN } }
+    TableSpeedSearch.installOn(this) { o, cell -> o.toString().takeIf { cell.column == GitRebaseCommitsTableModel.SUBJECT_COLUMN } }
   }
 
   private fun prepareCommitIconColumn() {

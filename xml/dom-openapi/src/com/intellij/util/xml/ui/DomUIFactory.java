@@ -86,6 +86,7 @@ public abstract class DomUIFactory {
 
   protected abstract TableCellEditor createCellEditor(DomElement element, Class type);
 
+  @NotNull
   public abstract UserActivityWatcher createEditorAwareUserActivityWatcher();
 
   public abstract void setupErrorOutdatingUserActivityWatcher(CommittablePanel panel, DomElement... elements);

@@ -14,5 +14,5 @@ data class ExternalSystemProjectId(
 
   val projectName: @Nls String = PathUtil.getFileName(externalProjectPath)
 
-  val debugName = "$systemName ($projectName)"
+  val debugName: String = "$systemName ($projectName)"
 }

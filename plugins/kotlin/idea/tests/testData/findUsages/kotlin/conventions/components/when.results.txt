@@ -1,2 +1,2 @@
-Value read 10 val (x, y) = o
-Value read 25 val (x, y) = o
+Value read 11 val (x, y) = o
+Value read 26 val (x, y) = o

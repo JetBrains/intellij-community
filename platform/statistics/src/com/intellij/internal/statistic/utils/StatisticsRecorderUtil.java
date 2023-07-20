@@ -51,6 +51,10 @@ public final class StatisticsRecorderUtil {
     return false;
   }
 
+  public static boolean isCharsEscapingRequired(@NotNull String recorderId) {
+    return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId).isCharsEscapingRequired();
+  }
+
   private static @NotNull List<String> getCustomTestModeRecorders() {
     String additional = System.getProperty(IDEA_RECORDER_INTERNAL_MODE);
     if (!StringUtil.isEmptyOrSpaces(additional)) {

@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.cloud;
 
-import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -15,7 +14,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.AbstractTerminalRunner;
 import org.jetbrains.plugins.terminal.ShellStartupOptions;
 
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutionException;
 
@@ -49,33 +47,6 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
   @Override
   public @NotNull CloudTerminalProcess createProcess(@NotNull ShellStartupOptions options) throws ExecutionException {
     return myProcess;
-  }
-
-  @Override
-  protected ProcessHandler createProcessHandler(final CloudTerminalProcess process) {
-    return new ProcessHandler() {
-
-      @Override
-      protected void destroyProcessImpl() {
-        process.destroy();
-      }
-
-      @Override
-      protected void detachProcessImpl() {
-        process.destroy();
-      }
-
-      @Override
-      public boolean detachIsDefault() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public OutputStream getProcessInput() {
-        return process.getOutputStream();
-      }
-    };
   }
 
   @Override

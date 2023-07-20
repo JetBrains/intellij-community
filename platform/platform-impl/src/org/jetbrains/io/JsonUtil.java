@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io;
 
+import com.google.gson.stream.JsonToken;
 import com.intellij.util.SmartList;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufUtil;
@@ -8,10 +9,7 @@ import io.netty.buffer.ByteBufUtilEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class JsonUtil {
   private static final String[] REPLACEMENT_CHARS;
@@ -112,6 +110,34 @@ public final class JsonUtil {
     readListBody(reader, list);
     reader.endArray();
     return list;
+  }
+
+  @NotNull
+  public static List<String> nextStringList(@NotNull JsonReaderEx reader) {
+    reader.beginArray();
+    if (!reader.hasNext()) {
+      reader.endArray();
+      return Collections.emptyList();
+    }
+    List<String> list = new ArrayList<>(2);
+    while (reader.hasNext()) {
+      String value = nextStringOrSkip(reader);
+      if (value != null) {
+        list.add(value);
+      }
+    }
+    reader.endArray();
+    return list;
+  }
+
+  @Nullable
+  public static String nextStringOrSkip(@NotNull JsonReaderEx reader) {
+    JsonToken token = reader.peek();
+    if (token == JsonToken.STRING) {
+      return reader.nextString();
+    }
+    reader.skipValue();
+    return null;
   }
 
   @NotNull

@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.json.JsonFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -73,7 +74,7 @@ public final class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter 
     @NotNull private final Project myProject;
     private final ZipperUpdater myUpdater;
     @NotNull private final JsonSchemaService myService;
-    private final Set<VirtualFile> myDirtySchemas = ContainerUtil.newConcurrentSet();
+    private final Set<VirtualFile> myDirtySchemas = ConcurrentCollectionFactory.createConcurrentSet();
     private final Runnable myRunnable;
     private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Json Vfs Updater Executor");
 

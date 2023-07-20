@@ -49,6 +49,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("ktij-5382.kt")
+        public void testKtij_5382() throws Exception {
+            runTest("testData/parameterInfo/arrayAccess/ktij-5382.kt");
+        }
+
         @TestMetadata("Overloads.kt")
         public void testOverloads() throws Exception {
             runTest("testData/parameterInfo/arrayAccess/Overloads.kt");

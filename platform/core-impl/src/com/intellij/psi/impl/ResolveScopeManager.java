@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.project.Project;
@@ -10,27 +10,21 @@ import org.jetbrains.annotations.NotNull;
 
 
 public abstract class ResolveScopeManager {
-  @NotNull
-  public abstract GlobalSearchScope getResolveScope(@NotNull PsiElement element);
+  public abstract @NotNull GlobalSearchScope getResolveScope(@NotNull PsiElement element);
 
-  @NotNull
-  public abstract GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile);
+  public abstract @NotNull GlobalSearchScope getDefaultResolveScope(@NotNull VirtualFile vFile);
 
-  @NotNull
-  public abstract GlobalSearchScope getUseScope(@NotNull PsiElement element);
+  public abstract @NotNull GlobalSearchScope getUseScope(@NotNull PsiElement element);
 
-  @NotNull
-  public static ResolveScopeManager getInstance(@NotNull Project project) {
+  public static @NotNull ResolveScopeManager getInstance(@NotNull Project project) {
     return project.getService(ResolveScopeManager.class);
   }
 
-  @NotNull
-  public static GlobalSearchScope getElementUseScope(@NotNull PsiElement element) {
+  public static @NotNull GlobalSearchScope getElementUseScope(@NotNull PsiElement element) {
     return getInstance(element.getProject()).getUseScope(element);
   }
 
-  @NotNull
-  public static GlobalSearchScope getElementResolveScope(@NotNull PsiElement element) {
+  public static @NotNull GlobalSearchScope getElementResolveScope(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file != null) {
       return getInstance(file.getProject()).getResolveScope(file);

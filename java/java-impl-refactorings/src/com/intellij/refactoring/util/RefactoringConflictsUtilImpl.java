@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -27,7 +28,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +45,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   @Override
   public void analyzeHierarchyConflictsAfterMethodModifierChange(@NotNull PsiMethod method,
                                                                  @NotNull @PsiModifier.ModifierConstant String modifier,
-                                                                 @NotNull MultiMap<PsiElement, @Nls String> conflicts) {
+                                                                 @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts(method, conflicts, modifier);
   }
 
@@ -53,7 +53,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   public void analyzeAccessibilityConflictsAfterMemberMove(@NotNull PsiClass targetClass,
                                                            @Nullable String newVisibility,
                                                            @NotNull Set<? extends PsiMember> membersToMove,
-                                                           @NotNull MultiMap<PsiElement, String> conflicts) {
+                                                           @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     analyzeAccessibilityConflictsAfterMemberMove(membersToMove, targetClass, newVisibility, targetClass, null, Conditions.alwaysTrue(),
                                                  conflicts);
   }
@@ -65,7 +65,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                            @NotNull PsiElement context,
                                                            @Nullable Set<? extends PsiMethod> abstractMethods,
                                                            @NotNull Condition<? super PsiReference> ignorePredicate,
-                                                           @NotNull MultiMap<PsiElement, String> conflicts) {
+                                                           @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(newVisibility)) { //Still need to check for access object
       newVisibility = PsiModifier.PUBLIC;
     }
@@ -80,7 +80,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                           @PsiModifier.ModifierConstant @Nullable String newVisibility,
                                                           @Nullable PsiClass targetClass,
                                                           @NotNull Set<? extends PsiMember> membersToMove,
-                                                          @NotNull MultiMap<PsiElement, String> conflicts,
+                                                          @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                           @NotNull Condition<? super PsiReference> ignorePredicate) {
     PsiModifierList modifierListCopy = member.getModifierList();
     if (modifierListCopy != null) {
@@ -105,7 +105,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                            @Nullable PsiModifierList modifierListCopy,
                                                            @Nullable PsiClass targetClass,
                                                            @NotNull Set<? extends PsiMember> membersToMove,
-                                                           @NotNull MultiMap<PsiElement, String> conflicts,
+                                                           @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts,
                                                            @NotNull Condition<? super PsiReference> ignorePredicate) {
     for (PsiReference psiReference : ReferencesSearch.search(member)) {
       if (ignorePredicate.value(psiReference)) {
@@ -119,7 +119,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                                    @Nullable PsiModifierList modifierListCopy,
                                                    @Nullable PsiClass targetClass,
                                                    @NotNull Set<? extends PsiMember> membersToMove,
-                                                   @NotNull MultiMap<PsiElement, String> conflicts) {
+                                                   @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
     PsiElement ref = reference.getElement();
     if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
@@ -151,7 +151,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                            @Nullable Set<? extends PsiMethod> abstractMethods,
                                            @Nullable PsiClass targetClass,
                                            @NotNull PsiElement context,
-                                           MultiMap<PsiElement, String> conflicts) {
+                                           MultiMap<PsiElement, @DialogMessage String> conflicts) {
     checkUsedElements(member, scope, membersToMove, abstractMethods, targetClass, null, context, conflicts);
   }
 
@@ -162,7 +162,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                  @Nullable PsiClass targetClass,
                                  PsiClass accessClass,
                                  @NotNull PsiElement context,
-                                 MultiMap<PsiElement, String> conflicts) {
+                                 MultiMap<PsiElement, @DialogMessage String> conflicts) {
     final Set<PsiMember> moving = new HashSet<>(membersToMove);
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
@@ -216,7 +216,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                             @NotNull PsiElement newContext,
                                             @Nullable PsiClass accessClass,
                                             PsiMember member,
-                                            MultiMap<PsiElement, String> conflicts) {
+                                            MultiMap<PsiElement, @DialogMessage String> conflicts) {
     PsiResolveHelper helper = JavaPsiFacade.getInstance(newContext.getProject()).getResolveHelper();
     if (!helper.isAccessible(refMember, refMember.getModifierList(), newContext, accessClass, newContext)) {
       String message = JavaRefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
@@ -234,9 +234,11 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
           !refMember.hasModifierProperty(PsiModifier.STATIC) &&
           fieldInSubClass != refMember &&
           !member.hasModifierProperty(PsiModifier.STATIC)) {
-        conflicts.putValue(refMember, StringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
-                                                            " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
-                                                            " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
+        conflicts.putValue(refMember, StringUtil.capitalize(
+          JavaRefactoringBundle.message("dialog.message.0.would.hide.which.1.used.by.moved.2",
+                                        RefactoringUIUtil.getDescription(fieldInSubClass, true),
+                                        RefactoringUIUtil.getDescription(refMember, true),
+                                        RefactoringUIUtil.getDescription(member, false))));
       }
     }
   }
@@ -246,7 +248,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
                                      @Nullable Collection<? extends PsiElement> scopes,
                                      UsageInfo[] usages,
                                      @NotNull VirtualFile vFile,
-                                     @NotNull MultiMap<PsiElement, @Nls String> conflicts) {
+                                     @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     if (scopes == null) return;
     for (final PsiElement scope : scopes) {
       if (scope instanceof PsiPackage) return;
@@ -396,7 +398,7 @@ public final class RefactoringConflictsUtilImpl implements RefactoringConflictsU
   @Override
   public void analyzeMethodConflictsAfterParameterDelete(@NotNull PsiMethod method,
                                                          @NotNull PsiParameter parameter,
-                                                         @NotNull MultiMap<PsiElement, @Nls String> conflicts) {
+                                                         @NotNull MultiMap<PsiElement, @DialogMessage String> conflicts) {
     JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
   }
 }

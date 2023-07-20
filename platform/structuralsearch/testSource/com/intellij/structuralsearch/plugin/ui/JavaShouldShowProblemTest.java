@@ -53,7 +53,7 @@ public class JavaShouldShowProblemTest extends LightJavaCodeInsightFixtureTestCa
     myFixture.configureFromExistingVirtualFile(fragment.getVirtualFile());
     final Editor editor = myFixture.getEditor();
     final Document document = editor.getDocument();
-    document.putUserData(StructuralSearchDialog.STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
+    document.putUserData(StructuralSearchDialogKeys.STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID, contextId);
     myFixture.testHighlighting(false, false, false);
   }
 }

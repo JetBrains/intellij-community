@@ -56,6 +56,9 @@ abstract class AbstractKotlinApplicableInspectionBase<ELEMENT : KtElement>(
         if (ranges.isEmpty()) return
 
         val problemInfo = buildProblemInfo(element) ?: return
+        if (!isOnTheFly && problemInfo.highlightType == ProblemHighlightType.INFORMATION) {
+            return
+        }
         getProblemRanges(ranges).forEach { range ->
             holder.registerProblem(
                 element,

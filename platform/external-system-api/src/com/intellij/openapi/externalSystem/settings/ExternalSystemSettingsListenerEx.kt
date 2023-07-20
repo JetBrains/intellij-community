@@ -26,6 +26,6 @@ interface ExternalSystemSettingsListenerEx {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName<ExternalSystemSettingsListenerEx>("com.intellij.externalSystemSettingsListener")
+    val EP_NAME: ExtensionPointName<ExternalSystemSettingsListenerEx> = ExtensionPointName<ExternalSystemSettingsListenerEx>("com.intellij.externalSystemSettingsListener")
   }
 }

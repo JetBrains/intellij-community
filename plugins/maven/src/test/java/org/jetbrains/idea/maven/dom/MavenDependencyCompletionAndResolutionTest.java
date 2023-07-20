@@ -785,7 +785,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                        </dependencies>
                        """);
 
-    checkHighlighting(myProjectPom);
+    checkHighlighting();
   }
 
   @Test 
@@ -820,7 +820,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                        </dependencies>
                        """);
 
-    checkHighlighting(myProjectPom);
+    checkHighlighting();
   }
 
   @Test 
@@ -842,7 +842,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                        </dependencies>
                        """);
 
-    checkHighlighting(myProjectPom);
+    checkHighlighting();
   }
 
   @Test 
@@ -1092,7 +1092,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
 
     importProject();
 
-    checkHighlighting(m, true, false, true);
+    checkHighlighting(m);
   }
 
   @Test 
@@ -1120,7 +1120,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                                       """);
 
     importProject();
-    checkHighlighting(m, true, false, true);
+    checkHighlighting(m);
   }
 
   @Test 

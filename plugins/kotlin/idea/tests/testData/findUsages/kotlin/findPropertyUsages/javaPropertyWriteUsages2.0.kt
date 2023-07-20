@@ -1,5 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtParameter
 // OPTIONS: usages, skipRead
+// PSI_ELEMENT_AS_TITLE: "foo: T"
 package server
 
 open class A<T>(open var <caret>foo: T)

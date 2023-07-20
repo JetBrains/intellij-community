@@ -30,13 +30,13 @@ interface ObservableProperty<T> : ReadOnlyProperty<Any?, T> {
     }
   }
 
-  fun afterChange(listener: (T) -> Unit) = afterChange(null, listener)
+  fun afterChange(listener: (T) -> Unit): Unit = afterChange(null, listener)
 
   @Deprecated(
     "Use instead afterChange with other order of listener and disposable",
     ReplaceWith("afterChange(parentDisposable, listener)")
   )
-  fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable) = afterChange(parentDisposable, listener)
+  fun afterChange(listener: (T) -> Unit, parentDisposable: Disposable): Unit = afterChange(parentDisposable, listener)
 
   /**
    * Value of Kotlin property can be delegated to ObservableProperty.

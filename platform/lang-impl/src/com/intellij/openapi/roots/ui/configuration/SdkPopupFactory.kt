@@ -41,7 +41,7 @@ interface SdkPopupFactory {
 
   companion object {
     @JvmStatic
-    fun newBuilder() = service<SdkPopupFactory>().createBuilder()
+    fun newBuilder(): SdkPopupBuilder = service<SdkPopupFactory>().createBuilder()
   }
 }
 

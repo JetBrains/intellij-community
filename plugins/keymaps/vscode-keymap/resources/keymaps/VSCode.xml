@@ -174,8 +174,6 @@
   <action id="EditorNextWord">
     <keyboard-shortcut first-keystroke="ctrl right" />
   </action>
-  <action id="EditorPageDownWithSelection" />
-  <action id="EditorPageUpWithSelection" />
   <action id="EditorPreviousWord">
     <keyboard-shortcut first-keystroke="ctrl left" />
   </action>
@@ -423,12 +421,6 @@
   </action>
   <action id="SaveAll">
     <keyboard-shortcut first-keystroke="ctrl k" second-keystroke="s" />
-  </action>
-  <action id="ScrollPane-scrollDown">
-    <keyboard-shortcut first-keystroke="shift page_down" />
-  </action>
-  <action id="ScrollPane-scrollUp">
-    <keyboard-shortcut first-keystroke="shift page_up" />
   </action>
   <action id="ScrollPane-unitScrollDown">
     <keyboard-shortcut first-keystroke="ctrl down" />

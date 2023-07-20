@@ -1,4 +1,4 @@
-// "Suppress 'REDUNDANT_NULLABLE' for file ${file}" "true"
+// "Suppress 'DIVISION_BY_ZERO' for file ${file}" "true"
 @file:Suppress("unused")
 
-public fun foo(): String?<caret>? = null
+public fun foo() = 2 / <caret>0

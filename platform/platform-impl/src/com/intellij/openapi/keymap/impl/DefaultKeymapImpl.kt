@@ -23,7 +23,7 @@ open class DefaultKeymapImpl(dataHolder: SchemeDataHolder<KeymapImpl>,
 
   override fun getSchemeState(): SchemeState = SchemeState.NON_PERSISTENT
 
-  override fun getPresentableName() = DefaultKeymap.getInstance().getKeymapPresentableName(this)
+  override fun getPresentableName(): String = DefaultKeymap.getInstance().getKeymapPresentableName(this)
 
   override fun readExternal(keymapElement: Element) {
     super.readExternal(keymapElement)

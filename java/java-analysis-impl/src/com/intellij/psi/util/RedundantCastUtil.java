@@ -18,16 +18,14 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.NullArgumentToVariableArgMethodInspection;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.SwitchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
 
@@ -586,6 +584,18 @@ public final class RedundantCastUtil {
             return  (PsiCall)PsiTreeUtil.releaseMark(callCopy, marker);
           }
           else {
+            //it is possible that in several cases there is not enough context, let's add more
+            ParentPathContext contextParent = getContextParent(expression);
+            if (contextParent != null && contextParent.hasPath()) {
+              RecaptureTypeMapper.encode(encoded = contextParent.parent());
+              PsiElement copy = contextParent.getElementCopy();
+              if (copy instanceof PsiCall psiCall) {
+                return psiCall;
+              }
+              else {
+                return null;
+              }
+            }
             RecaptureTypeMapper.encode(encoded = expression);
             return (PsiCall)expression.copy();
           }
@@ -598,6 +608,51 @@ public final class RedundantCastUtil {
         if (encoded != null) {
           RecaptureTypeMapper.clean(encoded);
         }
+      }
+    }
+
+    @Nullable
+    private static RedundantCastUtil.MyIsRedundantVisitor.ParentPathContext getContextParent(@NotNull PsiCall expression) {
+      PsiElement parent = expression.getParent();
+      List<Integer> indexes = new ArrayList<>();
+      PsiElement currentChild = expression;
+      while (parent instanceof PsiIfStatement || parent instanceof PsiConditionalExpression || parent instanceof PsiLoopStatement) {
+        PsiElement[] children = parent.getChildren();
+        PsiElement finalCurrentChild = currentChild;
+        int index = ContainerUtil.indexOf(Arrays.asList(children), child -> child == finalCurrentChild);
+        if (index != -1) {
+          indexes.add(index);
+        }
+        else {
+          return null;
+        }
+        currentChild = parent;
+        parent = parent.getParent();
+      }
+      return new ParentPathContext(currentChild, indexes);
+    }
+
+    /**
+     * represent a path to certain child
+     * @param parent - first parent in a path
+     * @param childrenIndexes - indexes of children, which should be applied to parent to get the certain child
+     */
+    private record ParentPathContext(PsiElement parent, List<Integer> childrenIndexes) {
+      public PsiElement getElementCopy() {
+        PsiElement result = parent.copy();
+        for (Integer nextIndex : childrenIndexes) {
+          if (result != null && result.getChildren().length > nextIndex) {
+            result = result.getChildren()[nextIndex];
+          }
+          else {
+            return null;
+          }
+        }
+        return result;
+      }
+
+      public boolean hasPath() {
+        return !childrenIndexes.isEmpty();
       }
     }
 

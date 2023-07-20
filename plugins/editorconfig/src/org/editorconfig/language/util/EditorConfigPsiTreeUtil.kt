@@ -21,8 +21,8 @@ import org.editorconfig.language.util.core.EditorConfigPsiTreeUtilCore
 import kotlin.math.max
 
 object EditorConfigPsiTreeUtil {
-  inline fun <reified T : PsiElement> PsiElement.getParentOfType(strict: Boolean = false) =
-    PsiTreeUtil.getParentOfType(this, T::class.java, strict)
+  inline fun <reified T : PsiElement> PsiElement.getParentOfType(strict: Boolean = false, vararg stopAt: Class<out PsiElement>) =
+    PsiTreeUtil.getParentOfType(this, T::class.java, strict, *stopAt)
 
   inline fun <reified T : PsiElement> PsiElement.hasParentOfType() =
     getParentOfType<T>() != null

@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build.output
 
 import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
+import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
@@ -99,7 +100,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     }
   }
 
-  override fun getParentEventId() = parentEventId
+  override fun getParentEventId(): Any = parentEventId
 
   override fun append(csq: CharSequence): BuildOutputInstantReaderImpl {
     appendedLineProcessor.append(csq)
@@ -151,7 +152,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
     return line
   }
 
-  override fun pushBack() = pushBack(1)
+  override fun pushBack(): Unit = pushBack(1)
 
   override fun pushBack(numberOfLines: Int) {
     readLinesBufferPosition += numberOfLines

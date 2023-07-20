@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesO
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
+import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -115,8 +116,19 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                                                            getFindUsagesOptions().isSearchInOverridingMethods, optionsPanel, true);
         }
 
-        boolean isAbstract = property.hasModifier(KtTokens.ABSTRACT_KEYWORD);
-        boolean isOpen = property.hasModifier(KtTokens.OPEN_KEYWORD);
+        boolean isContainingClassInterface = KtPsiUtilKt.getContainingClassOrObject(property) instanceof KtClass ktClass && ktClass.isInterface();
+
+        boolean isAbstract = property.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+                             isContainingClassInterface &&
+                             property instanceof KtProperty ktProperty &&
+                             !ktProperty.hasInitializer() && !ktProperty.hasDelegate() && ktProperty.getAccessors().isEmpty();
+
+        boolean isOpen = property.hasModifier(KtTokens.OPEN_KEYWORD) ||
+                         property.hasModifier(KtTokens.OVERRIDE_KEYWORD) &&
+                         !property.hasModifier(KtTokens.FINAL_KEYWORD)
+                         && (isContainingClassInterface ||
+                             KtPsiUtilKt.getContainingClassOrObject(property) instanceof KtClass ktClass && ktClass.hasModifier(KtTokens.OPEN_KEYWORD));
+
         if (isOpen || isAbstract) {
             overrideUsages = addCheckboxToPanel(
                     isAbstract

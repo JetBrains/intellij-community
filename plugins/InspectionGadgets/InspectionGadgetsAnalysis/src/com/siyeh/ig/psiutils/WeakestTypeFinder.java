@@ -348,7 +348,7 @@ public final class WeakestTypeFinder {
     }
     final PsiReferenceList throwsList = method.getThrowsList();
     final PsiClassType[] classTypes = throwsList.getReferencedTypes();
-    final Collection<PsiClassType> thrownTypes = ContainerUtil.set(classTypes);
+    final Collection<PsiClassType> thrownTypes = ContainerUtil.newHashSet(classTypes);
     final List<PsiMethod> superMethods = findAllSuperMethods(method);
     boolean checked = false;
     if (!superMethods.isEmpty()) {

@@ -40,9 +40,8 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
 
     object RemoveSpreadFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
         public override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val element = psiElement
-            if (element.node.elementType != KtTokens.MUL) return emptyList()
-            return listOf(RemovePsiElementSimpleFix(element, KotlinBundle.message("remove.star")))
+            if (psiElement.node.elementType != KtTokens.MUL) return emptyList()
+            return listOf(RemovePsiElementSimpleFix(psiElement, KotlinBundle.message("remove.star")))
         }
     }
 

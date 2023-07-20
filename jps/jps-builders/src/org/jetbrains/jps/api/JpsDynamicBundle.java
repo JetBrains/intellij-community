@@ -18,7 +18,7 @@ import java.util.ResourceBundle;
  * This class provides support for "dynamic" resource bundles provided by {@link com.intellij.DynamicBundle.LanguageBundleEP} extension.
  * if JPS plugin inherits the ResourceBundle from this class, IDE's language pack's localized resources will be automatically available for the JPS process launched by the IDE.
  */
-public abstract class JpsDynamicBundle extends AbstractBundle {
+public class JpsDynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(JpsDynamicBundle.class);
 
   private static final Method SET_PARENT = getSetParentMethod();

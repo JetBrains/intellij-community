@@ -29,10 +29,19 @@ internal class IFTInteractiveCourse : InteractiveCourseFactory {
 
   override val isActive: Boolean get() = LangManager.getInstance().getLangSupport()?.useUserProjects == false
 
-  override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel()
+  override val isEnabled: Boolean = enableLessonsAndPromoters
+
+  override val disabledText: String = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
+
+  override fun getInteractiveCourseComponent(): JComponent = IFTInteractiveCoursePanel(isEnabled, disabledText)
+
+  override fun getCourseData(): InteractiveCourseData {
+    return IFTInteractiveCourseData()
+  }
 }
 
-private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveCourseData(), enableLessonsAndPromoters) {
+private class IFTInteractiveCoursePanel(isEnabled: Boolean, disabledText: String) : InteractiveCoursePanel(IFTInteractiveCourseData(), isEnabled) {
+
   init {
     if (!enableLessonsAndPromoters) {
       add(JTextPane().apply {
@@ -43,7 +52,7 @@ private class IFTInteractiveCoursePanel : InteractiveCoursePanel(IFTInteractiveC
           }
         })
         editorKit = HTMLEditorKitBuilder.simple()
-        text = LearnBundle.message("welcome.tab.toggle.new.ui.hint")
+        text = disabledText
         isEditable = false
         isOpaque = false
         highlighter = null

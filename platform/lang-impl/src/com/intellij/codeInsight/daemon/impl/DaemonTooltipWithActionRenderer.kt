@@ -273,7 +273,7 @@ internal class DaemonTooltipWithActionRenderer(@NlsContexts.Tooltip text: String
     }
   }
 
-  override fun isContentAction(dressedText: String?): Boolean {
+  override fun isContentAction(dressedText: String): Boolean {
     return super.isContentAction(dressedText) || tooltipAction != null
   }
 

@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.*;
 
@@ -74,7 +75,8 @@ class ImmutableSyntheticLibrary extends SyntheticLibrary {
   }
 
   @NotNull
+  @Unmodifiable
   private static <E> List<E> immutableOrEmptyList(@NotNull List<? extends E> list) {
-    return list.isEmpty() ? Collections.emptyList() : ContainerUtil.immutableList(list);
+    return list.isEmpty() ? Collections.emptyList() : List.copyOf(list);
   }
 }

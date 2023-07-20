@@ -18,13 +18,15 @@ class GradleExtensionsImportingTest : GradleImportingTestCase() {
 
     assertModules("project", "project.main", "project.test")
 
-    val extensions = GradleExtensionsSettings.getInstance(myProject).getExtensionsFor(getModule("project"))
+    val extensions = GradleExtensionsSettings.getInstance(myProject).getExtensionsFor(getModule("project"))!!
 
-    val conventionsMap = extensions!!.conventions.map { it.name to it.typeFqn }.toMap()
-    assertThat(conventionsMap).containsExactly(
-      entry("base", "org.gradle.api.plugins.BasePluginConvention"),
-      entry("java", "org.gradle.api.plugins.JavaPluginConvention")
-    )
+    if (isGradleOlderThan("8.2")) {
+      val conventionsMap = extensions.conventions.map { it.name to it.typeFqn }.toMap()
+      assertThat(conventionsMap).containsExactly(
+        entry("base", "org.gradle.api.plugins.BasePluginConvention"),
+        entry("java", "org.gradle.api.plugins.JavaPluginConvention")
+      )
+    }
 
     val extensionsMap = extensions.extensions.mapValues { entry -> entry.value.typeFqn }
 

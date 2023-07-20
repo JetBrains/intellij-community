@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.kotlin.inspections;
 
 import com.intellij.icons.AllIcons;
@@ -35,8 +35,8 @@ public class KtPresentationAnnotationInspectionTest extends JavaCodeInsightFixtu
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("analysis", PathUtil.getJarPathForClass(Presentation.class));
-    moduleBuilder.addLibrary("icons", PathUtil.getJarPathForClass(AllIcons.class));
+    moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(Presentation.class));
+    moduleBuilder.addLibrary("platform-util-ui", PathUtil.getJarPathForClass(AllIcons.class));
   }
 
   public void testValidIcon() {

@@ -23,6 +23,12 @@ public class SmallStreamlinedBlobStorageTest extends StreamlinedBlobStorageTestB
   }
 
   @Override
+  protected int maxPayloadSize(int pageSize) {
+    return Math.min(pageSize, SmallStreamlinedBlobStorage.MAX_LENGTH)
+           - SmallStreamlinedBlobStorage.RECORD_HEADER_SIZE;
+  }
+
+  @Override
   protected SmallStreamlinedBlobStorage openStorage(final Path pathToStorage) throws IOException {
     final PagedFileStorage pagedStorage = new PagedFileStorage(
       pathToStorage,
@@ -54,5 +60,4 @@ public class SmallStreamlinedBlobStorageTest extends StreamlinedBlobStorageTestB
     }
     super.tearDown();
   }
-
 }

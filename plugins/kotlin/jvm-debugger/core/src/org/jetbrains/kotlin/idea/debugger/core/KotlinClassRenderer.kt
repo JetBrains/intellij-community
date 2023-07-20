@@ -91,10 +91,7 @@ class KotlinClassRenderer : ClassRenderer() {
     override fun shouldDisplay(context: EvaluationContext?, objInstance: ObjectReference, field: Field): Boolean {
         val referenceType = objInstance.referenceType()
         if (field.isStatic && referenceType.isKotlinObjectType()) {
-            if (field.isInstanceFieldOfType(referenceType)) {
-                return false
-            }
-            return true
+            return !field.isInstanceFieldOfType(referenceType)
         }
         return super.shouldDisplay(context, objInstance, field)
     }

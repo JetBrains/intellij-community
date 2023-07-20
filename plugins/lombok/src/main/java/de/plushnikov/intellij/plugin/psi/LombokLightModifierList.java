@@ -6,7 +6,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,6 @@ import java.util.*;
  * @author Plushnikov Michail
  */
 public class LombokLightModifierList extends LightModifierList implements SyntheticElement {
-  private static final Set<String> ALL_MODIFIERS = ContainerUtil.set(PsiModifier.MODIFIERS);
 
   private final Map<String, PsiAnnotation> myAnnotations;
   private final Set<String> myImplicitModifiers;
@@ -68,7 +66,7 @@ public class LombokLightModifierList extends LightModifierList implements Synthe
 
   private Collection<String> collectAllModifiers() {
     Collection<String> result = new HashSet<>();
-    for (@PsiModifier.ModifierConstant String modifier : ALL_MODIFIERS) {
+    for (@PsiModifier.ModifierConstant String modifier : PsiModifier.MODIFIERS) {
       if (hasExplicitModifier(modifier)) {
         result.add(modifier);
       }

@@ -28,19 +28,19 @@ class IkvIndexBuilder(private val writeSize: Boolean = true) {
 }
 
 sealed class IkvIndexEntry(@JvmField internal val offset: Long) {
-  internal var size = -1
+  internal var size: Int = -1
 }
 
 internal class IntKeyedEntry(@JvmField internal val intKey: Int, offset: Long) : IkvIndexEntry(offset) {
-  override fun equals(other: Any?) = intKey == (other as? IntKeyedEntry)?.intKey
+  override fun equals(other: Any?): Boolean = intKey == (other as? IntKeyedEntry)?.intKey
 
-  override fun hashCode() = intKey
+  override fun hashCode(): Int = intKey
 }
 
 internal class LongKeyedEntry(@JvmField internal val longKey: Long, offset: Long) : IkvIndexEntry(offset) {
-  override fun equals(other: Any?) = longKey == (other as? LongKeyedEntry)?.longKey
+  override fun equals(other: Any?): Boolean = longKey == (other as? LongKeyedEntry)?.longKey
 
-  override fun hashCode() = longKey.toInt()
+  override fun hashCode(): Int = longKey.toInt()
 }
 
 private fun writeIkvIndex(entries: Collection<IkvIndexEntry>, writeSize: Boolean = true, writer: (ByteBuffer) -> Unit) {

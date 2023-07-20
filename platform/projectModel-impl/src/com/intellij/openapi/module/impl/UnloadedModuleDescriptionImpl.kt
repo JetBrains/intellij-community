@@ -20,7 +20,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.module.UnloadedModuleDescription
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.platform.workspaceModel.jps.serialization.impl.ModulePath
+import com.intellij.platform.workspace.jps.serialization.impl.ModulePath
 import com.intellij.util.containers.Interner
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleDependency

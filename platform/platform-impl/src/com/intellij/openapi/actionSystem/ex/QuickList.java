@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
+import com.intellij.AbstractBundle;
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.openapi.options.ExternalizableSchemeAdapter;
 import com.intellij.openapi.options.SchemeState;
@@ -8,12 +9,14 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.ResourceBundle;
 
 public class QuickList extends ExternalizableSchemeAdapter implements SerializableScheme {
   public static final String QUICK_LIST_PREFIX = "QuickList.";
@@ -27,6 +30,7 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
   private String myDescription;
   private String[] myActionIds = ArrayUtilRt.EMPTY_STRING_ARRAY;
   private SchemeState schemeState;
+  private @Nullable ResourceBundle myBundle;
 
   /**
    * With read external to be called immediately after in mind
@@ -35,15 +39,33 @@ public class QuickList extends ExternalizableSchemeAdapter implements Serializab
     setName("");
   }
 
-  public QuickList(@NotNull String name, @Nullable String description, String[] actionIds) {
-    setName(name);
-    myDescription = StringUtil.nullize(description);
-    myActionIds = actionIds;
+  @SuppressWarnings("CopyConstructorMissesField")
+  public QuickList(@NotNull QuickList other) {
+    setName(other.getName());
+    myDescription = StringUtil.nullize(other.myDescription);
+    myBundle = other.myBundle;
+    myActionIds = other.getActionIds();
+  }
+
+  @Nls
+  @Override
+  public @NotNull String getDisplayName() {
+    if (myBundle != null) {
+      return AbstractBundle.messageOrDefault(myBundle, getActionId() + ".text", getName()); //NON-NLS
+    }
+    return super.getDisplayName();
   }
 
   @Nullable
   public String getDescription() {
+    if (StringUtil.isEmpty(myDescription) && myBundle != null) {
+      myDescription = AbstractBundle.messageOrNull(myBundle, getActionId() + ".description");
+    }
     return myDescription;
+  }
+
+  void localizeWithBundle(@Nullable ResourceBundle resourceBundle) {
+    myBundle = resourceBundle;
   }
 
   public void setDescription(@Nullable String value) {

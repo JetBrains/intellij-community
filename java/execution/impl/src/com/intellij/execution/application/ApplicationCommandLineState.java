@@ -38,7 +38,7 @@ public abstract class ApplicationCommandLineState<T extends
     T configuration = getConfiguration();
 
     params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
-    setupJavaParameters(params);
+    JavaParametersUtil.configureConfiguration(params, myConfiguration);
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
     ReadAction.run(() -> {
@@ -58,6 +58,8 @@ public abstract class ApplicationCommandLineState<T extends
     setupModulePath(params, module);
 
     params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
+
+    setupJavaParameters(params);
 
     return params;
   }

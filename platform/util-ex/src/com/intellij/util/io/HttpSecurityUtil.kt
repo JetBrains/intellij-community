@@ -6,7 +6,7 @@ import java.nio.CharBuffer
 import java.util.*
 
 object HttpSecurityUtil {
-  const val AUTHORIZATION_HEADER_NAME = "Authorization"
+  const val AUTHORIZATION_HEADER_NAME: String = "Authorization"
 
   @JvmStatic
   fun createBasicAuthHeaderValue(username: String, password: CharArray): String {

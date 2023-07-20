@@ -6,7 +6,7 @@ import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Contract
 
-const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
+const val SERVICE_NAME_PREFIX: String = "IntelliJ Platform"
 
 /**
  * The combined name of your service and name of service that requires authentication.
@@ -15,7 +15,7 @@ const val SERVICE_NAME_PREFIX = "IntelliJ Platform"
  * * reverse-DNS format: `com.apple.facetime: registrationV1`
  * * prefixed human-readable format: `IntelliJ Platform Settings Repository — github.com`, where `IntelliJ Platform` is a required prefix. **You must always use this prefix**.
  */
-fun generateServiceName(subsystem: String, key: String) = "$SERVICE_NAME_PREFIX $subsystem — $key"
+fun generateServiceName(subsystem: String, key: String): String = "$SERVICE_NAME_PREFIX $subsystem — $key"
 
 /**
  * Consider using [generateServiceName] to generate [serviceName].
@@ -34,7 +34,11 @@ data class CredentialAttributes(
               userName: String? = null,
               requestor: Class<*>? = null,
               isPasswordMemoryOnly: Boolean = false)
-    : this(serviceName, userName, requestor, isPasswordMemoryOnly, true)
+    : this(serviceName = serviceName,
+           userName = userName,
+           requestor = requestor,
+           isPasswordMemoryOnly = isPasswordMemoryOnly,
+           cacheDeniedItems = true)
 }
 
 /**
@@ -50,7 +54,7 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
 
   constructor(@NlsSafe user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
 
-  val userName = user.nullize()
+  val userName: String? = user.nullize()
 
   @NlsSafe
   fun getPasswordAsString(): String? = password?.toString()
@@ -60,23 +64,23 @@ class Credentials(@NlsSafe user: String?, @NlsSafe val password: OneTimeString? 
   override fun hashCode() = (userName?.hashCode() ?: 0) * 37 + (password?.hashCode() ?: 0)
 
   override fun toString() = "userName: $userName, password size: ${password?.length ?: 0}"
-
-  companion object {
-    val ACCESS_TO_KEY_CHAIN_DENIED = Credentials(null, null as OneTimeString?)
-    val CANNOT_UNLOCK_KEYCHAIN = Credentials(null, null as OneTimeString?)
-  }
 }
+
+val ACCESS_TO_KEY_CHAIN_DENIED: Credentials = Credentials(user = null, password = null as OneTimeString?)
+val CANNOT_UNLOCK_KEYCHAIN: Credentials = Credentials(user = null, password = null as OneTimeString?)
 
 /** @deprecated Use [CredentialAttributes] instead. */
 @Deprecated("Never use it in a new code.")
 @ApiStatus.ScheduledForRemoval
 @Suppress("DeprecatedCallableAddReplaceWith")
-fun CredentialAttributes(requestor: Class<*>, userName: String?) = CredentialAttributes(requestor.name, userName, requestor)
+fun CredentialAttributes(requestor: Class<*>, userName: String?): CredentialAttributes {
+  return CredentialAttributes(serviceName = requestor.name, userName = userName, requestor = requestor)
+}
 
 @Contract("null -> false")
-fun Credentials?.isFulfilled() = this != null && userName != null && !password.isNullOrEmpty()
+fun Credentials?.isFulfilled(): Boolean = this != null && userName != null && !password.isNullOrEmpty()
 
 @Contract("null -> false")
-fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
+fun Credentials?.hasOnlyUserName(): Boolean = this != null && userName != null && password.isNullOrEmpty()
 
-fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
+fun Credentials?.isEmpty(): Boolean = this == null || (userName == null && password.isNullOrEmpty())

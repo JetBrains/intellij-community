@@ -126,7 +126,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myWasTreeInitialized = true;
 
     super.initTree();
-    new TreeSpeedSearch(myTree, true, treePath -> getTextForSpeedSearch((MyNode)treePath.getLastPathComponent()));
+    TreeSpeedSearch.installOn(myTree, true, treePath -> getTextForSpeedSearch((MyNode)treePath.getLastPathComponent()));
     ToolTipManager.sharedInstance().registerComponent(myTree);
     myTree.setCellRenderer(new ProjectStructureElementRenderer(myContext));
   }
@@ -248,7 +248,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   @NotNull
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     final ArrayList<AnAction> result = new ArrayList<>();
-    AbstractAddGroup addAction = createAddAction();
+    AbstractAddGroup addAction = createAddAction(fromPopup);
     if (addAction != null) {
       result.add(addAction);
     }
@@ -277,7 +277,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   @Nullable
-  protected abstract AbstractAddGroup createAddAction();
+  protected abstract AbstractAddGroup createAddAction(boolean fromPopup);
 
   protected List<? extends RemoveConfigurableHandler<?>> getRemoveHandlers() {
     return Collections.emptyList();

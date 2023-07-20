@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleConf
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleNamedTaskAccessIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.TargetJvmVersion
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 
 fun runTaskIrs(@NonNls mainClass: String, classPath: BuildSystemIR? = null) = irsList {
@@ -31,5 +32,20 @@ class ApplicationConfigurationIR(private val mainClass: String): GradleIR, FreeI
                 }
             }
         }
+    }
+}
+
+class KotlinExtensionConfigurationIR(private val targetJvmVersion: TargetJvmVersion) : GradleIR, FreeIR {
+    override fun GradlePrinter.renderGradle() {
+        sectionCall("kotlin", needIndent = true) {
+            JvmToolchainConfigurationIR(targetJvmVersion).render(this)
+        }
+    }
+}
+
+class JvmToolchainConfigurationIR(private val targetJvmVersion: TargetJvmVersion) : GradleIR, FreeIR {
+    override fun GradlePrinter.renderGradle() {
+        +"jvmToolchain"
+        par{ +targetJvmVersion.versionNumber.toString() }
     }
 }

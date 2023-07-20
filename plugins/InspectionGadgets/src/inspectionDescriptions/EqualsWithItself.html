@@ -1,11 +1,13 @@
 <html>
 <body>
-Reports calls to <code>equals()</code> or <code>compareTo()</code> where an object is compared for equality
+Reports calls to <code>equals()</code>, <code>compareTo()</code> or similar, that compare an object for equality
 with itself.
-<p>According to the method contracts, these operations will always return
-  <code>true</code> for <code>equals()</code> or <code>0</code> for <code>compareTo()</code>. The inspection also checks
-  the calls to <code>Objects.equals()</code>, <code>Objects.deepEquals()</code>,
-  <code>Arrays.equals()</code>, <code>Comparator.compare</code>, and the like.</p>
+The method contracts of these methods specify that such calls will always return
+<code>true</code> for <code>equals()</code> or <code>0</code> for <code>compareTo()</code>.
+The inspection also checks
+calls to <code>Objects.equals()</code>, <code>Objects.deepEquals()</code>,
+<code>Arrays.equals()</code>, <code>Comparator.compare()</code>, <code>assertEquals()</code> methods of
+test frameworks (JUnit, TestNG, AssertJ), <code>Integer.compare()</code>, <code>Integer.compareUnsigned()</code> and similar methods.
 <p><b>Example:</b></p>
 <pre><code>
   class Foo {
@@ -21,7 +23,7 @@ with itself.
 <!-- tooltip end -->
 <p>
   Use the option to report test assertions report only on non-extendable library classes (like <code>String</code>) and primitive types.
-  This option could be useful, when tests check <code>equals</code> methods.
+  This option can be useful, when testing <code>equals()</code> methods.
 </p>
 </body>
 </html>

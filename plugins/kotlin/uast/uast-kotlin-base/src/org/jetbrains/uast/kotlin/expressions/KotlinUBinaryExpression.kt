@@ -77,7 +77,14 @@ class KotlinUBinaryExpression(
             KtTokens.IN_KEYWORD -> KotlinBinaryOperators.IN
             KtTokens.NOT_IN -> KotlinBinaryOperators.NOT_IN
             KtTokens.RANGE -> KotlinBinaryOperators.RANGE_TO
-            else -> baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
-        }
+            else -> {
+                val text = sourcePsi.operationReference.text
 
+                if (BITWISE_OPERATORS.containsKey(text)) {
+                    baseResolveProviderService.resolveBitwiseOperators(sourcePsi)
+                } else {
+                    UastBinaryOperator.OTHER
+                }
+            }
+        }
 }

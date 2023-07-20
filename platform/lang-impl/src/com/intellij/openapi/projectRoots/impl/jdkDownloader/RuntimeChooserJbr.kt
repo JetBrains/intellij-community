@@ -9,10 +9,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 
 data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserItem() {
-  override fun toString() = item.fullPresentationText
+  override fun toString(): @NlsSafe String = item.fullPresentationText
 }
 
 fun RuntimeChooserModel.fetchAvailableJbrs() {

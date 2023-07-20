@@ -23,8 +23,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.impl.VisibilityWatcher;
-import com.intellij.psi.PsiDocumentManager;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
@@ -55,6 +54,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
 
   protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
 
+  protected final @NotNull TodoView myTodoView;
   protected final @NotNull Project myProject;
   private final @NotNull TodoPanelSettings mySettings;
   private final boolean myCurrentFileMode;
@@ -65,7 +65,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   private final @NotNull MyOccurenceNavigator myOccurenceNavigator;
   private final @NotNull TodoTreeBuilder myTodoTreeBuilder;
 
-  private MyVisibilityWatcher myVisibilityWatcher;
   private final @NotNull UsagePreviewPanel myUsagePreviewPanel;
   private MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
@@ -77,13 +76,14 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
    *                        actions.
    */
-  TodoPanel(@NotNull Project project,
+  TodoPanel(@NotNull TodoView todoView,
             @NotNull TodoPanelSettings settings,
             boolean currentFileMode,
             @NotNull Content content) {
     super(false, true);
 
-    myProject = project;
+    myTodoView = todoView;
+    myProject = todoView.getProject();
     mySettings = settings;
     myCurrentFileMode = currentFileMode;
     myContent = content;
@@ -106,9 +106,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myTodoTreeBuilder.setShowPackages(mySettings.arePackagesShown);
     myTodoTreeBuilder.setShowModules(mySettings.areModulesShown);
     myTodoTreeBuilder.setFlattenPackages(mySettings.areFlattenPackages);
-
-    myVisibilityWatcher = new MyVisibilityWatcher();
-    myVisibilityWatcher.install(this);
   }
 
   private @NotNull TodoTreeBuilder setupTreeStructure() {
@@ -177,7 +174,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     myTree.setCellRenderer(new TodoCompositeRenderer());
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
@@ -244,12 +241,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
   }
 
   @Override
-  public void dispose() {
-    if (myVisibilityWatcher != null) {
-      myVisibilityWatcher.deinstall(this);
-      myVisibilityWatcher = null;
-    }
-  }
+  public void dispose() {}
 
   /**
    * Updates current filter. If previously set filter was removed then empty filter is set.
@@ -376,6 +368,10 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     alarm.addRequest(() -> {
       myTodoTreeBuilder.rebuildCache();
     }, 300);
+  }
+
+  void updateVisibility(@NotNull ToolWindow toolWindow) {
+    myTodoTreeBuilder.setUpdatable(toolWindow.isVisible() && myContent.isSelected());
   }
 
   /**
@@ -622,16 +618,6 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
       if (todoPanel != null) {
         todoPanel.mySettings.areFlattenPackages = state;
         todoPanel.myTodoTreeBuilder.setFlattenPackages(state);
-      }
-    }
-  }
-
-  private final class MyVisibilityWatcher extends VisibilityWatcher {
-    @Override
-    public void visibilityChanged() {
-      if (myProject.isOpen()) {
-        PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
-          () -> myTodoTreeBuilder.setUpdatable(isShowing()));
       }
     }
   }

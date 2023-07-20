@@ -20,10 +20,10 @@ interface UiDslConfigurable : UnnamedConfigurable {
       }
     }
 
-    final override fun isModified() = super.isModified()
-    final override fun reset() = super<DslConfigurableBase>.reset()
-    final override fun apply() = super.apply()
-    final override fun disposeUIResources() = super<DslConfigurableBase>.disposeUIResources()
-    final override fun cancel() = super<DslConfigurableBase>.cancel()
+    final override fun isModified(): Boolean = super.isModified()
+    final override fun reset(): Unit = super<DslConfigurableBase>.reset()
+    final override fun apply(): Unit = super.apply()
+    final override fun disposeUIResources(): Unit = super<DslConfigurableBase>.disposeUIResources()
+    final override fun cancel(): Unit = super<DslConfigurableBase>.cancel()
   }
 }

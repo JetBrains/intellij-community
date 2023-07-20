@@ -5,7 +5,8 @@ package test
 
 public final class Modifiers public constructor() {
     public final var extVar: kotlin.Int /* compiled code */
+        public final external get
+        public final external set(value: kotlin.Int) {/* compiled code */ }
 
     public final external fun extFun(): kotlin.Unit { /* compiled code */ }
 }
-

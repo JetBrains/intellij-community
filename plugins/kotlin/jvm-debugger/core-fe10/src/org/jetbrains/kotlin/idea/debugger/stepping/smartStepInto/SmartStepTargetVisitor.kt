@@ -382,15 +382,19 @@ private fun KtFunction.getParameterAndResolvedCallDescriptor(): Pair<ValueParame
     val arguments = resolvedCall.valueArguments
 
     for ((param, argument) in arguments) {
-        if (argument.arguments.any { getArgumentExpression(it) == this }) {
+        if (argument.arguments.any { it.getFunctionLiteral() == this }) {
             return Pair(param, descriptor)
         }
     }
     return null
 }
 
-private fun getArgumentExpression(it: ValueArgument): KtExpression? {
-    return (it.getArgumentExpression() as? KtLambdaExpression)?.functionLiteral ?: it.getArgumentExpression()
+private fun ValueArgument.getFunctionLiteral(): KtFunction? {
+    val argumentExpression = getArgumentExpression()
+    if (argumentExpression is KtFunction) {
+        return argumentExpression
+    }
+    return argumentExpression?.unpackFunctionLiteral()?.functionLiteral
 }
 
 private fun KotlinType.getFirstAbstractMethodDescriptor(): CallableMemberDescriptor? =

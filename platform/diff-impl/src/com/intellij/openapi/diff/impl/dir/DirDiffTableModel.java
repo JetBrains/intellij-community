@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.diff.impl.dir;
 
 import com.google.common.collect.BiMap;
@@ -45,7 +45,6 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -98,27 +97,13 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   public void applyRemove() {
     final List<DirDiffElementImpl> selectedElements = getSelectedElements();
     myUpdating.set(true);
-    final Iterator<DirDiffElementImpl> i = myElements.iterator();
-    while(i.hasNext()) {
-      final DiffType type = i.next().getType();
-      switch (type) {
-        case SOURCE:
-          if (!mySettings.showNewOnSource) i.remove();
-          break;
-        case TARGET:
-          if (!mySettings.showNewOnTarget) i.remove();
-          break;
-        case SEPARATOR:
-          break;
-        case CHANGED:
-          if (!mySettings.showDifferent) i.remove();
-          break;
-        case EQUAL:
-          if (!mySettings.showEqual) i.remove();
-          break;
-        case ERROR:
-      }
-    }
+    myElements.removeIf(element -> switch (element.getType()) {
+      case SOURCE -> !mySettings.showNewOnSource;
+      case TARGET -> !mySettings.showNewOnTarget;
+      case SEPARATOR, ERROR -> false;
+      case CHANGED -> !mySettings.showDifferent;
+      case EQUAL -> !mySettings.showEqual;
+    });
 
     boolean sep = true;
     for (int j = myElements.size() - 1; j >= 0; j--) {
@@ -846,18 +831,11 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     final DirDiffOperation operation = element.getOperation();
     if (operation == null) return;
     switch (operation) {
-      case COPY_TO:
-        performCopyTo(element);
-        break;
-      case COPY_FROM:
-        performCopyFrom(element);
-        break;
-      case DELETE:
-        performDelete(element);
-        break;
-      case MERGE:
-      case EQUAL:
-      case NONE:
+      case COPY_TO -> performCopyTo(element);
+      case COPY_FROM -> performCopyFrom(element);
+      case DELETE -> performDelete(element);
+      case MERGE, EQUAL, NONE -> {
+      }
     }
   }
 

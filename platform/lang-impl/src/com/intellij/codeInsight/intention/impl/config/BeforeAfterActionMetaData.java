@@ -26,19 +26,21 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   protected static final TextDescriptor[] EMPTY_EXAMPLE = new TextDescriptor[0];
   protected static final TextDescriptor EMPTY_DESCRIPTION = new PlainTextDescriptor("", "");
 
-  @NonNls protected static final String DESCRIPTION_FILE_NAME = "description.html";
-  @NonNls static final String EXAMPLE_USAGE_URL_SUFFIX = ".template";
-  @NonNls private static final String BEFORE_TEMPLATE_PREFIX = "before";
-  @NonNls private static final String AFTER_TEMPLATE_PREFIX = "after";
+  protected static final @NonNls String DESCRIPTION_FILE_NAME = "description.html";
+  static final @NonNls String EXAMPLE_USAGE_URL_SUFFIX = ".template";
+  private static final @NonNls String BEFORE_TEMPLATE_PREFIX = "before";
+  private static final @NonNls String AFTER_TEMPLATE_PREFIX = "after";
   protected final ClassLoader myLoader;
   protected final String myDescriptionDirectoryName;
+  private boolean mySkipBeforeAfter;
   private TextDescriptor[] myExampleUsagesBefore;
   private TextDescriptor[] myExampleUsagesAfter;
   protected TextDescriptor myDescription;
 
-  public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName) {
+  public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName, boolean skipBeforeAfter) {
     myLoader = loader;
     myDescriptionDirectoryName = descriptionDirectoryName;
+    mySkipBeforeAfter = skipBeforeAfter;
   }
 
   public BeforeAfterActionMetaData(@NotNull TextDescriptor description,
@@ -58,21 +60,21 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
 
   private TextDescriptor @NotNull [] retrieveURLs(@NotNull String prefix, @NotNull String suffix) {
     Set<TextDescriptor> urls = new LinkedHashSet<>();
-    final FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
+    FileType[] fileTypes = FileTypeManager.getInstance().getRegisteredFileTypes();
     for (FileType fileType : fileTypes) {
-      final List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
-      for (final FileNameMatcher matcher : matchers) {
+      List<FileNameMatcher> matchers = FileTypeManager.getInstance().getAssociations(fileType);
+      for (FileNameMatcher matcher : matchers) {
         if (matcher instanceof ExactFileNameMatcher exactFileNameMatcher) {
-          final String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
+          String fileName = StringUtil.trimStart(exactFileNameMatcher.getFileName(), ".");
           String resourcePath = getResourceLocation(prefix + "." + fileName + suffix);
           URL resource = myLoader.getResource(resourcePath);
           if (resource != null) urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
         }
         else if (matcher instanceof ExtensionFileNameMatcher extensionFileNameMatcher) {
-          final String extension = extensionFileNameMatcher.getExtension();
+          String extension = extensionFileNameMatcher.getExtension();
           for (int i = 0; ; i++) {
             String resourcePath = getResourceLocation(prefix + "." + extension + (i == 0 ? "" : Integer.toString(i))
-                                  + suffix);
+                                                      + suffix);
             URL resource = myLoader.getResource(resourcePath);
             if (resource == null) break;
             urls.add(new ResourceTextDescriptor(myLoader, resourcePath));
@@ -80,7 +82,7 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
         }
       }
     }
-    if (urls.isEmpty()) {
+    if (urls.isEmpty() && !mySkipBeforeAfter) {
       URL descriptionUrl = myLoader.getResource(getResourceLocation(DESCRIPTION_FILE_NAME));
       String url = descriptionUrl.toExternalForm();
       URL descriptionDirectory = null;
@@ -120,9 +122,12 @@ public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
     return myExampleUsagesAfter;
   }
 
+  public boolean isSkipBeforeAfter() {
+    return mySkipBeforeAfter;
+  }
+
   @Override
-  @NotNull
-  public TextDescriptor getDescription() {
+  public @NotNull TextDescriptor getDescription() {
     if (myDescription == null) {
       myDescription = new ResourceTextDescriptor(myLoader, getResourceLocation(DESCRIPTION_FILE_NAME));
     }

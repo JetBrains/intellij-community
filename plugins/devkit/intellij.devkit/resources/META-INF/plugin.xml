@@ -21,7 +21,6 @@
     <module name="intellij.devkit.intelliLang"/>
     <module name="intellij.devkit.themes"/>
     <module name="intellij.devkit.uiDesigner"/>
-    <module name="intellij.platform.workspaceModel.codegen"/>
     <module name="intellij.devkit.workspaceModel"/>
     <module name="intellij.java.devkit"/>
     <module name="intellij.groovy.devkit"/>

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +61,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
   @NonNls private static final String SELECTION_END = "SELECTION_END";
   @NonNls public static final String ARG = "ARG";
 
-  public static final Set<String> INTERNAL_VARS_SET = ContainerUtil.set(
+  public static final Set<String> INTERNAL_VARS_SET = Set.of(
     END, SELECTION, SELECTION_START, SELECTION_END);
 
   private boolean isDeactivated;

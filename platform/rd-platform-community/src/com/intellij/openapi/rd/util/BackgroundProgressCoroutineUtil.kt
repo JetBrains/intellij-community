@@ -13,9 +13,11 @@ import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isNotAlive
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedReceiveChannelException
+import kotlinx.coroutines.channels.trySendBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.lang.Runnable
 import kotlin.coroutines.CoroutineContext
 
 suspend fun <T> withModalProgressContext(
@@ -232,6 +234,7 @@ class ProgressCoroutineScope(override val coroutineContext: CoroutineContext, va
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use withText", ReplaceWith("withText(text, action)"))
   inline fun withTextAboveProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     withText(text, action)
@@ -248,6 +251,7 @@ class ProgressCoroutineScope(override val coroutineContext: CoroutineContext, va
     }
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use withDetails", ReplaceWith("withDetails(text, action)"))
   inline fun withTextUnderProgressBar(@Nls(capitalization = Nls.Capitalization.Sentence) text: String, action: ProgressCoroutineScope.() -> Unit) {
     withDetails(text, action)

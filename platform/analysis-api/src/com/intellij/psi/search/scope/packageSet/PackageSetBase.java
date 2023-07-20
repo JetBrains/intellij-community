@@ -5,6 +5,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,11 @@ public abstract class PackageSetBase implements PackageSet {
 
   @Override
   public boolean contains(@NotNull PsiFile file, @Nullable NamedScopesHolder holder) {
+    return contains((PsiFileSystemItem)file, holder);
+  }
+
+  @Override
+  public boolean contains(@NotNull PsiFileSystemItem file, NamedScopesHolder holder) {
     VirtualFile virtualFile = file.getVirtualFile();
     return virtualFile != null && contains(virtualFile, file.getProject(), holder);
   }

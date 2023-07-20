@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
+import org.jetbrains.kotlin.idea.completion.implCommon.handlers.HandleCompletionCharLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.stringTemplates.wrapLookupElementForStringTemplateAfterDotCompletion
 import org.jetbrains.kotlin.idea.completion.weighers.CompletionContributorGroupWeigher.groupPriority
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -45,20 +46,26 @@ internal class LookupElementSink(
     }
 
     private fun applyWrappersToLookupElement(lookupElement: LookupElement): LookupElement {
-        val wrappers = WrappersProvider.getWrapperForLookupElement(parameters)
+        val wrappers = WrappersProvider.getWrappersForLookupElement(parameters)
         return wrappers.wrap(lookupElement)
     }
 }
 
 
 private object WrappersProvider {
-    fun getWrapperForLookupElement(parameters: KotlinFirCompletionParameters): List<LookupElementWrapper> {
-        return when (parameters.type) {
+    fun getWrappersForLookupElement(parameters: KotlinFirCompletionParameters): List<LookupElementWrapper> {
+        val stringTemplateWrapper = when (parameters.type) {
             KotlinFirCompletionParameters.CorrectionType.BRACES_FOR_STRING_TEMPLATE -> {
-                listOf(LookupElementWrapper(::wrapLookupElementForStringTemplateAfterDotCompletion))
+                LookupElementWrapper(::wrapLookupElementForStringTemplateAfterDotCompletion)
             }
-            else -> listOf(LookupElementWrapper(::WrapSingleStringTemplateEntryWithBraces))
+
+            else -> LookupElementWrapper(::WrapSingleStringTemplateEntryWithBraces)
         }
+
+        return listOf(
+            stringTemplateWrapper,
+            LookupElementWrapper { HandleCompletionCharLookupElementDecorator(it, parameters.ijParameters) }
+        )
     }
 }
 

@@ -23,7 +23,7 @@ internal class IkvTest {
       sizeAwareIkvWriter(file).use { writer ->
         for (i in 0 until count) {
           val data = random.nextBytes(random.nextInt(64, 512))
-          val key = Xxh3.hash32(data)
+          val key = Xxh3.hash(data).toInt()
           writer.write(writer.entry(key), data)
           list.add(Pair(key, data))
         }
@@ -41,7 +41,7 @@ internal class IkvTest {
     val file = tempDir!!.resolve("db")
 
     val data = random.nextBytes(random.nextInt(64, 512))
-    val key = Xxh3.hash32(data)
+    val key = Xxh3.hash(data).toInt()
 
     Files.createDirectories(file.parent)
     sizeAwareIkvWriter(file).use { writer ->
@@ -58,7 +58,7 @@ internal class IkvTest {
     val file = tempDir!!.resolve("db")
 
     val data = random.nextBytes(random.nextInt(64, 512))
-    val key = Xxh3.hash32(data)
+    val key = Xxh3.hash(data).toInt()
 
     Files.createDirectories(file.parent)
     sizeUnawareIkvWriter(file).use { writer ->

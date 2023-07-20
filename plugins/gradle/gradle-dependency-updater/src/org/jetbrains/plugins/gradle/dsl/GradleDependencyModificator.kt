@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -109,7 +108,7 @@ class GradleDependencyModificator(private val myProject: Project) : ExternalDepe
     for (artifactModel in dependencies.artifacts()) {
       if (artifactModel.group().valueAsString() == descriptor.coordinates.groupId
           && artifactModel.name().valueAsString() == descriptor.coordinates.artifactId
-          && artifactModel.version().valueAsString() == descriptor.coordinates.version
+          && (artifactModel.version().valueAsString() ?: "") == descriptor.coordinates.version
       ) {
         dependencies.remove(artifactModel)
         break

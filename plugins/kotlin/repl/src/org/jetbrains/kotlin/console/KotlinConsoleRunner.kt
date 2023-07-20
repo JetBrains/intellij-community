@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.console
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.execution.Executor
 import com.intellij.execution.console.ConsoleExecuteAction
 import com.intellij.execution.console.LanguageConsoleBuilder
@@ -37,7 +38,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiFileFactoryImpl
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
@@ -322,7 +322,7 @@ class KotlinConsoleRunner(
 
 class ConsoleScriptDefinitionContributor : ScriptDefinitionSourceAsContributor {
 
-    private val definitionsSet = ContainerUtil.newConcurrentSet<ScriptDefinition>()
+    private val definitionsSet = ConcurrentCollectionFactory.createConcurrentSet<ScriptDefinition>()
 
     override val definitions: Sequence<ScriptDefinition>
         get() = definitionsSet.asSequence()

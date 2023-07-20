@@ -59,12 +59,6 @@ public abstract class ProjectView {
    */
   public abstract void changeView(@NotNull String viewId, @Nullable String subId);
 
-  /**
-   * @deprecated unused method
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void changeView();
-
   public abstract void refresh();
 
   public abstract boolean isAutoscrollToSource(String paneId);
@@ -144,7 +138,13 @@ public abstract class ProjectView {
   public abstract void setManualOrder(@NotNull String paneId, boolean enabled);
 
   public abstract boolean isSortByType(String paneId);
+
   public abstract void setSortByType(@NotNull String paneId, final boolean sortByType);
+
+  @NotNull
+  public abstract NodeSortKey getSortKey(String paneId);
+
+  public abstract void setSortKey(@NotNull String paneId, @NotNull NodeSortKey sortKey);
 
   public abstract AbstractProjectViewPane getCurrentProjectViewPane();
 

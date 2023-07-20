@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.tools.composeProjectWizard
 
 import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
@@ -14,41 +14,10 @@ import org.junit.rules.Verifier
 class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
     @Test
     fun testDesktopProject() {
-        init(ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM, ComposePWInitialStep.ComposePlatform.DESKTOP)
+        init()
         fixture.testDataPath += "/plugins/kotlin/project-wizard/compose/testData/etalons/desktop/"
-
-        fixture.checkResultEx("src/jvmMain/kotlin/Main.kt")
+        fixture.checkResultEx("src/main/kotlin/Main.kt")
     }
-
-    @Test
-    fun testWebProject() {
-        init(ComposePWInitialStep.ComposeConfigurationType.SINGLE_PLATFORM, ComposePWInitialStep.ComposePlatform.WEB)
-        fixture.testDataPath += "/plugins/kotlin/project-wizard/compose/testData/etalons/web/"
-
-        fixture.checkResultEx("src/jsMain/kotlin/Main.kt")
-        fixture.checkResultEx("src/jsMain/resources/index.html")
-    }
-
-    @Test
-    fun testMppProject() {
-        init(ComposePWInitialStep.ComposeConfigurationType.MULTI_PLATFORM, ComposePWInitialStep.ComposePlatform.DESKTOP)
-        fixture.testDataPath += "/plugins/kotlin/project-wizard/compose/testData/etalons/mpp/"
-
-        listOf("android/build.gradle.kts",
-               "android/src/main/AndroidManifest.xml",
-               "android/src/main/java/com/example/android/MainActivity.kt",
-               "common/build.gradle.kts",
-               "common/src/androidMain/kotlin/com/example/common/platform.kt",
-               "common/src/androidMain/AndroidManifest.xml",
-               "common/src/commonMain/kotlin/com/example/common/platform.kt",
-               "common/src/commonMain/kotlin/com/example/common/App.kt",
-               "common/src/desktopMain/kotlin/com/example/common/platform.kt",
-               "common/src/desktopMain/kotlin/com/example/common/DesktopApp.kt",
-               "desktop/build.gradle.kts",
-               "desktop/src/jvmMain/kotlin/Main.kt"
-        ).forEach {fixture.checkResultEx(it)}
-    }
-
 
     fun commonTestPart() {
         listOf("gradle.properties",
@@ -58,12 +27,10 @@ class ComposeModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
         ).forEach {fixture.checkResultEx(it)}
     }
 
-    fun init(configType: ComposePWInitialStep.ComposeConfigurationType, platform : ComposePWInitialStep.ComposePlatform ) {
+    fun init() {
         ComposeModuleBuilder().setupTestModule(fixture.module) {
             language = KOTLIN_STARTER_LANGUAGE
             isCreatingNewProject = true
-            putUserData(ComposeModuleBuilder.COMPOSE_CONFIG_TYPE_KEY, configType)
-            putUserData(ComposeModuleBuilder.COMPOSE_PLATFORM_KEY, platform)
         }
     }
 

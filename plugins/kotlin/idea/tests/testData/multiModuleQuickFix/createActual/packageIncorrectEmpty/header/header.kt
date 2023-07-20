@@ -1,4 +1,4 @@
-// "Create actual class for module testModule_JVM (JVM)" "true"
+// "Add missing actual declarations" "true"
 // SHOULD_BE_AVAILABLE_AFTER_EXECUTION
 
 package test.inner

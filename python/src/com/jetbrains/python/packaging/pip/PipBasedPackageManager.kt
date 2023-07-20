@@ -21,6 +21,14 @@ abstract class PipBasedPackageManager(project: Project, sdk: Sdk) : PythonPackag
     }
   }
 
+  override suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+    return runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.notification.update.failed", specification.name), specification.name) {
+      runPackagingTool("install", listOf("--upgrade") + specification.buildInstallationString(), PyBundle.message("python.packaging.update.progress", specification.name))
+      refreshPaths()
+      reloadPackages()
+    }
+  }
+
   override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
     return runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
       runPackagingTool("uninstall", listOf(pkg.name), PyBundle.message("python.packaging.uninstall.progress", pkg.name))

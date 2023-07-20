@@ -172,7 +172,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
             else {
               Set<String> detectedUrls =
                 Arrays.stream(library.getFiles(OrderRootType.CLASSES)).map(VirtualFile::getUrl).collect(Collectors.toSet());
-              Set<String> declaredUrls = ContainerUtil.set(library.getUrls(OrderRootType.CLASSES));
+              Set<String> declaredUrls = ContainerUtil.newHashSet(library.getUrls(OrderRootType.CLASSES));
               declaredUrls.removeAll(detectedUrls);
               declaredUrls.removeIf(library::isJarDirectory);
               if (!declaredUrls.isEmpty()) {
@@ -263,7 +263,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
         LOG.assertTrue(processors != null, uClass.getClass().getName());
         Query<PsiClass> search = ClassInheritorsSearch.search(uClass.getJavaPsi(), searchScope, false);
-        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
         search.forEach(createMembersProcessor(processors, scope));
       }
 
@@ -282,7 +282,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
         LOG.assertTrue(processors != null, uMethod.getClass().getName());
         Query<PsiMethod> search = OverridingMethodsSearch.search(uMethod.getJavaPsi(), searchScope, true);
-        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
         search.forEach(createMembersProcessor(processors, scope));
       }
 
@@ -300,7 +300,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(field)));
 
         Query<PsiReference> search = ReferencesSearch.search(field, searchScope, false);
-        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
         search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
@@ -320,7 +320,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, name);
 
         Query<PsiReference> search = ReferencesSearch.search(classDeclaration, searchScope, false);
-        if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+        if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
         search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
@@ -340,7 +340,7 @@ public final class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionC
         PsiMethod javaMethod = ReadAction.compute(() -> uMethod.getJavaPsi());
         if (javaMethod != null) {
           Query<PsiReference> search = MethodReferencesSearch.search(javaMethod, searchScope, true);
-          if (Registry.is("batch.inspection.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
+          if (Registry.is("batch.inspections.process.external.usages.in.parallel")) search = search.allowParallelProcessing();
           search.forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
         }
       }

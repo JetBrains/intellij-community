@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.dsl
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -60,7 +60,8 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
   /// Utility methods ///
 
   fun setSample(sample: LessonSample, setCaret: Boolean = true) {
-    taskInvokeLater(ModalityState.NON_MODAL) {
+    taskInvokeLater(ModalityState.nonModal()) {
+      lessonExecutor.lesson.beforeCaretApplied()
       TemplateManagerImpl.getTemplateState(editor)?.gotoEnd()
       (editor as? EditorEx)?.isViewer = false
       editor.caretModel.removeSecondaryCarets()
@@ -70,6 +71,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
   }
 
   fun select(startLine: Int, startColumn: Int, endLine: Int, endColumn: Int) {
+    lessonExecutor.lesson.beforeCaretApplied()
     val blockStart = LogicalPosition(startLine - 1, startColumn - 1)
     val blockEnd = LogicalPosition(endLine - 1, endColumn - 1)
 
@@ -81,6 +83,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
   }
 
   fun caret(text: String, select: Boolean = false) {
+    lessonExecutor.lesson.beforeCaretApplied()
     val start = getStartOffsetForText(text) ?: return
     editor.caretModel.moveToOffset(start)
     if (select) {
@@ -91,11 +94,13 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
 
   /** NOTE:  [line] and [column] starts from 1 not from zero. So these parameters should be same as in editors. */
   fun caret(line: Int, column: Int) {
+    lessonExecutor.lesson.beforeCaretApplied()
     OpenFileDescriptor(project, virtualFile, line - 1, column - 1).navigateIn(editor)
     requestEditorFocus()
   }
 
   fun caret(offset: Int) {
+    lessonExecutor.lesson.beforeCaretApplied()
     OpenFileDescriptor(project, virtualFile, offset).navigateIn(editor)
     requestEditorFocus()
   }
@@ -133,6 +138,7 @@ open class TaskRuntimeContext internal constructor(private val lessonExecutor: L
   }
 
   private fun setCaret(position: LessonSamplePosition) {
+    lessonExecutor.lesson.beforeCaretApplied()
     position.selection?.let { editor.selectionModel.setSelection(it.first, it.second) }
     editor.caretModel.moveToOffset(position.startOffset)
     requestEditorFocus()

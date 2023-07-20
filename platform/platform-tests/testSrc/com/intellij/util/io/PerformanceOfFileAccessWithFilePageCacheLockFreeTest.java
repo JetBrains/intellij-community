@@ -41,7 +41,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
   private final StorageLockContext storageContext = new StorageLockContext(true, true, true);
 
   @BeforeClass
-  public static void beforeClass() throws Exception {
+  public static void checkLockFreePageCacheIsEnabled() throws Exception {
     assumeTrue("PageCacheUtils.LOCK_FREE_VFS_ENABLED must be set for this test to run",
                PageCacheUtils.LOCK_FREE_VFS_ENABLED);
   }
@@ -192,7 +192,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     final long elapsedNs = finishedAtNs - startedAtNs;
     final long totalWrittenBytes = TWICE * FILE_SIZE * THREADS;
-    printReportForThroughput("Write sequentially, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
+    printReportForThroughput("Written sequentially, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
   }
 
   @Test
@@ -220,7 +220,7 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
 
     final long elapsedNs = finishedAtNs - startedAtNs;
     final long totalWrittenBytes = TWICE * FILE_SIZE * THREADS;
-    printReportForThroughput("Write randomly, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
+    printReportForThroughput("Written randomly, " + THREADS + " threads, uncontended, via PageCacheNew", totalWrittenBytes, elapsedNs);
   }
 
   //======================= Response-time (one-shot): ========
@@ -242,9 +242,22 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         final long blockOffset = offsetsToRequest[requestNo] % FILE_SIZE;
         try (final Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ false)) {
           buffer.clear();
+         
           //emulate 'read':
-          page.read(0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
-                    pageBuffer -> buffer.put(0, pageBuffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT));
+
+          //page.read(0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
+          //          pageBuffer -> buffer.put(0, pageBuffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT));
+
+          page.lockPageForRead();
+          try {
+            //final ByteBuffer pageBuffer = page.rawPageBuffer().duplicate();
+            //buffer.put(0, pageBuffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
+
+            buffer.put(0, page.rawPageBuffer(), 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
+          }
+          finally {
+            page.unlockPageForRead();
+          }
           return null;
         }
       };
@@ -276,7 +289,6 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
                         cacheCapacityBytes / IOUtil.MiB,
                         expectedPagesAllocated
       );
-
     }
     System.out.println(pageCache.getStatistics().toPrettyString());
   }
@@ -299,8 +311,16 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         try (final Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ true)) {
           //emulate 'write':
           buffer.clear();
-          page.write(0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
-                     pageBuffer -> pageBuffer.put(0, buffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT));
+          //page.write(0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT,
+          //           pageBuffer -> pageBuffer.put(0, buffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT));
+          page.lockPageForWrite();
+          try {
+            page.rawPageBuffer().put(0, buffer, 0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
+            page.regionModified(0, SEGMENT_LENGTH_FOR_RESPONSE_TIME_SHOT);
+          }
+          finally {
+            page.unlockPageForWrite();
+          }
           return null;
         }
       };
@@ -333,7 +353,6 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
                         cacheCapacityBytes / IOUtil.MiB,
                         expectedPagesAllocated
       );
-
     }
     System.out.println(pageCache.getStatistics().toPrettyString());
   }
@@ -390,8 +409,9 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
         try (Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ true)) {
           // emulate 'write':
           buffer.clear();
-          page.write(0, page.pageSize(),
-                     pageBuffer -> pageBuffer.put(buffer));
+          page.putFromBuffer(buffer, 0);
+          //page.write(0, page.pageSize(),
+          //           pageBuffer -> pageBuffer.put(buffer));
         }
       }
     }
@@ -407,8 +427,9 @@ public class PerformanceOfFileAccessWithFilePageCacheLockFreeTest extends Perfor
           try (Page page = pagedStorage.pageByOffset(blockOffset, /*forWrite: */ true)) {
             //emulate 'write':
             buffer.clear();
-            page.write(0, page.pageSize(),
-                       pageBuffer -> pageBuffer.put(buffer));
+            page.putFromBuffer(buffer, 0);
+            //page.write(0, page.pageSize(),
+            //           pageBuffer -> pageBuffer.put(buffer));
           }
         }
       }

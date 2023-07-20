@@ -48,7 +48,7 @@ internal class KotlinSelectNestedClassRefactoringDialog private constructor(
             add(moveMembersButton)
         }
 
-        RadioUpDownListener(moveToUpperLevelButton, moveMembersButton)
+        RadioUpDownListener.installOn(moveToUpperLevelButton, moveMembersButton)
 
         return JPanel(BorderLayout()).apply {
             val box = Box.createVerticalBox().apply {

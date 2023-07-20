@@ -332,7 +332,7 @@ class ConvertFunctionTypeReceiverToParameterIntention : SelfTargetingRangeIntent
         element.getConversionData()?.let { Converter(it, editor, element.project).run() }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
+    object Factory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction = ConvertFunctionTypeReceiverToParameterIntention()
     }
 }

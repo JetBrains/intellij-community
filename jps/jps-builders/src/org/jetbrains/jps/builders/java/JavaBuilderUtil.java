@@ -44,7 +44,7 @@ public final class JavaBuilderUtil {
   /**
    * @deprecated This functionality is obsolete and is not used by dependency analysis anymore. To be removed in future releases
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Callbacks.ConstantAffectionResolver> CONSTANT_SEARCH_SERVICE = Key.create("_constant_search_service_");
 
   private static final Logger LOG = Logger.getInstance(Builder.class);

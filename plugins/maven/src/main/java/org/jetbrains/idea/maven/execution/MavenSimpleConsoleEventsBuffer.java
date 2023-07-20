@@ -53,7 +53,8 @@ public class MavenSimpleConsoleEventsBuffer {
     }
 
     private boolean canAppend(@NotNull Key<String> outputType) {
-      return null == myOutputType || myOutputType.toString().equals(outputType.toString());
+      var currentOutputType = myOutputType;
+      return null == currentOutputType || currentOutputType.toString().equals(outputType.toString());
     }
 
     public void append(@NotNull String text, @NotNull Key<String> outputType) {

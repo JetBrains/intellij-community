@@ -12,7 +12,9 @@ import com.intellij.openapi.progress.runBlockingModalWithRawProgressReporter
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.components.dialog
-import com.intellij.ui.layout.panel
+import com.intellij.ui.dsl.builder.COLUMNS_LARGE
+import com.intellij.ui.dsl.builder.columns
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.Function
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
@@ -54,7 +56,9 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
       val panel = panel {
         row(IcsBundle.message("readonly.sources.configuration.url.label")) {
           urlField = textFieldWithBrowseButton(IcsBundle.message("readonly.sources.configuration.repository.chooser"),
-                                               fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
+                                               fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
+            .columns(COLUMNS_LARGE)
+            .component
         }
       }
 

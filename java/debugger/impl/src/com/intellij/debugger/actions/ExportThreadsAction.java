@@ -38,7 +38,7 @@ public class ExportThreadsAction extends AnAction {
           @Override
           protected void action() {
             final List<ThreadState> threads = ThreadDumpAction.buildThreadStates(process.getVirtualMachineProxy());
-            ApplicationManager.getApplication().invokeLater(() -> ExportToFileUtil.chooseFileAndExport(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.NON_MODAL);
+            ApplicationManager.getApplication().invokeLater(() -> ExportToFileUtil.chooseFileAndExport(project, ThreadDumpPanel.createToFileExporter(project, threads)), ModalityState.nonModal());
           }
         });
       }

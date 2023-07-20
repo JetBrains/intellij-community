@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettingsUtils;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.SelectionModel;
@@ -352,8 +353,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @Override
     protected void paintChildren(Graphics g) {
-      updateText(g.getClipBounds());
-      super.paintChildren(g);
+      ReadAction.run(() -> {
+        updateText(g.getClipBounds());
+        super.paintChildren(g);
+      });
     }
 
     private void updateText(Rectangle clip) {

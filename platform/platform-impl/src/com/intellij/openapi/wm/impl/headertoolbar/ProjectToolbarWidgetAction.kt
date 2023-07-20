@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
@@ -12,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.*
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.impl.ExpandableComboAction
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
@@ -22,11 +22,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.dsl.builder.AlignY
 import com.intellij.ui.dsl.builder.EmptySpacingConfiguration
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.gridLayout.JBGaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.SelectablePanel
-import com.intellij.ui.popup.util.PopupImplUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
@@ -66,6 +65,26 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     (widget.ui as? ToolbarComboWidgetUI)?.setMaxWidth(500)
     widget.text = presentation.text
     widget.toolTipText = presentation.description
+    widget.leftIcons = emptyList()
+    widget.isOpaque = false
+
+    val customizer = ProjectWindowCustomizerService.getInstance()
+    val project = presentation.getClientProperty(projectKey)
+
+    if (project != null && customizer.isAvailable()) {
+      widget.leftIcons = listOf(customizer.getProjectIcon(project))
+    }
+
+    if (customizer.isActive()) {
+      val paintingType = customizer.getPaintingType()
+      if (paintingType.isShowIcon() && project != null) {
+        customizer.showGotIt(project, widget)
+      }
+
+      if (paintingType.isDropdown() && project != null) {
+        widget.highlightBackground = customizer.getBackgroundProjectColor(project)
+      }
+    }
   }
 
   override fun update(e: AnActionEvent) {
@@ -91,7 +110,6 @@ class ProjectToolbarWidgetAction : ExpandableComboAction() {
     }
 
     val res = JBPopupFactory.getInstance().createListPopup(it, step, renderer)
-    PopupImplUtil.setPopupToggleButton(res, widget)
     res.setRequestFocus(false)
     return res
   }
@@ -151,12 +169,12 @@ private class ProjectWidgetRenderer : ListCellRenderer<PopupFactoryImpl.ActionIt
         row {
           icon(RecentProjectsManagerBase.getInstanceEx().getProjectIcon(projectPath, true))
             .align(AlignY.TOP)
-            .customize(JBGaps(right = 8))
+            .customize(UnscaledGaps(right = 8))
 
           panel {
             row {
               nameLbl = label(action.projectNameToDisplay ?: "")
-                .customize(JBGaps(bottom = 4))
+                .customize(UnscaledGaps(bottom = 4))
                 .applyToComponent {
                   foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(true) else UIUtil.getListForeground()
                 }.component

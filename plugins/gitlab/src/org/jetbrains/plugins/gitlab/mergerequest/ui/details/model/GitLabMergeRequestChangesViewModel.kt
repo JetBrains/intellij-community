@@ -1,127 +1,147 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui.details.model
 
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
-import com.intellij.openapi.ListSelection
-import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesViewModel
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
+import git4idea.changes.GitBranchComparisonResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
+import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
+import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
 
-internal interface GitLabMergeRequestChangesViewModel {
-  val reviewCommits: StateFlow<List<GitLabCommitDTO>>
-  val selectedCommit: StateFlow<GitLabCommitDTO?>
-  val selectedCommitIndex: StateFlow<Int>
+internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
+  val changeListVm: SharedFlow<Result<GitLabMergeRequestChangeListViewModel>>
 
-  val changesResult: Flow<Result<Collection<Change>>>
-  val selectedChanges: StateFlow<ListSelection<Change>>
-
-  fun selectCommit(commit: GitLabCommitDTO?)
-
-  fun selectAllCommits()
-
-  fun selectNextCommit()
-
-  fun selectPreviousCommit()
-
-  fun updateSelectedChanges(changes: ListSelection<Change>)
-
-  fun showDiff()
+  fun selectChange(change: Change)
 }
+
+private val LOG = logger<GitLabMergeRequestChangesViewModel>()
 
 internal class GitLabMergeRequestChangesViewModelImpl(
   parentCs: CoroutineScope,
-  changes: Flow<GitLabMergeRequestChanges>
-) : GitLabMergeRequestChangesViewModel {
+  private val mergeRequest: GitLabMergeRequest
+) : GitLabMergeRequestChangesViewModel,
+    CodeReviewChangesViewModel<GitLabCommitDTO> {
   private val cs = parentCs.childScope()
 
-  override val reviewCommits: StateFlow<List<GitLabCommitDTO>> =
-    changes.map { it.commits }
-      .stateIn(cs, SharingStarted.Lazily, listOf())
+  override val reviewCommits: Flow<List<GitLabCommitDTO>> =
+    mergeRequest.changes.map { it.commits }.modelFlow(cs, LOG)
 
-  private val _selectedCommit: MutableStateFlow<GitLabCommitDTO?> = MutableStateFlow(null)
-  override val selectedCommit: StateFlow<GitLabCommitDTO?> = _selectedCommit.asStateFlow()
+  override val selectedCommitIndex = MutableStateFlow(-1)
 
-  private val _selectedCommitIndex: MutableStateFlow<Int> = MutableStateFlow(0)
-  override val selectedCommitIndex: StateFlow<Int> = _selectedCommitIndex.asStateFlow()
-
-  override val changesResult: Flow<Result<Collection<Change>>> =
-    combine(changes.map { runCatching { it.getParsedChanges() } }, selectedCommit) { changesResult, commit ->
-      changesResult.map {
-        it.changesByCommits[commit?.sha] ?: it.changes
-      }
-    }.modelFlow(cs, thisLogger())
-
-  private val _selectedChangesEvents = MutableSharedFlow<ListSelection<Change>>()
-  override val selectedChanges: StateFlow<ListSelection<Change>> =
-    _selectedChangesEvents
-      .distinctUntilChanged(::isSelectionEqual)
-      .stateIn(cs, SharingStarted.Lazily, ListSelection.empty())
-
-  private val _showDiffRequests = MutableSharedFlow<Unit>()
-  val showDiffRequests = _showDiffRequests.asSharedFlow()
-
-  override fun selectCommit(commit: GitLabCommitDTO?) {
-    _selectedCommit.value = commit
-    _selectedCommitIndex.value = reviewCommits.value.indexOf(commit)
+  override val selectedCommit: Flow<GitLabCommitDTO?> = reviewCommits.combine(selectedCommitIndex) { commits, index ->
+    index.takeIf { it >= 0 }?.let { commits[it] }
   }
 
-  override fun selectAllCommits() {
-    _selectedCommit.value = null
-    _selectedCommitIndex.value = 0
+  private val selectionRequests = MutableSharedFlow<ChangesRequest>()
+
+  override fun selectCommit(index: Int) {
+    cs.launchNow {
+      selectionRequests.emit(ChangesRequest.Commit(index))
+    }
   }
 
   override fun selectNextCommit() {
-    _selectedCommitIndex.value++
-    _selectedCommit.value = reviewCommits.value[_selectedCommitIndex.value]
+    cs.launchNow {
+      selectionRequests.emit(ChangesRequest.NextCommit)
+    }
   }
 
   override fun selectPreviousCommit() {
-    _selectedCommitIndex.value--
-    _selectedCommit.value = reviewCommits.value[_selectedCommitIndex.value]
-  }
-
-  override fun updateSelectedChanges(changes: ListSelection<Change>) {
-    cs.launch {
-      _selectedChangesEvents.emit(changes)
+    cs.launchNow {
+      selectionRequests.emit(ChangesRequest.PrevCommit)
     }
   }
 
-  override fun showDiff() {
-    cs.launch {
-      _showDiffRequests.emit(Unit)
+  override fun selectChange(change: Change) {
+    cs.launchNow {
+      selectionRequests.emit(ChangesRequest.SelectChange(change))
     }
   }
 
-  companion object {
-    private fun isSelectionEqual(old: ListSelection<Change>, new: ListSelection<Change>): Boolean {
-      if (old.selectedIndex != new.selectedIndex) return false
-      val oldList = old.list
-      val newList = new.list
-      if (oldList.size != newList.size) return false
 
-      return oldList.equalsVia(newList) { o1, o2 ->
-        o1 == o2 &&
-        o1.beforeRevision == o2.beforeRevision &&
-        o1.afterRevision == o2.afterRevision
+  override val changeListVm: SharedFlow<Result<GitLabMergeRequestChangeListViewModelImpl>> =
+    mergeRequest.changes.manageChangeListVm().modelFlow(cs, LOG)
+
+  private fun Flow<GitLabMergeRequestChanges>.manageChangeListVm(): Flow<Result<GitLabMergeRequestChangeListViewModelImpl>> =
+    channelFlow {
+      val vm: GitLabMergeRequestChangeListViewModelImpl = createChangesVm()
+      collectLatest { allChanges ->
+        val parsedChanges: GitBranchComparisonResult = try {
+          allChanges.getParsedChanges()
+        }
+        catch (ce: CancellationException) {
+          throw ce
+        }
+        catch (e: Exception) {
+          send(Result.failure(e))
+          return@collectLatest
+        }
+        val commits: List<GitLabCommitDTO> = allChanges.commits
+
+        vm.updatesChanges(parsedChanges, selectedCommitIndex.value)
+        send(Result.success(vm))
+
+        fun updateCommit(change: Change?, indexUpdater: (current: Int) -> Int) {
+          val newIndex = selectedCommitIndex.updateAndGet { current ->
+            indexUpdater(current).let {
+              if (it !in -1..commits.lastIndex) {
+                -1
+              }
+              else {
+                it
+              }
+            }
+          }
+          vm.updatesChanges(parsedChanges, newIndex, change)
+        }
+
+        selectionRequests.collect { request ->
+          when (request) {
+            is ChangesRequest.Commit -> {
+              updateCommit(null) { request.index }
+            }
+            ChangesRequest.NextCommit -> {
+              updateCommit(null) { it + 1 }
+            }
+            ChangesRequest.PrevCommit -> {
+              updateCommit(null) { it - 1 }
+            }
+            is ChangesRequest.SelectChange -> {
+              val commitIndex = findCommitIndexForChange(commits, parsedChanges, request.change) ?: return@collect
+              updateCommit(request.change) { commitIndex }
+            }
+          }
+        }
       }
     }
 
-    private fun <E> List<E>.equalsVia(other: List<E>, isEqual: (E, E) -> Boolean): Boolean {
-      if (other === this) return true
-      val i1 = listIterator()
-      val i2 = other.listIterator()
-
-      while (i1.hasNext() && i2.hasNext()) {
-        val e1 = i1.next()
-        val e2 = i2.next()
-        if (!isEqual(e1, e2)) return false
-      }
-      return !(i1.hasNext() || i2.hasNext())
+  private fun findCommitIndexForChange(commits: List<GitLabCommitDTO>,
+                                       parsedChanges: GitBranchComparisonResult,
+                                       change: Change): Int? =
+    if (parsedChanges.changes.find { it.isEqual(change) } != null) {
+      -1
     }
-  }
+    else {
+      parsedChanges.commitByChange[change]?.let { commitSha -> commits.indexOfFirst { it.sha == commitSha } }
+    }
+
+  private fun CoroutineScope.createChangesVm(): GitLabMergeRequestChangeListViewModelImpl =
+    GitLabMergeRequestChangeListViewModelImpl(this, mergeRequest)
+
+  override fun commitHash(commit: GitLabCommitDTO): String = commit.shortId
+}
+
+private sealed interface ChangesRequest {
+  data class Commit(val index: Int) : ChangesRequest
+  object NextCommit : ChangesRequest
+  object PrevCommit : ChangesRequest
+  data class SelectChange(val change: Change) : ChangesRequest
 }

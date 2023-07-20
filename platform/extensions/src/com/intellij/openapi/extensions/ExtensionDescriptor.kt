@@ -23,7 +23,7 @@ class ExtensionPointDescriptor(@JvmField val name: String,
                                @JvmField val className: String,
                                @JvmField val isBean: Boolean,
                                @JvmField val isDynamic: Boolean) {
-  fun getQualifiedName(pluginDescriptor: PluginDescriptor) = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
+  fun getQualifiedName(pluginDescriptor: PluginDescriptor): String = if (isNameQualified) name else "${pluginDescriptor.pluginId}.$name"
 
   // getQualifiedName() can be used instead, but this method allows avoiding temp string creation
   fun nameEquals(qualifiedName: String, pluginDescriptor: PluginDescriptor): Boolean {

@@ -9,10 +9,9 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AnonymousTargetClassPresele
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.codeInsight.navigation.PsiTargetNavigator;
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
-import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -128,9 +127,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       else {
         title = JavaRefactoringBundle.message("popup.title.choose.class.to.introduce.field");
       }
-      NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
-                                        title,
-                                        new PsiElementProcessor<>() {
+      new PsiTargetNavigator<>(classes.toArray(PsiClass.EMPTY_ARRAY)).selection(selection).createPopup(project,
+                                                title,
+                                                new PsiElementProcessor<>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
                                             AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
@@ -138,7 +137,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                             convertExpressionToField(selectedExpr, editor, file, project, tempType);
                                             return false;
                                           }
-                                        }, selection).showInBestPositionFor(editor);
+                                        }).showInBestPositionFor(editor);
     }
     return true;
   }

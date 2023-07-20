@@ -28,24 +28,13 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     applyPassAndCheckResult(pass, sourceText, expectedText)
   }
 
-  fun doTestPreview(expectedText: String, providerId: String, provider: InlayHintsProvider, language: Language) {
+  fun doTestPreview(@org.intellij.lang.annotations.Language("JAVA") expectedText: String, providerId: String, provider: InlayHintsProvider, language: Language) {
     val previewText = DeclarativeHintsPreviewProvider.getPreview(language, providerId, provider) ?: error("Preview not found for provider: $providerId")
     val fileName = "preview." + (language.associatedFileType?.defaultExtension ?: error("language must have extension"))
-    myFixture.configureByText(fileName, previewText)
+    myFixture.configureByText(fileName, InlayDumpUtil.removeHints(previewText))
 
     val pass = DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId,
                                                                      emptyMap(), false)
-    applyPassAndCheckResult(pass, previewText, expectedText)
-  }
-
-  fun doTestOptionPreview(expectedText: String, providerId: String, provider: InlayHintsProvider, language: Language, optionId: String) {
-    val previewText = DeclarativeHintsPreviewProvider.getOptionPreview(language, providerId, optionId, provider) ?: error("Preview not found for provider: $providerId and option $optionId")
-    val fileName = "preview." + (language.associatedFileType?.defaultExtension ?: error("language must have extension"))
-    myFixture.configureByText(fileName, previewText)
-
-    val options = mapOf(optionId to true)
-    val pass = DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId,
-                                                                     options, false)
     applyPassAndCheckResult(pass, previewText, expectedText)
   }
 

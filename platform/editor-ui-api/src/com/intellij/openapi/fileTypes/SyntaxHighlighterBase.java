@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -71,9 +71,9 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
    * Tries to update the map by associating given keys with a given value.
    * Throws error if the map already contains different mapping for one of given keys.
    */
-  protected static void safeMap(@NotNull final Map<IElementType, TextAttributesKey> map,
-                                @NotNull final TokenSet keys,
-                                @NotNull final TextAttributesKey value) {
+  protected static void safeMap(final @NotNull Map<IElementType, TextAttributesKey> map,
+                                final @NotNull TokenSet keys,
+                                final @NotNull TextAttributesKey value) {
     for (final IElementType type : keys.getTypes()) {
       safeMap(map, type, value);
     }
@@ -83,9 +83,9 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
    * Tries to update the map by associating given key with a given value.
    * Throws error if the map already contains different mapping for given key.
    */
-  protected static void safeMap(@NotNull final Map<IElementType, TextAttributesKey> map,
-                                @NotNull final IElementType type,
-                                @NotNull final TextAttributesKey value) {
+  protected static void safeMap(final @NotNull Map<IElementType, TextAttributesKey> map,
+                                final @NotNull IElementType type,
+                                final @NotNull TextAttributesKey value) {
     final TextAttributesKey oldVal = map.put(type, value);
     if (oldVal != null && !oldVal.equals(value)) {
       LOG.error("Remapping highlighting for \"" + type + "\" val: old=" + oldVal + " new=" + value);

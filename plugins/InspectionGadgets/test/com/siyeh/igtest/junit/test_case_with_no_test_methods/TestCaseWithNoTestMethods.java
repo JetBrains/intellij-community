@@ -1,7 +1,5 @@
 public class <warning descr="Test class 'TestCaseWithNoTestMethods' has no tests">TestCaseWithNoTestMethods</warning> extends junit.framework.TestCase {
 
-  TestCaseWithNoTestMethods() {}
-
   public int testOne() {
     return 1;
   }

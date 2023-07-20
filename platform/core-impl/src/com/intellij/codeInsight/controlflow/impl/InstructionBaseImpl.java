@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.controlflow.impl;
 
 import com.intellij.codeInsight.controlflow.Instruction;
@@ -14,33 +14,28 @@ public abstract class InstructionBaseImpl implements Instruction {
   private final List<Instruction> myPred = new SmartList<>();
   private final List<Instruction> mySucc = new SmartList<>();
 
-  @Nullable
-  protected final PsiElement myElement;
+  protected final @Nullable PsiElement myElement;
 
   @Override
-  @Nullable
-  public PsiElement getElement() {
+  public @Nullable PsiElement getElement() {
     return myElement;
   }
 
-  public InstructionBaseImpl(@Nullable final PsiElement element) {
+  public InstructionBaseImpl(final @Nullable PsiElement element) {
     myElement = element;
   }
 
-  @NotNull
   @Override
-  public final List<Instruction> allSucc() {
+  public final @NotNull List<Instruction> allSucc() {
     return mySucc;
   }
 
-  @NotNull
   @Override
-  public final List<Instruction> allPred() {
+  public final @NotNull List<Instruction> allPred() {
     return myPred;
   }
 
-  @NotNull
-  public String toString() {
+  public @NotNull String toString() {
     final StringBuilder builder = new StringBuilder(id());
     builder.append("(");
     for (int i = 0; i < mySucc.size(); i++) {
@@ -58,14 +53,12 @@ public abstract class InstructionBaseImpl implements Instruction {
     return builder.toString();
   }
 
-  @NotNull
   @Override
-  public String getElementPresentation() {
+  public @NotNull String getElementPresentation() {
     return "element: " + myElement;
   }
 
-  @NotNull
-  protected String id() {
+  protected @NotNull String id() {
     return String.valueOf(num());
   }
 }

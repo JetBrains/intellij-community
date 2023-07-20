@@ -258,7 +258,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   private static void logProjectGeneratedEvent(@Nullable DirectoryProjectGenerator<?> generator, @Nullable Project project) {
-    FeatureUsageData data = new FeatureUsageData();
+    FeatureUsageData data = new FeatureUsageData("FUS");
     if (generator != null) {
       data.addData("generator_id", generator.getClass().getName());
       data.addPluginInfo(PluginInfoDetectorKt.getPluginInfo(generator.getClass()));

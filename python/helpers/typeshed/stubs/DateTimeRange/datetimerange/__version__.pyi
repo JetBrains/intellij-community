@@ -1,3 +1,6 @@
-__maintainer__: str
-__email__: str
+__author__: str = ...
+__copyright__: str
 __license__: str
+__version__: str
+__maintainer__ = __author__
+__email__: str

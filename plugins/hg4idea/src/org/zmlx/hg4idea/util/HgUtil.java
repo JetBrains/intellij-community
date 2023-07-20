@@ -622,6 +622,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
+  @Unmodifiable
   public static List<String> getTargetNames(@NotNull HgRepository repository) {
     return ContainerUtil.sorted(ContainerUtil.map(repository.getRepositoryConfig().getPaths(), s -> removePasswordIfNeeded(s)));
   }

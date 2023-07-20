@@ -102,13 +102,14 @@ object KDocRenderer {
     }
 
     private fun StringBuilder.appendHyperlink(kDocLink: KDocLink) {
+        val linkText = kDocLink.getLinkText()
         if (DumbService.isDumb(kDocLink.project)) {
-            append(kDocLink.getLinkText())
+            append(linkText)
         } else {
             DocumentationManagerUtil.createHyperlink(
                 this,
-                kDocLink.getLinkText(),
-                highlightQualifiedName(kDocLink.getLinkText(), getTargetLinkElementAttributes(kDocLink.getTargetElement())),
+                linkText,
+                highlightQualifiedName(linkText, getTargetLinkElementAttributes(kDocLink.getTargetElement())),
                 false,
                 true
             )
@@ -289,20 +290,21 @@ object KDocRenderer {
         if (!tags.any()) {
             return
         }
+
         appendSection(title) {
             tags.forEach {
-                val subjectName = it.getSubjectName()
-                if (subjectName != null) {
-                    append("<p><code>")
-                    when (val link = it.getChildrenOfType<KDocLink>().firstOrNull()) {
-                        null -> appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), titleAttributes, subjectName)
-                        else -> appendHyperlink(link)
-                    }
-                    append("</code>")
-                    val elementDescription = markdownToHtml(it)
-                    if (elementDescription.isNotBlank()) {
-                        append(" - $elementDescription")
-                    }
+                val subjectName = it.getSubjectName() ?: return@forEach
+
+                append("<p><code>")
+                when (val link = it.getChildrenOfType<KDocLink>().firstOrNull()) {
+                    null -> appendStyledSpan(DocumentationSettings.isSemanticHighlightingOfLinksEnabled(), titleAttributes, subjectName)
+                    else -> appendHyperlink(link)
+                }
+
+                append("</code>")
+                val elementDescription = markdownToHtml(it)
+                if (elementDescription.isNotBlank()) {
+                    append(" - $elementDescription")
                 }
             }
         }

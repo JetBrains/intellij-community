@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -94,7 +94,7 @@ public class SvnCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           ApplicationManager.getApplication().invokeLater(
             () -> AutoSvnUpdater
               .run(new AutoSvnUpdater(project, paths.toArray(new FilePath[0])), VcsBundle.message("action.name.update")),
-            ModalityState.NON_MODAL);
+            ModalityState.nonModal());
         }
       }
     };

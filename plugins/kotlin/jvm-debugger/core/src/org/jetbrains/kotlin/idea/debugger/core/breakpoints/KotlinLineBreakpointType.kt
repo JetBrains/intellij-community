@@ -46,19 +46,13 @@ class KotlinLineBreakpointType :
     inner class LineKotlinBreakpointVariant(
         position: XSourcePosition,
         element: PsiElement?,
-        lambdaOrdinal: Int?
-    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal) {
-        override fun getText(): String =
-            KotlinDebuggerCoreBundle.message("line.breakpoint")
-    }
+        lambdaOrdinal: Int
+    ) : LineJavaBreakpointVariant(position, element, lambdaOrdinal)
 
     inner class KotlinBreakpointVariant(
         position: XSourcePosition,
-        private val lambdaCount: Int
-    ) : JavaBreakpointVariant(position) {
-        override fun getText(): String =
-            KotlinDebuggerCoreBundle.message("line.and.lambda.breakpoint", lambdaCount)
-    }
+        lambdaCount: Int
+    ) : JavaBreakpointVariant(position, lambdaCount)
 
     override fun createJavaBreakpoint(
         project: Project, breakpoint:
@@ -82,16 +76,8 @@ class KotlinLineBreakpointType :
         return true
     }
 
-    override fun getContainingMethod(breakpoint: LineBreakpoint<*>): PsiElement? {
-        val position = breakpoint.sourcePosition ?: return null
-        val properties = breakpoint.javaBreakpointProperties
-        if (properties is JavaLineBreakpointProperties) {
-            val lambda = getLambdaByOrdinal(position, properties.lambdaOrdinal)
-            if (lambda != null) return lambda
-        }
-
-        return position.elementAt.getContainingMethod()
-    }
+    override fun getContainingMethod(breakpoint: LineBreakpoint<*>): PsiElement? =
+        breakpoint.sourcePosition?.elementAt?.getContainingMethod()
 
     override fun canPutAt(file: VirtualFile, line: Int, project: Project): Boolean {
         return isBreakpointApplicable(file, line, project) { element: PsiElement ->
@@ -121,7 +107,9 @@ class KotlinLineBreakpointType :
 
         val pos = SourcePosition.createFromLine(file, position.line)
         val lambdas = getLambdasAtLineIfAny(pos)
-        if (lambdas.isEmpty()) return emptyList()
+        val condRet = findSingleConditionalReturn(file, position.line)
+
+        if (lambdas.isEmpty() && condRet == null) return emptyList()
 
         val result = LinkedList<JavaLineBreakpointType.JavaBreakpointVariant>()
         val elementAt = pos.elementAt.parentsWithSelf.firstIsInstance<KtElement>()
@@ -149,20 +137,29 @@ class KotlinLineBreakpointType :
             result.add(KotlinBreakpointVariant(position, lambdas.size))
         }
 
+        if (condRet != null) {
+            val method = condRet.getContainingMethod()
+            val ordinal = lambdas.indexOf(method)
+            result.add(ConditionalReturnJavaBreakpointVariant(position, condRet, ordinal))
+        }
+
         return result
     }
 
     override fun getHighlightRange(breakpoint: XLineBreakpoint<JavaLineBreakpointProperties>): TextRange? {
         val properties = breakpoint.properties ?: return null
-        val ordinal = properties.lambdaOrdinal ?: return null
-        val javaBreakpoint = BreakpointManager.getJavaBreakpoint(breakpoint) as? LineBreakpoint<*> ?: return null
-        val position = javaBreakpoint.sourcePosition ?: return null
+        val position = (BreakpointManager.getJavaBreakpoint(breakpoint) as? LineBreakpoint<*>)?.sourcePosition ?: return null
 
+        if (properties.isConditionalReturn) {
+            return findSingleConditionalReturn(position)?.textRange
+        }
+
+        val lambdaOrdinal = properties.lambdaOrdinal ?: return null
         // Since lambda breakpoints are placed on the first lambda statement,
         // we should find the function parent to highlight lambda breakpoints properly
         val function = position.elementAt.parentOfType<KtFunction>() ?: return null
         val updatedPosition = SourcePosition.createFromElement(function) ?: return null
-        return getLambdaByOrdinal(updatedPosition, ordinal)?.textRange
+        return getLambdaByOrdinal(updatedPosition, lambdaOrdinal)?.textRange
     }
 
     override fun getSourcePosition(breakpoint: XBreakpoint<JavaLineBreakpointProperties>): XSourcePosition? =
@@ -171,13 +168,22 @@ class KotlinLineBreakpointType :
     private fun calculateSourcePosition(breakpoint: XBreakpoint<JavaLineBreakpointProperties>): XSourcePosition? {
         val javaBreakpointProperties = breakpoint.properties ?: return null
         val sourcePosition = createLineSourcePosition(breakpoint as XLineBreakpointImpl<*>) ?: return null
-        val ordinal = javaBreakpointProperties.lambdaOrdinal
-        val function = getLambdaByOrdinal(sourcePosition, ordinal) ?: return null
+
+        if (javaBreakpointProperties.isConditionalReturn) {
+            runReadAction {
+                findSingleConditionalReturn(sourcePosition)?.let {
+                    XSourcePositionImpl.createByElement(it)
+                }
+            }?.let { return it }
+        }
+
+        val lambdaOrdinal = javaBreakpointProperties.lambdaOrdinal ?: return null
+        val function = getLambdaByOrdinal(sourcePosition, lambdaOrdinal) ?: return null
         val firstStatement = function.bodyBlockExpression?.statements?.firstOrNull() ?: return null
         return runReadAction {
             val linePosition = SourcePosition.createFromElement(firstStatement) ?: return@runReadAction null
             DebuggerUtilsEx.toXSourcePosition(
-                PositionManagerImpl.JavaSourcePosition(linePosition, ordinal)
+                PositionManagerImpl.JavaSourcePosition(linePosition, lambdaOrdinal)
             )
         }
     }

@@ -1,23 +1,27 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
-import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.LibraryId
+import com.intellij.platform.workspace.jps.entities.LibraryPropertiesEntity
+import com.intellij.platform.workspace.jps.entities.LibraryTableId
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.platform.workspace.storage.CachedValue
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 internal class ProjectModifiableLibraryTableBridgeImpl(
@@ -54,26 +58,27 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
 
     val libraryTableId = LibraryTableId.ProjectLibraryTableId
 
-    val libraryEntity = diff.addLibraryEntity(
-      roots = emptyList(),
-      tableId = LibraryTableId.ProjectLibraryTableId,
-      name = name,
-      excludedRoots = emptyList(),
-      source = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource)
-    )
+    val libraryId = LibraryId(name, libraryTableId)
+    if (libraryId in diff) {
+      // We log the error, but don't break the execution as technically project model can handle this case.
+      // The existing library entity will be replaced with the new created one.
+      LOG.error("Project library with name '$name' already exists.")
+    }
+
+    val libraryEntity = diff addEntity LibraryEntity(name, libraryTableId, emptyList(), LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource))
 
     if (type != null) {
-      diff.addLibraryPropertiesEntity(
-        library = libraryEntity,
-        libraryType = type.kindId,
+      diff addEntity LibraryPropertiesEntity(libraryType = type.kindId,
+                                             entitySource = libraryEntity.entitySource) {
+        library = libraryEntity
         propertiesXmlTag = serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
-      )
+      }
     }
 
     val library = LibraryBridgeImpl(
       libraryTable = libraryTable,
       project = project,
-      initialId = LibraryId(name, libraryTableId),
+      initialId = libraryId,
       initialEntityStorage = entityStorageOnDiff,
       targetBuilder = this.diff
     )
@@ -136,4 +141,8 @@ internal class ProjectModifiableLibraryTableBridgeImpl(
   }
 
   override fun isChanged(): Boolean = diff.hasChanges()
+
+  companion object {
+    val LOG = logger<ProjectModifiableLibraryTableBridgeImpl>()
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.diagnostic.PluginException;
@@ -9,7 +9,6 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
@@ -31,6 +30,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.Command;
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 /**
  * @author Maxim.Medvedev
@@ -54,10 +56,10 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
   }
 
   public static void collectConflictsFromExtensions(@NotNull Ref<UsageInfo[]> refUsages,
-                                                    MultiMap<PsiElement, String> conflictDescriptions,
+                                                    MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
                                                     ChangeInfo changeInfo) {
     for (ChangeSignatureUsageProcessor usageProcessor : ChangeSignatureUsageProcessor.EP_NAME.getExtensions()) {
-      final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
+      final MultiMap<PsiElement, @DialogMessage String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
       for (PsiElement key : conflicts.keySet()) {
         Collection<String> collection = conflictDescriptions.get(key);
         if (collection.isEmpty()) collection = new HashSet<>();
@@ -224,7 +226,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
 
   @NotNull
   @Override
-  protected @NlsContexts.Command String getCommandName() {
+  protected @Command String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 

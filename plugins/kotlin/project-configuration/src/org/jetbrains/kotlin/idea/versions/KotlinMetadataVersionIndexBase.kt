@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.indexing.FileContent
-import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.ScalarIndexExtension
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.KeyDescriptor
@@ -15,9 +14,7 @@ import java.io.DataOutput
 /**
  * Important! This is not a stub-based index. And it has its own version
  */
-abstract class KotlinMetadataVersionIndexBase<T, V : BinaryVersion>(private val classOfIndex: Class<T>) : ScalarIndexExtension<V>() {
-    override fun getName(): ID<V, Void> = ID.create(classOfIndex.canonicalName)
-
+abstract class KotlinMetadataVersionIndexBase<V : BinaryVersion> : ScalarIndexExtension<V>() {
     override fun getKeyDescriptor(): KeyDescriptor<V> = object : KeyDescriptor<V> {
         override fun isEqual(val1: V, val2: V): Boolean = val1 == val2
 
@@ -49,13 +46,13 @@ abstract class KotlinMetadataVersionIndexBase<T, V : BinaryVersion>(private val 
     protected open fun isExtraBooleanNeeded(): Boolean = false
     protected open fun getExtraBoolean(version: V): Boolean = throw UnsupportedOperationException()
 
-    protected val log: Logger = Logger.getInstance(classOfIndex)
+    protected abstract fun getLogger(): Logger
 
     protected inline fun tryBlock(inputData: FileContent, body: () -> Unit) {
         try {
             body()
         } catch (e: Throwable) {
-            log.warn("Could not index ABI version for file " + inputData.file + ": " + e.message)
+            getLogger().warn("Could not index ABI version for file " + inputData.file + ": " + e.message)
         }
     }
 }

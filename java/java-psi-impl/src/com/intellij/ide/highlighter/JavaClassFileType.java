@@ -6,11 +6,14 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public final class JavaClassFileType implements FileType {
+  public static final @NonNls String DEFAULT_EXTENSION = "class";
+  public static final @NonNls String DOT_DEFAULT_EXTENSION = ".class";
   public static final JavaClassFileType INSTANCE = new JavaClassFileType();
 
   private JavaClassFileType() {
@@ -33,7 +36,7 @@ public final class JavaClassFileType implements FileType {
 
   @Override
   public @NotNull String getDefaultExtension() {
-    return "class";
+    return DEFAULT_EXTENSION;
   }
 
   @Override

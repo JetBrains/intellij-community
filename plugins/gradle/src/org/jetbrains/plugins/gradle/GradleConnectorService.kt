@@ -140,7 +140,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
     /** disable stop IDLE Gradle daemons on IDE project close. Applicable for Gradle versions w/o disconnect support (older than 6.5). */
     private val DISABLE_STOP_OLD_IDLE_DAEMONS = java.lang.Boolean.getBoolean("idea.gradle.disableStopIdleDaemonsOnProjectClose")
     /** some longer running tests require a longer idle time */
-    private val USE_PRODUCTION_TTL_FOR_TESTS =
+    private val USE_PRODUCTION_TTL_FOR_TESTS = 
       java.lang.Boolean.getBoolean("gradle.connector.useExternalSystemRemoteProcessIdleTtlForTests")
 
     @JvmStatic

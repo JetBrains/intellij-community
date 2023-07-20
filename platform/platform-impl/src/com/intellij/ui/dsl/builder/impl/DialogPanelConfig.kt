@@ -10,17 +10,17 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 internal class DialogPanelConfig {
 
-  val context = Context()
+  val context: Context = Context()
 
   var preferredFocusedComponent: JComponent? = null
 
-  val applyCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
-  val resetCallbacks = linkedMapOf<JComponent?, MutableList<() -> Unit>>()
-  val isModifiedCallbacks = linkedMapOf<JComponent?, MutableList<() -> Boolean>>()
+  val applyCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  val resetCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Unit>> = linkedMapOf()
+  val isModifiedCallbacks: LinkedHashMap<JComponent?, MutableList<() -> Boolean>> = linkedMapOf()
 
-  val validationRequestors = linkedMapOf<JComponent, MutableList<DialogValidationRequestor>>()
-  val validationsOnInput = linkedMapOf<JComponent, MutableList<DialogValidation>>()
-  val validationsOnApply = linkedMapOf<JComponent, MutableList<DialogValidation>>()
+  val validationRequestors: LinkedHashMap<JComponent, MutableList<DialogValidationRequestor>> = linkedMapOf()
+  val validationsOnInput: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf()
+  val validationsOnApply: LinkedHashMap<JComponent, MutableList<DialogValidation>> = linkedMapOf()
 }
 
 internal fun <C: JComponent?, T> MutableMap<C, MutableList<T>>.list(component: C): MutableList<T> {

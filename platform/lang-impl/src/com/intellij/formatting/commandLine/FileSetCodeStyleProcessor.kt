@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.io.FileUtil
@@ -55,8 +56,8 @@ class FileSetFormatter(
   defaultCodeStyle: CodeStyleSettings? = null
 ) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
 
-  override val operationContinuous = "Formatting"
-  override val operationPerfect = "formatted"
+  override val operationContinuous: String = "Formatting"
+  override val operationPerfect: String = "formatted"
 
   override fun processFileInternal(virtualFile: VirtualFile): String {
     val document = FileDocumentManager.getInstance().getDocument(virtualFile)
@@ -122,15 +123,15 @@ class FileSetFormatValidator(
   defaultCodeStyle: CodeStyleSettings? = null
 ) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
 
-  override val operationContinuous = "Checking"
-  override val operationPerfect = "checked"
+  override val operationContinuous: String = "Checking"
+  override val operationPerfect: String = "checked"
 
   override fun printReport() {
     super.printReport()
     messageOutput.info("${succeeded} file(s) are well formed.\n")
   }
 
-  override fun isResultSuccessful() = succeeded == processed
+  override fun isResultSuccessful(): Boolean = succeeded == processed
 
   override fun processFileInternal(virtualFile: VirtualFile): String {
     val document = FileDocumentManager.getInstance().getDocument(virtualFile)
@@ -186,7 +187,7 @@ abstract class FileSetCodeStyleProcessor(
 ) : FileSetProcessor(messageOutput, isRecursive, charset), Closeable {
 
   private val projectUID = UUID.randomUUID().toString()
-  protected val project = createProject(projectUID)
+  protected val project: Project = createProject(projectUID)
 
   abstract val operationContinuous: String
   abstract val operationPerfect: String
@@ -199,7 +200,7 @@ abstract class FileSetCodeStyleProcessor(
     messageOutput.info("${processed} file(s) $operationPerfect.\n")
   }
 
-  open fun isResultSuccessful() = true
+  open fun isResultSuccessful(): Boolean = true
 
   override fun close() {
     ProjectManager.getInstance().closeAndDispose(project)

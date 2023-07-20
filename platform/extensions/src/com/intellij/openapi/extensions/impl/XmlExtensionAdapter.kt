@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl
 
 import com.intellij.openapi.components.ComponentManager
@@ -6,7 +6,6 @@ import com.intellij.openapi.extensions.*
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xmlb.XmlSerializer
-import java.util.*
 
 internal open class XmlExtensionAdapter(implementationClassName: String,
                                         pluginDescriptor: PluginDescriptor,
@@ -102,7 +101,7 @@ internal open class XmlExtensionAdapter(implementationClassName: String,
           }
           ExtensionPointImpl.LOG.error(
             "Cannot create extension without pico container (class=" + aClass.name + ", constructors=" +
-            Arrays.toString(aClass.declaredConstructors) + ")," +
+            aClass.declaredConstructors.contentToString() + ")," +
             " please remove extra constructor parameters", e)
         }
       }

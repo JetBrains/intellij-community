@@ -149,18 +149,13 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
 
-        final PyClass parentClass = getClassOwner(node);
-        if (parentClass != null) {
-
-          if (parentClass.isSubclass(resolvedClass, myTypeEvalContext))
-            return;
-
-          PyClass outerClass = getClassOwner(parentClass);
-          while (outerClass != null) {
-            if (outerClass.isSubclass(resolvedClass, myTypeEvalContext))
+        if (resolvedClass != null) {
+          PyClass parentClass = getClassOwner(node);
+          while (parentClass != null) {
+            if (parentClass.isSubclass(resolvedClass, myTypeEvalContext)) {
               return;
-
-            outerClass = getClassOwner(outerClass);
+            }
+            parentClass = getClassOwner(parentClass);
           }
         }
         final PyType type = myTypeEvalContext.getType(qualifier);

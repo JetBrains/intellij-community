@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
@@ -202,10 +203,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           newLineNumber++;
         }
       }
-      else if (!editorSettings.isVirtualSpace() && lineShift == 0 && columnShift == -1) {
+      else if (lineShift == 0 && columnShift == -1) {
         if (newColumnNumber < 0 && newLineNumber > 0) {
           newLineNumber--;
-          newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+          if (editorSettings.isVirtualSpace()) {
+            newColumnNumber = myEditor.offsetToVisualPosition(Math.max(0, oldOffset - 1)).column;
+          } else {
+            newColumnNumber = EditorUtil.getLastVisualLineColumnNumber(myEditor, newLineNumber);
+          }
         }
       }
 
@@ -470,8 +475,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   private void updateOffsetsFromLogicalPosition() {
     int offset = myEditor.logicalPositionToOffset(myLogicalCaret);
     PositionMarker oldMarker = myPositionMarker;
-    myPositionMarker = new PositionMarker(offset);
-    oldMarker.dispose();
+    if (!oldMarker.isValid() || oldMarker.getStartOffset() != offset || oldMarker.getEndOffset() != offset) {
+      myPositionMarker = new PositionMarker(offset);
+      oldMarker.dispose();
+    }
     myLeansTowardsLargerOffsets = myLogicalCaret.leansForward;
     myLogicalColumnAdjustment = myLogicalCaret.column - myEditor.offsetToLogicalPosition(offset).column;
   }
@@ -1513,9 +1520,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   final class PositionMarker extends RangeMarkerImpl {
     private PositionMarker(int offset) {
       super(myEditor.getDocument(), offset, offset, false, true);
-      if (offset < 0) {
-        throw new IllegalArgumentException("invalid offset: "+offset+"; document length="+myEditor.getDocument().getTextLength());
-      }
       myCaretModel.myPositionMarkerTree.addInterval(this, offset, offset, false, false, false, 0);
     }
 
@@ -1529,8 +1533,11 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     @Override
     protected void changedUpdateImpl(@NotNull DocumentEvent e) {
       int oldOffset = intervalStart();
-      super.changedUpdateImpl(e);
-      if (isValid()) {
+      RangeMarkerTree.RMNode<RangeMarkerEx> node = myNode;
+      long newRange = isValid() && node != null ? applyChange(e, node.toScalarRange(), isGreedyToLeft(), isGreedyToRight(), isStickingToRight()) : -1;
+
+      if (newRange != -1) {
+        setRange(newRange);
         // Under certain conditions, when text is inserted at caret position, we position caret at the end of inserted text.
         // Ideally, client code should be responsible for positioning caret after document modification, but in case of
         // postponed formatting (after PSI modifications), this is hard to implement, so a heuristic below is used.
@@ -1547,7 +1554,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
       else {
         setValid(true);
-        int newOffset = Math.min(intervalStart(), e.getOffset() + e.getNewLength());
+        int newOffset = Math.min(getStartOffset(), e.getOffset() + e.getNewLength());
         if (!e.getDocument().isInBulkUpdate() && e.isWholeTextReplaced()) {
           try {
             int line = ((DocumentEventImpl)e).translateLineViaDiff(myLogicalCaret.line);

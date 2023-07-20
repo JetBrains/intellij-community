@@ -1,18 +1,27 @@
 package com.intellij.cce.metric
 
+import com.intellij.cce.actions.selectedWithoutPrefix
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
+import com.intellij.cce.metric.util.Bootstrap
 import com.intellij.cce.metric.util.Sample
+import org.apache.commons.lang.StringUtils
 
 internal fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
+    MatchedRatio(),
+    PrefixSimilarity(),
+    EditSimilarity(),
     MovesCount(),
     TypingsCount(),
     NavigationsCount(),
     CompletionInvocationsCount(),
     MovesCountNormalised(),
     PerfectLine(),
+    Precision(),
     RecallAt(1),
-    RecallAt(5)
+    RecallAt(5),
+    Recall()
   )
 
 internal abstract class CompletionGolfMetric<T : Number> : Metric {
@@ -59,8 +68,9 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
     get() = sample.sum()
 
   override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
-    sessions.sumOf { it.lookups.count() + it.totalSkippableChars() - it.completedSkippableChars() }
-
+    sessions.sumOf { it.expectedLength() +
+                     it.lookups.count { it.selectedPosition >= 0 } -
+                     it.lookups.sumOf { it.selectedWithoutPrefix()?.length ?: 0 } }
   companion object {
     const val NAME = "Typings"
   }
@@ -111,7 +121,7 @@ internal class MovesCountNormalised : Metric {
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val movesCount = MovesCount().compute(sessions, comparator)
     val minPossibleMoves = sessions.count() * 2
-    val maxPossibleMoves = sessions.sumOf { it.expectedText.length } * 2 - sessions.sumOf { it.totalSkippableChars() }
+    val maxPossibleMoves = sessions.sumOf { it.expectedLength() + it.completableLength }
     movesCountTotal += movesCount
     minPossibleMovesTotal += minPossibleMoves
     maxPossibleMovesTotal += maxPossibleMoves
@@ -121,12 +131,74 @@ internal class MovesCountNormalised : Metric {
     // To reach 0%, you also need to subtract the minimum number of lookups (eq. number of sessions plus minimum amount of completion calls)
     // 0% - best scenario, every line was completed from start to end with first suggestion in list
     // >100% is possible, when navigation in completion takes too many moves
+    if (maxPossibleMoves == minPossibleMoves) {
+      return 0.0
+    }
     return ((movesCount - minPossibleMoves).toDouble() / (maxPossibleMoves - minPossibleMoves))
   }
 
   companion object {
     const val NAME = "Moves Count Normalised"
   }
+}
+
+internal abstract class SimilarityMetric : Metric {
+  private var totalMatched: Double = 0.0
+  private var totalExpected: Double = 0.0
+  private var sample: MutableList<Pair<Double, Double>> = mutableListOf()
+
+  override val valueType = MetricValueType.DOUBLE
+  override val showByDefault: Boolean = false
+  override val value: Double
+    get() = totalMatched / totalExpected
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { values ->
+    values.sumOf { it.first } / values.sumOf { it.second }
+  }
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    var matched = 0.0
+    var expected = 0.0
+    for (session in sessions) {
+      for (lookup in session.lookups) {
+        val expectedText = session.expectedText.substring(lookup.offset)
+        expected += expectedText.length
+        val similarity = computeSimilarity(lookup, expectedText) ?: 0.0
+        matched += similarity
+        sample.add(Pair(similarity, expectedText.length.toDouble()))
+      }
+    }
+    totalMatched += matched
+    totalExpected += expected
+    return matched / expected
+  }
+
+  abstract fun computeSimilarity(lookup: Lookup, expectedText: String): Double?
+}
+
+internal class MatchedRatio : SimilarityMetric() {
+  override val name = "Matched Ratio"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
+    lookup.selectedWithoutPrefix()?.length?.toDouble()
+}
+
+internal class PrefixSimilarity : SimilarityMetric() {
+  override val name = "Prefix Similarity"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
+    lookup.suggestions.maxOfOrNull {
+      StringUtils.getCommonPrefix(arrayOf(it.text.drop(lookup.prefix.length), expectedText)).length
+    }?.toDouble()
+}
+
+internal class EditSimilarity : SimilarityMetric() {
+  override val name = "Edit Similarity"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? =
+    lookup.suggestions.maxOfOrNull {
+      expectedText.length - StringUtils.getLevenshteinDistance(it.text.drop(lookup.prefix.length), expectedText)
+    }?.toDouble()
 }
 
 internal class PerfectLine : CompletionGolfMetric<Int>() {
@@ -144,12 +216,41 @@ internal class PerfectLine : CompletionGolfMetric<Int>() {
   }
 }
 
-internal class RecallAt(private val n: Int) : Metric {
-  private val sample = Sample()
-  override val name = NAME_PREFIX + n
+internal class Precision : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name = "Precision"
   override val valueType = MetricValueType.DOUBLE
   override val value: Double
-    get() = sample.mean()
+    get() = sample.average()
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
+
+  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+    val fileSample = Sample()
+
+    for (lookup in sessions.flatMap { it.lookups }) {
+      for (i in lookup.suggestions.indices) {
+        if (i == lookup.selectedPosition) {
+          fileSample.add(1.0)
+          sample.add(1.0)
+        } else {
+          fileSample.add(0.0)
+          sample.add(0.0)
+        }
+      }
+    }
+    return fileSample.mean()
+  }
+}
+
+internal open class RecallAt(private val n: Int) : Metric {
+  private val sample = mutableListOf<Double>()
+  override val name = "RecallAt$n"
+  override val valueType = MetricValueType.DOUBLE
+  override val value: Double
+    get() = sample.average()
+
+  override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
   override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
     val fileSample = Sample()
@@ -166,15 +267,11 @@ internal class RecallAt(private val n: Int) : Metric {
     }
     return fileSample.mean()
   }
-
-  companion object {
-    const val NAME_PREFIX = "RecallAt"
-  }
 }
 
-private fun Session.totalSkippableChars() = expectedText.count { it.isWhitespace() }
-
-private fun Session.completedSkippableChars() = lookups.sumOf {
-  if (it.selectedPosition < 0) 0
-  else it.suggestions[it.selectedPosition].text.count { it.isWhitespace() }
+internal class Recall : RecallAt(Int.MAX_VALUE) {
+  override val name = "Recall"
+  override val showByDefault: Boolean = false
 }
+
+private fun Session.expectedLength(): Int = expectedText.length - (lookups.firstOrNull()?.offset ?: 0)

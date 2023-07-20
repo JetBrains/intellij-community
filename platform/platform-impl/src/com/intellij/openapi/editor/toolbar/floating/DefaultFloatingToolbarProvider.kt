@@ -5,10 +5,10 @@ import org.jetbrains.annotations.NonNls
 
 class DefaultFloatingToolbarProvider : AbstractFloatingToolbarProvider(ACTION_GROUP) {
 
-  override val autoHideable = true
+  override val autoHideable: Boolean = true
 
   companion object {
     @NonNls
-    const val ACTION_GROUP = "EditorContextBarMenu"
+    const val ACTION_GROUP: String = "EditorContextBarMenu"
   }
 }

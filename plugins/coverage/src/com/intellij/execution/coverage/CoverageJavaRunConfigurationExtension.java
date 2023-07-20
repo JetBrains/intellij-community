@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -136,7 +136,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       final CoverageDataManager coverageDataManager = CoverageDataManager.getInstance(project);
       ApplicationManager.getApplication().invokeLater(() -> {
         coverageConfig.setCurrentCoverageSuite(coverageDataManager.addCoverageSuite(coverageConfig));
-      }, ModalityState.NON_MODAL, project.getDisposed());
+      }, ModalityState.nonModal(), project.getDisposed());
       appendCoverageArgument(configuration, params, coverageConfig);
 
       final Sdk jdk = params.getJdk();

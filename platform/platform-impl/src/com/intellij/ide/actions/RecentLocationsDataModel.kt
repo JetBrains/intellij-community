@@ -184,7 +184,7 @@ internal class RecentLocationsDataModel(val project: Project,
     return if (startOffset <= endOffset)
       TextRange.create(startOffset, endOffset)
     else
-      TextRange.create(DocumentUtil.getLineTextRange(document, line))
+      DocumentUtil.getLineTextRange(document, line)
   }
 }
 

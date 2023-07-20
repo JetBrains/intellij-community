@@ -20,7 +20,6 @@
     <definitionsSearch implementation="com.intellij.xml.impl.schema.SchemaDefinitionsSearch"/>
     <listSplitJoinContext language="XML" implementationClass="com.intellij.codeInsight.intentions.XmlAttributesSplitJoinContext"/>
     <projectConfigurable groupId="language"
-                         groupWeight="110"
                          instance="com.intellij.javaee.ExternalResourceConfigurable"
                          key="xml.external.resource.display.name"
                          bundle="messages.XmlBundle"

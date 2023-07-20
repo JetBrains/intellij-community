@@ -6,8 +6,8 @@ import com.intellij.build.BuildProgressListener
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.output.BuildOutputInstantReaderImpl
 import com.intellij.build.output.BuildOutputParser
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemOutputDispatcherFactory.Companion.EP_NAME
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.CompletableFuture
@@ -72,10 +72,6 @@ class ExternalSystemEventDispatcher(taskId: ExternalSystemTaskId,
 
   override fun close() {
     outputMessageDispatcher.close()
-  }
-
-  companion object {
-    private val EP_NAME = ExtensionPointName.create<ExternalSystemOutputDispatcherFactory>("com.intellij.externalSystemOutputDispatcher")
   }
 
   private class DefaultOutputMessageDispatcher(

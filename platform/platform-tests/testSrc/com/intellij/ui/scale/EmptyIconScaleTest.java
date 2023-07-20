@@ -1,15 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.scale;
 
-import com.intellij.ui.RestoreScaleRule;
+import com.intellij.ui.RestoreScaleExtension;
 import com.intellij.util.ui.EmptyIcon;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.ExternalResource;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
 
 import static com.intellij.ui.scale.TestScaleHelper.overrideJreHiDPIEnabled;
-import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 /**
  * Tests {@link EmptyIcon} scaling behaviour.
@@ -17,9 +16,8 @@ import static junit.framework.TestCase.assertNotNull;
  * @author tav
  */
 public class EmptyIconScaleTest {
-  @ClassRule
-  public static final ExternalResource manageState = new RestoreScaleRule();
-
+  @RegisterExtension
+  public static final RestoreScaleExtension manageState = new RestoreScaleExtension();
 
   final static String MSG = "the icon size mismatch";
   final static int SIZE = 16;
@@ -44,21 +42,21 @@ public class EmptyIconScaleTest {
     // 1) create unscaled
     EmptyIcon icon = EmptyIcon.create(SIZE);
 
-    assertEquals(MSG, SIZE, icon.getIconWidth());
+    assertEquals(SIZE, icon.getIconWidth(), MSG);
 
     // 2) created scaled
     icon = EmptyIcon.create(JBUIScale.scale(SIZE));
 
-    assertEquals(MSG, JBUIScale.scale(SIZE), icon.getIconWidth());
+    assertEquals(JBUIScale.scale(SIZE), icon.getIconWidth(), MSG);
 
     // 3) create unscaled and then scale
     icon = JBUIScale.scaleIcon(EmptyIcon.create(SIZE));
 
-    assertEquals(MSG, JBUIScale.scale(SIZE), icon.getIconWidth());
+    assertEquals(JBUIScale.scale(SIZE), icon.getIconWidth(), MSG);
 
     // 4) create unscaled again
     icon = EmptyIcon.create(SIZE);
 
-    assertEquals(MSG, SIZE, icon.getIconWidth());
+    assertEquals(SIZE, icon.getIconWidth(), MSG);
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -26,16 +27,15 @@ public final class EdtTestUtil {
   @kotlin.Deprecated(message = "Use Kotlin runInEdtAndWait { ... } instead")  // this warning is only visible in Kotlin files
   @TestOnly
   public static <T extends Throwable> void runInEdtAndWait(@NotNull ThrowableRunnable<T> runnable) throws T {
-    final Application app = ApplicationManager.getApplication();
-    if (app != null ? app.isDispatchThread()
-                    : SwingUtilities.isEventDispatchThread()) {
+    Application app = ApplicationManager.getApplication();
+    if (app == null ? EDT.isCurrentThreadEdt() : app.isDispatchThread()) {
       // reduce stack trace
       runnable.run();
       return;
     }
 
-    final Ref<T> exception = new Ref<>();
-    final Runnable r = () -> {
+    Ref<T> exception = new Ref<>();
+    Runnable r = () -> {
       try {
         runnable.run();
       }
@@ -53,7 +53,8 @@ public final class EdtTestUtil {
         SwingUtilities.invokeAndWait(r);
       }
       catch (InterruptedException | InvocationTargetException e) {
-        throw new RuntimeException(e);  // must not happen
+        // must not happen
+        throw new RuntimeException(e);
       }
     }
 

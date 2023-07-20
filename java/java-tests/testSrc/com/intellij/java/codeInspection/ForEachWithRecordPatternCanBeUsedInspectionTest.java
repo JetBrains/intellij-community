@@ -50,7 +50,7 @@ public class ForEachWithRecordPatternCanBeUsedInspectionTest extends LightJavaCo
   private void checkAction(boolean checkPreview, boolean useCustomProperties, boolean checkAll) {
     ForEachWithRecordPatternCanBeUsedInspection inspection = new ForEachWithRecordPatternCanBeUsedInspection();
     if (useCustomProperties) {
-      inspection.useVar = true;
+      inspection.forceUseVar = true;
       inspection.maxLevel = 1;
       inspection.maxComponentCounts = 3;
       inspection.maxNotUsedComponentCounts = 1;

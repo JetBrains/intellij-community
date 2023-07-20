@@ -68,11 +68,6 @@ public class JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJavaA
         runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithDefaultImplementation_1_8.kt");
     }
 
-    @TestMetadata("ExtendClassWithJvmDefaultImplementation.kt")
-    public void testExtendClassWithJvmDefaultImplementation() throws Exception {
-        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendClassWithJvmDefaultImplementation.kt");
-    }
-
     @TestMetadata("ExtendInterfaceWithAJvmStaticMethodInCompanion.kt")
     public void testExtendInterfaceWithAJvmStaticMethodInCompanion() throws Exception {
         runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendInterfaceWithAJvmStaticMethodInCompanion.kt");

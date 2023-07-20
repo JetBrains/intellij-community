@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -200,7 +200,7 @@ public class XDebuggerTestUtil {
     s.down();
     ApplicationManager.getApplication().invokeLater(() -> s.up());
     s.waitForUnsafe();
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {});
+    UIUtil.invokeAndWaitIfNeeded(() -> {});
   }
 
   @NotNull
@@ -211,7 +211,7 @@ public class XDebuggerTestUtil {
         String eachName = ((XNamedValue)each).getName();
         if (eachName.equals(name)) return each;
 
-        if (names.length() > 0) names.append(", ");
+        if (!names.isEmpty()) names.append(", ");
         names.append(eachName);
       }
     }

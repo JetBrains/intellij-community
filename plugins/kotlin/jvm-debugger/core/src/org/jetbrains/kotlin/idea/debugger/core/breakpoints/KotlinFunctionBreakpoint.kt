@@ -122,7 +122,7 @@ open class KotlinFunctionBreakpoint(
 }
 
 fun SourcePosition.getMethodDescriptor(project: Project): MethodDescriptor? =
-    DumbService.getInstance(project).runReadActionInSmartMode<MethodDescriptor> {
+    DumbService.getInstance(project).runReadActionInSmartMode<MethodDescriptor?> {
         val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return@runReadActionInSmartMode null
         val descriptor = getMethodDescriptorInReadActionInSmartMode(project, this, document)
         descriptor?.takeIf { it.methodName != null && it.methodSignature != null }

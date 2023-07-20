@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -24,14 +10,15 @@ import org.jetbrains.annotations.NotNull;
 public class LocalInspectionToolSession extends UserDataHolderBase {
   private final PsiFile myFile;
   private final TextRange myPriorityRange;
+  private final TextRange myRestrictRange;
 
-  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange) {
+  LocalInspectionToolSession(@NotNull PsiFile file, @NotNull TextRange priorityRange, @NotNull TextRange restrictRange) {
     myFile = file;
     myPriorityRange = priorityRange;
+    myRestrictRange = restrictRange;
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
@@ -39,8 +26,14 @@ public class LocalInspectionToolSession extends UserDataHolderBase {
    * @return range (inside the {@link #getFile()}) which the current session will try to highlight first.
    * Usually it corresponds to the visible view port in the editor.
    */
-  @NotNull
-  public TextRange getPriorityRange() {
+  public @NotNull TextRange getPriorityRange() {
     return myPriorityRange;
+  }
+
+  /**
+   * @return range (inside the {@link #getFile()}) which the current session will restrict itself to.
+   */
+  public @NotNull TextRange getRestrictRange() {
+    return myRestrictRange;
   }
 }

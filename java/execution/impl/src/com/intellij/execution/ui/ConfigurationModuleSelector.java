@@ -57,17 +57,19 @@ public class ConfigurationModuleSelector {
     myProject = project;
     myModulesList = modulesList;
     myModulesDescriptionsComboBox = null;
-    new ComboboxSpeedSearch(modulesList){
+    ComboboxSpeedSearch search = new ComboboxSpeedSearch(modulesList, null) {
       @Override
       protected String getElementText(Object element) {
-        if (element instanceof Module){
+        if (element instanceof Module) {
           return ((Module)element).getName();
-        } else if (element == null) {
+        }
+        else if (element == null) {
           return noModule;
         }
         return super.getElementText(element);
       }
     };
+    search.setupListeners();
     myModulesList.setModel(new SortedComboBoxModel<>(ModulesAlphaComparator.INSTANCE));
     myModulesList.setRenderer(new ModuleListCellRenderer(noModule));
   }

@@ -5,6 +5,8 @@ import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabCiJobStatus
 
 @GraphQLFragment("/graphql/fragment/ciJob.graphql")
-class GitLabCiJobDTO(
-  val status: GitLabCiJobStatus
+data class GitLabCiJobDTO(
+  val name: String,
+  val status: GitLabCiJobStatus,
+  val webPath: String
 )

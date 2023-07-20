@@ -24,11 +24,18 @@ interface CellValidation<out T> {
 
   fun enabledIf(property: ObservableProperty<Boolean>)
 
-  fun addApplyRule(@NlsContexts.DialogMessage message: String, level: Level = Level.ERROR, condition: (T) -> Boolean)
+  fun addApplyRule(@NlsContexts.DialogMessage message: String, level: Level = Level.ERROR, condition: () -> Boolean)
 
   /**
    * Use overloaded method for simple cases
    */
   fun addApplyRule(validation: () -> ValidationInfo?)
+
+  fun addInputRule(@NlsContexts.DialogMessage message: String, level: Level = Level.ERROR, condition: () -> Boolean)
+
+  /**
+   * Use overloaded method for simple cases
+   */
+  fun addInputRule(validation: () -> ValidationInfo?)
 
 }

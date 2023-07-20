@@ -37,19 +37,19 @@ class ActionsGeneratorTest {
     Mockito.`when`(file.length).thenReturn(fileText.length)
     Mockito.`when`(file.path).thenReturn("example.java")
     Mockito.`when`(file.getChildren()).thenReturn(listOf(
-      CodeToken("public", 0, 6, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("class", 7, 5, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("public", 27, 6, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("static", 34, 6, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("void", 41, 4, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("String", 51, 6, JvmProperties.create(TypeProperty.TYPE_REFERENCE, SymbolLocation.LIBRARY) {}),
-      CodeToken("test", 76, 4, JvmProperties.create(TypeProperty.METHOD_CALL, SymbolLocation.PROJECT) { isStatic = true }),
-      CodeToken("args", 81, 4, JvmProperties.create(TypeProperty.VARIABLE, SymbolLocation.PROJECT) {}),
-      CodeToken("length", 86, 6, JvmProperties.create(TypeProperty.FIELD, SymbolLocation.LIBRARY) { isStatic = false }),
-      CodeToken("private", 105, 7, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("static", 113, 6, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("void", 120, 4, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {}),
-      CodeToken("Object", 130, 6, JvmProperties.create(TypeProperty.TYPE_REFERENCE, SymbolLocation.LIBRARY) {}),
+      CodeLine("public", 0).apply { addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("class", 7).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("public", 27).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("static", 34).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("void", 41).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("String", 51).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.TYPE_REFERENCE, SymbolLocation.LIBRARY) {})) },
+      CodeLine("test", 76).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.METHOD_CALL, SymbolLocation.PROJECT) { isStatic = true })) },
+      CodeLine("args", 81).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.VARIABLE, SymbolLocation.PROJECT) {})) },
+      CodeLine("length", 86).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.FIELD, SymbolLocation.LIBRARY) { isStatic = false })) },
+      CodeLine("private", 105).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("static", 113).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("void", 120).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.KEYWORD, SymbolLocation.LIBRARY) {})) },
+      CodeLine("Object", 130).apply {  addChild(CodeToken(text, offset, JvmProperties.create(TypeProperty.TYPE_REFERENCE, SymbolLocation.LIBRARY) {})) },
     ))
   }
 
@@ -84,13 +84,13 @@ class ActionsGeneratorTest {
   ))
 
   @Test
-  fun `test completion golf`() = doTest(outputFile = "completion-golf.json", completionGolf = true)
+  fun `test completion golf`() = doTest(outputFile = "completion-golf.json", completionGolf = CompletionGolfMode.ALL)
 
   private fun doTest(outputFile: String,
                      prefix: CompletionPrefix = CompletionPrefix.SimplePrefix(emulateTyping = false, n = 1),
                      context: CompletionContext = CompletionContext.ALL,
                      emulateUser: Boolean = false,
-                     completionGolf: Boolean = false,
+                     completionGolf: CompletionGolfMode? = null,
                      filters: Map<String, EvaluationFilter> = emptyMap()) {
     val actionsGenerator = ActionsGenerator(CompletionStrategy(prefix, context, emulateUser, completionGolf, filters), Language.JAVA)
     val actions = actionsGenerator.generate(file)

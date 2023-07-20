@@ -15,18 +15,25 @@ public class WebTypesTypeRule extends TypeRule {
     myRuleFactory = ruleFactory;
   }
 
-
   @Override
   public JType apply(String nodeName,
                      JsonNode node,
                      JsonNode parent,
                      JClassContainer jClassContainer,
                      Schema schema) {
-    JType result = myRuleFactory.getOneOfRule().apply(nodeName, node, parent, jClassContainer.getPackage(), schema);
-    if (result != null) {
-      return result;
+    var fromCache = myRuleFactory.getTypeFromCache(nodeName, node);
+    if (fromCache != null) {
+      return fromCache;
     }
-    return super.apply(nodeName, node, parent, jClassContainer, schema);
+
+    JType result = myRuleFactory.getComplexTypeRule().apply(nodeName, node, parent, jClassContainer.getPackage(), schema);
+    if (result == null) {
+      result = super.apply(nodeName, node, parent, jClassContainer, schema);
+    }
+    if (result != null){
+      myRuleFactory.storeTypeInCache(nodeName, node, result);
+    }
+    return result;
   }
 
 

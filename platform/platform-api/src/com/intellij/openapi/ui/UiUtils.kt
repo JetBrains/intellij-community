@@ -31,7 +31,7 @@ import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
 
 
-val PREFERRED_FOCUSED_COMPONENT = Key.create<JComponent>("JComponent.preferredFocusedComponent")
+val PREFERRED_FOCUSED_COMPONENT: Key<JComponent> = Key.create("JComponent.preferredFocusedComponent")
 
 fun JComponent.getPreferredFocusedComponent(): JComponent? {
   if (this is DialogPanel) {
@@ -127,7 +127,7 @@ fun ExtendableTextField.addExtension(
   addExtension(ExtendableTextComponent.Extension.create(icon, hoverIcon, tooltip, action))
 }
 
-fun <T> ListModel<T>.asSequence() = sequence<T> {
+fun <T> ListModel<T>.asSequence(): Sequence<T> = sequence {
   for (i in 0 until size) {
     yield(getElementAt(i))
   }
@@ -171,7 +171,7 @@ fun <C> C.setEmptyState(
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
   get() = model as CollectionComboBoxModel
 
-fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
+fun <T> Iterable<T>.naturalSorted(): List<T> = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))
 
 fun getPresentablePath(path: @NonNls String): @NlsSafe String {
   return FileUtil.getLocationRelativeToUserHome(FileUtil.toSystemDependentName(path.trim()), false)
@@ -203,7 +203,7 @@ fun shortenTextWithEllipsis(
   maxTextWidth: Int,
   getTextWidth: (String) -> Int,
   useEllipsisSymbol: Boolean = false
-) = shortenText(
+): @NlsSafe String = shortenText(
   text = text,
   minTextPrefixLength = minTextPrefixLength,
   minTextSuffixLength = minTextSuffixLength,

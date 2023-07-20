@@ -8,14 +8,15 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.RunAll
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
 import org.jetbrains.idea.maven.server.MavenServerManager
+import org.jetbrains.idea.maven.utils.MavenUtil
 import org.junit.Test
-import java.util.*
 
 class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
@@ -87,7 +88,7 @@ class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
     createProjectSubFile(".mvn/maven.config", "-aaaaT1")
     createAndImportProject()
     assertModules("test")
-    assertEvent { it.message.contains("Unable to parse maven.config:") }
+    assertEvent { it.message.contains("Unrecognized option: -aaaaT1") }
   }
 
   private fun loggedErrorProcessor(search: String) = object : LoggedErrorProcessor() {

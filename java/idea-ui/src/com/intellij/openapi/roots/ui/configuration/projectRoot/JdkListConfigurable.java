@@ -175,7 +175,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
   }
 
   @Override
-  public AbstractAddGroup createAddAction() {
+  public AbstractAddGroup createAddAction(boolean fromPopup) {
     return null;
   }
 

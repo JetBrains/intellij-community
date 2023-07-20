@@ -18,6 +18,7 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
@@ -64,7 +65,7 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new MakeInitializerExplicitFix();
   }
 

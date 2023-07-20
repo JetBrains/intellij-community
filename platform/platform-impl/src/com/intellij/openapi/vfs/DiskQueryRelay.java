@@ -1,21 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.function.Function;
+
+import static com.intellij.openapi.progress.ContextKt.isInCancellableContext;
 
 /**
  * A utility to run a potentially long function on a pooled thread, wait for it in an interruptible way,
@@ -43,11 +41,9 @@ public final class DiskQueryRelay<Param, Result> {
   }
 
   public Result accessDiskWithCheckCanceled(@NotNull Param arg) {
-    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if (indicator == null) {
+    if (!isInCancellableContext()) {
       return myFunction.apply(arg);
     }
-
     Future<Result> future = myTasks.computeIfAbsent(arg, eachArg -> ProcessIOExecutorService.INSTANCE.submit(() -> {
       try {
         return myFunction.apply(eachArg);
@@ -60,7 +56,7 @@ public final class DiskQueryRelay<Param, Result> {
       // maybe it was very fast and completed before being put into a map
       myTasks.remove(arg, future);
     }
-    return ProgressIndicatorUtils.awaitWithCheckCanceled(future, indicator);
+    return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
   }
 
   /**
@@ -70,29 +66,15 @@ public final class DiskQueryRelay<Param, Result> {
    * inside the {@code task} block.
    */
   public static <Result, E extends Exception> Result compute(@NotNull ThrowableComputable<Result, E> task) throws E, ProcessCanceledException {
-    Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(() -> task.compute());
-    while (true) {
-      try {
-        ProgressManager.checkCanceled();
-      }
-      catch (ProcessCanceledException e) {
-        future.cancel(true);
-        throw e;
-      }
-
-      try {
-        return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
-      }
-      catch (TimeoutException ignore) { }
-      catch (InterruptedException e) {
-        throw new ProcessCanceledException(e);
-      }
-      catch (ExecutionException e) {
-        Throwable t = e.getCause();
-        ExceptionUtil.rethrowUnchecked(t);
-        @SuppressWarnings("unchecked") E cause = (E)t;
-        throw cause;
-      }
+    Future<Result> future = ProcessIOExecutorService.INSTANCE.submit(task::compute);
+    try {
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(future);
+    }
+    finally {
+      //Better .cancel(true) here, but thread interruption is too intrusive, so it is cheaper
+      // to allow the task to uselessly finish than to safely deal with thread interruption
+      // everywhere (see IDEA-319309)
+      future.cancel(false);
     }
   }
 }

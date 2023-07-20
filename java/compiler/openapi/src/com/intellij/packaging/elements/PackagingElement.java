@@ -6,13 +6,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.PackagingElementPresentation;
+import com.intellij.platform.workspace.storage.*;
+import com.intellij.java.workspace.entities.CustomPackagingElementEntity;
+import com.intellij.java.workspace.entities.PackagingElementEntity;
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.workspaceModel.storage.*;
-import com.intellij.workspaceModel.storage.bridgeEntities.CustomPackagingElementEntity;
-import com.intellij.workspaceModel.storage.bridgeEntities.ExtensionsKt;
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity;
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -80,7 +80,10 @@ public abstract class PackagingElement<S> implements PersistentStateComponent<S>
     }
 
     CustomPackagingElementEntity addedEntity =
-      ExtensionsKt.addCustomPackagingElementEntity(diff, this.getType().getId(), xmlTag, children, source);
+      diff.addEntity(CustomPackagingElementEntity.create(this.getType().getId(), xmlTag, source, builder -> {
+        builder.setChildren(children);
+        return Unit.INSTANCE;
+      }));
 
     diff.getMutableExternalMapping("intellij.artifacts.packaging.elements").addMapping(addedEntity, this);
     return addedEntity;

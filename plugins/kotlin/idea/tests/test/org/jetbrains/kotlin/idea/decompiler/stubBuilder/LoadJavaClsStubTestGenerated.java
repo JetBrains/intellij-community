@@ -450,6 +450,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationOnTypeParameter.kt"));
             }
 
+            @TestMetadata("AnnotationWithVarargParam.kt")
+            public void testAnnotationWithVarargParam() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/AnnotationWithVarargParam.kt"));
+            }
+
             @TestMetadata("ClassLiteralArguments.kt")
             public void testClassLiteralArguments() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/ClassLiteralArguments.kt"));
@@ -463,6 +468,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
             @TestMetadata("PrimitiveArrayArguments.kt")
             public void testPrimitiveArrayArguments() throws Exception {
                 runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/PrimitiveArrayArguments.kt"));
+            }
+
+            @TestMetadata("SelfReferentialAnnotation.kt")
+            public void testSelfReferentialAnnotation() throws Exception {
+                runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/annotations/SelfReferentialAnnotation.kt"));
             }
 
             @TestMetadata("SimpleAnnotation.kt")
@@ -2350,31 +2360,31 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/nested")
-    public static class Nested extends AbstractLoadJavaClsStubTest {
+    @TestMetadata("../../../../out/kotlinc-testdata-2/compiler/testData/loadJava/compiledKotlin/nestedClasses")
+    public static class NestedClasses extends AbstractLoadJavaClsStubTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestCompiledKotlin, this, testDataFilePath);
         }
 
         @Override
         protected void setUp() {
-            compilerTestData("compiler/testData/loadJava/compiledKotlin/nested");
+            compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses");
             super.setUp();
         }
 
         @TestMetadata("deepInnerGeneric.kt")
         public void testDeepInnerGeneric() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nested/deepInnerGeneric.kt"));
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses/deepInnerGeneric.kt"));
         }
 
         @TestMetadata("innerClassReferencesOuterTP.kt")
         public void testInnerClassReferencesOuterTP() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nested/innerClassReferencesOuterTP.kt"));
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses/innerClassReferencesOuterTP.kt"));
         }
 
         @TestMetadata("membersReferenceOuterTP.kt")
         public void testMembersReferenceOuterTP() throws Exception {
-            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nested/membersReferenceOuterTP.kt"));
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/nestedClasses/membersReferenceOuterTP.kt"));
         }
     }
 
@@ -2918,6 +2928,11 @@ public abstract class LoadJavaClsStubTestGenerated extends AbstractLoadJavaClsSt
         @TestMetadata("PropertyInConstructorExplicitVisibility.kt")
         public void testPropertyInConstructorExplicitVisibility() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/PropertyInConstructorExplicitVisibility.kt"));
+        }
+
+        @TestMetadata("PublishedApi.kt")
+        public void testPublishedApi() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/visibility/PublishedApi.kt"));
         }
 
         @TestMetadata("TopLevelVarWithPrivateSetter.kt")

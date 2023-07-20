@@ -17,11 +17,11 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.MutableEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import org.jdom.Element
 import org.jetbrains.annotations.NotNull
 import java.util.*
@@ -35,6 +35,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
   private val module: ModuleBridge = rootModel.moduleBridge
 
   private val extensions by lazy {
+    if (this.isDisposed.get()) throwDisposed()
     loadExtensions(storage = storage, module = module, writable = false, diff = null, parentDisposable = this)
   }
 
@@ -131,6 +132,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       val moduleEntity = module.findModuleEntity(storage.current)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
+      if (parentDisposable is RootModelBridgeImpl && parentDisposable.isDisposed.get()) parentDisposable.throwDisposed()
       for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 

@@ -7,17 +7,17 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import java.nio.file.Path
 
 /**
- * Implement this interfaces and pass the implementation to {@link ProprietaryBuildTools} constructor to support scrambling the product
+ * Implement this interfaces and pass the implementation to [ProprietaryBuildTools] constructor to support scrambling the product
  * JAR files.
  */
 interface ScrambleTool {
   /**
-   * @return list of modules used by the tool which needs to be compiled before {@link #scramble} method is invoked
+   * @return list of modules used by the tool which needs to be compiled before [scramble] method is invoked
    */
   val additionalModulesToCompile: List<String>
 
   /**
-   * Scramble [mainJarName] in "[BuildPaths.distAllDir]/lib" directory
+   * Scramble [PluginLayout.mainJarName] in "[BuildPaths.distAllDir]/lib" directory
    */
   suspend fun scramble(platform: PlatformLayout, context: BuildContext)
 

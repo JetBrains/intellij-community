@@ -358,7 +358,7 @@ public final class Verifier {
     }
 
     //final int len = name.length();
-    if (name.length() == 0) {
+    if (name.isEmpty()) {
       return "XML names cannot be empty";
     }
 
@@ -720,8 +720,7 @@ public final class Verifier {
    * @return <code>String</code> reason for collision, or
    * <code>null</code> if no collision.
    */
-  static String checkNamespaceCollision(final Namespace namespace,
-                                        final Attribute attribute) {
+  static String checkNamespaceCollision(final Namespace namespace, final Attribute attribute) {
     String reason = null;
     if (!attribute.getNamespace().equals(Namespace.NO_NAMESPACE)) {
       reason = checkNamespaceCollision(namespace,
@@ -789,63 +788,6 @@ public final class Verifier {
     return reason;
   }
 
-  /**
-   * This will check the supplied data to see if it is legal for use as
-   * a JDOM <code>{@link ProcessingInstruction}</code> target.
-   *
-   * @param target <code>String</code> target to check.
-   * @return <code>String</code> reason target is illegal, or
-   * <code>null</code> if target is OK.
-   */
-  static String checkProcessingInstructionTarget(final String target) {
-    // Check basic XML name rules first
-    String reason;
-    if ((reason = checkXMLName(target)) != null) {
-      return reason;
-    }
-
-    // No colons allowed, per Namespace Specification Section 6
-    if (target.contains(":")) {
-      return "Processing instruction targets cannot contain colons";
-    }
-
-    // Cannot begin with 'xml' in any case
-    if (target.equalsIgnoreCase("xml")) {
-      return "Processing instructions cannot have a target of " +
-             "\"xml\" in any combination of case. (Note that the " +
-             "\"<?xml ... ?>\" declaration at the beginning of a " +
-             "document is not a processing instruction and should not " +
-             "be added as one; it is written automatically during " +
-             "output, e.g. by XMLOutputter.)";
-    }
-
-    // If we got here, everything is OK
-    return null;
-  }
-
-  /**
-   * This will check the supplied data to see if it is legal for use as
-   * <code>{@link ProcessingInstruction}</code> data. Besides, checking that
-   * all the characters are allowed in XML, this also checks
-   * that the data does not contain the PI end-string "?&gt;".
-   *
-   * @param data <code>String</code> data to check.
-   * @return <code>String</code> reason data is illegal, or
-   * <code>null</code> if data is OK.
-   */
-  static String checkProcessingInstructionData(final String data) {
-    // Check basic XML name rules first
-    final String reason = checkCharacterData(data);
-
-    if (reason == null) {
-      if (data.contains("?>")) {
-        return "Processing instructions cannot contain " +
-               "the string \"?>\"";
-      }
-    }
-
-    return reason;
-  }
 
   /**
    * This will check the supplied data to see if it is legal for use as

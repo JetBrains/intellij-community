@@ -47,9 +47,11 @@ class BuiltInDecompilerConsistencyTest : KotlinLightCodeInsightFixtureTestCase()
         doTest(
             "kotlin",
             // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
-            excludedClasses = setOf("ExperimentalStdlibApi")
+            excludedClasses = setOf("ExperimentalStdlibApi",
+            // annotation arguments defaults are not written in built-ins KT-58052
+                                    "Deprecated", "RequiresOptIn", "DeprecatedSinceKotlin")
         )
-        doTest("kotlin.annotation")
+        doTest("kotlin.annotation", excludedClasses = setOf("Retention"))
         doTest("kotlin.collections")
         doTest("kotlin.ranges")
         doTest("kotlin.reflect", 3,

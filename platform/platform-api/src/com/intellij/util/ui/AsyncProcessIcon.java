@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.icons.AllIcons;
@@ -44,11 +43,13 @@ public class AsyncProcessIcon extends AnimatedIcon {
     return new Rectangle(rec.x + rec.width - iconSize.width, rec.y, iconSize.width, iconSize.height);
   }
 
-  public static class Big extends AsyncProcessIcon {
-    private static final Icon[] BIG_ICONS = com.intellij.ui.AnimatedIcon.Big.ICONS.toArray(new Icon[0]);
+  public static @NotNull AnimatedIcon createBig(@NonNls String name) {
+    return new AsyncProcessIcon(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
+  }
 
-    public Big(final @NonNls String name) {
-      super(name, BIG_ICONS, AllIcons.Process.Big.Step_passive);
+  public static class Big extends AsyncProcessIcon {
+    public Big(@NonNls String name) {
+      super(name, com.intellij.ui.AnimatedIcon.Big.ICONS, AllIcons.Process.Big.Step_passive);
     }
   }
 

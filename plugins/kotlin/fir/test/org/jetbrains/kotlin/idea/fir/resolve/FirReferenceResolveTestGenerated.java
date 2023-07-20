@@ -576,6 +576,11 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
             runTest("../idea/tests/testData/resolve/references/DefaultObjectInShortReferenceFormCall.kt");
         }
 
+        @TestMetadata("EnumEntriesInJdk.kt")
+        public void testEnumEntriesInJdk() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/EnumEntriesInJdk.kt");
+        }
+
         @TestMetadata("EnumValues.kt")
         public void testEnumValues() throws Exception {
             runTest("../idea/tests/testData/resolve/references/EnumValues.kt");
@@ -679,6 +684,16 @@ public abstract class FirReferenceResolveTestGenerated extends AbstractFirRefere
         @TestMetadata("InVaragReferenceInNamedParameter.kt")
         public void testInVaragReferenceInNamedParameter() throws Exception {
             runTest("../idea/tests/testData/resolve/references/InVaragReferenceInNamedParameter.kt");
+        }
+
+        @TestMetadata("incOperatorOnObject.kt")
+        public void testIncOperatorOnObject() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/incOperatorOnObject.kt");
+        }
+
+        @TestMetadata("incOperatorOnObject_unresolved.kt")
+        public void testIncOperatorOnObject_unresolved() throws Exception {
+            runTest("../idea/tests/testData/resolve/references/incOperatorOnObject_unresolved.kt");
         }
 
         @TestMetadata("JavaAnnotationParameter.kt")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -128,8 +128,7 @@ public final class IdeBackgroundUtil {
 
   public static @NotNull Color getIdeBackgroundColor() {
     return JBColor.lazy(() -> {
-      Color light = ColorUtil.darker(JBColor.PanelBackground, 3);
-      return StartupUiUtil.isUnderDarcula() ? Gray._40 : light;
+      return StartupUiUtil.isUnderDarcula() ? Gray._40 : ColorUtil.darker(JBColor.PanelBackground, 3);
     });
   }
 

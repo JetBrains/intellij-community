@@ -26,19 +26,20 @@ public class TerminalSessionEditorProvider implements FileEditorProvider, DumbAw
   @NotNull
   @Override
   public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+    TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
     if (file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != null) {
-      return new TerminalSessionEditor(project, (TerminalSessionVirtualFileImpl)file);
+      return new TerminalSessionEditor(project, terminalFile);
     }
     else {
-      TerminalSessionVirtualFileImpl terminalFile = (TerminalSessionVirtualFileImpl)file;
       TerminalWidget widget = terminalFile.getTerminalWidget();
 
       String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget);
       Disposable tempDisposable = Disposer.newDisposable();
       ShellStartupOptions options = ShellStartupOptionsKt.shellStartupOptions(workingDirectory);
       TerminalWidget newWidget = new LocalTerminalDirectRunner(project).startShellTerminalWidget(tempDisposable, options, true);
-      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(
-        terminalFile.getName(), newWidget, terminalFile.getSettingsProvider());
+      TerminalSessionVirtualFileImpl newSessionVirtualFile = new TerminalSessionVirtualFileImpl(terminalFile.getName(),
+                                                                                                newWidget,
+                                                                                                terminalFile.getSettingsProvider());
       TerminalSessionEditor editor = new TerminalSessionEditor(project, newSessionVirtualFile);
       Disposer.dispose(tempDisposable); // newWidget's parent disposable should be changed now
       return editor;

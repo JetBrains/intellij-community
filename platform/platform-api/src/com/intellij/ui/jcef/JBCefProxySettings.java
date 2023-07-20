@@ -13,32 +13,38 @@ import org.jetbrains.annotations.Nullable;
  */
 class JBCefProxySettings {
   public final boolean USE_HTTP_PROXY;
+  public final boolean PROXY_TYPE_IS_SOCKS;
   public final boolean USE_PROXY_PAC;
   public final boolean USE_PAC_URL;
   public final @Nullable String PAC_URL;
   public final @Nullable String PROXY_HOST;
   public final int PROXY_PORT;
+  public final @Nullable String PROXY_EXCEPTIONS;
   public final boolean PROXY_AUTHENTICATION;
   private final @NotNull Credentials myCredentials;
 
   private static @Nullable JBCefProxySettings ourTestInstance;
 
   private JBCefProxySettings(boolean useHttpProxy,
+                             boolean proxyTypeIsSocks,
                              boolean useProxyPac,
                              boolean usePacUrl,
                              @Nullable String pacUrl,
                              @Nullable String proxyHost,
                              int proxyPort,
+                             @Nullable String proxyExceptions,
                              boolean proxyAuthentication,
                              @NotNull Credentials credentials)
   {
     USE_HTTP_PROXY = useHttpProxy;
+    PROXY_TYPE_IS_SOCKS = proxyTypeIsSocks;
     USE_PROXY_PAC = useProxyPac;
     USE_PAC_URL = usePacUrl;
     PAC_URL = pacUrl;
     PROXY_HOST = proxyHost;
     PROXY_PORT = proxyPort;
     PROXY_AUTHENTICATION = proxyAuthentication;
+    PROXY_EXCEPTIONS = proxyExceptions;
     myCredentials = credentials;
   }
 
@@ -49,11 +55,13 @@ class JBCefProxySettings {
     HttpConfigurable httpSettings = HttpConfigurable.getInstance();
     return new JBCefProxySettings(
       httpSettings.USE_HTTP_PROXY,
+      httpSettings.PROXY_TYPE_IS_SOCKS,
       httpSettings.USE_PROXY_PAC,
       httpSettings.USE_PAC_URL,
       httpSettings.PAC_URL,
       httpSettings.PROXY_HOST,
       httpSettings.PROXY_PORT,
+      httpSettings.PROXY_EXCEPTIONS,
       httpSettings.PROXY_AUTHENTICATION,
       new Credentials() {
         @Override
@@ -69,11 +77,13 @@ class JBCefProxySettings {
   }
 
   public static void setTestInstance(boolean useHttpProxy,
+                                     boolean proxyTypeIsSocks,
                                      boolean useProxyPac,
                                      boolean usePacUrl,
                                      @Nullable String pacUrl,
                                      @Nullable String proxyHost,
                                      int proxyPort,
+                                     @Nullable String proxyExceptions,
                                      boolean proxyAuthentication,
                                      @Nullable String login,
                                      @Nullable String password)
@@ -83,11 +93,13 @@ class JBCefProxySettings {
     }
     ourTestInstance = new JBCefProxySettings(
       useHttpProxy,
+      proxyTypeIsSocks,
       useProxyPac,
       usePacUrl,
       pacUrl,
       proxyHost,
       proxyPort,
+      proxyExceptions,
       proxyAuthentication,
       new Credentials() {
         @Override

@@ -116,17 +116,16 @@ class AssignmentExpressionUnfoldingConversion(context: NewJ2kConverterContext) :
     }
 
     private fun JKJavaAssignmentExpression.toExpressionChainLink(receiver: JKExpression): JKExpression {
+        val parenthesizedReceiver = receiver.parenthesizeIfCompoundExpression()
         val assignment = createKtAssignmentStatement(
             this::field.detached(),
             JKKtItExpression(operator.returnType),
             operator
         ).withFormattingFrom(this)
+        val field = field.copyTreeAndDetach()
         return when {
-            operator.isSimpleToken() ->
-                JKAssignmentChainAlsoLink(receiver, assignment, field.copyTreeAndDetach())
-
-            else ->
-                JKAssignmentChainLetLink(receiver, assignment, field.copyTreeAndDetach())
+            operator.isSimpleToken() -> JKAssignmentChainAlsoLink(parenthesizedReceiver, assignment, field)
+            else -> JKAssignmentChainLetLink(parenthesizedReceiver, assignment, field)
         }
     }
 

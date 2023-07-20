@@ -72,6 +72,12 @@ abstract class <lineMarker>AbstractFoo</lineMarker>: TestCase() {
     }
 }
 
+object SomeObject: TestCase() {
+    fun testButNo() {
+
+    }
+}
+
 class <lineMarker descr="Run Test">AnotherFileTestCaseClassImpl</lineMarker>: AnotherFileTestCaseClass() {// LIGHT_CLASS_FALLBACK
     fun <lineMarker descr="Run Test">testFoo</lineMarker>() {// LIGHT_CLASS_FALLBACK
 

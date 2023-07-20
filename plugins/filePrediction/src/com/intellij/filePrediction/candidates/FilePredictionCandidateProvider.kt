@@ -59,9 +59,7 @@ data class FilePredictionCandidateFile(val file: VirtualFile, val source: FilePr
 
     other as FilePredictionCandidateFile
 
-    if (file != other.file) return false
-
-    return true
+    return file == other.file
   }
 
   override fun hashCode(): Int {

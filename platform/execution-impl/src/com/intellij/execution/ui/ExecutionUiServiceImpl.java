@@ -4,7 +4,6 @@ package com.intellij.execution.ui;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.SettingsEditor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,10 +26,5 @@ public class ExecutionUiServiceImpl extends ExecutionUiService {
                                                                             @NotNull SettingsEditor<S> inner,
                                                                             Predicate<? super S> initialSelection) {
     return SettingsEditorFragment.createWrapper(id, name, group, inner, initialSelection);
-  }
-
-  @Override
-  public void assertTimeConsuming() {
-    ApplicationManagerEx.getApplicationEx().assertIsNonDispatchThread();
   }
 }

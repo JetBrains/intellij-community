@@ -5,6 +5,6 @@ class TextBlocks {
               first  \s\
               second
                 third_no space
-              <caret>""");
+<caret>              """);
   }
 }

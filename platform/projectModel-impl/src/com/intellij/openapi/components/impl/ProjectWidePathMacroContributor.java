@@ -19,6 +19,9 @@ import java.util.Map;
  *   If you want your custom project-wide path macro to be available in the JPS then consider implementing separate Path Macro
  *   contributor for the JPS too {@link org.jetbrains.jps.model.serialization.JpsPathMacroContributor}
  * </p>
+ * <p>
+ *   The implementation must be thread-safe
+ * </p>
  */
 @ApiStatus.Internal
 public interface ProjectWidePathMacroContributor {

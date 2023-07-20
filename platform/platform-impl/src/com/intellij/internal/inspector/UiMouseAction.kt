@@ -58,9 +58,9 @@ abstract class UiMouseAction(val uiActionId: String) : DumbAwareAction() {
     return false
   }
 
-  final override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  final override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
-  final override fun update(e: AnActionEvent) = Unit
+  final override fun update(e: AnActionEvent): Unit = Unit
 
   final override fun actionPerformed(e: AnActionEvent) {
     val event = e.inputEvent

@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,10 +9,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
@@ -40,8 +38,8 @@ class FilePartNode {
   static final int JAR_SEPARATOR_NAME_ID = -2;
   private final int nameId; // name id of the VirtualFile corresponding to this node
   FilePartNode @NotNull [] children = EMPTY_ARRAY; // sorted by this.getName(). elements never updated inplace
-  // file pointers for this exact path (i.e. concatenation of all getName() down from the root).
-  // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g. after file rename onto existing pointer)
+  // file pointers for this exact path (i.e., concatenation of all getName() down from the root).
+  // Either VirtualFilePointerImpl or VirtualFilePointerImpl[] (when it so happened that several pointers merged into one node - e.g., after file rename onto existing pointer)
   private Object leaves;
   @NotNull
   volatile Object myFileOrUrl;
@@ -261,7 +259,7 @@ class FilePartNode {
     }
   }
 
-  // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all subnodes
+  // update myFileOrUrl to a VirtualFile and replace UrlPartNode with FilePartNode if the file exists, including all sub-nodes
   void update(@NotNull FilePartNode parent, @NotNull FilePartNodeRoot root, @NotNull String debugSource, @Nullable Object debugInvalidationReason) {
     boolean oldCaseSensitive = isCaseSensitive();
     Object fileOrUrl = myFileOrUrl;
@@ -301,7 +299,7 @@ class FilePartNode {
       fileIsValid = file != null && file.isValid();
     }
     if (parent.nameId != -1 && !(parentFileOrUrl instanceof VirtualFile) && file != null) {
-      // if parent file can't be found then the child is not valid too
+      // if the parent file can't be found, then the child is not valid either
       file = null;
       fileIsValid = false;
       url = myUrl(fileOrUrl);
@@ -520,11 +518,11 @@ class FilePartNode {
   }
 
   void removeEmptyNodesByPath(@NotNull String path) {
-    Pair<NewVirtualFile, String> pair = VfsImplUtil.extractRootFromPath(myFS, path);
+    VfsImplUtil.PathFromRoot pair = VfsImplUtil.extractRootFromPath(myFS, path);
     if (pair != null) {
-      int rootIndex = binarySearchChildByName(pair.first.getNameSequence());
+      int rootIndex = binarySearchChildByName(pair.root().getNameSequence());
       if (rootIndex >= 0) {
-        if (children[rootIndex].removeEmptyNodesByPath(FilePartNodeRoot.splitNames(pair.second))) {
+        if (children[rootIndex].removeEmptyNodesByPath(FilePartNodeRoot.splitNames(pair.pathFromRoot()))) {
           children = children.length == 1 ? EMPTY_ARRAY : ArrayUtil.remove(children, rootIndex);
         }
       }

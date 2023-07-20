@@ -118,7 +118,7 @@ public class Group implements KeymapGroup {
   }
 
   public void normalizeSeparators() {
-    while (myChildren.size() > 0 && myChildren.get(0) instanceof Separator) {
+    while (myChildren.size() > 0 && (myChildren.get(0) instanceof Separator s) && s.getText() != null) {
       myChildren.remove(0);
     }
 

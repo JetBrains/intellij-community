@@ -1,4 +1,6 @@
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBUI.insets
+import com.intellij.util.ui.JBUI.insets as insetsAlias
 import java.awt.Insets
 
  class UseJBUIInsetsThatCanBeSimplified {
@@ -35,6 +37,14 @@ import java.awt.Insets
 
     // static import:
     JBUI.<warning descr="Insets creation can be simplified">insets(0)</warning>
+
+    // static method imports:
+    <warning descr="Insets creation can be simplified">insets(0)</warning>
+    takeInsets(JBUI.<warning descr="Insets creation can be simplified">insets(0, 0, 0, 0)</warning>)
+
+    // static method imported with alias:
+    <warning descr="Insets creation can be simplified">insetsAlias(0)</warning>
+     takeInsets(<warning descr="Insets creation can be simplified">insetsAlias(0, 0, 0, 0)</warning>)
 
     // constant used to check expressions evaluation:
     takeInsets(JBUI.<warning descr="Insets creation can be simplified">insets(ONE, ZERO, 0, ZERO)</warning>)

@@ -2,7 +2,7 @@
 <body>
 <p>Reports cases when a call to the <code>super</code> constructor in a class is missed.</p>
 <p><b>Example:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 class Fruit:
     def __init__(self):
         pass
@@ -11,11 +11,11 @@ class Fruit:
 class Pear(Fruit):
     def __init__(self):
         pass
-</pre>
+</code></pre>
 <p>The <code>Pear</code> class should have a <code>super</code> call in the <code>__init__</code>
   method.</p>
 <p>When the quick-fix is applied, the code changes to:</p>
-<pre style="font-family: monospace">
+<pre><code>
 class Fruit:
     def __init__(self):
         pass
@@ -24,6 +24,6 @@ class Fruit:
 class Pear(Fruit):
     def __init__(self):
         super().__init__()
-</pre>
+</code></pre>
 </body>
 </html>

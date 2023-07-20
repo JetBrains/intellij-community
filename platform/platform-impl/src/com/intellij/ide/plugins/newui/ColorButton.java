@@ -50,6 +50,7 @@ public class ColorButton extends JButton {
   }
 
   public static void setWidth(@NotNull JButton button, int noScaleWidth) {
+    button.setPreferredSize(null);
     int width = JBUIScale.scale(noScaleWidth);
     if (button instanceof JBOptionButton && button.getComponentCount() == 2) {
       width += button.getComponent(1).getPreferredSize().width;

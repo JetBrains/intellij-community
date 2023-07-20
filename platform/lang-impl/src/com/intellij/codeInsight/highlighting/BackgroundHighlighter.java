@@ -1,8 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
+import com.intellij.codeInsight.daemon.impl.HighlightingSessionImpl;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
 import com.intellij.codeInsight.template.Template;
@@ -22,11 +24,14 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.Alarm;
@@ -90,7 +95,7 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
         TextRange oldRange = e.getOldRange();
         TextRange newRange = e.getNewRange();
         if (oldRange != null && newRange != null && oldRange.isEmpty() == newRange.isEmpty()) {
-          // Don't perform braces update in case of active/absent selection.
+          // Don't update braces in case of active/absent selection.
           return;
         }
         updateHighlighted(project, editor);
@@ -102,7 +107,9 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
         myAlarm.cancelAllRequests();
-        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(editor -> updateHighlighted(project, editor));
+        EditorFactory.getInstance().editors(e.getDocument(), project).forEach(
+          editor -> submitUpdateHighlighted(project, editor)
+        );
       }
     };
     eventMulticaster.addDocumentListener(documentListener, parentDisposable);
@@ -143,6 +150,10 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     if (editor.getProject() != project || selectionModel.hasSelection()) {
       return;
     }
+    submitUpdateHighlighted(project, editor);
+  }
+
+  private void submitUpdateHighlighted(@NotNull Project project, @NotNull Editor editor) {
     updateHighlighted(project, editor);
   }
 
@@ -187,30 +198,36 @@ final class BackgroundHighlighter implements StartupActivity, DumbAware {
     });
   }
 
-  private static void submitIdentifierHighlighterPass(@NotNull Editor editor,
+  private static void submitIdentifierHighlighterPass(@NotNull Editor hostEditor,
                                                       int offsetBefore,
                                                       @NotNull PsiFile newFile,
                                                       @NotNull Editor newEditor) {
     ReadAction.nonBlocking(() -> {
         int textLength = newFile.getTextLength();
-        if (textLength == -1) {
-          // sometime some crazy stuff is returned (EA-248725)
+        if (textLength == -1 | hostEditor.isDisposed()) {
+          // sometimes some crazy stuff is returned (EA-248725)
           return null;
         }
-        IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().
-          createHighlightingPass(newFile, newEditor, TextRange.from(0, textLength));
-        if (pass != null) {
-          pass.doCollectInformation();
-        }
+        ProperTextRange visibleRange = ProperTextRange.from(0, textLength);
+        IdentifierHighlighterPass pass = new IdentifierHighlighterPassFactory().createHighlightingPass(newFile, newEditor, visibleRange);
+        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+        ProgressIndicatorUtils.runWithWriteActionPriority(() -> {
+          PsiFile hostPsiFile = PsiDocumentManager.getInstance(newFile.getProject()).getPsiFile(hostEditor.getDocument());
+          if (hostPsiFile == null) return;
+          HighlightingSessionImpl.runInsideHighlightingSession(hostPsiFile, hostEditor.getColorsScheme(), ProperTextRange.create(hostPsiFile.getTextRange()), false, session -> {
+            if (pass != null) {
+              pass.doCollectInformation(session);
+            }
+          });
+        }, indicator);
         return pass;
       })
-      .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(editor) ||
-                        !newFile.isValid() ||
-                        offsetBefore != editor.getCaretModel().getOffset())
-      .coalesceBy(HighlightIdentifiersKey.class, editor)
-      .finishOnUiThread(ModalityState.stateForComponent(editor.getComponent()), identifierHighlighterPass -> {
-        if (identifierHighlighterPass != null) {
-          identifierHighlighterPass.doApplyInformationToEditor();
+      .expireWhen(() -> !BackgroundHighlightingUtil.isValidEditor(hostEditor) ||
+                        hostEditor.getCaretModel().getOffset() != offsetBefore)
+      .coalesceBy(HighlightIdentifiersKey.class, hostEditor)
+      .finishOnUiThread(ModalityState.stateForComponent(hostEditor.getComponent()), pass -> {
+        if (pass != null) {
+          pass.doAdditionalCodeBlockHighlighting();
         }
       })
       .submit(AppExecutorUtil.getAppExecutorService());

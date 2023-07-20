@@ -110,16 +110,19 @@ public final class DfaPsiUtil {
       }
     }
 
+    if (owner instanceof PsiParameter parameter) {
+      Nullability nullability = inferParameterNullability(parameter);
+      if (nullability != Nullability.UNKNOWN) {
+        return nullability;
+      }
+    }
+
     Nullability fromType = getTypeNullability(resultType);
     if (fromType != Nullability.UNKNOWN) {
       if (fromType == Nullability.NOT_NULL && hasNullContract(owner)) {
         return Nullability.UNKNOWN;
       }
       return fromType;
-    }
-
-    if (owner instanceof PsiParameter parameter) {
-      return inferParameterNullability(parameter);
     }
 
     if (owner instanceof PsiMethod method && method.getParameterList().isEmpty()) {

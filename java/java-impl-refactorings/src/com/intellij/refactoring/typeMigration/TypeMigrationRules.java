@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.project.Project;
@@ -11,15 +11,19 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.rules.DisjunctionTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.RootTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class TypeMigrationRules {
   private final List<TypeConversionRule> myConversionRules;
-  private final Map<Class, Object> myConversionCustomSettings = new HashMap<>();
+  private final Map<Class<?>, Object> myConversionCustomSettings = new HashMap<>();
   private final Project myProject;
   private SearchScope mySearchScope;
 
@@ -42,13 +46,14 @@ public class TypeMigrationRules {
   }
 
   public <T> T getConversionSettings(Class<T> aClass) {
+    //noinspection unchecked
     return (T)myConversionCustomSettings.get(aClass);
   }
 
   @NonNls
   @Nullable
-  public TypeConversionDescriptorBase findConversion(final PsiType from, final PsiType to, final PsiMember member, final PsiExpression context,
-                                                     final boolean isCovariantPosition, final TypeMigrationLabeler labeler) {
+  public TypeConversionDescriptorBase findConversion(PsiType from, PsiType to, PsiMember member, PsiExpression context,
+                                                     boolean isCovariantPosition, TypeMigrationLabeler labeler) {
     final TypeConversionDescriptorBase conversion = findConversion(from, to, member, context, labeler);
     if (conversion != null) return conversion;
 
@@ -73,7 +78,7 @@ public class TypeMigrationRules {
   }
 
   public boolean shouldConvertNull(final PsiType from, final PsiType to, PsiExpression context) {
-    return myConversionRules.stream().anyMatch(rule -> rule.shouldConvertNullInitializer(from, to, context));
+    return ContainerUtil.exists(myConversionRules, rule -> rule.shouldConvertNullInitializer(from, to, context));
   }
 
   public void setBoundScope(@NotNull SearchScope searchScope) {

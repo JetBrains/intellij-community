@@ -6,11 +6,13 @@ import com.intellij.lang.java.JavaParserDefinition
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.stubs.PsiFileStub
+import com.intellij.psi.tree.IStubFileElementType
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
 class JavaPerFileElementTypeModificationTrackerTest : JavaCodeInsightFixtureTestCase() {
   companion object {
-    val JAVA = JavaParserDefinition.JAVA_FILE!!
+    val JAVA: IStubFileElementType<out PsiFileStub<*>> = JavaParserDefinition.JAVA_FILE!!
   }
 
   private val helper = StubIndexPerFileElementTypeModificationTrackerTestHelper()

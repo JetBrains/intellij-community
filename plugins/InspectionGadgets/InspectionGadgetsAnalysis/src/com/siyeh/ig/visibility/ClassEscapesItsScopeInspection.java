@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2022 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ import static com.intellij.codeInspection.options.OptPane.pane;
 public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within exported packages
-  @SuppressWarnings("PublicField") public boolean checkPublicApi; // All public & protected fields & methods
+  @SuppressWarnings("PublicField") public boolean checkPublicApi = true; // All public & protected fields & methods
   @SuppressWarnings("PublicField") public boolean checkPackageLocal;
 
   @Pattern(VALID_ID_PATTERN)
@@ -181,7 +181,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
              checkPackageLocal && member.hasModifierProperty(PsiModifier.PACKAGE_LOCAL);
     }
 
-    private boolean isLessRestrictiveScope(@NotNull PsiMember member, @NotNull PsiClass aClass) {
+    private static boolean isLessRestrictiveScope(@NotNull PsiMember member, @NotNull PsiClass aClass) {
       final int methodScopeOrder = getScopeOrder(member);
       final int classScopeOrder = getScopeOrder(aClass);
       final PsiClass containingClass = member.getContainingClass();
@@ -193,7 +193,7 @@ public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspect
       return methodScopeOrder > classScopeOrder && containingClassScopeOrder > classScopeOrder;
     }
 
-    private int getScopeOrder(@NotNull PsiModifierListOwner element) {
+    private static int getScopeOrder(@NotNull PsiModifierListOwner element) {
       if (element.hasModifierProperty(PsiModifier.PUBLIC)) {
         return 4;
       }

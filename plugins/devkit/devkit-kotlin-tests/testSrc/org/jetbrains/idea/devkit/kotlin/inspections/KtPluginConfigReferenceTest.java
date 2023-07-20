@@ -33,18 +33,18 @@ public class KtPluginConfigReferenceTest extends JavaCodeInsightFixtureTestCase 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addLibrary("core-api", PathUtil.getJarPathForClass(RegistryManager.class));
+    moduleBuilder.addLibrary("platform-core", PathUtil.getJarPathForClass(RegistryManager.class));
     moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
-    moduleBuilder.addLibrary("platform-impl", PathUtil.getJarPathForClass(ITNReporter.class));
-    moduleBuilder.addLibrary("platform-rt", PathUtil.getJarPathForClass(IncorrectOperationException.class));
+    moduleBuilder.addLibrary("platform-ide-impl", PathUtil.getJarPathForClass(ITNReporter.class));
+    moduleBuilder.addLibrary("platform-util-base", PathUtil.getJarPathForClass(IncorrectOperationException.class));
     moduleBuilder.addLibrary("platform-util", PathUtil.getJarPathForClass(Iconable.class));
     moduleBuilder.addLibrary("platform-analysis", PathUtil.getJarPathForClass(LocalInspectionEP.class));
     moduleBuilder.addLibrary("platform-resources", Paths.get(PathUtil.getJarPathForClass(LocalInspectionEP.class))
       .resolveSibling("intellij.platform.resources").toString());
-    moduleBuilder.addLibrary("ide-core", PathUtil.getJarPathForClass(Configurable.class));
-    moduleBuilder.addLibrary("ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
-    moduleBuilder.addLibrary("editor-ui-api", PathUtil.getJarPathForClass(AdvancedSettings.class));
-    moduleBuilder.addLibrary("extensions", PathUtil.getJarPathForClass(BaseExtensionPointName.class));
+    moduleBuilder.addLibrary("platform-ide-core", PathUtil.getJarPathForClass(Configurable.class));
+    moduleBuilder.addLibrary("platform-ide-core-impl", PathUtil.getJarPathForClass(NotificationGroupEP.class));
+    moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AdvancedSettings.class));
+    moduleBuilder.addLibrary("platform-extensions", PathUtil.getJarPathForClass(BaseExtensionPointName.class));
   }
 
   public void testExtensionPointHighlighting() {

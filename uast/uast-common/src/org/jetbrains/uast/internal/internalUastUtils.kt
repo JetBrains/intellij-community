@@ -22,7 +22,7 @@ import com.intellij.psi.PsiType
 internal val LINE_SEPARATOR = System.lineSeparator() ?: "\n"
 
 val String.withMargin: String
-  get() = lines().joinToString(LINE_SEPARATOR) { "    " + it }
+  get() = lines().joinToString(LINE_SEPARATOR) { "    $it" }
 
 internal operator fun String.times(n: Int) = this.repeat(n)
 
@@ -41,5 +41,5 @@ internal val PsiType.name: String
 
 internal fun PsiModifierListOwner.renderModifiers(): String {
   val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
-  return if (modifiers.isEmpty()) "" else modifiers + " "
+  return if (modifiers.isEmpty()) "" else "$modifiers "
 }

@@ -20,7 +20,7 @@ class ParameterInlayProviderSettingsModel(
   language: Language
 ) : InlayProviderSettingsModel(isParameterHintsEnabledForLanguage(language), ParameterInlayProviderSettingsModel.ID, language) {
   companion object {
-    val ID = "parameter.hints.old"
+    val ID: String = "parameter.hints.old"
   }
 
   override val mainCheckBoxLabel: String
@@ -44,7 +44,7 @@ class ParameterInlayProviderSettingsModel(
     return provider.getProperty("inlay.parameters." + case.id)
   }
 
-  override val component by lazy {
+  override val component: ParameterHintsSettingsPanel by lazy {
     ParameterHintsSettingsPanel(
       language = language,
       excludeListSupported = provider.isBlackListSupported

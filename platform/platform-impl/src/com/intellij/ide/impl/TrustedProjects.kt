@@ -53,20 +53,20 @@ enum class OpenUntrustedProjectChoice {
   CANCEL;
 }
 
-fun Project.isTrusted() = TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
+fun Project.isTrusted(): Boolean = TrustedProjects.isProjectTrusted(TrustedProjectsLocator.locateProject(this))
 
-fun Project.setTrusted(isTrusted: Boolean) = TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
+fun Project.setTrusted(isTrusted: Boolean): Unit = TrustedProjects.setProjectTrusted(TrustedProjectsLocator.locateProject(this), isTrusted)
 
-fun Project.getTrustedState() = TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
+fun Project.getTrustedState(): ThreeState = TrustedProjects.getProjectTrustedState(TrustedProjectsLocator.locateProject(this))
 
 @ApiStatus.Internal
-fun isTrustedCheckDisabled() = TrustedProjects.isTrustedCheckDisabled()
+fun isTrustedCheckDisabled(): Boolean = TrustedProjects.isTrustedCheckDisabled()
 
 @JvmOverloads
 @ApiStatus.Internal
 @Suppress("DEPRECATION")
 @Deprecated("Use TrustedProjects.isProjectTrusted instead")
-fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null) =
+fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean =
   TrustedProjects.isProjectImplicitlyTrusted(projectDir, project)
 
 /**
@@ -81,7 +81,7 @@ fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null) =
 internal class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
   class State : BaseState() {
     @get:Attribute
-    var isTrusted by enum(ThreeState.UNSURE)
+    var isTrusted: ThreeState by enum(ThreeState.UNSURE)
   }
 
   var trustedState: ThreeState
@@ -128,7 +128,7 @@ interface TrustStateListener {
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic(TrustStateListener::class.java, Topic.BroadcastDirection.NONE)
+    val TOPIC: Topic<TrustStateListener> = Topic(TrustStateListener::class.java, Topic.BroadcastDirection.NONE)
   }
 }
 
@@ -140,7 +140,7 @@ fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: (Project)
 
 @JvmOverloads
 @Deprecated("Use onceWhenProjectTrusted instead", ReplaceWith("onceWhenProjectTrusted(parentDisposable, listener::accept)"))
-fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>) =
+fun whenProjectTrusted(parentDisposable: Disposable? = null, listener: Consumer<Project>): Unit =
   TrustedProjectsListener.onceWhenProjectTrusted(parentDisposable, listener::accept)
 
-const val TRUSTED_PROJECTS_HELP_TOPIC = "Project_security"
+const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"

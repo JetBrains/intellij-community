@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -20,17 +20,17 @@ class ScanningStatistics(val fileSetName: String) {
 
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
-  var listOfFilesFullyIndexedByInfrastructureExtension = arrayListOf<String>()
+  var listOfFilesFullyIndexedByInfrastructureExtension: ArrayList<String> = arrayListOf()
 
   var scanningTime: TimeNano = 0
   var statusTime: TimeNano = 0
 
   var timeProcessingUpToDateFiles: TimeNano = 0
   var timeUpdatingContentLessIndexes: TimeNano = 0
-  var timeIndexingWithoutContent: TimeNano = 0
+  var timeIndexingWithoutContentViaInfrastructureExtension: TimeNano = 0
 
-  var providerRoots = emptyList<String>()
-  val scannedFiles = arrayListOf<ScannedFile>()
+  var providerRoots: List<String> = emptyList()
+  val scannedFiles: ArrayList<ScannedFile> = arrayListOf()
 
   data class ScannedFile(val portableFilePath: PortableFilePath, val isUpToDate: Boolean, val wasFullyIndexedByInfrastructureExtension: Boolean)
 
@@ -44,7 +44,7 @@ class ScanningStatistics(val fileSetName: String) {
 
     timeProcessingUpToDateFiles += unindexedFileStatus.timeProcessingUpToDateFiles
     timeUpdatingContentLessIndexes += unindexedFileStatus.timeUpdatingContentLessIndexes
-    timeIndexingWithoutContent += unindexedFileStatus.timeIndexingWithoutContent
+    timeIndexingWithoutContentViaInfrastructureExtension += unindexedFileStatus.timeIndexingWithoutContentViaInfrastructureExtension
 
     if (unindexedFileStatus.wasFullyIndexedByInfrastructureExtension) {
       numberOfFilesFullyIndexedByInfrastructureExtension++

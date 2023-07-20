@@ -196,7 +196,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
   }
 
   @Override
-  protected AbstractAddGroup createAddAction() {
+  protected AbstractAddGroup createAddAction(boolean fromPopup) {
     return new AbstractAddGroup(getAddText()) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable final AnActionEvent e) {

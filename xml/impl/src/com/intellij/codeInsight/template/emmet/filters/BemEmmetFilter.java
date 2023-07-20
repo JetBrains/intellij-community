@@ -19,8 +19,8 @@ import java.util.regex.Pattern;
 
 /**
  * Bem filter for emmet support.
- * See the original source code here: https://github.com/emmetio/emmet/blob/master/javascript/filters/bem.js
- * And documentation here: http://docs.emmet.io/filters/bem/
+ * See the original source code here: <a href="https://github.com/emmetio/emmet/blob/master/javascript/filters/bem.js">bem.js</a>
+ * And documentation here: <a href="http://docs.emmet.io/filters/bem/">emmet docs</a>
  */
 public class BemEmmetFilter extends ZenCodingFilter {
   private static final String SUFFIX = "bem";
@@ -48,7 +48,7 @@ public class BemEmmetFilter extends ZenCodingFilter {
   @Override
   public GenerationNode filterNode(@NotNull final GenerationNode node) {
     final Map<String, String> attributes = node.getTemplateToken().getAttributes();
-    String classAttributeName = getClassAttributeName();
+    String classAttributeName = HtmlUtil.CLASS_ATTRIBUTE_NAME;
     String classValue = attributes.get(classAttributeName);
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     if (classValue != null && emmetOptions != null) {
@@ -66,11 +66,6 @@ public class BemEmmetFilter extends ZenCodingFilter {
       attributes.put(classAttributeName, StringUtil.join(newClassNames, " "));
     }
     return node;
-  }
-
-  @NotNull
-  public String getClassAttributeName() {
-    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
   private static Iterable<String> processClassName(@NotNull String className, @NotNull GenerationNode node,

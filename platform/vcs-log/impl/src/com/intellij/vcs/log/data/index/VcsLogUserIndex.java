@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data.index;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
@@ -21,7 +20,6 @@ import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsUserKeyDescriptor;
 import com.intellij.vcs.log.impl.VcsLogErrorHandler;
-import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -38,20 +36,21 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 
-final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> implements VcsLogUserBiMap {
+final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   private static final @NonNls String USERS = "users";
   private static final @NonNls String USERS_IDS = "users-ids";
   private final @NotNull UserIndexer myUserIndexer;
 
-  VcsLogUserIndex(@NotNull StorageId storageId,
-                         @Nullable StorageLockContext storageLockContext,
-                         @NotNull VcsUserRegistry userRegistry,
-                         @NotNull VcsLogErrorHandler errorHandler,
-                         @NotNull Disposable disposableParent) throws IOException {
+  VcsLogUserIndex(@NotNull StorageId.Directory storageId,
+                  @Nullable StorageLockContext storageLockContext,
+                  @NotNull VcsUserRegistry userRegistry,
+                  @NotNull VcsLogErrorHandler errorHandler,
+                  @NotNull Disposable disposableParent) throws IOException {
     super(storageId,
           USERS,
           new UserIndexer(createUserEnumerator(storageId, storageLockContext, userRegistry)),
@@ -64,17 +63,12 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
   }
 
   @Override
-  public void update(int index, @NotNull VcsLogIndexer.CompressedDetails detail) {
-    super.update(index, detail);
-  }
-
-  @Override
   protected @NotNull Pair<ForwardIndex, ForwardIndexAccessor<Integer, Void>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
     return new Pair<>(new PersistentMapBasedForwardIndex(myStorageId.getStorageFile(myName + ".idx"), true, false, storageLockContext),
                       new KeyCollectionForwardIndexAccessor<>(new IntCollectionDataExternalizer()));
   }
 
-  private static @NotNull PersistentEnumerator<VcsUser> createUserEnumerator(@NotNull StorageId storageId,
+  private static @NotNull PersistentEnumerator<VcsUser> createUserEnumerator(@NotNull StorageId.Directory storageId,
                                                                              @Nullable StorageLockContext storageLockContext,
                                                                              @NotNull VcsUserRegistry userRegistry) throws IOException {
     Path storageFile = storageId.getStorageFile(USERS_IDS);
@@ -82,8 +76,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
                                       storageId.getVersion());
   }
 
-  @Override
-  public IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
+  @NotNull IntSet getCommitsForUsers(@NotNull Set<? extends VcsUser> users) throws IOException, StorageException {
     IntSet ids = new IntOpenHashSet();
     for (VcsUser user : users) {
       ids.add(myUserIndexer.getUserId(user));
@@ -91,10 +84,9 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     return getCommitsWithAnyKey(ids);
   }
 
-  @Override
-  public @Nullable VcsUser getAuthorForCommit(int commit) {
+  @Nullable VcsUser getAuthorForCommit(int commitId) {
     try {
-      Collection<Integer> userIds = getKeysForCommit(commit);
+      Collection<Integer> userIds = getKeysForCommit(commitId);
       if (userIds == null || userIds.isEmpty()) {
         return null;
       }
@@ -106,8 +98,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     }
   }
 
-  @Override
-  public int getUserId(@NotNull VcsUser user) {
+  int getUserId(@NotNull VcsUser user) {
     try {
       return myUserIndexer.getUserId(user);
     }
@@ -116,8 +107,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
     }
   }
 
-  @Override
-  public @Nullable VcsUser getUserById(int id) {
+  @Nullable VcsUser getUserById(int id) {
     try {
       return myUserIndexer.getUserById(id);
     }
@@ -158,7 +148,7 @@ final class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void, VcsShortCommitD
         result.put(myUserEnumerator.enumerate(inputData.getAuthor()), null);
       }
       catch (IOException e) {
-        myFatalErrorConsumer.consume(e);
+        myFatalErrorConsumer.accept(e);
       }
       return result;
     }

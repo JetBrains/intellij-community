@@ -8,11 +8,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,8 +20,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 public final class GoToChangePopupBuilder {
-  private static final Key<JBPopup> POPUP_KEY = Key.create("Diff.RequestChainGoToPopup");
-
   public interface Chain extends DiffRequestChain {
     @Nullable
     AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection);
@@ -52,28 +49,11 @@ public final class GoToChangePopupBuilder {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      UserDataHolder context = e.getRequiredData(DiffDataKeys.DIFF_CONTEXT);
-
-      JBPopup oldPopup = context.getUserData(POPUP_KEY);
-      if (oldPopup != null && oldPopup.isVisible()) {
-        oldPopup.cancel();
-      }
-
       final JBPopup popup = createPopup(e);
-
-      context.putUserData(POPUP_KEY, popup);
-      popup.addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          if (context.getUserData(POPUP_KEY) == popup) {
-            context.putUserData(POPUP_KEY, null);
-          }
-        }
-      });
 
       InputEvent event = e.getInputEvent();
       if (event instanceof MouseEvent) {
-        popup.show(new RelativePoint((MouseEvent)event));
+        popup.showUnderneathOf(event.getComponent());
       }
       else {
         popup.showInBestPositionFor(e.getDataContext());

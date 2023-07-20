@@ -50,4 +50,16 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
     myFixture.renameElementAtCaret("spam")
     myFixture.checkResultByFile("test_for_rename.after.py.txt")
   }
+
+  fun testRenameParameterWithType() {
+    myFixture.configureByFile("test_rename_parameter_with_type.py")
+    myFixture.renameElementAtCaret("new_fixture")
+    myFixture.checkResultByFile("after_rename_with_type.txt")
+  }
+
+  fun testRenameFixtureWithType() {
+    myFixture.configureByFile("test_rename_fixture_with_type.py")
+    myFixture.renameElementAtCaret("new_fixture")
+    myFixture.checkResultByFile("after_rename_with_type.txt")
+  }
 }

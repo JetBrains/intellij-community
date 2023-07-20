@@ -21,8 +21,8 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 class ZoomIndicatorView(val editor: EditorImpl) : JPanel(MigLayout("novisualpadding, ins 0")) {
-  var isHovered = false; private set
-  var lastHoverMs = 0L; private set
+  var isHovered: Boolean = false; private set
+  var lastHoverMs: Long = 0L; private set
 
   private val fontSizeLabel = JLabel(IdeBundle.message("action.reset.font.size.info", "000"))
 

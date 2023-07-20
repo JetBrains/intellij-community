@@ -168,7 +168,9 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     }
 
     final int offset = nodeAtCaret.getTextRange().getStartOffset();
-    if (inFromImportParentheses(statementBefore, offset) || inWithItemsParentheses(statementBefore, offset)) {
+    if (inFromImportParentheses(statementBefore, offset)
+        || inWithItemsParentheses(statementBefore, offset)
+        || inCaseClauseParentheses(statementBefore, offset)) {
       return false;
     }
 
@@ -278,6 +280,19 @@ public class PyWhiteSpaceFormattingStrategy extends StaticSymbolWhiteSpaceDefini
     }
 
     final PsiElement leftParen = PyPsiUtils.getFirstChildOfType(statement, PyTokenTypes.LPAR);
+    return leftParen != null && offset >= leftParen.getTextRange().getEndOffset();
+  }
+
+  private static boolean inCaseClauseParentheses(@NotNull PsiElement statement, int offset) {
+    if (!(statement instanceof PyCaseClause caseClause)) {
+      return false;
+    }
+    final PyPattern pattern = caseClause.getPattern();
+    if (pattern == null) {
+      return false;
+    }
+
+    final PsiElement leftParen = PyPsiUtils.getChildByFilter(pattern, PyTokenTypes.OPEN_BRACES, 0);
     return leftParen != null && offset >= leftParen.getTextRange().getEndOffset();
   }
 }

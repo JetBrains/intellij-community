@@ -22,8 +22,11 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage.checkAttributeValueSize;
 
 /**
  *
@@ -75,13 +78,18 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   public @Nullable AttributeInputStream readAttribute(final @NotNull PersistentFSConnection connection,
                                                       final int fileId,
                                                       final @NotNull FileAttribute attribute) throws IOException {
-    lock.readLock().lock();
+    final Lock readLock = lock.readLock();
+    //CancellationUtil.lockMaybeCancellable(readLock);
+    readLock.lock();
     try {
       PersistentFSConnection.ensureIdIsValid(fileId);
 
       final int attrRecordId = fileAttributeRecordId(connection, fileId);
       if (attrRecordId == NON_EXISTENT_ATTR_RECORD_ID) {
         return null;
+      }
+      else if (attrRecordId < NON_EXISTENT_ATTR_RECORD_ID) {
+        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attrRecordId + "] is negative, must be >=0");
       }
       final int encodedAttrId = connection.getAttributeId(attribute.getId());
 
@@ -122,7 +130,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       return stream;
     }
     finally {
-      lock.readLock().unlock();
+      readLock.unlock();
     }
   }
 
@@ -159,7 +167,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
     lock.writeLock().lock();
     try {
       int attPage = fileAttributeRecordId(connection, fileId);
-      if (attPage != 0) {
+      if (attPage != NON_EXISTENT_ATTR_RECORD_ID) {
         try (final DataInputStream attStream = attributesBlobStorage.readStream(attPage)) {
           if (bulkAttrReadSupport) skipRecordHeader(attStream, PersistentFSConnection.RESERVED_ATTR_ID, fileId);
 
@@ -174,7 +182,10 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
               }
               attAddressOrSize -= INLINE_ATTRIBUTE_SMALLER_THAN;
             }
-            attributesBlobStorage.deleteRecord(attAddressOrSize);
+            //RC: must always be true, but there are reports ...
+            if (attAddressOrSize > NON_EXISTENT_ATTR_RECORD_ID) {
+              attributesBlobStorage.deleteRecord(attAddressOrSize);
+            }
           }
         }
         attributesBlobStorage.deleteRecord(attPage);
@@ -229,27 +240,29 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
   private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
     private final PersistentFSConnection connection;
     @NotNull
-    private final FileAttribute myAttribute;
-    private final int myFileId;
+    private final FileAttribute attribute;
+    private final int fileId;
 
     private AttributeOutputStreamImpl(final PersistentFSConnection connection,
                                       final int fileId,
                                       final @NotNull FileAttribute attribute) {
       super(new BufferExposingByteArrayOutputStream());
       this.connection = connection;
-      myFileId = fileId;
-      myAttribute = attribute;
+      this.fileId = fileId;
+      this.attribute = attribute;
     }
 
     @Override
     public void close() throws IOException {
       super.close();
 
+      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+      final int attributeValueSize = _out.size();
+      checkAttributeValueSize(attribute, attributeValueSize);
+
       lock.writeLock().lock();
       try {
-        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-
-        if (inlineAttributes && _out.size() < INLINE_ATTRIBUTE_SMALLER_THAN) {
+        if (inlineAttributes && attributeValueSize < INLINE_ATTRIBUTE_SMALLER_THAN) {
           //if attribute value could be stored in the directory record inline -> try to (over)write it
           // there:
           rewriteDirectoryRecordWithInlineAttrContent(_out);
@@ -257,29 +270,30 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
         else {
           //if current attribute value can't be stored in directory record -> first remove it from
           //   directory record if it was stored there before:
-          int attributeRecordId = findAttributePage(connection, myFileId, myAttribute, true);
+          int attributeRecordId = findAttributePage(connection, fileId, attribute, true);
           if (inlineAttributes && attributeRecordId < 0) {
             //attribute was stored inline in directory record -> remove it from there it is now:
             rewriteDirectoryRecordWithInlineAttrContent(new BufferExposingByteArrayOutputStream());
             //now, as entry was removed from directory record, .findAttributePage() must create dedicated
             // record for our attribute, and return its recordId:
-            attributeRecordId = findAttributePage(connection, myFileId, myAttribute, /* toWrite: */true);
+            attributeRecordId = findAttributePage(connection, fileId, attribute, /* toWrite: */true);
           }
 
           if (bulkAttrReadSupport) {
             BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
             out = stream;
-            writeRecordHeader(connection.getAttributeId(myAttribute.getId()), myFileId, this);
+            writeRecordHeader(connection.getAttributeId(attribute.getId()), fileId, this);
             write(_out.getInternalBuffer(), 0, _out.size());
-            attributesBlobStorage.writeBytes(attributeRecordId, stream.toByteArraySequence(), myAttribute.isFixedSize());
+            attributesBlobStorage.writeBytes(attributeRecordId, stream.toByteArraySequence(), attribute.isFixedSize());
           }
           else {
-            attributesBlobStorage.writeBytes(attributeRecordId, _out.toByteArraySequence(), myAttribute.isFixedSize());
+            attributesBlobStorage.writeBytes(attributeRecordId, _out.toByteArraySequence(), attribute.isFixedSize());
           }
         }
         modCount.incrementAndGet();
       }
       catch (Throwable t) {
+        FSRecords.LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
         throw FSRecords.handleError(t);
       }
       finally {
@@ -292,10 +306,10 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
      * newAttributeInlinableValue bytes, either in place (if size remains the same), or re-arranging other
      * entries to put updated one in the end (if size was changed)
      * <p>
-     * TODO RC: I see no benefits in moving attribute entry to the end of record (almost) always: since
-     *          we re-arrange entries anyway, entry could remain there it is now, and entries after it
-     *          could be shifted to accommodate new value size as well. This looks not harder than current
-     *          impl, but allows for fewer movements at all in some cases
+     * MAYBE RC: I see no benefits in moving attribute entry to the end of record (almost) always: since
+     *           we re-arrange entries anyway, entry could remain there it is now, and entries after it
+     *           could be shifted to accommodate new value size as well. This looks not harder than current
+     *           impl, but allows for fewer movements at all in some cases
      * <p>
      * newAttributeInlinableValue.size() must be < MAX_SMALL_ATTR_SIZE -- method does not deal with non-inlinable
      * attribute entries.
@@ -308,8 +322,8 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       assert newAttributeInlinableValue.size() < INLINE_ATTRIBUTE_SMALLER_THAN : "Only small values could be stored in directory record";
       assert inlineAttributes : "Attributes could be stored in directory record only if 'inline small attributes' is enabled";
 
-      int recordId = fileAttributeRecordId(connection, myFileId);
-      int encodedAttrId = connection.getAttributeId(myAttribute.getId());
+      int recordId = fileAttributeRecordId(connection, fileId);
+      int encodedAttrId = connection.getAttributeId(attribute.getId());
 
       BufferExposingByteArrayOutputStream unchangedPreviousDirectoryStream = null;
 
@@ -318,7 +332,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
 
       if (recordId == 0) {
         recordId = attributesBlobStorage.createNewRecord();
-        updateFileAttributeRecordId(connection, myFileId, recordId);
+        updateFileAttributeRecordId(connection, fileId, recordId);
         createDirectoryRecord = true;
       }
       else {
@@ -334,7 +348,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
               int attId = DataInputOutputUtil.readINT(attrRefs);
               assert attId == PersistentFSConnection.RESERVED_ATTR_ID;
               int fileId = DataInputOutputUtil.readINT(attrRefs);
-              assert myFileId == fileId;
+              assert this.fileId == fileId;
 
               writeRecordHeader(attId, fileId, dataStream);
             }
@@ -395,7 +409,7 @@ public class AttributesStorageOld implements AbstractAttributesStorage {
       // write its new content there (and old record probably marked for reclaiming later)
       try (AbstractStorage.StorageDataOutput directoryStream = attributesBlobStorage.writeStream(recordId)) {
         if (createDirectoryRecord) {
-          if (bulkAttrReadSupport) writeRecordHeader(PersistentFSConnection.RESERVED_ATTR_ID, myFileId, directoryStream);
+          if (bulkAttrReadSupport) writeRecordHeader(PersistentFSConnection.RESERVED_ATTR_ID, fileId, directoryStream);
         }
         if (unchangedPreviousDirectoryStream != null) {
           directoryStream.write(unchangedPreviousDirectoryStream.getInternalBuffer(), 0, unchangedPreviousDirectoryStream.size());

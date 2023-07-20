@@ -2,6 +2,7 @@
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ui.TreeActions;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -207,6 +208,9 @@ final class TreeAction extends AbstractAction implements UIResource {
       if (!TreeUtil.isLoadingPath(path)) select(type, tree, path, row + 1);
     }
     else {
+      if (tree instanceof Tree) {
+        ((Tree)tree).startMeasuringExpandDuration(lead);
+      }
       tree.expandPath(lead);
     }
   }

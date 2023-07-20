@@ -1,38 +1,42 @@
 # The following rules are incompatible with or enforced by black:
-#       E203 whitespace before ':' -- scripts only
-#       E301 expected 1 blank line
-#       E302 expected 2 blank lines
-#       E305 expected 2 blank lines
-#       E501 line too long
+#     E203   whitespace before ':' -- scripts only
+#     E301   expected 1 blank line
+#     E302   expected 2 blank lines
+#     E305   expected 2 blank lines
+#     E501   line too long
 
 # Some rules are considered irrelevant to stub files:
-#       E701 multiple statements on one line (colon) -- disallows "..." on the same line
-#       F401 imported but unused -- does not recognize re-exports
+#     E701   multiple statements on one line (colon) -- disallows "..." on the same line
+#     F401   imported but unused -- does not recognize re-exports
 #            https://github.com/PyCQA/pyflakes/issues/474
-#       F822 undefined name in __all__ -- flake8 does not recognize 'foo: Any'
+#     F822   undefined name in __all__ -- flake8 does not recognize 'foo: Any'
 #            https://github.com/PyCQA/pyflakes/issues/533
 
 # Rules that are out of the control of stub authors:
-#       E741 ambiguous variable name
-#       F403 import *' used; unable to detect undefined names
-#       F405 defined from star imports
+#     E741   ambiguous variable name
+#     F403   import *' used; unable to detect undefined names
+#     F405   defined from star imports
 
 # Rules that we'd like to enable in the future:
-#       Y034 Detect common errors where certain methods are annotated as having a fixed
-#            return type, despite returning self at runtime (temporarily disabled for
-#            typing.pyi, enabled elsewhere).
-#       Y037 Use PEP 604 syntax instead of `typing.Union` and `typing.Optional`.
+#     Y037   Use PEP 604 syntax instead of `typing.Union` and `typing.Optional`.
 #            Currently can't be enabled due to a few lingering bugs in mypy regarding
 #            PEP 604 type aliases (see #4819).
+#     NQA102 "noqa" code has no matching violations. We often introduce "noqa" comments
+#            into the typeshed codebase to unblock flake8-pyi PRs, meaning these comments
+#            have "no matching violations" since the relevant flake8-pyi checks haven't
+#            yet been released.
 
 [flake8]
 per-file-ignores =
   *.py: E203, E301, E302, E305, E501
-  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822, Y037
+  *.pyi: E301, E302, E305, E501, E701, E741, NQA102, F401, F403, F405, F822, Y037
   # Since typing.pyi defines "overload" this is not recognized by flake8 as typing.overload.
   # Unfortunately, flake8 does not allow to "noqa" just a specific error inside the file itself.
   # https://github.com/PyCQA/flake8/issues/1079
   #     F811 redefinition of unused '...'
-  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822, Y034, Y037
+  stdlib/typing.pyi: E301, E302, E305, E501, E701, E741, NQA102, F401, F403, F405, F811, F822, Y037
+  # Generated protobuf files include docstrings
+  *_pb2.pyi: E301, E302, E305, E501, E701, NQA102, Y021, Y026
 
-exclude = .venv*,.git,*_pb2.pyi,stdlib/@python2/*
+exclude = .venv*,.git,stdlib/@python2/*
+noqa_require_code = true

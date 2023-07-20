@@ -8,7 +8,6 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.ClassTreeNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.progress.ProgressManager;
@@ -41,11 +40,6 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
   public Collection<AbstractTreeNode<?>> modify(@NotNull AbstractTreeNode<?> parent,
                                              @NotNull Collection<AbstractTreeNode<?>> children,
                                              ViewSettings settings) {
-    return AbstractTreeUi.calculateYieldingToWriteAction(() -> doModify(parent, children));
-  }
-
-  @NotNull
-  private Collection<AbstractTreeNode<?>> doModify(@NotNull AbstractTreeNode<?> parent, @NotNull Collection<? extends AbstractTreeNode<?>> children) {
     List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (AbstractTreeNode<?> child : children) {
       ProgressManager.checkCanceled();

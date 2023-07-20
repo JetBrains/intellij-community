@@ -1,0 +1,9 @@
+package test
+
+import JavaAnnotationWithValue
+import java.io.File
+
+@JavaAnnotationWithValue("some")
+class Some {
+    val file = File("")
+}

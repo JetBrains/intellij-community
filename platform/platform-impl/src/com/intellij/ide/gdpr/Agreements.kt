@@ -32,7 +32,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
       text = bundle.getString("userAgreement.dialog.exit"),
       action = {
         if (LoadingState.COMPONENTS_REGISTERED.isOccurred) {
-          ApplicationManager.getApplication().exit(true, true, false)
+          ApplicationManager.getApplication().exit(true, true, false, AppExitCodes.PRIVACY_POLICY_REJECTION)
         }
         else {
           exitProcess(AppExitCodes.PRIVACY_POLICY_REJECTION)

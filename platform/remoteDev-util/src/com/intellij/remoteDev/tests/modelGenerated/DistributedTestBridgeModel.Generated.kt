@@ -83,6 +83,8 @@ class DistributedTestBridgeModel private constructor(
         )
     }
     //contexts
+    //threading
+    override val extThreading: ExtThreadingKind get() = ExtThreadingKind.Default
 }
 val IProtocol.distributedTestBridgeModel get() = getOrCreateExtension(DistributedTestBridgeModel::class) { @Suppress("DEPRECATION") DistributedTestBridgeModel.create(lifetime, this) }
 

@@ -9,6 +9,8 @@ import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.*
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.table.JBTable
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
@@ -35,6 +37,7 @@ open class BaseKotlinImportLayoutPanel(@Nls title: String) : JPanel(BorderLayout
             false,
             JBInsets.emptyInsets()
         )
+        putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
     }
 
     protected fun addPackage() {

@@ -151,7 +151,9 @@ public class TextMateSelectorParser {
     @Override
     public TextMateWeigh weigh(@NotNull TextMateScope scope) {
       CharSequence scopeName = scope.getScopeName();
-      if (scopeName != null && StringUtilRt.startsWith(scopeName, selector)) {
+      if (scopeName != null && (selector.isEmpty() ||
+                                StringUtilRt.startsWith(scopeName, selector + ".") ||
+                                StringUtilRt.equal(scopeName, selector, true))) {
         return new TextMateWeigh(BASE_WEIGH - scope.getDotsCount() + Strings.countChars(selector, '.'),
                                  TextMateWeigh.Priority.NORMAL);
       }

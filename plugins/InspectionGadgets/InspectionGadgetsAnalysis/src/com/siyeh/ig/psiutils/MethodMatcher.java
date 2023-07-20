@@ -3,7 +3,7 @@ package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.options.OptTable;
-import com.intellij.codeInspection.options.OptionController;
+import com.intellij.codeInspection.options.OptionContainer;
 import com.intellij.codeInspection.options.RegexValidator;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsContexts;
@@ -33,7 +33,7 @@ import static com.intellij.codeInspection.options.OptPane.table;
  * Remember to call readSettings() and writeSettings from your inspection class!
  * @author Bas Leijdekkers
  */
-public class MethodMatcher {
+public class MethodMatcher implements OptionContainer {
 
   private final List<String> myMethodNamePatterns = new ArrayList<>();
   private final List<String> myClassNames = new ArrayList<>();
@@ -195,9 +195,5 @@ public class MethodMatcher {
                             new JavaClassValidator()),
                  column("myMethodNamePatterns", InspectionGadgetsBundle.message("method.name.regex"),
                             new RegexValidator()));
-  }
-
-  public @NotNull OptionController getOptionController() {
-    return OptionController.fieldsOf(this);
   }
 }

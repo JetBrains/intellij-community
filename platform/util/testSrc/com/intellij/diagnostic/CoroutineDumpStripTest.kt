@@ -3,12 +3,13 @@ package com.intellij.diagnostic
 
 import com.intellij.diagnostic.CoroutineDumpStripTest.JobTree.Companion.dump
 import com.intellij.diagnostic.CoroutineDumpStripTest.JobTree.Companion.parseAsJobTree
-import com.intellij.testFramework.utils.io.children
+import com.intellij.testFramework.utils.io.getChildren
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.DynamicTest
 import org.junit.jupiter.api.TestFactory
 import java.io.StringWriter
 import java.nio.file.Path
+import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.readLines
 import kotlin.io.path.relativeTo
 import kotlin.io.path.toPath
@@ -17,7 +18,7 @@ class CoroutineDumpStripTest {
   @TestFactory
   fun generateTests(): List<DynamicTest> {
     val dataPath = this.javaClass.getResource("/coroutine-dump-strip")!!.toURI().toPath()
-    return dataPath.children.map {
+    return dataPath.listDirectoryEntries().map {
       DynamicTest.dynamicTest(it.relativeTo(dataPath).toString()) {
         runScenario(it)
       }
@@ -29,7 +30,7 @@ class CoroutineDumpStripTest {
     val jobTree = scenarioData.parseAsJobTree()
 
     val expected = jobTree.transformTraces { it.filter { !it.omitMark }.map { it.element } }
-    val stripped = jobTree.transformTraces { stripTrace(it.map { it.element }) }
+    val stripped = jobTree.transformTraces { stripCoroutineTrace(it.map { it.element }) }
 
     assertEquals(expected.dump(), stripped.dump())
   }

@@ -8,11 +8,10 @@ import com.intellij.codeInsight.daemon.LineMarkerSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DocRenderDummyLineMarkerProvider extends LineMarkerProviderDescriptor {
+public final class DocRenderDummyLineMarkerProvider extends LineMarkerProviderDescriptor {
   private static final DocRenderDummyLineMarkerProvider INSTANCE = new DocRenderDummyLineMarkerProvider();
 
   @Override
@@ -31,7 +30,7 @@ public class DocRenderDummyLineMarkerProvider extends LineMarkerProviderDescript
   }
 
   @Override
-  public @Nullable Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Gutter.JavadocRead;
   }
 

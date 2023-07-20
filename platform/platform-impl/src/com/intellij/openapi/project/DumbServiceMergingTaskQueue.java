@@ -1,10 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,9 +21,13 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
   private final AtomicBoolean myFirstExecution = new AtomicBoolean(true);
 
   private void waitRequiredTasksToStartIndexing() {
+    var logger = Logger.getInstance(DumbServiceMergingTaskQueue.class);
+    logger.info("Initializing DumbServiceMergingTaskQueue...");
     if (myFirstExecution.compareAndSet(true, false)) {
       for (DumbServiceInitializationCondition condition : DUMB_SERVICE_INITIALIZATION_CONDITION_EXTENSION_POINT_NAME.getExtensionList()) {
+        logger.info("Running initialization condition: " + condition);
         condition.waitForInitialization();
+        logger.info("Finished: " + condition);
       }
     }
   }
@@ -32,15 +38,16 @@ public class DumbServiceMergingTaskQueue extends MergingTaskQueue<DumbModeTask> 
   }
 
   @Override
-  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator) {
-    return new QueuedDumbModeTask(task, indicator);
+  protected QueuedDumbModeTask wrapTask(DumbModeTask task, ProgressIndicatorBase indicator, @Nullable CoroutineContext context) {
+    return new QueuedDumbModeTask(task, indicator, context);
   }
 
   class QueuedDumbModeTask extends MergingTaskQueue.QueuedTask<DumbModeTask> {
 
     QueuedDumbModeTask(@NotNull DumbModeTask task,
-                       @NotNull ProgressIndicatorEx progress) {
-      super(task, progress);
+                       @NotNull ProgressIndicatorEx progress,
+                       @Nullable CoroutineContext context) {
+      super(task, progress, context);
     }
 
     @Override

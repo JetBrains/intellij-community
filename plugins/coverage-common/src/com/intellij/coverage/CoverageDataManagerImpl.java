@@ -273,7 +273,11 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   @Override
   public void removeCoverageSuite(final CoverageSuite suite) {
     suite.deleteCachedCoverageData();
+    unregisterCoverageSuite(suite);
+  }
 
+  @Override
+  public void unregisterCoverageSuite(CoverageSuite suite) {
     myCoverageSuites.remove(suite);
     if (myCurrentSuitesBundle != null && myCurrentSuitesBundle.contains(suite)) {
       CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
@@ -465,7 +469,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   private void applyInformationToEditor(FileEditor[] editors, final VirtualFile file) {
-    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> PsiManager.getInstance(myProject).findFile(file));
+    final PsiFile psiFile = doInReadActionIfProjectOpen(() -> file.isValid() ? PsiManager.getInstance(myProject).findFile(file) : null);
     if (psiFile != null && myCurrentSuitesBundle != null && psiFile.isPhysical()) {
       final CoverageEngine engine = myCurrentSuitesBundle.getCoverageEngine();
       if (!engine.coverageEditorHighlightingApplicableTo(psiFile)) {

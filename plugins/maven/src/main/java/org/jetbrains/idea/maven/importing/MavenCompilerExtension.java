@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
-import org.jetbrains.idea.maven.project.ResolveContext;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -48,8 +47,7 @@ public interface MavenCompilerExtension {
   default boolean resolveDefaultCompiler(@NotNull Project project,
                                          @NotNull MavenProject mavenProject,
                                          @NotNull NativeMavenProjectHolder nativeMavenProject,
-                                         @NotNull MavenEmbedderWrapper embedder,
-                                         @NotNull ResolveContext context) throws MavenProcessCanceledException { return false; }
+                                         @NotNull MavenEmbedderWrapper embedder) throws MavenProcessCanceledException { return false; }
 
   @Nullable
   default String getDefaultCompilerTargetLevel(@NotNull MavenProject mavenProject, @NotNull Module module) { return null; }

@@ -52,12 +52,6 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
   public JavaLineMarkerProvider() { }
 
-  /**
-   * @deprecated use {@link #JavaLineMarkerProvider()}
-   */
-  @Deprecated(forRemoval = true)
-  public JavaLineMarkerProvider(DaemonCodeAnalyzerSettings daemonSettings, EditorColorsManager colorsManager) { }
-
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();

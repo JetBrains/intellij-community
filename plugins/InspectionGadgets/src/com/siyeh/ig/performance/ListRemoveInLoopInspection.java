@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
@@ -101,7 +102,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
        *   list.remove(i);
        * }}</pre>
        */
-      private boolean isRemoveInCountingLoop(PsiLoopStatement forLoop, PsiExpression arg) {
+      private static boolean isRemoveInCountingLoop(PsiLoopStatement forLoop, PsiExpression arg) {
         if (!(forLoop instanceof PsiForStatement)) return false;
         CountingLoop loop = CountingLoop.from((PsiForStatement)forLoop);
         if (loop == null) return false;
@@ -113,7 +114,7 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
-  private static class ListRemoveInLoopFix implements LocalQuickFix {
+  private static class ListRemoveInLoopFix extends PsiUpdateModCommandQuickFix {
     @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
@@ -122,8 +123,8 @@ public class ListRemoveInLoopInspection extends AbstractBaseJavaLocalInspectionT
     }
 
     @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiLoopStatement loopStatement = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiLoopStatement.class);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      PsiLoopStatement loopStatement = PsiTreeUtil.getParentOfType(element, PsiLoopStatement.class);
       if (loopStatement == null) return;
       PsiExpressionStatement statement = tryCast(ControlFlowUtils.stripBraces(loopStatement.getBody()), PsiExpressionStatement.class);
       if (statement == null) return;

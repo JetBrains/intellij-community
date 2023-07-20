@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.JavaXmlDocumentKt;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,6 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.io.StringReader;
 
@@ -59,16 +58,13 @@ public class PasteMvnDependencyPreProcessor implements CopyPastePreProcessor {
 
   @ApiStatus.Internal
   public static @NotNull String toGradleDependency(@NotNull String mavenDependency, @NotNull GradleVersion gradleVersion) {
-    DocumentBuilderFactory factory = DocumentBuilderFactory.newDefaultInstance();
-    factory.setValidating(false);
-
     try {
-      DocumentBuilder builder = factory.newDocumentBuilder();
+      DocumentBuilder builder = JavaXmlDocumentKt.createDocumentBuilder();
       Document document = builder.parse(new InputSource(new StringReader(mavenDependency)));
       String gradleDependency = extractGradleDependency(document, gradleVersion);
       return gradleDependency != null ? gradleDependency : mavenDependency;
     }
-    catch (ParserConfigurationException | SAXException | IOException ignored) {
+    catch (SAXException | IOException ignored) {
     }
 
     return mavenDependency;

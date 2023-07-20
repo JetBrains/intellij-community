@@ -120,7 +120,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
     final PsiAnnotation[] annotations = list.getAnnotations();
     if (annotations.length > 0) {
-      final Set<PsiAnnotation> annotationSet = ContainerUtil.set(annotations);
+      final Set<PsiAnnotation> annotationSet = ContainerUtil.newHashSet(annotations);
 
       for (PsiAnnotation annotation : annotations) {
         final PsiJavaCodeReferenceElement nameReferenceElement = annotation.getNameReferenceElement();

@@ -19,9 +19,9 @@ fun bar() {
 // EXPRESSION: listOf(1, 2, 3).map { it }.size
 // RESULT: 3: I
 
-// MODULE: jvm
+// MODULE: jvm(common)
 // FILE: evaluateInCommonCode.kt
-// DEPENDS_ON: common
+
 
 actual fun foo() = 1
 

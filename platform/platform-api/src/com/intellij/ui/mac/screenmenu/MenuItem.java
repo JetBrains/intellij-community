@@ -17,7 +17,7 @@ import java.awt.image.DataBufferInt;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-@SuppressWarnings({"UndesirableClassUsage", "NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized"})
+@SuppressWarnings({"UndesirableClassUsage", "NonPrivateFieldAccessedInSynchronizedContext", "FieldAccessedSynchronizedAndUnsynchronized", "unused"})
 public class MenuItem implements Disposable, PropertyChangeListener {
   long nativePeer;
   Runnable actionDelegate;

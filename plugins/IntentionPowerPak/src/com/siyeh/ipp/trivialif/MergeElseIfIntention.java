@@ -15,17 +15,18 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.psi.*;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MergeElseIfIntention extends Intention {
+public class MergeElseIfIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -33,7 +34,7 @@ public class MergeElseIfIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  public @IntentionName @NotNull String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("merge.else.if.intention.name");
   }
 

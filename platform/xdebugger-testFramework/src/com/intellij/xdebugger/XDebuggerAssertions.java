@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
@@ -30,6 +29,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
@@ -69,6 +69,13 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
 
   public static void assertCurrentPosition(@NotNull XDebugSession session, @NotNull VirtualFile file, int line) throws IOException {
     assertPosition(session.getCurrentPosition(), file, line);
+  }
+
+  public static void assertVariable(@NotNull Collection<? extends XValue> vars,
+                                    @Nullable String name,
+                                    @Nullable String type,
+                                    @Nullable String value) {
+    assertVariable(vars, name, type, value, null, null);
   }
 
   public static void assertVariable(@NotNull Collection<? extends XValue> vars,
@@ -318,21 +325,21 @@ public class XDebuggerAssertions extends XDebuggerTestUtil {
 
   private static String computeFullValue(@NotNull XTestValueNode node) throws Exception {
     assertNotNull("full value evaluator should be not null", node.myFullValueEvaluator);
-    final FutureResult<String> result = new FutureResult<>();
+    CompletableFuture<String> result = new CompletableFuture<>();
     node.myFullValueEvaluator.startEvaluation(new XFullValueEvaluator.XFullValueEvaluationCallback() {
       @Override
       public void evaluated(@NotNull String fullValue) {
-        result.set(fullValue);
+        result.complete(fullValue);
       }
 
       @Override
       public void evaluated(@NotNull String fullValue, @Nullable Font font) {
-        result.set(fullValue);
+        result.complete(fullValue);
       }
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        result.set(errorMessage);
+        result.complete(errorMessage);
       }
     });
 

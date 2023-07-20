@@ -4,7 +4,6 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiClassInitializer
 import com.intellij.psi.PsiElement
-import com.intellij.util.lazyPub
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
@@ -16,7 +15,7 @@ class JavaUClassInitializer(
 ) : JavaAbstractUElement(uastParent), UClassInitializerEx, JavaUElementWithComments, UAnchorOwner, PsiClassInitializer by sourcePsi {
 
   @Suppress("OverridingDeprecatedMember")
-  override val psi get() = sourcePsi
+  override val psi: PsiClassInitializer get() = sourcePsi
 
   override val javaPsi: PsiClassInitializer = sourcePsi
 

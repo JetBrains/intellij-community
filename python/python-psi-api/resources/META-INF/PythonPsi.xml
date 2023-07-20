@@ -36,6 +36,9 @@
     <extensionPoint qualifiedName="Pythonid.inspectionExtension"
                     interface="com.jetbrains.python.inspections.PyInspectionExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="Pythonid.statementEffectQuickFixProvider"
+                    interface="com.jetbrains.python.inspections.PyStatementEffectQuickFixProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyClassInheritorsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pyOverridingMethodsSearch" interface="com.intellij.util.QueryExecutor" dynamic="true"/>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider"

@@ -3,7 +3,6 @@
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.CtrlMouseData
-import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.find.actions.PsiTargetVariant
 import com.intellij.find.actions.SearchTargetVariant
 import com.intellij.find.actions.TargetVariant
@@ -24,10 +23,6 @@ internal fun gotoDeclarationOrUsages(file: PsiFile, offset: Int): GTDUActionData
  * "Go To Declaration Or Usages" action data
  */
 internal interface GTDUActionData {
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  fun ctrlMouseInfo(): CtrlMouseInfo?
 
   fun ctrlMouseData(): CtrlMouseData?
 
@@ -69,19 +64,12 @@ private fun fromTargetData(file: PsiFile, offset: Int): GTDUActionData? {
 internal fun GTDActionData.toGTDUActionData(): GTDUActionData? {
   val gtdActionResult = result() ?: return null                           // nowhere to navigate
   return object : GTDUActionData {
-    @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
-    @Deprecated("Unused in v2 implementation")
-    override fun ctrlMouseInfo(): CtrlMouseInfo? = this@toGTDUActionData.ctrlMouseInfo()
     override fun ctrlMouseData(): CtrlMouseData? = this@toGTDUActionData.ctrlMouseData()
     override fun result(): GTDUActionResult = GTDUActionResult.GTD(gtdActionResult)
   }
 }
 
 private class ShowUsagesGTDUActionData(private val project: Project, private val targetData: TargetData) : GTDUActionData {
-
-  @Suppress("DEPRECATION")
-  @Deprecated("Unused in v2 implementation")
-  override fun ctrlMouseInfo(): CtrlMouseInfo? = targetData.ctrlMouseInfo()
 
   override fun ctrlMouseData(): CtrlMouseData? = targetData.ctrlMouseData(project)
 

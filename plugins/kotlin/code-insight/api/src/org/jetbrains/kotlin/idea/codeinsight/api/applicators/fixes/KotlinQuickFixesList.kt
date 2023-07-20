@@ -71,7 +71,6 @@ class KtQuickFixesListBuilder private constructor() {
         quickFixes.getOrPut(diagnosticClass) { mutableListOf() }.add(KotlinQuickFixFactory.KotlinQuickFixesPsiBasedFactory(quickFixFactory))
     }
 
-    @OptIn(PrivateForInline::class)
     fun <DIAGNOSTIC : KtDiagnosticWithPsi<*>> registerApplicators(
         quickFixFactories: Collection<KotlinDiagnosticFixFactory<out DIAGNOSTIC>>
     ) {

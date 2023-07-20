@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractclass;
 
 import com.intellij.java.JavaBundle;
@@ -52,7 +52,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
   private final JCheckBox createInner;
   private final List<MemberInfo> enumConstants = new ArrayList<>();
 
-  ExtractClassDialog(PsiClass sourceClass, PsiMember selectedMember) {
+  ExtractClassDialog(PsiClass sourceClass, Set<PsiElement> selectedMembers) {
     super(sourceClass.getProject(), true);
     setModal(true);
     setTitle(RefactorJBundle.message("extract.class.title"));
@@ -105,7 +105,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     boolean hasConstants = false;
     for (MemberInfo info : memberInfo) {
       final PsiMember member = info.getMember();
-      if (member.equals(selectedMember)) {
+      if (selectedMembers.contains(member)) {
         info.setChecked(true);
       }
       if (!hasConstants &&

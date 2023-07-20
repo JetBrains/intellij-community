@@ -24,7 +24,7 @@ abstract class ExternalSystemReifiedRunConfigurationExtension<C : ExternalSystem
 
   @Suppress("UNCHECKED_CAST")
   override fun <P : ExternalSystemRunConfiguration> createFragments(configuration: P): List<SettingsEditor<P>> {
-    return SettingsFragmentsContainer.fragments<C> {
+    return SettingsFragmentsContainer.fragments {
       configureFragments(configuration as C)
     } as List<SettingsEditor<P>>
   }

@@ -104,7 +104,7 @@ public final class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
   }
 
   @Override
-  public void setConfigFileInfos(@NotNull List<ConfigFileItem> configFileItems) {
+  public void setConfigFileItems(@NotNull List<ConfigFileItem> configFileItems) {
     var configFileInfos = new ArrayList<ConfigFileInfo>();
     for (var configFileItem : configFileItems) {
       var metadata = myMetaDataProvider.findMetaData(configFileItem.getId());

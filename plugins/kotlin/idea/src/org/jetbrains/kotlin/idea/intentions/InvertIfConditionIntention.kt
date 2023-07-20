@@ -59,7 +59,7 @@ class InvertIfConditionIntention : SelfTargetingIntention<KtIfExpression>(
             if (it.operationReference.getReferencedNameElementType() == KtTokens.EXCL) {
                 val binaryExpr = (it.baseExpression as? KtParenthesizedExpression)?.expression as? KtBinaryExpression
                 if (binaryExpr != null) {
-                    ConvertBinaryExpressionWithDemorgansLawIntention.convertIfPossible(binaryExpr)
+                    ConvertBinaryExpressionWithDemorgansLawIntention.Holder.convertIfPossible(binaryExpr)
                 }
             }
         }

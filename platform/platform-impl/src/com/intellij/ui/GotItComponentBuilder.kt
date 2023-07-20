@@ -357,9 +357,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
 
     if (showButton) {
       val button = JButton(buttonLabel).apply {
-        if (ExperimentalUI.isNewUI()) {
-          font = JBFont.label().asBold()
-        }
         isFocusable = requestFocus
         isOpaque = false
         foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
@@ -409,9 +406,9 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
   }
 
   companion object {
-    internal const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
+    internal const val CLOSE_ACTION_NAME: String = "CloseGotItTooltip"
 
-    internal const val MAX_LINES_COUNT = 5
+    internal const val MAX_LINES_COUNT: Int = 5
 
     /**
      * Max width of the text if lines count is less than [MAX_LINES_COUNT]

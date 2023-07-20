@@ -176,6 +176,8 @@ class WslSyncTest(private val linToWin: Boolean) {
     val modifyEachFile = 3
 
     val windowsDir = winDirRule.newDirectoryPath()
+    val executable = "execfile"
+    val execTxt = "exec.txt"
     val fileNames = (0..numberOfFiles).map { "$it-по-русски.txt" }
 
     val srcDir = if (linToWin) linuxDirAsPath else windowsDir
@@ -184,8 +186,13 @@ class WslSyncTest(private val linToWin: Boolean) {
     for (fileName in fileNames) {
       srcDir.resolve(fileName).writeText("hello $fileName")
     }
+    srcDir.resolve(executable).writeText("#!/bin/sh")
+    srcDir.resolve(execTxt).writeText(" $executable   ") // Must be marked executable on Linux
 
     WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin)
+    if (!linToWin) {
+      wslRule.wsl.runCommand("${linuxDirRule.dir}/$executable").getOrThrow()
+    }
 
     val modificationTimes = mutableMapOf<Path, FileTime>()
     for (fileName in fileNames) {
@@ -194,7 +201,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       Assert.assertEquals("Copied with wrong content", "hello $fileName", file.readText())
       modificationTimes[file] = file.lastModified()
     }
-    Assert.assertEquals(fileNames.size, dstDir.toFile().list()!!.size)
+    Assert.assertEquals(fileNames.size + 2, dstDir.toFile().list()!!.size) // +  exec files
 
     Thread.sleep(1000) // To check modification time
 

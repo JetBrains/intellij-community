@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.tools;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.InspectionUsageStorage;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
@@ -89,7 +90,7 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD =
     EventFields.StringValidatedByCustomRule("option_name", PluginInfoValidationRule.class);
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 13);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 14);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -119,6 +120,16 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
                               SCOPE_FIELD,
                               SEVERITY_FIELD,
                               EventFields.PluginInfo);
+
+  private static final StringListEventField INSPECTION_IDS_REPORTING_PROBLEMS_FIELD = EventFields.StringListValidatedByCustomRule(
+    "inspectionIds", InspectionToolValidator.class);
+
+  @SuppressWarnings("TypeParameterExtendsFinalClass")
+  private static final EventId2<List<? extends String>, Integer> INSPECTION_IDS_REPORTING_PROBLEMS = GROUP.registerEvent(
+    "inspections.reporting.problems",
+    INSPECTION_IDS_REPORTING_PROBLEMS_FIELD,
+    EventFields.Int("inspectionSessions")
+  );
 
   @Override
   public EventLogGroup getGroup() {
@@ -155,7 +166,15 @@ public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
       final MetricEvent scopeAndSeverityEvent = getChangedScopeAndSeverityEvent(state, pluginInfo);
       if (scopeAndSeverityEvent != null) result.add(scopeAndSeverityEvent);
     }
+
+    result.add(getInspectionsReportingProblemsEvent(project));
+
     return result;
+  }
+
+  private static MetricEvent getInspectionsReportingProblemsEvent(@NotNull Project project) {
+    InspectionUsageStorage.Report report = InspectionUsageStorage.getInstance(project).collectHighligtingReport();
+    return INSPECTION_IDS_REPORTING_PROBLEMS.metric(new ArrayList<>(report.inspectionsReportingProblems()), report.inspectionSessionCount());
   }
 
   private static Collection<MetricEvent> getChangedSettingsEvents(InspectionToolWrapper<?, ?> tool,

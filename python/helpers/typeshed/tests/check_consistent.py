@@ -16,43 +16,39 @@ import filecmp
 import os
 import re
 import sys
+from pathlib import Path
 
 import tomli
+import yaml
 from packaging.requirements import Requirement
+from packaging.specifiers import SpecifierSet
 from packaging.version import Version
+from utils import VERSIONS_RE, get_all_testcase_directories, strip_comments
 
 consistent_files = [{"stdlib/@python2/builtins.pyi", "stdlib/@python2/__builtin__.pyi"}]
 metadata_keys = {"version", "requires", "extra_description", "obsolete_since", "no_longer_updated", "tool"}
-tool_keys = {"stubtest": {"skip", "apt_dependencies", "ignore_missing_stub"}}
-allowed_files = {"README.md"}
+tool_keys = {"stubtest": {"skip", "apt_dependencies", "extras", "ignore_missing_stub"}}
+extension_descriptions = {".pyi": "stub", ".py": ".py"}
 
 
-def assert_stubs_only(directory: str) -> None:
-    """Check that given directory contains only valid stub files."""
-    top = directory.split(os.sep)[-1]
-    assert top.isidentifier(), f"Bad directory name: {top}"
-    for _, dirs, files in os.walk(directory):
-        for file in files:
-            if file in allowed_files:
-                continue
-            name, ext = os.path.splitext(file)
-            assert name.isidentifier(), f"Files must be valid modules, got: {name}"
-            assert ext == ".pyi", f"Only stub flies allowed. Got: {file} in {directory}"
-        for subdir in dirs:
-            assert subdir.isidentifier(), f"Directories must be valid packages, got: {subdir}"
-
-
-def check_stdlib() -> None:
-    for entry in os.listdir("stdlib"):
-        if os.path.isfile(os.path.join("stdlib", entry)):
-            name, ext = os.path.splitext(entry)
-            if ext != ".pyi":
-                assert entry == "VERSIONS", f"Unexpected file in stdlib root: {entry}"
-            assert name.isidentifier(), "Bad file name in stdlib"
+def assert_consistent_filetypes(directory: Path, *, kind: str, allowed: set[str]) -> None:
+    """Check that given directory contains only valid Python files of a certain kind."""
+    allowed_paths = {Path(f) for f in allowed}
+    contents = list(directory.iterdir())
+    while contents:
+        entry = contents.pop()
+        if entry.relative_to(directory) in allowed_paths:
+            # Note if a subdirectory is allowed, we will not check its contents
+            continue
+        if entry.is_file():
+            assert entry.stem.isidentifier(), f'Files must be valid modules, got: "{entry}"'
+            bad_filetype = f'Only {extension_descriptions[kind]!r} files allowed in the "{directory}" directory; got: {entry}'
+            assert entry.suffix == kind, bad_filetype
         else:
             if entry == "@python2":
                 continue
-            assert_stubs_only(os.path.join("stdlib", entry))
+            assert entry.name.isidentifier(), f"Directories must be valid packages, got: {entry}"
+            contents.extend(entry.iterdir())
     for entry in os.listdir("stdlib/@python2"):
         if os.path.isfile(os.path.join("stdlib/@python2", entry)):
             name, ext = os.path.splitext(entry)
@@ -62,24 +58,44 @@ def check_stdlib() -> None:
             assert_stubs_only(os.path.join("stdlib/@python2", entry))
 
 
+def check_stdlib() -> None:
+    assert_consistent_filetypes(Path("stdlib"), kind=".pyi", allowed={"_typeshed/README.md", "VERSIONS"})
+
+
 def check_stubs() -> None:
-    for distribution in os.listdir("stubs"):
-        assert not os.path.isfile(distribution), f"Only directories allowed in stubs, got {distribution}"
-        for entry in os.listdir(os.path.join("stubs", distribution)):
-            if os.path.isfile(os.path.join("stubs", distribution, entry)):
-                name, ext = os.path.splitext(entry)
-                if ext != ".pyi":
-                    assert entry in {"METADATA.toml", "README", "README.md", "README.rst"}, entry
-                else:
-                    assert name.isidentifier(), f"Bad file name '{entry}' in stubs"
-            else:
-                if entry == "@tests":
-                    continue
-                assert_stubs_only(os.path.join("stubs", distribution, entry))
+    for dist in Path("stubs").iterdir():
+        assert dist.is_dir(), f"Only directories allowed in stubs, got {dist}"
+
+        valid_dist_name = "^([A-Z0-9]|[A-Z0-9][A-Z0-9._-]*[A-Z0-9])$"  # courtesy of PEP 426
+        assert re.fullmatch(
+            valid_dist_name, dist.name, re.IGNORECASE
+        ), f"Directory name must be a valid distribution name: {dist}"
+        assert not dist.name.startswith("types-"), f"Directory name not allowed to start with 'types-': {dist}"
+
+        allowed = {"METADATA.toml", "README", "README.md", "README.rst", "@tests"}
+        assert_consistent_filetypes(dist, kind=".pyi", allowed=allowed)
 
 
-def check_same_files() -> None:
-    files = [os.path.join(root, file) for root, dir, files in os.walk(".") for file in files]
+def check_test_cases() -> None:
+    for package_name, testcase_dir in get_all_testcase_directories():
+        assert_consistent_filetypes(testcase_dir, kind=".py", allowed={"README.md"})
+        bad_test_case_filename = 'Files in a `test_cases` directory must have names starting with "check_"; got "{}"'
+        for file in testcase_dir.rglob("*.py"):
+            assert file.stem.startswith("check_"), bad_test_case_filename.format(file)
+            if package_name != "stdlib":
+                with open(file) as f:
+                    lines = {line.strip() for line in f}
+                pyright_setting_not_enabled_msg = (
+                    f'Third-party test-case file "{file}" must have '
+                    f'"# pyright: reportUnnecessaryTypeIgnoreComment=true" '
+                    f"at the top of the file"
+                )
+                has_pyright_setting_enabled = "# pyright: reportUnnecessaryTypeIgnoreComment=true" in lines
+                assert has_pyright_setting_enabled, pyright_setting_not_enabled_msg
+
+
+def check_no_symlinks() -> None:
+    files = [os.path.join(root, file) for root, _, files in os.walk(".") for file in files]
     no_symlink = "You cannot use symlinks in typeshed, please copy {} to its link."
     for file in files:
         _, ext = os.path.splitext(file)
@@ -96,18 +112,15 @@ def check_same_files() -> None:
                 )
 
 
-_VERSIONS_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_.]*): [23]\.\d{1,2}-(?:[23]\.\d{1,2})?$")
-
-
 def check_versions() -> None:
     versions = set()
     with open("stdlib/VERSIONS") as f:
         data = f.read().splitlines()
     for line in data:
-        line = line.split("#")[0].strip()
+        line = strip_comments(line)
         if line == "":
             continue
-        m = _VERSIONS_RE.match(line)
+        m = VERSIONS_RE.match(line)
         if not m:
             raise AssertionError(f"Bad line in VERSIONS: {line}")
         module = m.group(1)
@@ -162,10 +175,48 @@ def check_metadata() -> None:
                 assert key in tk, f"Unrecognised {tool} key {key} for {distribution}"
 
 
+def get_txt_requirements() -> dict[str, SpecifierSet]:
+    with open("requirements-tests.txt") as requirements_file:
+        stripped_lines = map(strip_comments, requirements_file)
+        requirements = map(Requirement, filter(None, stripped_lines))
+        return {requirement.name: requirement.specifier for requirement in requirements}
+
+
+def get_precommit_requirements() -> dict[str, SpecifierSet]:
+    with open(".pre-commit-config.yaml") as precommit_file:
+        precommit = precommit_file.read()
+    yam = yaml.load(precommit, Loader=yaml.Loader)
+    precommit_requirements = {}
+    for repo in yam["repos"]:
+        hook = repo["hooks"][0]
+        package_name, package_rev = hook["id"], repo["rev"]
+        package_specifier = SpecifierSet(f"=={package_rev.removeprefix('v')}")
+        precommit_requirements[package_name] = package_specifier
+        for additional_req in hook.get("additional_dependencies", []):
+            req = Requirement(additional_req)
+            precommit_requirements[req.name] = req.specifier
+    return precommit_requirements
+
+
+def check_requirements() -> None:
+    requirements_txt_requirements = get_txt_requirements()
+    precommit_requirements = get_precommit_requirements()
+    no_txt_entry_msg = "All pre-commit requirements must also be listed in `requirements-tests.txt` (missing {requirement!r})"
+    for requirement, specifier in precommit_requirements.items():
+        assert requirement in requirements_txt_requirements, no_txt_entry_msg.format(requirement)
+        specifier_mismatch = (
+            f'Specifier "{specifier}" for {requirement!r} in `.pre-commit-config.yaml` '
+            f'does not match specifier "{requirements_txt_requirements[requirement]}" in `requirements-tests.txt`'
+        )
+        assert specifier == requirements_txt_requirements[requirement], specifier_mismatch
+
+
 if __name__ == "__main__":
     assert sys.version_info >= (3, 9), "Python 3.9+ is required to run this test"
     check_stdlib()
     check_versions()
     check_stubs()
     check_metadata()
-    check_same_files()
+    check_no_symlinks()
+    check_test_cases()
+    check_requirements()

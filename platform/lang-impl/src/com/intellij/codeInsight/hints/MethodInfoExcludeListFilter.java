@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings;
 import com.intellij.lang.Language;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +43,7 @@ public class MethodInfoExcludeListFilter implements HintInfoFilter {
   }
 
   @NotNull
+  @Unmodifiable
   private static Set<String> fullExcludelist(Language language) {
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) {

@@ -5,6 +5,7 @@ import org.ec4j.core.model.Glob;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -20,7 +21,7 @@ public final class GlobVisibilityWorkaround {
     try {
       Method m = glob.getClass().getDeclaredMethod("convertGlobToRegEx", String.class, List.class, StringBuilder.class);
       m.setAccessible(true);
-      m.invoke(glob, globString, Collections.EMPTY_LIST, result);
+      m.invoke(glob, globString, new ArrayList<>(), result);
     }
     catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException e) {
       throw new RuntimeException(e);

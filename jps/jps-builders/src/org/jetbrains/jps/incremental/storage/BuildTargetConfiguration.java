@@ -52,7 +52,7 @@ public final class BuildTargetConfiguration {
     return "";
   }
 
-  public boolean isTargetDirty(final ProjectDescriptor pd) {
+  public boolean isTargetDirty(@NotNull ProjectDescriptor pd) {
     return DIRTY_MARK.equals(myConfiguration) || !getCurrentState(pd).equals(myConfiguration);
   }
 
@@ -118,7 +118,7 @@ public final class BuildTargetConfiguration {
   }
 
   @NotNull
-  private String getCurrentState(final ProjectDescriptor pd) {
+  private String getCurrentState(@NotNull ProjectDescriptor pd) {
     String state = myCurrentState;
     if (state == null) {
       myCurrentState = state = saveToString(pd);
@@ -126,7 +126,7 @@ public final class BuildTargetConfiguration {
     return state;
   }
 
-  private String saveToString(final ProjectDescriptor pd) {
+  private @NotNull String saveToString(@NotNull ProjectDescriptor pd) {
     StringWriter out = new StringWriter();
     myTarget.writeConfiguration(pd, new PrintWriter(out));
     return out.toString();

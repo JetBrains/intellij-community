@@ -13,6 +13,8 @@ import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.startup.StartupActionScriptManager.ActionCommand;
 import com.intellij.idea.StartupErrorReporter;
+import com.intellij.openapi.application.migrations.BigDataTools232;
+import com.intellij.openapi.application.migrations.PackageSearch232;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -34,9 +36,8 @@ import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -47,12 +48,14 @@ import com.intellij.util.ui.IoErrorText;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.lang.reflect.Constructor;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.DosFileAttributes;
@@ -104,10 +107,11 @@ public final class ConfigImportHelper {
     log.info("Importing configs to " + newConfigDir);
     System.setProperty(FIRST_SESSION_KEY, Boolean.TRUE.toString());
 
-    CustomConfigMigrationOption customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
+    var customMigrationOption = CustomConfigMigrationOption.readCustomConfigMigrationOptionAndRemoveMarkerFile(newConfigDir);
+    log.info("Custom migration option: " + customMigrationOption);
 
-    if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties) {
-      List<String> properties = ((CustomConfigMigrationOption.SetProperties)customMigrationOption).getProperties();
+    if (customMigrationOption instanceof CustomConfigMigrationOption.SetProperties sp) {
+      List<String> properties = sp.getProperties();
       log.info("Enabling system properties after restart: " + properties);
       for (String property : properties) {
         System.setProperty(property, Boolean.TRUE.toString());
@@ -125,14 +129,13 @@ public final class ConfigImportHelper {
 
     try {
       Pair<Path, Path> oldConfigDirAndOldIdePath = null;
-      if (customMigrationOption != null) {
-        log.info("Custom migration option: " + customMigrationOption);
+      if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace ||
+          customMigrationOption instanceof CustomConfigMigrationOption.StartWithCleanConfig) {
         vmOptionFileChanged = doesVmOptionsFileExist(newConfigDir);
         try {
-          if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace) {
+          if (customMigrationOption instanceof CustomConfigMigrationOption.MigrateFromCustomPlace mcp) {
             tempBackup = backupCurrentConfigToTempAndDelete(newConfigDir, log, false, settings);
-            Path location = ((CustomConfigMigrationOption.MigrateFromCustomPlace)customMigrationOption).getLocation();
-            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(location);
+            oldConfigDirAndOldIdePath = findConfigDirectoryByPath(mcp.getLocation());
             importScenarioStatistics = IMPORT_SETTINGS_ACTION;
           }
           else {
@@ -184,8 +187,9 @@ public final class ConfigImportHelper {
         Path oldConfigDir = oldConfigDirAndOldIdePath.first;
         Path oldIdeHome = oldConfigDirAndOldIdePath.second;
 
-        ConfigImportOptions configImportOptions = new ConfigImportOptions(log);
+        var configImportOptions = new ConfigImportOptions(log);
         configImportOptions.importSettings = settings;
+        configImportOptions.merge = customMigrationOption instanceof CustomConfigMigrationOption.MergeConfigs;
         if (!guessedOldConfigDirs.fromSameProduct) {
           importScenarioStatistics = IMPORTED_FROM_OTHER_PRODUCT;
         }
@@ -218,7 +222,7 @@ public final class ConfigImportHelper {
     finally {
       if (tempBackup != null) {
         try {
-          moveTempBackupToStandardBackup(tempBackup);
+          moveTempBackupToStandardBackup(newConfigDir, tempBackup);
         }
         catch (IOException e) {
           log.warn(String.format("Couldn't move the backup of current config from temp dir [%s] to backup dir", tempBackup), e);
@@ -247,12 +251,20 @@ public final class ConfigImportHelper {
   static @Nullable ConfigImportSettings findCustomConfigImportSettings() {
     try {
       String customProviderName = "com.intellij.openapi.application." + PlatformUtils.getPlatformPrefix() + "ConfigImportSettings";
-      @SuppressWarnings("unchecked") Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
+      @SuppressWarnings("unchecked")
+      Class<ConfigImportSettings> customProviderClass = (Class<ConfigImportSettings>)Class.forName(customProviderName);
       if (ConfigImportSettings.class.isAssignableFrom(customProviderClass)) {
-        return ReflectionUtil.newInstance(customProviderClass);
+        Constructor<ConfigImportSettings> constructor = customProviderClass.getDeclaredConstructor();
+        try {
+          constructor.setAccessible(true);
+        }
+        catch (SecurityException ignored) {
+        }
+        return constructor.newInstance();
       }
     }
-    catch (Exception ignored) { }
+    catch (Exception ignored) {
+    }
     return null;
   }
 
@@ -286,10 +298,9 @@ public final class ConfigImportHelper {
   }
 
   private static File backupCurrentConfigToTempAndDelete(Path currentConfig, Logger log, boolean smartDelete, @Nullable ConfigImportSettings settings) throws IOException {
-    Path configDir = PathManager.getConfigDir();
-    File tempBackupDir = FileUtil.createTempDirectory(configDir.getFileName().toString(), "-backup-" + UUID.randomUUID());
+    File tempBackupDir = FileUtil.createTempDirectory(currentConfig.getFileName().toString(), "-backup-" + UUID.randomUUID());
     log.info("Backup config from " + currentConfig + " to " + tempBackupDir);
-    FileUtil.copyDir(configDir.toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.toPath(), settings));
+    FileUtil.copyDir(currentConfig.toFile(), tempBackupDir, file -> !shouldSkipFileDuringImport(file.toPath(), settings));
 
     deleteCurrentConfigDir(currentConfig, log, smartDelete);
 
@@ -335,8 +346,8 @@ public final class ConfigImportHelper {
     }
   }
 
-  private static void moveTempBackupToStandardBackup(File backupToMove) throws IOException {
-    new ConfigBackup(PathManager.getConfigDir()).moveToBackup(backupToMove);
+  private static void moveTempBackupToStandardBackup(@NotNull Path newConfigDir, File backupToMove) throws IOException {
+    new ConfigBackup(newConfigDir).moveToBackup(backupToMove);
   }
 
   private static boolean shouldAskForConfig() {
@@ -357,7 +368,7 @@ public final class ConfigImportHelper {
 
     ImportOldConfigsPanel dialog = new ImportOldConfigsPanel(guessedOldConfigDirs, ConfigImportHelper::findConfigDirectoryByPath);
     dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-    AppUIUtil.updateWindowIcon(dialog);
+    AppUIUtilKt.updateAppWindowIcon(dialog);
 
     hideSplash();
     dialog.setVisible(true);
@@ -556,7 +567,7 @@ public final class ConfigImportHelper {
     return StringUtilRt.startsWithIgnoreCase(name, strictPrefix) && !name.equalsIgnoreCase(strictPrefix);
   }
 
-  private static String getNameWithVersion(Path configDir) {
+  public static String getNameWithVersion(Path configDir) {
     String name = configDir.getFileName().toString();
     if (CONFIG.equals(name)) {
       name = Strings.trimStart(configDir.getParent().getFileName().toString(), ".");
@@ -697,8 +708,8 @@ public final class ConfigImportHelper {
           idx++;
         }
       }
-      if (configDir.length() > 0) {
-        return Paths.get(fixDirName(configDir.toString())).toString();
+      if (!configDir.isEmpty()) {
+        return Path.of(fixDirName(configDir.toString())).toString();
       }
     }
 
@@ -749,12 +760,14 @@ public final class ConfigImportHelper {
     MarketplacePluginDownloadService downloadService;
     Path bundledPluginPath = null;
     @Nullable Map<PluginId, Set<String>> brokenPluginVersions = null;
+    boolean merge = false;
 
     ConfigImportOptions(Logger log) {
       this.log = log;
     }
   }
 
+  @VisibleForTesting
   static void doImport(@NotNull Path oldConfigDir,
                        @NotNull Path newConfigDir,
                        @Nullable Path oldIdeHome,
@@ -777,8 +790,11 @@ public final class ConfigImportHelper {
 
       @Override
       public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-        if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
-          Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+        Path target = newConfigDir.resolve(oldConfigDir.relativize(file));
+        if (options.merge && file.getFileName().toString().equals(VMOptions.getFileName()) && Files.exists(target)) {
+          mergeVmOptions(file, target, options.log);
+        }
+        else if (!blockImport(file, oldConfigDir, newConfigDir, oldPluginsDir, options.importSettings)) {
           NioFiles.createDirectories(target.getParent());
           Files.copy(file, target, LinkOption.NOFOLLOW_LINKS);
         }
@@ -846,10 +862,10 @@ public final class ConfigImportHelper {
 
     try {
       Map<PluginId, Set<String>> brokenPluginVersions = options.brokenPluginVersions;
-      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptors(oldPluginsDir,
-                                                                          options.bundledPluginPath,
-                                                                          brokenPluginVersions,
-                                                                          options.compatibleBuildNumber);
+      PluginLoadingResult result = PluginDescriptorLoader.loadDescriptorsFromOtherIde(oldPluginsDir,
+                                                                                      options.bundledPluginPath,
+                                                                                      brokenPluginVersions,
+                                                                                      options.compatibleBuildNumber);
 
       partitionNonBundled(result.getIdMap().values(), pluginsToDownload, pluginsToMigrate, descriptor -> {
         Set<String> brokenVersions = brokenPluginVersions != null ? brokenPluginVersions.get(descriptor.getPluginId()) : null;
@@ -874,6 +890,11 @@ public final class ConfigImportHelper {
                                                      pluginsToDownload);
     }
 
+    migrateGlobalPlugins(newConfigDir,
+                         oldConfigDir,
+                         pluginsToMigrate,
+                         pluginsToDownload);
+
     pluginsToMigrate.removeIf(hasPendingUpdate);
     if (!pluginsToMigrate.isEmpty()) {
       migratePlugins(newPluginsDir, pluginsToMigrate, log);
@@ -886,6 +907,20 @@ public final class ConfigImportHelper {
       // migrating plugins for which we weren't able to download updates
       migratePlugins(newPluginsDir, pluginsToDownload, log);
     }
+  }
+
+  private static void migrateGlobalPlugins(@NotNull Path newConfigDir,
+                                           @NotNull Path oldConfigDir,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                           @NotNull List<IdeaPluginDescriptor> pluginsToDownload) {
+    String currentProductVersion = PluginManagerCore.getBuildNumber().asStringWithoutProductCode();
+
+    PluginMigrationOptions options = new PluginMigrationOptions(currentProductVersion,
+                                                                newConfigDir, oldConfigDir,
+                                                                pluginsToMigrate, pluginsToDownload);
+
+    new BigDataTools232().migratePlugins(options);
+    new PackageSearch232().migratePlugins(options);
   }
 
   private static void partitionNonBundled(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors,
@@ -976,7 +1011,7 @@ public final class ConfigImportHelper {
 
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
-      AppUIUtil.updateWindowIcon(dialog);
+      AppUIUtilKt.updateAppWindowIcon(dialog);
       hideSplash();
       PluginDownloader.runSynchronouslyInBackground(() -> {
         downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
@@ -1023,7 +1058,7 @@ public final class ConfigImportHelper {
   private static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor,
                                         @Nullable Map<PluginId, Set<String>> brokenPluginVersions) {
     if (brokenPluginVersions == null) {
-      return PluginManagerCore.isBrokenPlugin(descriptor);
+      return BrokenPluginFileKt.isBrokenPlugin(descriptor);
     }
     Set<String> versions = brokenPluginVersions.get(descriptor.getPluginId());
     return versions != null && versions.contains(descriptor.getVersion());
@@ -1066,6 +1101,52 @@ public final class ConfigImportHelper {
           }
         }
       }
+    }
+  }
+
+  /*
+   * Merging imported VM option file with the one pre-created by an external tool (like the Toolbox app).
+   * When both files set the same property, the value from an external tool is supposed to be more actual.
+   * When both files set `-Xmx`, a higher value is preferred.
+   */
+  private static void mergeVmOptions(Path importFile, Path currentFile, Logger log) {
+    try {
+      var cs = VMOptions.getFileCharset();
+      var importLines = Files.readAllLines(importFile, cs);
+      var currentLines = Files.readAllLines(currentFile, cs);
+      var result = new ArrayList<String>(importLines.size() + currentLines.size());
+      var preferCurrentXmx = false;
+
+      nextLine:
+      for (var line : importLines) {
+        if (line.startsWith("-D")) {
+          var p = line.indexOf('=', 3);
+          if (p > 0) {
+            var prefix = line.substring(0, p + 1);
+            for (var l : currentLines) {
+              if (l.startsWith(prefix)) {
+                continue nextLine;
+              }
+            }
+          }
+        }
+        else if (line.startsWith("-Xmx") && isLowerValue("-Xmx", line.substring(4), currentLines)) {
+          preferCurrentXmx = true;
+          continue nextLine;
+        }
+        result.add(line);
+      }
+
+      for (var line : currentLines) {
+        if (preferCurrentXmx || !line.startsWith("-Xmx")) {
+          result.add(line);
+        }
+      }
+
+      Files.write(currentFile, result, cs);
+    }
+    catch (IOException e) {
+      log.warn("Failed to merge VM option files " + importFile + " and " + currentFile, e);
     }
   }
 

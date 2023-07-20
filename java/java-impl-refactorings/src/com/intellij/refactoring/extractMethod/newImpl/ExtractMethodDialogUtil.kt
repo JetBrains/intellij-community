@@ -21,7 +21,7 @@ object ExtractMethodDialogUtil {
     val thrownExceptions = extractOptions.thrownExceptions.toTypedArray()
     val isStatic = extractOptions.isStatic
     val typeParameters = extractOptions.typeParameters
-    val targetClass = extractOptions.anchor.containingClass
+    val targetClass = extractOptions.targetClass
     val elements = extractOptions.elements.toTypedArray()
     val nullability = extractOptions.dataOutput.nullability.takeIf { ExtractMethodHelper.isNullabilityAvailable(extractOptions) }
     val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
@@ -61,7 +61,7 @@ object ExtractMethodDialogUtil {
 
       override fun findOccurrences(): Array<PsiExpression> {
         return when (val dataOutput = extractOptions.dataOutput) {
-          is DataOutput.VariableOutput -> CodeInsightUtil.findReferenceExpressions(extractOptions.anchor, dataOutput.variable)
+          is DataOutput.VariableOutput -> CodeInsightUtil.findReferenceExpressions(dataOutput.variable.parent, dataOutput.variable)
           is DataOutput.ExpressionOutput -> dataOutput.returnExpressions.toTypedArray()
           else -> emptyArray()
         }

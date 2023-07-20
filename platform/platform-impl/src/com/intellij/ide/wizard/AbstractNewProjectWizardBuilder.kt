@@ -23,7 +23,7 @@ abstract class AbstractNewProjectWizardBuilder : ModuleBuilder() {
 
   protected abstract fun createStep(context: WizardContext): NewProjectWizardStep
 
-  final override fun getModuleType() =
+  final override fun getModuleType(): ModuleType<AbstractNewProjectWizardBuilder> =
     object : ModuleType<AbstractNewProjectWizardBuilder>(NPW_PREFIX + javaClass.simpleName) {
       override fun createModuleBuilder() = this@AbstractNewProjectWizardBuilder
       override fun getName() = this@AbstractNewProjectWizardBuilder.presentableName

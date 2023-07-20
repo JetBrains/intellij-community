@@ -724,6 +724,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         taskData.setTest(task.isTest());
+        taskData.setJvmTest(task.isJvmTest());
         ideModule.createChild(ProjectKeys.TASK, taskData);
         taskData.setInherited(inherited);
         tasks.add(taskData);

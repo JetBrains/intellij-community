@@ -344,7 +344,8 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    */
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
-  protected void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
+  @ApiStatus.Internal
+  public void setShortcutSet(@NotNull ShortcutSet shortcutSet) {
     if (myShortcutSet != shortcutSet &&
         myShortcutSet != CustomShortcutSet.EMPTY &&
         LoadingState.PROJECT_OPENED.isOccurred()) {

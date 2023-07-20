@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -87,8 +87,7 @@ final class FlushQueue {
     }
   }
 
-  @Nullable
-  private RunnableInfo pollNextEvent() {
+  private @Nullable RunnableInfo pollNextEvent() {
     synchronized (getQueueLock()) {
       ModalityState currentModality = LaterInvocator.getCurrentModalityState();
 
@@ -207,10 +206,10 @@ final class FlushQueue {
   }
 
   private static class RunnableInfo {
-    @NotNull private final Runnable runnable;
-    @NotNull private final ModalityState modalityState;
-    @NotNull private final Condition<?> expired;
-    @NotNull private final String clientId;
+    private final @NotNull Runnable runnable;
+    private final @NotNull ModalityState modalityState;
+    private final @NotNull Condition<?> expired;
+    private final @NotNull String clientId;
     private final long queuedTimeNs;
     /** How many items were in queue at the moment this item was enqueued */
     private final int queueSize;
@@ -251,8 +250,7 @@ final class FlushQueue {
     }
 
     @Override
-    @NonNls
-    public String toString() {
+    public @NonNls String toString() {
       return "[runnable: " + runnable + "; state=" + modalityState + (expired.value(null) ? "; expired" : "") + "]{queued at: " +
              queuedTimeNs + " ns, " + queueSize + " items were in front of}{wasSkipped: "+wasInSkippedItems+"}";
     }

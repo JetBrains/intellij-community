@@ -24,10 +24,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 
 internal class MavenPackageUpdateInspection : PackageUpdateInspection() {
 
-    override fun getStaticDescription(): String = PackageSearchBundle.getMessage("packagesearch.inspection.upgrade.description.maven")
-    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes) =
-        dependencyDeclarationIndexes.versionStartIndex
+    override fun getStaticDescription(): String = PackageSearchBundle.message("packagesearch.inspection.upgrade.description.maven")
+    override fun selectPsiElementIndex(dependencyDeclarationIndexes: DependencyDeclarationIndexes): Int? {
+        return dependencyDeclarationIndexes.versionStartIndex
+    }
 
-    override fun shouldCheckFile(file: PsiFile) =
-        MavenUtil.isPomFile(file.project, file.virtualFile)
+    override fun shouldCheckFile(file: PsiFile) = MavenUtil.isPomFile(file.project, file.virtualFile)
 }

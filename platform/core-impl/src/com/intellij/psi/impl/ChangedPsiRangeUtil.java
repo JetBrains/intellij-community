@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -55,8 +55,7 @@ public final class ChangedPsiRangeUtil {
     return result;
   }
 
-  @Nullable
-  public static TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newDocumentText) {
+  public static @Nullable TextRange getChangedPsiRange(@NotNull PsiFile file, @NotNull FileElement treeElement, @NotNull CharSequence newDocumentText) {
     int psiLength = treeElement.getTextLength();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new TextRange(0, psiLength);
@@ -71,11 +70,10 @@ public final class ChangedPsiRangeUtil {
     return new TextRange(commonPrefixLength, psiLength - commonSuffixLength);
   }
 
-  @Nullable
-  static ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
-                                            @NotNull Document document,
-                                            @NotNull CharSequence oldDocumentText,
-                                            @NotNull CharSequence newDocumentText) {
+  static @Nullable ProperTextRange getChangedPsiRange(@NotNull PsiFile file,
+                                                      @NotNull Document document,
+                                                      @NotNull CharSequence oldDocumentText,
+                                                      @NotNull CharSequence newDocumentText) {
     int psiLength = oldDocumentText.length();
     if (!file.getViewProvider().supportsIncrementalReparse(file.getLanguage())) {
       return new ProperTextRange(0, psiLength);

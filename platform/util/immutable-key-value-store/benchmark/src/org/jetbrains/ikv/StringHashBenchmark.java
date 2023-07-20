@@ -2,7 +2,6 @@
 package org.jetbrains.ikv;
 
 import com.intellij.util.lang.Murmur3_32Hash;
-import org.jetbrains.xxh3.Xxh3;
 import org.openjdk.jmh.annotations.Benchmark;
 import org.openjdk.jmh.annotations.BenchmarkMode;
 import org.openjdk.jmh.annotations.Mode;
@@ -30,15 +29,5 @@ public class StringHashBenchmark {
   @Benchmark
   public int murmur3_unencoded() {
     return Murmur3_32Hash.MURMUR3_32.hashUnencodedChars(data);
-  }
-
-  @Benchmark
-  public int xxh3() {
-    return Xxh3.hash32(data);
-  }
-
-  @Benchmark
-  public int xxh3_unencoded() {
-    return Xxh3.hashUnencodedChars32(data);
   }
 }

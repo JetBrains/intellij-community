@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 
@@ -24,10 +25,19 @@ public class PublicConstructorInNonPublicClassInspectionTest extends LightJavaCo
   }
 
   public void testQuickfix() {
+    checkQuickFix();
+  }
+
+  public void testQuickfixWithParameters() {
+    checkQuickFix();
+  }
+
+  private void checkQuickFix() {
     doTest();
     final IntentionAction intention = myFixture.getAvailableIntention("Remove 'public' modifier");
     assertNotNull(intention);
     myFixture.launchAction(intention);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResultByFile(getTestName(false) + ".after.java");
   }
 }

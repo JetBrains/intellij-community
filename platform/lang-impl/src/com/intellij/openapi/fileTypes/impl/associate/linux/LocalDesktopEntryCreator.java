@@ -6,7 +6,6 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.impl.associate.OSFileAssociationException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -26,10 +25,10 @@ public final class LocalDesktopEntryCreator {
     builder.append("[Desktop Entry]\n")
            .append("Type=Application\n")
            .append("Exec=").append(getLauncherPath()).append("\n");
-    ObjectUtils.consumeIfNotNull(
-      getIconPath(),
-      iconPath -> builder.append("Icon=").append(iconPath).append("\n")
-    );
+    String path = getIconPath();
+    if (path != null) {
+      builder.append("Icon=").append(path).append("\n");
+    }
     builder.append("Name=").append(ApplicationNamesInfo.getInstance().getFullProductName()).append("\n")
            .append("NoDisplay=true\n");
     try {

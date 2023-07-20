@@ -110,7 +110,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
     initTree();
 
-    Disposer.register(this, new UiNotifyConnector(myTree, new Activatable() {
+    Disposer.register(this, UiNotifyConnector.installOn(myTree, new Activatable() {
       private boolean showing;
 
       @Override
@@ -183,7 +183,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     ToolTipManager.sharedInstance().registerComponent(myTree);
     TreeUtil.installActions(myTree);
 
-    new MySpeedSearch(myTree);
+    MySpeedSearch.installOn(myTree);
 
     myTree.addKeyListener(new PsiCopyPasteManager.EscapeHandler());
     CustomizationUtil.installPopupHandler(myTree, IdeActions.GROUP_PROJECT_VIEW_POPUP, ActionPlaces.PROJECT_VIEW_POPUP);
@@ -308,8 +308,15 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
   }
 
   protected static final class MySpeedSearch extends TreeSpeedSearch {
-    MySpeedSearch(JTree tree) {
-      super(tree);
+    private MySpeedSearch(JTree tree) {
+      super(tree, (Void)null);
+    }
+
+    @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+    public static @NotNull MySpeedSearch installOn(@NotNull JTree tree) {
+      MySpeedSearch search = new MySpeedSearch(tree);
+      search.setupListeners();
+      return search;
     }
 
     @Override

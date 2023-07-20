@@ -143,13 +143,6 @@ object GrazieReplaceTypoQuickFix {
     }
   }
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated(message = "use getReplacementFixes(problem, underlineRanges)")
-  @Suppress("UNUSED_PARAMETER", "DeprecatedCallableAddReplaceWith")
-  fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>, file: PsiFile): List<LocalQuickFix> {
-    return getReplacementFixes(problem, underlineRanges)
-  }
-
   @JvmStatic
   fun getReplacementFixes(problem: TextProblem, underlineRanges: List<SmartPsiFileRange>): List<LocalQuickFix> {
     val file = problem.text.containingFile
@@ -183,7 +176,7 @@ object GrazieReplaceTypoQuickFix {
     if (shreds.isEmpty()) return emptyList()
 
     if (replacement.isEmpty() && removalWouldGlueUnrelatedTokens(localRange, text)) {
-      replacement = " ";
+      replacement = " "
     }
 
     val best = if (isWordMiddle(text, localRange.endOffset)) shreds.last() else shreds.first()

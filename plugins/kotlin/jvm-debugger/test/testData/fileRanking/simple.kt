@@ -4,6 +4,7 @@ class A {
         println("a")
     }
 }
+// PRODUCED_CLASS_NAMES: A
 
 //FILE: b/a.kt
 class B {
@@ -11,3 +12,4 @@ class B {
         println("b")
     }
 }
+// PRODUCED_CLASS_NAMES: B

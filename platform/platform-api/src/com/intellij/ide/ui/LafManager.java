@@ -2,6 +2,7 @@
 package com.intellij.ide.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -57,6 +58,15 @@ public abstract class LafManager {
   public abstract void setPreferredLightLaf(@NotNull UIManager.LookAndFeelInfo value);
 
   @ApiStatus.Internal
+  public abstract @Nullable EditorColorsScheme getPreviousSchemeForLaf(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo);
+
+  @ApiStatus.Internal
+  public abstract void setRememberSchemeForLaf(boolean rememberSchemeForLaf);
+
+  @ApiStatus.Internal
+  public abstract void rememberSchemeForLaf(@NotNull String schemeName);
+
+  @ApiStatus.Internal
   public void applyDensity() { }
 
   /**
@@ -110,4 +120,10 @@ public abstract class LafManager {
       return Objects.hash(name, className, themeId);
     }
   }
+
+  @Nullable
+  public abstract UIManager.LookAndFeelInfo getDefaultLightLaf();
+
+  @Nullable
+  public abstract UIManager.LookAndFeelInfo getDefaultDarkLaf();
 }

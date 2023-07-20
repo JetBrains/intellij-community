@@ -29,5 +29,5 @@ class LayoutActionsFloatingToolbar : AbstractFloatingToolbarComponent {
 
   override fun isComponentOnHold(): Boolean = true
 
-  override fun installMouseMotionWatcher() = Unit
+  override fun installMouseMotionWatcher(): Unit = Unit
 }

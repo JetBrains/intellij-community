@@ -140,7 +140,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
       HtmlChunk.text(JavaBundle.message("adds.module.dependencies.preview",
                                          myModules.size(),
                                          ContainerUtil.getFirstItem(myModules).getName(),
-                                         NlsMessages.formatAndList(ContainerUtil.map2List(myModules, module -> "'" + module.getName() + "'")),
+                                         NlsMessages.formatAndList(ContainerUtil.map(myModules, module -> "'" + module.getName() + "'")),
                                          myCurrentModule.getName())));
   }
 

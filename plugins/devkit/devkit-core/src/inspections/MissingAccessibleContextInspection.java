@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -77,7 +77,8 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       return true;
     }
 
-    private void processBody(UExpression body, UElement context) {
+    private void processBody(@Nullable UExpression body, UElement context) {
+      if (body == null) return;
       List<PsiElement> anchors = new ArrayList<>();
       for (UExpression expression : findReturnedExpressions(body, context)) {
         PsiClass panelClass = findReturnedClass(expression);
@@ -95,10 +96,8 @@ public class MissingAccessibleContextInspection extends DevKitUastInspectionBase
       var visitor = new AbstractUastVisitor() {
         boolean myHasAccessibilityMethodCall = false;
         
-        private boolean isAccessibilityMethod(@NotNull UCallExpression call) {
-          String methodName = call.getMethodName();
-          if (methodName == null) return false;
-          if (methodName.equals("setAccessibleName") || methodName.equals("setAccessibleDescription")) {
+        private static boolean isAccessibilityMethod(@NotNull UCallExpression call) {
+          if (call.isMethodNameOneOf(List.of("setAccessibleName", "setAccessibleDescription"))) {
             return true;
           }
           PsiMethod target = call.resolve();

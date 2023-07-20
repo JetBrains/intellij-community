@@ -69,6 +69,14 @@ public abstract class CoverageDataManager {
   public abstract void removeCoverageSuite(CoverageSuite suite);
 
   /**
+   * Remove suite from the list of tracked suites.
+   * <p>
+   * In contrast to <code>removeCoverageSuite</code>, this method keeps file on disk.
+   * @param suite suite to unregister
+   */
+  public abstract void unregisterCoverageSuite(CoverageSuite suite);
+
+  /**
    * runs computation in read action, blocking project close till action has been run,
    * and doing nothing in case projectClosing() event has been already broadcasted.
    *  Note that actions must not be long running not to cause significant pauses on project close.

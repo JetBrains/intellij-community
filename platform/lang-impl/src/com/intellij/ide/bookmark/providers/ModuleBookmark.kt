@@ -13,10 +13,10 @@ internal class ModuleBookmark(override val provider: ModuleBookmarkProvider, val
       else -> mapOf("module" to name)
     }
 
-  override fun createNode() = ModuleNode(provider.project, this)
+  override fun createNode(): ModuleNode = ModuleNode(provider.project, this)
 
-  override fun canNavigate() = provider.projectSettingsService != null && provider.moduleManager != null
-  override fun canNavigateToSource() = false
+  override fun canNavigate(): Boolean = provider.projectSettingsService != null && provider.moduleManager != null
+  override fun canNavigateToSource(): Boolean = false
   override fun navigate(requestFocus: Boolean) {
     val service = provider.projectSettingsService ?: return
     val module = provider.moduleManager?.findModuleByName(name)
@@ -26,13 +26,13 @@ internal class ModuleBookmark(override val provider: ModuleBookmarkProvider, val
     }
   }
 
-  override fun hashCode() = Objects.hash(provider, name, isGroup)
-  override fun equals(other: Any?) = other === this || other is ModuleBookmark
-                                     && other.provider == provider
-                                     && other.isGroup == isGroup
-                                     && other.name == name
+  override fun hashCode(): Int = Objects.hash(provider, name, isGroup)
+  override fun equals(other: Any?): Boolean = other === this || other is ModuleBookmark
+                                              && other.provider == provider
+                                              && other.isGroup == isGroup
+                                              && other.name == name
 
-  override fun toString() = when (isGroup) {
+  override fun toString(): String = when (isGroup) {
     true -> "ModuleBookmark(group=$name,provider=$provider)"
     else -> "ModuleBookmark(module=$name,provider=$provider)"
   }

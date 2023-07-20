@@ -1,10 +1,7 @@
 mutation ($reviewId: ID!, $body: String!, $commit: GitObjectID, $file: String, $position: Int, $inReplyTo: ID) {
-    addPullRequestReviewComment(input: {pullRequestReviewId: $reviewId, body: $body, commitOID: $commit, path: $file, position: $position, inReplyTo: $inReplyTo}) {
-        comment {
-            ...pullRequestReviewComment
-            pullRequestReview {
-                ...pullRequestPendingReview
-            }
-        }
+  addPullRequestReviewComment(input: {pullRequestReviewId: $reviewId, body: $body, commitOID: $commit, path: $file, position: $position, inReplyTo: $inReplyTo}) {
+    comment {
+      ...pullRequestReviewComment
     }
+  }
 }

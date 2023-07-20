@@ -16,13 +16,14 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Toggleable;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SmartList;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -30,7 +31,13 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
+import com.intellij.xdebugger.impl.XSourcePositionImpl;
+import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointManager;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public class ToggleLineBreakpointAction extends XDebuggerActionBase implements DumbAware, Toggleable {
   public ToggleLineBreakpointAction() {
@@ -66,7 +73,7 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
 
     final XLineBreakpointType<?>[] breakpointTypes = XDebuggerUtil.getInstance().getLineBreakpointTypes();
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(proj).getBreakpointManager();
-    for (XSourcePosition position : XDebuggerUtilImpl.getAllCaretsPositions(proj, e.getDataContext())) {
+    for (XSourcePosition position : getAllPositionsForBreakpoints(proj, e.getDataContext())) {
       for (XLineBreakpointType<?> breakpointType : breakpointTypes) {
         final VirtualFile file = position.getFile();
         final int line = position.getLine();
@@ -76,5 +83,31 @@ public class ToggleLineBreakpointAction extends XDebuggerActionBase implements D
       }
     }
     return false;
+  }
+
+  @NotNull
+  public static Collection<XSourcePosition> getAllPositionsForBreakpoints(@NotNull Project project, DataContext context) {
+    Editor editor = XDebuggerUtilImpl.getEditor(project, context);
+    if (editor == null) {
+      return Collections.emptyList();
+    }
+
+    VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+    List<XSourcePosition> res = new SmartList<>();
+
+    Integer line = XLineBreakpointManager.BREAKPOINT_LINE_KEY.getData(context);
+    if (line != null) {
+      XSourcePositionImpl position = XSourcePositionImpl.create(file, line);
+      res.add(position);
+      return res;
+    }
+
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      XSourcePositionImpl position = XSourcePositionImpl.createByOffset(file, caret.getOffset());
+      if (position != null) {
+        res.add(position);
+      }
+    }
+    return res;
   }
 }

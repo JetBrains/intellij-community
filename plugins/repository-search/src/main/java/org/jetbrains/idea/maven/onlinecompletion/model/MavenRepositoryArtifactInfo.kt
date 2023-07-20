@@ -33,6 +33,12 @@ class MavenRepositoryArtifactInfo(
 
   @NlsSafe
   override fun getKey() = "$groupId:$artifactId"
+  override fun mergeWith(another: RepositoryArtifactData): MavenRepositoryArtifactInfo {
+    if (another !is MavenRepositoryArtifactInfo) {
+      throw IllegalArgumentException()
+    }
+    return MavenRepositoryArtifactInfo(groupId, artifactId, items + another.items);
+  }
 
   @NonNls
   override fun toString() = "maven($groupId:$artifactId:$version ${items.size} total)"

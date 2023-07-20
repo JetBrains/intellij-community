@@ -7,12 +7,14 @@ import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
@@ -445,7 +447,7 @@ public final class AnnotationsHighlightUtil {
             IntentionAction action1 =
               QUICK_FIX_FACTORY.createDeleteFix(annotation, JavaAnalysisBundle.message("intention.text.remove.annotation"));
             info.registerFix(action1, null, null, null, null);
-            IntentionAction action = new ReplaceVarWithExplicitTypeFix(typeElement);
+            ModCommandAction action = new ReplaceVarWithExplicitTypeFix(typeElement);
             info.registerFix(action, null, null, null, null);
             return info;
           }
@@ -472,7 +474,7 @@ public final class AnnotationsHighlightUtil {
     String target = JavaAnalysisBundle.message("annotation.target." + targets[0]);
     String message = JavaErrorBundle.message("annotation.not.applicable", nameRef.getText(), target);
     HighlightInfo.Builder info = createAnnotationError(annotation, message);
-    if (Objects.requireNonNull(annotation.resolveAnnotationType()).isWritable()) {
+    if (BaseIntentionAction.canModify(Objects.requireNonNull(annotation.resolveAnnotationType()))) {
       for (PsiAnnotation.TargetType targetType : targets) {
         IntentionAction action = QUICK_FIX_FACTORY.createAddAnnotationTargetFix(annotation, targetType);
         info.registerFix(action, null, null, null, null);
@@ -514,7 +516,7 @@ public final class AnnotationsHighlightUtil {
       if (qualified instanceof PsiMember && ((PsiMember)qualified).hasModifierProperty(PsiModifier.STATIC)) {
         return createAnnotationError(annotation,
                                      JavaErrorBundle.message("annotation.not.allowed.static"),
-                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation));
+                                     new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asIntention());
       }
     }
     return null;
@@ -622,7 +624,7 @@ public final class AnnotationsHighlightUtil {
         QUICK_FIX_FACTORY.createDeleteFix(annotationList, JavaAnalysisBundle.message("intention.text.remove.annotation"));
       HighlightInfo.Builder builder =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(annotationList).descriptionAndTooltip(message);
-      IntentionAction moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
+      var moveAnnotationToPackageInfoFileFix = new MoveAnnotationToPackageInfoFileFix(statement);
       return builder.registerFix(deleteFix, null, null, null, null)
         .registerFix(moveAnnotationToPackageInfoFileFix, null, null, null, null);
     }

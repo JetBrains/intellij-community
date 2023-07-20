@@ -118,7 +118,7 @@ public class TestNGTestPattern extends TestNGTestObject {
           }
         };
       calculateDependencies(null, classes, searchScope, TestNGUtil.getAllTestClasses(projectFilter, false));
-      if (classes.size() == 0) {
+      if (classes.isEmpty()) {
         throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.for.patterns", StringUtil.join(patterns, " || ")));
       }
     }

@@ -119,6 +119,62 @@ public class Py3HighlightingTest extends PyTestCase {
     doTestWithLanguageLevel(LanguageLevel.PYTHON39, false, false);
   }
 
+  // PY-32067
+  public void testAwaitInNonAsyncFunction() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInLoopInNonAsyncFunction() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInComprehensionInNonAsyncFunction() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInNonAsyncInnerFunctionOfAsyncFunction() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInAsyncIterator() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInFunctionDefaultArg() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitOutsideFunction() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInNonAsyncFunctionPy27() {
+    doTestWithLanguageLevel(LanguageLevel.PYTHON27, false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInDefaultArgOfInnerNonAsyncFunction() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInDefaultArgOfFunctionDecorator() {
+    doTest(false, false);
+  }
+
+  // PY-32067
+  public void testAwaitInsideAwaitExpression() {
+    doTest(false, false);
+  }
+
+
   private void doTestWithLanguageLevel(LanguageLevel languageLevel, boolean checkWarnings, boolean checkInfos) {
     runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
   }

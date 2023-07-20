@@ -16,17 +16,17 @@ public abstract class BuildRootDescriptor {
   /**
    * Returns the serializable ID of the root, used for writing caches. May return simply the file path.
    */
-  public abstract String getRootId();
+  public abstract @NotNull String getRootId();
 
   /**
    * Returns the directory of the source root.
    */
-  public abstract File getRootFile();
+  public abstract @NotNull File getRootFile();
 
   /**
    * Returns the target to which this source root belongs.
    */
-  public abstract BuildTarget<?> getTarget();
+  public abstract @NotNull BuildTarget<?> getTarget();
 
   /**
    * Creates the file filter specifying which files under the specified root belong to this build target.

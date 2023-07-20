@@ -5,10 +5,10 @@ public class TestClass {
         if (true) {
             System.out.println();
         }
-<caret><selection>        else if (true) {
+        <selection><caret>else</selection> if (true) {
             System.out.println();
         }
-</selection>        else {
+        else {
 
         }
     }

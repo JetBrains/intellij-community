@@ -17,7 +17,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.StripeTable;
-import com.intellij.openapi.util.CachedImageIcon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -28,6 +27,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.icons.CachedImageIcon;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Function;
@@ -83,7 +83,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
     setSplitterProportionKey("UiInspector.table.splitter.proportion");
 
     myTable = new StripeTable(myModel);
-    new TableSpeedSearch(myTable);
+    TableSpeedSearch.installOn(myTable);
 
     TableColumnModel columnModel = myTable.getColumnModel();
     TableColumn propertyColumn = columnModel.getColumn(0);
@@ -106,7 +106,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
         }
         if (realValue instanceof Color) {
           Rectangle cellRect = table.getCellRect(row, column, true);
-          ColorPicker.showColorPickerPopup(null, (Color)realValue, new ColorListener() {
+          ColorChooserService.getInstance().showPopup(null, (Color)realValue, new ColorListener() {
             @Override
             public void colorChanged(Color color, Object source) {
               if (component != null) {
@@ -479,7 +479,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
       printClassName(consoleView, className);
       consoleView.print(" " + strValue.charAt(classNameEnd) + "\n", NORMAL_OUTPUT);
       for (String prop : properties) {
-        if (prop.length() == 0) continue;
+        if (prop.isEmpty()) continue;
         consoleView.print("\t", NORMAL_OUTPUT);
         String[] keyValuePair = prop.split("=");
         if (keyValuePair.length == 1) {
@@ -555,7 +555,7 @@ final class InspectorTable extends JBSplitter implements DataProvider, Disposabl
 
       StringBuilder builder = new StringBuilder();
       for (int row : rows) {
-        if (builder.length() > 0) builder.append('\n');
+        if (!builder.isEmpty()) builder.append('\n');
 
         for (int col : columns) {
           builder.append(getCellTextValue(row, col));

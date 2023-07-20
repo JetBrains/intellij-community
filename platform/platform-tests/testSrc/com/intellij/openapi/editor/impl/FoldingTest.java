@@ -240,9 +240,6 @@ public class FoldingTest extends AbstractEditorTest {
       public void onFoldRegionStateChange(@NotNull FoldRegion region) {
         notifications.add(region);
       }
-
-      @Override
-      public void onFoldProcessingEnd() {}
     }, getTestRootDisposable());
     runFoldingOperation(() -> myModel.removeFoldRegion(regionRef.get()));
     assertSize(1, notifications);
@@ -369,7 +366,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertFalse(regions[0].isValid());
     assertTrue(regions[1].isValid());
     List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
-    assertEquals(Arrays.asList(regions[1]), newRegionsInGroup);
+    assertEquals(Collections.singletonList(regions[1]), newRegionsInGroup);
   }
 
   public void testAllRegionsFromInvalidNodeAreRemovedFromGroups() {
@@ -390,7 +387,7 @@ public class FoldingTest extends AbstractEditorTest {
     assertFalse(regions[0].isValid());
     assertFalse(regions[1].isValid());
     assertTrue(regions[2].isValid());
-    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(regions[2].getGroup());
+    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
     assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
   }
 

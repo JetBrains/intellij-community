@@ -23,7 +23,7 @@ class GeneralSettingsParser(private val settings: Settings) {
     private const val PREFERRED_LIGHT_THEME = "workbench.preferredLightColorTheme"
   }
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a general settings file: $file")
 
     val root = ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(file) as? ObjectNode

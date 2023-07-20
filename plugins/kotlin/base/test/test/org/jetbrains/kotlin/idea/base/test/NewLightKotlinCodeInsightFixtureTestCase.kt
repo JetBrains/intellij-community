@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -46,7 +47,10 @@ abstract class NewLightKotlinCodeInsightFixtureTestCase : LightJavaCodeInsightFi
         directiveParser.build()
     }
 
-    private val testMethodPath: Path by lazy {
+    protected val testRootPath: Path
+        get() = Paths.get(testRoot)
+
+    protected val testMethodPath: Path by lazy {
         val testName = this.name
         val testClass = javaClass
         val testMethod = testClass.methods

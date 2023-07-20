@@ -10,11 +10,9 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicReference
 
-abstract class StateStorageBase<T : Any> : StateStorage {
-  companion object {
-    private val LOG = logger<StateStorageBase<*>>()
-  }
+private val LOG = logger<StateStorageBase<*>>()
 
+abstract class StateStorageBase<T : Any> : StateStorage {
   private var isSavingDisabled = false
 
   protected val storageDataRef: AtomicReference<T> = AtomicReference()

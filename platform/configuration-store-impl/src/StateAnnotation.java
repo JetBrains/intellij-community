@@ -76,6 +76,11 @@ public class StateAnnotation implements State {
   }
 
   @Override
+  public boolean getStateRequiresEdt() {
+    return false;
+  }
+
+  @Override
   public SettingsCategory category() {
     return SettingsCategory.OTHER;
   }

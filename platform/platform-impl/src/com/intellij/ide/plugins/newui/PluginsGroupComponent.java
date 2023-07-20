@@ -50,7 +50,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelectionListener(listener);
   }
 
-  public final @NotNull List<? extends ListPluginComponent> getSelection() {
+  public final @NotNull List<ListPluginComponent> getSelection() {
     return myEventHandler.getSelection();
   }
 
@@ -58,7 +58,7 @@ public abstract class PluginsGroupComponent extends JBPanelWithEmptyText {
     myEventHandler.setSelection(component);
   }
 
-  public void setSelection(@NotNull List<? extends ListPluginComponent> components) {
+  public void setSelection(@NotNull List<ListPluginComponent> components) {
     myEventHandler.setSelection(components);
   }
 

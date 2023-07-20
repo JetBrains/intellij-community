@@ -2,6 +2,7 @@
 package com.intellij.diff.util;
 
 import com.intellij.util.ui.AbstractLayoutManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,8 @@ public class SyncHeightComponent extends JPanel {
     }
   }
 
-  private static class SyncHeightLayout extends AbstractLayoutManager {
+  @ApiStatus.Internal
+  public static class SyncHeightLayout extends AbstractLayoutManager {
     @NotNull private final List<? extends JComponent> mySyncComponents;
     @Nullable private final JComponent myComponent;
 

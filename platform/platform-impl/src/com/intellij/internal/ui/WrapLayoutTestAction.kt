@@ -18,7 +18,7 @@ import javax.swing.SwingConstants
 
 internal class WrapLayoutTestAction : DumbAwareAction("WrapLayout Demo") {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     object : DialogWrapper(e.project, null, true, IdeModalityType.IDE, false) {

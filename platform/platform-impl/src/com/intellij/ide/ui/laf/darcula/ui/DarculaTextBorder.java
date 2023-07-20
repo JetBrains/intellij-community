@@ -41,7 +41,7 @@ public class DarculaTextBorder implements Border, UIResource, ErrorBorderCapable
     Rectangle r = new Rectangle(x, y, width, height);
     boolean focused = isFocused(c);
 
-    if (TextFieldWithPopupHandlerUI.isSearchField(c)) {
+    if (TextFieldWithPopupHandlerUI.isSearchField(c) || DarculaTextFieldProperties.isTextFieldRounded(c)) {
       paintSearchArea((Graphics2D)g, r, (JTextComponent)c, false);
     }
     else if (isTableCellEditor(c)) {

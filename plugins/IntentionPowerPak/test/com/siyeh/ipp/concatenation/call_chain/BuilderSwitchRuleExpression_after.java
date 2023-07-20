@@ -4,7 +4,7 @@ class Test {
     String s;
     s = switch (i) {
       default -> {
-          StringBuilder stringBuilder<caret> = new StringBuilder();
+          StringBuilder stringBuilder = new StringBuilder();
           stringBuilder.append("a");
           stringBuilder.append("b");
           yield stringBuilder.toString();

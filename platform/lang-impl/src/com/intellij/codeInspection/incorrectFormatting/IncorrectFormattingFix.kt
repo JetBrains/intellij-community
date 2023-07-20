@@ -17,8 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 
 class ReplaceQuickFix(val replacements: List<Pair<RangeMarker, CharSequence>>) : LocalQuickFix {
-  override fun getFamilyName() = LangBundle.message("inspection.incorrect.formatting.fix.replace")
-  override fun getFileModifierForPreview(target: PsiFile) = ReplaceQuickFix(replacements)
+  override fun getFamilyName(): @Nls String = LangBundle.message("inspection.incorrect.formatting.fix.replace")
+  override fun getFileModifierForPreview(target: PsiFile): ReplaceQuickFix = ReplaceQuickFix(replacements)
 
   private val applied = AtomicBoolean(false)
 
@@ -45,7 +45,7 @@ class ReplaceQuickFix(val replacements: List<Pair<RangeMarker, CharSequence>>) :
 
 
 object ReformatQuickFix : LocalQuickFix {
-  override fun getFamilyName() = LangBundle.message("inspection.incorrect.formatting.fix.reformat")
+  override fun getFamilyName(): @Nls String = LangBundle.message("inspection.incorrect.formatting.fix.reformat")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val innerFile = descriptor.psiElement.containingFile
@@ -56,8 +56,8 @@ object ReformatQuickFix : LocalQuickFix {
 
 
 abstract class ReconfigureQuickFix(@Nls val family: String, val reconfigure: IncorrectFormattingInspection.() -> Unit) : LocalQuickFix {
-  override fun getFamilyName() = family
-  override fun startInWriteAction() = false
+  override fun getFamilyName(): String = family
+  override fun startInWriteAction(): Boolean = false
   override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo = EMPTY
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {

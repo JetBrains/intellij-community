@@ -16,11 +16,11 @@
 package com.siyeh.ig.cloneable;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -30,7 +30,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -78,8 +77,8 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new SmartList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new SmartList<>();
     final PsiClass aClass = (PsiClass)infos[0];
     if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
       final PsiMethod[] superMethods = aClass.findMethodsByName(HardcodedMethodConstants.CLONE, true);
@@ -101,10 +100,10 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     if (CloneUtils.isDirectlyCloneable(aClass) && !cloneCalled) {
       fixes.add(RemoveCloneableFix.create(null));
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
-  private static class CreateCloneMethodFix extends InspectionGadgetsFix {
+  private static class CreateCloneMethodFix extends PsiUpdateModCommandQuickFix {
 
     private final boolean myGenerateTryCatch;
 
@@ -119,8 +118,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiClass aClass)) {
         return;
@@ -161,12 +159,7 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
       methodText.append("}");
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(methodText.toString(), element);
       final PsiElement newElement = parent.add(method);
-      if (isOnTheFly() && newElement.isPhysical()) {
-        final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-        if (editor != null) {
-          GenerateMembersUtil.positionCaret(editor, newElement, true);
-        }
-      }
+      GenerateMembersUtil.positionCaret(updater, newElement, true);
     }
   }
 

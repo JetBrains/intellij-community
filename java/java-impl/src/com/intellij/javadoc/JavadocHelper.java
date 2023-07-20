@@ -44,16 +44,14 @@ import java.util.List;
 /**
  * This class is not singleton but provides {@link #getInstance() single-point-of-usage field}.
  */
-public class JavadocHelper {
-
+public final class JavadocHelper {
   private static final String PARAM_TEXT = "param";
   
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
     = new Pair<>(null, Collections.emptyList());
   private static final JavadocHelper INSTANCE = new JavadocHelper();
   
-  @NotNull
-  public static JavadocHelper getInstance() {
+  public static @NotNull JavadocHelper getInstance() {
     return INSTANCE;
   }
 
@@ -64,7 +62,7 @@ public class JavadocHelper {
    * @param editor    target editor
    * @param project   target project
    */
-  public void navigate(@NotNull LogicalPosition position, @NotNull Editor editor, @NotNull final Project project) {
+  public void navigate(@NotNull LogicalPosition position, @NotNull Editor editor, final @NotNull Project project) {
     final Document document = editor.getDocument();
     final CaretModel caretModel = editor.getCaretModel();
     final int endLineOffset = document.getLineEndOffset(position.line);
@@ -88,8 +86,7 @@ public class JavadocHelper {
    * @param anchor   descriptor for the target parameter
    * @return         logical position that points to the desired parameter description start location
    */
-  @NotNull
-  public LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
+  public @NotNull LogicalPosition calculateDescriptionStartPosition(@NotNull PsiFile psiFile,
                                                            @NotNull Collection<? extends JavadocParameterInfo> data,
                                                            @NotNull JavadocHelper.JavadocParameterInfo anchor)
   {
@@ -125,8 +122,7 @@ public class JavadocHelper {
    * @return              pair like (javadoc info for the line identified by the given offset; list of javadoc parameter infos for
    *                      adjacent lines if any
    */
-  @NotNull
-  public Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
+  public @NotNull Pair<JavadocParameterInfo, List<JavadocParameterInfo>> parse(@NotNull PsiFile psiFile, @NotNull Editor editor, int offset) {
     List<JavadocParameterInfo> result = new ArrayList<>();
     PsiDocumentManager.getInstance(psiFile.getProject()).commitDocument(editor.getDocument());
     final PsiElement elementAtCaret = psiFile.findElementAt(offset);
@@ -181,8 +177,7 @@ public class JavadocHelper {
     return Pair.create(anchorInfo, result);
   }
 
-  @Nullable
-  private static JavadocParameterInfo parse(@NotNull PsiElement element, @NotNull Editor editor) {
+  private static @Nullable JavadocParameterInfo parse(@NotNull PsiElement element, @NotNull Editor editor) {
     final PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class, false);
     if (tag == null || !PARAM_TEXT.equals(tag.getName())) {
       return null;
@@ -232,8 +227,8 @@ public class JavadocHelper {
      *    *&#47;
      * </pre>
      */
-    @NotNull public final  LogicalPosition parameterNameEndPosition;
-    @Nullable public final LogicalPosition parameterDescriptionStartPosition;
+    public final @NotNull LogicalPosition parameterNameEndPosition;
+    public final @Nullable LogicalPosition parameterDescriptionStartPosition;
     /** Last logical line occupied by the current javadoc parameter. */
     public final int lastLine;
 

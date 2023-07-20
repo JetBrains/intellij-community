@@ -67,7 +67,7 @@ fun convertHSLtoRGB(hslFloats: FloatArray, alpha: Float): Int {
     throw IllegalArgumentException(message)
   }
   //  Formula needs all values between 0 - 1.
-  h = h % 360.0f
+  h %= 360.0f
   h /= 360f
   s /= 100f
   l /= 100f

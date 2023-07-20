@@ -1,21 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.client.ClientDisposableProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
@@ -38,6 +34,7 @@ import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import kotlin.Unit;
@@ -228,7 +225,7 @@ public abstract class DialogWrapper {
     myCreateSouthSection = createSouth;
     initResizeListener();
     createDefaultActions();
-    if(myPeer.getWindow() != null) {
+    if(myPeer.getWindow() != null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
       ToolbarUtil.setTransparentTitleBar(myPeer.getWindow(), myPeer.getRootPane(),
                                          runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     }
@@ -500,8 +497,8 @@ public abstract class DialogWrapper {
    * @return south panel
    */
   protected JComponent createSouthPanel() {
-    List<Action> actions = ContainerUtil.filter(createActions(), Conditions.notNull());
-    List<Action> leftSideActions = ContainerUtil.filter(createLeftSideActions(), Conditions.notNull());
+    List<Action> actions = new ArrayList<>(ContainerUtil.filter(createActions(), Conditions.notNull()));
+    List<Action> leftSideActions = new ArrayList<>(ContainerUtil.filter(createLeftSideActions(), Conditions.notNull()));
 
     Action helpAction = getHelpAction();
     boolean addHelpToLeftSide = false;
@@ -537,7 +534,7 @@ public abstract class DialogWrapper {
       }
     }
 
-    if (!UISettings.getShadowInstance().getAllowMergeButtons()) {
+    if (!Registry.is("ide.allow.merge.buttons", true)) {
       actions = flattenOptionsActions(actions);
       leftSideActions = flattenOptionsActions(leftSideActions);
     }
@@ -771,11 +768,27 @@ public abstract class DialogWrapper {
 
   public static @NotNull JButton createJButtonForAction(@NotNull Action action, @Nullable JRootPane rootPane) {
     JButton button;
-    if (action instanceof OptionAction && UISettings.getShadowInstance().getAllowMergeButtons()) {
-      button = createJOptionsButton((OptionAction)action);
+    if (action instanceof OptionAction optionAction && Registry.is("ide.allow.merge.buttons", true)) {
+      JBOptionButton optionButton = new JBOptionButton(optionAction, optionAction.getOptions());
+      optionButton.setOptionTooltipText(getDefaultTooltip());
+      button = optionButton;
     }
     else {
-      button = new JButton(action);
+      button = action instanceof DialogWrapperAction ? new JButton(action) : new JButton(action) {
+        @Override
+        protected void fireActionPerformed(ActionEvent event) {
+          Window window = UIUtil.getWindow(this);
+          DialogWrapper wrapper = window instanceof DialogWrapperDialog dwd ? dwd.getDialogWrapper() : null;
+          if (wrapper != null && (wrapper.myClosed || wrapper.myPerformAction)) return;
+          if (wrapper != null) wrapper.myPerformAction = true;
+          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+            super.fireActionPerformed(event);
+          }
+          finally {
+            if (wrapper != null) wrapper.myPerformAction = false;
+          }
+        }
+      };
     }
 
     if (SystemInfoRt.isMac) {
@@ -799,12 +812,6 @@ public abstract class DialogWrapper {
     }
 
     return button;
-  }
-
-  private static @NotNull JButton createJOptionsButton(@NotNull OptionAction action) {
-    JBOptionButton optionButton = new JBOptionButton(action, action.getOptions());
-    optionButton.setOptionTooltipText(getDefaultTooltip());
-    return optionButton;
   }
 
   public static @NotNull Pair<Integer, @Nls String> extractMnemonic(@Nullable @Nls String text) {
@@ -1460,6 +1467,7 @@ public abstract class DialogWrapper {
     myCrossClosesWindow = crossClosesWindow;
   }
 
+  /** @see #setOKButtonText(String) for mnemonic hadling */
   protected final void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelAction.putValue(Action.NAME, text);
   }
@@ -1489,9 +1497,11 @@ public abstract class DialogWrapper {
   }
 
   /**
-   * @param text action without mnemonic. If mnemonic is set, presentation would be shifted by one to the left
-   *             {@link AbstractButton#setText(String)}
-   *             {@link AbstractButton#updateDisplayedMnemonicIndex(String, int)}
+   * Passed action text WILL be processed by {@link #extractMnemonic(String)} if setter is called before the {@link #init()}.
+   * It WILL NOT be processed if setter is called after the {@link #init()}.
+   *
+   * @see AbstractButton#setText(String)
+   * @see AbstractButton#updateDisplayedMnemonicIndex(String, int)
    */
   protected final void setOKButtonText(@NlsContexts.Button @NotNull String text) {
     myOKAction.putValue(Action.NAME, text);
@@ -1759,29 +1769,20 @@ public abstract class DialogWrapper {
   private void logCloseDialogEvent(int exitCode) {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      String dialogId = getClass().getName();
-      if (Strings.isNotEmpty(dialogId)) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
-      }
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(getClass(), exitCode);
     }
   }
 
   private void logShowDialogEvent() {
     boolean canRecord = canRecordDialogId();
     if (canRecord) {
-      String dialogId = getClass().getName();
-      if (Strings.isNotEmpty(dialogId)) {
-        FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
-      }
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(getClass());
     }
   }
 
   private void logClickOnHelpDialogEvent() {
     if (!canRecordDialogId()) return;
-    String dialogId = getClass().getName();
-    if (Strings.isNotEmpty(dialogId)) {
-      FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(dialogId, getClass());
-    }
+    FeatureUsageUiEventsKt.getUiEventLogger().logClickOnHelpDialog(getClass());
   }
 
   /**
@@ -1812,8 +1813,8 @@ public abstract class DialogWrapper {
     public void actionPerformed(ActionEvent e) {
       if (myClosed) return;
       if (myPerformAction) return;
-      try {
-        myPerformAction = true;
+      myPerformAction = true;
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
         doAction(e);
       }
       finally {

@@ -135,8 +135,8 @@
   <action id="GotoNextBookmark"/>
   <action id="GotoPreviousBookmark"/>
   <action id="ShowNavBar">
-    <keyboard-shortcut first-keystroke="alt HOME"/>
     <keyboard-shortcut first-keystroke="control alt Left"/>
+    <keyboard-shortcut first-keystroke="alt HOME"/>
   </action>
   <action id="GotoPreviousError">
     <keyboard-shortcut first-keystroke="shift F12"/>

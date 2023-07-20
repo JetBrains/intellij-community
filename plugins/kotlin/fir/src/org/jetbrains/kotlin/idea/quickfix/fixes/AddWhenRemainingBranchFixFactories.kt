@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
@@ -46,7 +47,7 @@ object AddWhenRemainingBranchFixFactories {
 
     private class AddRemainingWhenBranchesQuickFix(
         target: KtWhenExpression,
-        private val context: AddRemainingWhenBranchesUtils.Context,
+        @SafeFieldForPreview private val context: AddRemainingWhenBranchesUtils.Context,
     ) : AbstractKotlinApplicableQuickFix<KtWhenExpression>(target) {
         override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(context.enumToStarImport != null)
         override fun apply(element: KtWhenExpression, project: Project, editor: Editor?, file: KtFile) =

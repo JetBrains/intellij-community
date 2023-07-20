@@ -47,7 +47,7 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
     return false
   }
 
-  override fun getHint(element: PsiElement, file: PsiFile): String? {
+  override fun getVisionInfo(element: PsiElement, file: PsiFile): CodeVisionInfo? {
     if (element !is PsiNamedElement) return null
     val elementName = element.name ?: return null
 
@@ -75,9 +75,14 @@ class PyReferencesCodeVisionProvider : ReferencesCodeVisionProvider() {
     val dynamicResult = dynamicUsagesCount.get()
     if (result == 0 && dynamicResult == 0) return null
     if (dynamicResult == 0 || result > limit) {
-      return PyBundle.message("inlay.hints.usages.text", min(result, limit), if (result > limit) 1 else 0)
+      return CodeVisionInfo(PyBundle.message("inlay.hints.usages.text", min(result, limit), if (result > limit) 1 else 0),
+                            result, result <= limit)
     }
-    return PyBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult)
+    return CodeVisionInfo(PyBundle.message("inlay.hints.usages.with.dynamic.text", result, dynamicResult), result)
+  }
+
+  override fun getHint(element: PsiElement, file: PsiFile): String? {
+    return getVisionInfo(element, file)?.text
   }
 
   override fun logClickToFUS(element: PsiElement, hint: String) {

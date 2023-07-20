@@ -53,7 +53,7 @@
     <projectService serviceInterface="com.intellij.application.options.codeStyle.cache.CodeStyleCachingService"
                     serviceImplementation="com.intellij.application.options.codeStyle.cache.CodeStyleCachingServiceImpl"/>
     <projectService serviceInterface="com.intellij.pom.PomModel"
-                    serviceImplementation="com.intellij.psi.impl.source.PostprocessReformattingAspect$LangPomModel" overrides="true"
+                    serviceImplementation="com.intellij.psi.impl.source.PostprocessReformattingAspectImpl$LangPomModel" overrides="true"
                     preload="await"/>
   </extensions>
 </idea-plugin>

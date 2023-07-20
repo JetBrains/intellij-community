@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.BatchQuickFix;
@@ -81,8 +81,8 @@ public class CleanupInspectionUtilImpl implements CleanupInspectionUtil {
         if (!myApplied && !myBatchModeDescriptors.isEmpty()) {
           final ProblemDescriptor representative = myBatchModeDescriptors.get(0);
           LOG.assertTrue(representative.getFixes() != null);
-          for (QuickFix fix : representative.getFixes()) {
-            if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
+          for (QuickFix<?> fix : representative.getFixes()) {
+            if (fix.getClass().isAssignableFrom(myQuickfixClass)) {
               ((BatchQuickFix)fix).applyFix(myProject,
                   myBatchModeDescriptors.toArray(ProblemDescriptor.EMPTY_ARRAY),
                   new ArrayList<>(),

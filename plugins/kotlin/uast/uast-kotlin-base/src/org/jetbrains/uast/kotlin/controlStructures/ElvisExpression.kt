@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.uast.kotlin
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
@@ -75,7 +75,7 @@ private fun createElvisExpressions(
             createVariableReferenceExpression(tempVariable, this)
         }
         override val elseExpression: UExpression? by lz {
-            val service = ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
+            val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
             service.baseKotlinConverter.convertExpression(right, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
         override val isTernary: Boolean = false

@@ -25,11 +25,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +52,7 @@ public final class ExecutionUtil {
     NotificationGroupManager.getInstance().getNotificationGroup("Silent Execution");
   private static final NotificationGroup ourNotificationGroup =
     NotificationGroupManager.getInstance().getNotificationGroup("Execution");
+  private static final ThreadLocal<DataContext> CONTEXT_THREAD_LOCAL = new ThreadLocal<>();
 
   private ExecutionUtil() { }
 
@@ -309,5 +312,21 @@ public final class ExecutionUtil {
   @NotNull
   public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
     return new LayeredIcon(base, new IndicatorIcon(base, emptyIconWidth, emptyIconHeight, color));
+  }
+
+  @ApiStatus.Internal
+  public static DataContext getThreadContext() {
+    return CONTEXT_THREAD_LOCAL.get();
+  }
+
+  @ApiStatus.Internal
+  public static <T> T computeWithDataContext(@NotNull ExecutionEnvironment environment, ThrowableComputable<T, ? extends ExecutionException> computable) throws ExecutionException {
+    try {
+      CONTEXT_THREAD_LOCAL.set(environment.getDataContext());
+      return computable.compute();
+    }
+    finally {
+      CONTEXT_THREAD_LOCAL.remove();
+    }
   }
 }

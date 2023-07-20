@@ -16,14 +16,10 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
 import org.jetbrains.idea.maven.utils.library.RepositoryUtils
 import kotlin.coroutines.coroutineContext
 
+private val LOG = logger<LibrarySynchronizationQueue>()
+
 @Service(Service.Level.PROJECT)
 internal class LibrarySynchronizationQueue(private val project: Project, private val scope: CoroutineScope) {
-  companion object {
-    @JvmStatic
-    fun getInstance(project: Project): LibrarySynchronizationQueue = project.service()
-    private val log = logger<LibrarySynchronizationQueue>()
-  }
-
   private val synchronizationRequests = Channel<Request>(capacity = Channel.UNLIMITED).apply {
     scope.coroutineContext.job.invokeOnCompletion {
       close()
@@ -63,7 +59,7 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
         }
         catch (e: Exception) {
           // continue collecting on exceptions
-          log.warn(e)
+          LOG.warn(e)
         }
       }
     }
@@ -103,6 +99,11 @@ internal class LibrarySynchronizationQueue(private val project: Project, private
     class RevokeSynchronization(val library: LibraryEx) : Request
     object AllLibrariesSynchronization : Request
     object Flush : Request
+  }
+
+  companion object {
+    @JvmStatic
+    fun getInstance(project: Project): LibrarySynchronizationQueue = project.service()
   }
 }
 

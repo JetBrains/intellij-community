@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -10,6 +10,8 @@ import java.awt.*;
 import static java.lang.Math.ceil;
 
 /**
+ * A single-color icon, with rounded corners.
+ *
  * @author Konstantin Bulenkov
  */
 public class ColorIcon extends EmptyIcon {
@@ -19,7 +21,7 @@ public class ColorIcon extends EmptyIcon {
   private final int myColorHeight;
   private final int myArc;
 
-  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, final boolean border, int arc) {
+  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, boolean border, int arc) {
     super(width, height);
     myColor = color;
     myColorWidth = colorWidth;
@@ -28,15 +30,15 @@ public class ColorIcon extends EmptyIcon {
     myArc = arc;
   }
 
-  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, final boolean border) {
+  public ColorIcon(int width, int height, int colorWidth, int colorHeight, @NotNull Color color, boolean border) {
     this(width, height, colorWidth, colorHeight, color, border, 0);
   }
 
-  public ColorIcon(int size, int colorSize, @NotNull Color color, final boolean border) {
+  public ColorIcon(int size, int colorSize, @NotNull Color color, boolean border) {
     this(size, size, colorSize, colorSize, color, border, 0);
   }
 
-  public ColorIcon(int size, @NotNull Color color, final boolean border) {
+  public ColorIcon(int size, @NotNull Color color, boolean border) {
     this(size, size, color, border);
   }
 
@@ -64,18 +66,18 @@ public class ColorIcon extends EmptyIcon {
   }
 
   @Override
-  public void paintIcon(final Component component, final Graphics g, final int i, final int j) {
-    final int iconWidth = getIconWidth();
-    final int iconHeight = getIconHeight();
+  public void paintIcon(Component component, Graphics g, int i, int j) {
+    int iconWidth = getIconWidth();
+    int iconHeight = getIconHeight();
 
     GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     g.setColor(getIconColor());
 
-    final int width = getColorWidth();
-    final int height = getColorHeight();
-    final int arc = getArc();
-    final int x = i + (iconWidth - width) / 2;
-    final int y = j + (iconHeight - height) / 2;
+    int width = getColorWidth();
+    int height = getColorHeight();
+    int arc = getArc();
+    int x = i + (iconWidth - width) / 2;
+    int y = j + (iconHeight - height) / 2;
 
     g.fillRoundRect(x, y, width, height, arc, arc);
 

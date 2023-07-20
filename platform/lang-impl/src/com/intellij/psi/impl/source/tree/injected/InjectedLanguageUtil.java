@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -108,10 +108,10 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
    * @param <T>         class that represents language we look for
    * @return instance of class that represents language we look for or null of not found
    */
-  @Nullable
-  @SuppressWarnings("unchecked") // We check types dynamically (using isAssignableFrom)
-  public static <T extends PsiFileBase> T findInjectedFile(@NotNull final PsiElement expression,
-                                                           @NotNull final Class<T> classToFind) {
+  // We check types dynamically (using isAssignableFrom)
+  @SuppressWarnings("unchecked")
+  public static @Nullable <T extends PsiFileBase> T findInjectedFile(final @NotNull PsiElement expression,
+                                                           final @NotNull Class<T> classToFind) {
     final List<Pair<PsiElement, TextRange>> files =
       InjectedLanguageManager.getInstance(expression.getProject()).getInjectedPsiFiles(expression);
     if (files == null) {
@@ -136,8 +136,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return getInjectedEditorForInjectedFile(editor, injectedFile);
   }
 
-  @NotNull
-  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, @Nullable final PsiFile injectedFile) {
+  public static @NotNull Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor, final @Nullable PsiFile injectedFile) {
     return getInjectedEditorForInjectedFile(hostEditor, hostEditor.getCaretModel().getCurrentCaret(), injectedFile);
   }
 
@@ -145,10 +144,9 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
    * @param hostCaret if not {@code null}, take into account caret's selection (in case it's not contained completely in injected fragment,
    *                  return host editor)
    */
-  @NotNull
-  public static Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor,
+  public static @NotNull Editor getInjectedEditorForInjectedFile(@NotNull Editor hostEditor,
                                                         @Nullable Caret hostCaret,
-                                                        @Nullable final PsiFile injectedFile) {
+                                                        final @Nullable PsiFile injectedFile) {
     if (injectedFile == null || !(hostEditor instanceof EditorImpl) || hostEditor.isDisposed()) return hostEditor;
     Project project = hostEditor.getProject();
     if (project == null) project = injectedFile.getProject();
@@ -190,8 +188,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return editor;
   }
 
-  @NotNull
-  public static Editor getTopLevelEditor(@NotNull Editor editor) {
+  public static @NotNull Editor getTopLevelEditor(@NotNull Editor editor) {
     return InjectedLanguageEditorUtil.getTopLevelEditor(editor);
   }
 
@@ -235,8 +232,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return unescaped - shreds.get(shreds.size() - 1).getSuffix().length();
   }
 
-  @Nullable
-  public static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
+  public static @Nullable DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     VirtualFile virtualFile = file.getVirtualFile();
@@ -255,8 +251,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     return shred.getRangeInsideHost().getStartOffset() + host.getTextRange().getStartOffset();
   }
 
-  @Nullable
-  public static PsiElement findElementInInjected(@NotNull PsiLanguageInjectionHost injectionHost, final int offset) {
+  public static @Nullable PsiElement findElementInInjected(@NotNull PsiLanguageInjectionHost injectionHost, final int offset) {
     final Ref<PsiElement> ref = Ref.create();
     enumerate(injectionHost, (injectedPsi, places) -> ref.set(injectedPsi.findElementAt(offset - getInjectedStart(places))));
     return ref.get();
@@ -272,8 +267,7 @@ public final class InjectedLanguageUtil extends InjectedLanguageUtilBase {
     }
   }
 
-  @Nullable
-  public static PsiFile getCachedInjectedFileWithLanguage(@NotNull PsiElement element, @NotNull Language language) {
+  public static @Nullable PsiFile getCachedInjectedFileWithLanguage(@NotNull PsiElement element, @NotNull Language language) {
     if (!element.isValid()) return null;
     PsiFile containingFile = PsiUtilCore.getTemplateLanguageFile(element.getContainingFile());
     if (containingFile == null || !containingFile.isValid()) return null;

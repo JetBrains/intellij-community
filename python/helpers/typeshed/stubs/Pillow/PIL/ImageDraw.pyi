@@ -116,7 +116,7 @@ class ImageDraw:
         features: Sequence[str] | None = ...,
         language: str | None = ...,
         embedded_color: bool = ...,
-    ) -> int: ...
+    ) -> float: ...
     def textbbox(
         self,
         xy: tuple[float, float],

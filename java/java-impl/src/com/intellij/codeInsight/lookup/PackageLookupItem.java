@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -41,6 +41,11 @@ public class PackageLookupItem extends LookupElement {
   @Override
   public String getLookupString() {
     return myString;
+  }
+
+  @Override
+  public boolean isValid() {
+    return true;
   }
 
   @Override

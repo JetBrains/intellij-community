@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.mock.MockProject;
@@ -117,7 +117,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
 
     assertReady(null);
 
-    myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.NON_MODAL);
+    myMonitor.addActivity(new UiActivity("non_modal_1"), ModalityState.nonModal());
     assertBusy(null);
 
     Dialog dialog = new Dialog(new Dialog((Window)null), "d", true);
@@ -125,7 +125,7 @@ public class ActivityMonitorTest extends LightPlatformTestCase {
     try {
       assertReady(null);
 
-      myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.NON_MODAL);
+      myMonitor.addActivity(new UiActivity("non_modal2"), ModalityState.nonModal());
       assertReady(null);
 
       ModalityState m1 = ApplicationManager.getApplication().getModalityStateForComponent(dialog);

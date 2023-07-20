@@ -3,8 +3,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
-import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -16,7 +16,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.infos.CandidateInfo;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -46,8 +49,8 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     }
 
     @Override
-    public MethodArgumentFix createFix(final PsiExpressionList list, final int i, final PsiType toType) {
-      return new MyMethodArgumentFix(list, i, toType, this);
+    public IntentionAction createFix(final PsiExpressionList list, final int i, final PsiType toType) {
+      return new MyMethodArgumentFix(list, i, toType, this).asIntention();
     }
 
     abstract String getText(PsiExpression element, PsiType type);
@@ -151,22 +154,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       }
       catch (IncorrectOperationException ioe) {
         PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variableType);
-        String message = "Cannot create expression for type " + variableType.getClass() + "\n"
-                         + "Canonical text: " + variableType.getCanonicalText() + "\n"
-                         + "Internal text: " + variableType.getInternalCanonicalText() + "\n";
-        if (aClass != null) {
-          message += "Class: " + aClass.getClass() + "|" + aClass.getQualifiedName() + "\n"
-                     + "File: " + aClass.getContainingFile() + "\n";
-        }
-        if (variableType instanceof PsiClassReferenceType) {
-          PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)variableType).getReference();
-          message += "Reference: " + reference.getCanonicalText() + "\n"
-                     + "Reference class: " + reference.getClass() + "\n"
-                     + "Reference name: " + reference.getReferenceName() + "\n"
-                     + "Reference qualifier: " + (reference.getQualifier() == null ? "(null)" : reference.getQualifier().getText()) + "\n"
-                     + "Reference file: " + reference.getContainingFile();
-        }
-        throw new IncorrectOperationException(message, (Throwable)ioe);
+        throw new IncorrectOperationException(getExceptionMessage(variableType, aClass), (Throwable)ioe);
       }
       PsiDeclarationStatement declaration =
         JavaPsiFacade.getElementFactory(context.getProject()).createVariableDeclarationStatement("x", outType, replacement, context);
@@ -176,6 +164,26 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
       if (initializer == null) return false;
       PsiType resultType = initializer.getType();
       return resultType != null && outType.isAssignableFrom(resultType);
+    }
+
+    @NotNull
+    private static String getExceptionMessage(PsiType variableType, PsiClass aClass) {
+      String message = "Cannot create expression for type " + variableType.getClass() + "\n"
+                       + "Canonical text: " + variableType.getCanonicalText() + "\n"
+                       + "Internal text: " + variableType.getInternalCanonicalText() + "\n";
+      if (aClass != null) {
+        message += "Class: " + aClass.getClass() + "|" + aClass.getQualifiedName() + "\n"
+                   + "File: " + aClass.getContainingFile() + "\n";
+      }
+      if (variableType instanceof PsiClassReferenceType) {
+        PsiJavaCodeReferenceElement reference = ((PsiClassReferenceType)variableType).getReference();
+        message += "Reference: " + reference.getCanonicalText() + "\n"
+                   + "Reference class: " + reference.getClass() + "\n"
+                   + "Reference name: " + reference.getReferenceName() + "\n"
+                   + "Reference qualifier: " + (reference.getQualifier() == null ? "(null)" : reference.getQualifier().getText()) + "\n"
+                   + "Reference file: " + reference.getContainingFile();
+      }
+      return message;
     }
 
     @Override
@@ -321,9 +329,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     @Nls
     @NotNull
     @Override
-    public String getText() {
-      PsiExpressionList list = myArgList.getElement();
-      if (list == null) return getFamilyName();
+    public String getText(@NotNull PsiExpressionList list) {
       AbstractWrapper wrapper = (AbstractWrapper)myArgumentFixerActionFactory;
       String wrapperText = wrapper.getText(list.getExpressions()[myIndex], myToType);
       if (wrapperText == null) return getFamilyName();
@@ -331,14 +337,6 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
         return QuickFixBundle.message("wrap.with.adapter.parameter.single.text", wrapperText);
       }
       return QuickFixBundle.message("wrap.with.adapter.parameter.multiple.text", myIndex + 1, wrapperText);
-    }
-
-    @Override
-    public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      PsiExpressionList list = myArgList.getElement();
-      if (list == null) return null;
-      return new MyMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
-                                     (AbstractWrapper)myArgumentFixerActionFactory);
     }
   }
 

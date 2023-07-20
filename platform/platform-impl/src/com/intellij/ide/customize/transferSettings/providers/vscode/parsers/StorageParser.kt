@@ -54,7 +54,7 @@ class StorageParser(private val settings: Settings) {
     }
   }
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a storage file: $file")
 
     val root = ObjectMapper(JsonFactory().enable(JsonParser.Feature.ALLOW_COMMENTS)).readTree(file) as? ObjectNode

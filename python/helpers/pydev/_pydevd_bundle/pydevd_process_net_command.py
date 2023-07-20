@@ -888,8 +888,16 @@ def process_net_command(py_db, cmd_id, seq, text):
 
             elif cmd_id == CMD_TABLE_EXEC:
                 try:
-                    thread_id, frame_id, init_command, command_type = text.split('\t', 3)
-                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type)
+                    parameters = text.split('\t')
+                    thread_id, frame_id, init_command, command_type = parameters[:4]
+
+                    start_index, end_index = None, None
+
+                    if len(parameters) >= 6:
+                        start_index = int(parameters[4])
+                        end_index = int(parameters[5])
+
+                    int_cmd = InternalTableCommand(seq, thread_id, frame_id, init_command, command_type, start_index, end_index)
                     py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()

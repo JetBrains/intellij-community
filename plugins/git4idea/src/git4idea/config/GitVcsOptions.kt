@@ -29,6 +29,12 @@ class GitVcsOptions : BaseState() {
   var gcAuto by string()
   @com.intellij.configurationStore.Property(description = "core.longpaths")
   var coreLongpaths by string()
+  @com.intellij.configurationStore.Property(description = "core.untrackedcache")
+  var coreUntrackedCache by string()
+  @com.intellij.configurationStore.Property(description = "core.fsmonitor")
+  var coreFsMonitor by string()
+  @com.intellij.configurationStore.Property(description = "feature.manyFiles")
+  var featureManyFiles by string()
 
   @get:OptionTag("PUSH_AUTO_UPDATE")
   var isPushAutoUpdate by property(false)

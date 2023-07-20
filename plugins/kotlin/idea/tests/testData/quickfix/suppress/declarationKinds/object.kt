@@ -1,5 +1,5 @@
-// "Suppress 'REDUNDANT_NULLABLE' for object C" "true"
+// "Suppress 'DIVISION_BY_ZERO' for object C" "true"
 
 object C {
-    var foo: String?<caret>? = null
+    var foo = 2 / <caret>0
 }

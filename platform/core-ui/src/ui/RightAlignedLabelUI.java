@@ -8,7 +8,7 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLabelUI;
 import java.awt.*;
 
-public class RightAlignedLabelUI extends BasicLabelUI {
+public final class RightAlignedLabelUI extends BasicLabelUI {
   @Override
   protected String layoutCL(
     JLabel label,

@@ -12,7 +12,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,7 @@ import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprDown;
 import static com.intellij.psi.util.PsiUtil.skipParenthesizedExprUp;
 
 public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvider {
-  private static final Set<String> ourUpdateMethods = ContainerUtil.set(
+  private static final Set<String> ourUpdateMethods = Set.of(
     "compareAndSet", "weakCompareAndSet", "set", "lazySet", "getAndSet", "getAndIncrement", "getAndDecrement", "getAndAdd",
     "incrementAndGet", "decrementAndGet", "addAndGet", "getAndUpdate", "updateAndGet", "getAndAccumulate", "accumulateAndGet");
 
@@ -106,6 +105,7 @@ public class AtomicReferenceImplicitUsageProvider implements ImplicitUsageProvid
     PsiReferenceExpression methodExpression = ObjectUtils.tryCast(skipParenthesizedExprUp(element.getParent()), PsiReferenceExpression.class);
     if (methodExpression != null &&
         (methodExpression instanceof PsiMethodReferenceExpression || methodExpression.getParent() instanceof PsiMethodCallExpression) &&
+        methodExpression.getReferenceName() != null &&
         ourUpdateMethods.contains(methodExpression.getReferenceName()) &&
         skipParenthesizedExprDown(methodExpression.getQualifierExpression()) == element) {
 

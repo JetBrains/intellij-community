@@ -1,6 +1,6 @@
 package inlineFunctionBreakpointVariants
 
-import inlineFunctionOtherPackage.*
+
 
 fun main(args: Array<String>) {
     //Breakpoint! (lambdaOrdinal = -1)

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -17,22 +17,19 @@ class SpineRef extends SubstrateRef {
     myIndex = index;
   }
 
-  @NotNull
   @Override
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return myFile.calcTreeElement().getStubbedSpine().getSpineNodes().get(myIndex);
   }
 
-  @Nullable
   @Override
-  public Stub getStub() {
+  public @Nullable Stub getStub() {
     StubTree tree = myFile.getStubTree();
     return tree == null ? null : tree.getPlainList().get(myIndex);
   }
 
-  @Nullable
   @Override
-  public Stub getGreenStub() {
+  public @Nullable Stub getGreenStub() {
     StubTree tree = myFile.getGreenStubTree();
     return tree == null ? null : tree.getPlainList().get(myIndex);
   }
@@ -42,9 +39,8 @@ class SpineRef extends SubstrateRef {
     return myFile.isValid();
   }
 
-  @NotNull
   @Override
-  public PsiFile getContainingFile() {
+  public @NotNull PsiFile getContainingFile() {
     return myFile;
   }
 }

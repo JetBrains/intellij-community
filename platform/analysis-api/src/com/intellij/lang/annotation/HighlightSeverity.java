@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.BundleBase;
@@ -22,17 +22,13 @@ import java.util.function.Supplier;
  * @see Annotation
  */
 public final class HighlightSeverity implements Comparable<HighlightSeverity> {
-  @NotNull
-  public final @NonNls String myName;
+  public final @NotNull @NonNls String myName;
 
   public final int myVal;
 
-  @Nullable
-  private final Supplier<@Nls String> myDisplayName;
-  @Nullable
-  private final Supplier<@Nls String> myCapitalizedDisplayName;
-  @Nullable
-  private final Supplier<@Nls String> myCountMessageTemplate;
+  private final @Nullable Supplier<@Nls String> myDisplayName;
+  private final @Nullable Supplier<@Nls String> myCapitalizedDisplayName;
+  private final @Nullable Supplier<@Nls String> myCountMessageTemplate;
 
   /**
    * The standard severity level for information annotations.

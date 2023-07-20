@@ -16,7 +16,7 @@ internal object KdbxEntryElementNames {
   const val string = "String"
 }
 
-class IncorrectMasterPasswordException(val isFileMissed: Boolean = false) : RuntimeException()
+class IncorrectMainPasswordException(val isFileMissed: Boolean = false) : RuntimeException()
 
 internal interface KeePassCredentials {
   val key: ByteArray

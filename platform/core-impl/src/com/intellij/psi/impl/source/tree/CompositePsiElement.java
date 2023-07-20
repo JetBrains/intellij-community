@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -33,9 +33,8 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
     setPsi(this);
   }
 
-  @NotNull
   @Override
-  public CompositePsiElement clone() {
+  public @NotNull CompositePsiElement clone() {
     CompositePsiElement clone = (CompositePsiElement)super.clone();
     clone.setPsi(clone);
     return clone;
@@ -220,8 +219,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 
@@ -237,14 +235,12 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
@@ -275,8 +271,7 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
       return project;
@@ -288,14 +283,12 @@ public abstract class CompositePsiElement extends CompositeElement implements Na
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getElementType().getLanguage();
   }
 
   @Override
-  @NotNull
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return this;
   }
 

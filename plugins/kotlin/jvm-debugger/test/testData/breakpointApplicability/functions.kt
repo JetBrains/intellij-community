@@ -51,3 +51,13 @@ fun foo12() { /// M
         } /// L
         .joinToString() /// L
 } /// L
+
+fun foo13() { /// M
+    listOf(1, 2, 3, 4, 5) /// L
+      .map { it * 2 }.map { it * 3 } /// *, L, λ, λ
+} /// L
+
+fun foo14() { /// M
+    listOf(1, 2, 3, 4, 5) /// L
+      .map { x -> x.let { 42 } } /// *, L, λ, λ
+} /// L

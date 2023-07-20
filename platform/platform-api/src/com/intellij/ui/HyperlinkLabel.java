@@ -387,7 +387,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
 
     @Override public EffectType getEffectType() {
-      return !isEnabled() || myMouseHover || myMousePressed ? EffectType.LINE_UNDERSCORE : null;
+      return isEnabled() && (myMouseHover || myMousePressed) ? EffectType.LINE_UNDERSCORE : null;
     }
 
     @Override public void setForegroundColor(Color color) {

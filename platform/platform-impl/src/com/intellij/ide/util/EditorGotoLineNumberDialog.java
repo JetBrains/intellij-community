@@ -4,17 +4,40 @@ package com.intellij.ide.util;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.impl.RelativeLineHelper;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class EditorGotoLineNumberDialog extends GotoLineNumberDialog {
   private final Editor myEditor;
+  private static final Pattern relativeNumberPattern = PatternUtil.compileSafe("\\s*([+-]\\d+)\\s*", null);
 
   public EditorGotoLineNumberDialog(Project project, Editor editor) {
     super(project);
     myEditor = editor;
     init();
+  }
+
+  @Override
+  protected final Coordinates getCoordinates() {
+    Coordinates c = super.getCoordinates();
+    if (c != null) return c;
+
+    Matcher relativeMatcher = relativeNumberPattern.matcher(getText());
+    if (relativeMatcher.matches()) {
+      int caretLine = myEditor.getCaretModel().getLogicalPosition().line;
+      int relativeLine = Integer.parseInt(relativeMatcher.group(1));
+      int logicalLine = RelativeLineHelper.INSTANCE.getLogicalLine(myEditor, caretLine, relativeLine);
+
+      int linesTotal = myEditor.getDocument().getLineCount();
+      return new Coordinates(Math.max(0, Math.min(logicalLine, linesTotal - 1)), 0);
+    }
+    return null;
   }
 
   @Override

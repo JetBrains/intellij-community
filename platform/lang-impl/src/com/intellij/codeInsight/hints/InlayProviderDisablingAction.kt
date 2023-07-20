@@ -22,7 +22,7 @@ class InlayProviderDisablingAction(
 
   override fun actionPerformed(e: AnActionEvent) {
     disableInlayHintsProvider(key, language)
-    refreshHints()
+    refreshHints(project)
   }
 }
 
@@ -47,7 +47,7 @@ internal class DisableInlayHintsProviderCaseAction(
 
     case.value = false
     model.apply()
-    refreshHints()
+    refreshHints(file.project)
   }
 }
 
@@ -68,7 +68,7 @@ internal class DisableInlayHintsProviderAction(
     val file = e.getData(PSI_FILE) ?: return
 
     disableInlayHintsProvider(providerKey, file.language)
-    refreshHints()
+    refreshHints(file.project)
   }
 }
 
@@ -90,6 +90,6 @@ internal class ConfigureInlayHintsProviderAction(
 private fun disableInlayHintsProvider(key: SettingsKey<*>, language: Language) =
   InlayHintsSettings.instance().changeHintTypeStatus(key, language, false)
 
-private fun refreshHints() {
-  InlayHintsPassFactory.forceHintsUpdateOnNextPass()
+private fun refreshHints(project: Project) {
+  InlayHintsPassFactory.restartDaemonUpdatingHints(project)
 }

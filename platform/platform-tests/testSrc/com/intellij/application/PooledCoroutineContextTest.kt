@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.assertInstanceOf
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.Dispatchers
@@ -13,11 +15,10 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(JUnit4::class)
-class PooledCoroutineContextTest : UsefulTestCase() {
+class PooledCoroutineContextTest : LightPlatformTestCase() {
 
   @Test
   fun `log error`() {
@@ -28,7 +29,13 @@ class PooledCoroutineContextTest : UsefulTestCase() {
   @Test
   fun `do not log ProcessCanceledException`() {
     val exception = ProcessCanceledException()
-    assertNull(loggedErrorsAfterThrowingFromGlobalScope(exception))
+    val logged = loggedErrorsAfterThrowingFromGlobalScope(exception)
+    if (Registry.`is`("ide.log.coroutine.pce")) {
+      assertSame(exception, assertInstanceOf<IllegalStateException>(logged).cause)
+    }
+    else {
+      assertNull(logged)
+    }
   }
 
   private fun loggedErrorsAfterThrowingFromGlobalScope(exception: Throwable): Throwable? = withNoopThreadUncaughtExceptionHandler {

@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.settingsSync.migration.SettingsRepositoryToSettingsSyncMigration
@@ -22,16 +23,16 @@ internal class SettingsSynchronizer : ApplicationInitializedListener, Applicatio
 
   private var scheduledFuture: ScheduledFuture<*>? = null // accessed only from the EDT
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
+  override suspend fun execute(asyncScope: CoroutineScope) : Unit = blockingContext {
     if (ApplicationManager.getApplication().isHeadlessEnvironment || !isSettingsSyncEnabledByKey()) {
-      return
+      return@blockingContext
     }
 
     SettingsSyncEvents.getInstance().addEnabledStateChangeListener(this)
 
     if (isSettingsSyncEnabledInSettings()) {
       executorService.schedule(initializeSyncing(SettingsSyncBridge.InitMode.JustInit), 0, TimeUnit.SECONDS)
-      return
+      return@blockingContext
     }
 
     if (!SettingsSyncSettings.getInstance().migrationFromOldStorageChecked) {

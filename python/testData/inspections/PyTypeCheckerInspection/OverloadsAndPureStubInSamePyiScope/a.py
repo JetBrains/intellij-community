@@ -2,8 +2,8 @@ from module import foo, bar
 
 foo("str")
 foo(5)
-foo(<warning descr="Unexpected type(s):(List[int])Possible type(s):(int)(str)">[5]</warning>)
+foo(<warning descr="Unexpected type(s):(List[int])Possible type(s):(str)(int)">[5]</warning>)
 
 bar("str")
 bar(5)
-bar(<warning descr="Unexpected type(s):(List[int])Possible type(s):(int)(str)">[5]</warning>)
+bar(<warning descr="Unexpected type(s):(List[int])Possible type(s):(str)(int)">[5]</warning>)

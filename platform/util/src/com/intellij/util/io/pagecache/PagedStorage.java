@@ -70,5 +70,5 @@ public interface PagedStorage extends Forceable, AutoCloseable {
   void force() throws IOException;
 
   @Override
-  void close() throws IOException, InterruptedException;
+  void close() throws IOException;
 }

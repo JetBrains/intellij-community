@@ -24,15 +24,17 @@ import com.jetbrains.python.psi.PyPsiFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
   @NotNull private final List<PyType> myElementTypes;
 
-  public PyCollectionTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<PyType> elementTypes) {
+  public PyCollectionTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<? extends PyType> elementTypes) {
     super(source, isDefinition);
-    myElementTypes = elementTypes;
+    myElementTypes = new ArrayList<>(elementTypes);
   }
 
 
@@ -54,14 +56,14 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
   @NotNull
   @Override
   public List<PyType> getElementTypes() {
-    return myElementTypes;
+    return Collections.unmodifiableList(myElementTypes);
   }
 
   @Nullable
   public static PyCollectionTypeImpl createTypeByQName(@NotNull final PsiElement anchor,
                                                        @NotNull final String classQualifiedName,
                                                        final boolean isDefinition,
-                                                       @NotNull final List<PyType> elementTypes) {
+                                                       @NotNull final List<? extends PyType> elementTypes) {
     final PyClass pyClass = PyPsiFacade.getInstance(anchor.getProject()).createClassByQName(classQualifiedName, anchor);
     if (pyClass == null) {
       return null;

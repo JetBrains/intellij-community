@@ -46,11 +46,7 @@ class WslDistributionConsoleFolding : ConsoleFolding() {
 
     // check that `wsl.exe` path (usually `C:\WINDOWS\system32`) is contained in `PATH` variable
     val wslExePath = line.substring(0, wslExeIndex).trim('\\', '/')
-    if (PathEnvironmentVariableUtil.getPathVariableValue()?.contains(wslExePath) != true) {
-      return false
-    }
-
-    return true
+    return PathEnvironmentVariableUtil.getPathVariableValue()?.contains(wslExePath) == true
   }
 
   override fun shouldBeAttachedToThePreviousLine(): Boolean = false

@@ -8,13 +8,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 
 class MoveMinimapAction : AnAction(MiniMessagesBundle.message("action.moveLeft")) {
-  override fun isDumbAware() = true
+  override fun isDumbAware(): Boolean = true
   override fun update(e: AnActionEvent) {
     e.presentation.text = if (MinimapSettings.getInstance().state.rightAligned) MiniMessagesBundle.message("action.moveLeft")
     else MiniMessagesBundle.message("action.moveRight")
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
     val settings = MinimapSettings.getInstance()
     settings.state.rightAligned = !settings.state.rightAligned

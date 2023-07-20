@@ -3,7 +3,7 @@
 Reports JUnit 4 tests that can be automatically migrated to JUnit 5.
 While default runners are automatically convertible, custom runners, method- and field- rules are not and require manual changes.
 <p><b>Example:</b></p>
-<pre><code>
+<pre><code lang="java">
   import org.junit.Assert;
   import org.junit.Test;
 
@@ -15,7 +15,7 @@ While default runners are automatically convertible, custom runners, method- and
   }
 </code></pre>
 <p>After the quick-fix is applied:</p>
-<pre><code>
+<pre><code lang="java">
   import org.junit.jupiter.api.Assertions;
   import org.junit.jupiter.api.Test;
 

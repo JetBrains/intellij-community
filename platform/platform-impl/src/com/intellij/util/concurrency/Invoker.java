@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
@@ -12,7 +13,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -176,34 +176,36 @@ public abstract class Invoker implements Disposable {
    * @param attempt an attempt to run the specified task
    */
   private void invokeSafely(@NotNull Task<?> task, int attempt) {
-    try {
-      if (task.canInvoke(disposed)) {
-        if (getApplication() == null) {
-          task.run(); // is not interruptible in tests without application
-        }
-        else if (useReadAction != ThreeState.YES || isDispatchThread()) {
-          ProgressManager.getInstance().runProcess(task, indicator(task.promise));
-        }
-        else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
-          offerRestart(task, attempt);
-          return;
-        }
-        task.setResult();
-      }
-    }
-    catch (ProcessCanceledException | IndexNotReadyException exception) {
-      offerRestart(task, attempt);
-    }
-    catch (Throwable throwable) {
+    try (AccessToken ignored = ClientId.withClientId(task.clientId)) {
       try {
-        LOG.error(throwable);
+        if (task.canInvoke(disposed)) {
+          if (getApplication() == null) {
+            task.run(); // is not interruptible in tests without application
+          }
+          else if (useReadAction != ThreeState.YES || isDispatchThread()) {
+            ProgressManager.getInstance().runProcess(task, indicator(task.promise));
+          }
+          else if (!runInReadActionWithWriteActionPriority(task, indicator(task.promise))) {
+            offerRestart(task, attempt);
+            return;
+          }
+          task.setResult();
+        }
+      }
+      catch (ProcessCanceledException | IndexNotReadyException exception) {
+        offerRestart(task, attempt);
+      }
+      catch (Throwable throwable) {
+        try {
+          LOG.error(throwable);
+        }
+        finally {
+          task.promise.setError(throwable);
+        }
       }
       finally {
-        task.promise.setError(throwable);
+        count.decrementAndGet();
       }
-    }
-    finally {
-      count.decrementAndGet();
     }
   }
 
@@ -385,7 +387,7 @@ public abstract class Invoker implements Disposable {
   }
 
   public static final class Background extends Invoker {
-    private final Set<Thread> threads = ContainerUtil.newConcurrentSet();
+    private final Set<Thread> threads = ConcurrentCollectionFactory.createConcurrentSet();
     private final ScheduledExecutorService executor;
 
     /**

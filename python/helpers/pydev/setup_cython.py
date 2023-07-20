@@ -19,6 +19,8 @@ _pydevd_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(_pydevd_dir)
 
 IS_PY36_OR_GREATER = sys.version_info > (3, 6)
+IS_PY311_OR_GREATER = sys.version_info > (3, 11)
+IS_PY312_OR_GREATER = sys.version_info > (3, 12)
 
 
 def process_args():
@@ -54,8 +56,9 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
                     target_arch, extended=False):
     """
     :param dir_name: directory where the Cython file is located
-    :param extension_name: name of the extension to build
-    :param target_pydevd_name: name of the Cython file
+    :param extension_name: name of the .pyx or .c file to build extension from, e.g.
+      'pydevd_cython' or 'pydevd_frame_evaluator_39_310'
+    :param target_pydevd_name: name of the resulting extension
     :param force_cython: if False, build from the C file, use ``.pyx`` otherwise
     :param target_arch: target architecture, e.g. amd64
     :param extended: add ``_ext`` to the name of the extension package name
@@ -117,13 +120,19 @@ def build_extension(dir_name, extension_name, target_pydevd_name, force_cython,
             # In case it's a pydevd_frame_evaluator extension with the version suffix.
             import re
             target_pydevd_name = extension_name
-            m = re.search("_\d+_\d+$", extension_name)
+            m = re.search(r"_\d+_\d+$", extension_name)
             if m:
                 target_pydevd_name = extension_name[:m.start()]
 
+            # The C file for Python 3.11 and older is incompatible with
+            # Python 3.12.
+            effective_c_file_name = "%s.c" % (
+                extension_name + "_312" if IS_PY312_OR_GREATER else extension_name
+            )
+
             ext_modules = [Extension(
                 "%s%s.%s" % (dir_name, "_ext" if extended else "", target_pydevd_name),
-                [os.path.join(dir_name, "%s.c" % extension_name), ],
+                [os.path.join(dir_name, effective_c_file_name)],
                 # uncomment to generate pdbs for visual studio.
                 # extra_compile_args=["-Zi", "/Od"],
                 # extra_link_args=["-debug"],
@@ -197,7 +206,7 @@ def main():
         "_pydevd_bundle", extension_name, target_pydevd_name, force_cython, target_arch,
         extended)
 
-    if IS_PY36_OR_GREATER:
+    if IS_PY36_OR_GREATER and not IS_PY311_OR_GREATER:
         extension_name = get_frame_eval_extension_name()
         frame_eval_dir_name = "_pydevd_frame_eval"
         target_frame_eval = target_frame_eval or extension_name

@@ -3,30 +3,32 @@
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
     <content url="file://$MODULE_DIR$">
-      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlin-stdlib" level="project" />
-    <orderEntry type="library" scope="TEST" name="opentelemetry" level="project" />
-    <orderEntry type="library" scope="TEST" name="grpc-netty-shaded" level="project" />
-    <orderEntry type="library" scope="TEST" name="grpc-core" level="project" />
-    <orderEntry type="library" scope="TEST" name="grpc-protobuf" level="project" />
-    <orderEntry type="library" scope="TEST" name="grpc-stub" level="project" />
-    <orderEntry type="library" scope="TEST" name="jackson-jr-objects" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.jps.model" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.util" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.java.rt" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
-    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-collections-immutable" level="project" />
-    <orderEntry type="library" scope="TEST" name="kotlinx-coroutines-jdk8" level="project" />
-    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
+    <orderEntry type="library" name="grpc-netty-shaded" level="project" />
+    <orderEntry type="library" name="grpc-core" level="project" />
+    <orderEntry type="library" name="grpc-protobuf" level="project" />
+    <orderEntry type="library" name="grpc-stub" level="project" />
+    <orderEntry type="library" name="jackson-jr-objects" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.core" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.idea.community.build.tasks" />
+    <orderEntry type="library" name="JUnit5" level="project" />
+    <orderEntry type="library" name="assertJ" level="project" />
+    <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
+    <orderEntry type="module" module-name="intellij.platform.reproducibleBuilds.diffTool" />
+    <orderEntry type="module" module-name="intellij.platform.jps.build" />
+    <orderEntry type="module" module-name="intellij.devkit.runtimeModuleRepository.jps" />
+    <orderEntry type="module" module-name="intellij.platform.runtime.repository" />
   </component>
 </module>

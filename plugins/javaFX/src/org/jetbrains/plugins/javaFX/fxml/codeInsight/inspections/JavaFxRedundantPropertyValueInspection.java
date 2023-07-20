@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.reference.SoftReference;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -28,11 +27,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.ref.Reference;
+import java.lang.ref.SoftReference;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.reference.SoftReference.dereference;
 
 public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(JavaFxRedundantPropertyValueInspection.class);
@@ -153,7 +155,7 @@ public final class JavaFxRedundantPropertyValueInspection extends XmlSuppressabl
    */
   @Nullable
   private static Map<String, String> getDefaultPropertyValues(String classQualifiedName) {
-    Map<String, Map<String, String>> values = SoftReference.dereference(ourDefaultPropertyValues);
+    Map<String, Map<String, String>> values = dereference(ourDefaultPropertyValues);
     if (values == null) {
       values = loadDefaultPropertyValues(JavaFxRedundantPropertyValueInspection.class.getSimpleName() + "8.txt");
       ourDefaultPropertyValues = new SoftReference<>(values);

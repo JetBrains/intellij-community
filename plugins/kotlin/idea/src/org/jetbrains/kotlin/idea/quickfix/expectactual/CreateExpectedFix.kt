@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.liftToExpected
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
@@ -39,9 +40,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 sealed class CreateExpectedFix<D : KtNamedDeclaration>(
     declaration: D,
     targetExpectedClass: KtClassOrObject?,
-    commonModule: Module,
-    generateIt: KtPsiFactory.(Project, TypeAccessibilityChecker, D) -> D?
-) : AbstractCreateDeclarationFix<D>(declaration, commonModule, generateIt) {
+    val module: Module,
+    val generateIt: KtPsiFactory.(Project, TypeAccessibilityChecker, D) -> D?
+) : KotlinQuickFixAction<D>(declaration) {
+
+    override fun getFamilyName(): String = KotlinBundle.message("fix.create.expect.actual")
+
+    protected val elementType: String = element.getTypeDescription()
+
+    override fun startInWriteAction() = false
 
     private val targetExpectedClassPointer = targetExpectedClass?.createSmartPointer()
 
@@ -50,10 +57,11 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
     final override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val targetExpectedClass = targetExpectedClassPointer?.element
         val expectedFile = targetExpectedClass?.containingKtFile ?: getOrCreateImplementationFile() ?: return
-        doGenerate(project, editor, originalFile = file, targetFile = expectedFile, targetClass = targetExpectedClass)
+        val declaration = element ?: return
+        generateExpectOrActualInFile(project, editor, originalFile = file, targetFile = expectedFile, targetClass = targetExpectedClass, declaration, module, generateIt)
     }
 
-    override fun findExistingFileToCreateDeclaration(
+    private fun findExistingFileToCreateDeclaration(
         originalFile: KtFile,
         originalDeclaration: KtNamedDeclaration
     ): KtFile? {
@@ -65,6 +73,13 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
             return expectedDeclaration.containingKtFile
         }
         return null
+    }
+
+    private fun getOrCreateImplementationFile(): KtFile? {
+        val declaration = element as? KtNamedDeclaration ?: return null
+        val parent = declaration.parent
+        return (parent as? KtFile)?.let { findExistingFileToCreateDeclaration(it, declaration) }
+            ?: createFileForDeclaration(module, declaration)
     }
 
     companion object : KotlinIntentionActionsFactory() {
@@ -84,13 +99,11 @@ sealed class CreateExpectedFix<D : KtNamedDeclaration>(
                 ?: actualDeclaration.module?.implementedModules
                 ?: return emptyList()
             return when (actualDeclaration) {
-                is KtClassOrObject -> expectedModules.map { CreateExpectedClassFix(actualDeclaration, expectedContainingClass, it) }
+                is KtClassOrObject -> expectedModules.map {
+                    CreateExpectedClassFix(actualDeclaration, expectedContainingClass, it)
+                }
                 is KtProperty, is KtParameter, is KtFunction -> expectedModules.map {
-                    CreateExpectedCallableMemberFix(
-                        actualDeclaration as KtCallableDeclaration,
-                        expectedContainingClass,
-                        it
-                    )
+                    CreateExpectedCallableMemberFix(actualDeclaration as KtCallableDeclaration, expectedContainingClass, it)
                 }
                 else -> emptyList()
             }

@@ -22,13 +22,12 @@ import java.util.concurrent.ThreadLocalRandom;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage.NULL_ID;
 import static java.nio.charset.StandardCharsets.US_ASCII;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Theories.class)
 public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobStorage> extends BlobStorageTestBase<S> {
 
-  private static final StorageRecord[] RANDOM_RECORDS_TO_START_WITH = BlobStorageTestBase.generateRecords(ENOUGH_RECORDS);
+  protected final StorageRecord[] randomRecordsToStartWith;
 
   protected final int pageSize;
   protected final SpaceAllocationStrategy allocationStrategy;
@@ -50,7 +49,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   @DataPoints
   public static Integer[] pageSizesToTry() {
     return new Integer[]{
-      //Try quite small pages, so issues on the page borders have chance to manifest themselves
+      //Try quite small pages, so issues on the page borders have a chance to manifest themselves
       1 << 14,
       1 << 18,
       1 << 22
@@ -58,10 +57,12 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
 
-  public StreamlinedBlobStorageTestBase(final @NotNull Integer pageSize,
-                                        final @NotNull SpaceAllocationStrategy strategy) {
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
+  protected StreamlinedBlobStorageTestBase(final @NotNull Integer pageSize,
+                                           final @NotNull SpaceAllocationStrategy strategy) {
     this.pageSize = pageSize;
     this.allocationStrategy = strategy;
+    randomRecordsToStartWith = generateRecords(ENOUGH_RECORDS, maxPayloadSize(pageSize));
   }
 
   /* ======================== TESTS (specific for this impl) ===================================== */
@@ -85,7 +86,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
-  public void newStorageHasVersionOfCurrentStorageFormat() throws Exception {
+  public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
     assertEquals(
       "New storage version == STORAGE_VERSION_CURRENT",
       storage.getStorageVersion(),
@@ -94,7 +95,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
-  public void dataFormatVersionCouldBeWrittenAndReadBackAsIs_AfterStorageReopened() throws Exception {
+  public void dataFormatVersion_CouldBeWritten_AndReadBackAsIs_AfterStorageReopened() throws Exception {
     final int dataFormatVersion = 42;
 
     storage.setDataFormatVersion(dataFormatVersion);
@@ -115,8 +116,27 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
+  public void manyRecordsWritten_CouldAllBeReadBackUnchanged_ById() throws Exception {
+    final StorageRecord[] recordsToWrite = randomRecordsToStartWith.clone();
+    for (int i = 0; i < recordsToWrite.length; i++) {
+      recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
+    }
+
+    for (int i = 0; i < recordsToWrite.length; i++) {
+      final StorageRecord recordWritten = recordsToWrite[i];
+      final StorageRecord recordReadBack = StorageRecord.readFromStorage(this, storage, recordWritten.recordId);
+      assertEquals(
+        "Record[" + i + "][#" + recordWritten.recordId + "] must be read back as-is: " +
+        "written [" + recordWritten.payload + "], read back[" + recordReadBack.payload + "]",
+        recordWritten.payload,
+        recordReadBack.payload
+      );
+    }
+  }
+
+  @Test
   public void manyRecordsWritten_CouldAllBeReadBackUnchanged_ViaForEach() throws Exception {
-    final StorageRecord[] recordsToWrite = RANDOM_RECORDS_TO_START_WITH.clone();
+    final StorageRecord[] recordsToWrite = randomRecordsToStartWith.clone();
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -147,7 +167,32 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
-  public void recordsLargerThanPageSizeRejectedByStorage_ButDoNotBreakStorage() throws Exception {
+  public void manyRecordsWritten_WithBigPayload_CouldAllBeReadBackUnchanged_ById() throws Exception {
+    //Specifically check payloads close to pageSize (-some margin for record header)
+
+    int enoughRecordsButNotTooManyToNotTriggerOoM = 1000;
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    final StorageRecord[] recordsToWrite = generateRecords(enoughRecordsButNotTooManyToNotTriggerOoM, () -> {
+      return rnd.nextInt(1, maxPayloadSize(pageSize));
+    });
+    for (int i = 0; i < recordsToWrite.length; i++) {
+      recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
+    }
+
+    for (int i = 0; i < recordsToWrite.length; i++) {
+      StorageRecord recordWritten = recordsToWrite[i];
+      StorageRecord recordReadBack = StorageRecord.readFromStorage(this, storage, recordWritten.recordId);
+      assertEquals(
+        "Record[" + i + "][#" + recordWritten.recordId + "] must be read back as-is: " +
+        "written [" + recordWritten.payload + "], read back[" + recordReadBack.payload + "]",
+        recordWritten.payload,
+        recordReadBack.payload
+      );
+    }
+  }
+
+  @Test
+  public void recordsLargerThanPageSize_AreRejected_ButDoNotBreakStorage() throws Exception {
     //records must be on a single page, hence total size(record) <= pageSize
     // I don't want to expose recordSize/payloadSize internal relationship, hence
     // I just vary payload size _around_ PAGE_SIZE to check that they are either stored OK,
@@ -173,7 +218,7 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
       }
       fail("_Some_ payload size around PAGE_SIZE must be rejected by storage");
     }
-    catch (IllegalArgumentException e) {
+    catch (IllegalArgumentException|IllegalStateException e) {
       //this is expectable
     }
 
@@ -200,8 +245,8 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
-  public void reallocatedRecordCouldStillBeReadByOriginalId() throws Exception {
-    final StorageRecord[] recordsToWrite = RANDOM_RECORDS_TO_START_WITH.clone();
+  public void reallocatedRecord_CouldStillBeRead_ByOriginalId() throws Exception {
+    final StorageRecord[] recordsToWrite = randomRecordsToStartWith.clone();
     for (int i = 0; i < recordsToWrite.length; i++) {
       recordsToWrite[i] = recordsToWrite[i].writeIntoStorage(this, storage);
     }
@@ -269,6 +314,11 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
 
 
   /* ========================= adapter implementation: ========================================= */
+
+  protected int maxPayloadSize(int pageSize) {
+    return pageSize - 10;//TODO each storage has own headers size, 10 is just an upper margin for header size
+  }
+
 
   @Override
   protected abstract S openStorage(final Path pathToStorage) throws IOException;

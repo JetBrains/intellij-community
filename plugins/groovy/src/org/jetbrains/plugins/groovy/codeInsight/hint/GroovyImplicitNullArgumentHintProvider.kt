@@ -4,7 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.hint
 import com.intellij.codeInsight.hints.*
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.panel
 import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.JPanel
 

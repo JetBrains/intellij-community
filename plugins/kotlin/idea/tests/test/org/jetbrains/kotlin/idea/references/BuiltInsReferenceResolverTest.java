@@ -7,9 +7,8 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.builtins.DefaultBuiltIns;
-import org.jetbrains.kotlin.descriptors.ClassDescriptor;
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor;
-import org.jetbrains.kotlin.descriptors.PackageViewDescriptor;
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
+import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.impl.DeclarationDescriptorVisitorEmptyBodies;
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde;
 import org.jetbrains.kotlin.idea.navigation.GotoCheck;
@@ -73,6 +72,13 @@ public class BuiltInsReferenceResolverTest extends KotlinLightCodeInsightFixture
         for (DeclarationDescriptor descriptor : getAllStandardDescriptors()) {
             // ExperimentalStdlibApi is incorrectly written in built-ins, see KT-53073
             if (descriptor.getName().toString().equals("ExperimentalStdlibApi")) continue;
+            // default values for annotation arguments are missing from protobuf KT-58052
+            if (descriptor instanceof PropertyDescriptor &&
+                descriptor.getContainingDeclaration() instanceof ClassDescriptor classDescriptor &&
+                classDescriptor.getKind() == ClassKind.ANNOTATION_CLASS &&
+                KotlinBuiltIns.isBuiltIn(classDescriptor)) {
+                continue;
+            }
 
             assertNotNull("Can't resolve " + descriptor, DescriptorToSourceUtilsIde.INSTANCE.getAnyDeclaration(getProject(), descriptor));
         }

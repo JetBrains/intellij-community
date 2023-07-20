@@ -21,7 +21,6 @@ import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.psi.util.PsiUtilCore;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -361,13 +360,6 @@ public final class CodeStyle {
    */
   public static boolean usesOwnSettings(@NotNull Project project) {
     return CodeStyleSettingsManager.getInstance(project).USE_PER_PROJECT_SETTINGS;
-  }
-
-  @ApiStatus.Internal
-  public static void updateDocumentIndentOptions(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document) {
-    CommonCodeStyleSettings.IndentOptions indentOptions =
-      getSettings(project, virtualFile).getIndentOptionsByFile(project, virtualFile, null, true, null);
-    indentOptions.associateWithDocument(document);
   }
 
   /**

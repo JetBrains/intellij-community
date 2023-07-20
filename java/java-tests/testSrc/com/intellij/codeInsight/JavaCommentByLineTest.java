@@ -2,10 +2,10 @@
 package com.intellij.codeInsight;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,7 +78,7 @@ public class JavaCommentByLineTest extends CommentByLineTestBase {
                                 <caret>System.out.println();
                               }
                             }""");
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     performAction();
     checkResultByText("""
@@ -100,7 +100,7 @@ public class JavaCommentByLineTest extends CommentByLineTestBase {
                                 System.out.println();
                               }
                             }""");
-    CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+    EditorTestUtil.buildInitialFoldingsInBackground(getEditor());
     executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
     executeAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN_WITH_SELECTION);
     performAction();

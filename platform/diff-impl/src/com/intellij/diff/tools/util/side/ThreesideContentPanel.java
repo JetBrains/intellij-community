@@ -42,7 +42,7 @@ public class ThreesideContentPanel extends JPanel {
     assert contents.size() == 3;
 
     myPanels = ContainerUtil.map(contents, it -> new DiffContentPanel(it));
-    DiffContentPanel.syncTitleHeights(myPanels);
+    DiffContentLayoutPanel.syncTitleHeights(myPanels);
 
     mySplitter = new ThreeDiffSplitter(myPanels);
     add(mySplitter, BorderLayout.CENTER);

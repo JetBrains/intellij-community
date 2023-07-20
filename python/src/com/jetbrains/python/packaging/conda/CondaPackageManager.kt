@@ -56,6 +56,17 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
     else super.uninstallPackage(pkg)
   }
 
+  override suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+    return if (specification is CondaPackageSpecification) {
+      runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.notification.update.failed", specification.name), specification.name) {
+        runConda("update", listOf(specification.name, "-y"), message("conda.packaging.update.progress", specification.name))
+        refreshPaths()
+        reloadPackages()
+      }
+    }
+    else super.updatePackage(specification)
+  }
+
   override suspend fun reloadPackages(): Result<List<PythonPackage>> {
     return withContext(Dispatchers.IO) {
       val result = runPackagingOperationOrShowErrorDialog(sdk, message("python.packaging.operation.failed.title")) {

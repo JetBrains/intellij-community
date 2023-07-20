@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.openapi.util.Key;
@@ -59,8 +59,7 @@ public class ProcessOutputType extends Key<Object> {
     myStreamType = this;
   }
 
-  @NotNull
-  public ProcessOutputType getBaseOutputType() {
+  public @NotNull ProcessOutputType getBaseOutputType() {
     return myStreamType;
   }
 
@@ -80,13 +79,11 @@ public class ProcessOutputType extends Key<Object> {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
   }
 
-  @NotNull
-  public static String getKeyNameForLogging(@NotNull Key<?> key) {
+  public static @NotNull String getKeyNameForLogging(@NotNull Key<?> key) {
     return key.toString().replace("\u001B", "ESC");
   }
 
-  @Nullable
-  public static ProcessOutputType tryCast(@NotNull Key<?> key) {
+  public static @Nullable ProcessOutputType tryCast(@NotNull Key<?> key) {
     return key instanceof ProcessOutputType ? (ProcessOutputType)key : null;
   }
 }

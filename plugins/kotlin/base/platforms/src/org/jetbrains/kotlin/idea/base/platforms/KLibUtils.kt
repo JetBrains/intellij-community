@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.library.impl.BuiltInsPlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.isJs
+import org.jetbrains.kotlin.platform.isWasm
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
 import java.io.IOException
@@ -68,6 +69,7 @@ private fun TargetPlatform.toBuiltInsPlatform() = when {
     isNative() -> BuiltInsPlatform.NATIVE
     isJvm() -> BuiltInsPlatform.JVM
     isJs() -> BuiltInsPlatform.JS
+    isWasm() -> BuiltInsPlatform.WASM
     else -> throw IllegalArgumentException("Unknown platform $this")
 }
 

@@ -4,6 +4,7 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -32,7 +33,9 @@ public class ActionToolbarSpacer extends JLabel {
   private static ActionToolbar createPrototypeToolbar(boolean horizontal) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.add(EMPTY_ACTION);
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, horizontal);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, horizontal);
+    toolbar.getComponent().setBorder(JBUI.Borders.empty());
+    return toolbar;
   }
 
   private final boolean myHorizontal;

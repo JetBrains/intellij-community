@@ -25,11 +25,11 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 * We have to process Kotlin builtIn classes separately since no light classes are built for them.
 * */
 abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
-    private val index: KotlinStringStubIndexExtension<T>,
+    private val helper: KotlinStringStubIndexHelper<T>,
     private val useOriginalScope: Boolean = false
 ) : ChooseByNameContributorEx, GotoClassContributor {
     override fun processNames(processor: Processor<in String>, scope: GlobalSearchScope, filter: IdFilter?) {
-        index.processAllKeys(scope, filter, processor)
+        helper.processAllKeys(scope, filter, processor)
     }
 
     override fun processElementsWithName(name: String, processor: Processor<in NavigationItem>, parameters: FindSymbolParameters) {
@@ -41,7 +41,7 @@ abstract class AbstractKotlinGotoSymbolContributor<T : NavigatablePsiElement>(
                 KotlinSourceFilterScope.projectFiles(parameters.searchScope, project)
             }
         val filter = parameters.idFilter
-        index.processElements(name, project, scope, filter, wrapProcessor(processor))
+        helper.processElements(name, project, scope, filter, wrapProcessor(processor))
     }
 
     open fun wrapProcessor(processor: Processor<in T>): Processor<in T> = processor
@@ -115,4 +115,4 @@ class KotlinGotoJvmNameSymbolContributor: AbstractKotlinGotoSymbolContributor<Kt
         }
 }
 
-class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.key)
+class KotlinGotoPrimeSymbolContributor : AbstractPrimeSymbolNavigationContributor(KotlinPrimeSymbolNameIndex.indexKey)

@@ -33,18 +33,16 @@ import com.intellij.vcs.log.VcsLogStructureFilter;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.ui.RootIcon;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
 import com.intellij.vcsUtil.VcsUtil;
-import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
@@ -177,7 +175,7 @@ public class StructureFilterPopupComponent
   }
 
   @Override
-  protected ActionGroup createActionGroup() {
+  protected @NotNull ActionGroup createActionGroup() {
     Set<VirtualFile> roots = getAllRoots();
 
     List<SelectVisibleRootAction> rootActions = new ArrayList<>();
@@ -203,7 +201,7 @@ public class StructureFilterPopupComponent
 
   private @NotNull List<VcsLogStructureFilter> getRecentFilters() {
     List<List<String>> filterValues = myUiProperties.getRecentlyFilteredGroups(PATHS);
-    return ContainerUtil.map2List(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
+    return ContainerUtil.map(filterValues, values -> VcsLogClassicFilterUi.FileFilterModel.createStructureFilter(values));
   }
 
   private Set<VirtualFile> getAllRoots() {
@@ -298,7 +296,7 @@ public class StructureFilterPopupComponent
       getTemplatePresentation().setText(root.getName(), false);
       myRoot = root;
       myAllActions = allActions;
-      myIcon = RootIcon.createAndScaleCheckbox(VcsLogGraphTable.getRootBackgroundColor(myRoot, myColorManager));
+      myIcon = RootIcon.createAndScaleCheckbox(myColorManager.getRootColor(myRoot));
       getTemplatePresentation().setIcon(JBUIScale.scaleIcon(EmptyIcon.create(CHECKBOX_ICON_SIZE))); // see PopupFactoryImpl.calcMaxIconSize
     }
 
@@ -317,22 +315,19 @@ public class StructureFilterPopupComponent
       if (!isEnabled()) {
         setVisibleOnly(myRoot);
       }
+      else if ((e.getModifiers() & getModifier()) != 0) {
+        setVisibleOnly(myRoot);
+      }
       else {
-        if ((e.getModifiers() & getMask()) != 0) {
-          setVisibleOnly(myRoot);
-        }
-        else {
-          setVisible(myRoot, state);
-        }
+        setVisible(myRoot, state);
       }
       for (SelectVisibleRootAction action : myAllActions) {
         action.updateIcon();
       }
     }
 
-    @JdkConstants.InputEventMask
-    private int getMask() {
-      return SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK;
+    private static int getModifier() {
+      return SystemInfo.isMac ? ActionEvent.META_MASK : ActionEvent.CTRL_MASK;
     }
 
     @Override
@@ -341,9 +336,8 @@ public class StructureFilterPopupComponent
 
       updateIcon();
       e.getPresentation().setIcon(myIcon);
-      String tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only",
-                                            KeyEvent.getKeyModifiersText(getMask()),
-                                            e.getPresentation().getText());
+      var modifierText = InputEvent.getModifiersExText(getModifier() << 6);
+      var tooltip = VcsLogBundle.message("vcs.log.filter.tooltip.click.to.see.only", modifierText, e.getPresentation().getText());
       e.getPresentation().putClientProperty(TOOL_TIP_TEXT_KEY, tooltip);
     }
 

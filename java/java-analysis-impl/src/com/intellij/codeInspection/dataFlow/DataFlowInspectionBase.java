@@ -197,25 +197,25 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     }
   }
 
-  protected @NotNull List<LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
-                                                         PsiType realType,
-                                                         boolean onTheFly,
-                                                         boolean alwaysFails) {
+  protected @NotNull List<@NotNull LocalQuickFix> createCastFixes(PsiTypeCastExpression castExpression,
+                                                                  PsiType realType,
+                                                                  boolean onTheFly,
+                                                                  boolean alwaysFails) {
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
-                                                        PsiExpression expression,
-                                                        boolean onTheFly,
-                                                        boolean alwaysNull) {
+  protected @NotNull List<@NotNull LocalQuickFix> createNPEFixes(@Nullable PsiExpression qualifier,
+                                                                 PsiExpression expression,
+                                                                 boolean onTheFly,
+                                                                 boolean alwaysNull) {
     return Collections.emptyList();
   }
 
-  protected @NotNull List<LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiElement anchor, boolean onTheFly) {
     return Collections.emptyList();
   }
 
-  protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
+  protected @NotNull List<@NotNull LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     return Collections.emptyList();
   }
 
@@ -245,8 +245,6 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     List<NullabilityProblem<?>> problems = NullabilityProblemKind.postprocessNullabilityProblems(visitor.problems().toList());
     reportNullabilityProblems(reporter, problems);
     reportNullableReturns(reporter, problems, scope);
-
-    reportOptionalOfNullableImprovements(reporter, visitor.getOfNullableCalls());
 
     reportRedundantInstanceOf(visitor, reporter);
 
@@ -608,10 +606,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
-    visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(call -> {
-      String message = getContractMessage(JavaMethodContractUtil.getMethodCallContracts(call));
-      LocalQuickFix causeFix = createExplainFix(call, new TrackingRunner.FailingCallDfaProblemType());
-      reporter.registerProblem(getElementToHighlight(call), message, LocalQuickFix.notNullElements(causeFix));
+    visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(anchor -> {
+      List<? extends MethodContract> contracts = DataFlowInstructionVisitor.getContracts(anchor);
+      if (contracts == null) return;
+      String message = getContractMessage(contracts);
+      LocalQuickFix causeFix = createExplainFix(anchor, new TrackingRunner.FailingCallDfaProblemType());
+      reporter.registerProblem(getElementToHighlight(anchor), message, LocalQuickFix.notNullElements(causeFix));
     });
   }
 
@@ -622,36 +622,22 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return JavaAnalysisBundle.message("dataflow.message.contract.fail");
   }
 
-  private static @NotNull PsiElement getElementToHighlight(@NotNull PsiCall call) {
+  private static @NotNull PsiElement getElementToHighlight(@NotNull PsiElement element) {
     PsiJavaCodeReferenceElement ref;
-    if (call instanceof PsiNewExpression) {
-      ref = ((PsiNewExpression)call).getClassReference();
+    if (element instanceof PsiNewExpression newExpression) {
+      ref = newExpression.getClassReference();
     }
-    else if (call instanceof PsiMethodCallExpression) {
-      ref = ((PsiMethodCallExpression)call).getMethodExpression();
+    else if (element instanceof PsiMethodCallExpression callExpression) {
+      ref = callExpression.getMethodExpression();
     }
     else {
-      return call;
+      return element;
     }
     if (ref != null) {
       PsiElement name = ref.getReferenceNameElement();
       return name != null ? name : ref;
     }
-    return call;
-  }
-
-  private static void reportOptionalOfNullableImprovements(ProblemReporter reporter, Map<PsiElement, ThreeState> nullArgs) {
-    nullArgs.forEach((anchor, alwaysPresent) -> {
-      if (alwaysPresent == ThreeState.UNSURE) return;
-      if (alwaysPresent.toBoolean()) {
-        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.non.null.argument.to.optional"),
-                                 LocalQuickFix.notNullElements(DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(anchor)));
-      }
-      else {
-        reporter.registerProblem(anchor, JavaAnalysisBundle.message("dataflow.message.passing.null.argument.to.optional"),
-                                 LocalQuickFix.notNullElements(DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(anchor)));
-      }
-    });
+    return element;
   }
 
   private void reportNullableArgumentPassedToNonAnnotatedMethodRef(@NotNull ProblemReporter reporter,
@@ -728,7 +714,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       assert castType != null;
       assert operand != null;
       List<LocalQuickFix> fixes = new ArrayList<>(createCastFixes(typeCast, realType, reporter.isOnTheFly(), alwaysFails));
-      fixes.add(createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
+      ContainerUtil.addIfNotNull(fixes, createExplainFix(typeCast, new TrackingRunner.CastDfaProblemType()));
       String text = PsiExpressionTrimRenderer.render(operand);
       String message = alwaysFails ?
                        JavaAnalysisBundle.message("dataflow.message.cce.always", text) :

@@ -48,7 +48,7 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
                         actionsController: AccountsPanelActionsController<A>): Cell<JComponent> {
 
     val accountsList = createList(actionsController, detailsProvider) {
-      SimpleAccountsListCellRenderer({ (accountManager is AccountsListModel.WithDefault<*, *>) && it == accountManager.defaultAccount },
+      SimpleAccountsListCellRenderer({ (accountsModel is AccountsListModel.WithDefault<*, *>) && it == accountsModel.defaultAccount },
                                      detailsProvider, actionsController)
     }
 
@@ -155,6 +155,9 @@ private constructor(private val accountManager: AccountManager<A, Cred>,
       .disableUpDownActions()
       .setAddAction { actionsController.addAccount(accountsList, it.preferredPopupPoint) }
       .setAddIcon(addIcon)
+      // TODO: move to controller???
+      .setRemoveAction { accountsList.selectedValue.let { (accountsModel as? MutableAccountsListModel)?.remove(it) } }
+      .setRemoveActionUpdater { accountsModel is MutableAccountsListModel && accountsList.selectedValue != null }
 
     if (accountsModel is AccountsListModel.WithDefault) {
       toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),

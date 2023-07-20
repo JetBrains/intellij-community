@@ -1,0 +1,12 @@
+// "Make 'x' 'abstract'" "true"
+// ERROR: Val cannot be reassigned
+// COMPILER_ARGUMENTS: -XXLanguage:+ProhibitMissedMustBeInitializedWhenThereIsNoPrimaryConstructor -XXLanguage:+ProhibitOpenValDeferredInitialization
+abstract class Foo {
+    constructor()
+
+    abstract val x: String
+
+    init {
+        x = ""
+    }
+}

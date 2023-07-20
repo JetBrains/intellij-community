@@ -12,6 +12,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
@@ -75,7 +76,9 @@ internal class ConversionServiceImpl : ConversionService() {
     }
 
     val context = ConversionContextImpl(projectPath)
-    val converters = isConversionNeeded(context)
+    val converters = blockingContext {
+      isConversionNeeded(context)
+    }
     if (converters.isEmpty()) {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }

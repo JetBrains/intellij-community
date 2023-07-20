@@ -1,1 +1,1 @@
-- [What is this repository for](#what-is-this-repository-for)
+- [What is this repository for](<fold text='...'>#what-is-this-repository-for</fold>)

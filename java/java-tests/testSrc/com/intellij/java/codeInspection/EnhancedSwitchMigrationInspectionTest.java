@@ -7,7 +7,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_17;
+import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_19;
 
 public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParameterizedTestCase {
   @Override
@@ -24,6 +24,6 @@ public class EnhancedSwitchMigrationInspectionTest extends LightQuickFixParamete
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_17;
+    return JAVA_19;
   }
 }

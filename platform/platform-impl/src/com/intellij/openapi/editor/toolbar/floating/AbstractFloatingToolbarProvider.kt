@@ -11,7 +11,7 @@ import org.jetbrains.annotations.ApiStatus
 
 abstract class AbstractFloatingToolbarProvider(actionGroupId: String) : FloatingToolbarProvider {
 
-  override val actionGroup by lazy { resolveActionGroup(actionGroupId) }
+  override val actionGroup: ActionGroup by lazy { resolveActionGroup(actionGroupId) }
 
   @ApiStatus.ScheduledForRemoval
   @Deprecated("Use register method with data context instead this")

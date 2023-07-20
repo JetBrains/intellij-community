@@ -7,8 +7,9 @@ fun main(args: Array<String>) {
     myJavaClass.foo = foo(bar(1))
 }
 
-fun foo(any: Any) = any
-fun bar(any: Any) = any
+fun foo(any: Int): Int = any
+
+fun bar(any: Int): Int = any
 
 // SMART_STEP_INTO_BY_INDEX: 1
 

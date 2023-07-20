@@ -10,7 +10,7 @@ abstract class PersistentContentCustomLayoutOptions(private val content: Content
                                                     private val selectedOptionKey: String) : CustomContentLayoutOptions {
 
   companion object {
-    const val HIDE_OPTION_KEY = "Hidden" //TODO check that none of the options have the same key
+    const val HIDE_OPTION_KEY: String = "Hidden" //TODO check that none of the options have the same key
   }
 
   override fun select(option: CustomContentLayoutOption) {
@@ -78,7 +78,7 @@ abstract class PersistentContentCustomLayoutOption(private val options: Persiste
 
   override fun isSelected(): Boolean = options.isContentVisible() && isThisOptionSelected()
 
-  override fun select() = options.select(this)
+  override fun select(): Unit = options.select(this)
 
   abstract fun getOptionKey(): @NlsSafe String
 

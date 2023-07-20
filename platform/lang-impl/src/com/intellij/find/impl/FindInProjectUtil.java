@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
+import com.intellij.find.findInProject.FindInProjectScopeService;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.LangBundle;
@@ -17,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
@@ -65,6 +67,15 @@ public final class FindInProjectUtil {
   private static final int USAGES_PER_READ_ACTION = 100;
 
   private FindInProjectUtil() {}
+
+  public static void setScope(@NotNull Project project, @NotNull FindModel model, @NotNull DataContext dataContext) {
+    if (AdvancedSettings.getBoolean("ide.remember.last.search.scope")) {
+      FindInProjectScopeService.getInstance(project).load(model);
+    }
+    else {
+      setDirectoryName(model, dataContext);
+    }
+  }
 
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -312,7 +323,7 @@ public final class FindInProjectUtil {
   }
 
   @NotNull
-  private static @Nls String getTitleForScope(@NotNull FindModel findModel) {
+  public static @Nls String getTitleForScope(@NotNull FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -513,21 +524,6 @@ public final class FindInProjectUtil {
     @Override
     public ItemPresentation getPresentation() {
       return this;
-    }
-
-    @Override
-    public void navigate(boolean requestFocus) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public boolean canNavigate() {
-      return false;
-    }
-
-    @Override
-    public boolean canNavigateToSource() {
-      return false;
     }
 
     @Override

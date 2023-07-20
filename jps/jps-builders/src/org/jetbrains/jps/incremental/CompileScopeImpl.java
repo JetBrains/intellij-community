@@ -33,9 +33,9 @@ public class CompileScopeImpl extends CompileScope {
   private final Map<BuildTarget<?>, Set<File>> myFiles;
   private final Map<BuildTarget<?>, Set<File>> myIndirectlyAffectedFiles = Collections.synchronizedMap(new HashMap<>());
 
-  public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
-                          Collection<? extends BuildTargetType<?>> typesToForceBuild,
-                          Collection<BuildTarget<?>> targets,
+  public CompileScopeImpl(@NotNull Collection<? extends BuildTargetType<?>> types,
+                          @NotNull Collection<? extends BuildTargetType<?>> typesToForceBuild,
+                          @NotNull Collection<BuildTarget<?>> targets,
                           @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
     myTypesToForceBuild = new HashSet<>();

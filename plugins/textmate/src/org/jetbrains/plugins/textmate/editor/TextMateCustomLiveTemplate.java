@@ -67,7 +67,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
     //todo parse content and build template/templates
     TextMateService service = TextMateService.getInstance();
     if (service != null) {
-      SnippetsRegistry snippetsRegistry = service.getSnippetsRegistry();
+      SnippetsRegistry snippetsRegistry = service.getSnippetRegistry();
       Editor editor = callback.getEditor();
       TextMateScope scope = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
       Collection<TextMateSnippet> snippets = snippetsRegistry.findSnippet(key, scope);
@@ -155,7 +155,7 @@ public class TextMateCustomLiveTemplate extends CustomLiveTemplateBase {
   private static Collection<TextMateSnippet> getAvailableSnippets(@NotNull Editor editor) {
     TextMateService service = TextMateService.getInstance();
     if (service != null) {
-      SnippetsRegistry snippetsRegistry = service.getSnippetsRegistry();
+      SnippetsRegistry snippetsRegistry = service.getSnippetRegistry();
       TextMateScope scope = TextMateEditorUtils.getCurrentScopeSelector(((EditorEx)editor));
       return snippetsRegistry.getAvailableSnippets(scope);
     }

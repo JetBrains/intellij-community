@@ -26,7 +26,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
   public boolean canFindUsagesFor(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
       PsiPackage psiPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)element);
-      return psiPackage != null && psiPackage.getQualifiedName().length() != 0;
+      return psiPackage != null && !psiPackage.getQualifiedName().isEmpty();
     }
 
     return element instanceof PsiClass ||
@@ -277,7 +277,7 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       return null;
     }
     String name = psiPackage.getQualifiedName();
-    if (name.length() > 0) {
+    if (!name.isEmpty()) {
       return name;
     }
     return getDefaultPackageName();

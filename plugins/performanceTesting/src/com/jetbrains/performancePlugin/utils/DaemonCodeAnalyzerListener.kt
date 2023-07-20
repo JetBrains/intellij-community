@@ -1,45 +1,50 @@
 package com.jetbrains.performancePlugin.utils
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Ref
 import com.intellij.util.messages.SimpleMessageBusConnection
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
+import kotlinx.coroutines.future.asDeferred
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
-object DaemonCodeAnalyzerListener {
-
+internal object DaemonCodeAnalyzerListener {
   /**
    * Listen to the SimpleMessageBusConnection to receive notifications when the daemon finishes.
    *
    * @param connection The SimpleMessageBusConnection to listen to.
    * @param spanRef A reference to a Span to end when the daemon finishes.
-   * @param scopeRef A reference to a Scope to close when the daemon finishes.
    * @param timeoutInSeconds timeout for waiting result, default without timeout.
    *
    * @return A DaemonCodeAnalyzerResult that completes when the daemon finishes.
    */
   fun listen(connection: SimpleMessageBusConnection,
              spanRef: Ref<Span>,
-             scopeRef: Ref<Scope>,
-             timeoutInSeconds: Long = 0): DaemonCodeAnalyzerResult {
-    val result = DaemonCodeAnalyzerResult(connection, spanRef, scopeRef, timeoutInSeconds)
+             timeoutInSeconds: Long = 0,
+             expectedOpenedFile: String? = null): DaemonCodeAnalyzerResult {
+    val result = DaemonCodeAnalyzerResult(connection, spanRef, timeoutInSeconds)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
-      override fun daemonFinished() {
-        result.release()
+      override fun daemonFinished(fileEditors: Collection<FileEditor>) {
+        if (expectedOpenedFile == null) {
+          result.release()
+        }
+        if (expectedOpenedFile != null && fileEditors.any { fileEditor -> fileEditor.file.name == expectedOpenedFile }) {
+          result.release()
+        }
       }
     })
     return result
   }
 }
 
-class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnection,
-                               private val spanRef: Ref<Span>,
-                               private val scopeRef: Ref<Scope>, timeoutInSeconds: Long = 0) {
+internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnection,
+                                        private val spanRef: Ref<Span>,
+                                        timeoutInSeconds: Long = 0) {
   private val job = CompletableFuture<Unit>()
   private var suppressErrors: Boolean = false
-  private var timoutErrorMessage = "Timeout on waiting for demon code analyzer complete for $timeoutInSeconds seconds"
+  private var errorMessage = "Timeout on waiting for demon code analyzer complete for $timeoutInSeconds seconds"
 
   init {
     if (timeoutInSeconds > 0) {
@@ -55,16 +60,29 @@ class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnectio
   }
 
   fun withErrorMessage(message: String) {
-    timoutErrorMessage = message
+    errorMessage = message
   }
 
-  fun waitForComplete() {
+  fun blockingWaitForComplete() {
     try {
       job.join()
     }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Exception) {
       if (!suppressErrors)
-        throw IllegalStateException(timoutErrorMessage, e)
+        throw IllegalStateException(errorMessage, e)
+    }
+  }
+
+  suspend fun waitForComplete() {
+    try {
+      job.asDeferred().join()
+    }
+    catch (e: Exception) {
+      if (!suppressErrors)
+        throw IllegalStateException(errorMessage, e)
     }
   }
 
@@ -74,7 +92,6 @@ class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnectio
     }
     finally {
       spanRef.get()?.end()
-      scopeRef.get()?.close()
       if (!job.isDone && !job.isCancelled) {
         job.complete(Unit)
       }
@@ -82,6 +99,6 @@ class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnectio
   }
 
   fun onError(action: (e: Throwable) -> Unit) {
-    job.exceptionally { action.invoke(it) }
+    job.exceptionally(action::invoke)
   }
 }

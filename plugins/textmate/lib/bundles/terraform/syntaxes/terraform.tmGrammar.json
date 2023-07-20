@@ -49,7 +49,7 @@
     },
     "attribute_definition": {
       "name": "variable.declaration.hcl",
-      "match": "(\\()?((?!null|false|true)[[:alpha:]][[:alnum:]_-]*)(\\))?\\s*(\\=(?!\\=|\\>))\\s*",
+      "match": "(\\()?(\\b(?!null\\b|false\\b|true\\b)[[:alpha:]][[:alnum:]_-]*)(\\))?\\s*(\\=(?!\\=|\\>))\\s*",
       "comment": "Identifier \"=\" with optional parens",
       "captures": {
         "1": {

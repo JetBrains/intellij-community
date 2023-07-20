@@ -31,14 +31,14 @@ internal enum class WalOpCode(internal val code: Int) {
   APPEND(2);
 
   companion object {
-    val size = values().size
+    val size: Int = values().size
   }
 }
 
 private val checksumGen = { CRC32() }
 
 @Volatile
-var debugWalRecords = false
+var debugWalRecords: Boolean = false
 
 private val log = logger<WalRecord>()
 
@@ -53,11 +53,11 @@ internal class PersistentEnumeratorWal<Data> @Throws(IOException::class) @JvmOve
                                                                                                    compact: Boolean = false) : Closeable {
   private val underlying = PersistentMapWal(dataDescriptor, integerExternalizer, useCompression, file, walIoExecutor, compact)
 
-  fun enumerate(data: Data, id: Int) = underlying.put(data, id)
+  fun enumerate(data: Data, id: Int): Unit = underlying.put(data, id)
 
-  fun flush() = underlying.flush()
+  fun flush(): Unit = underlying.flush()
 
-  override fun close() = underlying.close()
+  override fun close(): Unit = underlying.close()
 }
 
 internal class PersistentMapWal<K, V> @Throws(IOException::class) @JvmOverloads constructor(private val keyDescriptor: KeyDescriptor<K>,
@@ -476,7 +476,7 @@ class PersistentMapWalPlayer<K, V> @Throws(IOException::class) constructor(priva
   }
 
   @Throws(IOException::class)
-  override fun close() = input.close()
+  override fun close(): Unit = input.close()
 
   @Throws(IOException::class)
   private fun readNextEvent(): WalEvent<K, V>? {

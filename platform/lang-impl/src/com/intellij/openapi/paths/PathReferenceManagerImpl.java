@@ -7,14 +7,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiReferencesWrapper;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -176,7 +174,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
       PsiReference reference = references.get(i);
 
       assert element.equals(reference.getElement());
-      if (reference.resolve() != null) {
+      if (reference instanceof PsiReferencesWrapper || reference.resolve() != null) {
         resolvingRefs.add(reference);
       } else {
         nonResolvingRefs.add(reference);
@@ -211,6 +209,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
       result.add(list.get(0));
     } else {
       final PsiDynaReference psiDynaReference = new PsiDynaReference<>(element);
+      list.sort(Comparator.comparing(it -> it instanceof PsiReferencesWrapper));
       psiDynaReference.addReferences(list);
       psiDynaReference.setRangeInElement(range);
       result.add(psiDynaReference);
@@ -262,5 +261,16 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
 
   private static List<PathReferenceProvider> getProviders() {
     return PATH_REFERENCE_PROVIDER_EP.getExtensionList();
+  }
+
+  /**
+   * Converts {@link PsiReferencesWrapper wrapped references} to {@link PsiDynaReference} according to {@code PathReferenceManager} rules.
+   * Should be used only in legacy code which relies on {@link PsiDynaReference} behavior, please avoid using this method if possible.
+   */
+  public static List<PsiReference> remergeWrappedReferences(PsiReference ref) {
+    if (!(ref instanceof PsiReferencesWrapper)) return Collections.singletonList(ref);
+    List<PsiReference> inner = ((PsiReferencesWrapper)ref).getReferences();
+    PsiReference[] references = mergeReferences(ref.getElement(), inner);
+    return Arrays.asList(references);
   }
 }

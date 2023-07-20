@@ -16,7 +16,7 @@ import java.util.List;
 public interface KotlinGradleModelFacade {
     ExtensionPointName<KotlinGradleModelFacade> EP_NAME = ExtensionPointName.create("org.jetbrains.kotlin.gradleModelFacade");
 
-    @Deprecated
+    @Deprecated(forRemoval = true)
     @Nullable
     default IdeKotlinVersion getResolvedKotlinStdlibVersionByModuleData(@NotNull DataNode<?> moduleData, @NotNull List<String> libraryIds) {
         return null;

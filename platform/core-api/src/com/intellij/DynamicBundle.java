@@ -195,6 +195,12 @@ public class DynamicBundle extends AbstractBundle {
       .computeIfAbsent(pathToBundle, __ -> resolveResourceBundle(loader, pathToBundle));
   }
 
+  public static @Nullable ResourceBundle getPluginBundle(@NotNull PluginDescriptor pluginDescriptor) {
+    ClassLoader classLoader = pluginDescriptor.getPluginClassLoader();
+    String baseName = pluginDescriptor.getResourceBundleBaseName();
+    return classLoader != null && baseName != null ? getResourceBundle(classLoader, baseName) : null;
+  }
+
   private static @NotNull ResourceBundle resolveResourceBundle(@NotNull ClassLoader loader, @NonNls @NotNull String pathToBundle) {
     return resolveResourceBundleWithFallback(
       () -> resolveResourceBundle(

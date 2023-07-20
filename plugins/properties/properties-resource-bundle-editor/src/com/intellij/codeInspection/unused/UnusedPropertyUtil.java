@@ -70,7 +70,7 @@ public final class UnusedPropertyUtil {
       LOG.assertTrue(file != null);
       List<PropertiesFile> propertiesFiles = file.getResourceBundle().getPropertiesFiles();
       if (!FileModificationService.getInstance()
-        .preparePsiElementsForWrite(ContainerUtil.map2List(propertiesFiles, p -> p.getContainingFile()))) {
+        .preparePsiElementsForWrite(ContainerUtil.map(propertiesFiles, p -> p.getContainingFile()))) {
         return;
       }
       WriteAction.run(() -> propertiesFiles

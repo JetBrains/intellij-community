@@ -4,7 +4,7 @@
   <file>Test.java</file>
   <line>2</line>
   <entry_point TYPE="method" FQNAME="Test void doSmth(java.lang.String str)" />
-  <description>Parameter &lt;code&gt;str&lt;/code&gt; is not used in either this method or any of its derived methods</description>
+  <description>Parameter &lt;code&gt;str&lt;/code&gt; is not used</description>
 </problem>
 
 </problems>

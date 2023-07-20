@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.Disposable;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.function.Supplier;
 
@@ -72,8 +71,7 @@ public final class EventDispatcher<T extends EventListener> {
                                           @Nullable Map<String, Object> methodReturnValues,
                                           @NotNull Supplier<? extends Iterable<T>> listeners) {
     LOG.assertTrue(listenerClass.isInterface(), "listenerClass must be an interface: " + listenerClass.getName());
-    //noinspection unchecked
-    return (T)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, (proxy, method, args) -> {
+    return ReflectionUtil.proxy(listenerClass, (proxy, method, args) -> {
       String methodName = method.getName();
       if (method.getDeclaringClass().getName().equals("java.lang.Object")) {
         return handleObjectMethod(proxy, args, methodName);

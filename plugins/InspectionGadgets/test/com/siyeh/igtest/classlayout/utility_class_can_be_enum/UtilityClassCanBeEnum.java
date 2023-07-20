@@ -46,3 +46,8 @@ class <warning descr="Utility class 'Second' can be 'enum'">Second</warning> {
     String s = "y"; // X not referenced
   }
 }
+class Main {
+  public static void main(String[] args) {
+    System.out.println("Hello world!");
+  }
+}

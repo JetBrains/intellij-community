@@ -195,28 +195,4 @@ public interface VcsLogProvider {
     @NotNull
     Set<VcsRef> getRefs();
   }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readMetadata(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    CollectConsumer<VcsShortCommitDetails> collectConsumer = new CollectConsumer<>();
-    readMetadata(root, hashes, collectConsumer);
-    return new ArrayList<>(collectConsumer.getResult());
-  }
-
-  /**
-   * @deprecated replaced by {@link VcsLogProvider#readFullDetails(VirtualFile, List, Consumer)}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  default List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
-    throws VcsException {
-    List<VcsFullCommitDetails> result = new ArrayList<>();
-    readFullDetails(root, hashes, result::add);
-    return result;
-  }
 }

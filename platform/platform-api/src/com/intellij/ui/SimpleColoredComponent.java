@@ -1,9 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.AppMode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -11,6 +12,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.icons.IconWithToolTip;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.IconUtil;
@@ -105,7 +107,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myFragments = new ArrayList<>(3);
     myIpad = JBInsets.create(1, 2);
     myIconTextGap = JBUIScale.scale(2);
-    myBorder = JBUI.Borders.empty(1, UIUtil.isUnderWin10LookAndFeel() ? 0 : 1);
+    myBorder = JBUI.Borders.empty(1, StartupUiUtil.isUnderWin10LookAndFeel() ? 0 : 1);
     setOpaque(true);
     updateUI();
   }
@@ -216,6 +218,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   protected void revalidateAndRepaint() {
+    firePropertyChange("state", null, this);
     if (myAutoInvalidate) {
       revalidate();
     }
@@ -522,7 +525,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     Font baseFont = getBaseFont();
     if (!baseFont.equals(myLayoutFont) || !frc.equals(myLayoutFRC)) {
       myFragments.forEach(ColoredFragment::invalidateLayout);
-      myLayoutFont = baseFont;
+      myLayoutFont = new ImmutableFont(baseFont);
       myLayoutFRC = frc;
     }
     return frc;
@@ -558,7 +561,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static float getFragmentWidth(@NotNull ColoredFragment fragment, Font font, FontRenderContext frc) {
-    WidthKey key = new WidthKey(fragment.text, font, frc, fragment.attributes.getStyle());
+    WidthKey key = new WidthKey(fragment.text, new ImmutableFont(font), frc, fragment.attributes.getStyle(), font.getSize());
     Float result;
     synchronized (ourWidthCache) {
       result = ourWidthCache.get(key);
@@ -1404,7 +1407,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       TextRenderer renderer = this.renderer;
       if (renderer == null) {
         String text = this.text;
-        if (needFontFallback(font, text)) {
+        if (needFontFallback(font, text) && !AppMode.isRemoteDevHost()) {
           renderer = new LayoutTextRenderer(createTextLayout(text, font, frc));
         }
         else {
@@ -1523,6 +1526,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   private record WidthKey(@NotNull String text,
                           Font font,
                           FontRenderContext frc,
-                          int style) {
+                          int style,
+                          int size) {
+  }
+
+  private static final class ImmutableFont extends Font {
+    public ImmutableFont(Font font) {
+      super(font);
+    }
   }
 }

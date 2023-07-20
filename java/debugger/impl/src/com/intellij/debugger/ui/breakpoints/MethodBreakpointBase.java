@@ -22,7 +22,7 @@ public interface MethodBreakpointBase extends FilteredRequestor {
 
   void disableEmulation();
 
-  static boolean canBeEmulated(DebugProcessImpl debugProcess) {
+  static boolean canBeWatchExitEmulated(DebugProcessImpl debugProcess) {
     VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
     return virtualMachineProxy.canGetBytecodes() && virtualMachineProxy.canGetConstantPool();
   }

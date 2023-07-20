@@ -16,7 +16,7 @@ import java.awt.*;
 public final class ExtendableEditorSupport {
   private static final Key<JPanel> BUTTON_CONTAINER = Key.create("EditorButtonContainer");
   
-  public static void setupExtension(@NotNull EditorEx editor,
+  public static JLabel setupExtension(@NotNull EditorEx editor,
                                      Color background,
                                      ExtendableTextComponent.Extension extension) {
     JLabel label = ExpandableSupport.createLabel(extension);
@@ -34,5 +34,7 @@ public final class ExtendableEditorSupport {
       scrollBar.setOpaque(true);
     }
     panel.add(label);
+
+    return label;
   }
 }

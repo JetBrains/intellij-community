@@ -165,7 +165,7 @@ class FailedEditorBuilder internal constructor(@DialogMessage val message: Strin
       isFocusable = false
       isEditable = false
       border = null
-      font = StartupUiUtil.getLabelFont()
+      font = StartupUiUtil.labelFont
       background = UIUtil.getLabelBackground()
       val centerAttribute = SimpleAttributeSet()
       StyleConstants.setAlignment(centerAttribute, StyleConstants.ALIGN_CENTER)

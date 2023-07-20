@@ -317,7 +317,7 @@ public final class GenericsHighlightUtil {
   }
 
   static HighlightInfo.Builder checkElementInTypeParameterExtendsList(@NotNull PsiReferenceList referenceList,
-                                                              @NotNull PsiClass aClass,
+                                                              @NotNull PsiTypeParameter typeParameter,
                                                               @NotNull JavaResolveResult resolveResult,
                                                               @NotNull PsiElement element) {
     PsiJavaCodeReferenceElement[] referenceElements = referenceList.getReferenceElements();
@@ -328,16 +328,16 @@ public final class GenericsHighlightUtil {
       String description = JavaErrorBundle.message("interface.expected");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
       PsiClassType type =
-        JavaPsiFacade.getElementFactory(aClass.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
-      IntentionAction action = QUICK_FIX_FACTORY.createMoveBoundClassToFrontFix(aClass, type);
+        JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
+      IntentionAction action = QUICK_FIX_FACTORY.createMoveBoundClassToFrontFix(typeParameter, type);
       errorResult.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
     }
     else if (referenceElements.length != 0 && element != referenceElements[0] && referenceElements[0].resolve() instanceof PsiTypeParameter) {
       String description = JavaErrorBundle.message("type.parameter.cannot.be.followed.by.other.bounds");
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(description);
       PsiClassType type =
-        JavaPsiFacade.getElementFactory(aClass.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
-      IntentionAction action = QUICK_FIX_FACTORY.createExtendsListFix(aClass, type, false);
+        JavaPsiFacade.getElementFactory(typeParameter.getProject()).createType(extendFrom, resolveResult.getSubstitutor());
+      IntentionAction action = QUICK_FIX_FACTORY.createExtendsListFix(typeParameter, type, false);
       errorResult.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(null), null, null);
     }
     return errorResult;
@@ -1372,8 +1372,11 @@ public final class GenericsHighlightUtil {
         PsiReferenceParameterList parameterList = ((PsiJavaCodeReferenceElement)qualifier).getParameterList();
         if (parameterList != null && parameterList.getTypeArguments().length > 0) {
           String message = JavaErrorBundle.message("generics.select.static.class.from.parameterized.type",
-                                                         HighlightUtil.formatClass((PsiClass)resolved));
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList).descriptionAndTooltip(message);
+                                                   HighlightUtil.formatClass((PsiClass)resolved));
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(parameterList)
+            .descriptionAndTooltip(message)
+            .registerFix(QUICK_FIX_FACTORY.createDeleteFix(parameterList), null, null, null, null);
         }
       }
     }

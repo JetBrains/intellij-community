@@ -11,8 +11,8 @@ set -ex -o pipefail
 # followed by committing the changes to typeshed
 #
 # Update these two variables when rerunning script
-PROTOBUF_VERSION=3.19.3
-MYPY_PROTOBUF_VERSION=v3.2.0
+PROTOBUF_VERSION=3.20.1
+MYPY_PROTOBUF_VERSION=v3.3.0
 
 if uname -a | grep Darwin; then
     # brew install coreutils wget
@@ -54,11 +54,11 @@ find "$REPO_ROOT/stubs/protobuf/" -name '*_pb2.pyi' -delete
 
 # Roughly reproduce the subset of .proto files on the public interface as described
 # by find_package_modules in the protobuf setup.py.
-# The logic (as of 3.14.0) can roughly be described as a allowlist of .proto files
+# The logic (as of 3.20.1) can roughly be described as a allowlist of .proto files
 # further limited to exclude *test* and internal/
 # https://github.com/protocolbuffers/protobuf/blob/master/python/setup.py
-PROTO_FILES=$(grep "generate_proto.*google" $PYTHON_PROTOBUF_DIR/python/setup.py | \
-    cut -d\" -f2 | \
+PROTO_FILES=$(grep "GenProto.*google" $PYTHON_PROTOBUF_DIR/python/setup.py | \
+    cut -d\' -f2 | \
     grep -v "test" | \
     grep -v google/protobuf/internal/ | \
     grep -v google/protobuf/pyext/python.proto | \
@@ -69,6 +69,7 @@ PROTO_FILES=$(grep "generate_proto.*google" $PYTHON_PROTOBUF_DIR/python/setup.py
 )
 
 # And regenerate!
+# shellcheck disable=SC2086
 protoc_install/bin/protoc --proto_path="$PYTHON_PROTOBUF_DIR/src" --mypy_out="relax_strict_optional_primitives:$REPO_ROOT/stubs/protobuf" $PROTO_FILES
 
 isort "$REPO_ROOT/stubs/protobuf"

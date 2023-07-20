@@ -72,6 +72,7 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
 
         private fun statusFor(property: KtProperty): Status? {
             if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return null
+            if (property.annotationEntries.isNotEmpty()) return null
             val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
             val initializer = property.initializer ?: return null
 

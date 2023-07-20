@@ -312,15 +312,6 @@ public final class MoveClassesOrPackagesUtil {
   }
 
   /**
-   * @deprecated use CommonMoveClassesOrPackagesUtil.chooseDestinationPackage
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public static PsiDirectory chooseDestinationPackage(Project project, String packageName, @Nullable PsiDirectory baseDir) {
-    return CommonMoveClassesOrPackagesUtil.chooseDestinationPackage(project, packageName, baseDir);
-  }
-
-  /**
    * @deprecated use CommonMoveClassesOrPackagesUtil.chooseSourceRoot
    */
   @Deprecated

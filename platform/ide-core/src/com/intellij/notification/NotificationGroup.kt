@@ -56,7 +56,7 @@ class NotificationGroup private constructor(val displayId: String,
 
   var isHideFromSettings: Boolean = false
 
-  val pluginId = pluginId ?: ApplicationManager.getApplication()?.let { PluginUtil.getInstance().findPluginId(Throwable()) }
+  val pluginId: PluginId? = pluginId ?: ApplicationManager.getApplication()?.let { PluginUtil.getInstance().findPluginId(Throwable()) }
 
   init {
     if (registerGroup) {

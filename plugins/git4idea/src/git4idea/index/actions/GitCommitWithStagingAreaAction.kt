@@ -10,7 +10,7 @@ import git4idea.index.showStagingArea
 
 class GitCommitWithStagingAreaAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
+    return ActionUpdateThread.BGT
   }
 
   override fun update(e: AnActionEvent) {

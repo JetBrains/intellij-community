@@ -2,6 +2,8 @@
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.colors.CodeInsightColors.BOOKMARKS_ATTRIBUTES
 import com.intellij.openapi.editor.ex.MarkupModelEx
@@ -14,7 +16,9 @@ import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.text.StringUtil.escapeXmlEntities
 import com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive
+import org.jetbrains.annotations.Nls
 import java.lang.ref.WeakReference
+import javax.swing.Icon
 
 internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : DumbAware, GutterIconRenderer() {
   private var reference: WeakReference<RangeHighlighter>? = null
@@ -34,20 +38,20 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
   private val markup
     get() = document?.let { DocumentMarkupModel.forDocument(it, bookmark.provider.project, false) as? MarkupModelEx }
 
-  internal val highlighter
+  internal val highlighter: RangeHighlighter?
     get() = reference?.get() ?: markup?.allHighlighters?.find { it.gutterIconRenderer == this }
 
-  override fun getIcon() = type.gutterIcon
+  override fun getIcon(): Icon = type.gutterIcon
 
-  override fun getAlignment() = Alignment.RIGHT
+  override fun getAlignment(): Alignment = Alignment.RIGHT
 
-  override fun getClickAction() = ActionUtil.getAction("ToggleBookmark")
+  override fun getClickAction(): AnAction? = ActionUtil.getAction("ToggleBookmark")
 
-  override fun getMiddleButtonClickAction() = ActionUtil.getAction("EditBookmark")
+  override fun getMiddleButtonClickAction(): AnAction? = ActionUtil.getAction("EditBookmark")
 
-  override fun getPopupMenuActions() = ActionUtil.getActionGroup("popup@BookmarkContextMenu")
+  override fun getPopupMenuActions(): ActionGroup? = ActionUtil.getActionGroup("popup@BookmarkContextMenu")
 
-  override fun getAccessibleName() = message("accessible.name.icon.bookmark.0", type)
+  override fun getAccessibleName(): @Nls String = message("accessible.name.icon.bookmark.0", type)
 
   override fun getTooltipText(): String {
     val result = StringBuilder(message("bookmark.text"))
@@ -99,7 +103,7 @@ internal data class GutterLineBookmarkRenderer(val bookmark: LineBookmark) : Dum
     reference = null
   }
 
-  fun refreshHighlighter(release: () -> Boolean) = invokeLaterIfProjectAlive(bookmark.provider.project) {
+  fun refreshHighlighter(release: () -> Boolean): Unit = invokeLaterIfProjectAlive(bookmark.provider.project) {
     when (release()) {
       true -> releaseHighlighter()
       else -> highlighter?.also {

@@ -28,8 +28,8 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
   public String filterText(@NotNull String text, @NotNull TemplateToken token) {
     XmlTag tag = token.getXmlTag();
     if (tag != null) {
-      String classAttr = tag.getAttributeValue(getClassAttributeName());
-      String idAttr = tag.getAttributeValue(HtmlUtil.ID_ATTRIBUTE_NAME);
+      String classAttr = token.getAttributes().get(HtmlUtil.CLASS_ATTRIBUTE_NAME);
+      String idAttr = token.getAttributes().get(HtmlUtil.ID_ATTRIBUTE_NAME);
       if (!Strings.isEmpty(classAttr) || !Strings.isEmpty(idAttr)) {
         String commentString = buildCommentString(classAttr, idAttr);
         return String.format(getCommentFormat(), text, commentString);
@@ -41,11 +41,6 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
   @NotNull
   protected String getCommentFormat() {
     return "%s\n<!-- /%s -->";
-  }
-
-  @NotNull
-  public String getClassAttributeName() {
-    return HtmlUtil.CLASS_ATTRIBUTE_NAME;
   }
 
   @NotNull

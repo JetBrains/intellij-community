@@ -214,8 +214,8 @@ public class CompletionData {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }
-    else if (reference instanceof PsiDynaReference) {
-      for (PsiReference ref : ((PsiDynaReference<?>)reference).getReferences()) {
+    else if (reference instanceof PsiReferencesWrapper) {
+      for (PsiReference ref : ((PsiReferencesWrapper)reference).getReferences()) {
         completeReference(ref, position, set, tailType, filter, variant);
       }
     }

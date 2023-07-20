@@ -294,6 +294,41 @@ public final class ScreenUtil {
     return x * x + y * y;
   }
 
+  public static void moveAndScale(@NotNull Point location, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    location.setLocation(toScreen.x + (location.x - fromScreen.x) * kw, toScreen.y + (location.y - fromScreen.y) * kh);
+  }
+
+  public static void moveAndScale(@NotNull Dimension size, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    size.setSize(size.width * kw, size.height * kh);
+  }
+
+  public static void moveAndScale(@NotNull Rectangle bounds, @NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    checkScreensNonEmpty(fromScreen, toScreen);
+    double kw = toScreen.getWidth() / fromScreen.getWidth();
+    double kh = toScreen.getHeight() / fromScreen.getHeight();
+    bounds.setRect(
+      toScreen.x + (bounds.x - fromScreen.x) * kw,
+      toScreen.y + (bounds.y - fromScreen.y) * kh,
+      bounds.width * kw,
+      bounds.height * kh
+    );
+  }
+
+  private static void checkScreensNonEmpty(@NotNull Rectangle fromScreen, @NotNull Rectangle toScreen) {
+    if (fromScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move from an empty screen: " + fromScreen);
+    }
+    if (toScreen.isEmpty()) {
+      throw new IllegalArgumentException("Can't move to an empty screen: " + toScreen);
+    }
+  }
+
   public static void moveRectangleToFitTheScreen(Rectangle aRectangle) {
     int screenX = aRectangle.x + aRectangle.width / 2;
     int screenY = aRectangle.y + aRectangle.height / 2;
@@ -448,7 +483,7 @@ public final class ScreenUtil {
    * @param bounds - area to check if location shifted towards or not. Also in screen coordinates
    * @return true if movement from prevLocation to location is towards specified rectangular area
    */
-  public static boolean isMovementTowards(final Point prevLocation, final Point location, final Rectangle bounds) {
+  public static boolean isMovementTowards(final Point prevLocation, @NotNull Point location, final Rectangle bounds) {
     if (bounds == null) {
       return false;
     }

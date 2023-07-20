@@ -5,6 +5,8 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -14,17 +16,20 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.Alarm;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -90,15 +95,27 @@ public final class EmmetPreviewHint extends LightweightHint implements Disposabl
   public void updateText(@NotNull final Supplier<String> contentProducer) {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      if (!isDisposed) {
-        final String newText = contentProducer.get();
-        if (StringUtil.isEmpty(newText)) {
-          hide();
-        }
-        else if (!myEditor.getDocument().getText().equals(newText)) {
-          DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
-        }
-      }
+      if (isDisposed) return;
+      Project project = myEditor.getProject();
+      if (project == null) return;
+
+      PsiDocumentManager.getInstance(project).commitDocument(myParentEditor.getDocument());
+
+      ReadAction.nonBlocking(() -> {
+          if (isDisposed) return null;
+          return contentProducer.get();
+        }).finishOnUiThread(ModalityState.current(), newText -> {
+          if (isDisposed) return;
+
+          if (StringUtil.isEmpty(newText)) {
+            hide();
+          }
+          else if (!myEditor.getDocument().getText().equals(newText)) {
+            DocumentUtil.writeInRunUndoTransparentAction(() -> myEditor.getDocument().setText(newText));
+          }
+        })
+        .expireWith(myAlarm)
+        .submit(AppExecutorUtil.getAppExecutorService());
     }, 100);
   }
 

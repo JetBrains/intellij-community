@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.NoSettings
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 import groovy.transform.CompileStatic
+import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 
 @CompileStatic
@@ -15,7 +16,7 @@ class GroovyImplicitNullArgumentHintProviderTest extends InlayHintsProviderTestC
     return GroovyProjectDescriptors.GROOVY_2_5
   }
 
-  def doTest(String text) {
+  def doTest(@Language("Groovy") String text) {
     doTestProvider("test.groovy", text, new GroovyImplicitNullArgumentHintProvider(), new NoSettings())
   }
 
@@ -23,7 +24,7 @@ class GroovyImplicitNullArgumentHintProviderTest extends InlayHintsProviderTestC
     doTest """
 def foo(String s) {}
 
-foo(<# null #>)
+foo(/*<# null #>*/)
 """
   }
 
@@ -47,7 +48,7 @@ foo()
     doTest """
 def foo(s) {}
 
-foo(<# null #>)
+foo(/*<# null #>*/)
 """
   }
 
@@ -57,7 +58,7 @@ class Foo {
   Foo(String s) {}
 }
 
-new Foo(<# null #>)
+new Foo(/*<# null #>*/)
 """
   }
 

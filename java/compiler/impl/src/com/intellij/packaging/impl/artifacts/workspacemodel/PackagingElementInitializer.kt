@@ -4,10 +4,10 @@ package com.intellij.packaging.impl.artifacts.workspacemodel
 import com.intellij.openapi.project.Project
 import com.intellij.packaging.elements.ElementInitializer
 import com.intellij.packaging.elements.PackagingElement
-import com.intellij.workspaceModel.storage.EntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.CompositePackagingElementEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.PackagingElementEntity
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
+import com.intellij.platform.workspace.storage.EntityStorage
+import com.intellij.java.workspace.entities.CompositePackagingElementEntity
+import com.intellij.java.workspace.entities.PackagingElementEntity
+import com.intellij.platform.workspace.storage.impl.VersionedEntityStorageOnStorage
 
 object PackagingElementInitializer : ElementInitializer {
   override fun initialize(entity: PackagingElementEntity, project: Project, storage: EntityStorage): PackagingElement<*> =

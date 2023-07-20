@@ -16,11 +16,9 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.BlockUtils;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -30,7 +28,6 @@ import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import one.util.streamex.StreamEx;
@@ -72,11 +69,11 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new ReplaceForByWhileFix();
   }
 
-  private static class ReplaceForByWhileFix extends InspectionGadgetsFix {
+  private static class ReplaceForByWhileFix extends PsiUpdateModCommandQuickFix {
 
     @Override
     @NotNull
@@ -85,8 +82,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection implemen
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiForStatement forStatement = ObjectUtils.tryCast(element.getParent(), PsiForStatement.class);
       if (forStatement == null) return;
       CommentTracker commentTracker = new CommentTracker();

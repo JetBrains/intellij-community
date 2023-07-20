@@ -54,7 +54,7 @@ class MemoryDiskConflictResolver {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           myConflictAppeared = new Throwable();
         }
-        ApplicationManager.getApplication().invokeLater(this::processConflicts);
+        ApplicationManager.getApplication().invokeLater(() -> processConflicts());
       }
       myConflicts.add(file);
     }

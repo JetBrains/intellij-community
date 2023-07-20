@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -35,15 +35,14 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   private Object myValue;
   private boolean myNullValueSet;
   private final boolean myNodeWrapper;
-  static final Object TREE_WRAPPER_VALUE = new Object();
+  protected static final Object TREE_WRAPPER_VALUE = new Object();
 
   protected AbstractTreeNode(Project project, @NotNull T value) {
     super(project, null);
     myNodeWrapper = setInternalValue(value);
   }
 
-  @NotNull
-  public abstract Collection<? extends AbstractTreeNode<?>> getChildren();
+  public abstract @NotNull Collection<? extends AbstractTreeNode<?>> getChildren();
 
   protected boolean hasProblemFileBeneath() {
     return false;
@@ -111,9 +110,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return !myProject.isDisposed() && getEqualityObject() != null;
   }
 
-  @NotNull
   @Override
-  public LeafState getLeafState() {
+  public @NotNull LeafState getLeafState() {
     if (isAlwaysShowPlus()) return LeafState.NEVER;
     if (isAlwaysLeaf()) return LeafState.ALWAYS;
     return LeafState.DEFAULT;
@@ -132,8 +130,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   }
 
   @Override
-  @Nullable
-  public final AbstractTreeNode<T> getElement() {
+  public final @Nullable AbstractTreeNode<T> getElement() {
     return getEqualityObject() != null ? this : null;
   }
 
@@ -200,9 +197,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myNullValueSet ? null : myValue;
   }
 
-  @Nullable
   @TestOnly
-  public String toTestString(@Nullable Queryable.PrintInfo printInfo) {
+  public @Nullable String toTestString(@Nullable Queryable.PrintInfo printInfo) {
     if (getValue() instanceof Queryable) {
       return Queryable.Util.print((Queryable)getValue(), printInfo, this);
     }
@@ -218,10 +214,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use {@link #toTestString(Queryable.PrintInfo)} instead
    */
   @Deprecated
-  @Nullable
-  @NonNls
   @TestOnly
-  public String getTestPresentation() {
+  public @Nullable @NonNls String getTestPresentation() {
     if (myName != null) {
       return myName;
     }
@@ -231,8 +225,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return null;
   }
 
-  @Nullable
-  public Color getFileStatusColor(final FileStatus status) {
+  public @Nullable Color getFileStatusColor(final FileStatus status) {
     if (FileStatus.NOT_CHANGED.equals(status) && myProject != null && !myProject.isDefault()) {
       final VirtualFile vf = getVirtualFile();
       if (vf != null && vf.isDirectory()) {
@@ -255,22 +248,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
     return myName;
   }
 
-  @Override
-  public void navigate(boolean requestFocus) {
-  }
-
-  @Override
-  public boolean canNavigate() {
-    return false;
-  }
-
-  @Override
-  public boolean canNavigateToSource() {
-    return false;
-  }
-
-  @Nullable
-  protected final Object getParentValue() {
+  protected final @Nullable Object getParentValue() {
     AbstractTreeNode<?> parent = getParent();
     return parent == null ? null : parent.getValue();
   }

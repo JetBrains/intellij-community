@@ -3,8 +3,8 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingModeProvider
+import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingMode
+import com.intellij.platform.workspace.storage.impl.ConsistencyCheckingModeProvider
 
 class WorkspaceStorageIdeConsistencyCheckingModeProvider : ConsistencyCheckingModeProvider {
   override val mode: ConsistencyCheckingMode

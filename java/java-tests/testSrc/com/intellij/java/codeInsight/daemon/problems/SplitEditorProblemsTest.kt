@@ -26,6 +26,8 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
 
   override fun setUp() {
     super.setUp()
+    val project = project
+    project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     @Suppress("DEPRECATION")
     manager = FileEditorManagerImpl(project, project.coroutineScope.childScope()).also { it.initDockableContentFactory() }

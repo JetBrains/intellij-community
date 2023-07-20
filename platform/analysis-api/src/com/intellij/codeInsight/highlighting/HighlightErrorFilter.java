@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -18,5 +18,5 @@ import org.jetbrains.annotations.NotNull;
 public abstract class HighlightErrorFilter {
   public static final ProjectExtensionPointName<HighlightErrorFilter> EP_NAME = new ProjectExtensionPointName<>("com.intellij.highlightErrorFilter");
 
-  public abstract boolean shouldHighlightErrorElement(@NotNull final PsiErrorElement element);
+  public abstract boolean shouldHighlightErrorElement(final @NotNull PsiErrorElement element);
 }

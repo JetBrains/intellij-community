@@ -32,14 +32,14 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
     String version = MavenUtil.getMavenVersion(mavenHome);
-    return StringUtil.compareVersionNumbers(version, "3") >= 0;
+    return StringUtil.compareVersionNumbers(version, "3") >= 0 && StringUtil.compareVersionNumbers(version, "4") < 0;
   }
 
   @Override
   public @Nullable File getMavenHomeFile(@Nullable String mavenHome) {
     if (mavenHome == null) return null;
     if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
-        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.title"), mavenHome)) {
+        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.3.title"), mavenHome)) {
       return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     return null;
@@ -107,7 +107,7 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
 
   private static void prepareClassPathForLocalRunAndUnitTests(@NotNull String mavenVersion, List<File> classpath, String root) {
     BuildDependenciesCommunityRoot communityRoot = new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath()));
-    BundledMavenDownloader.INSTANCE.downloadMavenCommonLibsSync(communityRoot);
+    BundledMavenDownloader.INSTANCE.downloadMaven3LibsSync(communityRoot);
 
     classpath.add(new File(PathUtil.getJarPathForClass(MavenId.class)));
     classpath.add(new File(root, "intellij.maven.server"));

@@ -8,6 +8,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.SerializationConstants;
 
 import java.util.ArrayList;
@@ -37,7 +38,7 @@ public final class FacetState {
   }
 
   @Tag(JpsFacetSerializer.CONFIGURATION_TAG)
-  public Element getConfiguration() {
+  public @Nullable Element getConfiguration() {
     return myConfiguration;
   }
 

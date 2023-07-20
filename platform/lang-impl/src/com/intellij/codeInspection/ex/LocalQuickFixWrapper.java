@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -103,7 +103,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
         final QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {
           //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
-          fix.applyFix(project, descriptor);
+          fix.applyFixNonInteractively(project, descriptor);
           restart = true;
           ignore(ignoredElements, descriptor, true, context);
         }

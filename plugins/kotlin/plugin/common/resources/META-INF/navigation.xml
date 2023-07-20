@@ -11,6 +11,10 @@
             language="kotlin"
             implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
 
+    <psi.referenceContributor
+            language="kotlin"
+            implementation="org.jetbrains.kotlin.idea.references.KotlinIssueReferenceContributor"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>
     <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>

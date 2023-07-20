@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.lexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
 import java.util.Map;
@@ -195,20 +194,19 @@ public interface TokenSets {
 
   TokenSet WHITE_SPACES_OR_COMMENTS = TokenSet.orSet(WHITE_SPACES_SET, COMMENT_SET);
 
-  Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = new ContainerUtil.ImmutableMapBuilder<IElementType, IElementType>()
-    .put(mMINUS_ASSIGN, mMINUS)
-    .put(mPLUS_ASSIGN, mPLUS)
-    .put(mDIV_ASSIGN, mDIV)
-    .put(mSTAR_ASSIGN, mSTAR)
-    .put(mMOD_ASSIGN, mMOD)
-    .put(mSL_ASSIGN, COMPOSITE_LSHIFT_SIGN)
-    .put(mSR_ASSIGN, COMPOSITE_RSHIFT_SIGN)
-    .put(mBSR_ASSIGN, COMPOSITE_TRIPLE_SHIFT_SIGN)
-    .put(mBAND_ASSIGN, mBAND)
-    .put(mBOR_ASSIGN, mBOR)
-    .put(mBXOR_ASSIGN, mBXOR)
-    .put(mSTAR_STAR_ASSIGN, mSTAR_STAR)
-    .build();
+  Map<IElementType, IElementType> ASSIGNMENTS_TO_OPERATORS = Map.ofEntries(
+    Map.entry(mMINUS_ASSIGN, mMINUS),
+    Map.entry(mPLUS_ASSIGN, mPLUS),
+    Map.entry(mDIV_ASSIGN, mDIV),
+    Map.entry(mSTAR_ASSIGN, mSTAR),
+    Map.entry(mMOD_ASSIGN, mMOD),
+    Map.entry(mSL_ASSIGN, COMPOSITE_LSHIFT_SIGN),
+    Map.entry(mSR_ASSIGN, COMPOSITE_RSHIFT_SIGN),
+    Map.entry(mBSR_ASSIGN, COMPOSITE_TRIPLE_SHIFT_SIGN),
+    Map.entry(mBAND_ASSIGN, mBAND),
+    Map.entry(mBOR_ASSIGN, mBOR),
+    Map.entry(mBXOR_ASSIGN, mBXOR),
+    Map.entry(mSTAR_STAR_ASSIGN, mSTAR_STAR));
 
   TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF, kIN, kAS, kTRAIT, kVAR, kYIELD, kRECORD);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.statistics;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,8 +23,7 @@ public abstract class StatisticsManager {
 
   public static final KeyedExtensionCollector<Statistician, Key> COLLECTOR = new KeyedExtensionCollector<>("com.intellij.statistician");
 
-  @Nullable
-  public static <T, Loc> StatisticsInfo serialize(Key<? extends Statistician<T, Loc>> key, T element, Loc location) {
+  public static @Nullable <T, Loc> StatisticsInfo serialize(Key<? extends Statistician<T, Loc>> key, T element, Loc location) {
     for (@SuppressWarnings("unchecked") Statistician<T, Loc> statistician : COLLECTOR.forKey(key)) {
       StatisticsInfo info = statistician.serialize(element, location);
       if (info != null) {

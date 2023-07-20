@@ -1,18 +1,17 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.projectView
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.projectView.impl.PackageViewPane
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runWithModalProgressBlocking
 import com.intellij.openapi.ui.Queryable
 import com.intellij.project.stateStore
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
-import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 
 open class ModulesInProjectViewTestCase : BaseProjectViewTestCase() {
   init {
@@ -72,23 +71,20 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runUnderModalProgressIfIsEdt {
+    runWithModalProgressBlocking(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded", "unloaded-inner"))
     }
-    if (!WorkspaceFileIndexEx.IS_ENABLED) {
-      //todo temporarily dispose until events are fired after unloading
-      assertStructureEqual("""
-        Project
-         loaded
-          unloaded-inner
-           subdir
-           y.txt
-         unloaded
-          loaded-inner
-           subdir
-           z.txt
-      """.trimIndent())
-    }
+    assertStructureEqual("""
+      Project
+       loaded
+        unloaded-inner
+         subdir
+         y.txt
+       unloaded
+        loaded-inner
+         subdir
+         z.txt
+    """.trimIndent())
   }
 
   fun `test unloaded module with qualified name`() {
@@ -115,7 +111,7 @@ class ModulesInProjectViewTest : ModulesInProjectViewTestCase() {
     """.trimIndent()
     assertStructureEqual(expected)
 
-    runUnderModalProgressIfIsEdt {
+    runWithModalProgressBlocking(myProject, "") {
       ModuleManager.getInstance(myProject).setUnloadedModules(listOf("unloaded"))
     }
     assertStructureEqual(expected)

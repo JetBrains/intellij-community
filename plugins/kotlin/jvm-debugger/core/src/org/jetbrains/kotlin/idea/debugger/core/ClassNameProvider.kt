@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.debugger.core
 
 import com.intellij.debugger.SourcePosition
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.psi.PsiClass
@@ -168,7 +168,14 @@ class ClassNameProvider(
             ProgressManager.getInstance().runProcessWithProgressSynchronously(task, progressMessage, true, project)
         } else {
             try {
-                ProgressManager.getInstance().runProcess(task, EmptyProgressIndicator())
+                // We should not create new indicator when already running in a process,
+                // as it will make the outer process not cancellable
+                val currentIndicator = ProgressManager.getInstance().progressIndicator
+                if (currentIndicator != null) {
+                    task.run()
+                } else {
+                    ProgressManager.getInstance().runProcess(task, ProgressIndicatorBase())
+                }
                 true
             } catch (e: InterruptedException) {
                 false

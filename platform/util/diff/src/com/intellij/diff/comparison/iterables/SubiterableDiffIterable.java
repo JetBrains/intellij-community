@@ -4,45 +4,55 @@ package com.intellij.diff.comparison.iterables;
 import com.intellij.diff.util.Range;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Iterator;
+import java.util.List;
 
-class SubiterableDiffIterable extends ChangeDiffIterableBase {
-  @NotNull private final DiffIterable myIterable;
+public class SubiterableDiffIterable extends ChangeDiffIterableBase {
+  @NotNull private final List<Range> myChanged;
   private final int myStart1;
   private final int myStart2;
   private final int myEnd1;
   private final int myEnd2;
+  private final int myFirstIndex;
 
-  SubiterableDiffIterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
+  /**
+   * @param firstIndex First range in {@code changed} that might affects our range.
+   *                   This is an optimization to avoid O(changed.size) lookups of the first element for each subIterable.
+   */
+  public SubiterableDiffIterable(@NotNull List<Range> changed, int start1, int end1, int start2, int end2,
+                                 int firstIndex) {
     super(end1 - start1, end2 - start2);
-    myIterable = iterable;
+    myChanged = changed;
     myStart1 = start1;
     myStart2 = start2;
     myEnd1 = end1;
     myEnd2 = end2;
+    myFirstIndex = firstIndex;
   }
 
   @NotNull
   @Override
   protected ChangeIterable createChangeIterable() {
-    return new SubiterableChangeIterable(myIterable, myStart1, myEnd1, myStart2, myEnd2);
+    return new SubiterableChangeIterable(myChanged, myStart1, myEnd1, myStart2, myEnd2, myFirstIndex);
   }
 
   private static class SubiterableChangeIterable implements ChangeIterable {
-    private final Iterator<Range> myIterator;
+    private final List<Range> myChanged;
     private final int myStart1;
     private final int myEnd1;
     private final int myStart2;
     private final int myEnd2;
 
+    private int myIndex;
     private Range myLast;
 
-    SubiterableChangeIterable(@NotNull DiffIterable iterable, int start1, int end1, int start2, int end2) {
-      myIterator = iterable.changes();
+    SubiterableChangeIterable(@NotNull List<Range> changed, int start1, int end1, int start2, int end2,
+                              int firstIndex) {
+      myChanged = changed;
       myStart1 = start1;
       myEnd1 = end1;
       myStart2 = start2;
       myEnd2 = end2;
+      myIndex = firstIndex;
 
       next();
     }
@@ -56,8 +66,10 @@ class SubiterableDiffIterable extends ChangeDiffIterableBase {
     public void next() {
       myLast = null;
 
-      while (myIterator.hasNext()) {
-        Range range = myIterator.next();
+      while (myIndex < myChanged.size()) {
+        Range range = myChanged.get(myIndex);
+        myIndex++;
+
         if (range.end1 < myStart1 || range.end2 < myStart2) continue;
         if (range.start1 > myEnd1 || range.start2 > myEnd2) break;
 

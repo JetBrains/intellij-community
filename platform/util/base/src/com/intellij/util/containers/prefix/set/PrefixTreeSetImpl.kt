@@ -14,10 +14,6 @@ internal class PrefixTreeSetImpl<Key, KeyElement>(
   override val size: Int
     get() = map.size
 
-  override fun asSequence(): Sequence<Key> {
-    return map.getKeySequence()
-  }
-
   override fun isEmpty(): Boolean {
     return map.isEmpty()
   }
@@ -34,24 +30,12 @@ internal class PrefixTreeSetImpl<Key, KeyElement>(
     return map.getDescendantKeys(element)
   }
 
-  override fun getDescendantSequence(element: Key): Sequence<Key> {
-    return map.getDescendantKeySequence(element)
-  }
-
   override fun getAncestors(element: Key): Set<Key> {
     return map.getAncestorKeys(element)
   }
 
-  override fun getAncestorSequence(element: Key): Sequence<Key> {
-    return map.getAncestorKeySequence(element)
-  }
-
   override fun getRoots(): Set<Key> {
     return map.getRootKeys()
-  }
-
-  override fun getRootSequence(): Sequence<Key> {
-    return map.getRootKeySequence()
   }
 
   override fun add(element: Key) {
@@ -63,6 +47,6 @@ internal class PrefixTreeSetImpl<Key, KeyElement>(
   }
 
   override fun iterator(): Iterator<Key> {
-    return asSequence().iterator()
+    return map.keys.iterator()
   }
 }

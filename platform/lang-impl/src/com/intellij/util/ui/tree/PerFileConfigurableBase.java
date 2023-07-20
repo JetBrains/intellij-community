@@ -472,7 +472,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     sorter.setSortsOnUpdates(true);
     myTable.setRowSorter(sorter);
     myTable.getRowSorter().setSortKeys(Collections.singletonList(new RowSorter.SortKey(0, SortOrder.ASCENDING)));
-    new TableSpeedSearch(myTable, o -> keyToString(o));
+    TableSpeedSearch.installOn(myTable, o -> keyToString(o));
 
     FontMetrics metrics = myTable.getFontMetrics(myTable.getFont());
     int maxValueWidth = 2 * metrics.stringWidth(myTable.getModel().getColumnName(1));

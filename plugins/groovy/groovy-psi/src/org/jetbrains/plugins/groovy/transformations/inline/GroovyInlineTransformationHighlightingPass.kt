@@ -22,14 +22,13 @@ internal class GroovyInlineTransformationHighlightingPassFactory : TextEditorHig
   }
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? = file.getGroovyFile()?.let {
-    GroovyInlineTransformationHighlightingPass(it, editor.document)
+    GroovyInlineTransformationHighlightingPass(file, it, editor.document)
   }
 }
 
-private class GroovyInlineTransformationHighlightingPass(val file: GroovyFileBase, document: Document) : GroovyHighlightingPass(file, document) {
-
+private class GroovyInlineTransformationHighlightingPass(psiFile:PsiFile, val groovyBaseFile: GroovyFileBase, document: Document) : GroovyHighlightingPass(psiFile, groovyBaseFile, document) {
   override fun doCollectInformation(progress: ProgressIndicator) {
-    file.accept(object : GroovyRecursiveElementVisitor() {
+    groovyBaseFile.accept(object : GroovyRecursiveElementVisitor() {
 
       override fun visitElement(element: GroovyPsiElement) {
         val performer = getRootInlineTransformationPerformer(element) ?: return super.visitElement(element)
@@ -40,5 +39,6 @@ private class GroovyInlineTransformationHighlightingPass(val file: GroovyFileBas
       }
 
     })
+    applyInformationInBackground()
   }
 }

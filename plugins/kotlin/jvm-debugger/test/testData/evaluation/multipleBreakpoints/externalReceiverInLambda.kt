@@ -13,3 +13,6 @@ fun main(args: Array<String>) {
     //Breakpoint!
     buildString { append(sb.toString()) }
 }
+
+// IGNORE_FOR_K2_CODE
+// Remove ignore after KT-57227 fix

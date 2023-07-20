@@ -21,7 +21,7 @@ class RecentProjectsParser(private val settings: Settings) {
     private const val URI_FIELD = "URI"
   }
 
-  fun process(file: File) = try {
+  fun process(file: File): Unit = try {
     logger.info("Processing a file: $file")
 
     val root = JDOMUtil.load(file)

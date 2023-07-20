@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KtDeclarationSymbol
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
-import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.NavigationPopupDescriptor
 import org.jetbrains.kotlin.idea.codeInsight.lineMarkers.shared.TestableLineMarkerNavigator
@@ -197,10 +197,18 @@ fun hasExpectForActual(declaration: KtDeclaration): Boolean {
     }
 }
 
-internal fun getModulesStringForMarkerTooltip(
-    navigatableDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>?
-): String? =
-    navigatableDeclarations.takeUnless { it.isNullOrEmpty() }?.mapNotNull { it.element }?.joinToString { it.getKtModule().moduleName }
+internal fun getModulesStringForMarkerTooltip(navigatableDeclarations: Collection<SmartPsiElementPointer<KtDeclaration>>?): String? {
+    if (navigatableDeclarations.isNullOrEmpty()) {
+        return null
+    }
+
+    val project = navigatableDeclarations.first().project
+    val projectStructureProvider = ProjectStructureProvider.getInstance(project)
+
+    return navigatableDeclarations
+        .mapNotNull { it.element }
+        .joinToString { projectStructureProvider.getModule(it, null).moduleName }
+}
 
 private val KtModule.moduleName: String
     get() = (this as? KtSourceModule)?.moduleName ?: moduleDescription

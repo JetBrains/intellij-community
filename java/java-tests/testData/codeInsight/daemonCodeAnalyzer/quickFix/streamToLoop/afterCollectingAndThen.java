@@ -37,16 +37,17 @@ public class Main {
   }
 
   void sample3(List<String> people) {
-    List<String> list2 = people.stream().collect( // comment
-      Collectors.collectingAndThen(Collectors.<String, List<String>>toCollection(LinkedList::new),
-        list -> {
-            List<String> result = new ArrayList<>();
-            for (Iterator<String> it = Stream.concat(list.stream(), list.stream()).iterator(); it.hasNext(); ) {
-                String s = it.next();
-                result.add(s);
-            }
-            return result;
-        }));
+      // comment
+      List<String> strings = new LinkedList<>();
+      for (String person : people) {
+          strings.add(person);
+      }
+      List<String> result = new ArrayList<>();
+      for (Iterator<String> it = Stream.concat(strings.stream(), strings.stream()).iterator(); it.hasNext(); ) {
+          String s = it.next();
+          result.add(s);
+      }
+      List<String> list2 = result;
   }
 
   void sample4(List<String> people) {

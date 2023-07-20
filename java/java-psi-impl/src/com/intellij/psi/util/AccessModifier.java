@@ -7,6 +7,7 @@ import com.intellij.psi.impl.light.LightRecordCanonicalConstructor;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -15,10 +16,13 @@ import java.util.List;
  */
 public enum AccessModifier {
   PUBLIC(PsiModifier.PUBLIC), PROTECTED(PsiModifier.PROTECTED), PACKAGE_LOCAL(PsiModifier.PACKAGE_LOCAL), PRIVATE(PsiModifier.PRIVATE);
-  public static final List<AccessModifier> ALL_MODIFIERS = ContainerUtil.immutableList(values());
-  
-  private static final List<AccessModifier> PUBLIC_PACKAGE = ContainerUtil.immutableList(PUBLIC, PACKAGE_LOCAL);
-  private static final List<AccessModifier> PUBLIC_PRIVATE = ContainerUtil.immutableList(PUBLIC, PRIVATE);
+  @Unmodifiable
+  public static final List<AccessModifier> ALL_MODIFIERS = Arrays.asList(values());
+
+  @Unmodifiable
+  private static final List<AccessModifier> PUBLIC_PACKAGE = Arrays.asList(PUBLIC, PACKAGE_LOCAL);
+  @Unmodifiable
+  private static final List<AccessModifier> PUBLIC_PRIVATE = Arrays.asList(PUBLIC, PRIVATE);
 
   @NotNull @PsiModifier.ModifierConstant
   private final String myModifier;

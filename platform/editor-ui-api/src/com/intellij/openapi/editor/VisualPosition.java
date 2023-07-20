@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * @see Editor#offsetToVisualPosition(int)
  * @see Editor#xyToVisualPosition(java.awt.Point)
  */
-public class VisualPosition {
+public final class VisualPosition {
   public final int line;
   public final int column;
   /**
@@ -74,8 +74,7 @@ public class VisualPosition {
     return new VisualPosition(line, column, value);
   }
 
-  @NonNls
-  public String toString() {
+  public @NonNls String toString() {
     return "VisualPosition: (" + line + ", " + column + ")" + (leansRight ? " leans right" : "");
   }
 

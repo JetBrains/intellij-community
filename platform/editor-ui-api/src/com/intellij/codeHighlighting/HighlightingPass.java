@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeHighlighting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -7,7 +7,11 @@ import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Pass performs analysis in background and highlights found issues in the editor.
+ * HighlightingPass performs analysis in the background and highlights found issues in the editor.
+ * <p>
+ * Implement {@link com.intellij.openapi.project.DumbAware} to allow highlighting during index updates.
+ * If pass is created by {@link TextEditorHighlightingPassFactory},
+ * the factory should implement {@link com.intellij.openapi.project.DumbAware} as well
  */
 public interface HighlightingPass {
   HighlightingPass[] EMPTY_ARRAY = new HighlightingPass[0];
@@ -16,8 +20,9 @@ public interface HighlightingPass {
    * Asks this pass to start analysis and hold collected information.
    * This method is called from a background thread.
    *
-   * @param progress to check if highlighting process is cancelled. Pass is to check progress.isCanceled() as often as possible and
-   *                 throw {@link com.intellij.openapi.progress.ProcessCanceledException} if {@code true} is returned.
+   * @param progress The progress indicator under which the current highlighting process is being performed.
+   *                 The pass has to call {@code ProgressManager#checkCanceled} as often as possible (to
+   *                 throw {@link com.intellij.openapi.progress.ProcessCanceledException} if some {@link ProgressIndicator} is canceled).
    *                 See also {@link ProgressIndicator#checkCanceled()}.
    */
   void collectInformation(@NotNull ProgressIndicator progress);
@@ -28,8 +33,7 @@ public interface HighlightingPass {
    */
   void applyInformationToEditor();
 
-  @NotNull
-  default Condition<?> getExpiredCondition() {
+  default @NotNull Condition<?> getExpiredCondition() {
     return Conditions.alwaysFalse();
   }
 }

@@ -218,12 +218,13 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         }
 
         private fun KtProperty.isSerializationImplicitlyUsedField(): Boolean {
-            val ownerObject = getNonStrictParentOfType<KtClassOrObject>()
-            if (ownerObject is KtObjectDeclaration && ownerObject.isCompanion()) {
-                val lightClass = ownerObject.getNonStrictParentOfType<KtClass>()?.toLightClass() ?: return false
-                return lightClass.fields.any { it.name == name && HighlightUtil.isSerializationImplicitlyUsedField(it) }
-            }
-            return false
+            val ownerObject = getNonStrictParentOfType<KtClassOrObject>() as? KtObjectDeclaration ?: return false
+            val lightClass = if (ownerObject.isCompanion()) {
+                ownerObject.getNonStrictParentOfType<KtClass>()?.toLightClass()
+            } else {
+                ownerObject.toLightClass()
+            } ?: return false
+            return lightClass.fields.any { it.name == name && HighlightUtil.isSerializationImplicitlyUsedField(it) }
         }
 
         private fun KtNamedFunction.isSerializationImplicitlyUsedMethod(): Boolean =

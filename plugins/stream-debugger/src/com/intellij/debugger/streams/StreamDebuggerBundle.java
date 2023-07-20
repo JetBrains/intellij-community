@@ -6,14 +6,13 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
-public final class StreamDebuggerBundle extends DynamicBundle {
+public final class StreamDebuggerBundle {
   private static final String BUNDLE = "messages.StreamDebuggerBundle";
-  private static final StreamDebuggerBundle INSTANCE = new StreamDebuggerBundle();
+  private static final DynamicBundle INSTANCE = new DynamicBundle(StreamDebuggerBundle.class, BUNDLE);
 
-  private StreamDebuggerBundle() { super(BUNDLE); }
+  private StreamDebuggerBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, @NotNull Object... params) {
     return INSTANCE.getMessage(key, params);
   }
 }

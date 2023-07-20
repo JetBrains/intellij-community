@@ -8,6 +8,7 @@ import com.intellij.ide.customize.transferSettings.providers.vswin.utilities.reg
 import com.sun.jna.platform.win32.Advapi32
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
+import java.util.*
 
 typealias WinRegAction<T> = (WinReg.HKEY) -> T
 
@@ -21,14 +22,14 @@ class RegistryKey internal constructor(val key: String, private val registryRoot
         return RegistryKey("$key\\$child", registryRoot)
     }
 
-    override fun getStringValue(value: String) = tryExecuteWithHKEY(key, value) {
+    override fun getStringValue(value: String): String? = tryExecuteWithHKEY(key, value) {
         if (!Advapi32Util.registryKeyExists(it, key)) {
             return@tryExecuteWithHKEY null
         }
         return@tryExecuteWithHKEY Advapi32Util.registryGetStringValue(it, key, value)
     }
-    override fun getKeys() = tryExecuteWithHKEY(key) { Advapi32Util.registryGetKeys(it, key) }?.toList()
-    override fun getValues() = tryExecuteWithHKEY(key) { Advapi32Util.registryGetValues(it, key) }
+    override fun getKeys(): List<String>? = tryExecuteWithHKEY(key) { Advapi32Util.registryGetKeys(it, key) }?.toList()
+    override fun getValues(): TreeMap<String, Any>? = tryExecuteWithHKEY(key) { Advapi32Util.registryGetValues(it, key) }
 
     private fun <T> tryExecuteWithHKEY(vararg args: String, action: WinRegAction<T>): T? {
         return registryRoot.executeWithHKEY {

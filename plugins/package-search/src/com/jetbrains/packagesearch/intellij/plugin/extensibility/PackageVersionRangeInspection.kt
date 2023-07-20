@@ -64,8 +64,6 @@ abstract class PackageVersionRangeInspection : AbstractPackageUpdateInspectionCh
 
         val startsWithParenthesisOrBrackets = normalizedVersion.startsWith('(') || normalizedVersion.startsWith('[')
         val endsWithParenthesisOrBrackets = normalizedVersion.endsWith(')') || normalizedVersion.endsWith(']')
-        if (startsWithParenthesisOrBrackets && endsWithParenthesisOrBrackets) return true
-
-        return false
+        return startsWithParenthesisOrBrackets && endsWithParenthesisOrBrackets
     }
 }

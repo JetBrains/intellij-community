@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -145,7 +146,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
    */
   default @NotNull List<@NotNull VirtualFile> getFilesToRefresh() {
     VirtualFile file = getFile();
-    return file == null ? Collections.emptyList() : Collections.singletonList(file);
+    return ContainerUtil.createMaybeSingletonList(file);
   }
 
   /**

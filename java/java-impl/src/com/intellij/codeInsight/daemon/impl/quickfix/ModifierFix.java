@@ -157,7 +157,13 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement imp
 
   private void changeModifierList (@NotNull PsiModifierList modifierList) {
     try {
+      boolean needRemoveWhiteSpace = modifierList.getLastChild() instanceof PsiAnnotation &&
+                                     modifierList.getNextSibling() instanceof PsiWhiteSpace &&
+                                     myShouldHave;
       modifierList.setModifierProperty(myModifier, myShouldHave);
+      if (needRemoveWhiteSpace) {
+        modifierList.getNextSibling().delete();
+      }
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);

@@ -203,4 +203,11 @@ class Prefix{
   String getSomeText(String text){
     return text;
   }
+
+  void complex(){
+      System.out.printf("'%c' U+%<03X", <warning descr="Argument type 'char' does not match the type of the format specifier '%<03X'">'B'</warning>);
+      System.out.printf("'%c'", 'B');
+      System.out.printf("U+%1$03X", <warning descr="Argument type 'char' does not match the type of the format specifier '%1$03X'">'B'</warning>);
+      System.out.printf("'%c' U+%1$03X", <warning descr="Argument type 'char' does not match the type of the format specifier '%1$03X'">'B'</warning>);
+  }
 }

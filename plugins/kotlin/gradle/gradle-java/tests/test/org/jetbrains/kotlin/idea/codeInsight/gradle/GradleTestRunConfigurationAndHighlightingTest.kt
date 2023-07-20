@@ -9,8 +9,6 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.options.advanced.AdvancedSettings
-import com.intellij.openapi.options.advanced.AdvancedSettingsImpl
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
@@ -27,17 +25,24 @@ import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
+import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.awt.Point
 import java.io.File
 
 class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTestCase() {
     @Test
-    fun testExpectClassWithTests() = doTest()
+    @TargetVersions("<7.6")
+    fun testExpectClassWithTests() {
+        enableExperimentalMPP(true)
+        doTest()
+    }
 
     @Test
+    @TargetVersions("<7.6")
     fun testMultiplatformInheritedTests() {
         mockInheritorPopup()
+        enableExperimentalMPP(true)
         doTest()
     }
 
@@ -177,5 +182,5 @@ class GradleTestRunConfigurationAndHighlightingTest23 : KotlinGradleImportingTes
         )
     }
 
-    override fun testDataDirName(): String = "testRunConfigurations"
+    override fun testDataDirName(): String = "multiplatform/testRunConfigurations"
 }

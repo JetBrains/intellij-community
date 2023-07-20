@@ -31,13 +31,11 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   protected static final int PAGE_SIZE = 1 << 15;
   protected static final StorageLockContext LOCK_CONTEXT = new StorageLockContext(true, true);
 
-  /**
-   * Not so much records because each of them could be up to 64k, which leads to OoM quite quickly
-   */
+  /** Not so many records because each of them could be up to 64k, which leads to OoM quite quickly */
   protected static final int ENOUGH_RECORDS = 1 << 15;
 
   protected static final int ARBITRARY_FILE_ID = 157;
-  protected static final int ARBITRARY_ATTRIBUTE_ID = 10;
+  protected static final int ARBITRARY_ATTRIBUTE_ID = AttributesStorageOverBlobStorage.MAX_SUPPORTED_ATTRIBUTE_ID - 1;
 
 
   @BeforeClass
@@ -100,6 +98,25 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   }
 
   @Test
+  public void singleSmallRecordInserted_AreAllReportedExistInStorage_AndCouldBeReadBackRaw() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN - 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    assertTrue(
+      "Attribute just inserted must exist",
+      attributes.existsInStorage(insertedRecord, attributesStorage)
+    );
+
+    assertArrayEquals(
+      "Attribute content could be read back as-is",
+      insertedRecord.attributeBytes(),
+      insertedRecord.readValueFromStorageRaw(attributesStorage)
+    );
+  }
+
+  @Test
   public void singleBigRecordInserted_ReportedExistInStorage_AndCouldBeReadBack() throws IOException {
     final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
       .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
@@ -116,6 +133,47 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       insertedRecord.attributeBytes(),
       insertedRecord.readValueFromStorage(attributesStorage)
     );
+  }
+
+  @Test
+  public void singleBigRecordInserted_ReportedExistInStorage_AndCouldBeReadBackRaw() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    assertTrue(
+      "Attribute just inserted must exist",
+      insertedRecord.existsInStorage(attributesStorage)
+    );
+
+    assertArrayEquals(
+      "Attribute content could be read back as-is",
+      insertedRecord.attributeBytes(),
+      insertedRecord.readValueFromStorageRaw(attributesStorage)
+    );
+  }
+
+  @Test
+  public void singleBigRecordInserted_ReportedExistInStorage_AndCouldBeReadBack_WithForEach() throws IOException {
+    final AttributeRecord record = newAttributeRecord(ARBITRARY_FILE_ID, ARBITRARY_ATTRIBUTE_ID)
+      .withRandomAttributeBytes(INLINE_ATTRIBUTE_SMALLER_THAN + 1);
+
+    final AttributeRecord insertedRecord = attributes.insertOrUpdateRecord(record, attributesStorage);
+
+    final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = readAllRecordsWithForEach(attributesStorage);
+    assertEquals(
+      "1 record must be read",
+      recordsReadWithForEach.size(),
+      1
+    );
+
+    final AttributeRecord recordRead = recordsReadWithForEach.get(insertedRecord.uniqueId());
+    assertNotNull(insertedRecord + " must be read back",
+                  recordRead);
+    assertArrayEquals(insertedRecord + " must be read back with same content",
+                      recordRead.attributeBytes(),
+                      insertedRecord.attributeBytes());
   }
 
   @Test
@@ -178,6 +236,11 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         insertedRecord.attributeBytes(),
         insertedRecord.readValueFromStorage(attributesStorage)
       );
+      assertArrayEquals(
+        insertedRecord + ": content could be read back as-is (raw)",
+        insertedRecord.attributeBytes(),
+        insertedRecord.readValueFromStorageRaw(attributesStorage)
+      );
     }
   }
 
@@ -229,6 +292,10 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         attributeRecord.attributeBytes(),
         attributeRecord.readValueFromStorage(attributesStorage)
       );
+      assertArrayEquals(
+        attributeRecord.attributeBytes(),
+        attributeRecord.readValueFromStorageRaw(attributesStorage)
+      );
     }
   }
 
@@ -258,15 +325,8 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     // Hence, here I decided to use .uniqueId() to match written records with the records read back, and delay more correct implementation
     // until the need for it satisfies its cost.
 
-    final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = new Long2ObjectOpenHashMap<>();
-    attributesStorage.forEachAttribute((recordId, fileId, attributeId, attributeValue, inlinedAttribute) -> {
-      final AttributeRecord attributeRecord = new AttributeRecord(recordId, fileId, attributeId)
-        .withAttributeBytes(attributeValue, attributeValue.length);
-      recordsReadWithForEach.put(
-        attributeRecord.uniqueId(),
-        attributeRecord
-      );
-    });
+    final Long2ObjectMap<AttributeRecord>
+      recordsReadWithForEach = readAllRecordsWithForEach(attributesStorage);
     assertEquals(
       "Same number of records must be read",
       recordsReadWithForEach.size(),
@@ -360,6 +420,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         record.attributeBytes(),
         record.readValueFromStorage(attributesStorage)
       );
+
+      assertArrayEquals(
+        "[" + i + "]" + record + " value must be read (raw)",
+        record.attributeBytes(),
+        record.readValueFromStorageRaw(attributesStorage)
+      );
     }
   }
 
@@ -384,6 +450,12 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
         insertedRecord.readValueFromStorage(attributesStorage),
         insertedRecord.attributeBytes()
       );
+
+      assertArrayEquals(
+        insertedRecord + " value must be read (raw)",
+        insertedRecord.readValueFromStorageRaw(attributesStorage),
+        insertedRecord.attributeBytes()
+      );
     }
   }
 
@@ -406,6 +478,21 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     }
   }
 
+  protected static Long2ObjectMap<AttributeRecord> readAllRecordsWithForEach(AttributesStorageOverBlobStorage storage) throws IOException {
+    final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = new Long2ObjectOpenHashMap<>();
+
+    storage.forEachAttribute((recordId, fileId, attributeId, attributeValue, inlinedAttribute) -> {
+
+      final AttributeRecord attributeRecord = new AttributeRecord(recordId, fileId, attributeId)
+        .withAttributeBytes(attributeValue, attributeValue.length);
+
+      recordsReadWithForEach.put(attributeRecord.uniqueId(), attributeRecord);
+
+    });
+
+    return recordsReadWithForEach;
+  }
+
   protected static AttributeRecord[] generateManyRandomRecords(final int size,
                                                                final int differentAttributesCount,
                                                                final int maxAttributeValueSize,
@@ -416,7 +503,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
       .limit(size / 2)
       .distinct()
       .toArray();
-    final int[] attributeIds = rnd.ints(0, AttributesStorageOverBlobStorage.MAX_ATTRIBUTE_ID + 1)
+    final int[] attributeIds = rnd.ints(0, AbstractAttributesStorage.MAX_ATTRIBUTE_ID + 1)
       .filter(id -> id > 0)
       .limit(differentAttributesCount)
       .distinct()
@@ -531,6 +618,14 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
     public byte[] readValueFromStorage(final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
       return attributesStorage.readAttributeValue(attributesRecordId, fileId, attributeId);
+    }
+
+    public byte[] readValueFromStorageRaw(final AttributesStorageOverBlobStorage attributesStorage) throws IOException {
+      return attributesStorage.readAttributeValue(attributesRecordId, fileId, attributeId, buffer -> {
+        final byte[] bytes = new byte[buffer.remaining()];
+        buffer.get(bytes);
+        return bytes;
+      });
     }
 
     @Override

@@ -442,8 +442,8 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.checkConsistency(nodeToBeMovedFilter: (MockModuleTreeNode) -> Boolean) {
-    val expectedNodeForGroup = HashMap<ModuleGroup, MockModuleTreeNode>(getNodeForGroupMap())
-    val expectedNodeVirtualGroupToChildNode = HashMap<ModuleGroup, MockModuleTreeNode>(getVirtualGroupToChildNodeMap())
+    val expectedNodeForGroup = HashMap(getNodeForGroupMap())
+    val expectedNodeVirtualGroupToChildNode = HashMap(getVirtualGroupToChildNodeMap())
     val expectedGroupByNode = HashMap<MockModuleTreeNode, ModuleGroup>(getGroupByNodeMap())
     val expectedModuleByNode = HashMap<MockModuleTreeNode, MockModule>(getModuleByNodeMap())
     TreeUtil.treeNodeTraverser(root).postOrderDfsTraversal().forEach { o ->

@@ -1,17 +1,15 @@
 package org.jetbrains.plugins.notebooks.visualization
 
+import com.intellij.lang.Language
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import java.awt.Color
 import java.awt.Graphics
-import java.awt.Rectangle
 import javax.swing.JComponent
 import kotlin.math.max
 import kotlin.math.min
@@ -75,6 +73,9 @@ fun Editor.getCells(lines: IntRange): List<NotebookCellLines.Interval> =
 fun Editor.getCellByOrdinal(ordinal: Int): NotebookCellLines.Interval =
   NotebookCellLines.get(this).intervals[ordinal]
 
+fun Editor.getCellByOffset(offset: Int): NotebookCellLines.Interval =
+  getCell(line = document.getLineNumber(offset))
+
 fun NotebookCellLines.getCells(lines: IntRange): Sequence<NotebookCellLines.Interval> =
   intervalsIterator(lines.first).asSequence().takeWhile { it.lines.first <= lines.last }
 
@@ -97,24 +98,24 @@ val NotebookCellLines.Interval.lastContentLine: Int
 val NotebookCellLines.Interval.contentLines: IntRange
   get() = firstContentLine .. lastContentLine
 
-fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLines.Marker> {
-  val markers = ArrayList<NotebookCellLines.Marker>()
+fun makeMarkersFromIntervals(document: Document, intervals: Iterable<NotebookCellLines.Interval>): List<NotebookCellLinesLexer.Marker> {
+  val markers = ArrayList<NotebookCellLinesLexer.Marker>()
 
-  fun addMarker(line: Int, type: NotebookCellLines.CellType) {
+  fun addMarker(line: Int, type: NotebookCellLines.CellType, language: Language? = null) {
     val startOffset = document.getLineStartOffset(line)
     val endOffset =
       if (line + 1 < document.lineCount) document.getLineStartOffset(line + 1)
       else document.getLineEndOffset(line)
     val length = endOffset - startOffset
-    markers.add(NotebookCellLines.Marker(markers.size, type, startOffset, length))
+    markers.add(NotebookCellLinesLexer.Marker(markers.size, type, startOffset, length, language))
   }
 
   for (interval in intervals) {
     if (interval.markers.hasTopLine) {
-      addMarker(interval.lines.first, interval.type)
+      addMarker(interval.lines.first, interval.type, interval.language)
     }
     if (interval.markers.hasBottomLine) {
-      addMarker(interval.lines.last, interval.type)
+      addMarker(interval.lines.last, interval.type, interval.language)
     }
   }
 

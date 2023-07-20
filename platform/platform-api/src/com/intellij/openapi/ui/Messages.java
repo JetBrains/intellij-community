@@ -31,6 +31,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
+import java.util.function.BiFunction;
 
 import static com.intellij.openapi.util.NlsContexts.*;
 
@@ -568,9 +569,26 @@ public class Messages {
                                                Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{getOkButton(), getCancelButton()}, checkboxText, checked, defaultOptionIndex,
                                      focusedOptionIndex, icon,
-                                     (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
+                                     (BiFunction<? super Integer, ? super JCheckBox, Integer>) 
+                                       (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public static int showCheckboxMessageDialog(@DialogMessage String message,
+                                              @DialogTitle String title,
+                                              String @NotNull @NlsContexts.Button [] options,
+                                              @NlsContexts.Checkbox String checkboxText,
+                                              final boolean checked,
+                                              final int defaultOptionIndex,
+                                              final int focusedOptionIndex,
+                                              Icon icon,
+                                              final @Nullable BiFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
+    return MessagesService.getInstance()
+      .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+                                     exitFunc);
+  }
+  
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static int showCheckboxMessageDialog(@DialogMessage String message,
                                               @DialogTitle String title,
                                               String @NotNull @NlsContexts.Button [] options,
@@ -580,9 +598,8 @@ public class Messages {
                                               final int focusedOptionIndex,
                                               Icon icon,
                                               final @Nullable PairFunction<? super Integer, ? super JCheckBox, Integer> exitFunc) {
-    return MessagesService.getInstance()
-      .showTwoStepConfirmationDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
-                                     exitFunc);
+    return showCheckboxMessageDialog(message, title, options, checkboxText, checked, defaultOptionIndex, focusedOptionIndex, icon,
+                                     (BiFunction<? super Integer, ? super JCheckBox, Integer>)exitFunc);
   }
 
   public static int showTwoStepConfirmationDialog(@DialogMessage String message,

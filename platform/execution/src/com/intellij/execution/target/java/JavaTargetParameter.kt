@@ -49,13 +49,13 @@ class JavaTargetParameter private constructor(
     /**
      * Adds given string as-is to the overall parameter.
      */
-    fun fixed(value: String) = apply { parameterBuilderParts += { value } }
+    fun fixed(value: String): Builder = apply { parameterBuilderParts += { value } }
 
     /**
      * Adds string that is a resolved version of given one. If it is a file path, then it will be resolved to
      * satisfy file system on target.
      */
-    fun resolved(value: String) = apply { parameterBuilderParts += { getResolved(value) } }
+    fun resolved(value: String): Builder = apply { parameterBuilderParts += { getResolved(value) } }
 
     fun build(): JavaTargetParameter {
       val parameter = TargetValue.map(TargetValue.EMPTY_VALUE) {
@@ -76,6 +76,6 @@ class JavaTargetParameter private constructor(
 
   companion object {
     @JvmStatic
-    fun fixed(parameter: String) = JavaTargetParameter(TargetValue.fixed(parameter), TargetPaths.unordered())
+    fun fixed(parameter: String): JavaTargetParameter = JavaTargetParameter(TargetValue.fixed(parameter), TargetPaths.unordered())
   }
 }

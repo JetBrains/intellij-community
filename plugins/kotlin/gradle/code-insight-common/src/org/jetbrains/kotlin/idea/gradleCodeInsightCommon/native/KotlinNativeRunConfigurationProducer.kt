@@ -56,7 +56,7 @@ class KotlinNativeRunConfigurationProducer :
             taskNames = mainRunTasks
         }
         configuration.name = mainRunTasks.first()
-        configuration.isScriptDebugEnabled = false
+        configuration.isDebugServerProcess = false
 
         return true
     }

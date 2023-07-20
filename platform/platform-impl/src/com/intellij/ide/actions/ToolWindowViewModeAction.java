@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -18,7 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-@SuppressWarnings("ComponentNotRegistered")
 public class ToolWindowViewModeAction extends DumbAwareToggleAction implements FusAwareAction {
   public enum ViewMode {
     DockPinned("DockPinnedMode"),

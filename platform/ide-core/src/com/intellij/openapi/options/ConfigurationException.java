@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,17 +69,6 @@ public class ConfigurationException extends Exception {
 
   public void setQuickFix(@Nullable ConfigurationQuickFix quickFix) {
     myQuickFix = quickFix;
-  }
-
-  /**
-   * @return a runnable task that can fix the problem somehow, or {@code null} if it is not set
-   *
-   * @deprecated use {@link #getConfigurationQuickFix()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  @Nullable
-  public Runnable getQuickFix() {
-    return myQuickFix == null ? null : () -> myQuickFix.applyFix(DataContext.EMPTY_CONTEXT);
   }
 
   @Nullable

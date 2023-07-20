@@ -4,6 +4,7 @@ package com.intellij.ui.tabs.impl
 import com.intellij.openapi.rd.fill2DRect
 import com.intellij.openapi.rd.fill2DRoundRect
 import com.intellij.openapi.rd.paint2DLine
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.tabs.JBTabPainter
 import com.intellij.ui.tabs.JBTabsPosition
@@ -20,6 +21,32 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
 
   override fun getBackgroundColor(): Color = theme.background ?: theme.borderColor
 
+  override fun getCustomBackground(tabColor: Color?, selected: Boolean, active: Boolean, hovered: Boolean): Color? {
+    var bg: Color? = null
+    if (!selected) {
+      if (tabColor != null) {
+        bg = theme.inactiveColoredTabBackground?.let { inactive ->
+          ColorUtil.alphaBlending(inactive, tabColor)
+        } ?: tabColor
+      }
+
+      if (hovered) {
+        (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let { hover ->
+          bg = bg?.let { ColorUtil.alphaBlending(hover, it) } ?: hover
+        }
+      }
+    }
+    else {
+      bg = (tabColor ?: if (active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
+      if (hovered) {
+        (if (active) theme.hoverSelectedBackground else theme.hoverSelectedInactiveBackground).let { hover ->
+          bg = bg?.let { ColorUtil.alphaBlending(hover, it) } ?: hover
+        }
+      }
+    }
+    return bg
+  }
+
   override fun fillBackground(g: Graphics2D, rect: Rectangle) {
     theme.background?.let{
       g.fill2DRect(rect, it)
@@ -27,32 +54,14 @@ open class JBDefaultTabPainter(val theme : TabTheme = DefaultTabTheme()) : JBTab
   }
 
   override fun paintTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    tabColor?.let {
+    getCustomBackground(tabColor, selected = false, active, hovered)?.let {
       g.fill2DRect(rect, it)
-
-      theme.inactiveColoredTabBackground?.let { inactive ->
-        g.fill2DRect(rect, inactive)
-      }
-    }
-
-    if(hovered) {
-      (if (active) theme.hoverBackground else theme.hoverInactiveBackground)?.let{
-        g.fill2DRect(rect, it)
-      }
     }
   }
 
   override fun paintSelectedTab(position: JBTabsPosition, g: Graphics2D, rect: Rectangle, borderThickness: Int, tabColor: Color?, active: Boolean, hovered: Boolean) {
-    val color = (tabColor ?: if(active) theme.underlinedTabBackground else theme.underlinedTabInactiveBackground) ?: theme.background
-
-    color?.let {
+    getCustomBackground(tabColor, selected = true, active, hovered)?.let {
       g.fill2DRect(rect, it)
-    }
-
-    if(hovered) {
-      (if (active) theme.hoverSelectedBackground else theme.hoverSelectedInactiveBackground).let{
-        g.fill2DRect(rect, it)
-      }
     }
 
     //this code smells. Remove when animation is default for all tabs

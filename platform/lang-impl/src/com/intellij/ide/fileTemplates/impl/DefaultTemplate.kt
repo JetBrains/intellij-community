@@ -98,6 +98,6 @@ class DefaultTemplate constructor(val name: String,
     }
   }
 
-  override fun toString() = textSupplier.toString()
+  override fun toString(): String = textSupplier.toString()
 }
 

@@ -154,7 +154,7 @@ class WindowsFileStorage(dir: Path,
     LOGGER.info("Creating tar")
     val tarFile = createTempFile()
     val feature = CompletableFuture.supplyAsync {
-      Compressor.Tar(tarFile.toFile(), Compressor.Tar.Compression.NONE).use { tar ->
+      Compressor.Tar(tarFile, Compressor.Tar.Compression.NONE).use { tar ->
         for (relativeFile in files) {
           tar.addFile(relativeFile.asWindowsPath, dir.resolve(relativeFile.asWindowsPath))
         }

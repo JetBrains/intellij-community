@@ -10,9 +10,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.JBEditorTabsBase;
 import com.intellij.ui.tabs.JBTabsPresentation;
-import com.intellij.ui.tabs.impl.singleRow.CompressibleSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.ScrollableSingleRowLayout;
-import com.intellij.ui.tabs.impl.singleRow.SingleRowLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +23,13 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
 
   private boolean myAlphabeticalModeChanged = false;
 
-  public JBEditorTabs(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
-    super(project, focusManager, parentDisposable);
+  public JBEditorTabs(@Nullable Project project, @SuppressWarnings("unused") @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
+    super(project, parentDisposable);
+    setSupportsCompression(true);
+  }
 
+  public JBEditorTabs(@Nullable Project project, @NotNull Disposable parentDisposable) {
+    super(project, parentDisposable);
     setSupportsCompression(true);
   }
 
@@ -41,24 +42,14 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   /**
-   * @deprecated Use {@link #JBEditorTabs(Project, IdeFocusManager, Disposable)}
+   * @deprecated Use {@link #JBEditorTabs(Project, Disposable)}
    */
   @Deprecated
   public JBEditorTabs(@Nullable Project project,
                       @SuppressWarnings("unused") @NotNull ActionManager actionManager,
                       @Nullable IdeFocusManager focusManager,
                       @NotNull Disposable parent) {
-    this(project, focusManager, parent);
-  }
-
-  @Override
-  protected SingleRowLayout createSingleRowLayout() {
-    if (!UISettings.getInstance().getHideTabsIfNeeded() && supportsCompression()) {
-      return new CompressibleSingleRowLayout(this);
-    }
-    else {
-      return new ScrollableSingleRowLayout(this);
-    }
+    this(project, parent);
   }
 
   @Override
@@ -80,7 +71,7 @@ public class JBEditorTabs extends JBTabsImpl implements JBEditorTabsBase {
   }
 
   @Override
-  public JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
+  public @NotNull JBTabsPresentation setAlphabeticalMode(boolean alphabeticalMode) {
     myAlphabeticalModeChanged = true;
     return super.setAlphabeticalMode(alphabeticalMode);
   }

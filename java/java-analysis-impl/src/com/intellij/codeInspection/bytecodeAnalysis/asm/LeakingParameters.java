@@ -33,12 +33,9 @@ public class LeakingParameters {
       Frame<ParamsValue> frame = frames[i];
       if (frame != null) {
         switch (insnNode.getType()) {
-          case AbstractInsnNode.LABEL:
-          case AbstractInsnNode.LINE:
-          case AbstractInsnNode.FRAME:
-            break;
-          default:
-            new Frame<>(frame).execute(insnNode, collector);
+          case AbstractInsnNode.LABEL, AbstractInsnNode.LINE, AbstractInsnNode.FRAME -> {
+          }
+          default -> new Frame<>(frame).execute(insnNode, collector);
         }
       }
     }

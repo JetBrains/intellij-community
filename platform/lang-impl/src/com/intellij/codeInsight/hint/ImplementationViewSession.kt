@@ -54,7 +54,7 @@ interface ImplementationViewSessionFactory {
   ): ImplementationViewSession?
 
   companion object {
-    @JvmField val EP_NAME = ExtensionPointName.create<ImplementationViewSessionFactory>("com.intellij.implementationViewSessionFactory")
+    @JvmField val EP_NAME: ExtensionPointName<ImplementationViewSessionFactory> = ExtensionPointName.create("com.intellij.implementationViewSessionFactory")
   }
 }
 

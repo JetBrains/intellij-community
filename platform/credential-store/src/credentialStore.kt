@@ -1,15 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.toByteArray
 import java.nio.CharBuffer
 import java.security.SecureRandom
 
-val LOG = logger<CredentialStore>()
+internal val LOG: Logger
+  get() = logger<PasswordSafeSettings>()
 
-fun joinData(user: String?, password: OneTimeString?): ByteArray? {
+internal fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   if (user == null && password == null) {
     return null
   }
@@ -28,7 +30,7 @@ fun joinData(user: String?, password: OneTimeString?): ByteArray? {
   return buffer.toByteArray()
 }
 
-fun splitData(data: String?): Credentials? {
+internal fun splitData(data: String?): Credentials? {
   if (data.isNullOrEmpty()) {
     return null
   }
@@ -70,10 +72,6 @@ private fun parseString(data: String, @Suppress("SameParameterValue") delimiter:
   return result
 }
 
-// check isEmpty before
-@JvmOverloads
-fun Credentials.serialize(storePassword: Boolean = true) = joinData(userName, if (storePassword) password else null)!!
-
 fun createSecureRandom(): SecureRandom {
   // do not use SecureRandom.getInstanceStrong()
   // https://tersesystems.com/blog/2015/12/17/the-right-way-to-use-securerandom/
@@ -87,6 +85,3 @@ internal fun SecureRandom.generateBytes(size: Int): ByteArray {
   nextBytes(result)
   return result
 }
-
-val ACCESS_TO_KEY_CHAIN_DENIED = Credentials.ACCESS_TO_KEY_CHAIN_DENIED
-val CANNOT_UNLOCK_KEYCHAIN = Credentials.CANNOT_UNLOCK_KEYCHAIN

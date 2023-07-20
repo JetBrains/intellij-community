@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.analyzer.LanguageSettingsProvider
 import org.jetbrains.kotlin.cli.common.arguments.JavaTypeEnhancementStateParser
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
@@ -58,10 +59,14 @@ val Project.languageVersionSettings: LanguageVersionSettings
     get() = LanguageVersionSettingsProvider.getInstance(this).commonSettings
 
 val PsiElement.languageVersionSettings: LanguageVersionSettings
-    get() = if (project.serviceOrNull<ProjectFileIndex>() == null) {
-        LanguageVersionSettingsImpl.DEFAULT
-    } else runReadAction {
-        IDELanguageSettingsProvider.getLanguageVersionSettings(this.moduleInfo, project)
+    get() {
+        if (project.serviceOrNull<ProjectFileIndex>() == null) {
+            return LanguageVersionSettingsImpl.DEFAULT
+        }
+
+        return runReadAction {
+            project.service<LanguageSettingsProvider>().getLanguageVersionSettings(this.moduleInfo, project)
+        }
     }
 
 @Service(Service.Level.PROJECT)

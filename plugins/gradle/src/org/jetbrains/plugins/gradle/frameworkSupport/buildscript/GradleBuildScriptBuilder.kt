@@ -76,7 +76,8 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withJUnit(): BSB
   fun withJUnit4(): BSB
   fun withJUnit5(): BSB
-
+  fun targetCompatibility(level: String): BSB
+  fun sourceCompatibility(level: String): BSB
   companion object {
 
     @JvmStatic

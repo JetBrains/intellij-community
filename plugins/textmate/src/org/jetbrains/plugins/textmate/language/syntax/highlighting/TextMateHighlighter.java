@@ -4,6 +4,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.fileTypes.PlainSyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 import java.util.List;
 import java.util.Map;
@@ -40,12 +42,28 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     Map<CharSequence, TextMateTextAttributesAdapter> customHighlightingColors = service.getCustomHighlightingColors();
 
     Set<CharSequence> highlightingRules = ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules());
-    List<CharSequence> selectors = ContainerUtil.reverse(
-      new TextMateScopeComparator<>(((TextMateElementType)tokenType).getScope(), Function.identity()).sortAndFilter(highlightingRules));
+
+    TextMateScope textMateScope = trimEmbeddedScope((TextMateElementType)tokenType);
+    List<CharSequence> selectors = ContainerUtil.reverse(new TextMateScopeComparator<>(textMateScope, Function.identity())
+                                                           .sortAndFilter(highlightingRules));
     return ContainerUtil.map2Array(selectors, TextAttributesKey.class, rule -> {
       TextMateTextAttributesAdapter customTextAttributes = customHighlightingColors.get(rule);
       return customTextAttributes != null ? customTextAttributes.getTextAttributesKey(TextMateTheme.INSTANCE)
                                           : TextMateTheme.INSTANCE.getTextAttributesKey(rule);
     });
+  }
+
+  private static TextMateScope trimEmbeddedScope(TextMateElementType tokenType) {
+    TextMateScope result = TextMateScope.EMPTY;
+    TextMateScope current = tokenType.getScope();
+    while (current != null) {
+      CharSequence scopeName = current.getScopeName();
+      result = result.add(scopeName);
+      if (scopeName != null && Strings.contains(scopeName, ".embedded.")) {
+        break;
+      }
+      current = current.getParent();
+    }
+    return result;
   }
 }

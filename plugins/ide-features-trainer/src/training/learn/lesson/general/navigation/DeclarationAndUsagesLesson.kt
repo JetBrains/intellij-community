@@ -47,21 +47,19 @@ abstract class DeclarationAndUsagesLesson
         test { actions(it) }
       }
 
-      task("GotoDeclaration") {
-        text(LessonsBundle.message("declaration.and.usages.show.usages", action(it)))
-        trigger(it, { state() }) l@{ before, now ->
-          if (before == null || now == null) {
-            return@l false
-          }
-
-          val navigationElement = before.target.navigationElement
-          return@l navigationElement == now.target.navigationElement &&
-                   isInsidePsi(navigationElement, before.position) &&
-                   !isInsidePsi(navigationElement, now.position)
+      task("GotoDeclaration") { actionId ->
+        text(LessonsBundle.message("declaration.and.usages.show.usages", action(actionId)))
+        stateCheck l@{
+          val curEditor = editor
+          val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(curEditor.document) ?: return@l false
+          val offset = curEditor.caretModel.offset
+          val element = psiFile.findElementAt(offset) ?: return@l false
+          val parentExpr = getParentExpression(element) ?: return@l false
+          parentExpr.text.endsWith(entityName)
         }
         restoreIfModifiedOrMoved()
         test {
-          actions(it)
+          actions(actionId)
           ideFrame {
             waitComponent(JBTable::class.java, "ShowUsagesTable")
             invokeActionViaShortcut("ENTER")
@@ -123,6 +121,8 @@ abstract class DeclarationAndUsagesLesson
                               action(it), strong(UIBundle.message("tool.window.name.find")))
       }
     }
+
+  protected abstract fun getParentExpression(element: PsiElement): PsiElement?
 
   private fun TaskRuntimeContext.state(): MyInfo? {
     val flags = TargetElementUtil.ELEMENT_NAME_ACCEPTED or TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED

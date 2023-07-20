@@ -175,7 +175,6 @@ object MavenWslUtil : MavenUtil() {
 
     val options = WSLCommandLineOptions()
       .setExecuteCommandInLoginShell(true)
-      .setShellPath(this.shellPath)
     val processOutput = this.executeOnWsl(listOf("which", "mvn"), options, 10000, null)
     if (processOutput.exitCode == 0) {
       val path = processOutput.stdout.lines().find { it.isNotEmpty() }?.let(this::resolveSymlink)?.let(this::getWindowsPath)?.let(::File)

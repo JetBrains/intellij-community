@@ -6,6 +6,7 @@ package com.intellij.ide.customize.transferSettings
 import com.intellij.ide.customize.transferSettings.controllers.TransferSettingsListener
 import com.intellij.ide.customize.transferSettings.models.IdeVersion
 import com.intellij.ide.customize.transferSettings.models.Settings
+import com.intellij.ide.customize.transferSettings.models.TransferSettingsModel
 import com.intellij.ide.customize.transferSettings.providers.testProvider.TestTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vscode.VSCodeTransferSettingsProvider
 import com.intellij.ide.customize.transferSettings.providers.vsmac.VSMacTransferSettingsProvider
@@ -28,7 +29,8 @@ class TransferSettingsDemoAction : DumbAwareAction("Test transfer settings") {
 
 private class TransferSettingsDemoDialog(private val project: Project) : DialogWrapper(project) {
   private val config = DefaultTransferSettingsConfiguration(TransferSettingsDataProvider(TestTransferSettingsProvider(), VSCodeTransferSettingsProvider(), VSMacTransferSettingsProvider()), false)
-  private val pnl = TransferSettingsView(config)
+  private val model: TransferSettingsModel = TransferSettingsModel(config, true)
+  private val pnl = TransferSettingsView(config, model)
 
   init {
     init()

@@ -9,6 +9,8 @@
       <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/1.7.36/slf4j-jdk14-1.7.36.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-jdk14/1.7.36/slf4j-jdk14-1.7.36-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

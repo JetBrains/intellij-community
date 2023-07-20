@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.GutterMark;
@@ -28,12 +28,9 @@ public class ActionDeclarationRelatedItemLineMarkerProviderTest extends JavaCode
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
-    String platformEditorJar = PathUtil.getJarPathForClass(AnAction.class);
-    moduleBuilder.addLibrary("platform-editor", platformEditorJar);
-    String platformIdeJar = PathUtil.getJarPathForClass(JBList.class);
-    moduleBuilder.addLibrary("platform-ide", platformIdeJar);
-    String platformUtilJar = PathUtil.getJarPathForClass(AllIcons.class);
-    moduleBuilder.addLibrary("platform-util", platformUtilJar);
+    moduleBuilder.addLibrary("platform-editor", PathUtil.getJarPathForClass(AnAction.class));
+    moduleBuilder.addLibrary("platform-ide", PathUtil.getJarPathForClass(JBList.class));
+    moduleBuilder.addLibrary("platform-util-ui", PathUtil.getJarPathForClass(AllIcons.class));
   }
 
   public void testActionSingleDeclaration() {

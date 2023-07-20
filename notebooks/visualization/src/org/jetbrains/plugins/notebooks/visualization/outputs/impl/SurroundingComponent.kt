@@ -3,6 +3,7 @@ package org.jetbrains.plugins.notebooks.visualization.outputs.impl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper
 import org.jetbrains.plugins.notebooks.visualization.outputs.getEditorBackground
 import org.jetbrains.plugins.notebooks.visualization.ui.registerEditorSizeWatcher
@@ -17,7 +18,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
   private var presetWidth = 0
 
   init {
-    border = IdeBorderFactory.createEmptyBorder(Insets(10, 0, 0, 0))
+    border = IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(10))
     add(innerComponent, BorderLayout.CENTER)
   }
 
@@ -47,7 +48,7 @@ internal class SurroundingComponent private constructor(private val innerCompone
     ) = SurroundingComponent(innerComponent).also {
       registerEditorSizeWatcher(it) {
         it.presetWidth = editor.textEditingAreaWidth
-        if (it.presetWidth == 0 && GraphicsUtil.isProjectorEnvironment()) {
+        if (it.presetWidth == 0 && GraphicsUtil.isRemoteEnvironment()) {
           it.presetWidth = editor.contentSize.width
         }
         innerComponent.revalidate()

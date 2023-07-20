@@ -31,7 +31,7 @@ import java.util.concurrent.CancellationException
 import javax.swing.JLabel
 
 
-val WizardContext.projectOrDefault get() = project ?: ProjectManager.getInstance().defaultProject
+val WizardContext.projectOrDefault: Project get() = project ?: ProjectManager.getInstance().defaultProject
 
 @Deprecated(
   message = "Use NewProjectWizardChainStep.nextStep instead",
@@ -183,6 +183,6 @@ fun whenProjectCreated(project: Project, action: () -> Unit) {
 @ApiStatus.Internal
 fun NewProjectWizardStep.setupProjectFromBuilder(project: Project, builder: ProjectBuilder): Module? {
   val model = context.getUserData(NewProjectWizardStep.MODIFIABLE_MODULE_MODEL_KEY)
-  return builder.commit(project, model).firstOrNull()
+  return builder.commit(project, model)?.firstOrNull()
 }
 

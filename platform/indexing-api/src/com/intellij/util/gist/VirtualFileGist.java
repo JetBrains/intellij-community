@@ -31,16 +31,20 @@ import java.util.function.Supplier;
  * Obtained using {@link GistManager#newVirtualFileGist}.<p/>
  *
  * Tracks VFS content only. Unsaved/uncommitted documents have no effect on the {@link #getFileData} results.
- * Neither do any disk file changes, until VFS refresh has detected them. To work with PSI content, use {@link PsiFileGist}.<p/>
+ * Neither do any disk file changes, until VFS refresh has detected them. To work with PSI content, use
+ * {@link PsiFileGist}.<p/>
  *
- * Please note that every call to {@link #getFileData} means a disk access. Clients that access gists frequently should take care of proper caching themselves. The data is calculated on demand when first requested, so if you need this data for a lot of files at once, this can take some amount of time on the first query. If that's unacceptable from the UX perspective,
- * consider using {@link FileBasedIndexExtension} instead.<p/>
+ * Please note that every call to {@link #getFileData} means disk access. Clients that access gists frequently
+ * should take care of proper caching themselves. The data is calculated on demand when first requested, so if
+ * you need this data for a lot of files at once, this can take some amount of time on the first query. If that's
+ * unacceptable from the UX perspective, consider using {@link FileBasedIndexExtension} instead.<p/>
  *
  * The differences to file-based index:
  * <ul>
  *   <li>Gists have simpler lifecycle and API, but don't provide a possibility for queries across multiple files.</li>
  *   <li>Gists are project-dependent.</li>
- *   <li>Gists are calculated on request for specific files, index processes all files in advance. Thus gists can be used to speed up the indexing phase and move the logic into later stages, when it's beneficial.</li>
+ *   <li>Gists are calculated on request for specific files, index processes all files in advance. Thus gists can be
+ *   used to speed up the indexing phase and move the logic into later stages, when it's beneficial.</li>
  * </ul>
  */
 @ApiStatus.NonExtendable

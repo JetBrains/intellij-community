@@ -47,7 +47,7 @@ public final class ComponentTreeBuilder implements ComponentSelectionListener, D
     tree.setArea(myTreeArea);
     designer.handleTreeArea(myTreeArea);
 
-    new TreeDropListener(tree, myTreeArea, designer.getToolProvider());
+    TreeDropListener.installOn(tree, myTreeArea, designer.getToolProvider());
 
     selectFromSurface();
     expandFromState();

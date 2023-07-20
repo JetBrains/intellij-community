@@ -11,6 +11,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleVersionQuickFix
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleWrapperSettingsOpenQuickFix
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleUtil
 
@@ -22,23 +23,24 @@ class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: St
   override fun getNavigatable(project: Project): Navigatable? = null
 
   init {
-    require(gradleVersion < minimalRecommendedVersion)
+    val oldestRecommendedGradleVersion = GradleJvmSupportMatrix.getOldestRecommendedGradleVersionByIdea()
+    require(gradleVersion < oldestRecommendedGradleVersion)
     val issueDescription = StringBuilder()
 
     val ideVersionName = ApplicationInfoImpl.getShadowInstance().versionName
     issueDescription.append("""
       The project uses Gradle ${gradleVersion.version}.
-      The support for Gradle older that ${minimalRecommendedVersion.version} will likely be dropped by $ideVersionName in the next release.
+      The support for Gradle older that ${oldestRecommendedGradleVersion.version} will likely be dropped by $ideVersionName in the next release.
       
-      Gradle ${minimalRecommendedVersion.version} release notes can be found at https://docs.gradle.org/${minimalRecommendedVersion.version}/release-notes.html
+      Gradle ${oldestRecommendedGradleVersion.version} release notes can be found at https://docs.gradle.org/${oldestRecommendedGradleVersion.version}/release-notes.html
       """.trimIndent())
 
     issueDescription.append("\n\nPossible solution:\n")
     val wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath)
     if (wrapperPropertiesFile == null) {
-      val gradleVersionFix = GradleVersionQuickFix(projectPath, minimalRecommendedVersion, true)
+      val gradleVersionFix = GradleVersionQuickFix(projectPath, oldestRecommendedGradleVersion, true)
       issueDescription.append(
-        " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${minimalRecommendedVersion.version} version " +
+        " - <a href=\"${gradleVersionFix.id}\">Upgrade Gradle wrapper to ${oldestRecommendedGradleVersion.version} version " +
         "and re-import the project</a>\n")
       quickFixes.add(gradleVersionFix)
     }
@@ -46,19 +48,11 @@ class DeprecatedGradleVersionIssue(gradleVersion: GradleVersion, projectPath: St
       val wrapperSettingsOpenQuickFix = GradleWrapperSettingsOpenQuickFix(projectPath, "distributionUrl")
       val reimportQuickFix = ReimportQuickFix(projectPath, GradleConstants.SYSTEM_ID)
       issueDescription.append(" - <a href=\"${wrapperSettingsOpenQuickFix.id}\">Open Gradle wrapper settings</a>, " +
-                              "change `distributionUrl` property to use Gradle ${minimalRecommendedVersion.version} or newer and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
+                              "change `distributionUrl` property to use Gradle ${oldestRecommendedGradleVersion.version} or newer and <a href=\"${reimportQuickFix.id}\">reload the project</a>\n")
       quickFixes.add(wrapperSettingsOpenQuickFix)
       quickFixes.add(reimportQuickFix)
     }
 
     description = issueDescription.toString()
-  }
-
-  companion object {
-    private val minimalRecommendedVersion: GradleVersion = GradleVersion.version("3.0")
-    @JvmStatic
-    fun isDeprecated(gradleVersion: GradleVersion): Boolean {
-      return gradleVersion < minimalRecommendedVersion
-    }
   }
 }

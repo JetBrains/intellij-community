@@ -133,7 +133,7 @@ public class FeatureDescriptor {
   /**
    * @deprecated Use {@code getTipId()} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable String getTipFileName() {
     return myTipId;
   }

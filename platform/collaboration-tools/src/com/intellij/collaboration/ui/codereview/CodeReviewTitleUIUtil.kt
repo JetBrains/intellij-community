@@ -9,7 +9,6 @@ import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 
 object CodeReviewTitleUIUtil {
-
   fun createTitleText(title: @NlsSafe String, reviewNumber: @NlsSafe String, url: @NlsSafe String, tooltip: @Nls String): @NlsSafe String {
     return HtmlBuilder()
       .append(title)

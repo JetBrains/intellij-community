@@ -20,6 +20,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 
 class GitAddAction : StagingAreaOperationAction(GitAddOperation)
+class GitAddWithoutContent : StagingAreaOperationAction(GitAddWithoutContentOperation)
 class GitResetAction : StagingAreaOperationAction(GitResetOperation)
 class GitRevertAction : StagingAreaOperationAction(GitRevertOperation)
 

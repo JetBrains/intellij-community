@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -6,12 +6,14 @@ import com.intellij.application.options.editor.checkBox
 import com.intellij.ide.DataManager
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle.message
+import com.intellij.ide.ProjectWindowCustomizerService
 import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
+import com.intellij.internal.statistic.service.fus.collectors.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
@@ -24,6 +26,7 @@ import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
@@ -31,9 +34,11 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
@@ -42,9 +47,11 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.not
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.JBR
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
@@ -107,6 +114,9 @@ private val cdFullPathsInTitleBar
   get() = CheckboxDescriptor(message("checkbox.full.paths.in.window.header"), settings::fullPathsInWindowHeader)
 private val cdShowMenuIcons
   get() = CheckboxDescriptor(message("checkbox.show.icons.in.menu.items"), settings::showIconsInMenus, groupName = windowOptionGroupName)
+private val cdDifferentiateProjects
+  get() = CheckboxDescriptor(message("checkbox.use.solution.colors.in.main.toolbar"), settings::differentiateProjects,
+                             message("text.use.solution.colors.in.main.toolbar"), groupName = uiOptionGroupName)
 
 internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
   return sequenceOf(
@@ -122,7 +132,8 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
     cdShowTreeIndents,
     cdDnDWithAlt,
     cdFullPathsInTitleBar,
-    cdSeparateMainMenu
+    cdSeparateMainMenu,
+    cdDifferentiateProjects
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 }
 
@@ -141,6 +152,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
     }
     syncThemeProperty.afterChange(disposable!!) {
       lafManager.autodetect = it
+      ThemeAutodetectSelector.log(it)
     }
 
     return panel {
@@ -203,7 +215,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
         val useCustomCheckbox = checkBox(message("checkbox.override.default.laf.fonts"))
           .gap(RightGap.SMALL)
           .bindSelected(settings::overrideLafFonts) {
-            settings.overrideLafFonts = it
+            NotRoamableUiSettings.getInstance().overrideLafFonts = it
             if (!it) {
               getDefaultFont().let { defaultFont ->
                 settings.fontFace = defaultFont.family
@@ -218,7 +230,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
         val fontFace = cell(FontComboBox())
           .bind({ it.fontName }, { it, value -> it.fontName = value },
-                MutableProperty({ if (settings.overrideLafFonts) settings.fontFace else getDefaultFont().family },
+                MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
                                 { settings.fontFace = it }))
           .shouldUpdateLaF()
           .enabledIf(useCustomCheckbox.selected)
@@ -284,7 +296,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             }
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
-                .applyToComponent { isSelected = colorBlindnessProperty.get() != null }
+                .selected(colorBlindnessProperty.get() != null)
               comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create("") { PlatformEditorBundle.message(it.key) } }
@@ -325,20 +337,32 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                   contextHelp(message("checkbox.smooth.scrolling.description"))
                 })
           yield({ checkBox(cdDnDWithAlt) })
-          if (SystemInfo.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()) {
+          if (SystemInfoRt.isWindows && IdeFrameDecorator.isCustomDecorationAvailable()
+              || IdeRootPane.hideNativeLinuxTitleAvailable) {
             yield({
-                    val overridden = UISettings.isMergeMainMenuWithWindowTitleOverridden
-                    checkBox(cdMergeMainMenuWithWindowTitle)
-                      .enabled(!overridden)
+                    val checkBox = checkBox(cdMergeMainMenuWithWindowTitle)
                       .gap(RightGap.SMALL)
-                    if (overridden) {
+                    if (SystemInfoRt.isWindows && UISettings.isMergeMainMenuWithWindowTitleOverridden) {
+                      checkBox.enabled(false)
                       contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
                     }
-                    comment(message("ide.restart.required.comment"))
+                    if (SystemInfoRt.isXWindow && !(IdeRootPane.jbr5777Workaround() && JBR.isWindowMoveSupported())) {
+                      checkBox.enabled(false)
+                      checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
+                    } else {
+                      comment(message("ide.restart.required.comment"))
+                    }
                   })
           }
           yield({ checkBox(cdFullPathsInTitleBar) })
           yield({ checkBox(cdShowMenuIcons) })
+          if (ProjectWindowCustomizerService.getInstance().isAvailable()) {
+            yield {
+              checkBox(cdDifferentiateProjects)
+                .enabledIf(AtomicBooleanProperty(ExperimentalUI.isNewUI()))
+                .comment(cdDifferentiateProjects.comment, 30)
+            }
+          }
         }
 
         // Since some of the columns have variable number of items, enumerate them in a loop, while moving orphaned items from the right
@@ -499,6 +523,14 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
   }
 
   private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
+}
+
+private fun getFontFamily(fontFace: String?): String {
+  val defFace = JBUIScale.getSystemFontData(null).first
+  if (fontFace != null && fontFace != defFace) {
+    return fontFace
+  }
+  return Font(defFace, Font.PLAIN, 13).family
 }
 
 private fun getDefaultFont(): Font {

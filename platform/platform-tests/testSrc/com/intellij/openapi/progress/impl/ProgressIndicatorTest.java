@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl;
 
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
@@ -572,12 +572,12 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testDefaultModalityWithNestedProgress() {
-    assertEquals(ModalityState.NON_MODAL, ModalityState.defaultModalityState());
+    assertEquals(ModalityState.nonModal(), ModalityState.defaultModalityState());
     ProgressManager.getInstance().run(new Task.Modal(getProject(), "", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          assertFalse(ModalityState.NON_MODAL.equals(ModalityState.defaultModalityState()));
+          assertFalse(ModalityState.nonModal().equals(ModalityState.defaultModalityState()));
           assertEquals(ProgressManager.getInstance().getProgressIndicator().getModalityState(), ModalityState.defaultModalityState());
           ProgressManager.getInstance().runProcess(() -> {
             assertSame(indicator.getModalityState(), ModalityState.defaultModalityState());
@@ -685,7 +685,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
             ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.getInstance());
           }
         }));
-      assertSame(ModalityState.NON_MODAL, ModalityState.current());
+      assertSame(ModalityState.nonModal(), ModalityState.current());
     }
     finally {
       LaterInvocator.leaveAllModals();

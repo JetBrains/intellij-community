@@ -6,7 +6,7 @@ Reports passing unspecified <code>place</code> parameter for <code>ActionManager
 </p>
 <p>
 Examples:
-<pre>
+<pre><code lang="java">
 // bad:
 actionManager.createActionToolbar("", group, false);
 actionManager.createActionToolbar("unknown", group, false);
@@ -15,7 +15,7 @@ actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group);
 // good:
 actionManager.createActionToolbar("MyPlace", group, false);
 actionManager.createActionPopupMenu(ActionPlaces.EDITOR_TOOLBAR, group);
-</pre>
+</code></pre>
 </p>
 </body>
 </html>

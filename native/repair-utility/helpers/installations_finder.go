@@ -44,7 +44,7 @@ func SelectIdeaBinary() (path string, err error) {
 }
 func beautifyPackageName(idePackage string) string {
 	if strings.Contains(idePackage, "oolbox") {
-		return "From ToolBox app"
+		return "From Toolbox App"
 	}
 	return idePackage
 }

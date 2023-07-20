@@ -163,11 +163,13 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     myHandler.addCustomEnvironmentVariable(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_HANDLER_ENV, myNativeSshHandler.toString());
     myHandler.addCustomEnvironmentVariable(NativeSshAskPassAppHandler.IJ_SSH_ASK_PASS_PORT_ENV, Integer.toString(port));
 
-    // SSH_ASKPASS is ignored if DISPLAY variable is not set
+    myHandler.addCustomEnvironmentVariable(GitCommand.SSH_ASKPASS_REQUIRE_ENV, "force");
+    // SSH_ASKPASS_REQUIRE is supported by openssh 8.4+, prior versions ignore SSH_ASKPASS if DISPLAY variable is not set
     String displayEnv = StringUtil.nullize(System.getenv(GitCommand.DISPLAY_ENV));
     myHandler.addCustomEnvironmentVariable(GitCommand.DISPLAY_ENV, StringUtil.notNullize(displayEnv, ":0.0"));
 
     if (Registry.is("git.use.setsid.for.native.ssh")) {
+      // if SSH_ASKPASS_REQUIRE is not supported, openssh will prioritize tty used to spawn IDE to SSH_ASKPASS. Detach it with setsid.
       myHandler.withNoTty();
     }
   }

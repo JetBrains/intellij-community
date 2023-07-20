@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.ListSelectionEvent;
@@ -15,7 +16,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-class SEListSelectionTracker implements ListSelectionListener {
+@ApiStatus.Internal
+public class SEListSelectionTracker implements ListSelectionListener {
 
   private final JBList<?> myList;
   private final SearchListModel myListModel;
@@ -105,5 +107,13 @@ class SEListSelectionTracker implements ListSelectionListener {
     return IntStream.range(0, items.size())
       .filter(i -> mySelectedItems.contains(items.get(i)))
       .toArray();
+  }
+
+  public void performAndKeepSelection(@NotNull Runnable action) {
+    lock();
+    action.run();
+    unlock();
+
+    restoreSelection();
   }
 }

@@ -84,6 +84,7 @@ public final class InspectionTestUtil {
 
     StreamTokenizer tokenizer = new StreamTokenizer(new CharArrayReader(expectedDescription.toCharArray()));
     tokenizer.quoteChar('\'');
+    tokenizer.ordinaryChar('/');
 
     int idx = 0;
     while (tokenizer.nextToken() != StreamTokenizer.TT_EOF) {

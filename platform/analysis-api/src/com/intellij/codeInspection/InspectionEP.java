@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.AbstractBundle;
@@ -59,8 +59,7 @@ public class InspectionEP extends LanguageExtensionPoint<InspectionProfileEntry>
   @Attribute("projectType")
   public String projectType;
 
-  @NonNls
-  public @NotNull String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     if (implementationClass == null) {
       throw new IllegalArgumentException(toString());
     }

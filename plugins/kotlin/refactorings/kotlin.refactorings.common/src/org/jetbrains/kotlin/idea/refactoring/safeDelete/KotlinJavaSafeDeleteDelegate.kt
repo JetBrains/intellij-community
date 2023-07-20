@@ -57,7 +57,12 @@ class KotlinJavaSafeDeleteDelegate : JavaSafeDeleteDelegate {
 
         val argCount = args.size
         if (parameterIndex < argCount) {
-            usages.add(SafeDeleteValueArgumentListUsageInfo(parameter, args[parameterIndex] as KtValueArgument))
+            val argument = args[parameterIndex]
+            if (argument.getArgumentName()?.text != null) {
+                //parameter name check already failed above
+                return
+            }
+            usages.add(SafeDeleteValueArgumentListUsageInfo(parameter, argument))
         } else {
             val lambdaArgs = callExpression.lambdaArguments
             val lambdaIndex = parameterIndex - argCount

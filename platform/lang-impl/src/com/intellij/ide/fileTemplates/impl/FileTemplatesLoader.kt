@@ -47,7 +47,7 @@ private const val DESCRIPTION_EXTENSION_SUFFIX = ".$DESCRIPTION_FILE_EXTENSION"
  */
 internal open class FileTemplatesLoader(project: Project?) : Disposable {
   companion object {
-    const val TEMPLATES_DIR = "fileTemplates"
+    const val TEMPLATES_DIR: String = "fileTemplates"
   }
 
   private val managers = SynchronizedClearableLazy { loadConfiguration(project) }

@@ -14,11 +14,11 @@ import java.rmi.RemoteException;
 import java.util.*;
 
 /**
- * {@link Maven30AetherModelConverter} provides adapted methods of {@link MavenModelConverter} for aether models conversion
+ * {@link Maven30AetherModelConverter} provides adapted methods of {@link Maven3ModelConverter} for aether models conversion
  *
  * @author Vladislav.Soroka
  */
-public class Maven30AetherModelConverter extends MavenModelConverter {
+public class Maven30AetherModelConverter extends Maven3ModelConverter {
 
   @NotNull
   public static MavenModel convertModelWithAetherDependencyTree(Model model,

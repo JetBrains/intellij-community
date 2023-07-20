@@ -3,10 +3,10 @@
 Reports calls to <code>Assert.assertEquals()</code>, <code>Assert.assertTrue()</code>, etc. methods
 which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</code> calls.
 <p>For example:</p>
-<pre><code>
-  <b>public class</b> SubstantialTest {
+<pre><code lang="java">
+  public class SubstantialTest {
     @Test
-    <b>public void</b> testContents(Collection&lt;String> c, String s) {
+    public void testContents(Collection&lt;String&gt; c, String s) {
       Assert.assertTrue(c.contains(s));
       Assert.assertEquals(c, s);
       Assert.assertNotNull(c);
@@ -16,10 +16,10 @@ which can be migrated to Hamcrest declarative style <code>Assert.assertThat()</c
   }
 </code></pre>
 <p>A quick-fix is provided to perform the migration:</p>
-<pre><code>
-  <b>public class</b> SubstantialTest {
+<pre><code lang="java">
+  public class SubstantialTest {
     @Test
-    <b>public void</b> testContents(Collection&lt;String> c, String s) {
+    public void testContents(Collection&lt;String&gt; c, String s) {
       assertThat(c, hasItem(o));
       assertThat(o, is(c));
       assertThat(c, notNullValue());

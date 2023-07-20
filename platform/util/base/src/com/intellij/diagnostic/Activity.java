@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import org.jetbrains.annotations.NonNls;
@@ -16,6 +16,4 @@ public interface Activity {
   @NotNull Activity endAndStart(@NonNls @NotNull String name);
 
   @NotNull Activity startChild(@NonNls @NotNull String name);
-
-  void updateThreadName();
 }

@@ -37,6 +37,7 @@ object PythonCommunityPluginModules {
     )
     return pythonPlugin("intellij.python.community.plugin", pythonCommunityName, COMMUNITY_MODULES + communityOnlyModules) { spec ->
       body?.invoke(spec)
+      spec.withProjectLibrary("XmlRPC")
     }
   }
 

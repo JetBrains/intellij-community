@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2023 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 package com.siyeh.ig.memory;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.BatchQuickFix;
 import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.openapi.application.ReadAction;
@@ -77,12 +79,12 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> fixes = new ArrayList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> fixes = new ArrayList<>();
     fixes.add(new InnerClassMayBeStaticFix());
     final PsiClass aClass = (PsiClass)infos[0];
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   private static class InnerClassMayBeStaticFix extends InspectionGadgetsFix implements BatchQuickFix {
@@ -145,10 +147,6 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
         this.innerClass = innerClass;
       }
 
-      public List<PsiElement> getReferences() {
-        return references;
-      }
-
       public List<PsiElement> getElements() {
         final List<PsiElement> elements = new SmartList<>();
         elements.add(innerClass);
@@ -170,6 +168,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
       }
 
       void makeStatic() {
+        final PsiModifierList modifiers = innerClass.getModifierList();
+        if (modifiers == null) {
+          return;
+        }
+        modifiers.setModifierProperty(PsiModifier.STATIC, true);
         final Project project = innerClass.getProject();
         final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -177,28 +180,36 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
           .sorted((r1, r2) -> PsiUtilCore.compareElementsByPosition(r2, r1))
           .forEach(reference -> {
             final PsiElement parent = reference.getParent();
-            if (!(parent instanceof PsiNewExpression newExpression)) {
-              return;
+            if (parent instanceof PsiNewExpression newExpression) {
+              final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+              if (classReference == null) {
+                return;
+              }
+              final PsiExpressionList argumentList = newExpression.getArgumentList();
+              if (argumentList == null) {
+                return;
+              }
+              final PsiReferenceParameterList parameterList = classReference.getParameterList();
+              final String genericParameters = parameterList != null ? parameterList.getText() : "";
+              final String text = "new " + classReference.getQualifiedName() + genericParameters + argumentList.getText();
+              final PsiExpression expression = factory.createExpressionFromText(text, innerClass);
+              codeStyleManager.shortenClassReferences(newExpression.replace(expression));
             }
-            final PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-            if (classReference == null) {
-              return;
+            else if (reference instanceof PsiJavaCodeReferenceElement ref) {
+              removeTypeArguments(ref);
             }
-            final PsiExpressionList argumentList = newExpression.getArgumentList();
-            if (argumentList == null) {
-              return;
-            }
-            final PsiReferenceParameterList parameterList = classReference.getParameterList();
-            final String genericParameters = parameterList != null ? parameterList.getText() : "";
-            final PsiExpression expression = factory
-              .createExpressionFromText("new " + classReference.getQualifiedName() + genericParameters + argumentList.getText(), innerClass);
-            codeStyleManager.shortenClassReferences(newExpression.replace(expression));
           });
-        final PsiModifierList modifiers = innerClass.getModifierList();
-        if (modifiers == null) {
+      }
+
+      private static void removeTypeArguments(PsiJavaCodeReferenceElement ref) {
+        if (ref == null || !(ref.getQualifier() instanceof PsiJavaCodeReferenceElement qualifier)) {
           return;
         }
-        modifiers.setModifierProperty(PsiModifier.STATIC, true);
+        removeTypeArguments(qualifier);
+        PsiReferenceParameterList parameterList = qualifier.getParameterList();
+        if (parameterList != null && parameterList.getFirstChild() != null) {
+          parameterList.delete();
+        }
       }
     }
   }
@@ -212,11 +223,11 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      if (PsiUtil.isLocalOrAnonymousClass(aClass)) {
-        return;
+      if (aClass.getContainingClass() != null && !aClass.hasModifierProperty(PsiModifier.STATIC) ||
+          PsiUtil.isLocalOrAnonymousClass(aClass)) {
+        if (!HighlightingFeature.INNER_STATICS.isAvailable(aClass)) {
+          return;
+        }
       }
       for (PsiClass innerClass : aClass.getInnerClasses()) {
         if (innerClass.hasModifierProperty(PsiModifier.STATIC)) {

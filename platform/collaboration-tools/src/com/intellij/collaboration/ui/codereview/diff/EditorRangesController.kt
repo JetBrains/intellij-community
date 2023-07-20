@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.diff
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.diff.util.LineRange
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.RangeHighlighterEx
@@ -10,16 +11,17 @@ import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.util.Disposer
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSets
 
 open class EditorRangesController(private val gutterIconRendererFactory: DiffEditorGutterIconRendererFactory,
                                   private val editor: EditorEx) {
-  private val commentableLines = IntOpenHashSet()
-  private val highlighters: MutableSet<RangeHighlighterEx> = mutableSetOf()
+  private val commentableLines = IntSets.synchronize(IntOpenHashSet())
+  private val highlighters: MutableSet<RangeHighlighterEx> = ConcurrentCollectionFactory.createConcurrentSet()
 
   init {
     val listenerDisposable = Disposer.newDisposable()
     editor.markupModel.addMarkupModelListener(listenerDisposable, object : MarkupModelListener {
-      override fun beforeRemoved(highlighter: RangeHighlighterEx) {
+      override fun afterRemoved(highlighter: RangeHighlighterEx) {
         val iconRenderer = highlighter.gutterIconRenderer as? AddCommentGutterIconRenderer ?: return
         Disposer.dispose(iconRenderer)
         commentableLines.remove(iconRenderer.line)

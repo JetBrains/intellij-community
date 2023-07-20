@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -50,9 +50,8 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     setPsi(this);
   }
 
-  @NotNull
   @Override
-  public LazyParseablePsiElement clone() {
+  public @NotNull LazyParseablePsiElement clone() {
     LazyParseablePsiElement clone = (LazyParseablePsiElement)super.clone();
     clone.setPsi(clone);
     return clone;
@@ -63,8 +62,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
     return getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
   }
 
-  @Nullable
-  protected <T> T findChildByClass(Class<T> aClass) {
+  protected @Nullable <T> T findChildByClass(Class<T> aClass) {
     for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
       if (aClass.isInstance(cur)) return (T)cur;
     }
@@ -256,8 +254,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   }
 
   @Override
-  @NotNull
-  public PsiElement getNavigationElement() {
+  public @NotNull PsiElement getNavigationElement() {
     return this;
   }
 
@@ -273,15 +270,13 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   }
 
   @Override
-  @NotNull
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     assert isValid();
     return ResolveScopeManager.getElementResolveScope(this);
   }
 
   @Override
-  @NotNull
-  public SearchScope getUseScope() {
+  public @NotNull SearchScope getUseScope() {
     return ResolveScopeManager.getElementUseScope(this);
   }
 
@@ -311,8 +306,7 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   }
 
   @Override
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null) {
       return project;
@@ -324,14 +318,12 @@ public class LazyParseablePsiElement extends LazyParseableElement implements Psi
   }
 
   @Override
-  @NotNull
-  public Language getLanguage() {
+  public @NotNull Language getLanguage() {
     return getElementType().getLanguage();
   }
 
   @Override
-  @NotNull
-  public ASTNode getNode() {
+  public @NotNull ASTNode getNode() {
     return this;
   }
 

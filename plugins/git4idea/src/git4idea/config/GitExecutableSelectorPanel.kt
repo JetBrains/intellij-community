@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config
 
 import com.intellij.ide.impl.isTrusted
@@ -127,7 +127,7 @@ internal class GitExecutableSelectorPanel(val project: Project, val disposable: 
     if (versionCheckRequested) return
     versionCheckRequested = true
 
-    runInEdt(ModalityState.NON_MODAL) {
+    runInEdt(ModalityState.nonModal()) {
       versionCheckRequested = false
 
       runBackgroundableTask(GitBundle.message("git.executable.version.progress.title"), project, true) {

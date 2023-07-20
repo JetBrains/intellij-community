@@ -8,7 +8,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
-import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
+import org.jetbrains.kotlin.idea.completion.test.configureByFilesWithSuffixes
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.CODE_STYLE_SETTING_PREFIX
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.ELEMENT_TEXT_PREFIX
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractCompletionHandlerTest.Companion.INVOCATION_COUNT_PREFIX
@@ -167,7 +167,7 @@ abstract class AbstractPerformanceCompletionHandlerTests(
     }
 
     protected open fun setUpFixture(testPath: String) {
-        fixture.configureWithExtraFile(testPath, ".dependency", ".dependency.1", ".dependency.2")
+        fixture.configureByFilesWithSuffixes(dataFile(), testDataDirectory, ".dependency", ".dependency.1", ".dependency.2")
     }
 
     protected open fun tearDownFixture() {

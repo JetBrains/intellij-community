@@ -263,7 +263,9 @@ public abstract class RefactoringDialog extends DialogWrapper {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      doPreviewAction();
+      try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+        doPreviewAction();
+      }
     }
   }
 

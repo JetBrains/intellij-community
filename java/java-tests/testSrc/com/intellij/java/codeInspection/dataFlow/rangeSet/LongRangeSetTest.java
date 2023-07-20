@@ -23,7 +23,6 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypes;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -726,7 +725,7 @@ public class LongRangeSetTest {
   public void testModRangeContains() {
     LongRangeSet set = modRange(0, 24, 10, 0b111100);
     assertEquals("{2..24}: <2, 3, 4, 5> mod 10", set.toString());
-    Set<Integer> members = ContainerUtil.set(2, 3, 4, 5, 12, 13, 14, 15, 22, 23, 24);
+    Set<Integer> members = Set.of(2, 3, 4, 5, 12, 13, 14, 15, 22, 23, 24);
     assertFalse(set.contains(-1));
     assertFalse(set.contains(26));
     assertEquals(members, set.stream().mapToObj(val -> (int)val).collect(Collectors.toSet()));

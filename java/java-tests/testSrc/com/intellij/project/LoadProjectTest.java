@@ -18,10 +18,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.ServiceContainerUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 
 import java.nio.file.Path;
@@ -65,6 +62,7 @@ public class LoadProjectTest extends HeavyPlatformTestCase {
     fileA.navigate(true);
     Editor editorA = FileEditorManager.getInstance(getProject()).openTextEditor(new OpenFileDescriptor(getProject(), a), true);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    EditorTestUtil.waitForLoading(editorA);
 
     assertNotNull(editorA);
     CodeInsightTestFixtureImpl.instantiateAndRun(fileA, editorA, new int[] {Pass.EXTERNAL_TOOLS}, false);

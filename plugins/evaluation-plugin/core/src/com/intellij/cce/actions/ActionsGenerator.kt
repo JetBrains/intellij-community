@@ -14,7 +14,7 @@ class ActionsGenerator(val strategy: CompletionStrategy, private val language: L
     if (strategy.context == CompletionContext.PREVIOUS) deletionVisitor.process(code)
 
     val completionVisitor =
-      if (strategy.completionGolf) CompletionGolfProcessor()
+      if (strategy.completionGolf != null) CompletionGolfProcessor()
       else CallCompletionProcessor(code.text, strategy, language, code.offset)
 
     completionVisitor.process(code)

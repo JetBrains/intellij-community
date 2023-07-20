@@ -50,16 +50,16 @@ import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
-fun String.toReadable() = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
+fun String.toReadable(): String = replace(" ", "<Space>").replace("\n", "<Enter>").replace("\t", "<Tab>")
 
 class RetypeLog {
-  val LOG = Logger.getInstance(RetypeLog::class.java)
+  val LOG: Logger = Logger.getInstance(RetypeLog::class.java)
   private val log = arrayListOf<String>()
   private var currentTyping: String? = null
   private var currentCompletion: String? = null
-  var typedChars = 0
+  var typedChars: Int = 0
     private set
-  var completedChars = 0
+  var completedChars: Int = 0
     private set
 
   fun recordTyping(c: Char) {
@@ -580,7 +580,7 @@ class RetypeSession(
   }
 
   @Language("JAVA")
-  val code = """
+  val code: String = """
     final class MyClass {
         public static void main1(String[] args) {
           int x = 5;
@@ -589,13 +589,13 @@ class RetypeSession(
   """.trimIndent()
 
   companion object {
-    val LOG = Logger.getInstance(RetypeSession::class.java)
-    const val INTERFERE_FILE_NAME = "IdeaRetypeBackgroundChanges.java"
-    const val LARGE_INDEX_DIR_NAME = "_indexDir_"
+    val LOG: Logger = Logger.getInstance(RetypeSession::class.java)
+    const val INTERFERE_FILE_NAME: String = "IdeaRetypeBackgroundChanges.java"
+    const val LARGE_INDEX_DIR_NAME: String = "_indexDir_"
   }
 }
 
-val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.retype.RetypeSession")
+val RETYPE_SESSION_KEY: Key<RetypeSession> = Key.create("com.intellij.internal.retype.RetypeSession")
 
 class RetypeEditorNotificationProvider : EditorNotificationProvider {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {

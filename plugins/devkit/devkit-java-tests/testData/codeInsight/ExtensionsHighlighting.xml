@@ -20,7 +20,7 @@
 
         <extensionPoint name="experimentalApiEP" interface="foo.MyExperimentalEP"
                         dynamic="true"/>
-        <extensionPoint name="scheduledForRemovalApiEP" interface="foo.MyScheduledForRemovalEP"
+        <extensionPoint name="scheduledForRemovalApiEP" beanClass="foo.MyScheduledForRemovalEP"
                         dynamic="true"/>
         <extensionPoint name="internalApiEP" interface="foo.MyInternalEP"
                         dynamic="true"/>
@@ -61,7 +61,7 @@
 
         <<error descr="Marked for removal extension point 'com.intellij.myPlugin.deprecatedForRemovalEP'">myPlugin.deprecatedForRemovalEP</error> implementation="foo.MyDeprecatedForRemovalEPImpl"/>
 
-        <<error descr="Marked for removal extension point 'com.intellij.myPlugin.scheduledForRemovalApiEP' in version 'removeVersion'">myPlugin.scheduledForRemovalApiEP</error> implementation="foo.MyScheduledForRemovalEP"/>
+        <<error descr="Marked for removal extension point 'com.intellij.myPlugin.scheduledForRemovalApiEP' in version 'removeVersion'">myPlugin.scheduledForRemovalApiEP</error> <error descr="Marked for removal attribute 'scheduledForRemovalAttribute'">scheduledForRemovalAttribute="DoNotUse"</error>/>
 
         <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems."><myPlugin.experimentalApiEP implementation="foo.MyExperimentalEP" <warning descr="Usage of API marked with @org.jetbrains.annotations.ApiStatus.Experimental. Such API may be changed or removed in future IDE versions causing compatibility problems.">experimentalAttribute="java.lang.String"</warning>/></warning>
 

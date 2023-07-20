@@ -29,11 +29,12 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.ParamHelper;
-import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
-import com.jetbrains.python.psi.impl.PyEvaluator;
-import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
+import com.jetbrains.python.psi.impl.*;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import kotlin.Triple;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,6 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
 
   @NotNull
   private static final Set<String> EXCEPTION_SUPPRESSORS = ImmutableSet.of("suppress", "assertRaises", "assertRaisesRegex");
-
-  private static final Set<String> KNOWN_NORETURNS = ImmutableSet.of("sys.exit", "exit", "pytest.fail");
 
   private final ControlFlowBuilder myBuilder = new ControlFlowBuilder();
 
@@ -135,7 +134,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyCallExpression(final @NotNull PyCallExpression node) {
     final PyExpression callee = node.getCallee();
     // Flow abrupted
-    if (callee != null && assumeDeadEnd(callee)) {
+    if (callee != null && isCallOfNoReturnFunction(callee)) {
       callee.accept(this);
       for (PyExpression expression : node.getArguments()) {
         expression.accept(this);
@@ -227,7 +226,7 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   public void visitPyDelStatement(@NotNull PyDelStatement node) {
     myBuilder.startNode(node);
     for (PyExpression target : node.getTargets()) {
-      if (target instanceof PyReferenceExpression expr){
+      if (target instanceof PyReferenceExpression expr) {
         myBuilder.addNode(ReadWriteInstruction.newInstruction(myBuilder, target, expr.getName(), ReadWriteInstruction.ACCESS.DELETE));
         PyExpression qualifier = expr.getQualifier();
         if (qualifier != null) {
@@ -993,23 +992,29 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
     if (target != null) target.accept(this);
   }
 
-  private static boolean assumeDeadEnd(final @NotNull PyExpression callee) {
-    String repr = PyUtil.getReadableRepr(callee, true);
-    if (KNOWN_NORETURNS.contains(repr)) {
-      return true;
-    }
-    /* Since we can't fully resolve the call during the building of the control flow graph,
-     * here we make an assumption that the class which contains self.fail() call is the real
-     * test class and self.fail() is actually unittest.TestCase.fail() call which leads to flow abruption (see PY-23859).
-     * This approach does not completely eliminate false positives, but it helps to reduce their number. */
-    if (repr.equals("self.fail")) {
-      PyClass clazz = PsiTreeUtil.getParentOfType(callee, PyClass.class);
-      if (clazz != null && clazz.getName() != null) {
-        String className = clazz.getName();
-        boolean classNameContainsTest = className.contains("Test");
-        if (classNameContainsTest) {
+  private static boolean isCallOfNoReturnFunction(@NotNull PyExpression callee) {
+    if (callee instanceof PyReferenceExpression expression) {
+      QualifiedName qName = expression.asQualifiedName();
+
+      if (qName == null) {
+        return false;
+      }
+
+      ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(expression);
+
+      // Flow-insensitive context is required to prevent recursive control flow access during the resolve process
+      TypeEvalContext context = TypeEvalContext.codeInsightFallback(callee.getProject());
+
+      while (scopeOwner != null) {
+        boolean resolvesToNoReturnOrNever = StreamEx
+          .of(PyResolveUtil.resolveQualifiedNameInScope(qName, scopeOwner, context))
+          .select(PyFunction.class)
+          .anyMatch(function -> PyTypingTypeProvider.isNoReturn(function, context));
+
+        if (resolvesToNoReturnOrNever) {
           return true;
         }
+        scopeOwner = ScopeUtil.getScopeOwner(scopeOwner);
       }
     }
     return false;

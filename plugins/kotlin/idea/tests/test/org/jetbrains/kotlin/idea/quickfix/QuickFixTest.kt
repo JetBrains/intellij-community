@@ -11,7 +11,7 @@ import java.io.File
 
 interface QuickFixTest {
     fun parseInspectionsToEnable(beforeFileName: String, beforeFileText: String): List<InspectionProfileEntry> {
-        val toolsStrings = InTextDirectivesUtils.findListWithPrefixes(beforeFileText, "TOOL:")
+        val toolsStrings = InTextDirectivesUtils.findListWithPrefixes(beforeFileText, "TOOL:", *additionalToolDirectives)
         val profiles = try {
             if (toolsStrings.isNotEmpty()) toolsStrings.map { toolFqName ->
                 @Suppress("UNCHECKED_CAST")
@@ -31,4 +31,7 @@ interface QuickFixTest {
 
     val inspectionFileName: String
         get() = ".inspection"
+
+    val additionalToolDirectives: Array<String>
+        get() = emptyArray()
 }

@@ -92,7 +92,7 @@ class SourceLevelBuildIssue(private val message: String,
 
 
   override fun getNavigatable(project: Project): Navigatable {
-    return mavenProject.file.let { OpenFileDescriptor(project, it) }
+    return OpenFileDescriptor(project, mavenProject.file)
   }
 }
 

@@ -84,5 +84,5 @@ public enum JqlStandardFunction {
     return new ArrayList<>(TYPE_LOOKUP.get(Pair.create(type, multipleResults)));
   }
 
-  public static final List<String> ALL_FUNCTION_NAMES = ContainerUtil.map2List(VALUES, field -> field.myName);
+  public static final List<String> ALL_FUNCTION_NAMES = ContainerUtil.map(VALUES, field -> field.myName);
 }

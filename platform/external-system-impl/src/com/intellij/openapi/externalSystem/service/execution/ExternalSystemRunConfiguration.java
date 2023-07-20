@@ -3,7 +3,6 @@ package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
-import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -27,20 +26,19 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
 import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationFragmentedEditor;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
-import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -63,17 +61,21 @@ import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.function.Consumer;
 
 public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
+
+  private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
+
+  private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
+
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
+  public static final Key<Boolean> DEBUG_SERVER_PROCESS_KEY = ExternalSystemExecutionSettings.DEBUG_SERVER_PROCESS_KEY;
 
-  static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
-  private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
-  static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger");
-
-  public static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
+  private static final String DEBUG_SERVER_PROCESS_NAME = "ExternalSystemDebugServerProcess";
   private static final String REATTACH_DEBUG_PROCESS_NAME = "ExternalSystemReattachDebugProcess";
+
   private boolean isDebugServerProcess = true;
   private boolean isReattachDebugProcess = false;
 
@@ -104,6 +106,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
   public void setDebugServerProcess(boolean debugServerProcess) {
     isDebugServerProcess = debugServerProcess;
+    putUserData(DEBUG_SERVER_PROCESS_KEY, debugServerProcess);
   }
 
   @Override
@@ -152,17 +155,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
-
-      final Element debugServerProcess = element.getChild(DEBUG_SERVER_PROCESS_NAME);
-      if (debugServerProcess != null) {
-        isDebugServerProcess = Boolean.parseBoolean(debugServerProcess.getText());
-      }
-      final Element reattachProcess = element.getChild(REATTACH_DEBUG_PROCESS_NAME);
-      if (reattachProcess != null) {
-        isReattachDebugProcess = Boolean.parseBoolean(reattachProcess.getText());
-      }
+      readExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, this::setDebugServerProcess);
+      readExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, this::setReattachDebugProcess);
     }
-    ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);
+    ExternalSystemRunConfigurationExtensionManager.getInstance().readExternal(this, element);
   }
 
   @Override
@@ -179,15 +175,25 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         };
       }
     }));
+    writeExternalBoolean(element, DEBUG_SERVER_PROCESS_NAME, isDebugServerProcess());
+    writeExternalBoolean(element, REATTACH_DEBUG_PROCESS_NAME, isReattachDebugProcess());
+    ExternalSystemRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
+  }
 
-    final Element debugServerProcess = new Element(DEBUG_SERVER_PROCESS_NAME);
-    debugServerProcess.setText(String.valueOf(isDebugServerProcess));
-    element.addContent(debugServerProcess);
-    final Element reattachProcess = new Element(REATTACH_DEBUG_PROCESS_NAME);
-    reattachProcess.setText(String.valueOf(isReattachDebugProcess));
-    element.addContent(reattachProcess);
+  protected static boolean readExternalBoolean(@NotNull Element element, @NotNull String name, @NotNull Consumer<Boolean> consumer) {
+    var childElement = element.getChild(name);
+    if (childElement == null) {
+      return false;
+    }
+    var value = Boolean.parseBoolean(childElement.getText());
+    consumer.accept(value);
+    return true;
+  }
 
-    ExternalSystemRunConfigurationExtensionManager.writeExternal(this, element);
+  protected static void writeExternalBoolean(@NotNull Element element, @NotNull String name, boolean value) {
+    var childElement = new Element(name);
+    childElement.setText(String.valueOf(value));
+    element.addContent(childElement);
   }
 
   @NotNull
@@ -198,25 +204,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", true)) {
-      return new ExternalSystemRunConfigurationFragmentedEditor(this);
-    }
-
-    SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
-                    new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    ExternalSystemRunConfigurationExtensionManager.appendEditors(this, group);
-    group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
-    return group;
+    return new ExternalSystemRunConfigurationFragmentedEditor(this);
   }
 
-  @Nullable
   @Override
-  public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
+  public @Nullable RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) {
     // DebugExecutor ID  - com.intellij.execution.executors.DefaultDebugExecutor.EXECUTOR_ID
-    String debugExecutorId = ToolWindowId.DEBUG;
-    ExternalSystemRunnableState
-      runnableState = new ExternalSystemRunnableState(mySettings, getProject(), debugExecutorId.equals(executor.getId()), this, env);
+    var isStateForDebug = ToolWindowId.DEBUG.equals(executor.getId());
+    var runnableState = new ExternalSystemRunnableState(mySettings, getProject(), isStateForDebug, this, env);
     copyUserDataTo(runnableState);
     return runnableState;
   }

@@ -37,34 +37,34 @@ public class JavaCoreProjectEnvironment extends CoreProjectEnvironment {
   public JavaCoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     super(parentDisposable, applicationEnvironment);
 
-    myProject.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(myProject));
-    myProject.registerService(JavaPsiImplementationHelper.class, createJavaPsiImplementationHelper());
-    myProject.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(myProject));
-    myProject.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
-    myProject.registerService(JavaResolveCache.class, new JavaResolveCache(myProject));
-    myProject.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
-    myProject.registerService(JavaFileCodeStyleFacade.class, new CoreJavaFileCodeStyleFacade());
-    myProject.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
-    myProject.registerService(ControlFlowFactory.class, new ControlFlowFactory(myProject));
+    project.registerService(PsiElementFactory.class, new PsiElementFactoryImpl(project));
+    project.registerService(JavaPsiImplementationHelper.class, createJavaPsiImplementationHelper());
+    project.registerService(PsiResolveHelper.class, new PsiResolveHelperImpl(project));
+    project.registerService(LanguageLevelProjectExtension.class, new CoreLanguageLevelProjectExtension());
+    project.registerService(JavaResolveCache.class, new JavaResolveCache(project));
+    project.registerService(JavaCodeStyleSettingsFacade.class, new CoreJavaCodeStyleSettingsFacade());
+    project.registerService(JavaFileCodeStyleFacade.class, new CoreJavaFileCodeStyleFacade());
+    project.registerService(JavaCodeStyleManager.class, new CoreJavaCodeStyleManager());
+    project.registerService(ControlFlowFactory.class, new ControlFlowFactory(project));
 
     myPackageIndex = createCorePackageIndex();
-    myProject.registerService(PackageIndex.class, myPackageIndex);
+    project.registerService(PackageIndex.class, myPackageIndex);
 
     myFileManager = createCoreFileManager();
-    myProject.registerService(JavaFileManager.class, myFileManager);
+    project.registerService(JavaFileManager.class, myFileManager);
 
-    myProject.registerService(JvmPsiConversionHelper.class, new JvmPsiConversionHelperImpl());
+    project.registerService(JvmPsiConversionHelper.class, new JvmPsiConversionHelperImpl());
     registerJavaPsiFacade();
-    myProject.registerService(JvmFacade.class, new JvmFacadeImpl(myProject));
+    project.registerService(JvmFacade.class, new JvmFacadeImpl(project));
   }
 
   protected void registerJavaPsiFacade() {
-    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(myProject);
-    myProject.registerService(JavaPsiFacade.class, javaPsiFacade);
+    JavaPsiFacadeImpl javaPsiFacade = new JavaPsiFacadeImpl(project);
+    project.registerService(JavaPsiFacade.class, javaPsiFacade);
   }
 
   protected CoreJavaPsiImplementationHelper createJavaPsiImplementationHelper() {
-    return new CoreJavaPsiImplementationHelper(myProject);
+    return new CoreJavaPsiImplementationHelper(project);
   }
 
   protected JavaFileManager createCoreFileManager() {

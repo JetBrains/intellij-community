@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -18,9 +18,10 @@ import java.util.List;
 /**
  * Manager for intentions. All intentions must be registered here.
  *
+ * @see <a href="https://www.jetbrains.com/help/idea/intention-actions.html">IntelliJ documentation</a>
  * @see IntentionAction
  */
-public abstract class IntentionManager  {
+public abstract class IntentionManager {
   /**
    * Key to be used within {@link UserDataHolder} in order to check presence of explicit indication on if intentions sub-menu
    * should be shown.
@@ -82,33 +83,31 @@ public abstract class IntentionManager  {
    * E.g. actions for suppress the problem via comment, javadoc or annotation,
    * and edit corresponding inspection settings.
    */
-  @NotNull
-  public abstract List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey, @NotNull PsiElement context);
+  public abstract @NotNull List<IntentionAction> getStandardIntentionOptions(@NotNull HighlightDisplayKey displayKey,
+                                                                             @NotNull PsiElement context);
 
   /**
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
-  @Nullable
-  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper, @NotNull IntentionAction action);
+  public abstract @Nullable IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper<?, ?> toolWrapper,
+                                                                  @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file
    */
-  @NotNull
-  public abstract IntentionAction createCleanupAllIntention();
+  public abstract @NotNull IntentionAction createCleanupAllIntention();
 
   /**
    * @return options for cleanup intention {@link #createCleanupAllIntention()}
    * e.g. edit enabled cleanup inspections or starting cleanup on predefined scope
    */
-  @NotNull
-  public abstract List<IntentionAction> getCleanupIntentionOptions();
+  public abstract @NotNull List<IntentionAction> getCleanupIntentionOptions();
 
   /**
    * Wraps given action in a LocalQuickFix object.
+   *
    * @param action action to convert.
    * @return quick fix instance.
    */
-  @NotNull
-  public abstract LocalQuickFix convertToFix(@NotNull IntentionAction action);
+  public abstract @NotNull LocalQuickFix convertToFix(@NotNull IntentionAction action);
 }

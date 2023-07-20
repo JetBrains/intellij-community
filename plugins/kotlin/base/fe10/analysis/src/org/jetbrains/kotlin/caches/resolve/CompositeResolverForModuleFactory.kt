@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.frontend.java.di.initializeJavaSpecificComponents
 import org.jetbrains.kotlin.idea.base.projectStructure.IdeBuiltInsLoadingState
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.CompositeAnalyzerServices
 import org.jetbrains.kotlin.idea.compiler.IdeSealedClassInheritorsProvider
+import org.jetbrains.kotlin.idea.project.IdeaAbsentDescriptorHandler
 import org.jetbrains.kotlin.idea.project.IdeaEnvironment
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
@@ -39,9 +40,11 @@ import org.jetbrains.kotlin.resolve.*
 import org.jetbrains.kotlin.resolve.jvm.JavaDescriptorResolver
 import org.jetbrains.kotlin.resolve.jvm.JvmPlatformParameters
 import org.jetbrains.kotlin.resolve.jvm.extensions.PackageFragmentProviderExtension
+import org.jetbrains.kotlin.resolve.lazy.AbsentDescriptorHandler
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactoryService
+import org.jetbrains.kotlin.resolve.scopes.optimization.OptimizingOptions
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPackageFragmentProvider
 import org.jetbrains.kotlin.serialization.deserialization.MetadataPartProvider
 import org.jetbrains.kotlin.storage.StorageManager
@@ -58,7 +61,9 @@ class CompositeResolverForModuleFactory(
         moduleContent: ModuleContent<M>,
         resolverForProject: ResolverForProject<M>,
         languageVersionSettings: LanguageVersionSettings,
-        sealedInheritorsProvider: SealedClassInheritorsProvider
+        sealedInheritorsProvider: SealedClassInheritorsProvider,
+        resolveOptimizingOptions: OptimizingOptions?,
+        absentDescriptorHandlerClass: Class<out AbsentDescriptorHandler>?
     ): ResolverForModule {
         val (moduleInfo, syntheticFiles, moduleContentScope) = moduleContent
         val project = moduleContext.project
@@ -104,6 +109,7 @@ class CompositeResolverForModuleFactory(
 
             yieldAll(getCommonProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container)) // todo: module context
             yieldAll(getJsProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
+            yieldAll(getWasmProvidersIfAny(moduleInfo, moduleContext, moduleDescriptor, container))
             yieldAll(getJvmProvidersIfAny(container))
             yieldAll(getNativeProvidersIfAny(moduleInfo, container))
             yieldAll(getExtensionsProvidersIfAny(moduleInfo, moduleContext, trace))
@@ -138,7 +144,6 @@ class CompositeResolverForModuleFactory(
         return listOfNotNull(metadataProvider, klibMetadataProvider)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     private fun getJvmProvidersIfAny(container: StorageComponentContainer): List<PackageFragmentProvider> =
         buildList {
             if (targetPlatform.has<JvmPlatform>()) add(container.get<JavaDescriptorResolver>().packageFragmentProvider)
@@ -184,7 +189,18 @@ class CompositeResolverForModuleFactory(
     ): List<PackageFragmentProvider> {
         if (moduleInfo !is LibraryModuleInfo || !moduleInfo.platform.isJs()) return emptyList()
 
-        return createPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+        return createJsPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
+    }
+
+    private fun getWasmProvidersIfAny(
+        moduleInfo: ModuleInfo,
+        moduleContext: ModuleContext,
+        moduleDescriptor: ModuleDescriptorImpl,
+        container: StorageComponentContainer
+    ): List<PackageFragmentProvider> {
+        if (moduleInfo !is LibraryModuleInfo || !moduleInfo.platform.isWasm()) return emptyList()
+
+        return createWasmPackageFragmentProvider(moduleInfo, container, moduleContext, moduleDescriptor)
     }
 
     private fun createContainerForCompositePlatform(
@@ -209,7 +225,16 @@ class CompositeResolverForModuleFactory(
         }
 
         // Called by all normal containers set-ups
-        configureModule(moduleContext, targetPlatform, analyzerServices, trace, languageVersionSettings, IdeSealedClassInheritorsProvider)
+        configureModule(
+            moduleContext,
+            targetPlatform,
+            analyzerServices,
+            trace,
+            languageVersionSettings,
+            IdeSealedClassInheritorsProvider,
+            null,
+            IdeaAbsentDescriptorHandler::class.java
+        )
         configureStandardResolveComponents()
         useInstance(moduleContentScope)
         useInstance(declarationProviderFactory)

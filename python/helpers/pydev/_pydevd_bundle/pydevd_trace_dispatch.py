@@ -4,7 +4,7 @@
 import os
 import sys
 import traceback
-from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, IS_PYCHARM, IS_PY311
+from _pydevd_bundle.pydevd_constants import CYTHON_SUPPORTED, IS_PYCHARM
 
 
 use_cython = os.getenv('PYDEVD_USE_CYTHON', None)
@@ -12,10 +12,6 @@ dirname = os.path.dirname(os.path.dirname(__file__))
 # Do not show incorrect warning for .egg files for Remote debugger
 if not CYTHON_SUPPORTED or dirname.endswith('.egg'):
     # Do not try to import cython extensions if cython isn't supported
-    use_cython = 'NO'
-
-# Temporarily disable Cython speed-ups for Python 3.11 (see PY-51730).
-if IS_PY311:
     use_cython = 'NO'
 
 

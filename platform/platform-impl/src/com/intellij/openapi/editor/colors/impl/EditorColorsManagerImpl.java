@@ -10,7 +10,6 @@ import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
@@ -48,6 +47,7 @@ import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Ref;
@@ -64,24 +64,22 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
+import kotlin.jvm.functions.Function1;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.UIManager.LookAndFeelInfo;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.function.Function;
 
-import static com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser.installAndEnable;
+import static com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl.COMPONENT_NAME;
+import static com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl.STORAGE_NAME;
 
 @State(
-  name = "EditorColorsManagerImpl",
-  storages = @Storage("colors.scheme.xml"),
+  name = COMPONENT_NAME,
+  storages = @Storage(STORAGE_NAME),
   additionalExportDirectory = EditorColorsManagerImpl.FILE_SPEC,
   category = SettingsCategory.UI
 )
@@ -90,6 +88,10 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public static final ExtensionPointName<AdditionalTextAttributesEP> ADDITIONAL_TEXT_ATTRIBUTES_EP_NAME = new ExtensionPointName<>("com.intellij.additionalTextAttributes");
 
   private static final Logger LOG = Logger.getInstance(EditorColorsManagerImpl.class);
+
+  public static final String COMPONENT_NAME = "EditorColorsManagerImpl";
+  public static final String STORAGE_NAME = "colors.scheme.xml";
+
   private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
@@ -99,6 +101,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   private State myState = new State();
   private boolean themeIsCustomized;
+  private boolean myInitialConfigurationLoaded = false;
 
   public EditorColorsManagerImpl() {
     this(SchemeManagerFactory.getInstance());
@@ -143,7 +146,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     @Override
     public @NotNull EditorColorsSchemeImpl createScheme(@NotNull SchemeDataHolder<? super EditorColorsSchemeImpl> dataHolder,
                                                         @NotNull String name,
-                                                        @NotNull Function<? super String, String> attributeProvider,
+                                                        @NotNull Function1<? super String, String> attributeProvider,
                                                         boolean isBundled) {
       EditorColorsSchemeImpl scheme = isBundled ? new BundledScheme() : new EditorColorsSchemeImpl(null);
       // todo be lazy
@@ -252,13 +255,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   // initScheme has to execute only after the LaF has been set in LafManagerImpl.initializeComponent
   private void initScheme(@NotNull UIManager.LookAndFeelInfo currentLaf) {
     EditorColorsScheme scheme = null;
-    String wizardEditorScheme = WelcomeWizardUtil.getWizardEditorScheme();
-    if (wizardEditorScheme != null) {
-      scheme = getScheme(wizardEditorScheme);
-      LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
-    }
 
-    if (!themeIsCustomized && scheme == null) {
+    if (!themeIsCustomized) {
       if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
         String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
         if (schemeName != null) {
@@ -281,6 +279,29 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         mySchemeManager.loadBundledScheme(ep.getPath() + ".xml", null, pluginDescriptor);
       });
     }
+  }
+
+  @TestOnly
+  public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
+    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
+      UITheme theme = laf.getTheme();
+      if (themeName.equals(theme.getName())) {
+        String scheme = theme.getEditorScheme();
+        if (scheme != null) {
+          EditorColorsScheme bundledScheme = mySchemeManager.loadBundledScheme(scheme, theme, null);
+          initEditableBundledSchemesCopies();
+          return bundledScheme;
+        }
+      }
+    }
+    return null;
+  }
+
+  @TestOnly
+  public void removeScheme(@NotNull EditorColorsScheme scheme) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
+    mySchemeManager.removeScheme(scheme);
   }
 
   private void loadSchemesFromThemes() {
@@ -319,15 +340,22 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
       catch (InvalidDataException e) {
         brokenSchemesList.add(scheme);
+        String name = scheme.getName();
+        if (name.startsWith(Scheme.EDITABLE_COPY_PREFIX)) name = StringUtil.trimStart(name, Scheme.EDITABLE_COPY_PREFIX);
         String message = IdeBundle
-          .message("notification.content.color.scheme", scheme.getName(),
+          .message("notification.content.color.scheme", name,
                    e.getMessage());
         Notifications.Bus.notify(
           new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, IdeBundle.message("notification.title.incompatible.color.scheme"), message, NotificationType.ERROR));
       }
     }
     for (EditorColorsScheme brokenScheme : brokenSchemesList) {
-      mySchemeManager.removeScheme(brokenScheme);
+      if (brokenScheme instanceof AbstractColorsScheme && !(brokenScheme instanceof ReadOnlyColorsScheme)) {
+        ((AbstractColorsScheme)brokenScheme).setVisible(false);
+      }
+      else {
+        mySchemeManager.removeScheme(brokenScheme);
+      }
     }
   }
 
@@ -344,6 +372,11 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       editableCopy = (AbstractColorsScheme)initialScheme.clone();
       editableCopy.setName(editableCopyName);
       mySchemeManager.addScheme(editableCopy);
+    }
+    else {
+      if (initialScheme instanceof BundledScheme) {
+        editableCopy.copyMissingAttributes(initialScheme);
+      }
     }
     editableCopy.setCanBeDeleted(false);
   }
@@ -494,8 +527,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
     mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, notify, processChangeSynchronously);
   }
 
-  private void setGlobalSchemeInner(@Nullable EditorColorsScheme scheme) {
-    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, false);
+  private void setGlobalSchemeLoadedFromConfiguration(@Nullable EditorColorsScheme scheme) {
+    mySchemeManager.setCurrent(scheme == null ? getDefaultScheme() : scheme, myInitialConfigurationLoaded);
+    myInitialConfigurationLoaded = true;
   }
 
   private @NotNull EditorColorsScheme getDefaultScheme() {
@@ -509,6 +543,9 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public @NotNull EditorColorsScheme getGlobalScheme() {
     EditorColorsScheme scheme = mySchemeManager.getActiveScheme();
+    if (scheme instanceof AbstractColorsScheme && !(scheme instanceof ReadOnlyColorsScheme) && !((AbstractColorsScheme)scheme).isVisible()) {
+      return getDefaultScheme();
+    }
     EditorColorsScheme editableCopy = getEditableCopy(scheme);
     if (editableCopy != null) return editableCopy;
     return scheme == null ? getDefaultScheme() : scheme;
@@ -562,7 +599,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public void noStateLoaded() {
     themeIsCustomized = false;
-    setGlobalSchemeInner(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
+    setGlobalSchemeLoadedFromConfiguration(StartupUiUtil.isUnderDarcula() ? getScheme("Darcula") : getDefaultScheme());
   }
 
   @Override
@@ -588,7 +625,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           }
         });
       }
-      setGlobalSchemeInner(schemeRef.get());
+      setGlobalSchemeLoadedFromConfiguration(schemeRef.get());
       notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
     }
   }
@@ -597,7 +634,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   public void initializeComponent() {
     Activity activity = StartUpMeasurer.startActivity("editor color scheme initialization");
     // LafManager is initialized in EDT, so, that's ok to call it here
-    LookAndFeelInfo laf = LafManager.getInstance().getCurrentLookAndFeel();
+    LookAndFeelInfo laf = ApplicationManager.getApplication().isUnitTestMode() ? null : LafManager.getInstance().getCurrentLookAndFeel();
     // null in a headless mode
     if (laf != null) {
       initScheme(laf);
@@ -762,12 +799,12 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
                   }
                 });
 
-                installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
+                PluginsAdvertiser.installAndEnable(project, Sets.newHashSet(pluginId), notification::expire);
               }
             });
           }
           notification.notify(project);
-        }, ModalityState.NON_MODAL);
+        }, ModalityState.nonModal());
       }
     });
   }

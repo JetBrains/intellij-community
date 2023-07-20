@@ -29,6 +29,7 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyFileImpl
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.resolve.RatedResolveResult
+import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLanguageDialect.getInstance()) {
   override fun getFileType(): PythonFileType = PyiFileType.INSTANCE
@@ -68,5 +69,9 @@ class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLang
 
   private fun isPrivateImport(element: PsiElement?, dunderAll: List<String>): Boolean {
     return element is PyImportElement && element.asName == null && element.visibleName !in dunderAll
+  }
+
+  override fun prioritizeNameRedefinitions(definitions: MutableList<PsiNamedElement>, typeEvalContext: TypeEvalContext) {
+    // .pyi stubs contain only declarations. Thus, names cannot be redefined, and the original order is important.
   }
 }

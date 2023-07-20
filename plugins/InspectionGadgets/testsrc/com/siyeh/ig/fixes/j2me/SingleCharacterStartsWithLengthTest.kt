@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes.j2me
 
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.j2me.SingleCharacterStartsWithInspection
@@ -28,6 +29,7 @@ abstract class SingleCharacterStartsWithFixTestCase : LightJavaCodeInsightFixtur
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.testHighlighting()
     myFixture.launchAction(myFixture.findSingleIntention(InspectionGadgetsBundle.message("single.character.startswith.quickfix")))
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
     myFixture.checkResultByFile(getTestName(false) + ".after.java")
   }
 

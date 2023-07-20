@@ -21,27 +21,34 @@ class GitLabMergeRequestDTO(
   val targetBranch: String,
   val sourceBranch: String,
   val diffRefs: GitLabDiffRefs,
+  val approved: Boolean,
   val conflicts: Boolean,
   val headPipeline: GitLabPipelineDTO?,
   val mergeStatusEnum: GitLabMergeStatus,
+  val mergeable: Boolean,
   val state: GitLabMergeRequestState,
   val draft: Boolean,
   val author: GitLabUserDTO,
   val targetProject: GitLabProjectDTO,
-  val sourceProject: GitLabProjectDTO,
+  val sourceProject: GitLabProjectDTO?,
+  val userPermissions: GitLabMergeRequestPermissionsDTO,
+  val shouldBeRebased: Boolean,
+  val rebaseInProgress: Boolean,
   approvedBy: UserCoreConnection,
   assignees: AssigneeConnection,
   reviewers: ReviewerConnection,
   commits: CommitConnection,
-  val userPermissions: UserPermissions
+  labels: LabelConnection
 ) : GitLabMergeRequestId {
   val approvedBy: List<GitLabUserDTO> = approvedBy.nodes
 
   val assignees: List<GitLabUserDTO> = assignees.nodes
 
-  val reviewers: List<GitLabUserDTO> = reviewers.nodes
+  val reviewers: List<GitLabReviewerDTO> = reviewers.nodes
 
   val commits: List<GitLabCommitDTO> = commits.nodes
+
+  val labels: List<GitLabLabelDTO> = labels.nodes
 
   class UserCoreConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
     : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
@@ -49,13 +56,12 @@ class GitLabMergeRequestDTO(
   class AssigneeConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
     : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
 
-  class ReviewerConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabUserDTO>)
-    : GraphQLConnectionDTO<GitLabUserDTO>(pageInfo, nodes)
+  class ReviewerConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabReviewerDTO>)
+    : GraphQLConnectionDTO<GitLabReviewerDTO>(pageInfo, nodes)
 
   class CommitConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabCommitDTO>)
     : GraphQLConnectionDTO<GitLabCommitDTO>(pageInfo, nodes)
 
-  data class UserPermissions(
-    val createNote: Boolean
-  )
+  class LabelConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabLabelDTO>)
+    : GraphQLConnectionDTO<GitLabLabelDTO>(pageInfo, nodes)
 }

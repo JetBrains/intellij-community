@@ -15,10 +15,10 @@
  */
 package com.siyeh.ig.classmetrics;
 
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public class AnonymousClassComplexityInspection
   private static final int DEFAULT_COMPLEXITY_LIMIT = 3;
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new MoveAnonymousToInnerClassFix();
   }
 
@@ -90,7 +90,7 @@ public class AnonymousClassComplexityInspection
       return totalComplexity;
     }
 
-    private int calculateInitializerComplexity(PsiClass aClass) {
+    private static int calculateInitializerComplexity(PsiClass aClass) {
       final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       int complexity = 0;
       final PsiClassInitializer[] initializers = aClass.getInitializers();
@@ -102,7 +102,7 @@ public class AnonymousClassComplexityInspection
       return complexity;
     }
 
-    private int calculateComplexityForMethods(PsiMethod[] methods) {
+    private static int calculateComplexityForMethods(PsiMethod[] methods) {
       final CyclomaticComplexityVisitor visitor = new CyclomaticComplexityVisitor();
       int complexity = 0;
       for (final PsiMethod method : methods) {

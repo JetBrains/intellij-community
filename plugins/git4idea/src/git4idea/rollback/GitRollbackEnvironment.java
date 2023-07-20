@@ -29,7 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.util.*;
 
-@Service
+@Service(Service.Level.PROJECT)
 public final class GitRollbackEnvironment implements RollbackEnvironment {
   @NotNull private final Project myProject;
 

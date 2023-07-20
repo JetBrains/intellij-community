@@ -8,28 +8,28 @@ import com.intellij.openapi.vfs.VirtualFile
 import java.util.*
 
 class LineBookmarkImpl(override val provider: LineBookmarkProvider, file: VirtualFile, line: Int) : LineBookmark {
-  val descriptor = OpenFileDescriptor(provider.project, file, line, 0)
+  val descriptor: OpenFileDescriptor = OpenFileDescriptor(provider.project, file, line, 0)
 
-  override val file
+  override val file: VirtualFile
     get() = descriptor.file
 
-  override val line
+  override val line: Int
     get() = descriptor.line
 
   override val attributes: Map<String, String>
     get() = mapOf("url" to file.url, "line" to line.toString())
 
-  override fun createNode() = LineNode(provider.project, this)
+  override fun createNode(): LineNode = LineNode(provider.project, this)
 
-  override fun canNavigate() = !provider.project.isDisposed && descriptor.canNavigate()
-  override fun canNavigateToSource() = !file.isDirectory && canNavigate()
-  override fun navigate(requestFocus: Boolean) = descriptor.navigate(requestFocus)
+  override fun canNavigate(): Boolean = !provider.project.isDisposed && descriptor.canNavigate()
+  override fun canNavigateToSource(): Boolean = !file.isDirectory && canNavigate()
+  override fun navigate(requestFocus: Boolean): Unit = descriptor.navigate(requestFocus)
 
-  override fun hashCode() = Objects.hash(provider, file, line)
-  override fun equals(other: Any?) = other === this || other is LineBookmarkImpl
-                                     && other.provider == provider
-                                     && other.file == file
-                                     && other.line == line
+  override fun hashCode(): Int = Objects.hash(provider, file, line)
+  override fun equals(other: Any?): Boolean = other === this || other is LineBookmarkImpl
+                                              && other.provider == provider
+                                              && other.file == file
+                                              && other.line == line
 
-  override fun toString() = "LineBookmarkImpl(line=$line,file=$file,provider=$provider)"
+  override fun toString(): String = "LineBookmarkImpl(line=$line,file=$file,provider=$provider)"
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -153,6 +153,25 @@ data class AnonymizedEventField(override val name: String) : PrimitiveEventField
   }
 }
 
+internal data class ShortAnonymizedEventField(override val name: String) : PrimitiveEventField<String?>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#short_hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: String?) {
+    fuData.addAnonymizedValue(name, value, true)
+  }
+}
+
+internal data class DatedShortAnonymizedEventField<T>(override val name: String, val dateAndValueProvider: (T) -> Pair<Long, String?>) : PrimitiveEventField<T>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp#date_short_hash}")
+
+  override fun addData(fuData: FeatureUsageData, value: T) {
+    val (timestamp, toHash) = dateAndValueProvider.invoke(value)
+    fuData.addDatedShortAnonymizedValue(name, timestamp, toHash)
+  }
+}
+
 data class EnumEventField<T : Enum<*>>(override val name: String,
                                        private val enumClass: Class<T>,
                                        private val transform: (T) -> String) : PrimitiveEventField<T>() {
@@ -162,6 +181,27 @@ data class EnumEventField<T : Enum<*>>(override val name: String,
 
   override val validationRule: List<String>
     get() = listOf("{enum:${enumClass.enumConstants.joinToString("|", transform = transform)}}")
+}
+
+data class NullableEnumEventField<T : Enum<*>>(override val name: String,
+                                               private val enumClass: Class<T>,
+                                               private val nullValue: String?,
+                                               private val transform: (T) -> String) : PrimitiveEventField<T?>() {
+  override fun addData(fuData: FeatureUsageData, value: T?) {
+    if (value == null) {
+      if (nullValue != null) fuData.addData(name, nullValue)
+    }
+    else {
+      fuData.addData(name, transform(value))
+    }
+  }
+
+  override val validationRule: List<String>
+    get() {
+      val enumValues = enumClass.enumConstants.joinToString("|", transform = transform)
+      if (nullValue != null) return listOf("{enum:$enumValues|$nullValue}")
+      return listOf("{enum:$enumValues}")
+    }
 }
 
 data class LongListEventField(override val name: String) : ListEventField<Long>() {
@@ -243,7 +283,7 @@ class ObjectEventField(override val name: String, vararg val fields: EventField<
   constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
 
   override fun addData(fuData: FeatureUsageData, value: ObjectEventData) {
-    fuData.addObjectData(name, value.buildObjectData(fields))
+    fuData.addObjectData(name, value.buildObjectData(fuData.recorderId, fields))
   }
 
   override fun equals(other: Any?): Boolean {
@@ -295,14 +335,23 @@ class ObjectEventData(private val values: List<EventPair<*>>) {
 
   constructor(vararg values: EventPair<*>) : this(listOf(*values))
 
-  fun buildObjectData(allowedFields: Array<out EventField<*>>): Map<String, Any> {
-    val data = FeatureUsageData()
+  fun buildObjectData(recorderId: String, allowedFields: Array<out EventField<*>>): Map<String, Any> {
+    val data = FeatureUsageData(recorderId)
     for (eventPair in values) {
       val eventField = eventPair.field
       if (eventField !in allowedFields) throw IllegalArgumentException("Field ${eventField.name} is not in allowed object fields")
       eventPair.addData(data)
     }
     return data.build()
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ObjectEventData
+
+    return values == other.values
   }
 }
 
@@ -330,6 +379,6 @@ class ObjectListEventField(override val name: String, vararg val fields: EventFi
   constructor(name: String, description: ObjectDescription) : this(name, *description.getFields())
 
   override fun addData(fuData: FeatureUsageData, value: List<ObjectEventData>) {
-    fuData.addListObjectData(name, value.map { it.buildObjectData(fields) })
+    fuData.addListObjectData(name, value.map { it.buildObjectData(fuData.recorderId, fields) })
   }
 }

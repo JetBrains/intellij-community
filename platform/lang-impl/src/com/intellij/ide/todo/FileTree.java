@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,7 +25,7 @@ final class FileTree {
 
   FileTree() {
     myDirectory2Children = new ConcurrentHashMap<>();
-    myFiles = ContainerUtil.newConcurrentSet();
+    myFiles = ConcurrentCollectionFactory.createConcurrentSet();
     myStrictDirectory2Children = new ConcurrentHashMap<>();
   }
 

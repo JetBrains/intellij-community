@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi
 
 import com.intellij.openapi.application.ApplicationManager
@@ -18,13 +18,13 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.stubs.StubTree
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.reference.SoftReference
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 
+import java.lang.ref.SoftReference
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Future

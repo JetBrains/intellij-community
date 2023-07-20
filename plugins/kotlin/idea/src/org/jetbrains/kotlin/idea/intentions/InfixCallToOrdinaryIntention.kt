@@ -18,10 +18,10 @@ class InfixCallToOrdinaryIntention : SelfTargetingIntention<KtBinaryExpression>(
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
-        convert(element)
+        Holder.convert(element)
     }
 
-    companion object {
+    object Holder {
         fun convert(element: KtBinaryExpression): KtExpression {
             val argument = KtPsiUtil.safeDeparenthesize(element.right!!)
             val pattern = "$0.$1" + when (argument) {

@@ -72,12 +72,12 @@ private fun PsiElement?.isBeforeLeftBrace(): Boolean {
 }
 
 private fun isSemicolonRequired(semicolon: PsiElement): Boolean {
-    if (isRequiredForCompanion(semicolon)) {
-        return true
-    }
-
     val prevSibling = semicolon.getPrevSiblingIgnoringWhitespaceAndComments()
     val nextSibling = semicolon.getNextSiblingIgnoringWhitespaceAndComments()
+
+    if (prevSibling is KtObjectDeclaration && prevSibling.isCompanion() && prevSibling.nameIdentifier == null && prevSibling.body == null) {
+        return true
+    }
 
     if (prevSibling is KtNameReferenceExpression && prevSibling.text in softModifierKeywords && nextSibling is KtDeclaration) {
         // enum; class Foo
@@ -92,18 +92,6 @@ private fun isSemicolonRequired(semicolon: PsiElement): Boolean {
     }
 
     return false
-}
-
-private fun isRequiredForCompanion(semicolon: PsiElement): Boolean {
-    val prev = semicolon.getPrevSiblingIgnoringWhitespaceAndComments() as? KtObjectDeclaration ?: return false
-    if (!prev.isCompanion()) return false
-    if (prev.nameIdentifier != null || prev.getChildOfType<KtClassBody>() != null) return false
-
-    val next = semicolon.getNextSiblingIgnoringWhitespaceAndComments() ?: return false
-    val firstChildNode = next.firstChild?.node ?: return false
-    if (KtTokens.KEYWORDS.contains(firstChildNode.elementType)) return false
-
-    return true
 }
 
 private val softModifierKeywords: List<String> = KtTokens.SOFT_KEYWORDS.types.mapNotNull { (it as? KtModifierKeywordToken)?.toString() }

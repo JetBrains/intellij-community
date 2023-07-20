@@ -5,13 +5,15 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.toUnscaled
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 internal class PlaceholderImpl(parent: RowImpl) : PlaceholderBaseImpl<Placeholder>(parent), Placeholder {
 
-  @Deprecated("Use align method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Placeholder {
     super.verticalAlign(verticalAlign)
@@ -43,7 +45,13 @@ internal class PlaceholderImpl(parent: RowImpl) : PlaceholderBaseImpl<Placeholde
     return this
   }
 
+  @Deprecated("Use customize(UnscaledGaps) instead")
+  @ApiStatus.ScheduledForRemoval
   override fun customize(customGaps: Gaps): Placeholder {
+    return customize(customGaps.toUnscaled())
+  }
+
+  override fun customize(customGaps: UnscaledGaps): Placeholder {
     super.customize(customGaps)
     return this
   }

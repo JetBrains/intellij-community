@@ -67,6 +67,7 @@ import org.jetbrains.annotations.NotNull;
  */
 
 public abstract class Indent {
+  @NotNull
   public abstract Type getType();
 
   /**

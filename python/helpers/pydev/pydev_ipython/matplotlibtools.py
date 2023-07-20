@@ -93,6 +93,9 @@ def activate_matplotlib(enable_gui_function):
     """Set interactive to True for interactive backends.
     enable_gui_function - Function which enables gui, should be run in the main thread.
     """
+    if 'matplotlib' not in sys.modules:
+        return False
+
     matplotlib = sys.modules['matplotlib']
     if not hasattr(matplotlib, 'rcParams'):
         # matplotlib module wasn't fully imported, try later
@@ -157,6 +160,9 @@ def flag_calls(func):
 
 
 def activate_pylab():
+    if 'pylab' not in sys.modules:
+        return False
+
     pylab = sys.modules['pylab']
     pylab.show._needmain = False
     # We need to detect at runtime whether show() is called by the user.
@@ -166,6 +172,9 @@ def activate_pylab():
 
 
 def activate_pyplot():
+    if 'matplotlib.pyplot' not in sys.modules:
+        return False
+
     pyplot = sys.modules['matplotlib.pyplot']
     pyplot.show._needmain = False
     # We need to detect at runtime whether show() is called by the user.

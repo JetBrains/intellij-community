@@ -1,8 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.data
 
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJob
+import com.intellij.collaboration.ui.codereview.details.data.CodeReviewCIJobState
 import com.intellij.util.containers.nullize
-import org.jetbrains.plugins.github.api.data.*
+import org.jetbrains.plugins.github.api.data.GHBranchProtectionRules
+import org.jetbrains.plugins.github.api.data.GHCommitCheckSuiteConclusion
+import org.jetbrains.plugins.github.api.data.GHCommitStatusContextState
+import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeStateStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeabilityData
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestMergeableState
@@ -38,46 +43,20 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       GHPullRequestMergeableState.UNKNOWN -> null
     }
 
-    var failedChecks = 0
-    var pendingChecks = 0
-    var successfulChecks = 0
-
-    val lastCommit = mergeabilityData.commits.nodes.lastOrNull()?.commit
+    val ciJobs = mutableListOf<CodeReviewCIJob>()
+    val lastCommit = mergeabilityData.commits.lastOrNull()?.commit
     val contexts = lastCommit?.status?.contexts.orEmpty()
-    for (context in contexts) {
-      when (context.state) {
-        GHCommitStatusContextState.ERROR,
-        GHCommitStatusContextState.FAILURE -> failedChecks++
-        GHCommitStatusContextState.EXPECTED,
-        GHCommitStatusContextState.PENDING -> pendingChecks++
-        GHCommitStatusContextState.SUCCESS -> successfulChecks++
-      }
+    contexts.forEach { context ->
+      val status = CodeReviewCIJob(name = context.context, status = context.state.toCiState(), detailsUrl = context.targetUrl)
+      ciJobs.add(status)
     }
 
-    val checkSuites = lastCommit?.checkSuites?.nodes.orEmpty()
-    for (suite in checkSuites) {
-      when (suite.status) {
-        GHCommitCheckSuiteStatusState.IN_PROGRESS,
-        GHCommitCheckSuiteStatusState.QUEUED,
-        GHCommitCheckSuiteStatusState.PENDING,
-        GHCommitCheckSuiteStatusState.WAITING,
-        GHCommitCheckSuiteStatusState.REQUESTED -> pendingChecks++
-        GHCommitCheckSuiteStatusState.COMPLETED -> {
-          when (suite.conclusion) {
-            GHCommitCheckSuiteConclusion.ACTION_REQUIRED -> failedChecks++
-            GHCommitCheckSuiteConclusion.CANCELLED -> successfulChecks++
-            GHCommitCheckSuiteConclusion.FAILURE -> failedChecks++
-            GHCommitCheckSuiteConclusion.NEUTRAL -> successfulChecks++
-            GHCommitCheckSuiteConclusion.SKIPPED -> successfulChecks++
-            GHCommitCheckSuiteConclusion.STALE -> failedChecks++
-            GHCommitCheckSuiteConclusion.STARTUP_FAILURE -> failedChecks++
-            GHCommitCheckSuiteConclusion.SUCCESS -> successfulChecks++
-            GHCommitCheckSuiteConclusion.TIMED_OUT -> failedChecks++
-            null -> failedChecks++
-          }
-        }
+    val checkSuites = lastCommit?.checkSuites.orEmpty()
+    checkSuites.flatMap { checkSuite -> checkSuite.checkRuns }
+      .forEach { checkRun ->
+        val status = CodeReviewCIJob(name = checkRun.name, status = checkRun.conclusion.toCiState(), detailsUrl = checkRun.url)
+        ciJobs.add(status)
       }
-    }
 
     val canBeMerged = when {
       mergeabilityData.mergeStateStatus.canMerge() -> true
@@ -85,14 +64,13 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
       else -> false
     }
 
-    val summaryChecksState = getChecksSummaryState(failedChecks, pendingChecks, successfulChecks)
     val checksState = when (mergeabilityData.mergeStateStatus) {
       GHPullRequestMergeStateStatus.CLEAN,
       GHPullRequestMergeStateStatus.DIRTY,
       GHPullRequestMergeStateStatus.DRAFT,
       GHPullRequestMergeStateStatus.HAS_HOOKS,
       GHPullRequestMergeStateStatus.UNKNOWN,
-      GHPullRequestMergeStateStatus.UNSTABLE -> summaryChecksState
+      GHPullRequestMergeStateStatus.UNSTABLE -> null
       GHPullRequestMergeStateStatus.BEHIND -> ChecksState.BLOCKING_BEHIND
       GHPullRequestMergeStateStatus.BLOCKED -> {
         if (requiredContexts.isEmpty()
@@ -100,7 +78,7 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
               .filter { it.state == GHCommitStatusContextState.SUCCESS }
               .map { it.context }
               .containsAll(requiredContexts)) {
-          summaryChecksState
+          null
         }
         else ChecksState.BLOCKING_FAILING
       }
@@ -113,18 +91,33 @@ class GHPRMergeabilityStateBuilder(private val headRefOid: String, private val p
 
     return GHPRMergeabilityState(headRefOid, prHtmlUrl,
                                  hasConflicts,
-                                 failedChecks, pendingChecks, successfulChecks,
-                                 checksState,
+                                 ciJobs,
                                  canBeMerged, mergeabilityData.canBeRebased,
                                  isRestricted, actualRequiredApprovingReviewsCount)
   }
 
-  private fun getChecksSummaryState(failed: Int, pending: Int, successful: Int): ChecksState {
-    return when {
-      failed > 0 -> ChecksState.FAILING
-      pending > 0 -> ChecksState.PENDING
-      successful > 0 -> ChecksState.SUCCESSFUL
-      else -> ChecksState.NONE
+  private fun GHCommitStatusContextState.toCiState(): CodeReviewCIJobState {
+    return when (this) {
+      GHCommitStatusContextState.ERROR,
+      GHCommitStatusContextState.EXPECTED,
+      GHCommitStatusContextState.FAILURE -> CodeReviewCIJobState.FAILED
+      GHCommitStatusContextState.PENDING -> CodeReviewCIJobState.PENDING
+      GHCommitStatusContextState.SUCCESS -> CodeReviewCIJobState.SUCCESS
+    }
+  }
+
+  private fun GHCommitCheckSuiteConclusion?.toCiState(): CodeReviewCIJobState {
+    return when (this) {
+      null -> CodeReviewCIJobState.PENDING
+      GHCommitCheckSuiteConclusion.ACTION_REQUIRED,
+      GHCommitCheckSuiteConclusion.CANCELLED,
+      GHCommitCheckSuiteConclusion.NEUTRAL,
+      GHCommitCheckSuiteConclusion.SKIPPED,
+      GHCommitCheckSuiteConclusion.STALE,
+      GHCommitCheckSuiteConclusion.STARTUP_FAILURE,
+      GHCommitCheckSuiteConclusion.TIMED_OUT,
+      GHCommitCheckSuiteConclusion.FAILURE -> CodeReviewCIJobState.FAILED
+      GHCommitCheckSuiteConclusion.SUCCESS -> CodeReviewCIJobState.SUCCESS
     }
   }
 }

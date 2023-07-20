@@ -18,7 +18,7 @@ import javax.swing.JComponent
 /**
  * Git implementation of the quick popup action
  */
-@Service
+@Service(Service.Level.PROJECT)
 class GitQuickActionsToolbarService {
   var gitMappingInitialized = false
     private set

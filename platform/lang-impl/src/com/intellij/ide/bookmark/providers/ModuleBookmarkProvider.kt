@@ -12,13 +12,13 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 
 internal class ModuleBookmarkProvider(private val project: Project) : BookmarkProvider {
-  override fun getWeight() = 200
-  override fun getProject() = project
+  override fun getWeight(): Int = 200
+  override fun getProject(): Project = project
 
-  internal val moduleManager
+  internal val moduleManager: ModuleManager?
     get() = if (project.isDisposed) null else ModuleManager.getInstance(project)
 
-  internal val projectSettingsService
+  internal val projectSettingsService: ProjectSettingsService?
     get() = if (project.isDisposed) null else ProjectSettingsService.getInstance(project)
 
   override fun compare(bookmark1: Bookmark, bookmark2: Bookmark): Int {
@@ -29,7 +29,7 @@ internal class ModuleBookmarkProvider(private val project: Project) : BookmarkPr
     return StringUtil.naturalCompare(bookmark1.name, bookmark2.name)
   }
 
-  override fun createBookmark(map: MutableMap<String, @NlsSafe String>) =
+  override fun createBookmark(map: MutableMap<String, @NlsSafe String>): ModuleBookmark? =
     map["group"] ?.let { ModuleBookmark(this, it, true) } ?: map["module"]?.let { ModuleBookmark(this, it, false) }
 
   private fun createGroupBookmark(name: @NlsSafe String?) = name?.let { ModuleBookmark(this, it, true) }

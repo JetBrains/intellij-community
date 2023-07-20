@@ -53,7 +53,6 @@ class XDebugSessionTab3(
 
   override fun addVariablesAndWatches(session: XDebugSessionImpl) {
     val variablesView: XVariablesView?
-    val watchesView: XVariablesView?
     if (isWatchesInVariables) {
       variablesView = getWatchesViewImpl(session, watchesIsVariables = true)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
@@ -61,11 +60,8 @@ class XDebugSessionTab3(
     } else {
       variablesView = XVariablesView(session)
       registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
-      watchesView = getWatchesViewImpl(session, watchesIsVariables = false)
-      registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
-      myWatchesView = watchesView
-
-      myUi.addContent(createWatchesContent(session), 0, PlaceInGrid.right, false)
+      val watchesView = getWatchesViewImpl(session, watchesIsVariables = false)
+      myUi.addContent(createWatchesContent(session, watchesView), 0, PlaceInGrid.right, false)
     }
     applyVariablesTabLayoutSettings()
 

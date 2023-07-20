@@ -1,12 +1,20 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+/**
+ * <h3>Obsolescence notice</h3>
+ * <p>
+ *   Define a proper Kotlin data class or Java record instead.
+ * </p>
+ */
+@Obsolete
 public class Trinity<A, B, C> {
   public final A first;
   public final B second;

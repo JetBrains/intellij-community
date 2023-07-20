@@ -1,3 +1,5 @@
+// FIR_COMPARISON
+// FIR_IDENTICAL
 package Test.MyTest
 
 class A {
@@ -15,3 +17,6 @@ class A {
 fun testMy() {
     A.testOther<caret>
 }
+
+// ELEMENT: testOther
+// TAIL_TEXT: (a: Boolean)

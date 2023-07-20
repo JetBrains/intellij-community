@@ -5,7 +5,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.layout.ValidationInfoBuilder
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.extractDocsId
 import org.intellij.plugins.markdown.fileActions.utils.GoogleDocsImportUtils.importGoogleDoc
@@ -28,9 +30,10 @@ class GoogleDocsImportDialog(private val project: Project) : DialogWrapper(proje
 
   override fun createCenterPanel(): JComponent = panel {
     row(MarkdownBundle.message("markdown.google.docs.import.dialog.url.field")) {
-      cell {
-        docsLinkField(growX).withValidationOnApply { validateDocsLink(it) }.focused()
-      }
+      cell(docsLinkField)
+        .align(AlignX.FILL)
+        .validationOnApply { validateDocsLink(it) }
+        .focused()
     }
   }.apply {
     withPreferredWidth(PREFERRED_WIDTH)

@@ -9,6 +9,7 @@ import io.netty.buffer.Unpooled
 import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ide.BuiltInServerManager.Companion.getInstance
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.FileResponses.checkCache
@@ -114,6 +115,7 @@ class PreviewStaticServer : HttpRequestHandler() {
       return getInstance().addAuthToken(url).toExternalForm()
     }
 
+    @ApiStatus.ScheduledForRemoval
     @Deprecated("Use PreviewStaticServer.getStaticUrl(ResourceProvider, String) instead")
     @JvmStatic
     fun getStaticUrl(staticPath: String): String {

@@ -40,12 +40,6 @@ public interface NavBarUI {
 
   Insets getElementIpad(boolean isPopupElement);
 
-  /**
-   * @deprecated Use {@link #getElementPadding(NavBarItem)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  Insets getElementPadding();
-
   Insets getElementPadding(NavBarItem item);
 
   Font getElementFont(NavBarItem navBarItem);

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -56,7 +56,7 @@ object VcsLogEditorUtil {
 
     for (logEditor in editorsToIdsMap) {
       val ids = logEditor.disposeLogUis()
-      ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.NON_MODAL,
+      ApplicationManager.getApplication().invokeLater({ editorManager.closeFile(logEditor.file!!) }, ModalityState.nonModal(),
                                                       { project.isDisposed })
       tabsToClose.removeAll(ids.toHashSet())
     }

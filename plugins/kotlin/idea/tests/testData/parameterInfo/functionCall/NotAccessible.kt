@@ -8,6 +8,6 @@ fun f(c: C) {
 }
 // TODO: wrong name resolution. see: change
 /*
-Text: (<no parameters>), Disabled: true, Strikeout: false, Green: false
-Text_K2: (<no parameters>), Disabled: true, Strikeout: false, Green: true
+Text_K1: Text: (<no parameters>), Disabled: true, Strikeout: false, Green: false
+Text_K2: Text: (<no parameters>), Disabled: true, Strikeout: false, Green: true
 */

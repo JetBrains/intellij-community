@@ -145,4 +145,31 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
       .endsWith("myGroup/myArtifact/1.0-an1/myArtifact-1.0-an1-annotations.zip!/")
   }
 
+
+  @Test fun `test RootSetChanged should not be triggered resolving same artifact`() {
+    val resolver = ExternalAnnotationsRepositoryResolver()
+    val library = createLibrary()
+    var libraryRootsChangedCounter = 0
+    library.rootProvider.addRootSetChangedListener {
+      libraryRootsChangedCounter++
+    }
+
+    RemoteRepositoriesConfiguration.getInstance(myProject).repositories = listOf(myMavenRepoDescription)
+
+    MavenRepoFixture(myMavenRepo).apply {
+      addAnnotationsArtifact(artifact = "myArtifact", version = "1.0")
+      generateMavenMetadata("myGroup", "myArtifact")
+    }
+
+    resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
+
+    val modifiableModel = library.modifiableModel
+    modifiableModel.addRoot("file:///fake.source", OrderRootType.SOURCES)
+    runWriteAction { modifiableModel.commit() }
+
+    resolver.resolve(myProject, library, "myGroup:myArtifact:1.0")
+
+    assertEquals(2, libraryRootsChangedCounter)
+  }
+
 }

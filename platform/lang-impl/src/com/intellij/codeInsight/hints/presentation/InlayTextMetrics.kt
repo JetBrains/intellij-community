@@ -42,7 +42,7 @@ class InlayTextMetricsStorage(val editor: Editor) {
     val familyName = if (EditorSettingsExternalizable.getInstance().isUseEditorFontInInlays) {
       EditorColorsManager.getInstance().globalScheme.editorFontName
     } else {
-      StartupUiUtil.getLabelFont().family
+      StartupUiUtil.labelFont.family
     }
     val fontType = editor.colorsScheme.getAttributes(DefaultLanguageHighlighterColors.INLAY_DEFAULT).fontType
 
@@ -78,7 +78,7 @@ class InlayTextMetrics(
         val editorFont = EditorUtil.getEditorFont()
         editorFont.deriveFont(fontType, size)
       } else {
-        val familyName = StartupUiUtil.getLabelFont().family
+        val familyName = StartupUiUtil.labelFont.family
         UIUtil.getFontWithFallback(familyName, fontType, size)
       }
       val context = getCurrentContext(editor.component)
@@ -103,7 +103,7 @@ class InlayTextMetrics(
   // Editor metrics:
   val ascent: Int = editor.ascent
   val descent: Int = (editor as? EditorImpl)?.descent ?: 0
-  val lineHeight = editor.lineHeight
+  val lineHeight: Int = editor.lineHeight
   private val editorComponent = editor.component
 
   fun isActual(size: Float, familyName: String) : Boolean {

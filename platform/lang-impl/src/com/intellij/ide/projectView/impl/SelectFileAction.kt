@@ -29,7 +29,7 @@ internal class SelectFileAction : DumbAwareAction() {
         if (Registry.`is`("ide.selectIn.works.as.revealIn.when.project.view.focused")) {
           ActionManager.getInstance().getAction("RevealIn")?.actionPerformed(event)
         } else {
-          getView(event)?.selectOpenedFile?.run()
+          getView(event)?.selectOpenedFile()
         }
     }
   }
@@ -59,7 +59,7 @@ internal class SelectFileAction : DumbAwareAction() {
     }
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   private data class Selector(val target: SelectInTarget, val context: SelectInContext)
 

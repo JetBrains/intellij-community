@@ -6,7 +6,7 @@ import java.util.*
 
 
 object SchemesMappings {
-  fun schemeMap(scheme: String) = when (scheme) {
+  fun schemeMap(scheme: String): BundledEditorColorScheme = when (scheme) {
     "Light" -> KnownColorSchemes.Light
     "Dark" -> KnownColorSchemes.Darcula
     "Gruvbox" -> KnownColorSchemes.Darcula

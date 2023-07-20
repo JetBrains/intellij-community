@@ -26,7 +26,7 @@ internal class ActionToolbarGotItTooltip(@NonNls private val id: String,
   private var balloon: Balloon? = null
 
   init {
-    UiNotifyConnector(toolbar.component, this).also { Disposer.register(tooltipDisposable, it) }
+    UiNotifyConnector.installOn(toolbar.component, this).also { Disposer.register(tooltipDisposable, it) }
   }
 
   override fun showNotify() = showHint()

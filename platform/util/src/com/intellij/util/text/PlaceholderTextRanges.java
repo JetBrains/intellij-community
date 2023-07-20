@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.TextRange;
@@ -19,16 +19,14 @@ public final class PlaceholderTextRanges {
   /**
    * @see #getPlaceholderRanges(String, String, String, boolean, boolean)
    */
-  @NotNull
-  public static Set<TextRange> getPlaceholderRanges(@NotNull String s, @NotNull String prefix, @NotNull String suffix) {
+  public static @NotNull Set<TextRange> getPlaceholderRanges(@NotNull String s, @NotNull String prefix, @NotNull String suffix) {
     return getPlaceholderRanges(s, prefix, suffix, false);
   }
 
   /**
    * @see #getPlaceholderRanges(String, String, String, boolean, boolean)
    */
-  @NotNull
-  public static Set<TextRange> getPlaceholderRanges(@NotNull String s,
+  public static @NotNull Set<TextRange> getPlaceholderRanges(@NotNull String s,
                                                     @NotNull String prefix,
                                                     @NotNull String suffix,
                                                     boolean useFullTextRange) {
@@ -45,8 +43,7 @@ public final class PlaceholderTextRanges {
    * @param filterNestedRanges Remove nested ranges from result.
    * @return Matching ranges.
    */
-  @NotNull
-  public static Set<TextRange> getPlaceholderRanges(@NotNull String s,
+  public static @NotNull Set<TextRange> getPlaceholderRanges(@NotNull String s,
                                                     @NotNull String prefix,
                                                     @NotNull String suffix,
                                                     boolean useFullTextRange,

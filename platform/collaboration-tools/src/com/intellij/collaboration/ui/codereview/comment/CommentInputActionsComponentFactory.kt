@@ -4,10 +4,7 @@ import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil.isDefault
 import com.intellij.collaboration.ui.HorizontalListPanel
 import com.intellij.collaboration.ui.VerticalListPanel
-import com.intellij.collaboration.ui.util.ActivatableCoroutineScopeProvider
-import com.intellij.collaboration.ui.util.bindChild
-import com.intellij.collaboration.ui.util.getName
-import com.intellij.collaboration.ui.util.toAnAction
+import com.intellij.collaboration.ui.util.*
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ShortcutSet
 import com.intellij.openapi.keymap.KeymapUtil
@@ -58,7 +55,7 @@ object CommentInputActionsComponentFactory {
     return HorizontalListPanel(12).apply {
       add(createHintLabel(CollaborationToolsBundle.message("review.comment.new.line.hint", newLineShortcutText)))
 
-      bindChild(cs, submitHintState, index = 0, componentFactory = { _, hint ->
+      bindChildIn(cs, submitHintState, index = 0, componentFactory = { hint ->
         createHintLabel(hint)
       })
     }
@@ -71,7 +68,7 @@ object CommentInputActionsComponentFactory {
                               cfg.additionalActions,
                               cfg.cancelAction) { primary, secondary, additional, cancel ->
       val buttons = mutableListOf<JComponent>()
-      if (cancel != null && cancel.getName().isNotEmpty()) {
+      if (cancel != null && cancel.name.orEmpty().isNotEmpty()) {
         buttons.add(JButton(cancel).apply {
           isOpaque = false
         })

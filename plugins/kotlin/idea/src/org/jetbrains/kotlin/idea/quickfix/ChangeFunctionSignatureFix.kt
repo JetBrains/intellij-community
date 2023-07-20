@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor.Kind.SYNTHESIZED
+import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getType
+import org.jetbrains.kotlin.resolve.isValueClass
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
@@ -91,6 +93,10 @@ abstract class ChangeFunctionSignatureFix(
                 val arguments = originalElement.valueArguments
 
                 if (arguments.size > parameters.size) {
+                    if (functionDescriptor is ConstructorDescriptor &&
+                        functionDescriptor.containingDeclaration.isValueClass()
+                    ) return null
+
                     val bindingContext = originalElement.analyze()
                     val call = originalElement.getCall(bindingContext) ?: return null
                     val argumentToParameter = call.mapArgumentsToParameters(functionDescriptor)

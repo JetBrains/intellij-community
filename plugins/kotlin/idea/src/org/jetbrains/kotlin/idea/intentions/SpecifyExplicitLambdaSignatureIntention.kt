@@ -31,10 +31,10 @@ open class SpecifyExplicitLambdaSignatureIntention : SelfTargetingOffsetIndepend
     }
 
     override fun applyTo(element: KtLambdaExpression, editor: Editor?) {
-        applyTo(element)
+        Holder.applyTo(element)
     }
 
-    companion object {
+    object Holder {
         fun applyTo(element: KtLambdaExpression) {
             val functionLiteral = element.functionLiteral
             val functionDescriptor = element.analyze(BodyResolveMode.PARTIAL)[BindingContext.FUNCTION, functionLiteral]!!

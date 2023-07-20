@@ -362,6 +362,17 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonMenuItemUI"
     },
 
+    "Review": {
+      "Branch": {
+        "Background": "#45494A",
+        "Background.Hover": "#525758"
+      },
+      "State": {
+        "Background": "#45494A",
+        "Foreground": "#8C8C8C"
+      }
+    },
+
     "RootPaneUI":{
       "os.windows": "com.intellij.ide.ui.laf.darcula.ui.DarculaRootPaneUI"
     },
@@ -510,6 +521,7 @@
       "hash": "#505355",
       "leftChildIndent": 7,
       "paintLines": false,
+      "forceFocusedSelectionForeground": true,
       "rightChildIndent": 11,
       "rowHeight": 20,
       "UI": "com.intellij.ui.tree.ui.DefaultTreeUI"
@@ -605,14 +617,11 @@
     },
     "RunWidget" : {
       "foreground": "#ffffff",
-      "runModeIconColor": "#5fad65",
-      "disabledForeground": "#FFFFFF66",
-      "background": "#3369d6",
+      "runIconColor": "#5fad65",
       "runningBackground": "#599e5e",
       "stopBackground": "#c94f4f",
       "hoverBackground": "#00000019",
-      "pressedBackground": "#00000028",
-      "separatorColor": "#FFFFFF40"
+      "pressedBackground": "#00000028"
     },
 
 
@@ -626,11 +635,170 @@
       "hoverBackground": "#1A1A1B",
       "separatorColor": "#2B2D30",
       "borderColor": "#1E1F22"
-    }
+    },
+    "Profiler": {
+      "ChartSlider": {
+        "foreground": "#FEFEFE",
+        "lineColor": "#9AA7B0"
+      },
+      "CpuChart": {
+        "background": "#6296554D",
+        "borderColor": "#629655",
+        "inactiveBackground": "#62965533",
+        "inactiveBorderColor": "#4F6A4B",
+        "pointBackground": "#629625",
+        "pointBorderColor": "#3C3F41"
+      },
+      "MemoryChart": {
+        "background": "#589DF680",
+        "borderColor": "#589DF6",
+        "inactiveBackground": "#589DF633",
+        "inactiveBorderColor": "#476589",
+        "pointBackground": "#589dF6",
+        "pointBorderColor": "#3C3F41"
+      },
+      "Timer": {
+        "foreground": "#BBBBBB",
+        "disabledForeground": "#777777",
+        "background": "#323232"
+      },
+      "LiveChart": {
+        "horizontalAxisColor": "#D1D1D1"
+      }
+    },
+    "FlameGraph.Tooltip": {
+      "scaleBackground": "#363839",
+      "scaleColor": "#365880",
+      "foreground": "#BBBBBB"
+    },
+    "LineProfiler" : {
+      "Line" : {
+        "labelBackground" : "#43474A",
+        "foreground" : "#787878",
+        "hoverBackground" : "#4A4E52"
+      },
+      "HotLine" : {
+        "labelBackground" : "#593D41",
+        "foreground" : "#FF5261",
+        "hoverBackground" : "#704745"
+      },
+      "IgnoredLine" : {
+        "labelBackground" : "#43474A",
+        "foreground" : "#5F5F5F"
+      }
+    },
+
+    "Ide.Shadow": {
+      "borderInsets": "16,16,16,16",
+      "top0Color": "#00000000",
+      "top1Color": "#00000012",
+      "bottom0Color": "#00000000",
+      "bottom1Color": "#00000012",
+      "left0Color": "#00000000",
+      "left1Color": "#00000012",
+      "right0Color": "#00000000",
+      "right1Color": "#00000012",
+      "topLeft0Color": "#00000000",
+      "topLeft1Color": "#00000012",
+      "topRight0Color": "#00000000",
+      "topRight1Color": "#00000012",
+      "bottomLeft0Color": "#00000000",
+      "bottomLeft1Color": "#00000012",
+      "bottomRight0Color": "#00000000",
+      "bottomRight1Color": "#00000012"
+    },
+    "Notification.Shadow": {
+      "borderInsets": "5,5,5,5",
+      "top0Color": "#00000000",
+      "top1Color": "#00000010",
+      "bottom0Color": "#00000000",
+      "bottom1Color": "#00000010",
+      "left0Color": "#00000000",
+      "left1Color": "#00000010",
+      "right0Color": "#00000000",
+      "right1Color": "#00000010",
+      "topLeft0Color": "#00000000",
+      "topLeft1Color": "#00000009",
+      "topRight0Color": "#00000000",
+      "topRight1Color": "#00000009",
+      "bottomLeft0Color": "#00000000",
+      "bottomLeft1Color": "#00000009",
+      "bottomRight0Color": "#00000000",
+      "bottomRight1Color": "#00000009"
+    },
+
+    "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
+    "WelcomeScreen.Projects.actions.background": "#3C5C86",
+
+    "RecentProject": {
+      "Color1": {
+        "MainToolbarGradientStart": "#654B40",
+        "Avatar": {
+          "Start": "#E08855",
+          "End": "#E9806F"
+        }
+      },
+      "Color2": {
+        "MainToolbarGradientStart": "#534C33",
+        "Avatar": {
+          "Start": "#B08B14",
+          "End": "#BB7F19"
+        }
+      },
+      "Color3": {
+        "MainToolbarGradientStart": "#455038",
+        "Avatar": {
+          "Start": "#A1A359",
+          "End": "#87AA59"
+        }
+      },
+      "Color4": {
+        "MainToolbarGradientStart": "#31515F",
+        "Avatar": {
+          "Start": "#3B92B8",
+          "End": "#6183EC"
+        }
+      },
+      "Color5": {
+        "MainToolbarGradientStart": "#344C7D",
+        "Avatar": {
+          "Start": "#3574F0",
+          "End": "#7A64F0"
+        }
+      },
+      "Color6": {
+        "MainToolbarGradientStart": "#5D354A",
+        "Avatar": {
+          "Start": "#C84D8F",
+          "End": "#A956CF"
+        }
+      },
+      "Color7": {
+        "MainToolbarGradientStart": "#4F3E65",
+        "Avatar": {
+          "Start": "#955AE0",
+          "End": "#A84DE0"
+        }
+      },
+      "Color8": {
+        "MainToolbarGradientStart": "#1D4744",
+        "Avatar": {
+          "Start": "#24A394",
+          "End": "#279CCD"
+        }
+      },
+      "Color9": {
+        "MainToolbarGradientStart": "#3E5540",
+        "Avatar": {
+          "Start": "#5FAD65",
+          "End": "#3D968B"
+        }
+      }
+    },
+
+    "MainToolbar.Dropdown.transparentHoverBackground": "#FFFFFF1A"
   },
 
-  "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
-  "WelcomeScreen.Projects.actions.background": "#3C5C86",
 
   "iconColorsOnSelection": {
     "#5e5e5e": "#5778ad",

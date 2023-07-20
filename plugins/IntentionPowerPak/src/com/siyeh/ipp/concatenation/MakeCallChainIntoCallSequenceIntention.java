@@ -15,18 +15,20 @@
  */
 package com.siyeh.ipp.concatenation;
 
-import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ig.psiutils.*;
-import com.siyeh.ipp.base.Intention;
+import com.siyeh.ig.psiutils.CodeBlockSurrounder;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.VariableNameGenerator;
+import com.siyeh.ipp.base.MCIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -38,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class MakeCallChainIntoCallSequenceIntention extends Intention {
+public class MakeCallChainIntoCallSequenceIntention extends MCIntention {
 
   @Override
   public @NotNull String getFamilyName() {
@@ -46,7 +48,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   }
 
   @Override
-  public @NotNull String getText() {
+  protected @Nullable String getTextForElement(@NotNull PsiElement element) {
     return IntentionPowerPackBundle.message("make.call.chain.into.call.sequence.intention.name");
   }
 
@@ -57,7 +59,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) {
+  protected void processIntention(@NotNull ActionContext context, @NotNull ModPsiUpdater updater, @NotNull PsiElement element) {
     final List<String> callTexts = new ArrayList<>();
     PsiMethodCallExpression call = ObjectUtils.tryCast(element, PsiMethodCallExpression.class);
     if (call == null) return;
@@ -127,16 +129,15 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       toReplace = Objects.requireNonNull(((PsiMethodCallExpression)toReplace).getMethodExpression().getQualifierExpression());
     }
     String replacementBlock = generateReplacementBlock(callTexts, targetText, firstStatement);
-    PsiVariable variable = appendStatements(appendStatement, tracker, introduceVariable, replacementBlock);
+    PsiVariable variable = appendStatements(appendStatement, tracker, introduceVariable, replacementBlock, updater);
     if (keepLastStatement) {
-      tracker.replaceAndRestoreComments(toReplace, targetText);
+      updater.moveTo(tracker.replaceAndRestoreComments(toReplace, targetText));
     } else {
       tracker.deleteAndRestoreComments(appendStatement);
     }
     if (variable != null) {
-      variable = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(variable);
-      final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope()).toArray(PsiReference.EMPTY_ARRAY);
-      HighlightUtils.showRenameTemplate(PsiUtil.getVariableCodeBlock(variable, null), variable, references);
+      updater.rename(variable, new VariableNameGenerator(variable, VariableKind.LOCAL_VARIABLE)
+        .byExpression(variable.getInitializer()).byType(variable.getType()).generateAll(true));
     }
   }
 
@@ -144,7 +145,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
   private static PsiVariable appendStatements(PsiStatement anchor,
                                               CommentTracker tracker,
                                               boolean introduceVariable,
-                                              String replacementBlock) {
+                                              String replacementBlock, @NotNull ModPsiUpdater updater) {
     PsiElement parent = anchor.getParent();
     Project project = anchor.getProject();
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -154,8 +155,11 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     PsiVariable variable = null;
     for (int i = 0, length = statements.length; i < length; i++) {
       final PsiElement insertedStatement = parent.addBefore(tracker.markUnchanged(statements[i]), anchor);
-      if (i == 0 && introduceVariable) {
-        variable = (PsiVariable)((PsiDeclarationStatement)insertedStatement).getDeclaredElements()[0];
+      if (i == 0) {
+        updater.moveTo(insertedStatement);
+        if (introduceVariable) {
+          variable = (PsiVariable)((PsiDeclarationStatement)insertedStatement).getDeclaredElements()[0];
+        }
       }
       codeStyleManager.reformat(insertedStatement);
     }

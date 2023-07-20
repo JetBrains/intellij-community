@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.structureView;
 
@@ -25,19 +25,16 @@ public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
   }
 
   @Override
-  @NotNull
-  public StructureViewTreeElement getRoot() {
+  public @NotNull StructureViewTreeElement getRoot() {
     return myRoot;
   }
 
-  @NotNull
-  public StructureViewModelBase withSorters(Sorter @NotNull ... sorters) {
+  public @NotNull StructureViewModelBase withSorters(Sorter @NotNull ... sorters) {
     mySorters = sorters;
     return this;
   }
 
-  @NotNull
-  public StructureViewModelBase withSuitableClasses(Class @NotNull ... suitableClasses) {
+  public @NotNull StructureViewModelBase withSuitableClasses(Class @NotNull ... suitableClasses) {
     mySuitableClasses = suitableClasses;
     return this;
   }

@@ -13,9 +13,9 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.refactoring.move.createMoveUsageInfoIfPossible
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.KotlinDirectoryMoveTarget
-import org.jetbrains.kotlin.idea.refactoring.move.moveDeclarations.analyzeConflictsInFile
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveRenameUsage
+import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveTarget
+import org.jetbrains.kotlin.idea.refactoring.move.analyzeConflictsInFile
 import org.jetbrains.kotlin.idea.stubindex.KotlinExactPackagesIndex
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -38,12 +38,12 @@ class KotlinAwareDelegatingMoveDestination(
         if (targetPackage == null || targetDirectory == null) return
 
         val project = targetDirectory.project
-        val moveTarget = KotlinDirectoryMoveTarget(FqName(targetPackage.qualifiedName), targetDirectory.virtualFile)
+        val moveTarget = KotlinMoveTarget.Directory(FqName(targetPackage.qualifiedName), targetDirectory.virtualFile)
         val directoriesToMove = elements.flatMapTo(LinkedHashSet<PsiDirectory>()) {
             (it as? PsiPackage)?.directories?.toList() ?: emptyList()
         }
         val projectScope = project.projectScope()
-        val filesToProcess = elements.flatMapTo(LinkedHashSet<KtFile>()) {
+        val filesToProcess = elements.flatMapTo(LinkedHashSet()) {
             if (it is PsiPackage) KotlinExactPackagesIndex.get(it.qualifiedName, project, projectScope) else emptyList()
         }
 
@@ -68,7 +68,7 @@ class KotlinAwareDelegatingMoveDestination(
             for ((index, element) in extraElementsForReferenceSearch.withIndex()) {
                 progressIndicator.fraction = (index + 1) / extraElementsForReferenceSearch.size.toDouble()
                 ReferencesSearch.search(element, projectScope).mapNotNullTo(extraUsages) { ref ->
-                    createMoveUsageInfoIfPossible(ref, element, addImportToOriginalFile = true, isInternal = false)
+                    KotlinMoveRenameUsage.createIfPossible(ref, element, addImportToOriginalFile = true, isInternal = false)
                 }
             }
         } finally {
@@ -76,7 +76,7 @@ class KotlinAwareDelegatingMoveDestination(
         }
 
         filesToProcess.forEach {
-            analyzeConflictsInFile(it, extraUsages, moveTarget, directoriesToMove, conflicts) {}
+            conflicts.putAllValues(analyzeConflictsInFile(it, extraUsages, moveTarget, directoriesToMove) {})
         }
     }
 }

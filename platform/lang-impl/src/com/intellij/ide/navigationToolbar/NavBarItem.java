@@ -2,6 +2,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.util.treeView.TreeAnchorizer;
@@ -49,7 +50,10 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
   private final boolean myIsModule;
 
   public static final Icon CHEVRON_ICON = AllIcons.General.ChevronRight;
-  static final Icon MODULE_ICON = IconManager.getInstance().getIcon("expui/nodes/module8x8.svg", AllIcons.class);
+
+  public static Icon getModuleIcon() {
+    return ExpUiIcons.Nodes.Module8x8;
+  }
 
   public NavBarItem(NavBarPanel panel, Object object, int idx, Disposable parent) {
     this(panel, object, idx, parent, false);
@@ -67,7 +71,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
       myText = presentation.getPresentableText(object, inPopup);
       myAttributes = presentation.getTextAttributes(object, false);
       myIsModule = presentation.isModule(object);
-      myIcon = ExperimentalUI.isNewUI() && myIsModule && !inPopup ? MODULE_ICON : presentation.getIcon(object);
+      myIcon = ExperimentalUI.isNewUI() && myIsModule && !inPopup ? getModuleIcon() : presentation.getIcon(object);
     }
     else {
       myText = IdeBundle.message("navigation.bar.item.sample");
@@ -349,7 +353,7 @@ public final class NavBarItem extends SimpleColoredComponent implements Disposab
       // The base will be first or last NavBarItem in the NavBarPanel
       NavBarItem focusBase = null;
       List<NavBarItem> items = myPanel.getItems();
-      if (items.size() > 0) {
+      if (!items.isEmpty()) {
         if (next) {
           focusBase = items.get(items.size() - 1);
         } else {

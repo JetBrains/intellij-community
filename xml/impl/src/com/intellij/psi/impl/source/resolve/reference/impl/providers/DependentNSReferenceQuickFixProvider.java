@@ -8,8 +8,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.ManuallySetupExtResourceAct
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import org.jetbrains.annotations.NotNull;
 
-
-public class DependentNSReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<DependentNSReference> {
+final class DependentNSReferenceQuickFixProvider extends UnresolvedReferenceQuickFixProvider<DependentNSReference> {
   @Override
   public void registerFixes(@NotNull DependentNSReference ref, @NotNull QuickFixActionRegistrar registrar) {
     registrar.register(new FetchExtResourceAction(ref.isForceFetchResultValid()));

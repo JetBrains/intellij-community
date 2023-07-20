@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -40,7 +41,11 @@ public class RecursiveFilePathHolderImpl implements FilePathHolder {
   }
 
   @Override
-  public boolean containsFile(@NotNull FilePath file) {
+  public boolean containsFile(@NotNull FilePath file, @NotNull VirtualFile vcsRoot) {
+    return containsFile(file);
+  }
+
+  private boolean containsFile(@NotNull FilePath file) {
     if (myMap.isEmpty()) return false;
     FilePath parent = file;
     while (parent != null) {

@@ -39,5 +39,5 @@ class LocalFsDataLoader(val basePath: Path) : DataLoader {
     }
   }
 
-  override fun toString() = basePath.toString()
+  override fun toString(): String = basePath.toString()
 }

@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import org.assertj.core.api.Assertions
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -48,17 +48,17 @@ class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCa
       }).containsExactlyInAnyOrder(*expected)
     }
 
+    val resources = defaultResources().map { it to JavaResourceRootType.RESOURCE } + defaultTestResources().map { it to JavaResourceRootType.TEST_RESOURCE }
+
     check(myProjectRoot,
           "customSrc" to JavaSourceRootType.SOURCE,
-          "src/main/resources" to JavaResourceRootType.RESOURCE,
           "src/test/java" to JavaSourceRootType.TEST_SOURCE,
-          "src/test/resources" to JavaResourceRootType.TEST_RESOURCE)
+          *resources.toTypedArray())
 
     check(module.parent,
           "src/main/java" to JavaSourceRootType.SOURCE,
-          "src/main/resources" to JavaResourceRootType.RESOURCE,
           "src/test/java" to JavaSourceRootType.TEST_SOURCE,
-          "src/test/resources" to JavaResourceRootType.TEST_RESOURCE)
+          *resources.toTypedArray())
 
   }
 }

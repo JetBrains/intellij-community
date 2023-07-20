@@ -66,8 +66,6 @@ final class PyCharmCorePluginConfigurator implements ApplicationInitializedListe
       PyConsoleOptions.getInstance(ProjectManager.getInstance().getDefaultProject()).setCommandQueueEnabled(PlatformUtils.isDataSpell());
     }
 
-    ActionManager.getInstance().unregisterAction("RunAnything");
-
     Experiments.getInstance().setFeatureEnabled("terminal.shell.command.handling", false);
   }
 }

@@ -72,7 +72,7 @@ public class InspectionNodeInfo extends JPanel {
     }
     final String toolDescription =
       stripUIRefsFromInspectionDescription(StringUtil.notNullize(descriptionText));
-    DescriptionEditorPaneKt.readHTML(description, toolDescription);
+    DescriptionEditorPaneKt.readHTMLWithCodeHighlighting(description, toolDescription, toolWrapper.getLanguage());
     JScrollPane pane = ScrollPaneFactory.createScrollPane(description, true);
     pane.setAlignmentX(0);
 

@@ -14,7 +14,7 @@ class EditorConfigRemoveSpacesQuickFix : LocalQuickFix {
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val header = descriptor.psiElement as? EditorConfigHeader ?: return
     val manager = CodeStyleManager.getInstance(project)
-    val spaces = findSuspiciousSpaces(header)
+    val spaces = findSuspiciousSpaces(header).toList()
     if (spaces.isEmpty()) return
     manager.performActionWithFormatterDisabled { spaces.forEach { it.delete() } }
   }

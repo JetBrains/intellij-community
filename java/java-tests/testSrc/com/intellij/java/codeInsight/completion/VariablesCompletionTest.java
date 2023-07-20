@@ -108,7 +108,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   @NeedsIndex.ForStandardLibrary(reason = "With empty indices 'Object' may be considered variable name, and instanceof is ok here; Object is not resolved thus not replaced with 'o'")
   public void testUnresolvedReference() throws Exception {
     configureByFile(FILE_PREFIX + "locals/" + getTestName(false) + ".java");
-    assertStringItems("o", "psiClass");
+    assertStringItems("o", "psiClass", "object");
   }
 
   public void testFieldNameCompletion1() {
@@ -175,7 +175,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   public void testInitializerMatters() {
     myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {{ String f<caret>x = getFoo(); }; String getFoo() {}; }");
     complete();
-    assertStringItems("foo");
+    assertStringItems("foo", "fString");
   }
 
   public void testFieldInitializerMatters() {
@@ -216,7 +216,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
   @NeedsIndex.ForStandardLibrary(reason = "On empty indices String is not resolved and replaced with name 's', filtered out in JavaMemberNameCompletionContributor.getOverlappedNameVersions for being short")
   public void testConstructorParameterName() {
     configure();
-    assertStringItems("color");
+    assertStringItems("color", "coString");
   }
 
   @NeedsIndex.ForStandardLibrary(reason = "On empty indices String is not resolved and replaced with name 's', filtered out in JavaMemberNameCompletionContributor.getOverlappedNameVersions for being short; P is from PARAMETER_NAME_PREFIX")
@@ -227,7 +227,7 @@ public class VariablesCompletionTest extends LightFixtureCompletionTestCase {
 
     configure();
 
-    assertStringItems("pColor");
+    assertStringItems("pColor", "pCoPString");
   }
 
   public void test_finish_with__() {

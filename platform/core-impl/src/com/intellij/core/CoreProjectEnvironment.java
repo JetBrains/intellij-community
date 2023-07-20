@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -31,88 +31,81 @@ public class CoreProjectEnvironment {
 
   protected final FileIndexFacade myFileIndexFacade;
   protected final PsiManagerImpl myPsiManager;
-  protected final MockProject myProject;
+  protected final MockProject project;
 
   public CoreProjectEnvironment(@NotNull Disposable parentDisposable, @NotNull CoreApplicationEnvironment applicationEnvironment) {
     myParentDisposable = parentDisposable;
     myEnvironment = applicationEnvironment;
-    myProject = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
+    project = createProject(myEnvironment.getApplication().getPicoContainer(), myParentDisposable);
 
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
 
-    PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
-    myProject.registerService(PsiModificationTracker.class, modificationTracker);
-    myProject.registerService(FileIndexFacade.class, myFileIndexFacade);
-    myProject.registerService(ResolveCache.class, new ResolveCache(myProject));
+    PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(project);
+    project.registerService(PsiModificationTracker.class, modificationTracker);
+    project.registerService(FileIndexFacade.class, myFileIndexFacade);
+    project.registerService(ResolveCache.class, new ResolveCache(project));
 
-    myPsiManager = new PsiManagerImpl(myProject);
-    myProject.registerService(PsiManager.class, myPsiManager);
-    myProject.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
-    myProject.registerService(DocumentCommitProcessor.class, new MockDocumentCommitProcessor());
-    myProject.registerService(PsiDocumentManager.class, new CorePsiDocumentManager(myProject));
+    myPsiManager = new PsiManagerImpl(project);
+    project.registerService(PsiManager.class, myPsiManager);
+    project.registerService(SmartPointerManager.class, SmartPointerManagerImpl.class);
+    project.registerService(DocumentCommitProcessor.class, new MockDocumentCommitProcessor());
+    project.registerService(PsiDocumentManager.class, new CorePsiDocumentManager(project));
 
-    myProject.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
+    project.registerService(ResolveScopeManager.class, createResolveScopeManager(myPsiManager));
 
-    myProject.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
-    myProject.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(myProject, new PsiCachedValuesFactory(myProject)));
-    myProject.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(myProject));
-    myProject.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
-    myProject.registerService(DumbService.class, new MockDumbService(myProject));
-    myProject.registerService(DumbUtil.class, new MockDumbUtil());
-    myProject.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
-    myProject.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
+    project.registerService(PsiFileFactory.class, new PsiFileFactoryImpl(myPsiManager));
+    project.registerService(CachedValuesManager.class, new CachedValuesManagerImpl(project, new PsiCachedValuesFactory(project)));
+    project.registerService(PsiDirectoryFactory.class, new PsiDirectoryFactoryImpl(project));
+    project.registerService(ProjectScopeBuilder.class, createProjectScopeBuilder());
+    project.registerService(DumbService.class, new MockDumbService(project));
+    project.registerService(DumbUtil.class, new MockDumbUtil());
+    project.registerService(CoreEncodingProjectManager.class, CoreEncodingProjectManager.class);
+    project.registerService(InjectedLanguageManager.class, new CoreInjectedLanguageManager());
   }
 
-  @NotNull
-  protected MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
+  protected @NotNull MockProject createProject(@NotNull PicoContainer parent, @NotNull Disposable parentDisposable) {
     return new MockProject(parent, parentDisposable);
   }
 
-  @NotNull
-  protected ProjectScopeBuilder createProjectScopeBuilder() {
-    return new CoreProjectScopeBuilder(myProject, myFileIndexFacade);
+  protected @NotNull ProjectScopeBuilder createProjectScopeBuilder() {
+    return new CoreProjectScopeBuilder(project, myFileIndexFacade);
   }
 
   protected void preregisterServices() {
 
   }
 
-  @NotNull
-  protected FileIndexFacade createFileIndexFacade() {
-    return new MockFileIndexFacade(myProject);
+  protected @NotNull FileIndexFacade createFileIndexFacade() {
+    return new MockFileIndexFacade(project);
   }
 
-  @NotNull
-  protected ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
+  protected @NotNull ResolveScopeManager createResolveScopeManager(@NotNull PsiManager psiManager) {
     return new MockResolveScopeManager(psiManager.getProject());
   }
 
-  public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, @NotNull final T extension) {
+  public <T> void addProjectExtension(@NotNull ExtensionPointName<T> name, final @NotNull T extension) {
     //noinspection TestOnlyProblems
-    name.getPoint(myProject).registerExtension(extension, myParentDisposable);
+    name.getPoint(project).registerExtension(extension, myParentDisposable);
   }
 
   public <T> void registerProjectComponent(@NotNull Class<T> interfaceClass, @NotNull T implementation) {
-    CoreApplicationEnvironment.registerComponentInstance(myProject.getPicoContainer(), interfaceClass, implementation);
+    CoreApplicationEnvironment.registerComponentInstance(project.getPicoContainer(), interfaceClass, implementation);
     if (implementation instanceof Disposable) {
-      Disposer.register(myProject, (Disposable) implementation);
+      Disposer.register(project, (Disposable) implementation);
     }
   }
 
-  @NotNull
-  public Disposable getParentDisposable() {
+  public @NotNull Disposable getParentDisposable() {
     return myParentDisposable;
   }
 
-  @NotNull
-  public CoreApplicationEnvironment getEnvironment() {
+  public @NotNull CoreApplicationEnvironment getEnvironment() {
     return myEnvironment;
   }
 
-  @NotNull
-  public MockProject getProject() {
-    return myProject;
+  public @NotNull MockProject getProject() {
+    return project;
   }
 }

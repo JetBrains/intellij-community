@@ -34,10 +34,11 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     import com.jetbrains.OtherClass;
     import org.checkerframework.checker.tainting.qual.*;
     class A {
+        String tainted;
         void callSink() {}
         void sink(@Untainted String s) {}
         static @Tainted String source() { return "unsafe"; }
-        static String foo() { return "bar"; }
+        static String foo(String... a) { return a.length==0? "bar" : a[0]; }
         static @Untainted String safe() { return "safe"; }
     }""";
 
@@ -45,7 +46,9 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new SourceToSinkFlowInspection());
+    SourceToSinkFlowInspection inspection = new SourceToSinkFlowInspection();
+    inspection.warnIfComplex = true;
+    myFixture.enableInspections(inspection);
   }
 
   @Override
@@ -75,7 +78,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
                          import org.checkerframework.checker.tainting.qual.*;
                          class OtherClass {
                              static @Tainted String source() { return "unsafe"; }
-                             static String foo() { return "bar"; }
+                             static String foo(String... a) { return a.length==0? "bar" : a[0]; }
                              static @Untainted String safe() { return "safe"; }
                          }""");
     PropertyChecker.customized()
@@ -88,13 +91,20 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     PsiClass psiClass = Objects.requireNonNull(facade.findClass("com.jetbrains.A", GlobalSearchScope.allScope(project)));
     myFixture.openFileInEditor(psiClass.getContainingFile().getVirtualFile());
     MethodBody methodBody = MethodBody.generate(env);
-    PsiClass aClass = WriteCommandAction.runWriteCommandAction(project, 
-                                                               (Computable<PsiClass>)() -> recreateClass(facade.getElementFactory(), psiClass));
+    PsiClass aClass = WriteCommandAction.runWriteCommandAction(project,
+                                                               (Computable<PsiClass>)() -> recreateClass(facade.getElementFactory(),
+                                                                                                         psiClass));
     JavaContext javaContext = JavaContext.create(aClass, facade);
     WriteCommandAction.runWriteCommandAction(project, () -> methodBody.add(javaContext));
     env.logMessage("A class:\n" + aClass.getText());
     TaintState taintState = methodBody.taintState();
-    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WARNING);
+    List<HighlightInfo> infos = myFixture.doHighlighting(HighlightSeverity.WEAK_WARNING);
+    if (infos.size() == 1) {
+      HighlightInfo info = infos.get(0);
+      if (info.getDescription().equals(JvmAnalysisBundle.message("jvm.inspections.source.to.sink.flow.too.complex"))) {
+        return;
+      }
+    }
     if (taintState == TaintState.SAFE) {
       assertEmpty(infos);
     }
@@ -163,7 +173,7 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
                                                                               CallExpression::generate,
                                                                               TernaryExpression::generate,
                                                                               ParenthesizedExpression::generate);
-    
+
     @NotNull String getText();
 
     @NotNull TaintState taintState();
@@ -191,11 +201,11 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
     }
 
     public void declareField(@NotNull String varName, @NotNull String declarationText) {
-      declarationText = String.format("private String %s = %s", varName, declarationText);
+      declarationText = String.format("public String %s = %s", varName, declarationText);
       PsiField field = myFactory.createFieldFromText(declarationText, null);
       PsiClass containingClass = myMethod.getContainingClass();
-      PsiElement lBrace = containingClass.getLBrace();
-      containingClass.addAfter(field, lBrace);
+      PsiElement previousField = PsiTreeUtil.findChildOfType(containingClass, PsiField.class);
+      containingClass.addAfter(field, previousField);
     }
 
     public void declareLocalVariable(@NotNull String varName, @NotNull String declarationText) {
@@ -231,6 +241,9 @@ public class SourceToSinkPropertyInspectionTest extends LightJavaCodeInsightFixt
 
     @Override
     public @NotNull String getText() {
+      if (myIsExternal && myCallType.methodName().equals("foo")) {
+        return "OtherClass.foo(tainted)";
+      }
       return (myIsExternal ? "OtherClass." : "") + myCallType.methodName() + "()";
     }
 

@@ -25,6 +25,7 @@ public abstract class FileIndexFacade {
   public abstract boolean isInContent(@NotNull VirtualFile file);
   public abstract boolean isInSource(@NotNull VirtualFile file);
   public abstract boolean isInSourceContent(@NotNull VirtualFile file);
+  public abstract boolean isInLibrary(@NotNull VirtualFile file);
   public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
 
   public abstract boolean isInLibrarySource(@NotNull VirtualFile file);

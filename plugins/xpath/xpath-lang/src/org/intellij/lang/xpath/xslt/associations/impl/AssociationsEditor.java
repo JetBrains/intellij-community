@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.xpath.xslt.associations.impl;
 
+import com.intellij.ide.projectView.NodeSortKey;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.GroupByTypeComparator;
@@ -67,7 +68,7 @@ final class AssociationsEditor implements Disposable {
 
     myTree.setModel(new AsyncTreeModel(myModel, this));
     myTree.setCellRenderer(new MyNodeRenderer(myManager));
-    new TreeSpeedSearch(myTree);
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree);
 
     if (!project.isDefault()) {
       SwingUtilities.invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> {
@@ -255,8 +256,8 @@ final class AssociationsEditor implements Disposable {
     }
 
     @Override
-    protected boolean isSortByType() {
-      return false;
+    protected @NotNull NodeSortKey getSortKey() {
+      return NodeSortKey.BY_NAME;
     }
   }
 

@@ -3,10 +3,17 @@ package com.intellij.execution.testframework.actions
 
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.actions.DocumentsSynchronizer
-import com.intellij.diff.actions.SynchronizedDocumentContent
+import com.intellij.diff.contents.DiffContentBase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.impl.EditorFactoryImpl
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
@@ -15,21 +22,28 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.refactoring.suggested.startOffset
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.function.IntUnaryOperator
 
 class TestDiffContent(
   private val project: Project,
-  original: DocumentContent,
+  private val original: DocumentContent,
   text: String,
   private val elemPtr: SmartPsiElementPointer<PsiElement>
-) : SynchronizedDocumentContent(original) {
+) : DiffContentBase(), DocumentContent {
+  override fun getDocument(): Document = fakeDocument
+
   override fun getContentType(): FileType = FileTypes.PLAIN_TEXT
 
-  override val synchronizer: DocumentsSynchronizer = object : DocumentsSynchronizer(project, original.document, fakeDocument) {
+  private val fakeDocument = (EditorFactory.getInstance() as EditorFactoryImpl).createDocument("", true, false).apply {
+    putUserData(UndoManager.ORIGINAL_DOCUMENT, original.document)
+  }
+
+  private val synchronizer: DocumentsSynchronizer = object : DocumentsSynchronizer(project, original.document, fakeDocument) {
     override fun onDocumentChanged1(event: DocumentEvent) {
       PsiDocumentManager.getInstance(project).performForCommittedDocument(document1, Runnable {
         val element = elemPtr.element ?: return@Runnable
-        replaceString(myDocument2, 0, myDocument2.textLength, ElementManipulators.getValueText(element))
+        replaceString(myDocument2, ElementManipulators.getValueText(element))
       })
     }
 
@@ -38,7 +52,7 @@ class TestDiffContent(
       try {
         myDuringModification = true
         val element = elemPtr.element ?: return
-        ElementManipulators.getManipulator(element)?.handleContentChange(element, event.document.text)
+        TestDiffProvider.TEST_DIFF_PROVIDER_LANGUAGE_EXTENSION.forLanguage(element.language).updateExpected(element, event.document.text)
       }
       finally {
         myDuringModification = false
@@ -46,9 +60,44 @@ class TestDiffContent(
     }
 
     override fun startListen() {
-      replaceString(myDocument2, 0, myDocument2.textLength, text)
+      replaceString(myDocument2, text)
       super.startListen()
     }
+
+    @RequiresEdt
+    private fun replaceString(document: Document, newText: CharSequence) {
+      try {
+        myDuringModification = true
+        CommandProcessor.getInstance().executeCommand(
+          myProject,
+          {
+            ApplicationManager.getApplication().runWriteAction {
+              document.replaceString(0, document.textLength, newText)
+            }
+          },
+          DiffBundle.message("synchronize.document.and.its.fragment"),
+          document
+        )
+      }
+      finally {
+        myDuringModification = false
+      }
+    }
+
+  }
+
+  private var assignments = 0
+
+  override fun onAssigned(isAssigned: Boolean) {
+    if (isAssigned) {
+      if (assignments == 0) synchronizer.startListen()
+      assignments++
+    }
+    else {
+      assignments--
+      if (assignments == 0) synchronizer.stopListen()
+    }
+    assert(assignments >= 0)
   }
 
   companion object {
@@ -63,7 +112,7 @@ class TestDiffContent(
       return TestDiffContent(project, diffContent, text, elemPtr).apply {
         val originalLineConvertor = original.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR)
         putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, IntUnaryOperator { value ->
-          if (!element.isValid) return@IntUnaryOperator - 1
+          if (!element.isValid) return@IntUnaryOperator -1
           val line = value + original.document.getLineNumber(element.startOffset)
           originalLineConvertor?.applyAsInt(line) ?: line
         })

@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.psi.util.PsiUtil
@@ -43,7 +44,7 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
   fun parameterized(fileName: String) {
     val filePath = "/" + LightQuickFixTestCase.BEFORE_PREFIX + fileName
     val file = fixture.configureByFile(filePath)
-    val action = ActionHint.parse(file, file.text).findAndCheck(fixture.availableIntentions) {
+    val action = runReadAction { ActionHint.parse(file, file.text) }.findAndCheck(fixture.availableIntentions) {
       """
              Test: ${getRelativePath() + filePath}
              Language level: ${PsiUtil.getLanguageLevel(fixture.project)}

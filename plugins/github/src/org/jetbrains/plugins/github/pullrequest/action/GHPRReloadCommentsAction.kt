@@ -10,7 +10,7 @@ import java.util.function.Supplier
 
 class GHPRReloadCommentsAction
   : RefreshAction(GithubBundle.messagePointer("pull.request.refresh.comments.action"),
-                  Supplier<String?> { null },
+                  Supplier { null },
                   AllIcons.Actions.Refresh) {
 
   override fun update(e: AnActionEvent) {

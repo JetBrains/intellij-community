@@ -16,6 +16,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiImportStatement;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -39,7 +40,7 @@ public class JavaLangImportInspection extends BaseInspection implements CleanupL
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     return new DeleteImportFix();
   }
 

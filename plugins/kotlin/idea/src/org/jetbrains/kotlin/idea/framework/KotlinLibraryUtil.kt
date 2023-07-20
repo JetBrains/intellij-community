@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.framework
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
 val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
@@ -18,6 +18,7 @@ val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
 val GRADLE_SYSTEM_ID: ProjectSystemId
     get() = org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
     "Moved to the 'org.jetbrains.kotlin.idea.base.util' package.",
     level = DeprecationLevel.ERROR,

@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
@@ -255,44 +256,6 @@ public final class VcsUtil {
     if (virtualFile != null) return IconUtil.getIcon(virtualFile, 0, project);
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(filePath.getName());
     return fileType.getIcon();
-  }
-
-  /**
-   * @return Return true if the "Change" object is created for "Rename" operation:
-   * in this case name of files for "before" and "after" revisions must not coincide.
-   * @deprecated See {@link Change#getType()}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isRenameChange(Change change) {
-    boolean isRenamed = false;
-    ContentRevision before = change.getBeforeRevision();
-    ContentRevision after = change.getAfterRevision();
-    if (before != null && after != null) {
-      String prevFile = getCanonicalLocalPath(before.getFile().getPath());
-      String newFile = getCanonicalLocalPath(after.getFile().getPath());
-      isRenamed = !prevFile.equals(newFile);
-    }
-    return isRenamed;
-  }
-
-  /**
-   * @return Return true if the "Change" object is created for "New" operation:
-   * "before" revision is NULL, while "after" revision is NOT NULL.
-   * @deprecated See {@link Change#getType()}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isChangeForNew(Change change) {
-    return change.getBeforeRevision() == null && change.getAfterRevision() != null;
-  }
-
-  /**
-   * @return Return true if the "Change" object is created for "Delete" operation:
-   * "before" revision is NOT NULL, while "after" revision is NULL.
-   * @deprecated See {@link Change#getType()}
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean isChangeForDeleted(Change change) {
-    return change.getBeforeRevision() != null && change.getAfterRevision() == null;
   }
 
   public static boolean isChangeForFolder(Change change) {
@@ -702,5 +665,10 @@ public final class VcsUtil {
       modified |= set.remove(value);
     }
     return modified;
+  }
+
+  public static boolean shouldDetectVcsMappingsFor(@NotNull Project project) {
+    return Registry.is("vcs.detect.vcs.mappings.automatically") &&
+           VcsSharedProjectSettings.getInstance(project).isDetectVcsMappingsAutomatically();
   }
 }

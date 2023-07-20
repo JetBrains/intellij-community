@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.stubindex
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexKey
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
@@ -14,13 +13,15 @@ import org.jetbrains.kotlin.psi.KtTypeAlias
  * The key is stringified [org.jetbrains.kotlin.name.ClassId] by the rules described in [org.jetbrains.kotlin.name.ClassId.asString]:
  * packages are delimited by '/' and classes by '.', e.g. "kotlin/Map.Entry"
  */
-object KotlinInnerTypeAliasClassIdIndex : StringStubIndexExtension<KtTypeAlias>() {
-    private val KEY: StubIndexKey<String, KtTypeAlias> =
-        StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinInnerTypeAliasClassIdIndex")
+class KotlinInnerTypeAliasClassIdIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
+    companion object Helper : KotlinStringStubIndexHelper<KtTypeAlias>(KtTypeAlias::class.java) {
+        override val indexKey: StubIndexKey<String, KtTypeAlias> =
+            StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinInnerTypeAliasClassIdIndex")
+    }
 
-    override fun getKey(): StubIndexKey<String, KtTypeAlias> = KEY
+    override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
-    override fun get(s: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
-        return StubIndex.getElements(KEY, s, project, scope, KtTypeAlias::class.java)
+    override fun get(fqName: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
+        return Helper[fqName, project, scope]
     }
 }

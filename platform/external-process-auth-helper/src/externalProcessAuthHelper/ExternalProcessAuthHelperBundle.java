@@ -9,28 +9,17 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class ExternalProcessAuthHelperBundle extends DynamicBundle {
-  @NonNls public static final String BUNDLE = "messages.ExternalProcessAuthHelperBundle";
-  private static final ExternalProcessAuthHelperBundle INSTANCE = new ExternalProcessAuthHelperBundle();
+public final class ExternalProcessAuthHelperBundle {
+  public static final @NonNls String BUNDLE = "messages.ExternalProcessAuthHelperBundle";
+  private static final DynamicBundle INSTANCE = new DynamicBundle(ExternalProcessAuthHelperBundle.class, BUNDLE);
 
-  private ExternalProcessAuthHelperBundle() { super(BUNDLE); }
+  private ExternalProcessAuthHelperBundle() {}
 
-  @NotNull
-  public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getMessage(key, params);
   }
 
-  @NotNull
-  public static Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
+  public static @NotNull Supplier<@Nls String> messagePointer(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key, Object @NotNull ... params) {
     return INSTANCE.getLazyMessage(key, params);
-  }
-
-  /**
-   * @deprecated prefer {@link #message(String, Object...)} instead
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return message(key);
   }
 }

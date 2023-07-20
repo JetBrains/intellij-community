@@ -43,14 +43,14 @@ sealed class TargetPaths {
     /**
      * Adds a path that must be uploaded, with related actions that must be performed before and after this path is resolved.
      */
-    fun upload(localPath: String, beforeUploadResolved: (String) -> Unit = {}, afterUploadResolved: (String) -> Unit) = apply { 
+    fun upload(localPath: String, beforeUploadResolved: (String) -> Unit = {}, afterUploadResolved: (String) -> Unit): OrderBuilder = apply {
       orderedPaths += TargetPath.toUpload(localPath, beforeUploadResolved, afterUploadResolved)
     }
 
     /**
      * Adds a path that must be downloaded, with related actions that must be performed before and after this path is resolved.
      */
-    fun download(localPath: String, beforeDownloadResolved: (String) -> Unit = {}, afterDownloadResolved: (String) -> Unit) = apply {
+    fun download(localPath: String, beforeDownloadResolved: (String) -> Unit = {}, afterDownloadResolved: (String) -> Unit): OrderBuilder = apply {
       orderedPaths += TargetPath.toDownload(localPath, beforeDownloadResolved, afterDownloadResolved)
     }
 
@@ -99,10 +99,10 @@ class TargetPath private constructor(val localPath: String,
   private enum class PathKind { UPLOAD, DOWNLOAD }
 
   companion object {
-    fun toUpload(path: String, beforeUploadResolved: (String) -> Unit = {}, afterUploadResolved: (String) -> Unit = {}) =
+    fun toUpload(path: String, beforeUploadResolved: (String) -> Unit = {}, afterUploadResolved: (String) -> Unit = {}): TargetPath =
       TargetPath(path, PathKind.UPLOAD, beforeUploadResolved, afterUploadResolved)
 
-    fun toDownload(path: String, beforeDownloadResolved: (String) -> Unit = {}, afterDownloadResolved: (String) -> Unit = {}) =
+    fun toDownload(path: String, beforeDownloadResolved: (String) -> Unit = {}, afterDownloadResolved: (String) -> Unit = {}): TargetPath =
       TargetPath(path, PathKind.DOWNLOAD, beforeDownloadResolved, afterDownloadResolved)
   }
 }

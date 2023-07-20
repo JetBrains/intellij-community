@@ -315,7 +315,7 @@ public class PrepareToDeployAction extends AnAction {
           VirtualFile outputPath = extension.getCompilerOutputPath();
           if (outputPath != null) {
             // pre-condition: output dirs for all modules are up-to-date
-            jar.addDirectory(new File(outputPath.getPath()));
+            jar.addDirectory(outputPath.toNioPath());
           }
         }
       }

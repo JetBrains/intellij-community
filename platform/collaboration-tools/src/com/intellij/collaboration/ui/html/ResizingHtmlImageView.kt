@@ -4,7 +4,6 @@ package com.intellij.collaboration.ui.html
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.util.containers.ComparatorUtil.min
-import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -24,7 +23,7 @@ private val loadingIcon: Icon
   get() = AllIcons.Process.Step_passive
 
 private val notLoadedIcon: Icon
-  get() = EmptyIcon.ICON_16
+  get() = AllIcons.FileTypes.Image
 
 /**
  * Custom image view to be used with [com.intellij.util.ui.ExtendableHTMLViewFactory]
@@ -150,7 +149,7 @@ class ResizingHtmlImageView(element: Element) : View(element) {
       cachedContainer?.repaint(100)
     }
     else {
-      cachedContainer?.repaint(100, rect.x, rect.y, rect.width, rect.height)
+      cachedContainer?.repaint(rect.x, rect.y, rect.width, rect.height)
     }
   }
 
@@ -286,7 +285,7 @@ private class ImageLoader(
       val dim = Dimension(img.getWidth(null), img.getHeight(null))
       state = State.Loaded(img, dim)
     }
-    else {
+    else if (state !is State.Loaded) {
       state = State.Loading(dimension.takeIf { width >= 0 && height >= 0 })
     }
 

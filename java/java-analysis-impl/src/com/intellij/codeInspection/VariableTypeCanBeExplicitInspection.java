@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
@@ -45,11 +45,10 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
         }
       }
 
-      private void registerTypeElementProblem(PsiTypeElement typeElement) {
-        holder.registerProblem(typeElement,
-                               JavaAnalysisBundle.message("var.can.be.replaced.with.explicit.type"),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               new ReplaceVarWithExplicitTypeFix(typeElement));
+      private void registerTypeElementProblem(@NotNull PsiTypeElement typeElement) {
+        holder.problem(typeElement, JavaAnalysisBundle.message("var.can.be.replaced.with.explicit.type"))
+          .fix(new ReplaceVarWithExplicitTypeFix(typeElement))
+          .register();
       }
     };
   }

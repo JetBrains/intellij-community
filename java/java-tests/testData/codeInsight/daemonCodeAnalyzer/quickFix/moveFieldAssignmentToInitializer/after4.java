@@ -12,7 +12,7 @@ class X {
       }
     };
   X() {
-      <caret>//
+    <caret>  //
   }
 
   void x() {

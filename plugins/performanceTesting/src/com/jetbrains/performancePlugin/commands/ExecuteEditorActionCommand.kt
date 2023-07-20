@@ -14,7 +14,6 @@ import com.jetbrains.performancePlugin.PerformanceTestSpan
 import com.jetbrains.performancePlugin.utils.DaemonCodeAnalyzerListener
 import com.jetbrains.performancePlugin.utils.EditorUtils.createEditorContext
 import io.opentelemetry.api.trace.Span
-import io.opentelemetry.context.Scope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.NonNls
@@ -28,23 +27,22 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
   override suspend fun doExecute(context: PlaybackContext) {
     val input = extractCommandArgument(DelayTypeCommand.PREFIX)
     val parameter = input.parameter(1)
+    val expectedOpenedFile = input.parameter("expectedOpenedFile")
     val span = PerformanceTestSpan.TRACER.spanBuilder(PARTITION_SPAN_NAME + cleanSpanName(parameter)).setParent(
       PerformanceTestSpan.getContext())
     val spanRef = Ref<Span>()
-    val scopeRef = Ref<Scope>()
     val connection = context.project.messageBus.simpleConnect()
-    val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, scopeRef)
-    withContext(Dispatchers.EDT) {
-      val project = context.project
-      val editor = FileEditorManager.getInstance(project).selectedTextEditor
-      if (editor == null) {
-        throw IllegalStateException("editor is null")
-      }
-      spanRef.set(span.startSpan())
-      scopeRef.set(spanRef.get().makeCurrent())
-      executeAction(editor, parameter)
+    val project = context.project
+    val editor = FileEditorManager.getInstance(project).selectedTextEditor
+    if (editor == null) {
+      throw IllegalStateException("editor is null")
     }
-    job.waitForComplete()
+    withContext(Dispatchers.EDT) {
+      spanRef.set(span.startSpan())
+      val job = DaemonCodeAnalyzerListener.listen(connection, spanRef, expectedOpenedFile = expectedOpenedFile)
+      executeAction(editor, parameter)
+      job.waitForComplete()
+    }
   }
 
   fun executeAction(editor: Editor, actionId: String) {
@@ -67,6 +65,11 @@ class ExecuteEditorActionCommand(text: String, line: Int) : PlaybackCommandCorou
   }
 }
 
+private fun String.parameter(name: String): String? {
+  val paramArray = this.split(" ")
+  val keyIndex = paramArray.indexOf(name)
+  return if (keyIndex > 0 && (keyIndex + 1) <= paramArray.size) paramArray[keyIndex + 1] else null
+}
 private fun String.parameter(i: Int): String {
   return this.split(" ").also {
     if (it.size < i + 1) throw IllegalArgumentException("Parameter with index $i not exists in $it")

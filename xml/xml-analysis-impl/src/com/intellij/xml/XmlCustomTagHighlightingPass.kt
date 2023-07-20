@@ -31,7 +31,7 @@ import com.intellij.psi.xml.XmlTag
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor
 import com.intellij.xml.util.HtmlUtil
 
-val attributeKeyMapping = mapOf<TextAttributesKey, TextAttributesKey>(
+val attributeKeyMapping: Map<TextAttributesKey, TextAttributesKey> = mapOf<TextAttributesKey, TextAttributesKey>(
   XmlHighlighterColors.HTML_TAG_NAME to XmlHighlighterColors.HTML_CUSTOM_TAG_NAME,
   XmlHighlighterColors.XML_TAG_NAME to XmlHighlighterColors.XML_CUSTOM_TAG_NAME
 )

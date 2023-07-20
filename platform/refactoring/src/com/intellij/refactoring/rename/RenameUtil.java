@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -46,6 +45,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public final class RenameUtil {
   private static final Logger LOG = Logger.getInstance(RenameUtil.class);
@@ -286,7 +287,7 @@ public final class RenameUtil {
     return result.isEmpty() ? null : result;
   }
 
-  public static void addConflictDescriptions(UsageInfo[] usages, MultiMap<PsiElement, String> conflicts) {
+  public static void addConflictDescriptions(UsageInfo[] usages, MultiMap<PsiElement, @DialogMessage String> conflicts) {
     for (UsageInfo usage : usages) {
       if (usage instanceof UnresolvableCollisionUsageInfo) {
         conflicts.putValue(usage.getElement(), ((UnresolvableCollisionUsageInfo)usage).getDescription());
@@ -332,7 +333,13 @@ public final class RenameUtil {
       final UsageOffset substitution = new UsageOffset(fileOffset, fileOffset + rangeInElement.getLength(), usage.newText);
       final UsageOffset duplicate = offsetMap.get(fileOffset);
       if (duplicate != null) {
-        LOG.assertTrue(duplicate.equals(substitution), "unequal renaming in the same place of document");
+        if (!duplicate.equals(substitution)) {
+          LOG.warn("ATTENTION! Unequal renaming in the same place in the document, possibly due to injection (read more in CPP-17316):\n"
+                    + "      document: " + document + "\n"
+                    + "       element: " + element + "\n"
+                    + "  first rename: " + substitution.newText + "(" + substitution.startOffset + ", " + substitution.endOffset + ")\n"
+                    + " second rename: " + duplicate.newText + "(" + duplicate.startOffset + ", " + duplicate.endOffset + ")");
+        }
       }
       else {
         offsetMap.put(fileOffset, substitution);

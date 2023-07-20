@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.renderer.*
+import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.types.KotlinType
 import java.lang.reflect.Modifier
 import kotlin.jvm.internal.PropertyReference1Impl
@@ -89,6 +90,7 @@ open class KotlinIdeDescriptorOptions : DescriptorRendererOptions {
     override var receiverAfterName by property(false)
     override var renderCompanionObjectName by property(false)
     override var propertyAccessorRenderingPolicy by property(PropertyAccessorRenderingPolicy.DEBUG)
+    override var propertyConstantRenderer: ((ConstantValue<*>) -> String?)? by property(null)
     override var renderDefaultAnnotationArguments by property(false)
     override var eachAnnotationOnNewLine by property(false)
     override var excludedAnnotationClasses by property(emptySet<FqName>())

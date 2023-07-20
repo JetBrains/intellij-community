@@ -34,13 +34,14 @@ private val DEMOS = arrayOf(
   ::demoGaps,
   ::demoGroups,
   ::demoAvailability,
+  ::demoValidation,
   ::demoBinding,
   ::demoTips
 )
 
 internal class UiDslShowcaseAction : DumbAwareAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     UiDslShowcaseDialog(e.project, templatePresentation.text).show()
@@ -92,13 +93,15 @@ private class UiDslShowcaseDialog(val project: Project?, dialogTitle: String) :
         { it },
         {
           when (it.name) {
-            "parentDisposable" -> myDisposable
+            "parentDisposable" -> disposable
             else -> null
           }
         }
       )
 
       val dialogPanel = demo.callBy(args)
+      dialogPanel.registerValidators(disposable)
+
       if (annotation.scrollbar) {
         row {
           dialogPanel.border = JBEmptyBorder(10)

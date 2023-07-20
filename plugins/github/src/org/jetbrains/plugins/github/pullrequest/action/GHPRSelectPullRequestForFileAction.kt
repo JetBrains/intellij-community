@@ -16,7 +16,7 @@ import org.jetbrains.plugins.github.pullrequest.GHPRVirtualFile
 import java.util.function.Supplier
 
 class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messagePointer("pull.request.select.action"),
-                                                           Supplier<String?> { null },
+                                                           Supplier { null },
                                                            AllIcons.General.Locate) {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT

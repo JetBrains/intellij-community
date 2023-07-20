@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.fir.completion.test.handlers
 
 import com.intellij.testFramework.common.runAll
+import org.jetbrains.kotlin.idea.completion.test.firFileName
 import org.jetbrains.kotlin.idea.completion.test.handlers.AbstractBasicCompletionHandlerTest
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.test.utils.IgnoreTests
@@ -21,8 +22,7 @@ abstract class AbstractHighLevelBasicCompletionHandlerTest : AbstractBasicComple
         )
     }
 
-    override fun handleTestPath(path: String): File =
-        IgnoreTests.getFirTestFileIfFirPassing(File(path), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after")
+    override fun fileName(): String = firFileName(super.fileName(), testDataDirectory, ".after")
 
     override fun doTest(testPath: String) {
         IgnoreTests.runTestIfEnabledByFileDirective(dataFilePath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON, ".after") {

@@ -5,3 +5,4 @@ fun foo(p: java.io.File?){ }
 fun bar(o: Any){
     foo(o as? File)<caret>
 }
+// AUTOCOMPLETE_SETTING: true

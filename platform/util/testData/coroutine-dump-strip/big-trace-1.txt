@@ -4,7 +4,7 @@
 #  at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:123)
   at com.intellij.ide.navbar.ui.StaticNavBarPanel$1.invokeSuspend(StaticNavBarPanel.kt:25)
   - ProducerCoroutine{Active}@1550081f, state: SUSPENDED [EDT]
-    at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#    at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
     at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:27)
 #    at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:60)
     - StandaloneCoroutine{Active}@5c957cfe, state: SUSPENDED [EDT]
@@ -17,7 +17,7 @@
 #        at kotlinx.coroutines.flow.internal.ChannelFlow$collect$2.invokeSuspend(ChannelFlow.kt:123)
         at com.intellij.ide.navbar.ui.NewNavBarPanel$2.invokeSuspend(NewNavBarPanel.kt:81)
         - ProducerCoroutine{Active}@380d7b13, state: SUSPENDED [EDT]
-          at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#          at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
           at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:27)
 #          at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:60)
           - StandaloneCoroutine{Active}@54f0d5a1, state: SUSPENDED [EDT]
@@ -29,33 +29,33 @@
 #            at kotlinx.coroutines.flow.FlowKt__MergeKt$mapLatest$1.invokeSuspend(Merge.kt:214)
 #            at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3$1$2.invokeSuspend(Merge.kt:34)
             - StandaloneCoroutine{Active}@66d324ee, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@aac227f, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@4fad8a30, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@1d2203b9, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@6229b0a7, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@97dd947, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@2aa23e52, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@2710df74, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - StandaloneCoroutine{Active}@893ffb9, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at com.intellij.ide.navbar.ui.NavBarItemComponent$1.invokeSuspend(NavBarItemComponent.kt:74)
             - ProducerCoroutine{Active}@6f43a80d, state: SUSPENDED [EDT]
-              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
+#              at kotlinx.coroutines.flow.StateFlowImpl.collect(StateFlow.kt:403)
               at kotlinx.coroutines.flow.internal.ChannelFlowTransformLatest$flowCollect$3.invokeSuspend(Merge.kt:27)
 #              at kotlinx.coroutines.flow.internal.ChannelFlow$collectToFun$1.invokeSuspend(ChannelFlow.kt:60)

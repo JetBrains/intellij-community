@@ -88,6 +88,8 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             KtContainerNode::class.java,
             KtTypeArgumentList::class.java
         )
+
+        private const val SINGLE_LINE_PARAMETERS_COUNT = 3
     }
 
     override fun getActualParameterDelimiterType(): KtSingleValueToken = KtTokens.COMMA
@@ -132,7 +134,6 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
         return PsiTreeUtil.getParentOfType(element, argumentListClass.java)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
     override fun updateParameterInfo(argumentList: TArgumentList, context: UpdateParameterInfoContext) {
         if (context.parameterOwner !== argumentList) {
             context.removeHint()
@@ -167,11 +168,11 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
                 // We need to get the type of the target variable, and retrieve the parameter names from the type (KtFunctionalType).
                 // The names need to be added to KtFunctionalType (currently only types are there) and populated in KtSymbolByFirBuilder.TypeBuilder.
 
-                val parameterToIndex = buildMap<KtVariableLikeSignature<KtValueParameterSymbol>, Int> {
+                val parameterToIndex = buildMap {
                     valueParameters.forEachIndexed { index, parameter -> put(parameter, index) }
                 }
 
-                val parameterIndexToText = buildMap<Int, String> {
+                val parameterIndexToText = buildMap {
                     valueParameters.forEachIndexed { index, parameter ->
                         // TODO: Add hasSynthesizedParameterNames to HL API.
                         // See resolveValueParameters() in core/descriptors.jvm/src/org/jetbrains/kotlin/load/java/lazy/descriptors/LazyJavaScope.kt
@@ -381,6 +382,7 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
             val usedParameterIndices = HashSet<Int>()
             val text = buildString {
                 var argumentIndex = 0
+                val parameterDelimiterIndexes = mutableListOf<Int>()
 
                 fun appendParameter(
                     parameterIndex: Int,
@@ -392,13 +394,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                     if (length > 0) {
                         append(", ")
+                        parameterDelimiterIndexes.add(length)
                         if (markUsedUnusedParameterBorder) {
                             // This is used to "disable" the used parameters, when in "named mode" and there are more unused parameters.
                             // See NamedParameter3.kt test. Disabling them gives a visual cue that they are already used.
 
-                            // Highlight the space after the comma; highlighted text needs to be at least one character long
+                            // Highlight something as bold to show text before as disabled
                             highlightStartOffset = length - 1
-                            highlightEndOffset = length
+                            highlightEndOffset = length - 1
                             isDisabledBeforeHighlight = true
                         }
                     }
@@ -476,6 +479,14 @@ abstract class KotlinHighLevelParameterInfoWithCallHandlerBase<TArgumentList : K
 
                 if (length == 0) {
                     append(CodeInsightBundle.message("parameter.info.no.parameters"))
+                } else if (argumentIndex > SINGLE_LINE_PARAMETERS_COUNT) {
+                    parameterDelimiterIndexes.forEach { offset ->
+                        val start = offset - 1
+                        val end = offset
+                        replace(start, end, "\n")
+                        if (start < highlightStartOffset) highlightStartOffset--
+                        if (start < highlightEndOffset) highlightEndOffset--
+                    }
                 }
             }
 

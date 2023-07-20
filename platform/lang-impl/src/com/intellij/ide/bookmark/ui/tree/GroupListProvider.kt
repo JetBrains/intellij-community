@@ -6,16 +6,17 @@ import com.intellij.ide.bookmark.BookmarksListProvider
 import com.intellij.ide.bookmark.ui.GroupRenameDialog
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 internal class GroupListProvider(private val project: Project) : BookmarksListProvider {
-  override fun getWeight() = Int.MAX_VALUE
-  override fun getProject() = project
+  override fun getWeight(): Int = Int.MAX_VALUE
+  override fun getProject(): Project = project
 
   override fun createNode(): AbstractTreeNode<*>? = null
 
-  override fun getEditActionText() = message("bookmark.group.rename.action.text")
-  override fun canEdit(selection: Any) = selection is GroupNode
+  override fun getEditActionText(): @Nls String = message("bookmark.group.rename.action.text")
+  override fun canEdit(selection: Any): Boolean = selection is GroupNode
   override fun performEdit(selection: Any, parent: JComponent) {
     val node = selection as? GroupNode ?: return
     val group = node.value ?: return
@@ -23,9 +24,9 @@ internal class GroupListProvider(private val project: Project) : BookmarksListPr
     GroupRenameDialog(project, parent, manager, group).showAndGetGroup()
   }
 
-  override fun getDeleteActionText() = message("bookmark.group.delete.action.text")
-  override fun canDelete(selection: List<*>) = selection.all { it is GroupNode }
-  override fun performDelete(selection: List<*>, parent: JComponent) = selection.forEach {
+  override fun getDeleteActionText(): @Nls String = message("bookmark.group.delete.action.text")
+  override fun canDelete(selection: List<*>): Boolean = selection.all { it is GroupNode }
+  override fun performDelete(selection: List<*>, parent: JComponent): Unit = selection.forEach {
     val node = it as? GroupNode
     node?.value?.remove()
   }

@@ -12,7 +12,7 @@ import git4idea.commands.GitLineHandler
 import git4idea.config.GitVersionSpecialty
 import org.jetbrains.annotations.NonNls
 
-@Service
+@Service(Service.Level.PROJECT)
 internal class GitAmendCommitService(project: Project) : AmendCommitService(project) {
   override fun isAmendCommitSupported(): Boolean = true
 

@@ -16,6 +16,7 @@ import com.jetbrains.python.packaging.PyPackageVersionComparator
 import com.jetbrains.python.packaging.cache.PythonPackageCache
 import com.jetbrains.python.packaging.common.PythonRankingAwarePackageNameComparator
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
+import com.jetbrains.python.sdk.add.target.conda.TargetEnvironmentRequestCommandExecutor
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.getOrCreateAdditionalData
 import com.jetbrains.python.sdk.targetEnvConfiguration
@@ -36,9 +37,9 @@ class CondaPackageCache : PythonPackageCache<String> {
     withContext(Dispatchers.IO) {
       val pathOnTarget = (sdk.getOrCreateAdditionalData().flavorAndData.data as PyCondaFlavorData).env.fullCondaPathOnTarget
       val targetConfig = sdk.targetEnvConfiguration
-
-      val command = PyCondaCommand(pathOnTarget, targetConfig, project)
-      val baseConda = PyCondaEnv.getEnvs(command).getOrThrow()
+      val targetRequest = targetConfig?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
+      val commandExecutor = TargetEnvironmentRequestCommandExecutor(targetRequest)
+      val baseConda = PyCondaEnv.getEnvs(commandExecutor, pathOnTarget).getOrThrow()
         .first { it.envIdentity is PyCondaEnvIdentity.UnnamedEnv && it.envIdentity.isBase }
 
       val helpersAware = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, project)
@@ -76,7 +77,7 @@ class CondaPackageCache : PythonPackageCache<String> {
         .filterNot { it.size < 2 }
         .filterNot { it[0].startsWith("r-") } // todo[akniazev]: make sure it's the best way to get rid of R packages
         .groupBy({ it[0] }, { it[1] })
-        .mapValues { it.value.sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
+        .mapValues { it.value.distinct().sortedWith(PyPackageVersionComparator.STR_COMPARATOR.reversed()) }
         .toSortedMap(PythonRankingAwarePackageNameComparator())
 
       cache = packages

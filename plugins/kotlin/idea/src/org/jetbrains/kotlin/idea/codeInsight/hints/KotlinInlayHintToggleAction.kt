@@ -93,7 +93,7 @@ internal fun toggleHintSetting(
         }
         settings.enable(hintType, enable)
         hintsSettings.storeSettings(settingsKey, language, settings)
-        refreshHints()
+        refreshHints(project)
         true
     } ?: false
 }

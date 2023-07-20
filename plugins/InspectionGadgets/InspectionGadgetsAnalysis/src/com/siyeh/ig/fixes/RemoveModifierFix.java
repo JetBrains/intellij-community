@@ -15,14 +15,18 @@
  */
 package com.siyeh.ig.fixes;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
+import com.intellij.lang.ASTNode;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
-public class RemoveModifierFix extends InspectionGadgetsFix {
+public class RemoveModifierFix extends PsiUpdateModCommandQuickFix {
 
   private final String modifierText;
 
@@ -44,10 +48,16 @@ public class RemoveModifierFix extends InspectionGadgetsFix {
   }
 
   @Override
-  public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement modifierElement = descriptor.getPsiElement();
-    //if (modifierElement instanceof PsiKeyword) {
-      deleteElement(modifierElement);
-    //}
+  protected void applyFix(@NotNull Project project, @NotNull PsiElement modifierElement, @NotNull ModPsiUpdater updater) {
+    PsiElement modifierElementParent = modifierElement.getParent();
+    if (modifierElementParent instanceof PsiModifierList &&
+        modifierElementParent.getParent() instanceof PsiMethod method) {
+      ASTNode node = method.getParameterList().getNode();
+      if (node != null) {
+        //align method parameters
+        CodeEditUtil.markToReformat(node, true);
+      }
+    }
+    modifierElement.delete();
   }
 }

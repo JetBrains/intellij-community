@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -558,7 +558,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
         virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
         VirtualFile file = virtualFile;
         ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file),
-                                                        ModalityState.NON_MODAL,
+                                                        ModalityState.nonModal(),
                                                         ApplicationManager.getApplication().getDisposed());
       }
     }

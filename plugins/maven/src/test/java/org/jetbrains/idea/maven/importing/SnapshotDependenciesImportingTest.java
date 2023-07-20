@@ -15,9 +15,9 @@
  */
 package org.jetbrains.idea.maven.importing;
 
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.io.File;
@@ -190,7 +190,7 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
   }
 
   @Test
-  public void testCorrectlryUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
+  public void testCorrectlyUpdateRootEntriesWithActualPathForSnapshotDependencies() throws Exception {
     if (!hasMavenInstallation()) return;
 
     deployArtifact("test", "foo", "1-SNAPSHOT",
@@ -276,7 +276,6 @@ public class SnapshotDependenciesImportingTest extends MavenMultiVersionImportin
                      """);
     removeFromLocalRepository("test");
 
-    scheduleResolveAll();
     resolveDependenciesAndImport();
 
     assertModuleLibDep("project",

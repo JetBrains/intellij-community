@@ -28,20 +28,23 @@ public class ChangeTypeSignatureHandler implements ChangeTypeSignatureHandlerBas
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
     final PsiElement element = file.findElementAt(offset);
+    if (element instanceof PsiIdentifier) {
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiVariable variable) {
+        if (invoke(project, editor, variable.getTypeElement(), variable)) {
+          return;
+        }
+      }
+      else if (parent instanceof PsiMethod method && !method.isConstructor()) {
+        if (invoke(project, editor, method.getReturnTypeElement(), method)) {
+          return;
+        }
+      }
+    }
     PsiTypeElement typeElement = PsiTreeUtil.getParentOfType(element, PsiTypeElement.class);
     while (typeElement != null) {
       final PsiElement parent = typeElement.getParent();
-      PsiElement[] toMigrate = null;
-      if (parent instanceof PsiVariable) {
-        toMigrate = extractReferencedVariables(typeElement);
-      }
-      else if ((parent instanceof PsiMember && !(parent instanceof PsiClass)) || isClassArgument(parent)) {
-        toMigrate = new PsiElement[]{parent};
-      }
-      if (toMigrate != null && toMigrate.length > 0) {
-        invoke(project, toMigrate, editor);
-        return;
-      }
+      if (invoke(project, editor, typeElement, parent)) return;
       typeElement = PsiTreeUtil.getParentOfType(parent, PsiTypeElement.class, false);
     }
     CommonRefactoringUtil.showErrorHint(project, editor,
@@ -49,8 +52,23 @@ public class ChangeTypeSignatureHandler implements ChangeTypeSignatureHandlerBas
                                         JavaRefactoringBundle.message("type.migration.error.hint.title"), "refactoring.migrateType");
   }
 
+  private static boolean invoke(@NotNull Project project, Editor editor, PsiTypeElement typeElement, PsiElement parent) {
+    PsiElement[] toMigrate = null;
+    if (parent instanceof PsiVariable) {
+      toMigrate = extractReferencedVariables(typeElement);
+    }
+    else if ((parent instanceof PsiMember && !(parent instanceof PsiClass)) || isClassArgument(parent)) {
+      toMigrate = new PsiElement[]{parent};
+    }
+    if (toMigrate != null && toMigrate.length > 0) {
+      invoke(project, toMigrate, editor);
+      return true;
+    }
+    return false;
+  }
+
   @Override
-  public void invoke(@NotNull final Project project, final PsiElement @NotNull [] elements, final DataContext dataContext) {
+  public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     final PsiElement element = elements[0];
     invokeOnElement(project, element);
@@ -67,10 +85,10 @@ public class ChangeTypeSignatureHandler implements ChangeTypeSignatureHandlerBas
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, root, migrationType);
   }
 
-  private static void invokeOnElement(final Project project, final PsiElement element) {
+  private static void invokeOnElement(Project project, PsiElement element) {
     if (element instanceof PsiVariable ||
         (element instanceof PsiMember && !(element instanceof PsiClass)) ||
-        element instanceof PsiFile  ||
+        element instanceof PsiFile ||
         isClassArgument(element)) {
       invoke(project, new PsiElement[] {element}, (Editor)null);
     }

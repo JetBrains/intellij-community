@@ -17,12 +17,12 @@ public final class EventLogSystemLogger {
   public static final String GROUP = "event.log";
 
   public static void logMetadataLoad(@NotNull String recorderId, @Nullable String version) {
-    final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
+    final FeatureUsageData data = new FeatureUsageData(recorderId).addVersionByString(version);
     logEvent(recorderId, "metadata.loaded", data);
   }
 
   public static void logMetadataUpdated(@NotNull String recorderId, @Nullable String version) {
-    final FeatureUsageData data = new FeatureUsageData().addVersionByString(version);
+    final FeatureUsageData data = new FeatureUsageData(recorderId).addVersionByString(version);
     logEvent(recorderId, "metadata.updated", data);
   }
 
@@ -35,7 +35,7 @@ public final class EventLogSystemLogger {
   }
 
   private static void logMetadataError(@NotNull String recorderId, @NotNull String eventId, @NotNull EventLogMetadataUpdateError error) {
-    final FeatureUsageData data = new FeatureUsageData().
+    final FeatureUsageData data = new FeatureUsageData(recorderId).
       addData("stage", error.getUpdateStage().name()).
       addData("error", error.getErrorType());
 
@@ -54,7 +54,7 @@ public final class EventLogSystemLogger {
                                   @NotNull List<String> successfullySentFiles,
                                   @NotNull List<Integer> errors) {
     EventLogRecorderConfiguration config = EventLogConfiguration.getInstance().getOrCreate(recorderId);
-    final FeatureUsageData data = new FeatureUsageData().
+    final FeatureUsageData data = new FeatureUsageData(recorderId).
       addData("total", total).
       addData("send", succeed + failed).
       addData("succeed", succeed).
@@ -66,13 +66,13 @@ public final class EventLogSystemLogger {
   }
 
   public static void logStartingExternalSend(@NotNull String recorderId, long time) {
-    FeatureUsageData data = new FeatureUsageData().addData("send_ts", time);
+    FeatureUsageData data = new FeatureUsageData(recorderId).addData("send_ts", time);
     logEvent(recorderId, "external.send.started", data);
   }
 
   public static void logFinishedExternalSend(@NotNull String recorderId, @Nullable String error, long time) {
     boolean succeed = StringUtil.isEmpty(error);
-    FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed).addData("send_ts", time);
+    FeatureUsageData data = new FeatureUsageData(recorderId).addData("succeed", succeed).addData("send_ts", time);
     if (!succeed) {
       data.addData("error", error);
     }
@@ -87,18 +87,17 @@ public final class EventLogSystemLogger {
 
   public static void logFinishedCreatingExternalSendCommand(@NotNull List<String> recorders, @Nullable EventLogUploadErrorType errorType) {
     boolean succeed = errorType == null;
-    FeatureUsageData data = new FeatureUsageData().addData("succeed", succeed);
-    if (!succeed) {
-      data.addData("error", errorType.name());
-    }
-
     for (String recorderId : recorders) {
+      FeatureUsageData data = new FeatureUsageData(recorderId).addData("succeed", succeed);
+      if (!succeed) {
+        data.addData("error", errorType.name());
+      }
       logEvent(recorderId, "external.send.command.creation.finished", data);
     }
   }
 
   public static void logSystemError(@NotNull String recorderId, @NotNull String eventId, @NotNull String errorClass, long time) {
-    FeatureUsageData data = new FeatureUsageData().addData("error", errorClass);
+    FeatureUsageData data = new FeatureUsageData(recorderId).addData("error", errorClass);
     if (time != -1) {
       data.addData("error_ts", time);
     }

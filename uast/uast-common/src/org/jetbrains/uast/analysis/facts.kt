@@ -7,6 +7,6 @@ import org.jetbrains.annotations.ApiStatus
 enum class UNullability {
   NULLABLE, NOT_NULL, NULL, UNKNOWN;
 
-  val isNullOrNullable
+  val isNullOrNullable: Boolean
     get() = this == NULL || this == NULLABLE
 }

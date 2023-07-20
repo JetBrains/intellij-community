@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention;
 
 import com.intellij.openapi.editor.Editor;
@@ -47,8 +47,7 @@ public interface CustomizableIntentionAction extends IntentionAction {
   /**
    * Get text specifically for tooltip view
    */
-  @NlsContexts.Tooltip
-  default String getTooltipText() {
+  default @NlsContexts.Tooltip String getTooltipText() {
     return getText();
   }
 
@@ -67,6 +66,11 @@ public interface CustomizableIntentionAction extends IntentionAction {
     private final TextRange rangeInPsi;
     private final TextAttributesKey highlightKey;
 
+    /**
+     * @param psi psi element to highlight
+     * @param rangeInPsi range within psi element to highlight
+     * @param highlightKey highlighting key to use
+     */
     public RangeToHighlight(@NotNull PsiElement psi, @NotNull TextRange rangeInPsi, @NotNull TextAttributesKey highlightKey) {
       this.psi = psi;
       this.rangeInPsi = rangeInPsi;

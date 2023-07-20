@@ -10,7 +10,7 @@ abstract class IndentedPrintingVisitor(val shouldIndent: (PsiElement) -> Boolean
   constructor(vararg kClasses: KClass<*>) : this({ psi -> kClasses.any { it.isInstance(psi) } })
 
   private val builder = StringBuilder()
-  var level = 0
+  var level: Int = 0
     private set
 
   override fun visitElement(element: PsiElement) {

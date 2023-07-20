@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -79,7 +79,25 @@ public interface IntentionPreviewInfo {
   };
 
   /**
-   * Diff preview where original text and new text are explicitly displayed.
+   * Diff preview for multiple files. UI may show only some of them if there are too many.
+   */
+  class MultiFileDiff implements IntentionPreviewInfo {
+    private final @NotNull List<@NotNull CustomDiff> myDiffs;
+
+    public MultiFileDiff(@NotNull List<@NotNull CustomDiff> diffs) {
+      myDiffs = diffs;
+    }
+
+    /**
+     * @return list of individual CustomDiff objects to display
+     */
+    public @NotNull List<@NotNull CustomDiff> getDiffs() {
+      return myDiffs;
+    }
+  }
+  
+  /**
+   * Diff preview where original text and new text are explicitly specified.
    * Could be used to generate custom diff previews (e.g. when changes are to be applied to another file).
    * <p>
    * In most of the cases, original text could be empty, so simply the new text will be displayed.
@@ -91,6 +109,7 @@ public interface IntentionPreviewInfo {
     private final @NotNull String myOrigText;
     private final @NotNull String myModifiedText;
     private final @Nullable String myFileName;
+    private final boolean myLineNumbers;
 
     /**
      * Construct a custom diff. Please prefer another constructor and specify a file name if it's applicable.
@@ -110,10 +129,30 @@ public interface IntentionPreviewInfo {
      * @param modifiedText changed file text
      */
     public CustomDiff(@NotNull FileType type, @Nullable String name, @NotNull String origText, @NotNull String modifiedText) {
+      this(type, name, origText, modifiedText, false);
+    }
+
+    /**
+     * @param type         file type, used for highlighting
+     * @param name         file name, can be displayed to user if specified
+     * @param origText     original file text
+     * @param modifiedText changed file text
+     * @param lineNumbers  if true then diff will display line numbers
+     */
+    public CustomDiff(@NotNull FileType type,
+                      @Nullable String name,
+                      @NotNull String origText,
+                      @NotNull String modifiedText,
+                      boolean lineNumbers) {
       myFileType = type;
       myFileName = name;
       myOrigText = origText;
       myModifiedText = modifiedText;
+      myLineNumbers = lineNumbers;
+    }
+
+    public boolean showLineNumbers() {
+      return myLineNumbers;
     }
 
     public @Nullable String fileName() {
@@ -197,8 +236,7 @@ public interface IntentionPreviewInfo {
     return new Html(fragment.wrapWith("p"));
   }
 
-  @NotNull
-  private static HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
+  private static @NotNull HtmlChunk getIconChunk(@Nullable Icon icon, @NotNull String id) {
     if (icon instanceof DeferredIcon) {
       icon = ((DeferredIcon)icon).evaluate();
     }
@@ -290,11 +328,10 @@ public interface IntentionPreviewInfo {
     return icon;
   }
 
-  @NotNull
-  private static HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
-                                               @Nullable Icon targetIcon,
-                                               @Nullable @Nls String sourceName,
-                                               @Nullable @Nls String targetName) {
+  private static @NotNull HtmlChunk getHtmlMoveFragment(@Nullable Icon sourceIcon,
+                                                        @Nullable Icon targetIcon,
+                                                        @Nullable @Nls String sourceName,
+                                                        @Nullable @Nls String targetName) {
     return new HtmlBuilder()
       .append(getIconChunk(sourceIcon, "source_" + sourceName))
       .append(Objects.requireNonNull(sourceName))
@@ -310,8 +347,17 @@ public interface IntentionPreviewInfo {
    */
   static @NotNull IntentionPreviewInfo navigate(@NotNull NavigatablePsiElement target) {
     PsiFile file = target.getContainingFile();
-    Icon icon = file.getIcon(0);
     int offset = target.getTextOffset();
+    return navigate(file, offset);
+  }
+
+  /**
+   * @param file file to navigate to
+   * @param offset offset within file to navigate to
+   * @return a presentation describing that the action will navigate to the specified target element
+   */
+  static @NotNull Html navigate(@NotNull PsiFile file, int offset) {
+    Icon icon = file.getIcon(0);
     Document document = file.getViewProvider().getDocument();
     HtmlBuilder builder = new HtmlBuilder();
     builder.append(HtmlChunk.htmlEntity("&rarr;")).append(" ");
@@ -344,7 +390,7 @@ public interface IntentionPreviewInfo {
    * @return a presentation describing that the action will add the specified option to the options list
    */
   static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
-                                            @NotNull @Nls String title, 
+                                            @NotNull @Nls String title,
                                             @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);
     HtmlChunk select = HtmlChunk.tag("select").attr("multiple", "multiple").attr("size", maxToList)

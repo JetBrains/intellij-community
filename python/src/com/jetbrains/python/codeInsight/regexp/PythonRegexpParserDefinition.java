@@ -7,7 +7,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IFileElementType;
-import org.intellij.lang.regexp.*;
+import org.intellij.lang.regexp.RegExpCapability;
+import org.intellij.lang.regexp.RegExpLexer;
+import org.intellij.lang.regexp.RegExpParser;
+import org.intellij.lang.regexp.RegExpParserDefinition;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
@@ -40,6 +43,6 @@ public class PythonRegexpParserDefinition extends RegExpParserDefinition {
 
   @Override
   public @NotNull PsiFile createFile(@NotNull FileViewProvider viewProvider) {
-    return new RegExpFile(viewProvider, PythonRegexpLanguage.INSTANCE);
+    return new DjangoRegexpFile(viewProvider);
   }
 }

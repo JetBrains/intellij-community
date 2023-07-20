@@ -104,7 +104,9 @@ class IdePluginModuleBuilder : StarterModuleBuilder() {
                                        ftManager.getJ2eeTemplate(DevKitFileTemplatesFactory.GRADLE_WRAPPER_PROPERTIES)))
 
       assets.addAll(standardAssetsProvider.getGradlewAssets())
-      assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      if (starterContext.isCreatingNewProject) {
+        assets.addAll(standardAssetsProvider.getGradleIgnoreAssets())
+      }
 
       val packagePath = getPackagePath(starterContext.group, starterContext.artifact)
       if (starterContext.language == JAVA_STARTER_LANGUAGE) {

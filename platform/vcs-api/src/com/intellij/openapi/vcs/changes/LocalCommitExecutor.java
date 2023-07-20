@@ -19,15 +19,13 @@ import com.intellij.ide.HelpIdProvider;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 
 /**
- * Allows registering additional commit actions for local changes.
- * <p>
- * NB: most {@link com.intellij.openapi.vcs.checkin.CheckinHandler} are skipped for such executors,
- * see {@link com.intellij.openapi.vcs.checkin.CheckinHandler#acceptExecutor(CommitExecutor)}.
- *
- * @see ChangeListManager#registerCommitExecutor(CommitExecutor)
- * @see com.intellij.openapi.vcs.changes.actions.CommitExecutorAction
+ * Marker class for executors that should be skipped by most {@link com.intellij.openapi.vcs.checkin.CheckinHandler} pre-commit checks.
+ * See {@link com.intellij.openapi.vcs.checkin.CheckinHandler#acceptExecutor(CommitExecutor)}.
  */
 public abstract class LocalCommitExecutor implements CommitExecutor, HelpIdProvider {
-  public static final ProjectExtensionPointName<LocalCommitExecutor> LOCAL_COMMIT_EXECUTOR =
-    new ProjectExtensionPointName<>("com.intellij.vcs.changes.localCommitExecutor");
+  /**
+   * @deprecated Use {@link CommitExecutor#LOCAL_COMMIT_EXECUTOR} instead.
+   */
+  @Deprecated
+  public static final ProjectExtensionPointName<CommitExecutor> LOCAL_COMMIT_EXECUTOR = CommitExecutor.LOCAL_COMMIT_EXECUTOR;
 }

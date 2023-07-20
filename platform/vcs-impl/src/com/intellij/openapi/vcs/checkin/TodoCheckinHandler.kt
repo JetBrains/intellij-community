@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -158,7 +158,7 @@ class TodoCheckinHandler(private val project: Project) : CheckinHandler(), Commi
       )
       if (content == null) return
 
-      runInEdt(ModalityState.NON_MODAL) {
+      runInEdt(ModalityState.nonModal()) {
         if (project.isDisposed) return@runInEdt
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(TODO_VIEW) ?: return@runInEdt
 

@@ -1,1 +1,1 @@
-property Foo.foo has 3 usages that are not safe to delete.
+Property Foo.foo has 3 usages that are not safe to delete.

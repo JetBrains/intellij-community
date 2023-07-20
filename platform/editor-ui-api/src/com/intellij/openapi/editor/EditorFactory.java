@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -31,14 +31,12 @@ public abstract class EditorFactory {
   /**
    * Creates a document from the specified text specified as a character sequence.
    */
-  @NotNull
-  public abstract Document createDocument(@NotNull CharSequence text);
+  public abstract @NotNull Document createDocument(@NotNull CharSequence text);
 
   /**
    * Creates a document from the specified text specified as an array of characters.
    */
-  @NotNull
-  public abstract Document createDocument(char @NotNull [] text);
+  public abstract @NotNull Document createDocument(char @NotNull [] text);
 
   /**
    * Creates an editor for the specified document. Must be invoked in EDT.
@@ -182,8 +180,7 @@ public abstract class EditorFactory {
   /**
    * Returns the service for attaching event listeners to all editor instances.
    */
-  @NotNull
-  public abstract EditorEventMulticaster getEventMulticaster();
+  public abstract @NotNull EditorEventMulticaster getEventMulticaster();
 
   /**
    * Reloads the editor settings and refreshes all currently open editors.

@@ -28,9 +28,7 @@ sealed class FilePredictionFeature {
 
     other as FilePredictionFeature
 
-    if (value != other.value) return false
-
-    return true
+    return value == other.value
   }
 
   override fun hashCode(): Int = value.hashCode()

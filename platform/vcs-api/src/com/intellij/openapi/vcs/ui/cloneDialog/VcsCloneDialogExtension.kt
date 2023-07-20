@@ -15,7 +15,7 @@ import javax.swing.Icon
 @JvmDefaultWithCompatibility
 interface VcsCloneDialogExtension {
   companion object {
-    val EP_NAME =
+    val EP_NAME: ExtensionPointName<VcsCloneDialogExtension> =
       ExtensionPointName.create<VcsCloneDialogExtension>("com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtension")
   }
 

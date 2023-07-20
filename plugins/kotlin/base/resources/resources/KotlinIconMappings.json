@@ -5,6 +5,20 @@
                 "idea": {
                     "icons": {
                         "expui": {
+                            "wizard": {
+                                "android.svg": "org/jetbrains/kotlin/idea/icons/wizard/android.svg",
+                                "console.svg": "org/jetbrains/kotlin/idea/icons/wizard/console.svg",
+                                "js.svg": "org/jetbrains/kotlin/idea/icons/wizard/js.svg",
+                                "jvm.svg": "org/jetbrains/kotlin/idea/icons/wizard/jvm.svg",
+                                "linux.svg": "org/jetbrains/kotlin/idea/icons/wizard/linux.svg",
+                                "multiplatform.svg": "org/jetbrains/kotlin/idea/icons/wizard/multiplatform.svg",
+                                "multiplatformLibrary.svg": "org/jetbrains/kotlin/idea/icons/wizard/multiplatformLibrary.svg",
+                                "multiplatformMobile.svg": "org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobile.svg",
+                                "multiplatformMobileLibrary.svg": "org/jetbrains/kotlin/idea/icons/wizard/multiplatformMobileLibrary.svg",
+                                "native.svg": "org/jetbrains/kotlin/idea/icons/wizard/native.svg",
+                                "nodejs.svg": "org/jetbrains/kotlin/idea/icons/wizard/nodejs.svg",
+                                "ppWeb.svg": "org/jetbrains/kotlin/idea/icons/wizard/ppWeb.svg"
+                            },
                             "abstractExtensionFunction.svg": "org/jetbrains/kotlin/idea/icons/abstract_extension_function.svg",
                             "abstractClassKotlin.svg": "org/jetbrains/kotlin/idea/icons/abstractClassKotlin.svg",
                             "actual.svg": "org/jetbrains/kotlin/idea/icons/actual.svg",

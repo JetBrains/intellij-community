@@ -4,6 +4,7 @@ package com.jetbrains.python.codeInsight.typing
 import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
+import com.google.common.cache.LoadingCache
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.packaging.PyPackageManager
@@ -11,15 +12,15 @@ import java.time.Duration
 
 class PyStubPackagesAdvertiserCache {
 
-  private val cache = CacheBuilder.newBuilder()
+  private val cache: LoadingCache<Sdk, Cache<String, StubPackagesForSource>> = CacheBuilder.newBuilder()
     .maximumSize(3)
     .expireAfterAccess(Duration.ofMinutes(10))
-    .build<Sdk, Cache<String, StubPackagesForSource>>(
+    .build(
       CacheLoader.from { _ ->
         CacheBuilder.newBuilder()
           .maximumSize(50)
           .expireAfterAccess(Duration.ofMinutes(5))
-          .build<String, StubPackagesForSource>()
+          .build()
       }
     )
 

@@ -35,13 +35,14 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
         for (session in fileSessionsInfo.sessions) {
           val json = workspace1.featuresStorage.getFeatures(session.id, fileSessionsInfo.filePath)
           val features = FeaturesSerializer.deserialize(json)
-          val newSession = Session(session.offset, session.expectedText, session.content, session.properties)
+          val newSession = Session(session.offset, session.expectedText, session.completableLength, session.content, session.properties)
           for ((i, lookup) in session.lookups.withIndex()) {
             val elements2features = lookup.suggestions.zip(features[i].element)
             val sortedElements2features = elements2features.sortedWith(compareByMultipleFeatures())
             newSession.addLookup(
               Lookup(
                 lookup.prefix,
+                lookup.offset,
                 sortedElements2features.map { it.first },
                 lookup.latency,
                 Features(features[i].common, sortedElements2features.map { it.second }),
@@ -57,8 +58,7 @@ class ReorderElementsStep(config: Config, project: Project, isHeadless: Boolean)
           FileSessionsInfo(fileSessionsInfo.filePath, fileSessionsInfo.text, resultSessions)
         )
       }
-      workspace2.sessionsStorage.saveEvaluationInfo()
-      workspace2.featuresStorage.saveFeaturesInfo()
+      workspace2.sessionsStorage.saveMetadata()
     }
 
     private fun compareByMultipleFeatures(): Comparator<Pair<Suggestion, Map<String, Any>>> {

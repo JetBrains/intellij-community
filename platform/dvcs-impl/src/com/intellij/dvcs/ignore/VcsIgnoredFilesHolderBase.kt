@@ -5,6 +5,7 @@ import com.intellij.dvcs.repo.AbstractRepositoryManager
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsManagedFilesHolderBase
 import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vfs.VirtualFile
 
 abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
   private val repositoryManager: AbstractRepositoryManager<REPOSITORY>
@@ -16,8 +17,8 @@ abstract class VcsIgnoredFilesHolderBase<REPOSITORY : Repository>(
 
   override fun isInUpdatingMode() = allHolders.any(VcsRepositoryIgnoredFilesHolder::isInUpdateMode)
 
-  override fun containsFile(file: FilePath): Boolean {
-    val repository = repositoryManager.getRepositoryForFileQuick(file) ?: return false
+  override fun containsFile(file: FilePath, vcsRoot: VirtualFile): Boolean {
+    val repository = repositoryManager.getRepositoryForRootQuick(vcsRoot) ?: return false
     return getHolder(repository).containsFile(file)
   }
 

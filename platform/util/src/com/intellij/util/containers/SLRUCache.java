@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -19,12 +19,10 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K, V> {
     super(protectedQueueSize, probationalQueueSize, hashingStrategy);
   }
 
-  @NotNull
-  public abstract V createValue(K key);
+  public abstract @NotNull V createValue(K key);
 
   @Override
-  @NotNull
-  public V get(K key) {
+  public @NotNull V get(K key) {
     V value = getIfCached(key);
     if (value != null) {
       return value;
@@ -36,19 +34,16 @@ public abstract class SLRUCache<K, V> extends SLRUMap<K, V> {
     return value;
   }
 
-  @Nullable
-  public V getIfCached(K key) {
+  public @Nullable V getIfCached(K key) {
     return super.get(key);
   }
 
-  @NotNull
-  public static <K, V> SLRUCache<K, V> create(int protectedQueueSize,
-                                              int probationalQueueSize,
-                                              @NotNull final NotNullFunction<? super K, ? extends V> valueProducer) {
+  public static @NotNull <K, V> SLRUCache<K, V> create(int protectedQueueSize,
+                                                       int probationalQueueSize,
+                                                       final @NotNull NotNullFunction<? super K, ? extends V> valueProducer) {
     return new SLRUCache<K, V>(protectedQueueSize, probationalQueueSize) {
-      @NotNull
       @Override
-      public V createValue(K key) {
+      public @NotNull V createValue(K key) {
         return valueProducer.fun(key);
       }
     };

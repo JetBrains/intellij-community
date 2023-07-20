@@ -50,4 +50,6 @@ private class SmartModeIndicatorWidget(private val context: WidgetPresentationDa
       delay(500)
     }
   }
+
+  override suspend fun getTooltipText(): String = UIBundle.message("status.bar.smart.mode.indicator.widget.name")
 }

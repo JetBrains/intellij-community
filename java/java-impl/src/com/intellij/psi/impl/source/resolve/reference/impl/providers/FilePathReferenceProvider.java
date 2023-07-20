@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
 import com.intellij.openapi.module.Module;
@@ -59,7 +59,7 @@ public class FilePathReferenceProvider extends PsiReferenceProvider {
       @Override
       public boolean absoluteUrlNeedsStartSlash() {
         final String s = getPathString();
-        return s != null && !s.isEmpty() && s.charAt(0) == '/';
+        return !s.isEmpty() && s.charAt(0) == '/';
       }
 
       @Override

@@ -1,0 +1,12 @@
+<idea-plugin package="com.intellij.searchEverywhereMl.ranking.vcs">
+
+  <dependencies>
+    <plugin id="Git4Idea"/>
+    <module name="intellij.searchEverywhereMl.ranking"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.searcheverywhere.ml">
+    <searchEverywhereElementFeaturesProvider
+      implementation="com.intellij.searchEverywhereMl.ranking.vcs.SearchEverywhereVcsFileFeaturesProvider" />
+  </extensions>
+</idea-plugin>

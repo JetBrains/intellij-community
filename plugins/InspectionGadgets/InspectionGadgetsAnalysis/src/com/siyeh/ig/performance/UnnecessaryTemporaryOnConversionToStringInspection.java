@@ -17,8 +17,10 @@ package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +29,6 @@ import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
@@ -66,13 +67,13 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInsp
   }
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
+  public LocalQuickFix buildFix(Object... infos) {
     final String replacement = calculateReplacementExpression((PsiNewExpression)infos[0], new CommentTracker());
     final String name = CommonQuickFixBundle.message("fix.replace.with.x", replacement);
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
-  private static final class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryTemporaryObjectFix extends PsiUpdateModCommandQuickFix {
 
     private final @IntentionName String m_name;
 
@@ -93,8 +94,8 @@ public class UnnecessaryTemporaryOnConversionToStringInspection extends BaseInsp
     }
 
     @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiNewExpression expression = (PsiNewExpression)descriptor.getPsiElement().getParent();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement startElement, @NotNull ModPsiUpdater updater) {
+      final PsiNewExpression expression = (PsiNewExpression)startElement.getParent();
       CommentTracker commentTracker = new CommentTracker();
       final String newExpression = calculateReplacementExpression(expression, commentTracker);
       if (newExpression == null) return;

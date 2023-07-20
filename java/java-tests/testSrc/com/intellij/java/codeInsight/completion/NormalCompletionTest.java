@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -1663,6 +1664,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1672,6 +1674,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -1681,6 +1684,7 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "Override", "Override/Implement methods...");
     getLookup().setCurrentItem(getLookup().getItems().get(1));
     myFixture.type('\n');
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResult();
   }
 
@@ -2873,5 +2877,54 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
                                 }
                             }
                             """);
+  }
+  @NeedsIndex.Full
+  public void testTagAdd() {
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
+    myFixture.configureByText("Test.java", """
+      import java.util.HashSet;
+                                        
+      public abstract class SuperClass {
+            
+          void run() {
+              HashSet<Object> objects = new HashSet<>();
+              objects.len<caret>;
+          }
+      }
+      """);
+    myFixture.completeBasic();
+    myFixture.type('\n');
+    myFixture.checkResult("""
+                            import java.util.HashSet;
+                                                              
+                            public abstract class SuperClass {
+                                  
+                                void run() {
+                                    HashSet<Object> objects = new HashSet<>();
+                                    objects.size();
+                                }
+                            }
+                            """);
+  }
+
+  @NeedsIndex.Full
+  public void testTagAddInvocationCount2() {
+    Registry.get("java.completion.methods.use.tags").setValue(true, getTestRootDisposable());
+    myFixture.configureByText("Test.java", """
+      import java.util.HashSet;
+                                        
+      public abstract class SuperClass {
+            
+          void run() {
+              HashSet<Object> objects = new HashSet<>();
+              objects.le<caret>;
+          }
+      }
+      """);
+    LookupElement[] lookupElements = myFixture.complete(CompletionType.BASIC, 1);
+    assertFalse(ContainerUtil.exists(lookupElements, t -> t.getLookupString().equals("size")));
+
+    lookupElements = myFixture.complete(CompletionType.BASIC, 2);
+    assertTrue(ContainerUtil.exists(lookupElements, t -> t.getLookupString().equals("size")));
   }
 }

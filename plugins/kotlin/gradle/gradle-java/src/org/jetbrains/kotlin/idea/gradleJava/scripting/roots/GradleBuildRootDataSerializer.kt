@@ -2,43 +2,65 @@
 
 package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.newvfs.FileAttribute
-import org.jetbrains.kotlin.idea.core.util.readNullable
+import com.intellij.util.gist.GistManager
+import com.intellij.util.gist.VirtualFileGist
+import com.intellij.util.io.DataExternalizer
 import org.jetbrains.kotlin.idea.core.util.readString
-import org.jetbrains.kotlin.idea.core.util.writeNullable
 import org.jetbrains.kotlin.idea.core.util.writeString
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
 import org.jetbrains.kotlin.idea.gradleJava.scripting.GradleKotlinScriptConfigurationInputs
 import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptModel
 import java.io.DataInput
-import java.io.DataInputStream
 import java.io.DataOutput
 
 internal object GradleBuildRootDataSerializer {
-    private val attribute = FileAttribute("kotlin-dsl-script-models", 8, false)
+
+    private val currentBuildRoot: ThreadLocal<VirtualFile> = ThreadLocal()
+    private val currentData: ThreadLocal<GradleBuildRootData> = ThreadLocal()
 
     fun read(buildRoot: VirtualFile): GradleBuildRootData? {
-        return attribute.readFileAttribute(buildRoot)?.use {
-            it.readNullable {
-                readKotlinDslScriptModels(it, buildRoot.path)
-            }
-        }
+        currentBuildRoot.set(buildRoot)
+        return runReadAction { buildRootGist.getFileData(null, buildRoot) }
     }
 
     fun write(buildRoot: VirtualFile, data: GradleBuildRootData?) {
-        attribute.writeFileAttribute(buildRoot).use {
-            it.writeNullable(data) {
-                writeKotlinDslScriptModels(this, it)
-            }
-        }
+        GistManager.getInstance().invalidateData(buildRoot)
+        if (data == null) return
+
+        currentBuildRoot.set(buildRoot)
+        currentData.set(data)
+
+        runReadAction { buildRootGist.getFileData(null, buildRoot) }
     }
 
     fun remove(buildRoot: VirtualFile) {
         write(buildRoot, null)
         LastModifiedFiles.remove(buildRoot)
     }
+
+    /*
+        The idea to utilize VirtualFileGist is dictated by the need to avoid using VFS attributes.
+        By the moment of this change there is no good alternative - VirtualFileGist isn't designed to be a key-value storage, its API
+        isn't designed for the purposes of this class. Hence, thread-locals and data invalidation for write method.
+        Once a better solution exists it should be applied instead.
+     */
+    private val buildRootGist: VirtualFileGist<GradleBuildRootData> = GistManager.getInstance().newVirtualFileGist(
+        "kotlin-dsl-script-models",
+        1,
+        object : DataExternalizer<GradleBuildRootData> {
+            override fun save(out: DataOutput, value: GradleBuildRootData) {
+                writeKotlinDslScriptModels(out, value)
+            }
+
+            override fun read(input: DataInput): GradleBuildRootData {
+                return readKotlinDslScriptModels(input, currentBuildRoot.get().path)
+            }
+        },
+    ) { _, _ -> currentData.get() }
+
 }
 
 @IntellijInternalApi
@@ -69,7 +91,7 @@ fun writeKotlinDslScriptModels(output: DataOutput, data: GradleBuildRootData) {
 }
 
 @IntellijInternalApi
-fun readKotlinDslScriptModels(input: DataInputStream, buildRoot: String): GradleBuildRootData {
+fun readKotlinDslScriptModels(input: DataInput, buildRoot: String): GradleBuildRootData {
     val strings = StringsPool.reader(input)
 
     val importTs = input.readLong()
@@ -134,12 +156,12 @@ private object StringsPool {
         }
     }
 
-    fun reader(input: DataInputStream): Reader {
+    fun reader(input: DataInput): Reader {
         val strings = input.readList { input.readString() }
         return Reader(input, strings)
     }
 
-    class Reader(val input: DataInputStream, val strings: List<String>) {
+    class Reader(val input: DataInput, val strings: List<String>) {
         fun getString(id: Int) = strings[id]
 
         fun readString() = getString(input.readInt())

@@ -9,7 +9,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import org.editorconfig.EditorConfigRegistry
-import org.editorconfig.configmanagement.EditorSettingsManager
 
 internal class EditorConfigModificationListener : BulkFileListener {
   override fun after(events: List<VFileEvent>) {
@@ -29,7 +28,6 @@ internal class EditorConfigModificationListener : BulkFileListener {
             SettingsProviderComponent.getInstance(project).incModificationCount()
             for (editor in EditorFactory.getInstance().allEditors) {
               if (editor.isDisposed) continue
-              EditorSettingsManager.applyEditorSettings(editor)
               (editor as EditorEx).reinitSettings()
             }
           }

@@ -11,10 +11,21 @@ import java.awt.*;
 
 /**
  * A custom visual element displayed in the editor.
- * It is associated with a certain position in a document, but is not represented in the document text in any way.
- * Inlay's document position (offset) is updated on document changes just like for a {@link RangeMarker}.
- * Both 'inline' (displayed within text lines) and 'block' (displayed between text lines) elements are supported.
  * <p>
+ * Each inlay is associated with a certain offset in a document but is not represented in the document text in any way.
+ * The inlay's offset in the document is updated on document changes just like for a zero-range {@link RangeMarker}.
+ * <p>
+ * There are several kinds of inlays:
+ * <ul>
+ * <li><b>Inline</b> inlays are inserted between characters in a line of text
+ *     and move the remaining text of the line further to the end of the line.
+ *     Examples of inline inlays are parameter hints or inferred types.
+ * <li><b>After-line-end</b> inlays are appended to the end of a logical line.
+ *     An example of after-line-end inlays are evaluated expressions during debugging.
+ * <li><b>Block</b> inlays are inserted between lines of text
+ *     and move the remaining lines of the file further down.
+ *     An example of block inlays are author attributions.
+ * </ul>
  * An inlay becomes invalid on explicit disposal, or when a document range that contains the inlay's offset is deleted.
  *
  * @see InlayModel

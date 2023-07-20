@@ -130,7 +130,7 @@ class GitLogRecord {
 
   String @NotNull [] getParentsHashes() {
     final String parents = lookup(PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtilRt.EMPTY_STRING_ARRAY;
+    if (parents.trim().isEmpty()) return ArrayUtilRt.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 

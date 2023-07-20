@@ -14,12 +14,14 @@ import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Supplier;
 
 public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionItem>,
@@ -38,6 +40,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   private final boolean myShowDisabledActions;
   private Runnable myFinalRunnable;
   private final Condition<? super AnAction> myPreselectActionCondition;
+  private @NotNull BiFunction<DataContext, AnAction, DataContext> mySubStepContextAdjuster = (c, a) -> c;
 
   public ActionPopupStep(@NotNull List<PopupFactoryImpl.ActionItem> items,
                          @PopupTitle @Nullable String title,
@@ -208,6 +211,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     return myTitle;
   }
 
+  @ApiStatus.Internal
+  public void setSubStepContextAdjuster(@NotNull BiFunction<DataContext, AnAction, DataContext>  subStepContextAdjuster) {
+    mySubStepContextAdjuster = subStepContextAdjuster;
+  }
+
   @Override
   public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice) {
     return onChosen(actionChoice, finalChoice, null);
@@ -218,8 +226,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
     if (!item.isEnabled()) return FINAL_CHOICE;
     AnAction action = item.getAction();
     if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
-      return getSubStep((ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
-                        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
+      DataContext dataContext = mySubStepContextAdjuster.apply(myContext.get(), action);
+      return getSubStep((ActionGroup)action, dataContext, myEnableMnemonics, true, myShowDisabledActions, null,
+                        false, false, () -> dataContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else if (action instanceof ToggleAction && item.isKeepPopupOpen()) {
       performAction(action, inputEvent);
@@ -250,6 +259,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
 
   public void performAction(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
     ActionUtil.invokeAction(action, myContext.get(), myActionPlace, inputEvent, null);
+  }
+
+  public @NotNull AnActionEvent createAnActionEvent(@NotNull AnAction action, @Nullable InputEvent inputEvent) {
+    Presentation presentation = myPresentationFactory != null ? myPresentationFactory.getPresentation(action) : action.getTemplatePresentation().clone();
+    return AnActionEvent.createFromInputEvent(inputEvent, myActionPlace, presentation, myContext.get());
   }
 
   public void updateStepItems(@NotNull JComponent component) {
@@ -315,6 +329,28 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   @Override
   public SpeedSearchFilter<PopupFactoryImpl.ActionItem> getSpeedSearchFilter() {
     return this;
+  }
+
+  @ApiStatus.Internal
+  public void reorderItems(int from, int where, int preserveSeparatorAt) {
+    if (myItems.get(from).isPrependWithSeparator() || myItems.get(where).isPrependWithSeparator()) {
+      String fromText = myItems.get(from).getSeparatorText();
+      String whereText = myItems.get(where).getSeparatorText();
+      myItems.get(from).setSeparatorText(null);
+      if (preserveSeparatorAt == from) {
+        myItems.get(from + 1).setSeparatorText(fromText);
+      }
+      if (preserveSeparatorAt == where) {
+        myItems.get(where).setSeparatorText(null);
+        myItems.get(from).setSeparatorText(whereText);
+      }
+    }
+    PopupFactoryImpl.ActionItem toMove = myItems.get(from);
+    myItems.add(where, toMove);
+    if (where < from) {
+      from ++;
+    }
+    myItems.remove(from);
   }
 
   private static boolean isPopupOrMainMenuPlace(@NotNull String place) {

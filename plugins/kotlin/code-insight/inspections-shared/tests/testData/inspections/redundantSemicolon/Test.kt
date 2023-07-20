@@ -42,7 +42,7 @@ fun baz(args: Array<String>) {
 enum class Foo {
     ; //not redundant
     ;
-    companion object;
+    companion object; //not redundant
     ;
 }
 

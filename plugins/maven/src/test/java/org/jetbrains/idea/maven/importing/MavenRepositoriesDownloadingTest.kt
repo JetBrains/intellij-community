@@ -141,7 +141,8 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     createProjectPom(pom())
     importProjectWithErrors()
     TestCase.assertEquals(1, myProjectsManager.rootProjects.size)
-    TestCase.assertTrue(myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description?.contains("401")?:false)
+    TestCase.assertEquals("status code: 401, reason phrase: Unauthorized (401)",
+                          myProjectsManager.rootProjects[0].problems.single { it.type == MavenProjectProblem.ProblemType.REPOSITORY }.description)
 
   }
 
@@ -213,9 +214,7 @@ class MavenRepositoriesDownloadingTest : MavenMultiVersionImportingTestCase() {
     Registry.get("maven.server.debug").setValue(false)
     removeFromLocalRepository("org/mytest/myartifact/")
     assertFalse(helper.getTestData("local1/org/mytest/myartifact/1.0/myartifact-1.0.jar").isFile)
-    val embedderWrapper = MavenServerManager.getInstance().createEmbedder(myProject, true,
-                                                                          myProjectRoot.toNioPath().toString(),
-                                                                          myProjectRoot.toNioPath().toString())
+    val embedderWrapper = MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.toNioPath().toString())
     val embedder = embedderWrapper.getEmbedder()
     assertTrue("Embedder should be remote object: got class ${embedder.javaClass.name}", embedder.javaClass.name.contains("\$Proxy"))
     assertFalse(embedder.javaClass.isAssignableFrom(MisconfiguredPlexusDummyEmbedder::class.java))

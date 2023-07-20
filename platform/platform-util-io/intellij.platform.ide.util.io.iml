@@ -13,5 +13,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" />
+    <orderEntry type="library" name="jna" level="project" />
   </component>
 </module>

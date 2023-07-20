@@ -160,6 +160,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/abstract/mustBeInitializedOrBeAbstractInSealedClass.kt");
         }
 
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("../idea/tests/testData/quickfix/abstract/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/abstract/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+
         @TestMetadata("nonAbstractFunctionWithNoBody.kt")
         public void testNonAbstractFunctionWithNoBody() throws Exception {
             runTest("../idea/tests/testData/quickfix/abstract/nonAbstractFunctionWithNoBody.kt");
@@ -516,6 +526,36 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("memberPropertyWithDelegateRuntime.kt")
         public void testMemberPropertyWithDelegateRuntime() throws Exception {
             runTest("../idea/tests/testData/quickfix/addInitializer/memberPropertyWithDelegateRuntime.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeAbstract.kt")
+        public void testMustBeInitializedOrBeAbstract() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrBeAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinal.kt")
+        public void testMustBeInitializedOrBeFinal() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrBeFinal.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrBeFinalWarning.kt")
+        public void testMustBeInitializedOrBeFinalWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrBeFinalWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstract.kt")
+        public void testMustBeInitializedOrFinalOrAbstract() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrFinalOrAbstract.kt");
+        }
+
+        @TestMetadata("mustBeInitializedOrFinalOrAbstractWarning.kt")
+        public void testMustBeInitializedOrFinalOrAbstractWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedOrFinalOrAbstractWarning.kt");
+        }
+
+        @TestMetadata("mustBeInitializedWarning.kt")
+        public void testMustBeInitializedWarning() throws Exception {
+            runTest("../idea/tests/testData/quickfix/addInitializer/mustBeInitializedWarning.kt");
         }
 
         @TestMetadata("topLevelExtensionProperty.kt")
@@ -909,6 +949,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/modifiers/abstractVarWithPrivateSetter.kt");
         }
 
+        @TestMetadata("addDataForJvmRecord.kt")
+        public void testAddDataForJvmRecord() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addDataForJvmRecord.kt");
+        }
+
         @TestMetadata("addLateinit.kt")
         public void testAddLateinit() throws Exception {
             runTest("../idea/tests/testData/quickfix/modifiers/addLateinit.kt");
@@ -1037,6 +1082,11 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("openMemberInFinalClass4.kt")
         public void testOpenMemberInFinalClass4() throws Exception {
             runTest("../idea/tests/testData/quickfix/modifiers/openMemberInFinalClass4.kt");
+        }
+
+        @TestMetadata("openMemberInObject.kt")
+        public void testOpenMemberInObject() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/openMemberInObject.kt");
         }
 
         @TestMetadata("openModifierInEnum.kt")
@@ -1222,6 +1272,104 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         @TestMetadata("withAnnotationAndEolComment3.kt")
         public void testWithAnnotationAndEolComment3() throws Exception {
             runTest("../idea/tests/testData/quickfix/modifiers/withAnnotationAndEolComment3.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration")
+    public static class AddOpenToClassDeclaration extends AbstractHighLevelQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotationSuperType.kt")
+        public void testAnnotationSuperType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/annotationSuperType.kt");
+        }
+
+        @TestMetadata("dataSuperType.kt")
+        public void testDataSuperType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/dataSuperType.kt");
+        }
+
+        @TestMetadata("enumSupertype.kt")
+        public void testEnumSupertype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/enumSupertype.kt");
+        }
+
+        @TestMetadata("enumUpperBound.kt")
+        public void testEnumUpperBound() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/enumUpperBound.kt");
+        }
+
+        @TestMetadata("explicitlyFinalSupertype.kt")
+        public void testExplicitlyFinalSupertype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/explicitlyFinalSupertype.kt");
+        }
+
+        @TestMetadata("explicitlyFinalUpperBound.kt")
+        public void testExplicitlyFinalUpperBound() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/explicitlyFinalUpperBound.kt");
+        }
+
+        @TestMetadata("finalLibrarySupertype.kt")
+        public void testFinalLibrarySupertype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalLibrarySupertype.kt");
+        }
+
+        @TestMetadata("finalLibraryUpperBound.kt")
+        public void testFinalLibraryUpperBound() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalLibraryUpperBound.kt");
+        }
+
+        @TestMetadata("finalSupertype.kt")
+        public void testFinalSupertype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalSupertype.kt");
+        }
+
+        @TestMetadata("finalUpperBound.kt")
+        public void testFinalUpperBound() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalUpperBound.kt");
+        }
+
+        @TestMetadata("implementInterfaceFinalSupertype.kt")
+        public void testImplementInterfaceFinalSupertype() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/implementInterfaceFinalSupertype.kt");
+        }
+
+        @TestMetadata("inlineSuperType.kt")
+        public void testInlineSuperType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/inlineSuperType.kt");
+        }
+
+        @TestMetadata("nestedFinalClass.kt")
+        public void testNestedFinalClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/nestedFinalClass.kt");
+        }
+
+        @TestMetadata("openInCompanion.kt")
+        public void testOpenInCompanion() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/openInCompanion.kt");
+        }
+
+        @TestMetadata("secondaryCtrDelegationInHeader.kt")
+        public void testSecondaryCtrDelegationInHeader() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/secondaryCtrDelegationInHeader.kt");
+        }
+
+        @TestMetadata("secondaryCtrDelegationInSecondary.kt")
+        public void testSecondaryCtrDelegationInSecondary() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/secondaryCtrDelegationInSecondary.kt");
+        }
+
+        @TestMetadata("valueSuperType.kt")
+        public void testValueSuperType() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/valueSuperType.kt");
+        }
+
+        @TestMetadata("withConstructor.kt")
+        public void testWithConstructor() throws Exception {
+            runTest("../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/withConstructor.kt");
         }
     }
 

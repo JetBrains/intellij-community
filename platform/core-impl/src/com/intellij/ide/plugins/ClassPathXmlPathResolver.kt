@@ -62,7 +62,7 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
 
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {
         Logger.getInstance(ClassPathXmlPathResolver::class.java)
-          .warn("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
+          .trace("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). ")
         val descriptor = RawPluginDescriptor()
         descriptor.`package` = "unresolved.${path.removeSuffix(".xml")}"
         return descriptor

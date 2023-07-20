@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
@@ -131,7 +131,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
       InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), AnnotationUtil.NOT_NULL, getFamilyName())
         .onSuccess(__ -> ApplicationManager.getApplication()
           .invokeLater(() -> doStartWriteAction(project, file, ownerPointer.getElement(), annotations),
-                       ModalityState.NON_MODAL,
+                       ModalityState.nonModal(),
                        module.getDisposed()));
       return;
     }

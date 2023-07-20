@@ -251,4 +251,17 @@ public abstract class KotlinMavenInspectionTestGenerated extends AbstractKotlinM
             runTest("testData/maven-inspections/_18/ideAndMavenVersionsNoForwardCompatibility.xml");
         }
     }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/maven-inspections/_19")
+    public static class _19 extends AbstractKotlinMavenInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("wrongPhaseExecutionExistingDefaultCompile.xml")
+        public void testWrongPhaseExecutionExistingDefaultCompile() throws Exception {
+            runTest("testData/maven-inspections/_19/wrongPhaseExecutionExistingDefaultCompile.xml");
+        }
+    }
 }

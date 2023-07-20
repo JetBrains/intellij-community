@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -301,20 +302,27 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected Set<String> getDependencyCompletionVariants(VirtualFile f) {
+    return getDependencyCompletionVariants(f, it -> MavenDependencyCompletionUtil.getPresentableText(it));
+  }
+
+  protected Set<String> getDependencyCompletionVariants(VirtualFile f,
+                                                        Function<? super MavenRepositoryArtifactInfo, String> lookupElementStringFunction) {
     configTest(f);
     LookupElement[] variants = myFixture.completeBasic();
 
     Set<String> result = new TreeSet<>();
     for (LookupElement each : variants) {
-      if (each.getObject() instanceof MavenRepositoryArtifactInfo) {
-        result.add(MavenDependencyCompletionUtil.getPresentableText((MavenRepositoryArtifactInfo)each.getObject()));
+      var object = each.getObject();
+      if (object instanceof MavenRepositoryArtifactInfo info) {
+        result.add(lookupElementStringFunction.apply(info));
       }
     }
     return result;
   }
 
   @Nullable
-  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture, Function<? super LookupElement, String> lookupElementStringFunction) {
+  protected List<String> getCompletionVariants(CodeInsightTestFixture fixture,
+                                               Function<? super LookupElement, String> lookupElementStringFunction) {
     LookupElement[] variants = fixture.getLookupElements();
     if (variants == null) return null;
 
@@ -345,13 +353,10 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
   }
 
   protected void checkHighlighting(VirtualFile f) {
-    checkHighlighting(f, true, false, true);
-  }
-
-  protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
+    VirtualFileManager.getInstance().syncRefresh();
     configTest(myProjectPom);
     try {
-      myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, f);
+      myFixture.testHighlighting(true, false, true, f);
     }
     catch (Throwable throwable) {
       throw new RuntimeException(throwable);

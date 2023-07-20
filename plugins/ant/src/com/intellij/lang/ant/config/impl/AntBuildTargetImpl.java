@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -21,6 +21,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -121,11 +122,25 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
 
     final String modelName = myModel.getName();
     if (!StringUtil.isEmptyOrSpaces(modelName)) {
-      name.append("_").append(modelName);
+      name.append("_").append(modelName.trim());
     }
 
     name.append('_').append(getName());
     return name.toString();
+  }
+
+  @Nullable
+  public static String parseBuildFileName(@Nullable Project project, @NotNull String actionId) {
+    // expected format antIdPrefix{_modelName}_targetName
+    String idPrefix = project != null? AntConfiguration.getActionIdPrefix(project) : AntConfiguration.ACTION_ID_PREFIX;
+    if (actionId.length() <= idPrefix.length() || !actionId.startsWith(idPrefix)) {
+      return null;
+    }
+    if (actionId.charAt(idPrefix.length()) != '_') {
+      return null;
+    }
+    int nextSeparatorIndex = actionId.indexOf('_', idPrefix.length() + 1);
+    return nextSeparatorIndex > idPrefix.length()? actionId.substring(idPrefix.length() + 1, nextSeparatorIndex) : null;
   }
 
   @Override

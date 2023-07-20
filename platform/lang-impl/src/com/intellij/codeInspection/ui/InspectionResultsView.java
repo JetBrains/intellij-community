@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ui;
 
@@ -106,6 +106,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
+  private final Executor myRightPanelUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Right-Panel-Updater");
   private volatile boolean myUpdating;
   private volatile boolean myFixesAvailable;
   private ToolWindow myToolWindow;
@@ -188,7 +189,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       InspectionProfileImpl profile = getCurrentProfile();
       String toolId = Objects.requireNonNull(profile.getSingleTool());
       InspectionToolWrapper<?,?> tool = Objects.requireNonNull(profile.getInspectionTool(toolId, getProject()));
-      mySettingsEnabled = InspectionOptionPaneRenderer.hasSettings(tool.getTool());
+      mySettingsEnabled = OptionPaneRenderer.hasSettings(tool.getTool());
     }
   }
 
@@ -397,7 +398,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
                      node instanceof InspectionModuleNode ||
                      node instanceof RefElementNode ||
                      (isSingleInspectionRun() && node instanceof InspectionSeverityGroupNode)) {
-              showInRightPanel(node.getContainingFileLocalEntity());
+              myRightPanelUpdater.execute(() -> {
+                final var entity = node.getContainingFileLocalEntity();
+                SwingUtilities.invokeLater(() -> {
+                  TreePath newPath = myTree.getSelectionModel().getLeadSelectionPath();
+                  if (newPath == pathSelected) showInRightPanel(entity);
+                });
+              });
             }
             else if (node instanceof InspectionNode) {
               if (myGlobalInspectionContext.getPresentation(((InspectionNode)node).getToolWrapper()).isDummy()) {
@@ -694,20 +701,28 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Override
   public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) return HELP_ID;
-    if (DATA_KEY.is(dataId)) return this;
-    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) return myExclusionHandler;
-    if (!ApplicationManager.getApplication().isDispatchThread()) return null;
-    TreePath[] paths = myTree.getSelectionPaths();
-    if (paths == null || paths.length == 0) return null;
-
+    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
+    }
+    if (DATA_KEY.is(dataId)) {
+      return this;
+    }
+    if (ExclusionHandler.EXCLUSION_HANDLER.is(dataId)) {
+      return myExclusionHandler;
+    }
     if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
       return paths[0].getLastPathComponent();
     }
     if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
       return ContainerUtil.map2Array(paths, p -> p.getLastPathComponent());
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      TreePath[] paths = myTree.getSelectionPaths();
+      if (paths == null || paths.length == 0) return null;
       return (DataProvider)slowId -> getSlowData(slowId, paths);
     }
     return null;
@@ -716,7 +731,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private @Nullable Object getSlowData(@NotNull String dataId, TreePath @NotNull [] paths) {
     if (paths.length > 1) {
       if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-        RefEntity[] refElements = myTree.getSelectedElements();
+        RefEntity[] refElements = myTree.getElementsFromSelection(paths);
         List<PsiElement> psiElements = new ArrayList<>();
         for (RefEntity refElement : refElements) {
           PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;

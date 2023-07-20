@@ -24,11 +24,7 @@ class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProj
     override var testVersionMessage: String? = null
         @TestOnly set
 
-    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>?, holder: DomElementAnnotationHolder?) {
-        if (domFileElement == null || holder == null) {
-            return
-        }
-
+    override fun checkFileElement(domFileElement: DomFileElement<MavenDomProjectModel>, holder: DomElementAnnotationHolder) {
         val project = domFileElement.module?.project ?: return
         val mavenManager = MavenProjectsManager.getInstance(project) ?: return
 

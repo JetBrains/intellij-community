@@ -42,6 +42,7 @@ import java.util.Set;
 public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
+  private final JCheckBox myFocusToolWindowBeforeRunCheckBox;
   private final JBList<BeforeRunTask<?>> myList;
   private final CollectionListModel<BeforeRunTask<?>> myModel;
   private RunConfiguration myRunConfiguration;
@@ -145,12 +146,7 @@ public final class BeforeRunStepsPanel extends JPanel {
       }
     });
     myActivateToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.activate.toolwindow.before.run"));
-    myActivateToolWindowBeforeRunCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        updateText();
-      }
-    });
+    myFocusToolWindowBeforeRunCheckBox = new JCheckBox(ExecutionBundle.message("configuration.focus.toolwindow.before.run"));
 
     myPanel = myDecorator.createPanel();
     myDecorator.getActionsPanel().setCustomShortcuts(CommonActionsPanel.Buttons.EDIT,
@@ -160,9 +156,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
     setLayout(new BorderLayout());
     add(myPanel, BorderLayout.CENTER);
-    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(5), JBUIScale.scale(5)));
+    JPanel checkboxPanel = new JPanel(new FlowLayout(FlowLayout.LEADING, JBUIScale.scale(10), JBUIScale.scale(5)));
     checkboxPanel.add(myShowSettingsBeforeRunCheckBox);
     checkboxPanel.add(myActivateToolWindowBeforeRunCheckBox);
+    checkboxPanel.add(myFocusToolWindowBeforeRunCheckBox);
     add(checkboxPanel, BorderLayout.SOUTH);
   }
 
@@ -194,6 +191,8 @@ public final class BeforeRunStepsPanel extends JPanel {
     myShowSettingsBeforeRunCheckBox.setEnabled(!isUnknown());
     myActivateToolWindowBeforeRunCheckBox.setSelected(settings.isActivateToolWindowBeforeRun());
     myActivateToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
+    myFocusToolWindowBeforeRunCheckBox.setSelected(settings.isFocusToolWindowBeforeRun());
+    myFocusToolWindowBeforeRunCheckBox.setEnabled(!isUnknown());
     myPanel.setVisible(checkBeforeRunTasksAbility(false));
     updateText();
   }
@@ -216,6 +215,10 @@ public final class BeforeRunStepsPanel extends JPanel {
 
   public boolean needActivateToolWindowBeforeRun() {
     return myActivateToolWindowBeforeRunCheckBox.isSelected();
+  }
+
+  public boolean needFocusToolWindowBeforeRun() {
+    return myFocusToolWindowBeforeRunCheckBox.isSelected();
   }
 
   private boolean checkBeforeRunTasksAbility(boolean checkOnlyAddAction) {

@@ -51,7 +51,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
 
   @Override
   public final void collectInformation(@NotNull ProgressIndicator progress) {
-    if (!isValid()) return; //Document has changed.
+    if (!isValid()) return; //the document has changed.
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myDumb = DumbService.getInstance(myProject).isDumb();
     doCollectInformation(progress);
@@ -101,7 +101,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   @Override
   public final void applyInformationToEditor() {
     if (!isValid()) {
-      return; // Document has changed.
+      return; // the document has changed.
     }
     if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
       Document document = getDocument();

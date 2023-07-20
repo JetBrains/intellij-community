@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui.completion
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.project.Project
@@ -12,8 +13,10 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.fields.ExtendableTextField
+import com.intellij.util.containers.DisposableWrapperList
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.text.BadLocationException
+import com.intellij.openapi.observable.util.whenTextChangedFromUi as whenTextChangedFromUiImpl
 
 abstract class TextCompletionField<T>(private val project: Project?) : ExtendableTextField() {
 
@@ -28,6 +31,8 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
   private var popup: TextCompletionPopup<T>? = null
   private val completionVariants = ArrayList<T>()
 
+  private val completionVariantChosenListeners = DisposableWrapperList<(T) -> Unit>()
+
   fun getTextToComplete(): @NlsSafe String {
     return when (completionType) {
       CompletionType.REPLACE_TEXT -> text
@@ -40,6 +45,9 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
       when (completionType) {
         CompletionType.REPLACE_TEXT -> replaceText(variant)
         CompletionType.REPLACE_WORD -> replaceWordUnderCaret(variant)
+      }
+      completionVariantChosenListeners.forEach { listener ->
+        listener(variant)
       }
     }
   }
@@ -138,6 +146,22 @@ abstract class TextCompletionField<T>(private val project: Project?) : Extendabl
   private fun hidePopup() {
     popup?.cancel()
     popup = null
+  }
+
+  fun whenCompletionVariantChosen(parentDisposable: Disposable? = null, listener: (T) -> Unit) {
+    when (parentDisposable) {
+      null -> completionVariantChosenListeners.add(listener)
+      else -> completionVariantChosenListeners.add(listener, parentDisposable)
+    }
+  }
+
+  fun whenTextChangedFromUi(parentDisposable: Disposable? = null, listener: (String) -> Unit) {
+    whenTextChangedFromUiImpl(parentDisposable, listener)
+    whenCompletionVariantChosen(parentDisposable) {
+      invokeLater(ModalityState.stateForComponent(this)) {
+        listener(text)
+      }
+    }
   }
 
   init {

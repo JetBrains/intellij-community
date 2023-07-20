@@ -47,7 +47,8 @@ import java.util.concurrent.ConcurrentMap
 
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
-import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.*
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
+import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
 
 /**
@@ -58,7 +59,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
   public static final boolean is4OrBetter = gradleBaseVersion >= GradleVersion.version("4.0")
-  public static final boolean is51OrBetter = is4OrBetter && gradleBaseVersion >= GradleVersion.version("5.1")
+  public static final boolean is44OrBetter = gradleBaseVersion >= GradleVersion.version("4.4")
+  public static final boolean is51OrBetter = gradleBaseVersion >= GradleVersion.version("5.1")
   public static final boolean is67OrBetter = gradleBaseVersion >= GradleVersion.version("6.7")
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
@@ -225,8 +227,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         externalTask.description = task.description
         externalTask.group = task.group ?: "other"
         def ext = task.getExtensions()?.extraProperties
-        externalTask.test = (task instanceof Test) ||
-                            (ext?.has("idea.internal.test") && Boolean.valueOf(ext.get("idea.internal.test").toString()))
+        def isInternalTest = ext?.has("idea.internal.test") && Boolean.valueOf(ext.get("idea.internal.test").toString())
+        def isEffectiveTest = "check" == task.name && "verification" == task.group
+        def isJvmTest = task instanceof Test
+        def isAbstractTest = is44OrBetter && task instanceof AbstractTestTask
+        externalTask.test = isJvmTest || isAbstractTest || isInternalTest || isEffectiveTest
+        externalTask.jvmTest = isJvmTest
         externalTask.type = ProjectExtensionsDataBuilderImpl.getType(task)
         result.put(externalTask.name, externalTask)
       }
@@ -255,7 +261,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def ideaTestSourceDirs = null
     def ideaTestResourceDirs = null
     def downloadJavadoc = false
-    def downloadSources = true
+    def downloadSources = Boolean.parseBoolean(System.getProperty("idea.disable.gradle.download.sources", "true"))
 
     def testSourceSets = []
 
@@ -294,13 +300,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectTargetCompatibility = getTargetCompatibility(project)
 
     def result = new LinkedHashMap<String, DefaultExternalSourceSet>();
-    def sourceSets = JavaPluginUtil.getSourceSetContainer(project)
+    def sourceSets = JavaPluginUtil.getJavaPluginAccessor(project).sourceSetContainer
     if (sourceSets == null) {
       return result
     }
 
     // ignore inherited source sets from parent project
-    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getSourceSetContainer(project.parent)
+    def parentProjectSourceSets = project.parent == null ? null : JavaPluginUtil.getJavaPluginAccessor(project.parent).sourceSetContainer
     if (parentProjectSourceSets && sourceSets.is(parentProjectSourceSets)) {
       return result
     }
@@ -607,16 +613,12 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   @Nullable
   private static String getSourceCompatibility(Project project) {
-    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
-    if (javaPluginConvention == null) return null
-    return javaPluginConvention.sourceCompatibility.toString()
+    return JavaPluginUtil.getJavaPluginAccessor(project).sourceCompatibility
   }
 
   @Nullable
   private static String getTargetCompatibility(Project project) {
-    def javaPluginConvention = JavaPluginUtil.getJavaPluginConvention(project)
-    if (javaPluginConvention == null) return null
-    return javaPluginConvention.targetCompatibility.toString()
+    return JavaPluginUtil.getJavaPluginAccessor(project).targetCompatibility
   }
 
   private static void cleanupSharedSourceFolders(Map<String, ExternalSourceSet> map) {
@@ -779,7 +781,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
         Set<Object> sourcePaths = (Set<Object>)sourcePathGetters.get(0).doMethodInvoke(mainSpec, new Object[]{});
         if (sourcePaths != null) {
           for (Object path : sourcePaths) {
-            if (isSafeToResolve(path)) {
+            if (isSafeToResolve(path, project)) {
               def files = project.files(path).files
               outputFiles.removeAll(files)
             }
@@ -799,10 +801,10 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
    *
    * @param object
    * @return true if object is safe to resolve using {@link Project#files(java.lang.Object...)}
-   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#unpackPresentProvider
+   * @see org.jetbrains.plugins.gradle.tooling.builder.ExternalProjectBuilderImpl#tryUnpackPresentProvider
    */
-  private static boolean isSafeToResolve(Object param) {
-    Object object = unpackPresentProvider(param)
+  private static boolean isSafeToResolve(Object param, Project project) {
+    Object object = tryUnpackPresentProvider(param, project)
     boolean isDirectoryOrRegularFile = dynamicCheckInstanceOf(object,
                                                               "org.gradle.api.file.Directory",
                                                               "org.gradle.api.file.RegularFile")
@@ -815,12 +817,13 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
 
   /**
    * Some Gradle {@link org.gradle.api.provider.Provider} implementations can not be resolved during sync,
-   * causing {@link org.gradle.api.InvalidUserCodeException}
-   * and {@link org.gradle.api.InvalidUserDataException}.
+   * causing {@link org.gradle.api.InvalidUserCodeException} and {@link org.gradle.api.InvalidUserDataException}.
+   * Also some {@link org.gradle.api.provider.Provider} attempts to resolve dynamic
+   * configurations, witch results in resolving a configuration without write lock on the project.
    *
    * @return provided value or current if value isn't present or cannot be evaluated
    */
-  private static Object unpackPresentProvider(Object object) {
+  private static Object tryUnpackPresentProvider(Object object, Project project) {
     if (!dynamicCheckInstanceOf(object, "org.gradle.api.provider.Provider")) {
       return object
     }
@@ -840,7 +843,8 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
       if (isCodeException || isDataException) {
         return object
       }
-      throw exception
+      project.getLogger().info("Unable to resolve task source path: ${targetException?.message} (${targetException?.class?.canonicalName})")
+      return object
     }
   }
 

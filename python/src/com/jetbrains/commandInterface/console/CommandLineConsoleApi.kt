@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module
 import com.jetbrains.commandInterface.command.Command
 import com.jetbrains.commandInterface.command.CommandExecutor
 import com.jetbrains.toolWindowWithActions.WindowWithActions
+import javax.swing.Icon
 
 /**
  * Displays command-line console for user.
@@ -80,8 +81,9 @@ fun jbFilter(filter: (String) -> String): (String) -> String {
 fun createConsole(
   module: Module,
   consoleName: String,
-  prompt: String  = consoleName,
-  commandsInfo: CommandsInfo?): LanguageConsoleView {
+  prompt: String = consoleName,
+  commandsInfo: CommandsInfo?,
+  icon: Icon): LanguageConsoleView {
   val project = module.project
   val console = CommandConsole.createConsole(module, prompt, commandsInfo)
 
@@ -91,6 +93,7 @@ fun createConsole(
                                            console.editor.component,
                                            consoleName,
                                            project,
+                                           icon,
                                            null)
 
   ArgumentHintLayer.attach(console) // Display [arguments]

@@ -321,7 +321,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
       JComponent component = myConfigEditor.getComponent();
       if (myConfigEditor instanceof AdjustingTabSettingsEditor) {
         JPanel panel = new JPanel(new BorderLayout());
-        UiNotifyConnector connector = new UiNotifyConnector(panel, new Activatable() {
+        UiNotifyConnector connector = UiNotifyConnector.installOn(panel, new Activatable() {
           private boolean myIsEmpty = true;
           @Override
           public void showNotify() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.*;
@@ -23,13 +23,12 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
   }
 
   @Override
-  @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange textRange = FileStatusMap.getDirtyTextRange(editor, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+    TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.EXTERNAL_TOOLS) == null ? null : file.getTextRange();
     if (textRange == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor(), false);
+    return new ExternalToolPass(file, editor.getDocument(), editor, textRange.getStartOffset(), textRange.getEndOffset(), new DefaultHighlightInfoProcessor());
   }
 
   private static boolean externalAnnotatorsDefined(@NotNull PsiFile file) {
@@ -42,15 +41,14 @@ final class ExternalToolPassFactory implements TextEditorHighlightingPassFactory
     return false;
   }
 
-  @Nullable
   @Override
-  public TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
-                                                               @NotNull Document document,
-                                                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+  public @Nullable TextEditorHighlightingPass createMainHighlightingPass(@NotNull PsiFile file,
+                                                                         @NotNull Document document,
+                                                                         @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     TextRange range = file.getTextRange();
     if (range == null || !externalAnnotatorsDefined(file)) {
       return null;
     }
-    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor, true);
+    return new ExternalToolPass(file, document, null, range.getStartOffset(), range.getEndOffset(), highlightInfoProcessor);
   }
 }

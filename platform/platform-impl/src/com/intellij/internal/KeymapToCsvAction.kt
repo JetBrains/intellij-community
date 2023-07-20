@@ -11,7 +11,7 @@ import com.intellij.openapi.keymap.KeymapManager
 
 internal class KeymapToCsvAction : AnAction() {
 
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun actionPerformed(e: AnActionEvent) {
     val allShortcuts = linkedMapOf<String, MutableMap<String, MutableList<String>>>()
@@ -55,7 +55,7 @@ internal class KeymapToCsvAction : AnAction() {
         append(key)
         for (column in columns) {
           append(",")
-          val actionsForShortcut = shortcutsForKey[column] ?: emptyList<String>()
+          val actionsForShortcut = shortcutsForKey[column] ?: emptyList()
           append(actionsForShortcut.joinToString("|"))
         }
         appendln()

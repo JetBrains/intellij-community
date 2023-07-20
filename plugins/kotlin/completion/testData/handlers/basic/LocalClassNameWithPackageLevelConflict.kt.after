@@ -6,7 +6,7 @@ class Main {
     fun test() {
         class Bar
 
-        val b = foo.Bar<caret>
+        val b = foo.Bar()<caret>
     }
 }
 

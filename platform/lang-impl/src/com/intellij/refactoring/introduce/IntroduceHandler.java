@@ -151,13 +151,10 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
         return IntroduceHandler.this.getOccurrenceRange(occurrence);
       }
     };
-    chooser.showChooser(new Pass<>() {
-      @Override
-      public void pass(final OccurrencesChooser.ReplaceChoice choice) {
-        AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
-        introducer.startInplaceIntroduceTemplate();
-      }
-    }, occurrencesMap);
+    chooser.showChooser(occurrencesMap, choice -> {
+            AbstractInplaceIntroducer<?, ?> introducer = getIntroducer(target, scope, usages, choice, file, editor, project);
+            introducer.startInplaceIntroduceTemplate();
+        });
   }
 
   @NotNull

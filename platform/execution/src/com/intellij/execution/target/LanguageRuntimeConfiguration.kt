@@ -52,7 +52,7 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
   }
 
   @Throws(RuntimeConfigurationException::class)
-  open fun validateConfiguration() = Unit
+  open fun validateConfiguration() {}
 
   protected fun saveInState(volumeDescriptor: VolumeDescriptor, doSave: (VolumeState?) -> Unit) {
     val volumeState = VolumeState().also {
@@ -84,8 +84,8 @@ abstract class LanguageRuntimeConfiguration(typeId: String) : ContributedConfigu
    * Proposed serialization format for the volume data, including both the target path and target specific data configured by the user
    */
   class VolumeState : BaseState() {
-    var remotePath by string()
-    var targetSpecificBits by map<String, String>()
+    var remotePath: String? by string()
+    var targetSpecificBits: MutableMap<String, String> by map()
 
     var targetSpecificData: TargetSpecificVolumeData?
       @Transient

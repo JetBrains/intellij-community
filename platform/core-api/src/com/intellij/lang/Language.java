@@ -2,9 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.diagnostic.ImplementationConflictException;
-import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.extensions.DefaultPluginDescriptor;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -125,17 +123,6 @@ public abstract class Language extends UserDataHolderBase {
       }
     }
     IElementType.unregisterElementTypes(classLoader, pluginDescriptor);
-  }
-
-  /**
-   * @deprecated do not use
-   */
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated
-  public static void unregisterLanguage(@NotNull Language language) {
-    PluginException.reportDeprecatedUsage("this method", "");
-    language.unregisterLanguage(new DefaultPluginDescriptor("unknown"));
   }
 
   @ApiStatus.Internal

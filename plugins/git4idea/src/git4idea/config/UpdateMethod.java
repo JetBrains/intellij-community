@@ -49,15 +49,6 @@ public enum UpdateMethod {
     myPresentation = presentation;
   }
 
-  /**
-   * @deprecated use {@link #getMethodName()} to avoid confusion with built-in {@link #name()}.
-   */
-  @NotNull
-  @Deprecated(forRemoval = true)
-  public String getName() {
-    return getMethodName();
-  }
-
   @NotNull
   public @Nls String getMethodName() {
     return GitBundle.message(myName);

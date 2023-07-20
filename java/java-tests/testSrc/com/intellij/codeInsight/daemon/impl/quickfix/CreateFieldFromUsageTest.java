@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.application.options.CodeStyle;
@@ -31,6 +31,7 @@ public class CreateFieldFromUsageTest extends LightQuickFixTestCase {
   public void testMultipleTypes() { doSingleTest(); }
   public void testMultipleTypes2() { doSingleTest(); }
   public void testRecord() { doSingleTest(); }
+  public void testExistingField() { doSingleTest(); }
   public void testParametericMethod() { doSingleTest(); }
   public void testQualifyInner() { doSingleTest(); }
   public void testTypeArgsFormatted() { doSingleTest(); }

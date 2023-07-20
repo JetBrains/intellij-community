@@ -49,7 +49,6 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   public boolean isCleanState() {
     return yystate() == YYINITIAL
            && myBraceCount == 0
-           && yycolumn == 0
            && myPrevElementIndent == 0
            && !myPossiblePlainTextScalarContinue;
   }

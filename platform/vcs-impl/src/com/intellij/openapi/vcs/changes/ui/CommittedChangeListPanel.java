@@ -42,8 +42,8 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
   private final JEditorPane myCommitMessageArea;
   private final JScrollPane myCommitMessageScrollPane;
 
-  private CommittedChangeList myChangeList;
-  private Collection<Change> myChanges;
+  private @NotNull CommittedChangeList myChangeList;
+  private @NotNull Collection<Change> myChanges;
 
   private boolean myShowSideBorders = true; // borders look better in dialogs
   private boolean myShowCommitMessage = true;
@@ -51,6 +51,9 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
   public CommittedChangeListPanel(@NotNull Project project) {
     super(new BorderLayout());
     myProject = project;
+
+    myChangeList = createChangeList(Collections.emptyList());
+    myChanges = myChangeList.getChanges();
 
     myDescriptionLabel = new JLabel();
     myDescriptionLabel.setBorder(BorderFactory.createEtchedBorder());
@@ -78,7 +81,6 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
     add(myDescriptionLabel, BorderLayout.NORTH);
     updatePresentation();
 
-    setChangeList(createChangeList(Collections.emptyList()));
     setDescription(null);
   }
 
@@ -112,7 +114,6 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
 
   @NotNull
   private @Nls String getChangelistCommentHtml() {
-    if (myChangeList == null) return "";
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, myChangeList.getComment().trim());
   }
 

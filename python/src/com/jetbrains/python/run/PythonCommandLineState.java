@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.run;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -8,12 +8,16 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.CommandLineState;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType;
+import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.PtyCommandLine;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.impl.ProcessStreamsSynchronizer;
+import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -240,6 +244,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     throws ExecutionException {
     final ConsoleView consoleView = createConsoleBuilder(project).getConsole();
     consoleView.addMessageFilter(createUrlFilter(processHandler));
+    consoleView.addMessageFilter(new PythonImportErrorFilter(project));
 
     addTracebackFilter(project, consoleView, processHandler);
 
@@ -374,7 +379,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    */
   protected @Nullable Function<TargetEnvironment, String> getPythonExecutionWorkingDir(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
     // the following working directory is located on the local machine
-    String workingDir = myConfig.getWorkingDirectory();
+    String workingDir = myConfig.getWorkingDirectorySafe();
     if (!StringUtil.isEmptyOrSpaces(workingDir)) {
       return getTargetPath(targetEnvironmentRequest, Path.of(workingDir));
     }
@@ -400,7 +405,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                                                          myConfig.getProject(), pathMapper);
       }
       else {
-        EncodingEnvironmentUtil.setLocaleEnvironmentIfMac(commandLine);
         processHandler = doCreateProcess(commandLine);
         ProcessTerminatedListener.attach(processHandler);
       }
@@ -416,7 +420,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     Process process = targetEnvironment.createProcess(commandLine, progressIndicator);
     // TODO [Targets API] [major] The command line should be prefixed with the interpreter identifier (f.e. Docker container id)
     String commandLineString = StringUtil.join(commandLine.getCommandPresentation(targetEnvironment), " ");
-    processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
+    processHandler = createPtyAwaredProcessHandler(process, commandLineString, targetEnvironment, commandLine);
     ProcessTerminatedListener.attach(processHandler);
     return processHandler;
   }
@@ -474,6 +478,18 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   @NotNull
+  private ProcessHandler createPtyAwaredProcessHandler(@NotNull Process process,
+                                                       @NotNull String commandLineString,
+                                                       @NotNull TargetEnvironment targetEnvironment,
+                                                       @NotNull TargetedCommandLine commandLine) {
+    ProcessHandler processHandler = createProcessHandler(process, commandLineString, targetEnvironment, commandLine);
+    if (processHandler instanceof OSProcessHandler osProcessHandler) {
+      osProcessHandler.setHasPty(myRunWithPty);
+    }
+    return processHandler;
+  }
+
+  @NotNull
   protected ProcessHandler createProcessHandler(@NotNull Process process,
                                                 @NotNull String commandLineString,
                                                 @NotNull TargetEnvironment targetEnvironment,
@@ -497,9 +513,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     if (sdkPathMappings != null) {
       pathMappingSettings.addAll(sdkPathMappings);
     }
+    final boolean isMostlySilentProcess = false;
     PyTargetPathMapper consolidatedPathMappings = new PyTargetPathMapper(targetEnvironment, pathMappingSettings);
     return PyCustomProcessHandlerProvider.createProcessHandler(process, commandLineString, commandLine.getCharset(),
-                                                               consolidatedPathMappings);
+                                                               consolidatedPathMappings, isMostlySilentProcess, myRunWithPty);
   }
 
   private @Nullable PathMappingSettings getSdkPathMappings() {

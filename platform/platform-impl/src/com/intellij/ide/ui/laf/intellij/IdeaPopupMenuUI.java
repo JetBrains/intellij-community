@@ -29,12 +29,22 @@ public final class IdeaPopupMenuUI extends BasicPopupMenuUI {
   }
 
   public static boolean isUnderPopup(Component component) {
-    if (component instanceof JBPopupMenu) {
-      Component invoker = ((JPopupMenu)component).getInvoker();
-      if (invoker instanceof ActionMenu) {
-        return !((ActionMenu)invoker).isMainMenuPlace();
+    if (component instanceof JBPopupMenu menu) {
+      Component invoker = menu.getInvoker();
+      if (invoker instanceof ActionMenu actionMenu) {
+        return !actionMenu.isMainMenuPlace();
       }
       return true;
+    }
+    return false;
+  }
+
+  public static boolean isUnderMainMenu(Component component) {
+    if (component instanceof JBPopupMenu menu) {
+      Component invoker = menu.getInvoker();
+      if (invoker instanceof ActionMenu actionMenu) {
+        return actionMenu.isMainMenuPlace();
+      }
     }
     return false;
   }

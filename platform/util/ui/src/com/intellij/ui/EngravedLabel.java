@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nls;
 import javax.swing.*;
 import java.awt.*;
 
-public class EngravedLabel extends JLabel {
+public final class EngravedLabel extends JLabel {
   private Color myShadowColor = EngravedTextGraphics.SHADOW_COLOR;
 
   public EngravedLabel(@Nls String text) {

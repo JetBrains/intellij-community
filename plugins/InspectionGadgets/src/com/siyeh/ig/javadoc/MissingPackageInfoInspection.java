@@ -2,7 +2,7 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.impl.analysis.MoveAnnotationToPackageInfoFileFix;
+import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationToPackageInfoFileFix;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefPackage;

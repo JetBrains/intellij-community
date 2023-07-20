@@ -166,11 +166,14 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
   }
 
   private static boolean isDefaultOrNull(@Nullable PsiCaseLabelElement labelElement) {
-    return labelElement instanceof PsiDefaultCaseLabelElement || ExpressionUtils.isNullLiteral(labelElement);
+    return labelElement instanceof PsiDefaultCaseLabelElement ||
+           labelElement instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr);
   }
 
   private static boolean hasMatchingNull(@NotNull PsiSwitchLabelStatementBase label) {
     PsiCaseLabelElementList labelElementList = label.getCaseLabelElementList();
-    return labelElementList != null && ContainerUtil.exists(labelElementList.getElements(), ExpressionUtils::isNullLiteral);
+    return labelElementList != null &&
+           ContainerUtil.exists(labelElementList.getElements(),
+                                el -> el instanceof PsiExpression expr && ExpressionUtils.isNullLiteral(expr));
   }
 }

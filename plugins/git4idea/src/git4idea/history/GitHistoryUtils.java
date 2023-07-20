@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,7 +62,7 @@ public final class GitHistoryUtils {
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  String @NotNull ... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer::consume, parameters);
   }
 
   /**
@@ -79,7 +79,7 @@ public final class GitHistoryUtils {
                                       @NotNull VirtualFile root,
                                       @NotNull Consumer<? super TimedVcsCommit> commitConsumer,
                                       String @NotNull ... parameters) throws VcsException {
-    GitLogUtil.readTimedCommits(project, root, Arrays.asList(parameters), null, null, commitConsumer);
+    GitLogUtil.readTimedCommits(project, root, Arrays.asList(parameters), null, null, commitConsumer::consume);
   }
 
   /**
@@ -197,7 +197,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
@@ -222,7 +222,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     final GitLogRecord record = parser.parseOneRecord(result);
@@ -264,7 +264,7 @@ public final class GitHistoryUtils {
     h.endOptions();
     h.addRelativePaths(filePath);
     String result = Git.getInstance().runCommand(h).getOutputOrThrow();
-    if (result.length() == 0) {
+    if (result.isEmpty()) {
       return null;
     }
     GitLogFullRecord record = parser.parseOneRecord(result);
@@ -300,7 +300,7 @@ public final class GitHistoryUtils {
     GitCommandResult result = Git.getInstance().runCommand(h);
     if (!result.success()) return null;
     String output = result.getOutputAsJoinedString().trim();
-    if (output.length() == 0) return null;
+    if (output.isEmpty()) return null;
     return GitRevisionNumber.resolve(project, root, output);
   }
 

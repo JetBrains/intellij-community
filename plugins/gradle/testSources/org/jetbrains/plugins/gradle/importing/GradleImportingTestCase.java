@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.compiler.CompilerTestUtil;
@@ -51,6 +51,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilderUtil;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder;
+import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GroovyDslGradleSettingScriptBuilder;
+import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix;
 import org.jetbrains.plugins.gradle.service.execution.GradleExternalTaskConfigurationType;
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -59,7 +62,6 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleJvmSupportMatrices;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -234,7 +236,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   public static @NotNull String requireJdkHome(@NotNull GradleVersion gradleVersion) {
     JavaVersion javaRuntimeVersion = JavaVersion.current();
-    if (GradleJvmSupportMatrices.isSupported(gradleVersion, javaRuntimeVersion)) {
+    if (GradleJvmSupportMatrix.isSupported(gradleVersion, javaRuntimeVersion)) {
       return IdeaTestUtil.requireRealJdkHome();
     }
     // fix exception of FJP at JavaHomeFinder.suggestHomePaths => ... => EnvironmentUtil.getEnvironmentMap => CompletableFuture.<clinit>
@@ -244,7 +246,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
       if (JdkUtil.checkForJdk(path)) {
         JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
         if (jdkVersionInfo == null) continue;
-        if (GradleJvmSupportMatrices.isSupported(gradleVersion, jdkVersionInfo.version)) {
+        if (GradleJvmSupportMatrix.isSupported(gradleVersion, jdkVersionInfo.version)) {
           return path;
         }
       }
@@ -305,11 +307,18 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   @Parameterized.Parameters(name = "{index}: with Gradle-{0}")
-  public static Collection<Object[]> data() {
+  public static Iterable<?> data() {
     String gradleVersionsString = System.getProperty("gradle.versions.to.run");
     if (gradleVersionsString != null && !gradleVersionsString.isEmpty()) {
-      String[] gradleVersionsToRun = gradleVersionsString.split(",");
-      return ContainerUtil.map(gradleVersionsToRun, it -> new String[]{it});
+      if (gradleVersionsString.startsWith("LAST:")) {
+        int last = Integer.parseInt(gradleVersionsString.substring("LAST:".length()));
+        List<String> all = Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
+        return all.subList(all.size() - last, all.size());
+      }
+      else {
+        String[] gradleVersionsToRun = gradleVersionsString.split(",");
+        return Arrays.asList(gradleVersionsToRun);
+      }
     }
     return Arrays.asList(SUPPORTED_GRADLE_VERSIONS);
   }
@@ -412,9 +421,10 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
     return builder.generate();
   }
 
-  protected @NotNull String getJUnitTestAnnotationClass() {
-    return GradleBuildScriptBuilderUtil.isSupportedJUnit5(getCurrentGradleVersion())
-           ? "org.junit.jupiter.api.Test" : "org.junit.Test";
+  public @NotNull String settingsScript(@NotNull Consumer<GradleSettingScriptBuilder<?>> configure) {
+    var builder = new GroovyDslGradleSettingScriptBuilder();
+    configure.accept(builder);
+    return builder.generate();
   }
 
   @Override
@@ -538,7 +548,7 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
   }
 
   protected boolean isJavaLibraryPluginSupported() {
-    return GradleBuildScriptBuilderUtil.isSupportedJavaLibraryPlugin(getCurrentGradleVersion());
+    return GradleBuildScriptBuilderUtil.isJavaLibraryPluginSupported(getCurrentGradleVersion());
   }
 
   protected boolean isGradleOlderThan(@NotNull String ver) {

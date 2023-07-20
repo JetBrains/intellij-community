@@ -59,7 +59,7 @@ public final class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionO
 
     PsiMethod method = createMethod(myTargetClass);
     List<Pair<PsiExpression, PsiType>> arguments =
-      ContainerUtil.map2List(method.getParameterList().getParameters(), psiParameter -> Pair.create(null, psiParameter.getType()));
+      ContainerUtil.map(method.getParameterList().getParameters(), psiParameter -> Pair.create(null, psiParameter.getType()));
 
     method = (PsiMethod)JavaCodeStyleManager.getInstance(project).shortenClassReferences(myTargetClass.add(method));
     CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);

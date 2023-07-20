@@ -65,11 +65,12 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       if (type == PyDataclassParameters.PredefinedType.STD) {
         val default = call.getKeywordArgument("default")
         val defaultFactory = call.getKeywordArgument("default_factory")
+        val kwOnly = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("kw_only"), false)
 
         return FieldParameters(default != null && !resolvesToOmittedDefault(default, type),
                                defaultFactory != null && !resolvesToOmittedDefault(defaultFactory, type),
                                initValue,
-                               false)
+                               kwOnly)
       }
       else if (type == PyDataclassParameters.PredefinedType.ATTRS) {
         val default = call.getKeywordArgument("default")

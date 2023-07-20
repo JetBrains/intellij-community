@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.CustomFoldRegion;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -303,13 +300,17 @@ abstract class FoldRegionsTree {
     return foldedInlaysHeight == null || foldedInlaysHeight.length == 0 ? 0 : foldedInlaysHeight[foldedInlaysHeight.length - 1];
   }
 
-  int[] getCustomRegionsYAdjustment(int offset, int idx) {
-    if (!isFoldingEnabled()) return new int[2];
+  /**
+   * @return (prevAdjustment, curAdjustment)
+   */
+  @NotNull
+  IntPair getCustomRegionsYAdjustment(int offset, int idx) {
+    if (!isFoldingEnabled()) return new IntPair(0,0);
     CachedData cachedData = ensureAvailableData();
     int prevAdjustment = idx == -1 ? 0 : cachedData.topCustomYAdjustment[idx];
     int curAdjustment = idx + 1 < cachedData.topStartOffsets.length && cachedData.topStartOffsets[idx + 1] == offset
                         ? cachedData.topCustomYAdjustment[idx + 1] - prevAdjustment : 0;
-    return new int[] {prevAdjustment, curAdjustment};
+    return new IntPair(prevAdjustment, curAdjustment);
   }
 
   int getLastTopLevelIndexBefore(int offset) {

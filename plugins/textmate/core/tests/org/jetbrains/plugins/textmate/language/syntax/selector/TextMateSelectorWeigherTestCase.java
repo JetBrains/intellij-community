@@ -25,6 +25,12 @@ abstract public class TextMateSelectorWeigherTestCase {
   }
 
   @Test
+  public void testDoNotMatchPartialPrefix() {
+    String selector = "source.rust string";
+    assertEquals(0, getWeigh("source.r string", selector));
+  }
+
+  @Test
   public void testNegativeWeigh() {
     String selector = "text.html.basic source.php.embedded.html string.quoted.double.php";
     assertEquals(0, getWeigh("string source.php", selector));

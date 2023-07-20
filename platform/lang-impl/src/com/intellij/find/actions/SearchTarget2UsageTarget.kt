@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.actions
 
@@ -56,10 +56,7 @@ class SearchTarget2UsageTarget(
   // ----- Navigatable & NavigationItem -----
   // TODO Symbol navigation
 
-  override fun canNavigate(): Boolean = false
-  override fun canNavigateToSource(): Boolean = false
   override fun getName(): String? = null
-  override fun navigate(requestFocus: Boolean) = Unit
 
   // ----- actions -----
 

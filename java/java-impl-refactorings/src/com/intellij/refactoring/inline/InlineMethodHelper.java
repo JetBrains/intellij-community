@@ -111,8 +111,7 @@ class InlineMethodHelper {
       }
 
       PsiExpression initializer = myFactory.createExpressionFromText(defaultValue, null);
-      PsiType varType = GenericsUtil.getVariableTypeByExpressionType(mySubstitutor.substitute(paramType));
-      PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, varType, initializer);
+      PsiDeclarationStatement declaration = myFactory.createVariableDeclarationStatement(name, paramType, initializer);
       declaration = (PsiDeclarationStatement)block.addAfter(declaration, null);
       parameterVars[i] = (PsiLocalVariable)declaration.getDeclaredElements()[0];
       PsiUtil.setModifierProperty(parameterVars[i], PsiModifier.FINAL, parameter.hasModifierProperty(PsiModifier.FINAL));
@@ -158,5 +157,12 @@ class InlineMethodHelper {
       }
     }
     return false;
+  }
+
+  public void substituteTypes(PsiLocalVariable[] vars) {
+    for (PsiLocalVariable var : vars) {
+      PsiType newType = GenericsUtil.getVariableTypeByExpressionType(mySubstitutor.substitute(var.getType()));
+      var.getTypeElement().replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(newType));
+    }
   }
 }

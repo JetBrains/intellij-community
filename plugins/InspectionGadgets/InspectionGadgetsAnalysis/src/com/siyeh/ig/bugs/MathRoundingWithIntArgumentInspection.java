@@ -1,9 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
@@ -12,7 +14,6 @@ import com.intellij.psi.util.RedundantCastUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +42,7 @@ public class MathRoundingWithIntArgumentInspection extends BaseInspection {
 
   @Override
   @Nullable
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)infos[0];
     if (!QUICK_FIX_MATH_ROUNDING_MATCHERS.matches(callExpression)) {
       return null;
@@ -49,7 +50,7 @@ public class MathRoundingWithIntArgumentInspection extends BaseInspection {
     return new MathRoundingWithIntArgumentFix(callExpression.getMethodExpression().getText());
   }
 
-  private static class MathRoundingWithIntArgumentFix extends InspectionGadgetsFix {
+  private static class MathRoundingWithIntArgumentFix extends PsiUpdateModCommandQuickFix {
 
     private final String method;
 
@@ -70,8 +71,7 @@ public class MathRoundingWithIntArgumentInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiElement element = descriptor.getPsiElement();
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       PsiElement parent = element.getParent();
       if (parent == null) return;
       if (!(parent.getParent() instanceof PsiMethodCallExpression callExpression)) {

@@ -100,11 +100,6 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
   }
 
   @Override
-  public boolean isIgnored(@NotNull VirtualFile file) {
-    return false;
-  }
-
-  @Override
   public boolean isExcluded(@NotNull VirtualFile file) {
     return false;
   }
@@ -138,7 +133,7 @@ class LightEditProjectFileIndex implements ProjectFileIndex {
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    return LightEditDirectoryIndex.getFileInfo().isInProject(fileOrDir);
+    return false;
   }
 
   @Override

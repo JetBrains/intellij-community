@@ -17,5 +17,7 @@ public interface UpdatableSnapshotInputMappingIndex<Key, Value, Input> extends S
 
   void flush() throws IOException;
 
+  boolean isDirty();
+
   void clear() throws IOException;
 }

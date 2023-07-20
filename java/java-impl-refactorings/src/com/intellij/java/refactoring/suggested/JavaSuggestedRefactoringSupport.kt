@@ -53,13 +53,13 @@ class JavaSuggestedRefactoringSupport : SuggestedRefactoringSupport {
     })?.textRange
   }
 
-  override fun isIdentifierStart(c: Char) = c.isJavaIdentifierStart()
-  override fun isIdentifierPart(c: Char) = c.isJavaIdentifierPart()
+  override fun isIdentifierStart(c: Char): Boolean = c.isJavaIdentifierStart()
+  override fun isIdentifierPart(c: Char): Boolean = c.isJavaIdentifierPart()
 
-  override val stateChanges = JavaSuggestedRefactoringStateChanges(this)
-  override val availability = JavaSuggestedRefactoringAvailability(this)
-  override val ui get() = JavaSuggestedRefactoringUI
-  override val execution = JavaSuggestedRefactoringExecution(this)
+  override val stateChanges: JavaSuggestedRefactoringStateChanges = JavaSuggestedRefactoringStateChanges(this)
+  override val availability: JavaSuggestedRefactoringAvailability = JavaSuggestedRefactoringAvailability(this)
+  override val ui: JavaSuggestedRefactoringUI get() = JavaSuggestedRefactoringUI
+  override val execution: JavaSuggestedRefactoringExecution = JavaSuggestedRefactoringExecution(this)
 
   companion object {
     fun extractAnnotationsToCopy(type: PsiType, owner: PsiModifierListOwner, file: PsiFile): List<PsiAnnotation> {

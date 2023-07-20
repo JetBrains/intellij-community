@@ -33,10 +33,7 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.RegionPainter;
 import com.jediterm.core.compatibility.Point;
 import com.jediterm.core.util.TermSize;
-import com.jediterm.terminal.ProcessTtyConnector;
-import com.jediterm.terminal.SubstringFinder;
-import com.jediterm.terminal.TerminalColor;
-import com.jediterm.terminal.TtyConnector;
+import com.jediterm.terminal.*;
 import com.jediterm.terminal.model.SelectionUtil;
 import com.jediterm.terminal.model.StyleState;
 import com.jediterm.terminal.model.TerminalSelection;
@@ -391,7 +388,8 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     }
 
     @Override
-    public void connectToTty(@NotNull TtyConnector ttyConnector) {
+    public void connectToTty(@NotNull TtyConnector ttyConnector, @NotNull TermSize initialTermSize) {
+      widget().getTerminal().resize(initialTermSize, RequestOrigin.User);
       widget().createTerminalSession(ttyConnector);
       widget().start();
       widget().getComponent().revalidate();

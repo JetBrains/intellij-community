@@ -28,7 +28,22 @@
           <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.0/apiguardian-api-1.1.0.jar!/" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-java/5.0.0-RC1/cucumber-java-5.0.0-RC1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-core/5.0.0-RC1/cucumber-core-5.0.0-RC1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/gherkin/5.2.0/gherkin-5.2.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/gherkin-jvm-deps/1.0.6/gherkin-jvm-deps-1.0.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/tag-expressions/2.0.2/tag-expressions-2.0.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-expressions/8.0.0/cucumber-expressions-8.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-core/2.1/hamcrest-core-2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.1/hamcrest-2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-library/2.1/hamcrest-library-2.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/datatable/3.0.0/datatable-3.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/datatable-dependencies/3.0.0/datatable-dependencies-3.0.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/cucumber-plugin/5.0.0-RC1/cucumber-plugin-5.0.0-RC1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/cucumber/docstring/5.0.0-RC1/docstring-5.0.0-RC1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apiguardian/apiguardian-api/1.1.0/apiguardian-api-1.1.0-sources.jar!/" />
+        </SOURCES>
       </library>
     </orderEntry>
   </component>

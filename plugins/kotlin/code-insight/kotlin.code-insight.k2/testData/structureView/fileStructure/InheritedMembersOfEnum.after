@@ -4,6 +4,8 @@
   fun clone(): Any location=→Enum
   fun compareTo(other: E): Int location=→Enum
   fun equals(other: Any?): Boolean location=→Enum
+  fun finalize() location=→Enum
+  fun getDeclaringClass(): Class<Test?> location=→Enum
   fun hashCode(): Int location=→Enum
   fun toString(): String location=→Enum
   SECOND

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.GlobalSimpleInspectionTool;
@@ -40,8 +40,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   /**
    * @see ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)
    */
-  @Nullable
-  public InitialInfoType collectInformation(@NotNull PsiFile file) {
+  public @Nullable InitialInfoType collectInformation(@NotNull PsiFile file) {
     return null;
   }
 
@@ -54,8 +53,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param hasErrors indicates if file has errors detected by preceding analyses
    * @return information to pass to {@link ExternalAnnotator#doAnnotate(InitialInfoType)}, or {@code null} if not applicable
    */
-  @Nullable
-  public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
+  public @Nullable InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
     return hasErrors ? null : collectInformation(file);
   }
 
@@ -67,8 +65,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param collectedInfo initial information gathered by {@link ExternalAnnotator#collectInformation}
    * @return annotations to pass to {@link ExternalAnnotator#apply(PsiFile, AnnotationResultType, AnnotationHolder)}
    */
-  @Nullable
-  public AnnotationResultType doAnnotate(InitialInfoType collectedInfo) {
+  public @Nullable AnnotationResultType doAnnotate(@Nullable InitialInfoType collectedInfo) {
     return null;
   }
 
@@ -79,7 +76,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param annotationResult annotations collected in {@link ExternalAnnotator#doAnnotate(InitialInfoType)}
    * @param holder           a container for receiving annotations
    */
-  public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
+  public void apply(@NotNull PsiFile file, @Nullable AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) { }
 
   /**
    * <p>Returns an inspection that should run in batch mode.</p>
@@ -89,7 +86,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * and extending {@link com.intellij.codeInspection.LocalInspectionTool} or {@link GlobalSimpleInspectionTool} would
    * provide implementation for a batch tool that would run without read action, according to the {@link #doAnnotate(Object)} documentation.</p>
    */
-  public String getPairedBatchInspectionShortName() {
+  public @Nullable String getPairedBatchInspectionShortName() {
     return null;
   }
 }

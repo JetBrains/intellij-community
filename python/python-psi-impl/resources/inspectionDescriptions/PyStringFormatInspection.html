@@ -2,17 +2,17 @@
 <body>
 <p>Reports errors in string formatting operations.</p>
 <p><b>Example 1:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 "Hello {1}".format("people")
-</pre>
+</code></pre>
 <p><b>Example 2:</b></p>
-<pre style="font-family: monospace">
+<pre><code>
 def bar():
     return 1
 
 
 "%s %s" % bar()
-</pre>
+</code></pre>
 <p>As a fix, you need to rewrite string formatting fragments to
   adhere to the <a href="https://docs.python.org/3/library/string.html#format-string-syntax">formatting syntax</a>.</p>
 </body>

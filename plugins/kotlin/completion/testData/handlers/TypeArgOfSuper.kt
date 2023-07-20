@@ -11,3 +11,5 @@ class Z : Y(), X {
         super<<caret>>.fn()
     }
 }
+
+// ELEMENT: X

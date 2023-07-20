@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.icons.ExpUiIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
@@ -96,7 +97,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   @NotNull private @NlsContexts.Label String myStatusText = "";
   @NotNull private Color myStatusColor = ExperimentalUI.isNewUI() ? UIUtil.getLabelInfoForeground() : UIUtil.getLabelForeground();
   private final AnAction modeAction = new ModeAction();
-  private static final Color EDITOR_BACKGROUND = JBColor.lazy(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
   @Nullable private final ShortcutSet findActionShortcutSet;
   @Nullable private final ShortcutSet replaceActionShortcutSet;
@@ -223,11 +223,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     mySearchToolbarWrapper.add(mySearchActionsToolbar, BorderLayout.CENTER);
 
-    if (ExperimentalUI.isNewUI()) {
-      mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
-      mySearchToolbarWrapper.setBackground(EDITOR_BACKGROUND);
-    }
-
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);
     myReplaceActionsToolbar.setBorder(JBUI.Borders.empty());
     myReplaceActionsToolbar.setOpaque(!isNewUI);
@@ -248,8 +243,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       modeToolbarComponent.setOpaque(false);
 
       myModePanel = JBUI.Panels.simplePanel().addToTop(modeToolbar.getComponent());
-      myModePanel.setOpaque(true);
-      myModePanel.setBackground(EDITOR_BACKGROUND);
+      myModePanel.setOpaque(false);
       add(myModePanel, BorderLayout.WEST);
     }
     else {
@@ -267,13 +261,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      if (ExperimentalUI.isNewUI()) {
-        mySearchActionsToolbar.setBackground(EDITOR_BACKGROUND);
-        mySplitter.setBackground(EDITOR_BACKGROUND);
-        mySplitter.setOpaque(true);
-      } else {
-        mySplitter.setOpaque(false);
-      }
+      mySplitter.setOpaque(false);
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
 
@@ -325,6 +313,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       Touchbar.setActions(this, touchbarActions);
     }
 
+    if (ExperimentalUI.isNewUI()) {
+      setBackground(JBColor.namedColor("Editor.SearchField.background", JBColor.background()));
+    }
+
     updateUI();
   }
 
@@ -342,11 +334,6 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       myModePanel.setBorder(JBUI.Borders.compound(JBUI.Borders.customLine(JBUI.CurrentTheme.Editor.BORDER_COLOR, 0, 0, 0, 1),
                                                   JBUI.Borders.empty(JBUI.CurrentTheme.Editor.SearchReplaceModePanel.borderInsets())));
     }
-  }
-
-  public void resetUndoRedoActions() {
-    SwingUndoUtil.resetUndoRedoActions(mySearchTextComponent);
-    SwingUndoUtil.resetUndoRedoActions(myReplaceTextComponent);
   }
 
   @Override
@@ -549,22 +536,21 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
   }
 
   public void addTextToRecent(@NotNull JTextComponent textField) {
+    if (myProject.isDisposed()) return;
     final String text = textField.getText();
-    if (text.length() > 0) {
-      FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
-      if (textField == mySearchTextComponent) {
-        if (myAddSearchResultsToGlobalSearch) {
-          findInProjectSettings.addStringToFind(text);
-        }
-        if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
-          ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
-        }
+    FindInProjectSettings findInProjectSettings = FindInProjectSettings.getInstance(myProject);
+    if (textField == mySearchTextComponent) {
+      if (myAddSearchResultsToGlobalSearch) {
+        findInProjectSettings.addStringToFind(text);
       }
-      else {
-        findInProjectSettings.addStringToReplace(text);
-        if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
-          ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
-        }
+      if (mySearchFieldWrapper.getTargetComponent() instanceof SearchTextField) {
+        ((SearchTextField)mySearchFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
+      }
+    }
+    else {
+      findInProjectSettings.addStringToReplace(text);
+      if (myReplaceFieldWrapper.getTargetComponent() instanceof SearchTextField) {
+        ((SearchTextField)myReplaceFieldWrapper.getTargetComponent()).addCurrentTextToHistory();
       }
     }
   }
@@ -654,15 +640,11 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     return true;
   }
 
-  private static final Icon CLOSE_ICON = ExperimentalUI.isNewUI() ?
-                                         IconManager.getInstance().getIcon("expui/general/close.svg", AllIcons.class) :
-                                         AllIcons.Actions.Close;
-
   private class CloseAction extends DumbAwareAction implements LightEditCompatible, RightAlignedToolbarAction {
     private final ShortcutSet shortcut = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_EDITOR_ESCAPE);
     private CloseAction() {
       getTemplatePresentation().setText(FindBundle.message("find.close.button.name"));
-      getTemplatePresentation().setIcon(CLOSE_ICON);
+      getTemplatePresentation().setIcon(ExperimentalUI.isNewUI() ? ExpUiIcons.General.Close : AllIcons.Actions.Close);
     }
 
     @Override
@@ -736,6 +718,7 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     ActionToolbarImpl toolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, group, true);
     toolbar.setTargetComponent(this);
     toolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
+    if (ExperimentalUI.isNewUI()) toolbar.setOpaque(false);
     Utils.setSmallerFontForChildren(toolbar);
     return toolbar;
   }

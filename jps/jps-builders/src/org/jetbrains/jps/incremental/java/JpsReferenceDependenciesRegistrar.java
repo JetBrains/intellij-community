@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.java;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -31,7 +30,7 @@ public final class JpsReferenceDependenciesRegistrar implements JavacFileReferen
   @Override
   public void registerFile(CompileContext context,
                            String filePath,
-                           Iterable<Object2IntMap.Entry<? extends JavacRef>> refs,
+                           Iterable<Map.Entry<? extends JavacRef, Integer>> refs,
                            Collection<? extends JavacDef> defs,
                            Collection<? extends JavacTypeCast> casts,
                            Collection<? extends JavacRef> implicitToString) {
@@ -48,7 +47,7 @@ public final class JpsReferenceDependenciesRegistrar implements JavacFileReferen
       return;
     }
 
-    Iterator<Object2IntMap.Entry<? extends JavacRef>> iterator = refs.iterator();
+    Iterator<Map.Entry<? extends JavacRef, Integer>> iterator = refs.iterator();
     if (iterator.hasNext()) {
       final Set<String> classImports = new HashSet<>();
       final Set<String> staticImports = new HashSet<>();

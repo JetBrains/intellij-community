@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -34,9 +34,8 @@ public class LinkedListWithSum<E> extends AbstractSequentialList<E> implements L
     return myList.size();
   }
 
-  @NotNull
   @Override
-  public ListIterator listIterator(int index) {
+  public @NotNull ListIterator listIterator(int index) {
     return new ListIterator(myList.listIterator(index));
   }
 

@@ -27,4 +27,13 @@ public class MavenImportSpec {
   public boolean isExplicitImport() {
     return myExplicitImport;
   }
+
+  @Override
+  public String toString() {
+    return "MavenImportSpec{" +
+           "forceReading=" + myForceReading +
+           ", forceResolve=" + myForceResolve +
+           ", explicit=" + myExplicitImport +
+           '}';
+  }
 }

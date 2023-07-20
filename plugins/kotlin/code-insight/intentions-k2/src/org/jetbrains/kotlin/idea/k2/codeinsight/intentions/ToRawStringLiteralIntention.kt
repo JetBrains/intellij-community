@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 internal class ToRawStringLiteralIntention : AbstractKotlinApplicableIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class
 ), LowPriorityAction {
-    override fun getFamilyName() = KotlinBundle.message("to.raw.string.literal")
+    override fun getFamilyName() = KotlinBundle.message("convert.to.raw.string.literal")
 
     override fun getActionName(element: KtStringTemplateExpression) = familyName
 

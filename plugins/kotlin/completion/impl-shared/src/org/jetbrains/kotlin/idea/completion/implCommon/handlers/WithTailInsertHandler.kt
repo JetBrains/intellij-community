@@ -67,7 +67,7 @@ class WithTailInsertHandler(
         var textToInsert = ""
         if (insert) {
             textToInsert = tailText
-            if (spaceBefore) textToInsert = " " + textToInsert
+            if (spaceBefore) textToInsert = " $textToInsert"
         }
         if (spaceAfter) textToInsert += " "
 

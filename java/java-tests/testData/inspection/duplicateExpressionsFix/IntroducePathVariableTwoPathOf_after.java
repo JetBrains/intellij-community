@@ -4,9 +4,9 @@ import java.nio.file.*;
 class C {
   public boolean isRelativeDirectory() {
     String fileName = "foo";
-      Path of = Path.of(fileName);
-      if (of.isAbsolute()) return false;
+      Path path = Path.of(fileName);
+      if (path.isAbsolute()) return false;
     System.out.println(fileName);
-    return Files.isDirectory(of);
+    return Files.isDirectory(path);
   }
 }

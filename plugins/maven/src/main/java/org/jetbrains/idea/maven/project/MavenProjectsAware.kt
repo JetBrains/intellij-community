@@ -111,7 +111,7 @@ class MavenProjectsAware(
           isImportCompleted.set(true)
         }
 
-        override fun importStarted(spec: MavenImportSpec?) {
+        override fun importStarted() {
           isImportCompleted.set(false)
         }
       })

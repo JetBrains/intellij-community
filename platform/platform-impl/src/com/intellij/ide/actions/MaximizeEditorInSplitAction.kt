@@ -86,10 +86,10 @@ internal class MaximizeEditorInSplitAction : DumbAwareAction() {
     presentation.isEnabled = false
   }
 
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
   companion object {
-    val CURRENT_STATE_IS_MAXIMIZED_KEY = Key.create<Boolean>("CURRENT_STATE_IS_MAXIMIZED")
+    val CURRENT_STATE_IS_MAXIMIZED_KEY: Key<Boolean> = Key.create("CURRENT_STATE_IS_MAXIMIZED")
 
     private fun getSplittersToMaximize(project: Project, editorComponent: Component?): Set<Pair<Splitter, Boolean>> {
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return emptySet()

@@ -27,7 +27,7 @@ constructor(
 ) : SdkData(sdkName) {
   companion object {
     @JvmField
-    val KEY = Key.create(ProjectSdkData::class.java, ProjectKeys.PROJECT.processingWeight + 1)
+    val KEY: Key<ProjectSdkData> = Key.create(ProjectSdkData::class.java, ProjectKeys.PROJECT.processingWeight + 1)
   }
 }
 
@@ -38,6 +38,6 @@ constructor(
 ) : SdkData(sdkName) {
   companion object {
     @JvmField
-    val KEY = Key.create(ModuleSdkData::class.java, ProjectSdkData.KEY.processingWeight + 1)
+    val KEY: Key<ModuleSdkData> = Key.create(ModuleSdkData::class.java, ProjectSdkData.KEY.processingWeight + 1)
   }
 }

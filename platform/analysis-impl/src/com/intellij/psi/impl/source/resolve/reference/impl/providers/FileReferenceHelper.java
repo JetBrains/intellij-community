@@ -162,8 +162,7 @@ public abstract class FileReferenceHelper {
     return url;
   }
 
-  @NotNull
-  public List<? extends LocalQuickFix> registerFixes(@NotNull FileReference reference) {
+  public @NotNull List<? extends @NotNull LocalQuickFix> registerFixes(@NotNull FileReference reference) {
     return emptyList();
   }
 

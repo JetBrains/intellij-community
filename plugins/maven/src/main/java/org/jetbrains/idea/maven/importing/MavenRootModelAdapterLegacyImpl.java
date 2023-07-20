@@ -215,7 +215,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
     ContentEntry e = getContentRootFor(url);
     if (e == null) return;
     if (e.getUrl().equals(url.getUrl())) return;
-    e.addExcludeFolder(url.getUrl(), getMavenExternalSource());
+    e.addExcludeFolder(url.getUrl(), true);
   }
 
   @Override

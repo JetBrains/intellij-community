@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StoreUtil;
@@ -22,10 +22,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.serviceContainer.ComponentManagerImpl;
+import com.intellij.util.CoroutineScopeKt;
 import com.intellij.util.messages.MessageBus;
+import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
-import org.picocontainer.PicoContainer;
 
 import java.util.Map;
 
@@ -231,11 +232,6 @@ final class DefaultProject extends UserDataHolderBase implements Project {
   }
 
   @Override
-  public @NotNull PicoContainer getPicoContainer() {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public boolean isInjectionForExtensionSupported() {
     return true;
   }
@@ -271,7 +267,10 @@ final class DefaultProjectImpl extends ClientAwareComponentManager implements Pr
   private final Project actualContainerInstance;
 
   DefaultProjectImpl(@NotNull Project actualContainerInstance) {
-    super((ComponentManagerImpl)ApplicationManager.getApplication(), false);
+    super((ComponentManagerImpl)ApplicationManager.getApplication(),
+          CoroutineScopeKt.namedChildScope(((ComponentManagerImpl)ApplicationManager.getApplication()).getCoroutineScope(), "DefaultProjectImpl",
+                                           EmptyCoroutineContext.INSTANCE, true),
+          false);
 
     this.actualContainerInstance = actualContainerInstance;
   }

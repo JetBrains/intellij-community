@@ -15,7 +15,7 @@ import javax.swing.JPanel
 class InlayHintsConfigurable(private val project: Project) : Configurable, Configurable.Composite, Configurable.WithEpDependencies {
   override fun getConfigurables(): Array<Configurable> = emptyArray()
 
-  override fun isModified() = false
+  override fun isModified(): Boolean = false
 
   override fun getDisplayName(): String {
     return CodeInsightBundle.message("settings.inlay.hints.panel.name")

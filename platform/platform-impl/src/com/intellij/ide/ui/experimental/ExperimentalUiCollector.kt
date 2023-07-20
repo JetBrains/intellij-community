@@ -10,8 +10,10 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
   enum class SwitchSource {
     ENABLE_NEW_UI_ACTION,
     DISABLE_NEW_UI_ACTION,
+    SETTINGS,
     WELCOME_PROMO,
-    WHATS_NEW_PAGE
+    WHATS_NEW_PAGE,
+    PREFERENCES
   }
 
   enum class MeetNewUiAction {
@@ -20,32 +22,38 @@ class ExperimentalUiCollector : CounterUsagesCollector() {
     DENSITY_COMPACT
   }
 
-  override fun getGroup() = GROUP
+  override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("experimental.ui.interactions", 4)
+    private val GROUP = EventLogGroup("experimental.ui.interactions", 6)
 
     private val switchSourceField = EventFields.Enum<SwitchSource>("switch_source")
     private val expUiField = EventFields.Boolean("exp_ui")
     private val switchUi = GROUP.registerVarargEvent("switch.ui", switchSourceField, expUiField)
 
     @JvmStatic
-    fun logSwitchUi(switchSource: SwitchSource, value: Boolean) = switchUi.log(
+    fun logSwitchUi(switchSource: SwitchSource, value: Boolean): Unit = switchUi.log(
       switchSourceField with switchSource,
       expUiField with value)
+
+    @JvmStatic
+    val inviteBannerShown = GROUP.registerEvent("invite.banner.shown")
+
+    @JvmStatic
+    val inviteBannerClosed = GROUP.registerEvent("invite.banner.closed")
 
     private val meetNewUiActionField = EventFields.Enum<MeetNewUiAction>("action")
     private val meetNewUiAction = GROUP.registerVarargEvent("meet.new.ui.action", meetNewUiActionField)
 
     @JvmStatic
-    fun logMeetNewUiAction(action: MeetNewUiAction) = meetNewUiAction.log(
+    fun logMeetNewUiAction(action: MeetNewUiAction): Unit = meetNewUiAction.log(
       meetNewUiActionField with action)
 
     private val meetNewUiThemeField = EventFields.StringValidatedByEnum("theme_name", "look_and_feel")
     private val meetNewUiSwitchTheme = GROUP.registerVarargEvent("meet.new.ui.switch_theme", meetNewUiThemeField)
 
     @JvmStatic
-    fun logMeetNewUiTheme(theme: String) = meetNewUiSwitchTheme.log(
+    fun logMeetNewUiTheme(theme: String): Unit = meetNewUiSwitchTheme.log(
       meetNewUiThemeField with theme)
   }
 

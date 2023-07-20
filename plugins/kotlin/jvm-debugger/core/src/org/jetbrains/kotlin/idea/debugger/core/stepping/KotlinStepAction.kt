@@ -28,9 +28,9 @@ sealed class KotlinStepAction {
         }
     }
 
-    class KotlinStepOver(private val filter: KotlinMethodFilter) : KotlinStepAction() {
+    class KotlinStepOver(private val filter: KotlinMethodFilter, private val stepSize: Int = StepRequest.STEP_LINE) : KotlinStepAction() {
         override fun createCommand(debugProcess: DebugProcessImpl, suspendContext: SuspendContextImpl, ignoreBreakpoints: Boolean): DebugProcessImpl.StepCommand {
-            return KotlinStepActionFactory.createKotlinStepOverCommand(debugProcess, suspendContext, ignoreBreakpoints, filter)
+            return KotlinStepActionFactory.createKotlinStepOverCommand(debugProcess, suspendContext, ignoreBreakpoints, filter, stepSize)
         }
     }
 

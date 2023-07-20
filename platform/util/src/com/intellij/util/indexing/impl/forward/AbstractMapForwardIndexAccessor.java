@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -22,16 +22,13 @@ public abstract class AbstractMapForwardIndexAccessor<Key, Value, DataType> exte
     return createDiffBuilderByMap(inputId, map);
   }
 
-  @NotNull
-  public InputDataDiffBuilder<Key, Value> createDiffBuilderByMap(int inputId, @Nullable Map<Key, Value> map) throws IOException {
+  public @NotNull InputDataDiffBuilder<Key, Value> createDiffBuilderByMap(int inputId, @Nullable Map<Key, Value> map) throws IOException {
     return new MapInputDataDiffBuilder<>(inputId, map);
   }
 
-  @Nullable
-  protected abstract Map<Key, Value> convertToMap(int inputId, @Nullable DataType inputData) throws IOException;
+  protected abstract @Nullable Map<Key, Value> convertToMap(int inputId, @Nullable DataType inputData) throws IOException;
 
-  @Nullable
-  public Map<Key, Value> convertToInputDataMap(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
+  public @Nullable Map<Key, Value> convertToInputDataMap(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
     return convertToMap(inputId, deserializeData(sequence));
   }
 }

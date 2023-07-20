@@ -23,7 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-@SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
+@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext", "unused"})
 public class Menu extends MenuItem {
   private static final boolean USE_STUB = Boolean.getBoolean("jbScreenMenuBar.useStubItem"); // just for tests/experiments
   private static final int CLOSE_DELAY = Integer.getInteger("jbScreenMenuBar.closeDelay", 500); // in milliseconds
@@ -101,7 +101,7 @@ public class Menu extends MenuItem {
     nativeSetTitle(nativePeer, label, isInHierarchy);
   }
 
-  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Search for subitem by title (regexp) in native NSMenu peer
   // Returns the index of first child with matched title.
   public int findIndexByTitle(String re) {
     if (re == null || re.isEmpty()) return -1;
@@ -110,7 +110,7 @@ public class Menu extends MenuItem {
     return nativeFindIndexByTitle(nativePeer, re);
   }
 
-  // Search for subitem by title (reg-exp) in native NSMenu peer
+  // Search for subitem by title (regexp) in native NSMenu peer
   // Returns the first child with matched title.
   // NOTE: Always creates java-wrapper for native NSMenuItem (that must be disposed manually)
   synchronized
@@ -226,7 +226,7 @@ public class Menu extends MenuItem {
     myIsOpened = true;
     if (myOnOpen != null) {
       if (USE_STUB) {
-        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty and we can't fill it later)
+        // NOTE: must add stub item when menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
         MenuItem stub = new MenuItem();
         myItems.add(stub);
         stub.isInHierarchy = true;
@@ -347,7 +347,7 @@ public class Menu extends MenuItem {
     }
     catch (Throwable e) {
       // default screen menu implementation will be used
-      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib.toFile().getAbsolutePath() + ", exception: " + e.getMessage());
+      Logger.getInstance(Menu.class).warn("can't load menu library: " + lib + ", exception: " + e.getMessage());
     }
 
     return IS_ENABLED;

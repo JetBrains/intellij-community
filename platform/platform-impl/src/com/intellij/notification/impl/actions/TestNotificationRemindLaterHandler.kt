@@ -50,11 +50,11 @@ class TestNotificationRemindLaterHandler : NotificationRemindLaterHandler {
 
 class ActionsState : BaseState() {
   @get:CollectionBean
-  val actions by list<String>()
+  val actions: MutableList<String> by list()
 }
 
 class TestNotificationRemindLaterHandler2 : NotificationRemindLaterHandlerWithState<ActionsState>(ActionsState::class.java) {
-  override fun getID() = "ZZZ_2"
+  override fun getID(): String = "ZZZ_2"
 
   override fun getState(notification: Notification): ActionsState {
     val state = ActionsState()

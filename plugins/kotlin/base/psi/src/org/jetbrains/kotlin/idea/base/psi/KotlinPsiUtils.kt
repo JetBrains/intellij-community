@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
     get() {
@@ -222,3 +223,12 @@ fun PsiElement.childrenDfsSequence(): Sequence<PsiElement> =
     }
 
 fun KtExpression.isAnnotationArgument(): Boolean = this.parents.any { it is KtAnnotationEntry }
+
+fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
+    return getArgumentExpression()
+        ?.safeAs<KtStringTemplateExpression>()
+        ?.entries
+        ?.singleOrNull()
+        ?.safeAs<KtLiteralStringTemplateEntry>()
+        ?.text
+}

@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 import static com.intellij.vcs.log.TimedCommitParser.log;
 
@@ -226,7 +226,7 @@ public class VcsLogRefresherTest extends VcsPlatformTest {
     private volatile Exception myException;
 
     @Override
-    public void consume(DataPack t) {
+    public void accept(DataPack t) {
       try {
         myQueue.add(t);
       }

@@ -21,6 +21,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.ui.ExperimentalUI;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -38,7 +39,8 @@ public class RunAction extends ExecutorAction {
     if (running) {
       presentation.setText(ExecutionBundle.messagePointer("run.dashboard.rerun.action.name"));
       presentation.setDescription(ExecutionBundle.messagePointer("run.dashboard.rerun.action.description"));
-      presentation.setIcon(AllIcons.Actions.Restart);
+      presentation.setIcon(
+        ExperimentalUI.isNewUI() ? DefaultRunExecutor.getRunExecutorInstance().getRerunIcon() : AllIcons.Actions.Restart);
     }
     else {
       presentation.setText(ExecutionBundle.messagePointer("run.dashboard.run.action.name"));

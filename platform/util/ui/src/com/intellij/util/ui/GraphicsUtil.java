@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
@@ -119,15 +119,23 @@ public final class GraphicsUtil {
     return ourSafelyGetGraphicsMethod.isAvailable() ? (Graphics)ourSafelyGetGraphicsMethod.invoke(null, c) : c.getGraphics();
   }
 
+  /**
+   * Put context hint that instructs using specified aliasing for a given component.
+   * It's preferred over using {@link #setupAntialiasing(Graphics)}, as it will allow to compute {@link JComponent#getPreferredSize()}
+   * without using {@link JComponent#getGraphics()} (see {@link #safelyGetGraphics(Component)} on why it shall be avoided).
+   * <p>
+   * NB: {@link JComponent#paint(Graphics)} should be using {@link sun.swing.SwingUtilities2#drawString} to make use of this component hint.
+   */
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
     AATextInfo.putClientProperty(type, component);
   }
 
   public static Object createAATextInfo(@NotNull Object hint) {
-    return AATextInfo.create(hint, UIUtil.getLcdContrastValue());
+    return AATextInfo.create(hint, StartupUiUtil.getLcdContrastValue());
   }
 
-  public static boolean isProjectorEnvironment() {
-    return GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName().equals("PGraphicsEnvironment");
+  public static boolean isRemoteEnvironment() {
+    String geClassName = GraphicsEnvironment.getLocalGraphicsEnvironment().getClass().getSimpleName();
+    return geClassName.equals("PGraphicsEnvironment") || geClassName.equals("IdeGraphicsEnvironment");
   }
 }

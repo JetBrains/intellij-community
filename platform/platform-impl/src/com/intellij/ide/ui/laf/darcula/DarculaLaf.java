@@ -199,6 +199,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
   }
 
   protected void loadDefaults(UIDefaults defaults) {
+    defaults.put("ClassLoader", getClass().getClassLoader());
     loadDefaultsFromJson(defaults);
   }
 

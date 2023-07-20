@@ -15,9 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.OutputStream;
 
 public final class PyConsoleDebugProcessHandler extends ProcessHandler implements PositionConverterProvider {
-  private final PyConsoleProcessHandler myConsoleProcessHandler;
+  private final ProcessHandler myConsoleProcessHandler;
 
-  public PyConsoleDebugProcessHandler(final PyConsoleProcessHandler processHandler) {
+  public PyConsoleDebugProcessHandler(final ProcessHandler processHandler) {
     myConsoleProcessHandler = processHandler;
     processHandler.addProcessListener(new ProcessListener() {
       @Override
@@ -53,7 +53,7 @@ public final class PyConsoleDebugProcessHandler extends ProcessHandler implement
     return null;
   }
 
-  public PyConsoleProcessHandler getConsoleProcessHandler() {
+  public ProcessHandler getConsoleProcessHandler() {
     return myConsoleProcessHandler;
   }
 

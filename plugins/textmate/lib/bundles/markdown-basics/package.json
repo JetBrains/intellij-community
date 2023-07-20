@@ -88,7 +88,8 @@
     "configurationDefaults": {
       "[markdown]": {
         "editor.unicodeHighlight.ambiguousCharacters": false,
-        "editor.unicodeHighlight.invisibleCharacters": false
+        "editor.unicodeHighlight.invisibleCharacters": false,
+        "diffEditor.ignoreTrimWhitespace": false
       }
     }
   }

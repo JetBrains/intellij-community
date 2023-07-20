@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
-
+public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton.NoPathCompletion implements UserActivityProviderComponent {
   protected EnvironmentVariablesData myData = EnvironmentVariablesData.DEFAULT;
   protected final Map<String, String> myParentDefaults = new LinkedHashMap<>();
   private final List<ChangeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();

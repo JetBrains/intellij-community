@@ -86,7 +86,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     }
 
     PsiElement[] temptoDelete = PsiTreeUtil.filterAncestors(elements);
-    Set<PsiElement> elementsSet = ContainerUtil.set(temptoDelete);
+    Set<PsiElement> elementsSet = Set.of(temptoDelete);
     Set<PsiElement> fullElementsSet = new LinkedHashSet<>();
 
     if (checkDelegates) {
