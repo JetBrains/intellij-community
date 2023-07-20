@@ -1,4 +1,4 @@
-// "Replace 'point' with pattern variable" "true"
+// "Replace 'point' with pattern variable" "false"
 class X {
   void test(Object obj) {
     if (obj instanceof Point(double x/*c*/, double y) && y == x) {
