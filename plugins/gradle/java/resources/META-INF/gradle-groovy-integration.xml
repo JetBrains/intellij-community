@@ -89,6 +89,7 @@
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleScriptMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectExtensionContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradlePropertySetterMemberContributor"/>
+    <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleConfigurableCallContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.transformation.GradleActionToClosureMemberContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleProjectMembersContributor"/>
     <membersContributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependencyHandlerContributor"/>
