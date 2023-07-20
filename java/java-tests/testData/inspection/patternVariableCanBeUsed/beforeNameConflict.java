@@ -179,4 +179,14 @@ class X {
       System.out.println(text);
     }
   }
+
+  private void testPair(Object obj) {
+    if (obj instanceof Integer) {
+      Integer typed = (Integer) obj;
+    }
+
+    if (obj instanceof Double) {
+      Double typed = (Double) obj;
+    }
+  }
 }

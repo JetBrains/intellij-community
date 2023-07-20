@@ -2,6 +2,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.ContractValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -352,19 +353,41 @@ public final class InstanceOfUtils {
    * @param variable a variable, which is used to check if the scope contains variables with the same name
    * @param instanceOf an instanceof expression that is used to calculate declaration scope
    * @return true if other declared variables with the same name are found in the scope of instanceof with variable patterns.
-   * The scope from {@link JavaSharedImplUtil#getPatternVariableDeclarationScope(PsiInstanceOfExpression)} is used
+   * {@link HighlightUtil#checkVariableAlreadyDefined(PsiVariable)} is used on copy files
    */
   public static boolean hasConflictingDeclaredNames(@NotNull PsiLocalVariable variable, @NotNull PsiInstanceOfExpression instanceOf) {
     PsiIdentifier identifier = variable.getNameIdentifier();
     if (identifier == null) {
       return false;
     }
+    if (instanceOf.getPattern() != null) return true;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(variable.getProject());
+    PsiElement newExpression = factory.createExpressionFromText(instanceOf.getText() + " " + identifier.getText(), instanceOf);
 
-    PsiElement scope = JavaSharedImplUtil.getPatternVariableDeclarationScope(instanceOf);
+    PsiFile file = variable.getContainingFile();
+    if (file != instanceOf.getContainingFile()) {
+      return true;
+    }
+    PsiFile copyFile = (PsiFile)file.copy();
+    PsiInstanceOfExpression copyInstanceOf = PsiTreeUtil.findSameElementInCopy(instanceOf, copyFile);
+    PsiLocalVariable copyVariable = PsiTreeUtil.findSameElementInCopy(variable, copyFile);
+    copyVariable.delete();
+    newExpression = copyInstanceOf.replace(newExpression);
+    if (!(newExpression instanceof PsiInstanceOfExpression newInstanceOfExpression)) {
+      return true;
+    }
+    if (!(newInstanceOfExpression.getPattern() instanceof PsiTypeTestPattern typeTestPattern)) {
+      return true;
+    }
+    PsiPatternVariable patternVariable = typeTestPattern.getPatternVariable();
+    if (patternVariable == null) {
+      return true;
+    }
+    PsiElement scope = JavaSharedImplUtil.getPatternVariableDeclarationScope(newInstanceOfExpression);
     if (scope == null) {
       return false;
     }
-    return isConflictingNameDeclaredInside(variable, scope);
+    return isConflictingNameDeclaredInside(patternVariable, scope);
   }
 
   private static boolean isConflictingNameDeclaredInside(@Nullable PsiVariable myVariable,
@@ -399,7 +422,8 @@ public final class InstanceOfUtils {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       String name = variable.getName();
-      if (name != null && myVariable != variable && myIdentifier.textMatches(name)) {
+      if (name != null && myVariable != variable && myIdentifier.textMatches(name) &&
+          HighlightUtil.checkVariableAlreadyDefined(variable) != null) {
         hasConflict = true;
         stopWalking();
       }

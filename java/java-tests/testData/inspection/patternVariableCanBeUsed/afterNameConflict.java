@@ -173,4 +173,12 @@ class X {
       System.out.println(text);
     }
   }
+
+  private void testPair(Object obj) {
+    if (obj instanceof Integer typed) {
+    }
+
+    if (obj instanceof Double typed) {
+    }
+  }
 }
