@@ -17,12 +17,11 @@ import java.util.List;
 public class TestIconProvider extends IconProvider {
   @Override
   public Icon getIcon(@NotNull PsiElement element, int flags) {
-    final List<TestFramework> testFrameworks =
-      TestFramework.EXTENSION_NAME.getExtensionList();
-    final Language language = element.getLanguage();
+    if (element.getContainingFile() == null) return null;
 
+    final List<TestFramework> testFrameworks = TestFramework.EXTENSION_NAME.getExtensionList();
     for (TestFramework framework : testFrameworks) {
-      if (framework.getLanguage() != language) continue;
+      if (!isSuitableByLanguage(element, framework)) continue;
 
       try {
         if (framework.isIgnoredMethod(element)) {
@@ -36,7 +35,7 @@ public class TestIconProvider extends IconProvider {
     }
 
     for (TestFramework framework : testFrameworks) {
-      if (framework.getLanguage() != language) continue;
+      if (!isSuitableByLanguage(element, framework)) continue;
 
       try {
         if (framework.isTestMethod(element)) {
@@ -49,5 +48,10 @@ public class TestIconProvider extends IconProvider {
     }
 
     return null;
+  }
+
+  private static boolean isSuitableByLanguage(PsiElement element, TestFramework framework) {
+    Language frameworkLanguage = framework.getLanguage();
+    return frameworkLanguage == Language.ANY || element.getLanguage().isKindOf(frameworkLanguage);
   }
 }

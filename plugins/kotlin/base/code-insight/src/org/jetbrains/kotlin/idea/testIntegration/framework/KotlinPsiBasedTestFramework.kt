@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.testIntegration.framework
 
+import com.intellij.codeInsight.TestFrameworks
+import com.intellij.lang.Language
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.testIntegration.TestFramework
@@ -19,7 +21,7 @@ interface KotlinPsiBasedTestFramework {
     fun responsibleFor(declaration: KtNamedDeclaration): Boolean
 
     fun checkTestClass(element: PsiElement?): ThreeState {
-        if (element?.language != KotlinLanguage.INSTANCE) return ThreeState.UNSURE
+        if (element?.language != KotlinLanguage.INSTANCE) return ThreeState.NO
         val psiElement = (element as? KtLightElement<*, *>)?.kotlinOrigin ?: element
         val ktClassOrObject = psiElement.parentOfType<KtClassOrObject>(true) ?: return ThreeState.NO
         return checkTestClass(ktClassOrObject)
@@ -55,20 +57,29 @@ interface KotlinPsiBasedTestFramework {
                 else -> null
             }
 
+        private fun Language.isSubLanguage(language: Language): Boolean =
+            language == Language.ANY || this.isKindOf(language)
+
         @JvmStatic
         fun findTestFramework(declaration: KtNamedDeclaration, psiOnlyChecks: Boolean = false): TestFramework? {
-            val frameworkNames = HashSet<String>()
+            val checkedFrameworksByName = HashMap<String, Language>()
             for (framework in TestFramework.EXTENSION_NAME.extensionList) {
                 val frameworkName = framework.name
-                if (frameworkNames.contains(frameworkName)) continue
+                val frameworkLanguage = framework.language
+
+                if (!TestFrameworks.isSuitableByLanguage(declaration, framework)) continue
+
+                val checkedFrameworkLanguage = checkedFrameworksByName[frameworkName]
+                // if we've checked framework for more specific language - no reasons to check it again for more general language
+                if (checkedFrameworkLanguage != null && checkedFrameworkLanguage.isSubLanguage(frameworkLanguage)) continue
 
                 val kotlinPsiBasedTestFramework = framework as? KotlinPsiBasedTestFramework
                 if (psiOnlyChecks && kotlinPsiBasedTestFramework == null) continue
                 val checkTestClass =
                     kotlinPsiBasedTestFramework?.checkTestClass(declaration) ?: ThreeState.UNSURE
 
-                val isTestFrameworkResponsible = if (checkTestClass != ThreeState.UNSURE) {
-                    frameworkNames += frameworkName
+                val responsible = if (checkTestClass != ThreeState.UNSURE) {
+                    checkedFrameworksByName[frameworkName] = frameworkLanguage
                     checkTestClass == ThreeState.YES && kotlinPsiBasedTestFramework!!.responsibleFor(declaration)
                 } else when (declaration) {
                     is KtClassOrObject ->
@@ -80,7 +91,7 @@ interface KotlinPsiBasedTestFramework {
 
                     else -> false
                 }
-                if (isTestFrameworkResponsible) return framework
+                if (responsible) return framework
             }
             return null
         }
