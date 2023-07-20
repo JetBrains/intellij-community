@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
@@ -49,13 +50,13 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   }
 
   @Throws(MavenProcessCanceledException::class)
-  fun resolveProject(files: Collection<VirtualFile>,
-                     explicitProfiles: MavenExplicitProfiles,
-                     indicator: ProgressIndicator?,
-                     syncConsole: MavenSyncConsole?,
-                     console: MavenConsole?,
-                     workspaceMap: MavenWorkspaceMap?,
-                     updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
+  suspend fun resolveProject(files: Collection<VirtualFile>,
+                             explicitProfiles: MavenExplicitProfiles,
+                             progressReporter: RawProgressReporter,
+                             syncConsole: MavenSyncConsole?,
+                             console: MavenConsole?,
+                             workspaceMap: MavenWorkspaceMap?,
+                             updateSnapshots: Boolean): Collection<MavenServerExecutionResult> {
     val transformer = if (files.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
     val ioFiles = files.map { file: VirtualFile -> transformer.toRemotePath(file.getPath())?.let { File(it) } }
@@ -67,9 +68,9 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       serverWorkspaceMap,
       updateSnapshots
     )
-    val results = runLongRunningTask(
+    val results = runLongRunningTaskAsync(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
-      indicator, syncConsole, console)
+      progressReporter, syncConsole, console)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
       for (result in results) {
         val data = result.projectData ?: continue
@@ -215,6 +216,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   fun clearCachesFor(projectId: MavenId?) {
   }
 
+  @ApiStatus.Obsolete
   @Throws(MavenProcessCanceledException::class)
   protected fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
                                        indicator: ProgressIndicator?,

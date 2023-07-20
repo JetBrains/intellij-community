@@ -643,7 +643,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
   protected void updateAllProjects() {
     myProjectsManager.updateAllMavenProjectsSync(MavenImportSpec.EXPLICIT_IMPORT);
-    myProjectsManager.waitForPluginResolution();
+    myProjectsManager.waitForImportCompletion();
   }
 
   protected void waitForReadingCompletion() {
@@ -712,7 +712,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       return;
     }
 
-    myProjectsManager.waitForPluginResolution();
+    myProjectsManager.waitForImportCompletion();
   }
 
   protected void downloadArtifacts() {

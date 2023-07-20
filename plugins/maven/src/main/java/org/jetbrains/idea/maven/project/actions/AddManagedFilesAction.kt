@@ -37,6 +37,11 @@ import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 
 class AddManagedFilesAction : MavenAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val cs = MavenCoroutineScopeProvider.getCoroutineScope(e.project)
+    cs.launch { actionPerformedAsync(e) }
+  }
+
+  suspend fun actionPerformedAsync(e: AnActionEvent) {
     val project = MavenActionUtil.getProject(e.dataContext) ?: return
     val manager = MavenProjectsManager.getInstanceIfCreated(project) ?: return
 
@@ -55,8 +60,7 @@ class AddManagedFilesAction : MavenAction() {
 
     if (files.size == 1) {
       val projectFile = files[0]
-      val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
-      cs.launch { addManagedFiles(projectFile, files, project) }
+      addManagedFiles(projectFile, files, project)
     }
   }
 

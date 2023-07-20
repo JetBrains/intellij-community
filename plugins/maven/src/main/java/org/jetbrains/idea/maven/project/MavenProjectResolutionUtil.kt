@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.RawProgressReporter
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.CollectionFactory
@@ -18,19 +19,49 @@ internal class MavenProjectResolutionUtil {
   companion object {
     @JvmStatic
     @Throws(MavenProcessCanceledException::class)
-    fun resolveProject(reader: MavenProjectReader,
-                       generalSettings: MavenGeneralSettings?,
-                       embedder: MavenEmbedderWrapper,
-                       files: Collection<VirtualFile>,
-                       explicitProfiles: MavenExplicitProfiles,
-                       locator: MavenProjectReaderProjectLocator?,
-                       process: ProgressIndicator?,
-                       syncConsole: MavenSyncConsole?,
-                       console: MavenConsole?,
-                       workspaceMap: MavenWorkspaceMap?,
-                       updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
+    @Deprecated("Use {@link #resolveProject()}")
+    fun resolveProjectSync(reader: MavenProjectReader,
+                           generalSettings: MavenGeneralSettings?,
+                           embedder: MavenEmbedderWrapper,
+                           files: Collection<VirtualFile>,
+                           explicitProfiles: MavenExplicitProfiles,
+                           locator: MavenProjectReaderProjectLocator?,
+                           progressReporter: RawProgressReporter,
+                           syncConsole: MavenSyncConsole?,
+                           console: MavenConsole?,
+                           workspaceMap: MavenWorkspaceMap?,
+                           updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
+      return runBlockingMaybeCancellable {
+        resolveProject(
+          reader,
+          generalSettings,
+          embedder,
+          files,
+          explicitProfiles,
+          locator,
+          progressReporter,
+          syncConsole,
+          console,
+          workspaceMap,
+          updateSnapshots)
+      }
+    }
+
+    @JvmStatic
+    @Throws(MavenProcessCanceledException::class)
+    suspend fun resolveProject(reader: MavenProjectReader,
+                               generalSettings: MavenGeneralSettings?,
+                               embedder: MavenEmbedderWrapper,
+                               files: Collection<VirtualFile>,
+                               explicitProfiles: MavenExplicitProfiles,
+                               locator: MavenProjectReaderProjectLocator?,
+                               progressReporter: RawProgressReporter,
+                               syncConsole: MavenSyncConsole?,
+                               console: MavenConsole?,
+                               workspaceMap: MavenWorkspaceMap?,
+                               updateSnapshots: Boolean): Collection<MavenProjectReaderResult> {
       return try {
-        val executionResults = embedder.resolveProject(files, explicitProfiles, process, syncConsole, console, workspaceMap, updateSnapshots)
+        val executionResults = embedder.resolveProject(files, explicitProfiles, progressReporter, syncConsole, console, workspaceMap, updateSnapshots)
         val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
         filesMap.putAll(files.associateBy { it.path })
         val readerResults: MutableCollection<MavenProjectReaderResult> = ArrayList()

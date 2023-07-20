@@ -327,16 +327,13 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
 
         val result = runMavenImportActivity(project, ImportingTask::class.java) {
           val resolver = MavenProjectResolver.getInstance(project)
-
           val resolutionResult = withBackgroundProgress(myProject, MavenProjectBundle.message("maven.resolving"), true) {
-            runMavenImportActivity(project, MavenProjectsProcessorResolvingTask::class.java) {
               withRawProgressReporter {
-                coroutineToIndicator {
-                  val indicator = ProgressManager.getGlobalProgressIndicator()
-                  resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, indicator, syncConsole)
+                runMavenImportActivity(project, MavenProjectsProcessorResolvingTask::class.java) {
+                  resolver.resolve(projectsToResolve, projectsTree, generalSettings, embeddersManager, mavenConsole, rawProgressReporter!!,
+                                   syncConsole)
                 }
               }
-            }
           }
 
           val projectsToImport = resolutionResult.mavenProjectMap.entries
@@ -352,8 +349,10 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                 runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
                   for (mavenProjects in resolutionResult.mavenProjectMap) {
                     try {
-                      pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!, syncConsole, true)
-                    } catch (e: Exception) {
+                      pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!, syncConsole,
+                                                    true)
+                    }
+                    catch (e: Exception) {
                       MavenLog.LOG.warn("Plugin resolution error", e)
                     }
                   }
@@ -445,6 +444,9 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
   private fun logImportErrorIfNotControlFlow(e: Throwable) {
     if (e is ControlFlowException) {
       ExceptionUtil.rethrowAllAsUnchecked(e)
+    }
+    if (e is CancellationException) {
+      throw e
     }
     if (myProject.isDisposed) return
     showServerException(e)

@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.testFramework.replaceService
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.project.*
@@ -75,13 +75,13 @@ class MavenProjectImporterTest : MavenMultiVersionImportingTestCase() {
 
     val resolverMock: MavenProjectResolver = object : MavenProjectResolver {
       @Throws(MavenProcessCanceledException::class)
-      override fun resolve(
+      override suspend fun resolve(
         mavenProjects: Collection<MavenProject>,
         tree: MavenProjectsTree,
         generalSettings: MavenGeneralSettings,
         embeddersManager: MavenEmbeddersManager,
         console: MavenConsole,
-        process: ProgressIndicator,
+        progressReporter: RawProgressReporter,
         syncConsole: MavenSyncConsole?
       ): MavenProjectResolver.MavenProjectResolutionResult {
         resolvedProjects.addAll(mavenProjects)

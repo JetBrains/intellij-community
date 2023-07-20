@@ -454,14 +454,18 @@ public final class MavenProjectReader {
     }
   }
 
+  /**
+   * @deprecated use {@link MavenProjectResolver}
+   */
   // used in third-party plugins
+  @Deprecated(forRemoval = true)
   public Collection<MavenProjectReaderResult> resolveProject(MavenGeneralSettings generalSettings,
                                                              MavenEmbedderWrapper embedder,
                                                              Collection<VirtualFile> files,
                                                              MavenExplicitProfiles explicitProfiles,
                                                              MavenProjectReaderProjectLocator locator)
     throws MavenProcessCanceledException {
-    return MavenProjectResolutionUtil.resolveProject(
+    return MavenProjectResolutionUtil.resolveProjectSync(
       this,
       generalSettings,
       embedder,

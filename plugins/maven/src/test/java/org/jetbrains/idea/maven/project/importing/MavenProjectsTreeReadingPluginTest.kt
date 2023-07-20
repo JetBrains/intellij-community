@@ -29,13 +29,13 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
                                 </parent>
                                 """.trimIndent())
     val listener = MyLoggingListener()
-    myTree.addListener(listener, getTestRootDisposable())
+    tree.addListener(listener, getTestRootDisposable())
     updateAll(myProjectPom, child)
-    val parentProject = myTree.findProject(myProjectPom)!!
+    val parentProject = tree.findProject(myProjectPom)!!
     val embeddersManager = MavenEmbeddersManager(myProject)
     try {
       val nativeProject = arrayOfNulls<NativeMavenProjectHolder>(1)
-      myTree.addListener(object : MavenProjectsTree.Listener {
+      tree.addListener(object : MavenProjectsTree.Listener {
         override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
                                      nativeMavenProject: NativeMavenProjectHolder?) {
           nativeProject[0] = nativeMavenProject
@@ -48,7 +48,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
               NULL_MAVEN_CONSOLE,
               mavenProgressIndicator
       )
-      val pluginResolver = MavenPluginResolver(myTree)
+      val pluginResolver = MavenPluginResolver(tree)
       val progressReporter = object : RawProgressReporter {}
       runBlocking {
         pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
@@ -70,7 +70,7 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
         .add("resolved", "parent")
         .add("folders", "parent"),
       listener.log)
-    myTree.updateAll(false, mavenGeneralSettings, mavenProgressIndicator.indicator)
+    tree.updateAll(false, mavenGeneralSettings, mavenProgressIndicator.indicator)
     assertEquals(
       log()
         .add("updated", "parent", "child")
