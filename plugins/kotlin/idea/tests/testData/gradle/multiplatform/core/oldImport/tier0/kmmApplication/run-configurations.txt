@@ -6,14 +6,6 @@ project.androidTest
 project.commonMain
 
 project.commonTest
-    fqName: null
-    name: CommonTest_usagesKt.use
-    type: Gradle
-    tasks: [:cleanTestDebugUnitTest, :testDebugUnitTest, --tests, "kmmApplication.CommonTest_usagesKt.use"]
-    scriptParameters:
-    isDebugAllEnabled: false
-    isRunAsTest: true
-
 
 project.iosArm64Main
 
