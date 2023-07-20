@@ -1902,6 +1902,32 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-61137
+  public void testLiteralStringInConditionalStatementsAndExpressions() {
+    doTestByText("""
+                   from typing import LiteralString
+                   def condition1():
+                       pass
+                   def return_literal_string() -> LiteralString:
+                       return "foo" if condition1() else "bar"  # OK
+                   def return_literal_str2(literal_string: LiteralString) -> LiteralString:
+                       return "foo" if condition1() else literal_string  # OK
+                   """);
+  }
+
+  // PY-61137
+  public void testLiteralInConditionalStatementsAndExpressions() {
+    doTestByText("""
+                   from typing import Literal
+                   def condition1():
+                       pass
+                   def return_literal_string() -> Literal["foo", "bar"]:
+                       return "foo" if condition1() else "bar"  # OK
+                   def return_literal_str2(literal_string: Literal["foo"]) -> Literal["foo"]:
+                       return "foo" if condition1() else literal_string  # OK
+                   """);
+  }
+
   // PY-62476
   public void testTypeGuardReturnTypeTreatedAsBool() {
     runWithLanguageLevel(
