@@ -202,7 +202,7 @@ public final class PluginManagerMain {
         PluginId dependantId = dependency.getPluginId();
         // If there is no installed plugin implementing the module, then it can only be a platform module which cannot be disabled
         if (PluginManagerCore.isModuleDependency(dependantId) &&
-            PluginManagerCore.findPluginByModuleDependency(dependantId) == null) {
+            PluginManagerCore.INSTANCE.findPluginByModuleDependency(dependantId) == null) {
           continue;
         }
 

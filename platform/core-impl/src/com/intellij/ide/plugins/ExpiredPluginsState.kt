@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.ApplicationManager
@@ -38,7 +38,7 @@ class ExpiredPluginsState : PluginEnabler {
         synchronized(ExpiredPluginsState::class.java) {
           var result = expiredPluginIds_
           if (result == null) {
-            result = LinkedHashSet(PluginManagerCore.tryReadPluginIdsFromFile(defaultFilePath, logger))
+            result = LinkedHashSet(tryReadPluginIdsFromFile(defaultFilePath, logger))
             expiredPluginIds_ = result
           }
           return result

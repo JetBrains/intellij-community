@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.util.*
-import java.util.function.Predicate
 import java.util.function.Supplier
 
 @ApiStatus.Internal
@@ -94,12 +93,12 @@ class PluginSetBuilder(
     return result
   }
 
-  fun computeEnabledModuleMap(disabler: Predicate<IdeaPluginDescriptorImpl>? = null): PluginSetBuilder {
+  fun computeEnabledModuleMap(disabler: ((IdeaPluginDescriptorImpl) -> Boolean)? = null): PluginSetBuilder {
     val logMessages = ArrayList<String>()
 
     m@ for (module in moduleGraph.nodes) {
       if (module.moduleName == null) {
-        if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isEnabled || (disabler != null && disabler.test(module)))) {
+        if (module.pluginId != PluginManagerCore.CORE_ID && (!module.isEnabled || (disabler != null && disabler(module)))) {
           continue
         }
       }
@@ -163,7 +162,7 @@ class PluginSetBuilder(
     )
   }
 
-  fun checkModules(descriptor: IdeaPluginDescriptorImpl, isDebugLogEnabled: Boolean, log: Logger) {
+  internal fun checkModules(descriptor: IdeaPluginDescriptorImpl, isDebugLogEnabled: Boolean, log: Logger) {
     m@ for (item in descriptor.content.modules) {
       for (ref in item.requireDescriptor().dependencies.modules) {
         if (!enabledModuleV2Ids.containsKey(ref.name)) {

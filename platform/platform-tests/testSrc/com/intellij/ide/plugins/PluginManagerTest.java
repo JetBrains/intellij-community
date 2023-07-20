@@ -88,15 +88,15 @@ public class PluginManagerTest {
   @Test
   public void ignoredCompatibility() {
     TriConsumer<String, String, String> checkCompatibility = (String ideVersion, String sinceBuild, String untilBuild) -> {
-      boolean ignoreCompatibility = PluginManagerCore.INSTANCE.isIgnoreCompatibility();
+      boolean ignoreCompatibility = PluginManagerCore.isIgnoreCompatibility;
       try {
         assertIncompatible(ideVersion, sinceBuild, untilBuild);
 
-        PluginManagerCore.INSTANCE.setIgnoreCompatibility(true);
+        PluginManagerCore.isIgnoreCompatibility = true;
         assertCompatible(ideVersion, sinceBuild, untilBuild);
       }
       finally {
-        PluginManagerCore.INSTANCE.setIgnoreCompatibility(ignoreCompatibility);
+        PluginManagerCore.isIgnoreCompatibility = ignoreCompatibility;
       }
     };
 
