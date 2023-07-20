@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative
 
 /**
@@ -22,7 +22,7 @@ interface InlayTreeSink {
 }
 
 /**
- * The payload for the whole inlay, may be used later by the actions from the right-click menu.
+ * The payload for the whole inlay. It may be used later by the actions from the right-click menu.
  */
 class InlayPayload(val payloadName: String, val payload: InlayActionPayload)
 
