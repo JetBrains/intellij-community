@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.options.OptPane
+import com.intellij.codeInspection.options.OptPane.checkbox
+import com.intellij.codeInspection.options.OptPane.pane
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -36,6 +39,21 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtProperty>(KtProperty::class.java) {
+    private enum class Status {
+        RETURN_ONLY,
+        EXACT_COPY
+    }
+
+    @JvmField
+    var ignoreImmediatelyReturnedVariables = true
+
+    override fun getOptionsPane(): OptPane = pane(
+        checkbox(
+            "ignoreImmediatelyReturnedVariables",
+            KotlinBundle.message("inspection.unnecessary.variable.option.ignore.immediately.returned.variables")
+        )
+    )
+
     override fun isApplicable(element: KtProperty): Boolean =
         statusFor(element) != null
 
@@ -71,63 +89,56 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
     private fun KtExpression.hasMultiLineBlock(): Boolean =
         anyDescendantOfType<LeafPsiElement> { it.startsMultilineBlock() }
 
-    companion object {
-        private enum class Status {
-            RETURN_ONLY,
-            EXACT_COPY
+    private fun statusFor(property: KtProperty): Status? {
+        if (!property.isLocal) return null
+        if (property.annotationEntries.isNotEmpty()) return null
+        val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
+        val initializer = property.initializer ?: return null
+        if (property.hasComment()) return null
+
+        fun isExactCopy(): Boolean {
+            if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
+
+            val initializerDescriptor = initializer.resolveToCall(BodyResolveMode.FULL)?.resultingDescriptor as? VariableDescriptor
+                                        ?: return false
+            if (initializerDescriptor.isVar) return false
+            if (initializerDescriptor.containingDeclaration !is FunctionDescriptor) return false
+            if (initializerDescriptor.safeAs<LocalVariableDescriptor>()?.isDelegated == true) return false
+
+            val copyName = initializerDescriptor.name.asString()
+            if (ReferencesSearch.search(property, LocalSearchScope(enclosingElement)).findFirst() == null) return false
+
+            val containingDeclaration = property.getStrictParentOfType<KtDeclaration>() ?: return true
+
+            val validator = Fe10KotlinNewDeclarationNameValidator(
+              container = containingDeclaration,
+              anchor = property,
+              target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
+              excludedDeclarations = listOfNotNull(
+                DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor) as? KtDeclaration
+              )
+            )
+            return validator(copyName)
         }
 
-        private fun statusFor(property: KtProperty): Status? {
-            if (!property.isLocal) return null
-            if (property.annotationEntries.isNotEmpty()) return null
-            val enclosingElement = KtPsiUtil.getEnclosingElementForLocalDeclaration(property) ?: return null
-            val initializer = property.initializer ?: return null
-            if (property.hasComment()) return null
-
-            fun isExactCopy(): Boolean {
-                if (property.isVar || initializer !is KtNameReferenceExpression || property.typeReference != null) return false
-
-                val initializerDescriptor = initializer.resolveToCall(BodyResolveMode.FULL)?.resultingDescriptor as? VariableDescriptor
-                    ?: return false
-                if (initializerDescriptor.isVar) return false
-                if (initializerDescriptor.containingDeclaration !is FunctionDescriptor) return false
-                if (initializerDescriptor.safeAs<LocalVariableDescriptor>()?.isDelegated == true) return false
-
-                val copyName = initializerDescriptor.name.asString()
-                if (ReferencesSearch.search(property, LocalSearchScope(enclosingElement)).findFirst() == null) return false
-
-                val containingDeclaration = property.getStrictParentOfType<KtDeclaration>() ?: return true
-
-                val validator = Fe10KotlinNewDeclarationNameValidator(
-                    container = containingDeclaration,
-                    anchor = property,
-                    target = KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
-                    excludedDeclarations = listOfNotNull(
-                        DescriptorToSourceUtils.descriptorToDeclaration(initializerDescriptor) as? KtDeclaration
-                    )
-                )
-                return validator(copyName)
-            }
-
-            fun isReturnOnly(): Boolean {
-                val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false
-                val returned = nextStatement.returnedExpression as? KtNameReferenceExpression ?: return false
-                val context = nextStatement.analyze()
-                return context[REFERENCE_TARGET, returned] == context[DECLARATION_TO_DESCRIPTOR, property]
-            }
-
-            return when {
-                isExactCopy() -> Status.EXACT_COPY
-                isReturnOnly() -> Status.RETURN_ONLY
-                else -> null
-            }
+        fun isReturnOnly(): Boolean {
+            val nextStatement = property.getNextSiblingIgnoringWhitespaceAndComments() as? KtReturnExpression ?: return false
+            val returned = nextStatement.returnedExpression as? KtNameReferenceExpression ?: return false
+            val context = nextStatement.analyze()
+            return context[REFERENCE_TARGET, returned] == context[DECLARATION_TO_DESCRIPTOR, property]
         }
 
-        private fun KtProperty.hasComment(): Boolean {
-            fun Sequence<PsiElement>.firstComment() =
-                takeWhile { it is PsiWhiteSpace || it is PsiComment }.firstIsInstanceOrNull<PsiComment>()
-            return prevLeafs.firstComment() != null ||
-                    initializer?.nextLeafs?.firstComment()?.takeIf { it.getLineNumber() == this.getLineNumber() } != null
+        return when {
+            isExactCopy() -> Status.EXACT_COPY
+            !ignoreImmediatelyReturnedVariables && isReturnOnly() -> Status.RETURN_ONLY
+            else -> null
         }
+    }
+
+    private fun KtProperty.hasComment(): Boolean {
+        fun Sequence<PsiElement>.firstComment() =
+          takeWhile { it is PsiWhiteSpace || it is PsiComment }.firstIsInstanceOrNull<PsiComment>()
+        return prevLeafs.firstComment() != null ||
+               initializer?.nextLeafs?.firstComment()?.takeIf { it.getLineNumber() == this.getLineNumber() } != null
     }
 }
