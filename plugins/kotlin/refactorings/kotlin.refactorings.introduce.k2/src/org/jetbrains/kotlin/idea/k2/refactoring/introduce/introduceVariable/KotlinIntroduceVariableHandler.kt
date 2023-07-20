@@ -427,12 +427,12 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
             val replaceOccurrence = expression.shouldReplaceOccurrence(container)
 
             expression.chooseApplicableComponentNamesForVariableDeclaration(replaceOccurrence, editor) { componentNames ->
-                val anchor = calculateAnchor(expression, container)
+                val anchor = calculateAnchor(expression, container) as? KtElement ?: return@chooseApplicableComponentNamesForVariableDeclaration
                 val suggestedNames = allowAnalysisOnEdt {
                     analyze(expression) {
                         val nameValidator = KotlinDeclarationNameValidator(
-                            expression,
-                            anchor?.siblings() ?: container.allChildren,
+                            anchor,
+                            true,
                             KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE,
                             this,
                         )
