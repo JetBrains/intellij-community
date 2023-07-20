@@ -31,8 +31,8 @@ public abstract class DfConstantType<T> implements DfType {
 
   @Override
   public @NotNull DfType fromRelation(@NotNull RelationType relationType) {
-    if (relationType == RelationType.EQ) return this;
-    if (relationType == RelationType.NE) {
+    if (relationType == RelationType.EQ || relationType == RelationType.IS) return this;
+    if (relationType == RelationType.NE || relationType == RelationType.IS_NOT) {
       DfType negated = tryNegate();
       if (negated != null) {
         return negated;
