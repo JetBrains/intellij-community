@@ -53,6 +53,7 @@ class JVMStatsToOTelReporter : ProjectActivity {
       batchCallback = otelMeter.batchCallback(
         {
           val heapUsage = memoryMXBean.heapMemoryUsage
+          //It seems like nonHeapMemoryUsage is unrelated to DirectByteBuffers usage -- that we're mostly interested in:
           val nonHeapUsage = memoryMXBean.nonHeapMemoryUsage
 
           usedHeapMemoryGauge.record(heapUsage.used)

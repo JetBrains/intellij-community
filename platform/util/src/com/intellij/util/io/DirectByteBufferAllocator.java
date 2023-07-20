@@ -73,9 +73,16 @@ public final class DirectByteBufferAllocator {
 
   /** Total size (bytes) of buffers that are now cached (i.e. now in cache, not in use) by the allocator */
   private final AtomicLong totalSizeOfBuffersInCache = new AtomicLong();
+  /**
+   * How many buffers (in bytes) allocator could keep cached in {@link #myPool}, instead of
+   * releasing immediately
+   */
   private final int mySizeLimitInBytes;
 
-  /** Total size (bytes) of buffers allocated (and not released) via the allocator */
+  /**
+   * Total size (bytes) of buffers allocated (and not released) via the allocator.
+   * Buffers currently in a pool are counted as 'allocated' (i.e. not yet released)
+   */
   private final AtomicLong totalSizeOfBuffersAllocated = new AtomicLong();
 
   //====== Statistics:
