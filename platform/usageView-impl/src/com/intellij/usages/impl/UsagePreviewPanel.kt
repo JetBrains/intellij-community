@@ -131,7 +131,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       psiFile to document
     } ?: return
 
-    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    withContext(Dispatchers.EDT) {
       val (psiFile, document) = pair
 
       if (myEditor == null || document !== myEditor!!.document) {
@@ -287,7 +287,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
   }
 
   override fun updateLayoutLater(infos: List<UsageInfo>?) {
-    cs.launch {
+    cs.launch(ModalityState.current().asContextElement()) {
       previewUsages(infos)
     }
   }
@@ -298,7 +298,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       resetEditor(infos!!)
     }
     else {
-      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+      withContext(Dispatchers.EDT) {
         releaseEditor()
         removeAll()
         val newLineIndex = cannotPreviewMessage.indexOf('\n')
