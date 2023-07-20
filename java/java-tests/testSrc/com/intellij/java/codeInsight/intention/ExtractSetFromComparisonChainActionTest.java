@@ -24,16 +24,6 @@ import java.util.List;
 
 public class ExtractSetFromComparisonChainActionTest extends LightIntentionActionTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    if (getTestName(false).equals("Duplicate.java")) {
-      UiInterceptors.register(new ChooserInterceptor(List.of(
-        "Replace only this occurrence",
-        "Replace all occurrences"), "Replace all occurrences"));
-    }
-  }
-
-  @Override
   protected LanguageLevel getDefaultLanguageLevel() {
     return LanguageLevel.JDK_1_8;
   }

@@ -44,7 +44,8 @@ abstract class LightQuickFixParameterizedTestCase5(projectDescriptor: LightProje
   fun parameterized(fileName: String) {
     val filePath = "/" + LightQuickFixTestCase.BEFORE_PREFIX + fileName
     val file = fixture.configureByFile(filePath)
-    val action = runReadAction { ActionHint.parse(file, file.text) }.findAndCheck(fixture.availableIntentions) {
+    val (hint, context) = runReadAction { ActionHint.parse(file, file.text) to fixture.actionContext }
+    val action = hint.findAndCheck(fixture.availableIntentions, context) {
       """
              Test: ${getRelativePath() + filePath}
              Language level: ${PsiUtil.getLanguageLevel(fixture.project)}

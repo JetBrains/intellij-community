@@ -43,6 +43,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageTarget;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.intellij.lang.annotations.Language;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus.Experimental;
@@ -86,6 +87,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   /**
    * @return the action context for current in-memory editor
    */
+  @RequiresReadLock
   default ModCommandAction.ActionContext getActionContext() {
     return ModCommandAction.ActionContext.from(getEditor(), getFile());
   }

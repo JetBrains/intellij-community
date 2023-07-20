@@ -1,4 +1,4 @@
-// "Replace with '0'" "true-preview"
+// "Replace with '0'|->Extract possible side effects" "true-preview"
 import java.util.stream.*;
 
 class Test {

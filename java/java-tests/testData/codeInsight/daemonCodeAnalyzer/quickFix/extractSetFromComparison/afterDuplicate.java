@@ -1,4 +1,4 @@
-// "Extract Set from comparison chain" "true-preview"
+// "Extract Set from comparison chain|->Replace all occurrences" "true-preview"
 
 import java.util.Collections;
 import java.util.EnumSet;

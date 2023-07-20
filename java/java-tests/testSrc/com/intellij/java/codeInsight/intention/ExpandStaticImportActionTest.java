@@ -9,16 +9,6 @@ import java.util.List;
 
 public class ExpandStaticImportActionTest extends LightIntentionActionTestCase {
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    if (getTestName(false).contains("Multiple")) {
-      UiInterceptors.register(new ChooserInterceptor(List.of("Replace this occurrence and keep the import",
-                                                             "Replace all and delete the import"),
-                                                     "Replace all and delete the import"));
-    }
-  }
-
-  @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/expandStaticImport";
   }

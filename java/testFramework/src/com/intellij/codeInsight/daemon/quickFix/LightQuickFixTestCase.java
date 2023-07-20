@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
+import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -92,6 +93,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
                        @NotNull String testName,
                        @NotNull QuickFixTestCase quickFix) throws Exception {
     IntentionAction action = actionHint.findAndCheck(quickFix.getAvailableActions(),
+                                                     ActionContext.from(getEditor(), getFile()),
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
       String text = action.getText();
