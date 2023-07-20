@@ -120,7 +120,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     Disposable disposable = new Disposable() {
       @Override
       public void dispose() {
-        new FileBasedIndexImpl.MyShutDownTask().run();
+        new FileBasedIndexImpl.MyShutDownTask(false).run();
       }
     };
     ApplicationManager.getApplication().addApplicationListener(new MyApplicationListener(fileBasedIndex), disposable);

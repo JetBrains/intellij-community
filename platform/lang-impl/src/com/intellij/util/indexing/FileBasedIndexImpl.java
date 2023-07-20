@@ -338,7 +338,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   void setUpShutDownTask() {
-    myShutDownTask = new MyShutDownTask();
+    myShutDownTask = new MyShutDownTask(true);
     ShutDownTracker.getInstance().registerCacheShutdownTask(myShutDownTask);
   }
 
@@ -380,6 +380,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   static class MyShutDownTask implements Runnable {
+    private final boolean myTermination;
+
+    MyShutDownTask(boolean termination) { myTermination = termination; }
+
     @Override
     public void run() {
       try {
@@ -389,8 +393,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         }
       }
       finally {
-        if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          StorageDiagnosticData.dumpOnShutdown();
+        if (!myTermination) {
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            StorageDiagnosticData.dumpOnShutdown();
+          }
         }
       }
     }
