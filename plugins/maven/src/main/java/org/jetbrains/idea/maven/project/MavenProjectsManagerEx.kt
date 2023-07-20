@@ -351,15 +351,16 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
           // plugins and artifacts can be resolved in parallel with import
           val cs = MavenCoroutineScopeProvider.getCoroutineScope(project)
           val pluginResolutionJob = cs.launch {
-            val indicator = MavenProgressIndicator(project, Supplier { syncConsole })
             val pluginResolver = MavenPluginResolver(projectsTree)
             withBackgroundProgress(myProject, MavenProjectBundle.message("maven.downloading.plugins"), true) {
-              runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
-                for (mavenProjects in resolutionResult.mavenProjectMap) {
-                  try {
-                    pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, indicator, true)
-                  } catch (e: Exception) {
-                    MavenLog.LOG.warn("Plugin resolutin error", e)
+              withRawProgressReporter {
+                runMavenImportActivity(project, MavenProjectsProcessorPluginsResolvingTask::class.java) {
+                  for (mavenProjects in resolutionResult.mavenProjectMap) {
+                    try {
+                      pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!, syncConsole, true)
+                    } catch (e: Exception) {
+                      MavenLog.LOG.warn("Plugin resolutin error", e)
+                    }
                   }
                 }
               }

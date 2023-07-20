@@ -7,7 +7,10 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.rawProgressReporter
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.withBackgroundProgress
+import com.intellij.openapi.progress.withRawProgressReporter
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -219,12 +222,17 @@ class MavenImportFlow {
                                              context.initialContext.generalSettings.isPrintErrorStackTraces)
 
     runBlockingMaybeCancellable {
-      resolver.resolvePlugins(
-        context.projectsWithUnresolvedPlugins,
-        embeddersManager,
-        consoleToBeRemoved,
-        context.initialContext.indicator,
-        false)
+      withBackgroundProgress(context.project, MavenProjectBundle.message("maven.downloading.plugins"), true) {
+        withRawProgressReporter {
+          resolver.resolvePlugins(
+            context.projectsWithUnresolvedPlugins,
+            embeddersManager,
+            consoleToBeRemoved,
+            rawProgressReporter!!,
+            context.initialContext.indicator.syncConsole,
+            false)
+        }
+      }
     }
 
     return MavenPluginResolvedContext(context.project, context)

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project.importing
 
+import com.intellij.openapi.progress.RawProgressReporter
 import com.intellij.openapi.util.Pair
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.project.*
@@ -48,11 +49,13 @@ class MavenProjectsTreeReadingPluginTest : MavenProjectsTreeTestCase() {
               mavenProgressIndicator
       )
       val pluginResolver = MavenPluginResolver(myTree)
+      val progressReporter = object : RawProgressReporter {}
       runBlocking {
         pluginResolver.resolvePlugins(listOf(MavenProjectWithHolder(parentProject, nativeProject[0]!!, MavenProjectChanges.ALL)),
                                       embeddersManager,
                                       NULL_MAVEN_CONSOLE,
-                                      mavenProgressIndicator,
+                                      progressReporter,
+                                      mavenProgressIndicator.syncConsole,
                                       false)
         MavenFolderResolver(myProject).resolveFolders(listOf(parentProject))
       }
