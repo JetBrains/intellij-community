@@ -4,7 +4,9 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
@@ -22,6 +24,11 @@ class KotlinMppTierZeroCasesImportingTests : AbstractKotlinMppGradleImportingTes
 
     @Test
     fun testKmmLibrary() {
-        doTest()
+        doTest {
+            /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+                disableCheckers(HighlightingChecker)
+            }
+        }
     }
 }

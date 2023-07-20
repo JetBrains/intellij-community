@@ -1,23 +1,17 @@
 MODULES
 project
 
-project.appleMain
-    src/appleMain/kotlin
-
-project.appleTest
-    src/appleTest/kotlin (Test)
-
 project.commonMain
     src/commonMain/kotlin
 
 project.commonTest
     src/commonTest/kotlin (Test)
 
-project.linuxMain
-    src/linuxMain/kotlin
+project.jvmMain
+    src/jvmMain/kotlin (Java)
 
-project.linuxTest
-    src/linuxTest/kotlin (Test)
+project.jvmTest
+    src/jvmTest/kotlin (Java, Test)
 
 project.linuxX64Main
     src/linuxX64Main/kotlin
@@ -25,23 +19,17 @@ project.linuxX64Main
 project.linuxX64Test
     src/linuxX64Test/kotlin (Test)
 
-project.macosMain
-    src/macosMain/kotlin
-
-project.macosTest
-    src/macosTest/kotlin (Test)
-
 project.macosX64Main
     src/macosX64Main/kotlin
 
 project.macosX64Test
     src/macosX64Test/kotlin (Test)
 
-project.nativeMain
-    src/nativeMain/kotlin
+project.mingwX64Main
+    src/mingwX64Main/kotlin
 
-project.nativeTest
-    src/nativeTest/kotlin (Test)
+project.mingwX64Test
+    src/mingwX64Test/kotlin (Test)
 
 
 Test configuration:

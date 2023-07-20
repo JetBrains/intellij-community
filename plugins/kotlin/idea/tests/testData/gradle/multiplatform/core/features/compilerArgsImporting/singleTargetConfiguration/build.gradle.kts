@@ -31,6 +31,4 @@ kotlin {
     }
     iosArm64()
     js(IR){ nodejs()}
-
-    targetHierarchy.default()
 }

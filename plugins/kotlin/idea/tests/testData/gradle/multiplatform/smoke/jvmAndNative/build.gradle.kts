@@ -13,9 +13,7 @@ kotlin {
     macosArm64()
     macosX64()
 
-    targetHierarchy.default()
-
-    sourceSets.commonMain.get().dependencies {
+    sourceSets.commonMain.dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")
     }
 

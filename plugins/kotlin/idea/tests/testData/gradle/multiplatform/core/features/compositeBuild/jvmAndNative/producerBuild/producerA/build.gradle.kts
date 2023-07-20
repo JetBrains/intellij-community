@@ -10,7 +10,6 @@ group = "org.jetbrains.sample"
 version = "1.0.0-SNAPSHOT"
 
 kotlin {
-    targetHierarchy.default()
     jvm()
     linuxX64()
     linuxArm64()
