@@ -11,6 +11,7 @@ import com.intellij.execution.testframework.sm.runner.ui.MockPrinter
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.GlobalSearchScope
@@ -172,21 +173,25 @@ class GradleExecutionViewFixture(
   }
 
   private fun assertContains(expectedTextSample: String, actualText: String) {
-    if (expectedTextSample !in actualText) {
+    val canonicalExpectedTextSample = StringUtil.convertLineSeparators(expectedTextSample)
+    val canonicalActualText = StringUtil.convertLineSeparators(actualText)
+    if (canonicalExpectedTextSample !in canonicalActualText) {
       throw AssertionFailureBuilder.assertionFailure()
         .message("Text doesn't contain text sample but should")
-        .expected(expectedTextSample)
-        .actual(actualText)
+        .expected(canonicalExpectedTextSample)
+        .actual(canonicalActualText)
         .build()
     }
   }
 
   private fun assertDoesNotContain(unexpectedTextSample: String, actualText: String) {
-    if (unexpectedTextSample in actualText) {
+    val canonicalUnexpectedTextSample = StringUtil.convertLineSeparators(unexpectedTextSample)
+    val canonicalActualText = StringUtil.convertLineSeparators(actualText)
+    if (canonicalUnexpectedTextSample in canonicalActualText) {
       throw AssertionFailureBuilder.assertionFailure()
         .message("Text contains text sample but shouldn't")
-        .expected(unexpectedTextSample)
-        .actual(actualText)
+        .expected(canonicalUnexpectedTextSample)
+        .actual(canonicalActualText)
         .build()
     }
   }
