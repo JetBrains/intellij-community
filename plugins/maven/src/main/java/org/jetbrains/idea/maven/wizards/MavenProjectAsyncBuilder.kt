@@ -115,7 +115,7 @@ internal class MavenProjectAsyncBuilder {
     }
     val distributionUrl = getWrapperDistributionUrl(project.guessProjectDir())
     if (distributionUrl != null) {
-      settings.getGeneralSettings().mavenHome = MavenServerManager.WRAPPED_MAVEN
+      settings.getGeneralSettings().mavenHomeType = MavenWrapper
     }
     val selectedProfiles = MavenExplicitProfiles.NONE.clone()
     val enabledProfilesList = System.getProperty("idea.maven.import.enabled.profiles")

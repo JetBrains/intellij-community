@@ -15,6 +15,7 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
+import org.jetbrains.idea.maven.project.MavenWrapper
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
@@ -285,12 +286,14 @@ class MavenImportingConnectorsTest : MavenMultiVersionImportingTestCase() {
                                                          }
 
                                                        }, testRootDisposable)
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHome = MavenServerManager.WRAPPED_MAVEN;
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = MavenWrapper;
     assertThrows(UnsupportedOperationException::class.java) {
       MavenServerManager.getInstance().createEmbedder(myProject, true, myProjectRoot.path).getEmbedder()
     }
     TestCase.assertNotNull(settingsRef.get())
-    TestCase.assertNull(settingsRef.get().settings.globalSettingsPath)
+    val path = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path).mavenDistribution.mavenHome
+
+    TestCase.assertEquals(path.resolve("conf/settings.xml").toString(), settingsRef.get().settings.globalSettingsPath)
   }
 
 

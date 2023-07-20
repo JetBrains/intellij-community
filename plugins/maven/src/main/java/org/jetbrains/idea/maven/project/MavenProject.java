@@ -40,6 +40,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.SYNTAX;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 @SuppressWarnings({"SynchronizationOnLocalVariableOrMethodParameter", "SynchronizeOnNonFinalField"})
 public class MavenProject {
@@ -113,8 +114,9 @@ public class MavenProject {
     if (updateLastReadStamp) newState.myLastReadStamp = myState.myLastReadStamp + 1;
 
     newState.myReadingProblems = readerResult.readingProblems;
-    newState.myLocalRepository = settings.getEffectiveLocalRepository();
-
+    newState.myLocalRepository = MavenUtil.resolveLocalRepository(settings.getLocalRepository(),
+                                                                  staticOrBundled(settings.getMavenHomeType()),
+                                                                  settings.getUserSettingsFile());
     newState.myActivatedProfilesIds = readerResult.activatedProfiles;
 
     MavenModel model = readerResult.mavenModel;

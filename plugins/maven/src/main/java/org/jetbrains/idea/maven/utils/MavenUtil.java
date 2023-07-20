@@ -101,6 +101,8 @@ import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
 import static org.apache.commons.lang.StringUtils.EMPTY;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.resolveMavenHomeType;
+import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
 
 public class MavenUtil {
 
@@ -600,9 +602,10 @@ public class MavenUtil {
   }
 
   @Nullable
+  @Deprecated
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
-      return getMavenHomeFile(overrideMavenHome);
+      return MavenUtil.getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -651,7 +654,60 @@ public class MavenUtil {
       }
     }
 
-    return getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3);
+    return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
+  }
+
+  public static List<MavenHomeType> getSystemMavenHomeVariants() {
+    List<MavenHomeType> result = new ArrayList<>();
+
+    String m2home = System.getenv(ENV_M2_HOME);
+    if (!isEmptyOrSpaces(m2home)) {
+      final File homeFromEnv = new File(m2home);
+      if (isValidMavenHome(homeFromEnv)) {
+        result.add(new MavenInSpecificPath(m2home));
+      }
+    }
+
+    String mavenHome = System.getenv("MAVEN_HOME");
+    if (!isEmptyOrSpaces(mavenHome)) {
+      final File mavenHomeFile = new File(mavenHome);
+      if (isValidMavenHome(mavenHomeFile)) {
+        result.add(new MavenInSpecificPath(mavenHome));
+      }
+    }
+
+    String userHome = SystemProperties.getUserHome();
+    if (!isEmptyOrSpaces(userHome)) {
+      final File underUserHome = new File(userHome, M2_DIR);
+      if (isValidMavenHome(underUserHome)) {
+        result.add(new MavenInSpecificPath(userHome));
+      }
+    }
+
+    if (SystemInfo.isMac) {
+      File home = fromBrew();
+      if (home != null) {
+        result.add(new MavenInSpecificPath(home.getAbsolutePath()));
+      }
+
+      if ((home = fromMacSystemJavaTools()) != null) {
+        result.add(new MavenInSpecificPath(home.getAbsolutePath()));
+      }
+    }
+    else if (SystemInfo.isLinux) {
+      File home = new File("/usr/share/maven");
+      if (isValidMavenHome(home)) {
+        result.add(new MavenInSpecificPath(home.getAbsolutePath()));
+      }
+
+      home = new File("/usr/share/maven2");
+      if (isValidMavenHome(home)) {
+        result.add(new MavenInSpecificPath(home.getAbsolutePath()));
+      }
+    }
+
+    result.add(BundledMaven3.INSTANCE);
+    return result;
   }
 
   public static void addEventListener(@NotNull String mavenVersion, @NotNull SimpleJavaParameters params) {
@@ -727,13 +783,6 @@ public class MavenUtil {
     return str == null || str.length() == 0 || str.trim().length() == 0;
   }
 
-  public static boolean isValidMavenHome(@Nullable String mavenHome) {
-    if (mavenHome == null) return false;
-    if (mavenHome.equals(MavenServerManager.BUNDLED_MAVEN_2)) return true;
-    if (mavenHome.equals(MavenServerManager.BUNDLED_MAVEN_3)) return true;
-    if (mavenHome.equals(MavenServerManager.WRAPPED_MAVEN)) return true;
-    return isValidMavenHome(new File(mavenHome));
-  }
 
   public static boolean isValidMavenHome(@Nullable File home) {
     if (home == null) return false;
@@ -744,26 +793,19 @@ public class MavenUtil {
     return new File(new File(mavenHome, BIN_DIR), M2_CONF_FILE);
   }
 
-  /**
-   * do not use this method directly, as it is impossible to resolve correct version if maven home is set to wrapper
-   * @see MavenDistributionsCache
-   */
-  @Nullable
-  @ApiStatus.Internal
-  public static File getMavenHomeFile(@Nullable String mavenHome) {
-    if (mavenHome == null) return null;
+  public static @Nullable File getMavenHomeFile(@NotNull StaticResolvedMavenHomeType mavenHome) {
+    if (mavenHome instanceof MavenInSpecificPath mp) {
+      File file = new File(mp.getMavenHome());
+      return isValidMavenHome(file) ? file : null;
+    }
     for (MavenVersionAwareSupportExtension e : MavenVersionAwareSupportExtension.MAVEN_VERSION_SUPPORT.getExtensionList()) {
       File file = e.getMavenHomeFile(mavenHome);
       if (file != null) return file;
     }
-
-    final File home = new File(mavenHome);
-    return isValidMavenHome(home) ? home : null;
+    return null;
   }
 
-  public static @Nullable String getMavenVersionByMavenHome(@Nullable String mavenHome) {
-    return getMavenVersion(getMavenHomeFile(mavenHome));
-  }
+
 
   @Nullable
   public static String getMavenVersion(@Nullable File mavenHome) {
@@ -813,19 +855,37 @@ public class MavenUtil {
     return getMavenVersion(new File(mavenHome));
   }
 
+  @Nullable
+  public static String getMavenVersion(Project project, String workingDir) {
+    MavenHomeType homeType = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings().getMavenHomeType();
+    if (homeType instanceof StaticResolvedMavenHomeType srmt) {
+      return getMavenVersion(srmt);
+    }
+    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getWrapper(workingDir);
+    if (distribution != null) return distribution.getVersion();
+    return null;
+  }
+
+  @Nullable
+  public static String getMavenVersion(StaticResolvedMavenHomeType mavenHomeType) {
+    return getMavenVersion(getMavenHomeFile(mavenHomeType));
+  }
+
   public static boolean isMaven3(String mavenHome) {
     String version = getMavenVersion(mavenHome);
     return version != null && version.compareTo("3.0.0") >= 0;
   }
 
   @Nullable
-  public static File resolveGlobalSettingsFile(@Nullable String overriddenMavenHome) {
-    if (overriddenMavenHome == null) {
-      return null;
-    }
-    File directory = resolveMavenHomeDirectory(overriddenMavenHome);
+  public static File resolveGlobalSettingsFile(@NotNull StaticResolvedMavenHomeType mavenHomeType) {
+    File directory = getMavenHomeFile(mavenHomeType);
     if (directory == null) return null;
     return new File(new File(directory, CONF_DIR), SETTINGS_XML);
+  }
+
+  @NotNull
+  public static File resolveGlobalSettingsFile(@NotNull File mavenHome) {
+    return new File(new File(mavenHome, CONF_DIR), SETTINGS_XML);
   }
 
   @NotNull
@@ -840,8 +900,32 @@ public class MavenUtil {
   }
 
   @NotNull
+  @Deprecated(forRemoval = true)
   public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
                                             @Nullable String overriddenMavenHome,
+                                            @Nullable String overriddenUserSettingsFile) {
+    MavenHomeType type = resolveMavenHomeType(overriddenMavenHome);
+    if (type instanceof StaticResolvedMavenHomeType st) {
+      return resolveLocalRepository(overriddenLocalRepository, st, overriddenUserSettingsFile);
+    }
+    throw new IllegalArgumentException("Cannot resolve local repository for wrapped maven, this API is deprecated");
+  }
+
+
+  @NotNull
+  public static File resolveDefaultLocalRepository() {
+    File userSettingsFile = new File(resolveM2Dir(), SETTINGS_XML);
+    final String fromUserSettings = getRepositoryFromSettings(userSettingsFile);
+    if (!isEmpty(fromUserSettings)) {
+      return new File(fromUserSettings);
+    }
+
+    return new File(resolveM2Dir(), REPOSITORY_DIR);
+  }
+
+  @NotNull
+  public static File resolveLocalRepository(@Nullable String overriddenLocalRepository,
+                                            @NotNull StaticResolvedMavenHomeType mavenHomeType,
                                             @Nullable String overriddenUserSettingsFile) {
     String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
     if (forcedM2Home != null) {
@@ -851,7 +935,7 @@ public class MavenUtil {
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
-                                        resolveGlobalSettingsFile(overriddenMavenHome));
+                                        resolveGlobalSettingsFile(mavenHomeType));
 
       if (result == null) {
         result = new File(resolveM2Dir(), REPOSITORY_DIR);
@@ -1076,13 +1160,8 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static VirtualFile resolveSuperPomFile(@Nullable File mavenHome) {
-    VirtualFile result = null;
-    if (mavenHome != null) {
-      result = doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
-    }
-    return result == null ? doResolveSuperPomFile(
-      new File(getMavenHomeFile(MavenServerManager.BUNDLED_MAVEN_3), LIB_DIR)) : result;
+  public static VirtualFile resolveSuperPomFile(@NotNull File mavenHome) {
+    return doResolveSuperPomFile(new File(mavenHome, LIB_DIR));
   }
 
   @Nullable
@@ -1544,8 +1623,7 @@ public class MavenUtil {
   }
 
   public static boolean isWrapper(@NotNull MavenGeneralSettings settings) {
-    return MavenServerManager.WRAPPED_MAVEN.equals(settings.getMavenHome()) ||
-           StringUtil.equals(settings.getMavenHome(), MavenProjectBundle.message("maven.wrapper.version.title"));
+    return settings.getMavenHomeType() instanceof MavenWrapper;
   }
 
   public static void setupProjectSdk(@NotNull Project project) {
@@ -1619,5 +1697,17 @@ public class MavenUtil {
     if (Registry.is("maven.always.reset")) return true;
     MavenProjectProblem unrecoverable = ContainerUtil.find(readingProblems, it -> !it.isRecoverable());
     return unrecoverable == null;
+  }
+
+  public static @Nullable VirtualFile getEffectiveSuperPom(Project project, @NotNull String workingDir) {
+    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(workingDir);
+    MavenHomeType type = MavenProjectsManager.getInstance(project).getGeneralSettings().getMavenHomeType();
+    return MavenUtil.resolveSuperPomFile(distribution.getMavenHome().toFile());
+  }
+
+  public static @Nullable VirtualFile getEffectiveSuperPomWithNoRespectToWrapper(Project project) {
+    MavenDistribution distribution = MavenDistributionsCache.getInstance(project).getSettingsDistribution();
+    MavenHomeType type = MavenProjectsManager.getInstance(project).getGeneralSettings().getMavenHomeType();
+    return MavenUtil.resolveSuperPomFile(distribution.getMavenHome().toFile());
   }
 }

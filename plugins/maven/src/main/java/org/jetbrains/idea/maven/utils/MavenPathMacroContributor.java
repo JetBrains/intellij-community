@@ -10,7 +10,7 @@ import java.util.Map;
 final class MavenPathMacroContributor implements PathMacroContributor {
   @Override
   public void registerPathMacros(@NotNull Map<String, String> macros, @NotNull Map<String, String> legacyMacros) {
-    String repository = MavenUtil.resolveLocalRepository(null, null, null).getAbsolutePath();
+    String repository = MavenUtil.resolveDefaultLocalRepository().getAbsolutePath();
     macros.put(PathMacrosImpl.MAVEN_REPOSITORY, repository);
   }
 

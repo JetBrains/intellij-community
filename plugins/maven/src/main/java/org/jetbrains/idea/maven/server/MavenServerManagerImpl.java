@@ -26,13 +26,12 @@ import org.apache.commons.lang.SystemUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenDisposable;
+import org.jetbrains.idea.maven.config.MavenConfig;
+import org.jetbrains.idea.maven.config.MavenConfigSettings;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.indices.MavenIndices;
-import org.jetbrains.idea.maven.project.MavenGeneralSettings;
-import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
-import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
+import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.MavenWslUtil;
@@ -306,7 +305,8 @@ final class MavenServerManagerImpl implements MavenServerManager {
       @NotNull
       @Override
       protected synchronized MavenServerEmbedder create() throws RemoteException {
-        MavenServerSettings settings = convertSettings(project, MavenProjectsManager.getInstance(project).getGeneralSettings());
+        MavenServerSettings settings =
+          convertSettings(project, MavenProjectsManager.getInstance(project).getGeneralSettings(), multiModuleProjectDirectory);
         if (alwaysOnline && settings.isOffline()) {
           settings = settings.clone();
           settings.setOffline(false);
@@ -512,7 +512,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
     return new File(root.getParent(), "intellij.maven.server.eventListener");
   }
 
-  private static MavenServerSettings convertSettings(@NotNull Project project, @Nullable MavenGeneralSettings settings) {
+  private static MavenServerSettings convertSettings(@NotNull Project project,
+                                                     @Nullable MavenGeneralSettings settings,
+                                                     @NotNull String multiModuleProjectDirectory) {
     if (settings == null) {
       settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings().getGeneralSettings();
     }
@@ -521,25 +523,36 @@ final class MavenServerManagerImpl implements MavenServerManager {
     result.setLoggingLevel(settings.getOutputLevel().getLevel());
     result.setOffline(settings.isWorkOffline());
     result.setUpdateSnapshots(settings.isAlwaysUpdateSnapshots());
-    File mavenHome = settings.getEffectiveMavenHome();
-    if (mavenHome != null) {
-      String remotePath = transformer.toRemotePath(mavenHome.toPath().toAbsolutePath().toString());
-      result.setMavenHomePath(remotePath);
-    }
+    MavenDistribution mavenDistribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multiModuleProjectDirectory);
 
+    String remotePath = transformer.toRemotePath(mavenDistribution.getMavenHome().toString());
+    result.setMavenHomePath(remotePath);
 
     File userSettings = MavenWslUtil.getUserSettings(project, settings.getUserSettingsFile(), settings.getMavenConfig());
     String userSettingsPath = userSettings.toPath().toAbsolutePath().toString();
     result.setUserSettingsPath(transformer.toRemotePath(userSettingsPath));
 
-    File globalSettings = MavenWslUtil.getGlobalSettings(project, settings.getMavenHome(), settings.getMavenConfig());
-    if (globalSettings != null) {
-      result.setGlobalSettingsPath(transformer.toRemotePath(globalSettings.toPath().toAbsolutePath().toString()));
-    }
-
-    String localRepository = settings.getEffectiveLocalRepository().toPath().toAbsolutePath().toString();
-
+    String localRepository =
+      MavenWslUtil.getLocalRepo(project, settings.getLocalRepository(), new MavenInSpecificPath(mavenDistribution.getMavenHome().toFile()),
+                                settings.getUserSettingsFile(),
+                                settings.getMavenConfig()).getAbsolutePath();
     result.setLocalRepositoryPath(transformer.toRemotePath(localRepository));
+    File file = getGlobalConfigFromMavenConfig(project, settings, transformer);
+    if (file == null) {
+      file = MavenUtil.resolveGlobalSettingsFile(mavenDistribution.getMavenHome().toFile());
+    }
+    result.setGlobalSettingsPath(transformer.toRemotePath(file.getAbsolutePath()));
     return result;
+  }
+
+  private static @Nullable File getGlobalConfigFromMavenConfig(@NotNull Project project,
+                                                        @NotNull MavenGeneralSettings settings,
+                                                        RemotePathTransformerFactory.Transformer transformer) {
+
+    MavenConfig mavenConfig = settings.getMavenConfig();
+    if (mavenConfig == null) return null;
+    String filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS);
+    if (filePath == null) return null;
+    return new File(filePath);
   }
 }

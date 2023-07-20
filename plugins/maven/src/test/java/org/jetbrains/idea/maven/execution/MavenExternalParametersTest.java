@@ -6,7 +6,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.maven.testFramework.MavenExecutionTestCase;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.project.MavenWrapper;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class MavenExternalParametersTest extends MavenExecutionTestCase {
   public void testWrappedMavenWithoutWrapperProperties() throws IOException, ExecutionException {
     MavenRunnerParameters runnerParameters = new MavenRunnerParameters(getProjectPath(), null, false, emptyList(), emptyMap());
     MavenGeneralSettings generalSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
-    generalSettings.setMavenHome(MavenServerManager.WRAPPED_MAVEN);
+    generalSettings.setMavenHomeType(MavenWrapper.INSTANCE);
     JavaParameters parameters = MavenExternalParameters.createJavaParameters(myProject, runnerParameters, generalSettings, null, null);
     assertTrue(parameters.getVMParametersList().hasProperty("maven.home"));
   }
