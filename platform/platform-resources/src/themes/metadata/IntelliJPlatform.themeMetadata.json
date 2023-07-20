@@ -814,6 +814,11 @@
       "description": "Border above the navbar, visible when the toolbar is on"
     },
     {
+      "key": "NewUiOnboarding.Dialog.background",
+      "description": "Background of the dialog with proposal to start the onboarding to the New UI",
+      "since": "2023.2.1"
+    },
+    {
       "key": "Notification.background",
       "description": "Notification that appears in in bottom-right corner. Use the \"Add Test Notification\" action in internal mode to show notifications on demand."
     },

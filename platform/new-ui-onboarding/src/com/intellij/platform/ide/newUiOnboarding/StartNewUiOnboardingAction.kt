@@ -7,7 +7,7 @@ import com.intellij.openapi.project.DumbAwareAction
 
 internal class StartNewUiOnboardingAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    NewUiOnboardingService.getInstance(e.project!!).startOnboarding()
+    NewUiOnboardingService.getInstance(e.project!!).showOnboardingDialog()
   }
 
   override fun update(e: AnActionEvent) {
