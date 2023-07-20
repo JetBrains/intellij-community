@@ -32,6 +32,9 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
       if (editor.getUserData(DISABLE_TABLE_INLAYS) == true) {
         return true
       }
+      if (!element.isValid) {
+        return true
+      }
       if (element is MarkdownTable && element.hasCorrectBorders()) {
         processTableRows(element, editor, sink)
         val presentation = HorizontalBarPresentation.create(factory, editor, element)
