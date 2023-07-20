@@ -366,7 +366,7 @@ final class InspectionRunner {
                                                                  myInspectionProfileWrapper, applyIncrementallyCallback);
 
     PsiElementVisitor visitor = InspectionEngine.createVisitor(tool, holder, myIsOnTheFly, session);
-    // if inspection returned empty visitor then it should be skipped
+    // if inspection returned the empty visitor then it should be skipped
     if (visitor != PsiElementVisitor.EMPTY_VISITOR) {
       tool.inspectionStarted(session, myIsOnTheFly);
       return new InspectionContext(toolWrapper, holder, visitor);

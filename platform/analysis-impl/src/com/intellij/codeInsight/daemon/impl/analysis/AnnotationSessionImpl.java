@@ -50,12 +50,7 @@ public class AnnotationSessionImpl extends AnnotationSession {
 
   public static <T> T computeWithSession(@NotNull PsiFile psiFile, boolean batchMode, @NotNull Function<? super AnnotationHolderImpl, T> runnable) {
     AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSessionImpl(psiFile), batchMode);
-    try {
-      return runnable.apply(holder);
-    }
-    finally {
-      
-    }
+    return runnable.apply(holder);
   }
 
 }
