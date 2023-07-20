@@ -1,16 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.codeInsight.daemon.impl;
+package com.intellij.codeInsight.daemon.impl
 
-import com.intellij.platform.diagnostic.telemetry.IJTracer;
-import com.intellij.platform.diagnostic.telemetry.Scope;
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
-import io.opentelemetry.api.common.AttributeKey;
+import com.intellij.platform.diagnostic.telemetry.IJTracer
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import io.opentelemetry.api.common.AttributeKey
 
 /**
  * Telemetry constants for daemon passes
  */
-final class HighlightingPassTracer {
-  static final IJTracer HIGHLIGHTING_PASS_TRACER = TelemetryManager.getInstance().getTracer(new Scope("HighlightingPasses"));
-  static final AttributeKey<String> FILE_ATTR_SPAN_KEY = AttributeKey.stringKey("file");
-  static final AttributeKey<String> CANCELLED_ATTR_SPAN_KEY = AttributeKey.stringKey("cancelled");
+internal object HighlightingPassTracer {
+  @JvmField
+  val HIGHLIGHTING_PASS_TRACER: IJTracer = TelemetryManager.getTracer(Scope("HighlightingPasses"))
+  @JvmField
+  val FILE_ATTR_SPAN_KEY: AttributeKey<String> = AttributeKey.stringKey("file")
+  @JvmField
+  val CANCELLED_ATTR_SPAN_KEY: AttributeKey<String> = AttributeKey.stringKey("cancelled")
 }
