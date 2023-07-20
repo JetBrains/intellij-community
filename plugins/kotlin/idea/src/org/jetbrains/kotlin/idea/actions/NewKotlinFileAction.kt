@@ -233,12 +233,14 @@ private fun createKotlinFileFromTemplate(dir: PsiDirectory, fileName: String, te
     val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties
 
     val properties = Properties(defaultProperties)
-    template.fileName = fileName
+    val templateWithFixedFileName = object : FileTemplate by template {
+        override fun getFileName(): String = fileName
+    }
     val className = fileName.substringBefore('.')
 
     val element = try {
         CreateFromTemplateDialog(
-            project, dir, template,
+            project, dir, templateWithFixedFileName,
             AttributesDefaults(className).withFixedName(true),
             properties
         ).create()
