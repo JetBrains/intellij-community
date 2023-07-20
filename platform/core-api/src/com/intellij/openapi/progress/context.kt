@@ -87,7 +87,12 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
   }
   val currentContext = prepareCurrentThreadContext()
   return resetThreadContext().use {
-    action(currentContext)
+    if (Cancellation.isInNonCancelableSection()) {
+      action(currentContext.minusKey(Job))
+    }
+    else {
+      action(currentContext)
+    }
   }
 }
 
@@ -96,6 +101,17 @@ fun <T> prepareThreadContext(action: (CoroutineContext) -> T): T {
  * or a child coroutine is started and failed
  */
 internal fun <T> prepareIndicatorThreadContext(indicator: ProgressIndicator, action: (CoroutineContext) -> T): T {
+  if (Cancellation.isInNonCancelableSection()) {
+    val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
+                           ?: EmptyCoroutineContext
+    val reporter = IndicatorRawProgressReporter(indicator).asContextElement()
+    val context = prepareCurrentThreadContext() + progressModality + reporter
+    return ProgressManager.getInstance().silenceGlobalIndicator {
+      resetThreadContext().use {
+        action(context)
+      }
+    }
+  }
   val currentJob = Job(parent = null) // no job parent, the "parent" is the indicator
   val indicatorWatcher = cancelWithIndicator(currentJob, indicator)
   val progressModality = ProgressManager.getInstance().currentProgressModality?.asContextElement()
