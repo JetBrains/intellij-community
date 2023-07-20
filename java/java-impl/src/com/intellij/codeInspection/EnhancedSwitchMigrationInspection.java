@@ -282,7 +282,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
 
   //Right part of switch rule (case labels -> result)
   private interface SwitchRuleResult {
-    String generate(CommentTracker ct);
+    String generate(CommentTracker ct, SwitchBranch branch);
   }
 
   private static class ReplaceWithSwitchExpressionFix extends PsiUpdateModCommandQuickFix {
@@ -910,7 +910,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
 
     @Override
-    public String generate(CommentTracker ct) {
+    public String generate(CommentTracker ct, SwitchBranch branch) {
       if (myResultStatements.length == 1) {
         PsiStatement first = myResultStatements[0];
         if (first instanceof PsiExpressionStatement || first instanceof PsiBlockStatement || first instanceof PsiThrowStatement) return ct.textWithComments(myResultStatements[0]) + "\n";
@@ -935,7 +935,11 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
         }
         sb.append(text).append("\n");
       }
-      sb.append("\n}");
+      addCommentsUntilNextLabel(ct, branch, sb);
+      if (sb.charAt(sb.length() - 1) != '\n') {
+        sb.append("\n");
+      }
+      sb.append("}");
       return sb.toString();
     }
   }
@@ -946,8 +950,40 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     private SwitchRuleExpressionResult(@NotNull PsiExpression expression) { myExpression = expression; }
 
     @Override
-    public String generate(CommentTracker ct) {
+    public String generate(CommentTracker ct, SwitchBranch branch) {
       return ct.textWithComments(myExpression) + ";";
+    }
+  }
+
+  private static void addCommentsUntilNextLabel(CommentTracker ct, SwitchBranch branch, StringBuilder builder) {
+    PsiElement label = ContainerUtil.find(branch.myUsedElements, e -> e instanceof PsiSwitchLabelStatement);
+    if (!(label instanceof PsiSwitchLabelStatement labelStatement)) {
+      return;
+    }
+    PsiSwitchLabelStatement nextLabelStatement = PsiTreeUtil.getNextSiblingOfType(labelStatement, PsiSwitchLabelStatement.class);
+    PsiElement untilComment = null;
+    if (nextLabelStatement != null) {
+      untilComment = PsiTreeUtil.getPrevSiblingOfType(nextLabelStatement, PsiStatement.class);
+    }
+    if (untilComment == null) {
+      PsiElement next = labelStatement.getNextSibling();
+      if (next != null) {
+        while (next.getNextSibling() != null) {
+          next = next.getNextSibling();
+        }
+      }
+      untilComment = next;
+    }
+    if (untilComment != null) {
+      String commentsBefore = ct.commentsBefore(untilComment).stripTrailing();
+      String previousText = builder.toString().stripTrailing();
+      if (previousText.length() > 1 && previousText.charAt(builder.length() - 1) == '\n') {
+        commentsBefore = StringUtil.trimStart(commentsBefore, "\n");
+      }
+      if (!commentsBefore.isEmpty()) {
+        commentsBefore += '\n';
+      }
+      builder.append(commentsBefore);
     }
   }
 
@@ -1005,7 +1041,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
       grabCommentsBeforeColon(label, ct, sb);
       sb.append("->");
-      sb.append(myRuleResult.generate(ct));
+      sb.append(myRuleResult.generate(ct, this));
       return sb.toString();
     }
 
