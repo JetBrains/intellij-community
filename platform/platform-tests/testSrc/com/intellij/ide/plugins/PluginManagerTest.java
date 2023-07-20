@@ -270,8 +270,7 @@ public class PluginManagerTest {
     expect(mock.getDependencies()).andReturn(Collections.emptyList()).anyTimes();
     replay(mock);
 
-    return PluginManagerCore.checkBuildNumberCompatibility(mock,
-                                                           Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
+    return PluginManagerCore.checkBuildNumberCompatibility(mock, Objects.requireNonNull(BuildNumber.fromString(ideVersion)));
   }
 
   private static boolean checkCompatibility(@NotNull String platformId) {

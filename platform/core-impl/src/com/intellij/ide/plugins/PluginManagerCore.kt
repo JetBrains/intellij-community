@@ -57,20 +57,25 @@ private var thirdPartyPluginsNoteAccepted: Boolean? = null
 object PluginManagerCore {
   const val META_INF: @NonNls String = "META-INF/"
   const val CORE_PLUGIN_ID: String = "com.intellij"
+
   @JvmField
   val CORE_ID: PluginId = PluginId.getId(CORE_PLUGIN_ID)
+
   @JvmField
   val JAVA_PLUGIN_ID: PluginId = PluginId.getId("com.intellij.java")
+
   @JvmField
   val JAVA_MODULE_ID: PluginId = PluginId.getId("com.intellij.modules.java")
   const val PLUGIN_XML: String = "plugin.xml"
   const val PLUGIN_XML_PATH: String = META_INF + PLUGIN_XML
+
   @JvmField
   val ALL_MODULES_MARKER: PluginId = PluginId.getId("com.intellij.modules.all")
   const val VENDOR_JETBRAINS: String = "JetBrains"
   const val VENDOR_JETBRAINS_SRO: String = "JetBrains s.r.o."
   private const val MODULE_DEPENDENCY_PREFIX = "com.intellij.module"
   private const val PLATFORM_DEPENDENCY_PREFIX = "com.intellij.platform"
+
   @JvmField
   val SPECIAL_IDEA_PLUGIN_ID: PluginId = PluginId.getId("IDEA CORE")
   const val DISABLE: @NonNls String = "disable"
@@ -228,10 +233,10 @@ object PluginManagerCore {
 
     // return if the found plugin is not `core`, or the package is obviously "core"
     if (CORE_ID != result.getPluginId() ||
-               className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
-               className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
-               className.startsWith("com.android.") ||
-               className.startsWith("git4idea.") || className.startsWith("org.angularjs.")) {
+        className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
+        className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
+        className.startsWith("com.android.") ||
+        className.startsWith("git4idea.") || className.startsWith("org.angularjs.")) {
       return result
     }
     else {
@@ -239,26 +244,6 @@ object PluginManagerCore {
     }
 
     // otherwise, we need to check plugins with use-idea-classloader="true"
-  }
-
-  private fun findClassInPluginThatUsesCoreClassloader(className: @NonNls String, pluginSet: PluginSet): IdeaPluginDescriptorImpl? {
-    var root: String? = null
-    for (descriptor in pluginSet.enabledPlugins) {
-      if (!descriptor.isUseIdeaClassLoader) {
-        continue
-      }
-      if (root == null) {
-        root = PathManager.getResourceRoot(descriptor.getClassLoader(), className.replace('.', '/') + ".class")
-        if (root == null) {
-          return null
-        }
-      }
-      val path = descriptor.getPluginPath()
-      if (root.startsWith(FileUtilRt.toSystemIndependentName(path.toString()))) {
-        return descriptor
-      }
-    }
-    return null
   }
 
   @Internal
@@ -534,12 +519,15 @@ object PluginManagerCore {
         val pluginName = descriptor.getName()
         val sinceBuildNumber = BuildNumber.fromString(sinceBuild, pluginName, null)
         if (sinceBuildNumber != null && sinceBuildNumber > ideBuildNumber) {
-          return PluginLoadingError(descriptor,
-                                    message("plugin.loading.error.long.incompatible.since.build", pluginName,
-                                            descriptor.getVersion(), sinceBuild, ideBuildNumber),
-                                    message("plugin.loading.error.short.incompatible.since.build", sinceBuild))
+          return PluginLoadingError(
+            plugin = descriptor,
+            detailedMessageSupplier = message("plugin.loading.error.long.incompatible.since.build", pluginName,
+                                              descriptor.getVersion(), sinceBuild, ideBuildNumber),
+            shortMessageSupplier = message("plugin.loading.error.short.incompatible.since.build", sinceBuild),
+          )
         }
       }
+
       val untilBuild = descriptor.getUntilBuild()
       if (untilBuild != null) {
         val pluginName = descriptor.getName()
@@ -981,7 +969,7 @@ object PluginManagerCore {
 class EssentialPluginMissingException internal constructor(@JvmField val pluginIds: List<String>)
   : RuntimeException("Missing essential plugins: ${pluginIds.joinToString(", ")}")
 
-private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String?, vararg params: Any): @Nls Supplier<String> {
+private fun message(key: @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String?, vararg params: Any?): @Nls Supplier<String> {
   return Supplier { CoreBundle.message(key!!, *params) }
 }
 
@@ -1038,4 +1026,25 @@ private fun prepareActions(pluginNamesToDisable: Collection<String>, pluginNames
   }
   actions.add(Supplier<HtmlChunk> { HtmlChunk.link(PluginManagerCore.EDIT, CoreBundle.message("link.text.open.plugin.manager")) })
   return actions
+}
+
+private fun findClassInPluginThatUsesCoreClassloader(className: @NonNls String, pluginSet: PluginSet): IdeaPluginDescriptorImpl? {
+  var root: String? = null
+  for (descriptor in pluginSet.enabledPlugins) {
+    if (!descriptor.isUseIdeaClassLoader) {
+      continue
+    }
+
+    if (root == null) {
+      root = PathManager.getResourceRoot(descriptor.getClassLoader(), className.replace('.', '/') + ".class")
+      if (root == null) {
+        return null
+      }
+    }
+    val path = descriptor.getPluginPath()
+    if (root.startsWith(FileUtilRt.toSystemIndependentName(path.toString()))) {
+      return descriptor
+    }
+  }
+  return null
 }
