@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
@@ -39,7 +39,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
     model.addListener(ModelListener(), ourDisposable)
     mainUi = createMainUI()
-    combinedViewer = createCombinedViewer()
+    combinedViewer = createCombinedViewer(true)
 
     buildLoadingBlocks()
   }
@@ -55,11 +55,12 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
     }
   }
 
-  private fun createCombinedViewer(): CombinedDiffViewer {
+  private fun createCombinedViewer(initialFocusRequest: Boolean): CombinedDiffViewer {
     val context = model.context
     return CombinedDiffViewer(context).also { viewer ->
       Disposer.register(ourDisposable, viewer)
       context.putUserData(COMBINED_DIFF_VIEWER_KEY, viewer)
+      context.putUserData(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, initialFocusRequest)
       viewer.addBlockListener(MyBlockListener())
       mainUi.setContent(viewer)
     }
@@ -70,7 +71,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
   private inner class ModelListener : CombinedDiffModelListener {
     override fun onModelReset() {
       Disposer.dispose(combinedViewer)
-      combinedViewer = createCombinedViewer()
+      combinedViewer = createCombinedViewer(false)
       buildLoadingBlocks()
     }
 
@@ -117,7 +118,7 @@ abstract class CombinedDiffComponentFactory(val model: CombinedDiffModel) {
 
     UiNotifyConnector.doWhenFirstShown(
       getMainComponent(),
-      { combinedViewer.selectDiffBlock(blockToSelect, true, CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK) },
+      { combinedViewer.selectDiffBlock(blockToSelect, false, CombinedDiffViewer.ScrollPolicy.SCROLL_TO_BLOCK) },
       ourDisposable
     )
   }

@@ -35,11 +35,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.Gray
-import com.intellij.ui.JBColor
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBLayeredPane
-import com.intellij.ui.components.JBScrollBar
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.Alarm
@@ -49,7 +46,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.NonNls
-import java.awt.Color
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.event.FocusAdapter
@@ -62,7 +58,7 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class CombinedDiffViewer(
-  context: DiffContext
+  private val context: DiffContext
 ) : DiffViewer,
     CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
@@ -184,7 +180,8 @@ class CombinedDiffViewer(
       newViewer.init()
 
       diffInfo.update()
-      if (blockNavigation.currentBlockIndex == getBlockIndex(blockId)) {
+      val requestFocus = DiffUtil.isUserDataFlagSet(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, context)
+      if (requestFocus && blockNavigation.currentBlockIndex == getBlockIndex(blockId)) {
         requestFocusInDiffViewer(newViewer)
       }
     }
