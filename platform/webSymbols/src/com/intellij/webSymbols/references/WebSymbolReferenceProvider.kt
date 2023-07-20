@@ -20,9 +20,11 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.webSymbols.*
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.getMessage
 import com.intellij.webSymbols.WebSymbolApiStatus.Companion.isDeprecatedOrObsolete
+import com.intellij.webSymbols.WebSymbolNameSegment.MatchProblem
 import com.intellij.webSymbols.inspections.WebSymbolsInspectionsPass.Companion.getDefaultProblemMessage
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.query.WebSymbolMatch
+import com.intellij.webSymbols.query.impl.WebSymbolMatchImpl
 import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.utils.asSingleSymbol
 import com.intellij.webSymbols.utils.getProblemKind
@@ -54,6 +56,14 @@ abstract class WebSymbolReferenceProvider<T : PsiExternalReferenceHost> : PsiSym
     ?: emptyMap()
 
   protected open fun shouldShowProblems(element: T): Boolean = true
+
+  protected fun unresolvedSymbol(namespace: SymbolNamespace, kind: SymbolKind, name: String) =
+    WebSymbolMatchImpl.create(
+      name,
+      listOf(WebSymbolNameSegment(0, name.length, problem = MatchProblem.UNKNOWN_SYMBOL)),
+      namespace, kind, WebSymbolOrigin.empty(),
+      null, null
+    )
 
   private fun getReferences(element: T): List<PsiSymbolReference> {
     val showProblems = shouldShowProblems(element)
