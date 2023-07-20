@@ -6,7 +6,6 @@ package com.intellij.idea
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.getTraceActivity
 import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.BootstrapBundle
@@ -55,13 +54,11 @@ fun main(rawArgs: Array<String>) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixMillis)
         subtask("startApplication") {
-          val appInitPreparationActivity = StartUpMeasurer.startActivity("app initialization preparation", getTraceActivity())
           // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
           val appStarterDeferred = async(CoroutineName("main class loading")) {
             val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
             MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as AppStarter
           }
-
 
           launch(CoroutineName("ForkJoin CommonPool configuration")) {
             IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(AppMode.isHeadless())
@@ -73,11 +70,7 @@ fun main(rawArgs: Array<String>) {
             }
           }
 
-          startApplication(args = args,
-                           appStarterDeferred = appStarterDeferred,
-                           mainScope = this@runBlocking,
-                           busyThread = busyThread,
-                           appInitPreparationActivity = appInitPreparationActivity)
+          startApplication(args = args, appStarterDeferred = appStarterDeferred, mainScope = this@runBlocking, busyThread = busyThread)
         }
       }
 

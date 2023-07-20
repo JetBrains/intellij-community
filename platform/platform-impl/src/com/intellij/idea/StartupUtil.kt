@@ -94,8 +94,7 @@ internal var shellEnvDeferred: Deferred<Boolean?>? = null
 fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
-                                    busyThread: Thread,
-                                    appInitPreparationActivity: Activity) {
+                                    busyThread: Thread) {
   val appInfoDeferred = async(CoroutineName("app info")) {
     // required for DisabledPluginsState and EUA
     ApplicationInfoImpl.getShadowInstance()
@@ -301,7 +300,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     appRegisteredJob.join()
     initServiceContainerJob.join()
 
-    appInitPreparationActivity.end()
     initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
                         app = app,
                         preloadCriticalServicesJob = preloadCriticalServicesJob,
