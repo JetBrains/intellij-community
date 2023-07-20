@@ -8,8 +8,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.components.KtConstantEvaluationMode
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspectionWithContext
@@ -127,7 +129,8 @@ internal class WhenWithOnlyElseInspection
         val subjectVariable = info.subjectVariable.dereference() ?: return null
         val initializer = info.initializer.dereference() ?: return null
         val isInitializerPure = info.isInitializerPure
-        val references = ReferencesSearch.search(subjectVariable).findAll()
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        val references = allowAnalysisFromWriteAction { ReferencesSearch.search(subjectVariable).findAll() }
         val occurrences = references.size
         return when {
             occurrences == 0 && isInitializerPure ->

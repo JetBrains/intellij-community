@@ -3,8 +3,10 @@ package org.jetbrains.kotlin.idea.navigation
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KtTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
@@ -215,15 +217,18 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     // Maybe called from EDT by IJ Platfrom :(
     @OptIn(KtAllowAnalysisOnEdt::class)
     private fun renderTypesForComparasion(declaration: KtCallableDeclaration) = allowAnalysisOnEdt {
-        analyze(declaration) {
-            buildString {
-                val symbol = declaration.getSymbol() as KtCallableSymbol
-                symbol.receiverType?.let { receiverType ->
-                    append(receiverType.render(renderer, position = Variance.INVARIANT))
-                    append('.')
-                }
-                if (symbol is KtFunctionLikeSymbol) {
-                    symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyze(declaration) {
+                buildString {
+                    val symbol = declaration.getSymbol() as KtCallableSymbol
+                    symbol.receiverType?.let { receiverType ->
+                        append(receiverType.render(renderer, position = Variance.INVARIANT))
+                        append('.')
+                    }
+                    if (symbol is KtFunctionLikeSymbol) {
+                        symbol.valueParameters.joinTo(this) { it.returnType.render(renderer, position = Variance.INVARIANT) }
+                    }
                 }
             }
         }

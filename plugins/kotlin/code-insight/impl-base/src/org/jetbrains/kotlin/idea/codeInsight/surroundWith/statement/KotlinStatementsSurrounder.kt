@@ -7,8 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -22,8 +24,11 @@ abstract class KotlinStatementsSurrounder : Surrounder {
             val expr = elements[0] as KtExpression
             if (!isApplicableWhenUsedAsExpression) {
                 allowAnalysisOnEdt {
-                    if (analyze(expr) { expr.isUsedAsExpression() }) {
-                        return false
+                    @OptIn(KtAllowAnalysisFromWriteAction::class)
+                    allowAnalysisFromWriteAction {
+                        if (analyze(expr) { expr.isUsedAsExpression() }) {
+                            return false
+                        }
                     }
                 }
             }

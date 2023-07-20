@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.codeInsight.surroundWith.KotlinExpressionSurrounder
 import org.jetbrains.kotlin.psi.*
@@ -18,10 +20,12 @@ class KotlinWithIfExpressionSurrounder(val withElse: Boolean) : KotlinExpression
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun isApplicable(expression: KtExpression): Boolean {
         allowAnalysisOnEdt {
-            return super.isApplicable(expression) &&
-                    analyze(expression) {
-                        expression.getKtType()?.isBoolean ?: false
-                    }
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                return super.isApplicable(expression) && analyze(expression) {
+                    expression.getKtType()?.isBoolean == true
+                }
+            }
         }
     }
 

@@ -5,11 +5,13 @@ package org.jetbrains.kotlin.idea.base.analysis.api.utils
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.ShortenCommand
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defaultCallableShortenOption
 import org.jetbrains.kotlin.analysis.api.components.ShortenOption.Companion.defaultClassShortenOption
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassLikeSymbol
@@ -52,11 +54,15 @@ fun shortenReferencesInRange(
     classShortenOption: (KtClassLikeSymbol) -> ShortenOption = defaultClassShortenOption,
     callableShortenOption: (KtCallableSymbol) -> ShortenOption = defaultCallableShortenOption
 ): PsiElement? {
-     val shortenCommand = allowAnalysisOnEdt {
-        analyze(file) {
-            collectPossibleReferenceShortenings(file, range, classShortenOption, callableShortenOption)
+    val shortenCommand = allowAnalysisOnEdt {
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyze(file) {
+                collectPossibleReferenceShortenings(file, range, classShortenOption, callableShortenOption)
+            }
         }
     }
+
     return shortenCommand.invokeShortening().firstOrNull()
 }
 

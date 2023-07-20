@@ -7,8 +7,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.diagnostics.WhenMissingCase
 import org.jetbrains.kotlin.idea.base.psi.replaced
@@ -32,9 +34,12 @@ class KotlinWhenSurrounder : KotlinExpressionSurrounder() {
             }
 
         val remainingBranches = allowAnalysisOnEdt {
-            analyze(whenExpression) {
-                whenExpression.getMissingCases().takeIf {
-                    it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(whenExpression) {
+                    whenExpression.getMissingCases().takeIf {
+                        it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
+                    }
                 }
             }
         }

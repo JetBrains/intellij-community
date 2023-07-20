@@ -9,9 +9,11 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -112,14 +114,17 @@ internal class K2RenameRefactoringSupport : KotlinRenameRefactoringSupport {
         fun KtCallableDeclaration.overridesNothing(): Boolean {
             val declaration = this
 
-            analyze(this) {
-                val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(this) {
+                    val declarationSymbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
 
-                val callableSymbol = when (declarationSymbol) {
-                    is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
-                    else -> declarationSymbol
+                    val callableSymbol = when (declarationSymbol) {
+                        is KtValueParameterSymbol -> declarationSymbol.generatedPrimaryConstructorProperty ?: return false
+                        else -> declarationSymbol
+                    }
+                    return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
                 }
-                return callableSymbol.getDirectlyOverriddenSymbols().isEmpty()
             }
         }
 

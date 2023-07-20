@@ -6,8 +6,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -29,12 +31,16 @@ abstract class KotlinExpressionSurrounder : Surrounder {
   @OptIn(KtAllowAnalysisOnEdt::class)
   protected open fun isApplicable(expression: KtExpression): Boolean {
       allowAnalysisOnEdt {
-          return analyze(expression) {
-              val type = expression.getKtType()
-              if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
-                  false
+          @OptIn(KtAllowAnalysisFromWriteAction::class)
+          allowAnalysisFromWriteAction {
+              return analyze(expression) {
+                  val type = expression.getKtType()
+                  if (type == null || type is KtErrorType || type.isUnit && isApplicableToStatements) {
+                      false
+                  } else {
+                      isApplicableToStatements || expression.isUsedAsExpression()
+                  }
               }
-              else isApplicableToStatements || expression.isUsedAsExpression()
           }
       }
   }

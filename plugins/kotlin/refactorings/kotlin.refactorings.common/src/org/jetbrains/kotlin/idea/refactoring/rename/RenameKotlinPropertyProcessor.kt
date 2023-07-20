@@ -16,6 +16,8 @@ import com.intellij.refactoring.rename.RenameUtil
 import com.intellij.refactoring.util.MoveRenameUsageInfo
 import com.intellij.refactoring.util.RefactoringUtil
 import com.intellij.usageView.UsageInfo
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.asJava.*
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -376,33 +378,39 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
       }
     }
 
-    val adjustedUsages = if (element is KtParameter) usages.filterNot {
-      val refTarget = it.reference?.resolve()
-      refTarget is KtLightMethod && DataClassResolver.isComponentLike(Name.guessByFirstCharacter(refTarget.name))
-    }
-    else usages.toList()
+      val (adjustedUsages, refKindUsages) = @OptIn(KtAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
+          val adjustedUsages = if (element is KtParameter) {
+              usages.filterNot {
+                  val refTarget = it.reference?.resolve()
+                  refTarget is KtLightMethod && DataClassResolver.isComponentLike(Name.guessByFirstCharacter(refTarget.name))
+              }
+          } else {
+              usages.toList()
+          }
 
-    val refKindUsages = adjustedUsages.groupBy { usage: UsageInfo ->
-      val refElement = usage.reference?.resolve()
-      if (refElement is PsiMethod) {
-        val refElementName = refElement.name
-        val refElementNameToCheck = (
-                                      if (usage is MangledJavaRefUsageInfo)
-                                        renameRefactoringSupport.demangleInternalName(refElementName)
-                                      else
-                                        null
-                                    ) ?: refElementName
+          val refKindUsages = adjustedUsages.groupBy { usage: UsageInfo ->
+              val refElement = usage.reference?.resolve()
+              if (refElement is PsiMethod) {
+                  val refElementName = refElement.name
+                  val refElementNameToCheck = (
+                          if (usage is MangledJavaRefUsageInfo)
+                              renameRefactoringSupport.demangleInternalName(refElementName)
+                          else
+                              null
+                          ) ?: refElementName
 
-        when (refElementNameToCheck) {
-          oldGetterName -> UsageKind.GETTER_USAGE
-          oldSetterName -> UsageKind.SETTER_USAGE
-          else -> UsageKind.SIMPLE_PROPERTY_USAGE
-        }
+                  when (refElementNameToCheck) {
+                      oldGetterName -> UsageKind.GETTER_USAGE
+                      oldSetterName -> UsageKind.SETTER_USAGE
+                      else -> UsageKind.SIMPLE_PROPERTY_USAGE
+                  }
+              } else {
+                  UsageKind.SIMPLE_PROPERTY_USAGE
+              }
+          }
+
+          adjustedUsages to refKindUsages
       }
-      else {
-        UsageKind.SIMPLE_PROPERTY_USAGE
-      }
-    }
 
     super.renameElement(
       element.copy(), JvmAbi.setterName(newNameUnquoted).quoteIfNeeded(),

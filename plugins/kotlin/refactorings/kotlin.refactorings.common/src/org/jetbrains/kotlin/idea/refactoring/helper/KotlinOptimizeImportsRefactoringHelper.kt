@@ -17,8 +17,10 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.RefactoringHelper
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.IncorrectOperationException
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
@@ -40,23 +42,26 @@ class KotlinOptimizeImportsRefactoringHelper : RefactoringHelper<Set<KtFile>> {
 
         @OptIn(KtAllowAnalysisOnEdt::class)
         override fun run(indicator: ProgressIndicator) = allowAnalysisOnEdt {
-            indicator.isIndeterminate = false
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                indicator.isIndeterminate = false
 
-            val myTotalCount = operationData.size
-            for ((counter, file) in operationData.withIndex()) {
-                ReadAction.nonBlocking {
-                    val virtualFile = file.virtualFile ?: return@nonBlocking
+                val myTotalCount = operationData.size
+                for ((counter, file) in operationData.withIndex()) {
+                    ReadAction.nonBlocking {
+                        val virtualFile = file.virtualFile ?: return@nonBlocking
 
-                    indicator.fraction = counter.toDouble() / myTotalCount
-                    indicator.text2 = virtualFile.presentableUrl
-                    analyze(file) {
-                        analyseImports(file).unusedImports.mapTo(unusedImports) { it.createSmartPointer() }
+                        indicator.fraction = counter.toDouble() / myTotalCount
+                        indicator.text2 = virtualFile.presentableUrl
+                        analyze(file) {
+                            analyseImports(file).unusedImports.mapTo(unusedImports) { it.createSmartPointer() }
+                        }
                     }
+                        .inSmartMode(project)
+                        .wrapProgress(indicator)
+                        .expireWhen { !file.isValid || project.isDisposed() }
+                        .executeSynchronously()
                 }
-                    .inSmartMode(project)
-                    .wrapProgress(indicator)
-                    .expireWhen { !file.isValid || project.isDisposed() }
-                    .executeSynchronously()
             }
         }
     }

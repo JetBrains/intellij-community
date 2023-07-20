@@ -5,9 +5,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.IncorrectOperationException
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtSymbolBasedReference
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtSyntheticJavaPropertySymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
@@ -57,12 +59,18 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
             it.delete()
         }
 
-        val newShortenings = analyze(newElement) { collectPossibleReferenceShorteningsInElement(newElement) }
+        val newShortenings = @OptIn(KtAllowAnalysisFromWriteAction::class) allowAnalysisFromWriteAction {
+            analyze(newElement) { collectPossibleReferenceShorteningsInElement(newElement) }
+        }
+
         return newShortenings.invokeShortening().firstOrNull() ?: newElement
     }
 
     private fun KtFile.unusedImports(): Set<KtImportDirective> = analyze(this) {
-        analyseImports(this@unusedImports).unusedImports
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyseImports(this@unusedImports).unusedImports
+        }
     }
 
     private fun KtTypeElement.replaceWith(fqName: FqName): KtTypeElement {
@@ -109,19 +117,23 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
 
     override fun handleElementRename(ktReference: KtReference, newElementName: String): PsiElement? {
         val newName = (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.getAdjustedNewName(newElementName)
-        if (newName == null && ktReference is KtSymbolBasedReference) {
-            @OptIn(KtAllowAnalysisOnEdt::class)
-            allowAnalysisOnEdt {
-                analyze(ktReference.element) {
-                    val symbol = ktReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol
-                    if (symbol != null) {
-                        return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
+
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            if (newName == null && ktReference is KtSymbolBasedReference) {
+                @OptIn(KtAllowAnalysisOnEdt::class)
+                allowAnalysisOnEdt {
+                    analyze(ktReference.element) {
+                        val symbol = ktReference.resolveToSymbol() as? KtSyntheticJavaPropertySymbol
+                        if (symbol != null) {
+                            return (ktReference as? KtSimpleReference<KtNameReferenceExpression>)?.renameToOrdinaryMethod(newElementName)
+                        }
                     }
                 }
             }
-        }
 
-        return super.handleElementRename(ktReference, newName?.asString() ?: newElementName)
+            return super.handleElementRename(ktReference, newName?.asString() ?: newElementName)
+        }
     }
 
     override fun replaceWithImplicitInvokeInvocation(newExpression: KtDotQualifiedExpression): KtExpression? =

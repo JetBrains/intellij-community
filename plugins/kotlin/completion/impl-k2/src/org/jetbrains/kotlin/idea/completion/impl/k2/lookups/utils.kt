@@ -10,8 +10,10 @@ import com.intellij.psi.util.nextLeaf
 import com.intellij.psi.util.prevLeaf
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.signatures.KtCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassifierSymbol
@@ -47,7 +49,10 @@ internal fun KtAnalysisSession.withCallableSignatureInfo(
 // FIXME: This is a hack, we should think how we can get rid of it
 @OptIn(KtAllowAnalysisOnEdt::class)
 internal inline fun <T> withAllowedResolve(action: () -> T): T {
-    return allowAnalysisOnEdt(action)
+    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    allowAnalysisFromWriteAction {
+        return allowAnalysisOnEdt(action)
+    }
 }
 
 internal fun CharSequence.skipSpaces(index: Int): Int =

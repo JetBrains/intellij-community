@@ -7,9 +7,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.ui.RowIcon
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -25,6 +27,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
+import org.jetbrains.kotlin.idea.completion.lookups.withAllowedResolve
 import org.jetbrains.kotlin.idea.core.overrideImplement.BodyType
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtClassMember
 import org.jetbrains.kotlin.idea.core.overrideImplement.KtOverrideMembersHandler
@@ -160,11 +163,11 @@ internal class OverrideKeywordHandler(
         classOrObject: KtClassOrObject,
         member: KtClassMember,
         project: Project
-    ) = allowAnalysisOnEdt {
+    ) = withAllowedResolve {
         analyze(classOrObject) {
             val symbolPointer = member.memberInfo.symbolPointer
             val symbol = symbolPointer.restoreSymbol()
-            requireNotNull(symbol) { "${symbolPointer::class} can't be restored"}
+            requireNotNull(symbol) { "${symbolPointer::class} can't be restored" }
             generateMember(
                 project,
                 member,

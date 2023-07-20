@@ -10,11 +10,13 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
 import org.jetbrains.kotlin.idea.core.moveCaretIntoGeneratedElement
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
@@ -45,21 +47,25 @@ abstract class KtGenerateMembersHandler(
     ) {
         // Using allowAnalysisOnEdt here because we don't want to pre-populate all possible textual overrides before user selection.
         val (commands, insertedBlocks) = allowAnalysisOnEdt {
-            val entryMembers = analyze(classOrObject) {
-                this.generateMembers(editor, classOrObject, selectedElements, copyDoc)
-            }
-            val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
-            // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
-            // members.
-            val commands = analyze(classOrObject) {
-                insertedBlocks.mapNotNull { block ->
-                    val declarations = block.declarations.mapNotNull { it.element }
-                    val first = declarations.firstOrNull() ?: return@mapNotNull null
-                    val last = declarations.last()
-                    collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                val entryMembers = analyze(classOrObject) {
+                    this.generateMembers(editor, classOrObject, selectedElements, copyDoc)
                 }
+                val insertedBlocks = insertMembersAccordingToPreferredOrder(entryMembers, editor, classOrObject)
+                // Reference shortening is done in a separate analysis session because the session need to be aware of the newly generated
+                // members.
+                val commands = analyze(classOrObject) {
+                    insertedBlocks.mapNotNull { block ->
+                        val declarations = block.declarations.mapNotNull { it.element }
+                        val first = declarations.firstOrNull() ?: return@mapNotNull null
+                        val last = declarations.last()
+                        collectPossibleReferenceShortenings(first.containingKtFile, TextRange(first.startOffset, last.endOffset))
+                    }
+                }
+
+                commands to insertedBlocks
             }
-            commands to insertedBlocks
         }
         runWriteAction {
             commands.forEach { it.invokeShortening() }

@@ -7,8 +7,10 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiUtilCore
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KtDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.types.KtErrorType
@@ -116,32 +118,36 @@ private fun createVariableAssignment(property: KtProperty): KtBinaryExpression {
 @OptIn(KtAllowAnalysisOnEdt::class)
 private fun createVariableDeclaration(property: KtProperty, generateDefaultInitializers: Boolean): KtProperty {
     allowAnalysisOnEdt {
-        analyze(property) {
-            val propertyType = property.getReturnKtType()
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        allowAnalysisFromWriteAction {
+            analyze(property) {
+                val propertyType = property.getReturnKtType()
 
-            var defaultInitializer: String? = null
-            if (generateDefaultInitializers && property.isVar) {
-                defaultInitializer = propertyType.defaultInitializer
+                var defaultInitializer: String? = null
+                if (generateDefaultInitializers && property.isVar) {
+                    defaultInitializer = propertyType.defaultInitializer
 
+                }
+                val typeRef = property.typeReference
+                val typeString = when {
+                    typeRef != null -> typeRef.text
+                    propertyType !is KtErrorType -> propertyType.render(
+                        KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.typeRenderer, Variance.INVARIANT
+                    )
+
+                    else -> null
+                }
+
+                return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
             }
-            val typeRef = property.typeReference
-            val typeString = when {
-                typeRef != null -> typeRef.text
-                propertyType !is KtErrorType -> propertyType.render(
-                    KtDeclarationRendererForSource.WITH_QUALIFIED_NAMES.typeRenderer, Variance.INVARIANT
-                )
-
-                else -> null
-            }
-
-            return KtPsiFactory(property.project).createProperty(property.name!!, typeString, property.isVar, defaultInitializer)
         }
     }
 }
 
 private fun needToDeclareOut(element: PsiElement, lastStatementOffset: Int, scope: SearchScope): Boolean {
     if (element is KtProperty || element is KtClassOrObject || element is KtFunction) {
-        val refs = ReferencesSearch.search(element, scope, false).toArray(PsiReference.EMPTY_ARRAY)
+        @OptIn(KtAllowAnalysisFromWriteAction::class)
+        val refs = allowAnalysisFromWriteAction { ReferencesSearch.search(element, scope, false).toArray(PsiReference.EMPTY_ARRAY) }
         if (refs.isNotEmpty()) {
             val lastRef = refs.maxByOrNull { it.element.textOffset } ?: return false
             if (lastRef.element.textOffset > lastStatementOffset) {

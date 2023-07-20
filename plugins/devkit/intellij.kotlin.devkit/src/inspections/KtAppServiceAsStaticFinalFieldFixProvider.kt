@@ -10,8 +10,10 @@ import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.idea.devkit.inspections.quickfix.AppServiceAsStaticFinalFieldFixProvider
 import org.jetbrains.idea.devkit.inspections.quickfix.WrapInSupplierQuickFix
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
@@ -51,9 +53,12 @@ private class KtWrapInSupplierQuickFix(ktProperty: KtProperty) : WrapInSupplierQ
     // can be called both from EDT and from the preview
     @OptIn(KtAllowAnalysisOnEdt::class)
     val ktPropertyType = allowAnalysisOnEdt {
-      analyze(element) {
-        val returnType = element.getReturnKtType().lowerBoundIfFlexible()
-        (returnType as? KtNonErrorClassType)?.classId
+      @OptIn(KtAllowAnalysisFromWriteAction::class)
+      allowAnalysisFromWriteAction {
+        analyze(element) {
+          val returnType = element.getReturnKtType().lowerBoundIfFlexible()
+          (returnType as? KtNonErrorClassType)?.classId
+        }
       }
     }
 

@@ -5,12 +5,14 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.components.buildClassType
 import org.jetbrains.kotlin.analysis.api.getModule
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
@@ -40,7 +42,10 @@ internal inline fun <R> analyzeForUast(
     useSiteKtElement: KtElement,
     action: KtAnalysisSession.() -> R
 ): R = allowAnalysisOnEdt {
-    analyze(useSiteKtElement, action)
+    @OptIn(KtAllowAnalysisFromWriteAction::class)
+    allowAnalysisFromWriteAction {
+        analyze(useSiteKtElement, action)
+    }
 }
 
 internal fun KtAnalysisSession.containingKtClass(
