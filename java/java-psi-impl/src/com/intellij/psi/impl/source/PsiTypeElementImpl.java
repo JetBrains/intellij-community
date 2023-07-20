@@ -170,7 +170,13 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       if (declarationScope instanceof PsiForeachStatement) {
         PsiExpression iteratedValue = ((PsiForeachStatement)declarationScope).getIteratedValue();
         if (iteratedValue != null) {
-          return JavaGenericsUtil.getCollectionItemType(iteratedValue);
+          PsiType type = JavaGenericsUtil.getCollectionItemType(iteratedValue);
+          //Upward projection is applied to the type of the initializer when determining the type of the
+          //variable
+          if (type instanceof PsiCapturedWildcardType) {
+            return ((PsiCapturedWildcardType)type).getUpperBound();
+          }
+          return type;
         }
         return null;
       }
