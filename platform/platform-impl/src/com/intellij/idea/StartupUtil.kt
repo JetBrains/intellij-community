@@ -287,7 +287,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
     if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-      launch(CoroutineName("coroutine debug probes init")) {
+      asyncScope.launch(CoroutineName("coroutine debug probes init")) {
         enableCoroutineDump()
         JBR.getJstack()?.includeInfoFrom {
           """
