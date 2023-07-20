@@ -17,7 +17,6 @@ import com.intellij.diff.comparison.ComparisonPolicy
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandAction.ActionContext
 import com.intellij.model.SideEffectGuard
 import com.intellij.model.SideEffectGuard.SideEffectNotAllowedException
@@ -155,7 +154,7 @@ class IntentionPreviewComputable(private val project: Project,
   }
 
   private fun getModActionPreview(origFile: PsiFile, origEditor: Editor): IntentionPreviewInfo {
-    val unwrapped = ModCommandAction.unwrap(action) ?: return IntentionPreviewInfo.EMPTY
+    val unwrapped = action.asModCommandAction() ?: return IntentionPreviewInfo.EMPTY
     val info = SideEffectGuard.computeWithoutSideEffects {
       unwrapped.generatePreview(ActionContext.from(origEditor, origFile))
     }

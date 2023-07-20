@@ -62,7 +62,7 @@ public class DataPointHolderConversionIntentionTest extends LightQuickFixTestCas
     configureByFile(getBasePath() + "/beforeNameTyping.java");
     TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
     IntentionAction intentionAction = findActionWithText("Replace by @DataPoint method");
-    ModCommandAction mc = ModCommandAction.unwrap(intentionAction);
+    ModCommandAction mc = intentionAction.asModCommandAction();
     assertNotNull(mc);
     List<ModCommand> commands = mc.perform(ModCommandAction.ActionContext.from(getEditor(), getFile())).unpack();
     assertEquals(2, commands.size());

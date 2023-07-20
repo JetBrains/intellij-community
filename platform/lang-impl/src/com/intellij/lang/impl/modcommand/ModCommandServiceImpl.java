@@ -2,7 +2,6 @@
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.modcommand.ModCommand;
@@ -40,16 +39,6 @@ public class ModCommandServiceImpl implements ModCommandService {
       return wrapper.getAction();
     }
     return null;
-  }
-
-  @Override
-  @Nullable
-  public ModCommandAction unwrap(@NotNull IntentionAction action) {
-    while (action instanceof IntentionActionDelegate delegate) {
-      action = delegate.getDelegate();
-    }
-    return action instanceof ModCommandActionWrapper wrapper ? wrapper.action() : 
-           action instanceof ModCommandActionQuickFixUberWrapper wrapper ? wrapper.action() : null;
   }
 
   @Override

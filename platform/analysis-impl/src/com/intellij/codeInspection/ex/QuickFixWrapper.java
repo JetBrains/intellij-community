@@ -68,8 +68,8 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    ModCommandAction modCommand = action instanceof ModCommandAction mc ? mc:
-                                  ModCommandAction.unwrap((IntentionAction)action);                              
+    ModCommandAction modCommand;
+    modCommand = action instanceof ModCommandAction mc ? mc : ((IntentionAction)action).asModCommandAction();
     if (modCommand instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }
@@ -84,7 +84,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.getFile();
     }
-    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+    if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       PsiElement element = qfAction.myDescriptor.getPsiElement();
       return element == null ? null : element.getContainingFile();
     }
@@ -164,7 +164,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myDescriptor.getHighlightType();
     }
-    if (ModCommandAction.unwrap(action) instanceof ModCommandQuickFixAction qfAction) {
+    if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myDescriptor.getHighlightType();
     }
     return null;

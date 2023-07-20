@@ -137,7 +137,7 @@ public final class IntentionActionWrapper implements IntentionAction, ShortcutPr
     catch (PsiInvalidElementAccessException e) {
       text = e.getMessage();
     }
-    ModCommandAction modCommand = ModCommandAction.unwrap(this);
+    ModCommandAction modCommand = asModCommandAction();
     Class<?> cls = modCommand == null ? getDelegate().getClass() : modCommand.getClass();
     return "Intention: (" + cls.getName() + "): '" + text + "'";
   }

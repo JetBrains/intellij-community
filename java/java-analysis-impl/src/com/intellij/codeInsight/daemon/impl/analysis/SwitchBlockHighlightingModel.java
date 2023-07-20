@@ -73,7 +73,7 @@ public class SwitchBlockHighlightingModel {
     PsiFile file = block.getContainingFile();
     SwitchBlockHighlightingModel model = createInstance(PsiUtil.getLanguageLevel(file), block, file);
     if (model == null) return false;
-    ModCommandAction templateAction = ModCommandAction.unwrap(QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null));
+    ModCommandAction templateAction = QuickFixFactory.getInstance().createAddSwitchDefaultFix(block, null).asModCommandAction();
     if (templateAction == null) return false;
     var holder = new HighlightInfoHolder(file) {
       boolean found;
@@ -82,7 +82,7 @@ public class SwitchBlockHighlightingModel {
       public boolean add(@Nullable HighlightInfo info) {
         if (info != null) {
           found |= info.findRegisteredQuickFix((desc, range) -> {
-            ModCommandAction action = ModCommandAction.unwrap(desc.getAction());
+            ModCommandAction action = desc.getAction().asModCommandAction();
             return action != null && action.getClass().equals(templateAction.getClass());
           });
         }

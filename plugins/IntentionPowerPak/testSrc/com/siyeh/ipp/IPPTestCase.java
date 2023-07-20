@@ -4,7 +4,6 @@ package com.siyeh.ipp;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -86,7 +85,7 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
     final List<IntentionAction> result = new SmartList<>();
     for (final IntentionAction intention : myFixture.getAvailableIntentions()) {
       if (intentionClass.isInstance(IntentionActionDelegate.unwrap(intention)) ||
-          intentionClass.isInstance(ModCommandAction.unwrap(intention))) {
+          intentionClass.isInstance(intention.asModCommandAction())) {
         result.add(intention);
       }
     }

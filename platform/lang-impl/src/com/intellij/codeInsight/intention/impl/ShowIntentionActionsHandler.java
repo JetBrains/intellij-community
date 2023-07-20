@@ -261,7 +261,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     try (AccessToken __ = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      ModCommandAction commandAction = ModCommandAction.unwrap(action);
+      ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {
         invokeCommandAction(hostFile, hostEditor, commandName, commandAction);
       } else {

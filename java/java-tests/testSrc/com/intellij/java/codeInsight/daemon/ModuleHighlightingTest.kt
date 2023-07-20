@@ -11,7 +11,6 @@ import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
-import com.intellij.modcommand.ModCommandService
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.TextRange
@@ -686,7 +685,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val availableIntentions = myFixture.availableIntentions
     val available = availableIntentions
-      .map { (ModCommandService.getInstance().unwrap(it) ?: IntentionActionDelegate.unwrap(it))::class.java }
+      .map { (it.asModCommandAction() ?: IntentionActionDelegate.unwrap(it))::class.java }
       .filter { it.name.startsWith("com.intellij.codeInsight.") &&
                 !(it.name.startsWith("com.intellij.codeInsight.intention.impl.") && it.name.endsWith("Action"))}
       .map { it.simpleName }

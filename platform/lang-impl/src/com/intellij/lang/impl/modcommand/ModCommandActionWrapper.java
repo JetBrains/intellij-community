@@ -110,7 +110,7 @@ import java.util.Objects;
   
   @Override
   public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
-    ModCommandAction unwrapped = ModCommandAction.unwrap(action);
+    ModCommandAction unwrapped = action.asModCommandAction();
     if (unwrapped == null || myPresentation == null || myPresentation.fixAllOption() == null) return false;
     return myPresentation.fixAllOption().belongsToMyFamily().test(unwrapped);
   }
@@ -138,5 +138,10 @@ import java.util.Objects;
   public String toString() {
     return "ModCommandActionWrapper[" +
            "action=" + myAction + ']';
+  }
+
+  @Override
+  public @NotNull ModCommandAction asModCommandAction() {
+    return myAction;
   }
 }

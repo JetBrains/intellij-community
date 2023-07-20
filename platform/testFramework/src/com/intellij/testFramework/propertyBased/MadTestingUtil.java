@@ -407,7 +407,7 @@ public final class MadTestingUtil {
   @NotNull
   static String getIntentionDescription(String intentionName, IntentionAction action) {
     IntentionAction actual = IntentionActionDelegate.unwrap(action);
-    ModCommandAction command = ModCommandAction.unwrap(action);
+    ModCommandAction command = action.asModCommandAction();
     String family = actual.getFamilyName();
     Class<?> aClass = command != null ? command.getClass() : actual.getClass();
     LocalQuickFix fix = QuickFixWrapper.unwrap(actual);

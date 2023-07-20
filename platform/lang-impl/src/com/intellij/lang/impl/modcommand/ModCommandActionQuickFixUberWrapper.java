@@ -112,7 +112,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
   @Override
   public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
     ModCommandAction.Presentation presentation = getPresentation();
-    ModCommandAction unwrapped = ModCommandAction.unwrap(action);
+    ModCommandAction unwrapped = action.asModCommandAction();
     if (unwrapped == null || presentation == null || presentation.fixAllOption() == null) return false;
     return presentation.fixAllOption().belongsToMyFamily().test(unwrapped);
   }
@@ -127,5 +127,10 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
   @Override
   public String toString() {
     return "[LocalQuickFixAndIntentionActionOnPsiElement] " + myAction;
+  }
+
+  @Override
+  public @Nullable ModCommandAction asModCommandAction() {
+    return myAction;
   }
 }

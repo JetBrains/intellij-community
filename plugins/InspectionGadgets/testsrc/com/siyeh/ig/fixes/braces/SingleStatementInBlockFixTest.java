@@ -45,7 +45,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
         }
       }""");
     IntentionAction action = myFixture.findSingleIntention(getMessage("if"));
-    ModCommandAction mcAction = ModCommandAction.unwrap(action);
+    ModCommandAction mcAction = action.asModCommandAction();
     assertNotNull(mcAction);
     ModCommandAction.Presentation presentation =
       mcAction.getPresentation(ModCommandAction.ActionContext.from(myFixture.getEditor(), myFixture.getFile()));

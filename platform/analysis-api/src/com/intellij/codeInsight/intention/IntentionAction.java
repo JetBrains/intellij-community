@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -13,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Intention actions are context-specific actions related to the caret position in the editor.
@@ -115,5 +117,14 @@ public interface IntentionAction extends FileModifier, CommonIntentionAction {
   @Override
   default @NotNull IntentionAction asIntention() {
     return this;
+  }
+
+  @Override
+  @Nullable
+  default ModCommandAction asModCommandAction() {
+    if (this instanceof IntentionActionDelegate delegate) {
+      return delegate.getDelegate().asModCommandAction();
+    }
+    return null;
   }
 }

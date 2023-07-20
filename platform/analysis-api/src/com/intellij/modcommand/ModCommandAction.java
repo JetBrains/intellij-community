@@ -94,13 +94,10 @@ public interface ModCommandAction extends CommonIntentionAction {
     return ModCommandService.getInstance().wrapToQuickFix(this);
   }
 
-  /**
-   * @param action action that may wrap a ModCommandAction (previously created via {@link #asIntention()})
-   * @return unwrapped {@link ModCommandAction}; null if the supplied action doesn't wrap a {@code ModCommandAction}.
-   */
-  @Contract(pure = true)
-  static @Nullable ModCommandAction unwrap(@NotNull IntentionAction action) {
-    return ModCommandService.getInstance().unwrap(action);
+  @Override
+  @NotNull
+  default ModCommandAction asModCommandAction() {
+    return this;
   }
 
   /**

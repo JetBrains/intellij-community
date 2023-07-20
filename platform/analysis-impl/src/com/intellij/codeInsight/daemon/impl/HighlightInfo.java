@@ -873,7 +873,7 @@ public class HighlightInfo implements Segment {
 
     @Override
     public String toString() {
-      ModCommandAction modCommandAction = ModCommandAction.unwrap(getAction());
+      ModCommandAction modCommandAction = getAction().asModCommandAction();
       LocalQuickFix fix = QuickFixWrapper.unwrap(getAction());
       Object action = fix != null ? fix : 
                       modCommandAction != null ? modCommandAction : 

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -29,7 +28,7 @@ public class IntentionPolicy {
    * </li> 
    */
   public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    if ((!action.startInWriteAction() && ModCommandAction.unwrap(action) == null) || shouldSkipIntention(action.getText())) {
+    if ((!action.startInWriteAction() && action.asModCommandAction() == null) || shouldSkipIntention(action.getText())) {
       return false;
     }
     IntentionAction original = IntentionActionDelegate.unwrap(action);

@@ -42,13 +42,6 @@ public interface ModCommandService {
   @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action);
 
   /**
-   * @param action {@link IntentionAction}
-   * @return a {@link ModCommandAction} which is wrapped inside the supplied intention action; null if the supplied intention action
-   * does not wrap a {@code ModCommandAction}.
-   */
-  @Nullable ModCommandAction unwrap(@NotNull IntentionAction action);
-
-  /**
    * @param fix {@link LocalQuickFix}
    * @return a {@link ModCommandAction} which is wrapped inside the supplied quick-fix; null if the supplied quick-fix
    * does not wrap a {@code ModCommandAction}.
