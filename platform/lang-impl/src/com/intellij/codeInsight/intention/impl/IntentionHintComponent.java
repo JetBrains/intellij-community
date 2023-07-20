@@ -123,6 +123,15 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
                                                                   @NotNull PsiFile file,
                                                                   @NotNull Editor editor,
                                                                   boolean showExpanded,
+                                                                  @NotNull CachedIntentions cachedIntentions) {
+    return showIntentionHint(project, file, editor, showExpanded, (IntentionContainer)cachedIntentions);
+  }
+
+  @RequiresEdt
+  public static @NotNull IntentionHintComponent showIntentionHint(@NotNull Project project,
+                                                                  @NotNull PsiFile file,
+                                                                  @NotNull Editor editor,
+                                                                  boolean showExpanded,
                                                                   @NotNull IntentionContainer cachedIntentions) {
     IntentionHintComponent component = new IntentionHintComponent(project, file, editor, cachedIntentions);
 

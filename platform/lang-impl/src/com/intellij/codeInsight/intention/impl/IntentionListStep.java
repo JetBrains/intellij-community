@@ -45,6 +45,17 @@ public class IntentionListStep implements ListPopupStep<IntentionActionWithTextC
   private final PsiFile myFile;
   private final @Nullable Editor myEditor;
 
+  /**
+   * This constructor exists for binary compatibility
+   */
+  public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
+                           @Nullable Editor editor,
+                           @NotNull PsiFile file,
+                           @NotNull Project project,
+                           @NotNull CachedIntentions intentions) {
+    this(popup, editor, file, project, (IntentionContainer)intentions);
+  }
+  
   public IntentionListStep(@Nullable IntentionHintComponent.IntentionPopup popup,
                            @Nullable Editor editor,
                            @NotNull PsiFile file,
