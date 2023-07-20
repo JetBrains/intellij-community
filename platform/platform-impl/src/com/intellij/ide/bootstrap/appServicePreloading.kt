@@ -103,19 +103,23 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 }
 
 private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job) {
-  launch {
+  asyncScope.launch {
     managingFsJob.join()
 
     // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
     coroutineScope {
-      launch {
+      launch(CoroutineName("FileTypeManager preloading")) {
         app.serviceAsync<FileTypeManager>()
       }
       // wants ManagingFS
-      launch { app.serviceAsync<VirtualFilePointerManager>() }
+      launch(CoroutineName("VirtualFilePointerManager preloading")) {
+        app.serviceAsync<VirtualFilePointerManager>()
+      }
     }
 
-    app.serviceAsync<ProjectJdkTable>()
+    subtask("ProjectJdkTable preloading") {
+      app.serviceAsync<ProjectJdkTable>()
+    }
   }
 
   launch(CoroutineName("app service preloading (sync)")) {

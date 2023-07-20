@@ -1015,7 +1015,7 @@ abstract class ComponentManagerImpl(
         if (plugin.pluginId != PluginManagerCore.CORE_ID) {
           val impl = getServiceImplementation(service, this)
           if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
-            val message = "`preload=true` should be used only for core services (service=$impl, plugin=${plugin.pluginId})"
+            val message = "`preload=true` must be used only for core services (service=$impl, plugin=${plugin.pluginId})"
             if (service.preload == PreloadMode.AWAIT) {
               LOG.error(PluginException(message, plugin.pluginId))
             }
