@@ -355,10 +355,7 @@ public class DefaultActionGroup extends ActionGroup {
         if (!(o instanceof ActionStubBase stub)) continue;
         try {
           AnAction action = actionManager.getAction(stub.getId());
-          if (action == null) {
-            LOG.error("Null action returned for stub in group " + this + " of class " + getClass() + ", id=" + stub.getId());
-          }
-          else {
+          if (action != null) {
             if (stubMap == null) stubMap = new HashMap<>();
             stubMap.put(stub, action);
           }
