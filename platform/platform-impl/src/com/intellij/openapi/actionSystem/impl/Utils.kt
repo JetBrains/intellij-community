@@ -35,6 +35,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.ide.menu.MacNativeActionMenuItem
+import com.intellij.platform.ide.menu.createMacNativeActionMenu
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ExperimentalUI

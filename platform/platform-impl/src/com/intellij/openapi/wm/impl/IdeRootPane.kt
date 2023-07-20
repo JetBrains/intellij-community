@@ -8,8 +8,6 @@ import com.intellij.diagnostic.rootTask
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.DistractionFreeModeController
-import com.intellij.ide.menu.ActionAwareIdeMenuBar
-import com.intellij.ide.menu.createMacMenuBar
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -43,6 +41,8 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.platform.ide.menu.ActionAwareIdeMenuBar
+import com.intellij.platform.ide.menu.createMacMenuBar
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
