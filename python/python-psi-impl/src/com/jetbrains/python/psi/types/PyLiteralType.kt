@@ -145,6 +145,12 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
           }
       }
 
+      if (expression is PyConditionalExpression) {
+        return PyUnionType.union(listOf(expression.truePart, expression.falsePart).map { expr ->
+          expr?.let { classOfAcceptableLiteral(expr, context, index)?.let { cls -> PyLiteralType(cls, expr) } }
+        })
+      }
+
       return classOfAcceptableLiteral(expression, context, index)?.let { PyLiteralType(it, expression) }
     }
 
