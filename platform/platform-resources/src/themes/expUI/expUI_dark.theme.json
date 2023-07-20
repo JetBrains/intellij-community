@@ -318,6 +318,8 @@
       "borderColor": "Grey4"
     },
 
+    "NewUiOnboarding.Dialog.background": "Grey2",
+
     "Ide.Shadow": {
       "borderInsets": "16,16,16,16",
       "top0Color": "#00000000",

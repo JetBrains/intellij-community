@@ -343,6 +343,8 @@
       "SearchField.background": "Grey14"
     },
 
+    "NewUiOnboarding.Dialog.background": "Grey14",
+
     "Ide.Shadow": {
       "borderInsets": "16,16,16,16",
       "top0Color": "#FFFFFF00",
