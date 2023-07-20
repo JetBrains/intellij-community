@@ -49,7 +49,7 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Annot
   }
 
   /**
-   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided to {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
+   * @deprecated Do not instantiate the AnnotationHolderImpl directly, please use the one provided via {@link Annotator#annotate(PsiElement, AnnotationHolder)} instead
    */
   @ApiStatus.Internal
   @Deprecated
