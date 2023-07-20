@@ -29,8 +29,10 @@ interface VfsLog {
   fun isCompactionRunning(): Boolean
 
   companion object {
-    @JvmField
-    val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+    private val LOG_VFS_OPERATIONS_ENABLED: Boolean = SystemProperties.getBooleanProperty("idea.vfs.log-vfs-operations.enabled", false)
+
+    @JvmStatic
+    val isVfsTrackingEnabled: Boolean get() = LOG_VFS_OPERATIONS_ENABLED
   }
 }
 

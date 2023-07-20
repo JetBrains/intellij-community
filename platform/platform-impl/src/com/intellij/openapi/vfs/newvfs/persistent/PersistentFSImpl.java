@@ -142,12 +142,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   private void initVfsLog() {
-    var readOnly = !VfsLog.LOG_VFS_OPERATIONS_ENABLED;
+    var readOnly = !VfsLog.isVfsTrackingEnabled();
     var paths = new PersistentFSPaths(Path.of(FSRecords.getCachesDir()));
     var vfsLogPath = paths.getVfsLogStorage();
     // forcefully erase VfsLog storages if the feature is disabled (or vfs is corrupted) so that when it will be
     // enabled again we won't consider old data as a source for recovery
-    if (!VfsLog.LOG_VFS_OPERATIONS_ENABLED || Files.exists(paths.getCorruptionMarkerFile())) {
+    if (!VfsLog.isVfsTrackingEnabled() || Files.exists(paths.getCorruptionMarkerFile())) {
       try {
         VfsLogImpl.Companion.clearStorage(vfsLogPath);
       }
@@ -193,7 +193,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
-      if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+      if (VfsLog.isVfsTrackingEnabled()) {
         try {
           if (VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(Path.of(FSRecords.getCachesDir()))) {
             LOG.info("FSRecords storages replacement was applied");
@@ -1842,7 +1842,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     public NewVirtualFile find(int fileId) {
-      if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+      if (VfsLog.isVfsTrackingEnabled()) {
         int maxId = vfsPeer.connection().getRecords().maxAllocatedID();
         if (fileId > maxId) {
           // do not corrupt vfs if provided fileId is out of bounds

@@ -119,7 +119,7 @@ public final class FSRecordsImpl {
     };
 
   public static ErrorHandler getDefaultErrorHandler() {
-    if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+    if (VfsLog.isVfsTrackingEnabled()) {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
     }
     else {

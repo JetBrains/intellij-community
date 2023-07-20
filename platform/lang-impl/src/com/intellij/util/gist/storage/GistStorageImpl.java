@@ -234,7 +234,7 @@ public class GistStorageImpl extends GistStorage {
             else {
               Path gistPath = dedicatedGistFilePath(file, gistRecord.externalFileSuffix);
               if (!Files.exists(gistPath)) {
-                if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
+                if (VfsLog.isVfsTrackingEnabled()) {
                   // maybe there was a recovery: gists were lost, but attributes were recovered
                   LOG.warn("Gist file [" + gistPath + "] doesn't exist, probably a vfs recovery has happened recently?");
                   return GistData.empty();

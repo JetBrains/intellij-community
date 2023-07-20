@@ -18,7 +18,7 @@ class RecoverVfsFromLogAction : RecoveryAction {
   override val actionKey: String
     get() = "recover-from-log"
 
-  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = VfsLog.LOG_VFS_OPERATIONS_ENABLED
+  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = VfsLog.isVfsTrackingEnabled
 
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
     val log = PersistentFS.getInstance().vfsLog
