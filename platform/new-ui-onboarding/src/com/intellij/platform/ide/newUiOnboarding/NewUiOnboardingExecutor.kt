@@ -5,6 +5,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,16 +51,12 @@ internal class NewUiOnboardingExecutor(private val project: Project,
             runStep(ind + 1)
           }
         }
-        .withSecondaryButton(NewUiOnboardingBundle.message("gotIt.button.skipAll")) {
-          Disposer.dispose(disposable)
-        }
+        .withSecondaryButton(NewUiOnboardingBundle.message("gotIt.button.skipAll")) { finishOnboarding() }
     }
     else {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.done"))
         .withContrastButton(true)
-        .onButtonClick {
-          Disposer.dispose(disposable)
-        }
+        .onButtonClick { finishOnboarding() }
     }
 
     val balloon = builder.build(stepDisposable) {
@@ -72,5 +70,11 @@ internal class NewUiOnboardingExecutor(private val project: Project,
     else {
       balloon.show(gotItData.relativePoint, gotItData.position)
     }
+  }
+
+  private fun finishOnboarding() {
+    Disposer.dispose(disposable)
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MEET_NEW_UI)
+    toolWindow?.activate(null)
   }
 }
