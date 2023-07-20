@@ -15,5 +15,5 @@ fun foo(e: E) {
 // ORDER: B
 // ORDER: C
 // ORDER: valueOf
-// ORDER: values
 // ORDER: A
+// ORDER: values
