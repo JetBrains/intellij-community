@@ -10,8 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.ThrowableNotNullFunction
-import com.intellij.platform.diagnostic.telemetry.helpers.computeWithSpanIgnoreThrows
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.psi.PsiCompiledFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
@@ -19,10 +18,7 @@ import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.impl.PsiFileEx
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
-import io.opentelemetry.api.trace.Span
 import java.util.concurrent.CancellationException
-
-private val LOG = logger<TextEditorBackgroundHighlighter>()
 
 private val IGNORE_FOR_COMPILED = intArrayOf(
   Pass.UPDATE_FOLDING,
@@ -41,52 +37,47 @@ class TextEditorBackgroundHighlighter(private val project: Project, private val 
   }
 
   fun getPasses(passesToIgnore: IntArray): List<TextEditorHighlightingPass> {
-    var passesToIgnore = passesToIgnore
     if (project.isDisposed()) {
       return emptyList()
     }
 
     val documentManager = PsiDocumentManager.getInstance(project) as PsiDocumentManagerBase
     if (!documentManager.isCommitted(document)) {
-      LOG.error("$document; ${documentManager.someDocumentDebugInfo(document)}")
+      logger<TextEditorBackgroundHighlighter>().error("$document; ${documentManager.someDocumentDebugInfo(document)}")
     }
 
     var file = renewFile() ?: return emptyList()
-    val compiled = file is PsiCompiledFile
-    if (compiled) {
-      file = (file as PsiCompiledFile).getDecompiledPsiFile()
-      passesToIgnore = IGNORE_FOR_COMPILED
+
+    var effectivePassesToIgnore = passesToIgnore
+    if (file is PsiCompiledFile) {
+      file = file.getDecompiledPsiFile()
+      effectivePassesToIgnore = IGNORE_FOR_COMPILED
     }
     else if (!DaemonCodeAnalyzer.getInstance(project).isHighlightingAvailable(file)) {
       return emptyList()
     }
 
-    val finalPassesToIgnore = passesToIgnore
-    val finalFile: PsiFile = file
-    return computeWithSpanIgnoreThrows(HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER,
-                                       "passes instantiation",
-                                       ThrowableNotNullFunction<Span, List<TextEditorHighlightingPass>, RuntimeException> { span: Span ->
-                                         val startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation")
-                                         var cancelled = false
-                                         try {
-                                           val passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
-                                           return@ThrowableNotNullFunction passRegistrar.instantiatePasses(finalFile, editor,
-                                                                                                           finalPassesToIgnore)
-                                         }
-                                         catch (e: ProcessCanceledException) {
-                                           cancelled = true
-                                           throw e
-                                         }
-                                         catch (e: CancellationException) {
-                                           cancelled = true
-                                           throw e
-                                         }
-                                         finally {
-                                           startupActivity.end()
-                                           span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, finalFile.getName())
-                                           span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, cancelled.toString())
-                                         }
-                                       })
+    HighlightingPassTracer.HIGHLIGHTING_PASS_TRACER.spanBuilder("passes instantiation").useWithScope { span ->
+      val startupActivity = StartUpMeasurer.startActivity("highlighting passes instantiation")
+      var cancelled = false
+      try {
+        val passRegistrar = TextEditorHighlightingPassRegistrarEx.getInstanceEx(project)
+        return passRegistrar.instantiatePasses(file, editor, effectivePassesToIgnore)
+      }
+      catch (e: ProcessCanceledException) {
+        cancelled = true
+        throw e
+      }
+      catch (e: CancellationException) {
+        cancelled = true
+        throw e
+      }
+      finally {
+        startupActivity.end()
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, file.getName())
+        span.setAttribute(HighlightingPassTracer.FILE_ATTR_SPAN_KEY, cancelled.toString())
+      }
+    }
   }
 
   override fun createPassesForEditor(): Array<TextEditorHighlightingPass> {
