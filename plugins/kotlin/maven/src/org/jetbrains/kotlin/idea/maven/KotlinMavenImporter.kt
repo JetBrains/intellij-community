@@ -7,7 +7,6 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -153,9 +152,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             }
         }
 
-        ApplicationManager.getApplication().invokeAndWait {
-            configureFacet(mavenProject, modifiableModelsProvider, module)
-        }
+        configureFacet(mavenProject, modifiableModelsProvider, module)
     }
 
     override fun collectSourceRoots(mavenProject: MavenProject, result: PairConsumer<String, JpsModuleSourceRootType<*>>) {
@@ -507,7 +504,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
             val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
 
-            kotlinFacet.configuration.settings.implementedModuleNames = implemented.map { manager.findModule(it)?.name ?: it.displayName }
+            runReadAction {
+                kotlinFacet.configuration.settings.implementedModuleNames =
+                    implemented.map { manager.findModule(it)?.name ?: it.displayName }
+            }
         }
     }
 }
