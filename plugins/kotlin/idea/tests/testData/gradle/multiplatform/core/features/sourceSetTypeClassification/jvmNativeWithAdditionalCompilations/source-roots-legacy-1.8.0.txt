@@ -11,7 +11,7 @@ rootProject.jvmAdditionalNonTest
     src/jvmAdditionalNonTest/kotlin (Java)
 
 rootProject.jvmAdditionalTest
-    src/jvmAdditionalTest/kotlin (Java, Test)
+    src/jvmAdditionalTest/kotlin (Java)
 
 rootProject.jvmMain
     src/jvmMain/kotlin (Java)
@@ -19,29 +19,17 @@ rootProject.jvmMain
 rootProject.jvmTest
     src/jvmTest/kotlin (Java, Test)
 
-rootProject.linuxMain
-    src/linuxMain/kotlin
-
-rootProject.linuxTest
-    src/linuxTest/kotlin (Test)
-
 rootProject.linuxX64AdditionalNonTest
     src/linuxX64AdditionalNonTest/kotlin
 
 rootProject.linuxX64AdditionalTest
-    src/linuxX64AdditionalTest/kotlin (Test)
+    src/linuxX64AdditionalTest/kotlin
 
 rootProject.linuxX64Main
     src/linuxX64Main/kotlin
 
 rootProject.linuxX64Test
     src/linuxX64Test/kotlin (Test)
-
-rootProject.nativeMain
-    src/nativeMain/kotlin
-
-rootProject.nativeTest
-    src/nativeTest/kotlin (Test)
 
 
 Test configuration:

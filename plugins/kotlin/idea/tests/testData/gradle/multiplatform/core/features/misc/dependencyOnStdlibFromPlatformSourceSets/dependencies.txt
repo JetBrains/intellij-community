@@ -36,15 +36,47 @@ my-app.jvmTest
     org.jetbrains.kotlin:kotlin-stdlib:{{KGP_VERSION}} (TEST)
     org.jetbrains:annotations:13.0 (TEST)
 
+my-app.linuxMain
+    Kotlin/Native: stdlib (COMPILE)
+    commonMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
+
+my-app.linuxTest
+    Kotlin/Native: stdlib (TEST)
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    linuxMain (friend, TEST)
+    linuxX64Main (friend, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+
 my-app.linuxX64Main
     Kotlin/Native: stdlib (COMPILE)
     commonMain (refines, COMPILE)
+    linuxMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
 
 my-app.linuxX64Test
     Kotlin/Native: stdlib (TEST)
     commonMain (friend, TEST)
     commonTest (refines, TEST)
+    linuxMain (friend, TEST)
+    linuxTest (refines, TEST)
     linuxX64Main (friend, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+
+my-app.nativeMain
+    Kotlin/Native: stdlib (COMPILE)
+    commonMain (refines, COMPILE)
+
+my-app.nativeTest
+    Kotlin/Native: stdlib (TEST)
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    linuxMain (friend, TEST)
+    linuxX64Main (friend, TEST)
+    nativeMain (friend, TEST)
 
 
 Test configuration:

@@ -7,7 +7,6 @@ repositories {
 }
 
 kotlin {
-    targetHierarchy.default()
     jvm()
     iosX64()
     iosArm64()

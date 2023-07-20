@@ -13,6 +13,7 @@ fun use() {
     consumeCommonMainExpect(CommonMainExpect())
 
     // Kotlin/Native stdlib is imported and usable
+    @OptIn(kotlin.experimental.ExperimentalNativeApi::class)
     val x: CpuArchitecture = CpuArchitecture.ARM64
 
     // iOS libraries are commonized, imported and usable

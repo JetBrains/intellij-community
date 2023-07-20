@@ -22,7 +22,12 @@ class KotlinMppExperimentalTierCasesImportingTest : AbstractKotlinMppGradleImpor
 
     @Test
     fun testCommonMainIsNativeShared() {
-        doTest()
+        doTest {
+            /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+                disableCheckers(HighlightingChecker)
+            }
+        }
     }
 
     @Test

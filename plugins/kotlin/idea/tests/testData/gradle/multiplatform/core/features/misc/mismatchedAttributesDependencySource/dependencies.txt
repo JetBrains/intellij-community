@@ -19,9 +19,17 @@ project.consumer.jsTest
     producer.commonMain (TEST)
     producer.jsMain (TEST)
 
+project.consumer.linuxMain
+
+project.consumer.linuxTest
+
 project.consumer.linuxX64Main
 
 project.consumer.linuxX64Test
+
+project.consumer.nativeMain
+
+project.consumer.nativeTest
 
 
 Test configuration:

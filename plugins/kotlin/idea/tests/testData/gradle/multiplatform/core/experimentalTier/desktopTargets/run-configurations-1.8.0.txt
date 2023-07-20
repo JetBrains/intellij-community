@@ -1,10 +1,6 @@
 MODULES
 project
 
-project.appleMain
-
-project.appleTest
-
 project.commonMain
 
 project.commonTest
@@ -13,33 +9,17 @@ project.jvmMain
 
 project.jvmTest
 
-project.linuxMain
-
-project.linuxTest
-
 project.linuxX64Main
 
 project.linuxX64Test
-
-project.macosMain
-
-project.macosTest
 
 project.macosX64Main
 
 project.macosX64Test
 
-project.mingwMain
-
-project.mingwTest
-
 project.mingwX64Main
 
 project.mingwX64Test
-
-project.nativeMain
-
-project.nativeTest
 
 
 Test configuration:

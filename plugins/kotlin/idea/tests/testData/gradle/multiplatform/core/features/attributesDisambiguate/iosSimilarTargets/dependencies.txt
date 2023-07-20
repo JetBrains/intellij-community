@@ -1,6 +1,14 @@
 MODULES
 project.app
 
+project.app.appleMain
+    lib.commonMain (COMPILE)
+    lib.sharedNativeMain (COMPILE)
+
+project.app.appleTest
+    lib.commonMain (TEST)
+    lib.sharedNativeMain (TEST)
+
 project.app.commonMain
     lib.commonMain (COMPILE)
     lib.sharedNativeMain (COMPILE)
@@ -27,6 +35,22 @@ project.app.iosArm64V2Main
 project.app.iosArm64V2Test
     lib.commonMain (TEST)
     lib.iosArm64V2Main (TEST)
+    lib.sharedNativeMain (TEST)
+
+project.app.iosMain
+    lib.commonMain (COMPILE)
+    lib.sharedNativeMain (COMPILE)
+
+project.app.iosTest
+    lib.commonMain (TEST)
+    lib.sharedNativeMain (TEST)
+
+project.app.nativeMain
+    lib.commonMain (COMPILE)
+    lib.sharedNativeMain (COMPILE)
+
+project.app.nativeTest
+    lib.commonMain (TEST)
     lib.sharedNativeMain (TEST)
 
 
