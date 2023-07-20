@@ -1616,15 +1616,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     myCallBack = null;
     myListeners.clear();
 
-    if (myMouseOutCanceller != null) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      // it may happen, but have no idea how
-      // http://www.jetbrains.net/jira/browse/IDEADEV-21265
-      if (toolkit != null) {
-        toolkit.removeAWTEventListener(myMouseOutCanceller);
-      }
-    }
-    myMouseOutCanceller = null;
+    removeMouseOutCanceller();
 
     if (myFinalRunnable != null) {
       Runnable finalRunnable = myFinalRunnable;
