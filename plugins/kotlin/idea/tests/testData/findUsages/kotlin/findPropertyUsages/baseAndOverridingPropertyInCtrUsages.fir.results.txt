@@ -1,0 +1,2 @@
+Value read 11 val d = m.openProp
+Value write 13 m.openProp = ""

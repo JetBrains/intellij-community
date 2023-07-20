@@ -2540,6 +2540,32 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
         public abstract static class FindPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
+            public static class TestBaseAndOverridingPropertyInBodyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("baseAndOverridingPropertyInBodyUsages.0.kt")
+                public void testBaseAndOverridingPropertyInBodyUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/baseAndOverridingPropertyInBodyUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
+            public static class TestBaseAndOverridingPropertyInCtrUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("baseAndOverridingPropertyInCtrUsages.0.kt")
+                public void testBaseAndOverridingPropertyInCtrUsages() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages/baseAndOverridingPropertyInCtrUsages.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findPropertyUsages")
             public static class TestExtensionPropertyUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);

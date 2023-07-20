@@ -1070,6 +1070,16 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("baseAndOverridingPropertyInBodyUsages.0.kt")
+            public void testBaseAndOverridingPropertyInBodyUsages() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/baseAndOverridingPropertyInBodyUsages.0.kt");
+            }
+
+            @TestMetadata("baseAndOverridingPropertyInCtrUsages.0.kt")
+            public void testBaseAndOverridingPropertyInCtrUsages() throws Exception {
+                runTest("testData/findUsages/kotlin/findPropertyUsages/baseAndOverridingPropertyInCtrUsages.0.kt");
+            }
+
             @TestMetadata("extensionPropertyUsages.0.kt")
             public void testExtensionPropertyUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findPropertyUsages/extensionPropertyUsages.0.kt");
