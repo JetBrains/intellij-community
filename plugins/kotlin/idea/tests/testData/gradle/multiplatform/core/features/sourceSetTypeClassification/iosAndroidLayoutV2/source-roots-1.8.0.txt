@@ -9,12 +9,6 @@ rootProject.androidTest
     src/androidTestDebug/java (Java, Test)
     src/androidTestDebug/kotlin (Java, Test)
 
-rootProject.appleMain
-    src/appleMain/kotlin
-
-rootProject.appleTest
-    src/appleTest/kotlin (Test)
-
 rootProject.commonMain
     src/commonMain/kotlin
 
@@ -33,12 +27,6 @@ rootProject.iosArm64Main
 rootProject.iosArm64Test
     src/iosArm64Test/kotlin (Test)
 
-rootProject.iosMain
-    src/iosMain/kotlin
-
-rootProject.iosTest
-    src/iosTest/kotlin (Test)
-
 rootProject.main
     src/androidDebug/kotlin (Java)
     src/androidMain/kotlin (Java)
@@ -46,12 +34,6 @@ rootProject.main
     src/debug/kotlin (Java)
     src/main/java (Java)
     src/main/kotlin (Java)
-
-rootProject.nativeMain
-    src/nativeMain/kotlin
-
-rootProject.nativeTest
-    src/nativeTest/kotlin (Test)
 
 rootProject.unitTest
     src/androidUnitTest/kotlin (Java, Test)

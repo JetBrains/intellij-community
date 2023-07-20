@@ -10,11 +10,12 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.face
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
 @TestMetadata("multiplatform/core/features/misc")
-class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest()  {
+class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() {
     override fun TestConfigurationDslScope.defaultTestConfiguration() {
         hideStdlib = true
         hideKotlinTest = true
@@ -113,6 +114,11 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
         // NB: Variant-mismatch error is printed verbatim in stderr
         doTest {
             onlyCheckers(OrderEntriesChecker)
+
+            /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
+            if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {
+                disableCheckers(HighlightingChecker)
+            }
 
             publish("producer")
             excludeDependencies(".*consumer.*")

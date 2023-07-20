@@ -32,9 +32,7 @@ class KotlinMppTestSourceRootDetectionTest : AbstractKotlinMppGradleImportingTes
     @Test
     @TestMetadata("jvmNativeWithAdditionalCompilations")
     fun `testJvmNativeWithAdditionalCompilations - default`() {
-        doTest {
-            testClassifier = "default"
-        }
+        doTest()
     }
 
     @Test

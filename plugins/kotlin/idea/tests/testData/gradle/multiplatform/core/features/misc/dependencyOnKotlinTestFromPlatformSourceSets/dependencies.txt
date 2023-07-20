@@ -31,13 +31,41 @@ my-app.jvmTest
     org.jetbrains.kotlin:kotlin-test-junit:{{KGP_VERSION}} (TEST)
     org.jetbrains.kotlin:kotlin-test:{{KGP_VERSION}} (TEST)
 
+my-app.linuxMain
+    commonMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
+
+my-app.linuxTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    linuxMain (friend, TEST)
+    linuxX64Main (friend, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+
 my-app.linuxX64Main
     commonMain (refines, COMPILE)
+    linuxMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
 
 my-app.linuxX64Test
     commonMain (friend, TEST)
     commonTest (refines, TEST)
+    linuxMain (friend, TEST)
+    linuxTest (refines, TEST)
     linuxX64Main (friend, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+
+my-app.nativeMain
+    commonMain (refines, COMPILE)
+
+my-app.nativeTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    linuxMain (friend, TEST)
+    linuxX64Main (friend, TEST)
+    nativeMain (friend, TEST)
 
 
 Test configuration:
