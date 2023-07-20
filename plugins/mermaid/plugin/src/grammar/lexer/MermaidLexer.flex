@@ -454,15 +454,15 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 //---class------------------------------------------------------------------------
 <class_relation_start, class_diagram> {
-  "<|"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.EXTENSION_START; }
-  "<"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.DEPENDENCY_START; }
-  [\*]/"--"|".." { yybegin(class_relation_line); return ClassDiagram.COMPOSITION; }
-  "o"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.AGGREGATION; }
-  "()"/"--"|".." { yybegin(class_relation_line); return ClassDiagram.LOLLIPOP; }
+  "<|"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.EXTENSION_START; }
+  "<"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.DEPENDENCY_START; }
+  [\*]/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.COMPOSITION; }
+  "o"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.AGGREGATION; }
+  "()"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.LOLLIPOP; }
 }
 <class_relation_line, class_diagram> {
-  "--"/[|>o*(] { yybegin(class_relation_end); return ClassDiagram.LINE; }
-  ".."/[|>o*(] { yybegin(class_relation_end); return ClassDiagram.DOTTED_LINE; }
+  "--"/\s*[|>o*(] { yybegin(class_relation_end); return ClassDiagram.LINE; }
+  ".."/\s*[|>o*(] { yybegin(class_relation_end); return ClassDiagram.DOTTED_LINE; }
 
   "--" { yybegin(class_in_relation); return ClassDiagram.LINE; }
   ".." { yybegin(class_in_relation); return ClassDiagram.DOTTED_LINE; }
