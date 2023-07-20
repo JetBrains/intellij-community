@@ -130,7 +130,7 @@ public class VFSChildrenAccessBenchmark {
   public static class LegacyTreeAccessorBenchmark extends TreeAccessorBenchmark {
     @Override
     protected PersistentFSTreeAccessor createTreeAccessor(FSRecordsImpl vfs) {
-      return new PersistentFSTreeAccessor(vfs.attributeAccessor(), vfs.connection());
+      return new PersistentFSTreeAccessor(vfs.attributeAccessor(), vfs.recordAccessor(), vfs.connection());
     }
   }
 
@@ -138,7 +138,7 @@ public class VFSChildrenAccessBenchmark {
   public static class RawTreeAccessorBenchmark extends TreeAccessorBenchmark {
     @Override
     protected PersistentFSTreeAccessor createTreeAccessor(FSRecordsImpl vfs) {
-      return new PersistentFSTreeRawAccessor(vfs.attributeAccessor(), vfs.connection());
+      return new PersistentFSTreeRawAccessor(vfs.attributeAccessor(), vfs.recordAccessor(), vfs.connection());
     }
   }
 

@@ -244,9 +244,9 @@ public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
    * <p/>
    * Implementation note: the exact moment file memory-mapping is actually released and the file could be
    * deleted -- is very OS/platform-dependent. E.g., Win is known to keep file 'in use' for some time even
-   * after unmap() call is already finished. JVM release mapped buffers with GC, which adds another level
-   * of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable to just .clear()
-   * the current storage, than to close->remove->create-fresh-new.
+   * after unmap() call is already finished. In JVM GS is responsible for releasing mapped buffers -- which
+   * adds another level of uncertainty. Hence, if one needs to re-create the storage, it may be more reliable
+   * to just .clear() the current storage, than to closeAndRemove -> create-fresh-new.
    */
   public void closeAndRemove() throws IOException {
     close();
@@ -287,13 +287,13 @@ public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
         if (nextRecordToBeAllocatedOffset.compareAndSet(recordOffsetInFile, recordOffsetInFile + remainingOnPage)) {
           Page page = storage.pageByOffset(recordOffsetInFile);
           RecordLayout.putPaddingRecord(page.rawPageBuffer(), recordOffsetInPage);
-        }//else -> somebody dealt with that offset -> retry
+        }//else: somebody else dealt with that offset -> retry anyway
         continue;
       }
 
       //remainingOnPage <= RECORD_HEADER_SIZE: even padding record can't fit
       // => just move the pointer to the next page:
-      //TODO RC: if we align records on 32b -- this branch must become unreachable?
+      //TODO RC: if we align records on 32b -- this branch becomes unreachable?
       long nextPageStartOffset = nextPageStartingOffset(recordOffsetInFile, pageSize);
       nextRecordToBeAllocatedOffset.compareAndSet(recordOffsetInFile, nextPageStartOffset);
       //don't need to check return value: either we succeed, or somebody else does

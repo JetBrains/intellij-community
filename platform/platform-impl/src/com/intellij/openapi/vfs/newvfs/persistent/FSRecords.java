@@ -63,7 +63,7 @@ public final class FSRecords {
    * records explicitly -- because it is consistent with id=0 being used as NULL in other parts
    * of app, e.g. in DataEnumerator
    */
-  static final int NULL_FILE_ID = 0;
+  public static final int NULL_FILE_ID = 0;
 
   /**
    * fileId of artificial 'directory' all FS roots are attached to as children. This fs-record

@@ -127,8 +127,6 @@ public final class FSRecordsImpl {
     }
   }
 
-  private final @NotNull Path storagesDirectory;
-
   private final @NotNull PersistentFSConnection connection;
   private final @NotNull PersistentFSContentAccessor contentAccessor;
   private final @NotNull PersistentFSAttributeAccessor attributeAccessor;
@@ -248,7 +246,6 @@ public final class FSRecordsImpl {
         treeAccessor.ensureLoaded();
 
         return new FSRecordsImpl(
-          storagesDirectoryPath,
           connection,
           contentAccessor, attributeAccessor, treeAccessor, recordAccessor,
           invertedNameIndexLazy,
@@ -284,8 +281,7 @@ public final class FSRecordsImpl {
   }
 
 
-  private FSRecordsImpl(@NotNull Path storagesDirectoryPath,
-                        @NotNull PersistentFSConnection connection,
+  private FSRecordsImpl(@NotNull PersistentFSConnection connection,
                         @NotNull PersistentFSContentAccessor contentAccessor,
                         @NotNull PersistentFSAttributeAccessor attributeAccessor,
                         @NotNull PersistentFSTreeAccessor treeAccessor,
@@ -294,8 +290,7 @@ public final class FSRecordsImpl {
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
                         @NotNull VFSInitializationResult initializationResult) {
-      storagesDirectory = storagesDirectoryPath;
-      this.connection = connection;
+    this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
     this.treeAccessor = treeAccessor;
@@ -363,7 +358,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  public VFSInitializationResult initializationResult(){
+  public VFSInitializationResult initializationResult() {
     return initializationResult;
   }
 

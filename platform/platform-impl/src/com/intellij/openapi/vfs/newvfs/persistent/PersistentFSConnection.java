@@ -81,15 +81,13 @@ public final class PersistentFSConnection {
   @NotNull
   private final PersistentFSPaths myPersistentFSPaths;
 
-  @NotNull
-  private final AbstractAttributesStorage myAttributesStorage;
-  @NotNull
-  private final RefCountingContentStorage myContents;
-  @NotNull
-  private final PersistentFSRecordsStorage myRecords;
-  @Nullable
-  private final ContentHashEnumerator myContentHashesEnumerator;
-  private final ScannableDataEnumeratorEx<String> myNames;
+  private final @NotNull AbstractAttributesStorage myAttributesStorage;
+  private final @NotNull RefCountingContentStorage myContents;
+
+  private final @NotNull PersistentFSRecordsStorage myRecords;
+
+  private final @Nullable ContentHashEnumerator myContentHashesEnumerator;
+  private final @NotNull ScannableDataEnumeratorEx<String> myNames;
   /**
    * Enumerator for repeating strings used in attributes. Used to support
    * {@link AttributeInputStream#readEnumeratedString()}
@@ -179,23 +177,20 @@ public final class PersistentFSConnection {
     return Objects.requireNonNull(myContentHashesEnumerator, "Content hash enumerator must be initialized");
   }
 
-  @NotNull("Vfs must be initialized")
-  RefCountingContentStorage getContents() {
+
+  @NotNull RefCountingContentStorage getContents() {
     return myContents;
   }
 
-  @NotNull("Vfs must be initialized")
-  AbstractAttributesStorage getAttributes() {
+  @NotNull AbstractAttributesStorage getAttributes() {
     return myAttributesStorage;
   }
 
-  @NotNull("Vfs must be initialized")
-  ScannableDataEnumeratorEx<String> getNames() {
+  @NotNull ScannableDataEnumeratorEx<String> getNames() {
     return myNames;
   }
 
-  @NotNull("Vfs must be initialized")
-  PersistentFSRecordsStorage getRecords() {
+  public @NotNull PersistentFSRecordsStorage getRecords() {
     return myRecords;
   }
 
@@ -283,8 +278,8 @@ public final class PersistentFSConnection {
                   myContents);
   }
 
-  @NotNull
-  PersistentFSPaths getPersistentFSPaths() {
+
+  public @NotNull PersistentFSPaths getPersistentFSPaths() {
     return myPersistentFSPaths;
   }
 
