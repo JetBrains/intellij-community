@@ -3,12 +3,13 @@ package com.intellij.xdebugger.impl.ui.attach.dialog
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.util.ui.JBUI
 import com.intellij.xdebugger.impl.ui.attach.dialog.items.AttachToProcessItemsListBase
 import com.intellij.xdebugger.impl.ui.attach.dialog.statistics.AttachDialogStatisticsCollector
 
-class AttachDialogState(val dialogDisposable: Disposable) {
+class AttachDialogState(val dialogDisposable: Disposable, val dataContext: DataContext) {
 
   companion object {
     private const val IS_ATTACH_VIEW_TREE_ENABLED = "ATTACH_VIEW_TREE_ENABLED"

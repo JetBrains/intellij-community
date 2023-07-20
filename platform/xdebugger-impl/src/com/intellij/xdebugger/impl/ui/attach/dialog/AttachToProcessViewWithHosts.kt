@@ -30,6 +30,12 @@ abstract class AttachToProcessViewWithHosts(
   columnsLayout: AttachDialogColumnsLayout,
   attachDebuggerProviders: List<XAttachDebuggerProvider>
 ) : AttachToProcessView(project, state, columnsLayout, attachDebuggerProviders) {
+  companion object{
+    // used externally
+    @Suppress("MemberVisibilityCanBePrivate")
+    val DEFAULT_ATTACH_HOST: DataKey<String?> = DataKey.create("DEFAULT_ATTACH_HOST")
+    private fun getDefaultAttachHost(state: AttachDialogState) = state.dataContext.getData(DEFAULT_ATTACH_HOST)
+  }
 
   protected abstract val addHostButtonAction: AddConnectionButtonAction
   protected abstract val hostsComboBoxAction: AttachHostsComboBoxAction
@@ -39,7 +45,7 @@ abstract class AttachToProcessViewWithHosts(
   abstract fun isAddingConnectionEnabled(): Boolean
   abstract fun saveSelectedHost(host: AttachHostItem?)
   abstract fun getSavedHost(allHosts: Set<AttachHostItem>): AttachHostItem?
-  protected open fun getDefaultHostFromSet(allHosts: Set<AttachHostItem>) = allHosts.firstOrNull()
+  protected open fun getHostFromSet(allHosts: Set<AttachHostItem>) = allHosts.firstOrNull()
   protected open fun handleSingleHost(allHosts: Set<AttachHostItem>, selectedHost: AttachHostItem, addedHost: AttachHostItem) = addedHost
   protected open fun handleMultipleHosts(allHosts: Set<AttachHostItem>, selectedHost: AttachHostItem) =
     if (allHosts.contains(selectedHost)) selectedHost
@@ -147,7 +153,9 @@ abstract class AttachToProcessViewWithHosts(
 
       val newSelectedHost =
         if (selected == null) {
-          getSavedHost(newHostsAsSet) ?: getDefaultHostFromSet(newHostsAsSet)
+          val defaultAttachHost = getDefaultAttachHost(state)
+          val defaultAttachHostItem = if (defaultAttachHost != null) newHostsAsSet.find { it.getPresentation() == defaultAttachHost } else null
+          defaultAttachHostItem ?: getSavedHost(newHostsAsSet) ?: getHostFromSet(newHostsAsSet)
         }
         else if (addedHosts.size == 1 && removedHosts.size <= 1) { //new connection was added (or modified)
           handleSingleHost(newHostsAsSet, selected, addedHosts.single())

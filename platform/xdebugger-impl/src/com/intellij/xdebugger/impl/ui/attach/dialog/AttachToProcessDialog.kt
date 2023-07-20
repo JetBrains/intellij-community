@@ -52,7 +52,8 @@ open class AttachToProcessDialog(
   private val project: Project,
   private val attachDebuggerProviders: List<XAttachDebuggerProvider>,
   private val attachHostProviders: List<XAttachHostProvider<XAttachHost>>,
-  isLocalViewDefault: Boolean = true,
+  dataContext: DataContext = DataContext.EMPTY_CONTEXT,
+  defaultHostType: AttachDialogHostType = AttachDialogHostType.LOCAL,
   parentComponent: JComponent? = null) : DialogWrapper(project, parentComponent, true, IdeModalityType.MODELESS) {
 
   companion object {
@@ -86,7 +87,7 @@ open class AttachToProcessDialog(
     })
   }
 
-  private val state = AttachDialogState(disposable)
+  private val state = AttachDialogState(disposable, dataContext)
 
   private val filterTypingMergeQueue: MergingUpdateQueue = MergingUpdateQueue(
     "Attach to process search typing merging queue",
@@ -127,7 +128,13 @@ open class AttachToProcessDialog(
     viewPanel.add(filterTextField, "wrap, grow")
     updateProblemStripe()
     currentAttachView.afterChange { updateView(it) }
-    currentAttachView.set(if (!isLocalViewDefault && attachHostProviders.any()) remoteAttachView else localAttachView)
+    val view = when (defaultHostType) {
+      AttachDialogHostType.LOCAL -> localAttachView
+      AttachDialogHostType.REMOTE -> if (attachHostProviders.any()) remoteAttachView else localAttachView
+      AttachDialogHostType.DOCKER -> externalProcessViews.firstOrNull { it.getHostType() == AttachDialogHostType.DOCKER } ?: localAttachView
+    }
+
+    currentAttachView.set(view)
 
     currentAttachView.afterChange { AttachDialogStatisticsCollector.hostSwitched(it) } // register view switch logging only after initialization
 

@@ -17,7 +17,11 @@ class AttachToProcessDialogFactory(private val project: Project) {
     // used externally
     @Suppress("MemberVisibilityCanBePrivate")
     val IS_LOCAL_VIEW_DEFAULT_KEY: DataKey<Boolean> = DataKey.create("ATTACH_DIALOG_VIEW_TYPE")
-    private fun isLocalViewDefault(dataContext: DataContext): Boolean = dataContext.getData(IS_LOCAL_VIEW_DEFAULT_KEY) ?: true
+    // used externally
+    @Suppress("MemberVisibilityCanBePrivate")
+    val DEFAULT_VIEW_HOST_TYPE: DataKey<AttachDialogHostType> = DataKey.create("ATTACH_DIALOG_VIEW_HOST_TYPE")
+    private fun getDefaultViewHostType(dataContext: DataContext): AttachDialogHostType =
+      dataContext.getData(DEFAULT_VIEW_HOST_TYPE) ?: AttachDialogHostType.LOCAL
   }
 
   private var currentDialog: AttachToProcessDialog? = null
@@ -26,14 +30,15 @@ class AttachToProcessDialogFactory(private val project: Project) {
                  attachHosts: List<XAttachHostProvider<XAttachHost>>,
                  context: DataContext) {
     application.assertIsDispatchThread()
-    val isLocalViewDefault = isLocalViewDefault(context)
+    val defaultViewHostType = getDefaultViewHostType(context)
 
     val currentDialogInstance = getOpenDialog()
     if (currentDialogInstance != null) {
-      currentDialogInstance.setShowLocalView(isLocalViewDefault)
+      currentDialogInstance.setShowLocalView(defaultViewHostType == AttachDialogHostType.LOCAL)
       return
     }
-    val dialog = AttachToProcessDialog(project, attachDebuggerProviders, attachHosts, isLocalViewDefault, null)
+
+    val dialog = AttachToProcessDialog(project, attachDebuggerProviders, attachHosts, context, defaultViewHostType, null)
     dialog.disposable.onTermination {
       UIUtil.invokeLaterIfNeeded { if (currentDialog == dialog) currentDialog = null }
     }
