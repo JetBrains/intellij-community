@@ -23,7 +23,7 @@ import java.io.File
 abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun createAction(fileText: String): CodeInsightAction {
         val actionClassName = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// ACTION_CLASS: ")
-        return Class.forName(actionClassName).newInstance() as CodeInsightAction
+        return Class.forName(actionClassName).getDeclaredConstructor().newInstance() as CodeInsightAction
     }
 
     protected open fun configure(mainFilePath: String, mainFileText: String) {

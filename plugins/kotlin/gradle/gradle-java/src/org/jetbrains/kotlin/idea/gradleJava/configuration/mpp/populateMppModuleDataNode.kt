@@ -540,7 +540,7 @@ private fun ExternalProject.notImportedCommonSourceSets() =
 private fun KotlinPlatform.isNotSupported() = IdePlatformKindTooling.getToolingIfAny(this) == null
 
 fun createCompilerArguments(args: List<String>, platform: KotlinPlatform): CommonCompilerArguments {
-    val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.newInstance()
+    val compilerArguments = IdePlatformKindTooling.getTooling(platform).kind.argumentsClass.getDeclaredConstructor().newInstance()
     parseCommandLineArguments(args.toList(), compilerArguments)
     return compilerArguments
 }

@@ -41,7 +41,7 @@ abstract class AbstractMultiFileIntentionTest : KotlinLightCodeInsightFixtureTes
         val testFile = File(path)
         val config = JsonParser().parse(FileUtil.loadFile(testFile, true)) as JsonObject
         val mainFilePath = config.getString("mainFile")
-        val intentionAction = Class.forName(config.getString("intentionClass")).newInstance() as IntentionAction
+        val intentionAction = Class.forName(config.getString("intentionClass")).getDeclaredConstructor().newInstance() as IntentionAction
         val isApplicableExpected = config["isApplicable"]?.asBoolean ?: true
 
         doTest(path) { rootDir ->

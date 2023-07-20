@@ -146,7 +146,7 @@ fun parseCompilerArgumentsToFacet(
     modelsProvider: IdeModifiableModelsProvider?
 ) {
     val compilerArgumentsClass = kotlinFacet.configuration.settings.compilerArguments?.javaClass ?: return
-    val currentArgumentsBean = compilerArgumentsClass.newInstance()
+    val currentArgumentsBean = compilerArgumentsClass.getDeclaredConstructor().newInstance()
     val currentArgumentWithDefaults = substituteDefaults(arguments, currentArgumentsBean)
     parseCommandLineArguments(currentArgumentWithDefaults, currentArgumentsBean)
     applyCompilerArgumentsToFacet(currentArgumentsBean, kotlinFacet, modelsProvider)
@@ -160,7 +160,7 @@ fun applyCompilerArgumentsToFacet(
     with(kotlinFacet.configuration.settings) {
         val compilerArguments = this.compilerArguments ?: return
         val oldPluginOptions = compilerArguments.pluginOptions
-        val emptyArgs = compilerArguments::class.java.newInstance()
+        val emptyArgs = compilerArguments::class.java.getDeclaredConstructor().newInstance()
 
         // Ad-hoc work-around for android compilations: middle source sets could be actualized up to
         // Android target, meanwhile compiler arguments are of type K2Metadata

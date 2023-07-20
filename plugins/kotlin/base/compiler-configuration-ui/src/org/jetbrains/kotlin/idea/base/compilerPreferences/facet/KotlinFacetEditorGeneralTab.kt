@@ -289,11 +289,11 @@ class KotlinFacetEditorGeneralTab(
                 )
             }
             val argumentClass = primaryArguments.javaClass
-            val additionalArguments = argumentClass.newInstance().apply {
+            val additionalArguments = argumentClass.getDeclaredConstructor().newInstance().apply {
                 parseCommandLineArguments(splitArgumentString(editor.compilerConfigurable.additionalArgsOptionsField.text), this)
                 validateArguments(errors)?.let { message -> return ValidationResult(message) }
             }
-            val emptyArguments = argumentClass.newInstance()
+            val emptyArguments = argumentClass.getDeclaredConstructor().newInstance()
             val fieldNamesToCheck = getExposedFacetFields(platform.idePlatformKind)
 
             val propertiesToCheck = collectProperties(argumentClass.kotlin, false).filter { it.name in fieldNamesToCheck }

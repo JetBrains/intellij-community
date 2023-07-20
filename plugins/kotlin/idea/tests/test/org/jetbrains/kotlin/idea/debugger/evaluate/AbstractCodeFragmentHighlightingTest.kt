@@ -38,7 +38,7 @@ abstract class AbstractCodeFragmentHighlightingTest : AbstractKotlinHighlightVis
     private fun checkHighlighting(filePath: String) {
         val inspectionName = InTextDirectivesUtils.findStringWithPrefixes(File(filePath).readText(), "// INSPECTION_CLASS: ")
         if (inspectionName != null) {
-            val inspection = Class.forName(inspectionName).newInstance() as InspectionProfileEntry
+            val inspection = Class.forName(inspectionName).getDeclaredConstructor().newInstance() as InspectionProfileEntry
             myFixture.enableInspections(inspection)
             try {
                 myFixture.checkHighlighting(true, false, false)
