@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -178,7 +178,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
       for (Map.Entry<C, IdeaPluginDescriptorImpl> entry : selection.entrySet()) {
         IdeaPluginDescriptorImpl descriptor = entry.getValue();
         List<IdeaPluginDescriptorImpl> dependents = MyPluginModel.getDependents(descriptor,
-                                                                                applicationInfo, PluginManagerCore.buildPluginIdMap());
+                                                                                applicationInfo, PluginManagerCore.INSTANCE.buildPluginIdMap());
 
         if (dependents.isEmpty() ||
             askToUninstall(getUninstallDependentsMessage(descriptor, dependents), entry.getKey())) {
@@ -216,7 +216,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
 
   static <C extends JComponent> void addActionsTo(@NotNull DefaultActionGroup group,
                                                   @NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                  @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
+                                                  @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
     PluginEnableDisableAction[] actions = PluginEnableDisableAction.values();
     for (int i = 0; i < actions.length; i++) {
       group.add(createEnableDisableAction.apply(actions[i]));
@@ -228,7 +228,7 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
   }
 
   static <C extends JComponent> @NotNull JComponent createGearButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                     @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
+                                                                     @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
     DefaultActionGroup result = new DefaultActionGroup();
     addActionsTo(result,
                  createEnableDisableAction,
@@ -240,10 +240,10 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent, D extends I
   }
 
   static <C extends JComponent> @NotNull OptionButtonController<C> createOptionButton(@NotNull Function<? super @NotNull PluginEnableDisableAction, @NotNull EnableDisableAction<C>> createEnableDisableAction,
-                                                                                      @NotNull Producer<? extends @NotNull UninstallAction<C>> createUninstallAction) {
-    return new OptionButtonController<C>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),
-                                      createEnableDisableAction.apply(PluginEnableDisableAction.DISABLE_GLOBALLY),
-                                      createUninstallAction.produce());
+                                                                                      @NotNull Producer<@NotNull UninstallAction<C>> createUninstallAction) {
+    return new OptionButtonController<>(createEnableDisableAction.apply(PluginEnableDisableAction.ENABLE_GLOBALLY),
+                                        createEnableDisableAction.apply(PluginEnableDisableAction.DISABLE_GLOBALLY),
+                                        createUninstallAction.produce());
   }
 
   static class OptionButtonController<C extends JComponent> implements ActionListener {

@@ -38,7 +38,7 @@ class PluginManagerFilters {
    * Checks if the plugin is compatible with the current build of the IDE.
    */
   fun isPluginCompatible(descriptor: IdeaPluginDescriptor): Boolean {
-    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.getBuildNumber())
+    val incompatibilityReason = PluginManagerCore.checkBuildNumberCompatibility(descriptor, PluginManagerCore.buildNumber)
     return incompatibilityReason == null
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.core;
 
 import com.intellij.DynamicBundle;
@@ -233,7 +233,7 @@ public class CoreApplicationEnvironment {
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
     IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
     if (descriptor == null) {
-      PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
+      PluginManagerCore.INSTANCE.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
       return;
     }
 

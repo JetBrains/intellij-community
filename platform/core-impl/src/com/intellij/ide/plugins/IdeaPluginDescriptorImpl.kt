@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty", "OVERRIDE_DEPRECATION")
 package com.intellij.ide.plugins
 
@@ -21,7 +21,7 @@ import java.time.ZoneOffset
 import java.util.*
 
 private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
+  get() = PluginManagerCore.logger
 
 fun Iterable<IdeaPluginDescriptor>.toPluginIdSet(): Set<PluginId> = mapTo(LinkedHashSet()) { it.pluginId }
 

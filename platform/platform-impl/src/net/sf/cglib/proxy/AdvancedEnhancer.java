@@ -384,7 +384,7 @@ public final class AdvancedEnhancer extends AbstractClassGenerator
       @Override
       public boolean test(@NotNull PluginClassLoader loader) {
         if (myMap == null) {
-          List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.getPluginSet().getEnabledModules();
+          List<IdeaPluginDescriptorImpl> plugins = PluginManagerCore.INSTANCE.getPluginSet().getEnabledModules();
 
           int count = 0;
           myMap = new Object2IntOpenHashMap<>(plugins.size());

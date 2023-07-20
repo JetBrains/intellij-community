@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.jbAcademy
 
 import com.intellij.icons.AllIcons
@@ -105,7 +105,7 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
         val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(EDU_TOOLS_PLUGIN_ID))
         val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                      emptyList(), true))
-        PluginManagerCore.getPlugins().filterTo(descriptors) {
+        PluginManagerCore.plugins.filterTo(descriptors) {
           !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagerFilters.getInstance().allowInstallingPlugin(it)
         }
         indicator.checkCanceled()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -57,7 +57,7 @@ internal class DropAnErrorWithAttachmentsAction : DumbAwareAction("Drop an Error
 internal class DropPluginErrorAction : DumbAwareAction("Drop an Error in a Random Plugin", "Hold down SHIFT for 3rd-party plugins only", null) {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
   override fun actionPerformed(e: AnActionEvent) {
-    var plugins = PluginManagerCore.getPlugins()
+    var plugins = PluginManagerCore.plugins
     if (e.modifiers and SHIFT_MASK != 0) {
       plugins = plugins.filterNot { PluginManagerCore.isDevelopedByJetBrains(it) }.toTypedArray()
     }

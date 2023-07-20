@@ -360,7 +360,7 @@ public final class PluginManagerMain {
 
     if (AppMode.isHeadless()) {
       // postponing the dialog till the next start
-      PluginManagerCore.write3rdPartyPlugins(aliens);
+      PluginManagerCore.INSTANCE.write3rdPartyPlugins(aliens);
       return true;
     }
 
@@ -384,7 +384,7 @@ public final class PluginManagerMain {
 
   @ApiStatus.Internal
   public static void checkThirdPartyPluginsAllowed() {
-    Boolean noteAccepted = PluginManagerCore.isThirdPartyPluginsNoteAccepted();
+    Boolean noteAccepted = PluginManagerCore.INSTANCE.isThirdPartyPluginsNoteAccepted();
     if (noteAccepted == Boolean.TRUE) {
       UpdateSettings.getInstance().setThirdPartyPluginsAllowed(true);
       PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);

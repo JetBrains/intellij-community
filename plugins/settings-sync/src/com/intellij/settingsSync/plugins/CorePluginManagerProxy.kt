@@ -15,7 +15,7 @@ class CorePluginManagerProxy : AbstractPluginManagerProxy() {
   override fun isDescriptorEssential(pluginId: PluginId): Boolean =
     (ApplicationInfo.getInstance() as ApplicationInfoEx).isEssentialPlugin(pluginId)
 
-  override fun getPlugins() = PluginManagerCore.getPlugins()
+  override fun getPlugins() = PluginManagerCore.plugins
 
   override fun addPluginStateChangedListener(listener: PluginEnableStateChangedListener, parentDisposable: Disposable) {
     DynamicPluginEnabler.addPluginStateChangedListener(listener)

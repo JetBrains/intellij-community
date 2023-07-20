@@ -32,7 +32,7 @@ public final class PluginManager {
   private PluginManager() {}
 
   /**
-   * @return file with list of once installed plugins if it exists, null otherwise
+   * @return file with a list of once installed plugins if it exists, null otherwise
    */
   public static @Nullable Path getOnceInstalledIfExists() {
     Path onceInstalledFile = PathManager.getConfigDir().resolve(INSTALLED_TXT);
@@ -145,11 +145,11 @@ public final class PluginManager {
   @Deprecated
   @ApiStatus.Internal
   public static @NotNull Logger getLogger() {
-    return PluginManagerCore.getLogger();
+    return PluginManagerCore.INSTANCE.getLogger();
   }
 
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {
-    return PluginManagerCore.getPluginSet().findEnabledPlugin(id);
+    return PluginManagerCore.INSTANCE.getPluginSet().findEnabledPlugin(id);
   }
 
   /**
@@ -168,7 +168,7 @@ public final class PluginManager {
 
   @ApiStatus.Internal
   public static @NotNull Stream<IdeaPluginDescriptorImpl> getVisiblePlugins(boolean showImplementationDetails) {
-    return filterVisiblePlugins(PluginManagerCore.getPluginSet().allPlugins, showImplementationDetails);
+    return filterVisiblePlugins(PluginManagerCore.INSTANCE.getPluginSet().allPlugins, showImplementationDetails);
   }
 
   @ApiStatus.Internal

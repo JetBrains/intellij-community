@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.application.JetBrainsProtocolHandler
@@ -144,8 +144,8 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
 
     @TestOnly
     @Throws(IOException::class)
-    fun saveDisabledPluginsAndInvalidate(configPath: Path, vararg pluginIds: String?) {
-      PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds.asList())
+    fun saveDisabledPluginsAndInvalidate(configPath: Path, pluginIds: List<String> = emptyList()) {
+      PluginManagerCore.writePluginIdsToFile(configPath.resolve(DISABLED_PLUGINS_FILENAME), pluginIds)
       invalidate()
     }
 

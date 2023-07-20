@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
-import com.intellij.concurrency.captureThreadContext
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.externalComponents.ExternalComponentManager
@@ -30,7 +29,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.AppScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
@@ -394,7 +392,7 @@ object UpdateChecker {
     val updateable = HashMap<PluginId, IdeaPluginDescriptor?>()
 
     // installed plugins that could be updated (either downloaded or updateable bundled)
-    PluginManagerCore.getPlugins()
+    PluginManagerCore.plugins
       .filter { !it.isBundled || it.allowBundledUpdate() }
       .associateByTo(updateable) { it.pluginId }
 

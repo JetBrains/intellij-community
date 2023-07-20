@@ -181,7 +181,7 @@ private fun computePluginCostMap(): MutableMap<String, Object2LongOpenHashMap<St
   val result = HashMap(StartUpMeasurer.pluginCostMap)
   StartUpMeasurer.pluginCostMap.clear()
 
-  for (plugin in PluginManagerCore.getLoadedPlugins()) {
+  for (plugin in PluginManagerCore.loadedPlugins) {
     val id = plugin.pluginId.idString
     val classLoader = (plugin as IdeaPluginDescriptorImpl).pluginClassLoader as? PluginAwareClassLoader ?: continue
     val costPerPhaseMap = result.computeIfAbsent(id) {

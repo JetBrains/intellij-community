@@ -913,15 +913,16 @@ open class IdeErrorsDialog internal constructor(
 
     private fun morePluginsAffected(pluginIdsToDisable: Set<PluginId>): Boolean {
       val pluginIdMap = PluginManagerCore.buildPluginIdMap()
-      for (rootDescriptor in PluginManagerCore.getPlugins()) {
+      for (rootDescriptor in PluginManagerCore.plugins) {
         if (!rootDescriptor.isEnabled || pluginIdsToDisable.contains(rootDescriptor.pluginId)) {
           continue
         }
-        if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl),
-                                                                 pluginIdMap) { descriptor: IdeaPluginDescriptorImpl ->
-            if (descriptor.isEnabled) if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
-            else FileVisitResult.CONTINUE
-            else FileVisitResult.SKIP_SUBTREE
+        if (!PluginManagerCore.processAllNonOptionalDependencies((rootDescriptor as IdeaPluginDescriptorImpl), pluginIdMap) { descriptor ->
+            when {
+              descriptor!!.isEnabled -> if (pluginIdsToDisable.contains(descriptor.pluginId)) FileVisitResult.TERMINATE
+              else FileVisitResult.CONTINUE
+              else -> FileVisitResult.SKIP_SUBTREE
+            }
           } /* no need to process its dependencies */
         ) {
           return true

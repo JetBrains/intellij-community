@@ -495,7 +495,7 @@ private suspend fun reportCrashesIfAny() {
         attachment.isIncluded = true
 
         // include plugins list
-        val plugins = PluginManagerCore.getLoadedPlugins()
+        val plugins = PluginManagerCore.loadedPlugins
           .asSequence()
           .filter { it.isEnabled && !it.isBundled }
           .map(::getPluginInfoByDescriptor)

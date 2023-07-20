@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.cds
 
 import com.google.common.hash.Hashing
@@ -30,7 +30,7 @@ class CDSPaths private constructor(val baseDir: File,
     classesErrorMarkerFile.writeText("Failed on ${LocalDateTime.now()}: $message")
   }
 
-  // re-compute installed plugins cache and see if there plugins were not changed
+  // re-compute installed plugins cache and see if their plugins were not changed
   fun hasSameEnvironmentToBuildCDSArchive(): Boolean = computePaths().cdsClassesHash == current.cdsClassesHash
 
   companion object {
@@ -61,7 +61,7 @@ class CDSPaths private constructor(val baseDir: File,
       hasher.putString(SystemInfo.JAVA_VERSION, Charsets.UTF_8)
 
       //active plugins
-      PluginManagerCore.getLoadedPlugins().sortedBy { it.pluginId.idString }.forEach {
+      PluginManagerCore.loadedPlugins.sortedBy { it.pluginId.idString }.forEach {
         hasher.putString(it.pluginId.idString + ":" + it.version, Charsets.UTF_8)
       }
 

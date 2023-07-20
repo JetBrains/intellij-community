@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -72,7 +72,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     val implicitDep = if (hasAllModules) getImplicitDependency(module, moduleMap) else null
     if (implicitDep != null) {
       if (module === implicitDep) {
-        PluginManagerCore.getLogger().error("Plugin $module depends on self")
+        PluginManagerCore.logger.error("Plugin $module depends on self")
       }
       else {
         result.add(implicitDep)
@@ -115,7 +115,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
 
 private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImpl>): Comparator<IdeaPluginDescriptorImpl> {
   // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
-  // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
+  // so, ensure that core plugin is always first (otherwise not possible to register actions - a parent group not defined)
   // don't use sortWith here - avoid loading kotlin stdlib
   return Comparator { o1, o2 ->
     when {
@@ -193,7 +193,7 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
       // can be such requirements removed or not
       if (rootDescriptor === dep) {
         if (rootDescriptor.pluginId != PluginManagerCore.CORE_ID) {
-          PluginManagerCore.getLogger().error("Plugin $rootDescriptor depends on self (${dependency})")
+          PluginManagerCore.logger.error("Plugin $rootDescriptor depends on self (${dependency})")
         }
       }
       else {

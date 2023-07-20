@@ -41,7 +41,7 @@ class BundledPluginsState : ApplicationInitializedListener {
       get() = logger<BundledPluginsState>()
 
     val loadedPlugins: Set<IdeaPluginDescriptor>
-      @VisibleForTesting get() = PluginManagerCore.getLoadedPlugins().filterTo(HashSet()) { it.isBundled }
+      @VisibleForTesting get() = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
 
     @VisibleForTesting
     fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path = PathManager.getConfigDir()) {

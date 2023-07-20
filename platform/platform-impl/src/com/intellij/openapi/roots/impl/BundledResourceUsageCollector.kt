@@ -1,4 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.openapi.roots.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -80,7 +82,7 @@ internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
   }
 
   private val pluginByKindAndDirectory by lazy {
-    PluginManagerCore.getLoadedPlugins()
+    PluginManagerCore.loadedPlugins
       .filter { it.pluginPath.isDirectory() }
       .associateBy { it.kind to it.pluginPath.fileName.toString() }
   }
@@ -95,7 +97,7 @@ internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
         val relativePath = FileUtil.getRelativePath(kind.homePath, path, '/')!!
         val firstName = relativePath.substringBefore('/')
         val pathInPlugin = relativePath.substringAfter('/')
-        val plugin = pluginByKindAndDirectory[kind to firstName]
+        val plugin = pluginByKindAndDirectory.get(kind to firstName)
         if (plugin != null) {
           val pluginInfo = getPluginInfoByDescriptor(plugin)
           if (pluginInfo.isSafeToReport()) {
@@ -126,7 +128,7 @@ private val ideLibPath by lazy { FileUtil.toSystemIndependentName(PathManager.ge
 
 internal class BundledResourcePathValidationRule : CustomValidationRule() {
   private val pluginKindAndDirectoryById by lazy {
-    PluginManagerCore.getLoadedPlugins()
+    PluginManagerCore.loadedPlugins
       .filter { it.pluginPath.isDirectory() }
       .associateBy({ it.pluginId.idString }, { it.kind to it.pluginPath.fileName.toString() })
   }
@@ -140,7 +142,7 @@ internal class BundledResourcePathValidationRule : CustomValidationRule() {
       if (!isReportedByJetBrainsPlugin(context)) {
         return ValidationResultType.REJECTED
       }
-      val (kind, pluginDirectoryName) = pluginKindAndDirectoryById[context.eventData["plugin"]] ?: return ValidationResultType.REJECTED
+      val (kind, pluginDirectoryName) = pluginKindAndDirectoryById.get(context.eventData["plugin"]) ?: return ValidationResultType.REJECTED
       if (Path.of(kind.homePath, pluginDirectoryName, data).exists()) {
         return ValidationResultType.ACCEPTED
       }

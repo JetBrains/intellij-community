@@ -40,7 +40,7 @@ import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
 
 private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
+  get() = PluginManagerCore.logger
 
 @TestOnly
 fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext): IdeaPluginDescriptorImpl? {
@@ -474,7 +474,7 @@ private fun appendPlugin(descriptor: IdeaPluginDescriptor, target: StringBuilder
 @Suppress("unused")
 @Internal
 suspend fun getLoadedPluginsForRider(): List<IdeaPluginDescriptorImpl?> {
-  PluginManagerCore.getNullablePluginSet()?.enabledPlugins?.let {
+  PluginManagerCore.nullablePluginSet?.enabledPlugins?.let {
     return it
   }
 
@@ -693,7 +693,7 @@ private fun collectPluginFilesInClassPath(loader: ClassLoader): Map<URL, String>
 @RequiresBackgroundThread
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
-                                             productBuildNumber = { buildNumber ?: PluginManagerCore.getBuildNumber() },
+                                             productBuildNumber = { buildNumber ?: PluginManagerCore.buildNumber },
                                              transient = true)
 
   val descriptor = runBlocking {
@@ -772,7 +772,7 @@ fun loadDescriptorsFromOtherIde(
   return DescriptorListLoadingContext(
     disabledPlugins = emptySet(),
     brokenPluginVersions = brokenPluginVersions ?: getBrokenPluginVersions(),
-    productBuildNumber = { productBuildNumber ?: PluginManagerCore.getBuildNumber() },
+    productBuildNumber = { productBuildNumber ?: PluginManagerCore.buildNumber },
     isMissingIncludeIgnored = true,
     isMissingSubDescriptorIgnored = true,
   ).use { context ->

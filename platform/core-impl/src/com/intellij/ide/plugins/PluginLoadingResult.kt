@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -115,7 +115,7 @@ class PluginLoadingResult(private val checkModuleDependencies: Boolean = !Platfo
 
     if (PluginManagerCore.checkBuildNumberCompatibility(descriptor, productBuildNumber) == null &&
         (overrideUseIfCompatible || VersionComparatorUtil.compare(descriptor.version, prevDescriptor.version) > 0)) {
-      PluginManagerCore.getLogger().info("$descriptor overrides $prevDescriptor")
+      PluginManagerCore.logger.info("$descriptor overrides $prevDescriptor")
       idMap.put(pluginId, descriptor)
       return
     }

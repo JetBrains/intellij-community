@@ -121,7 +121,7 @@ fun loadApp(setupEventQueue: Runnable) {
 
 @TestOnly
 private fun loadAppInUnitTestMode(isHeadless: Boolean) {
-  val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
+  val loadedModuleFuture = PluginManagerCore.initPluginFuture
 
   val awtBusyThread = AppScheduledExecutorService.getPeriodicTasksThread()
   lateinit var rwLockHolder: RwLockHolder

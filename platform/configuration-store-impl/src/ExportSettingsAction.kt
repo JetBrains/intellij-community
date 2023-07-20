@@ -171,7 +171,7 @@ data class LocalExportableItem(val file: Path, val presentableName: String, val 
 
 @ApiStatus.Internal
 fun exportInstalledPlugins(zip: Compressor) {
-  val pluginIds = PluginManagerCore.getLoadedPlugins()
+  val pluginIds = PluginManagerCore.loadedPlugins
     .asSequence()
     .filterNot { it.isBundled }
     .joinToString("\n") { it.pluginId.idString }

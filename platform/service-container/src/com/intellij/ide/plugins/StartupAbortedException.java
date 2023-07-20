@@ -30,7 +30,7 @@ public final class StartupAbortedException extends RuntimeException {
   public static void processException(@NotNull Throwable t) {
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ControlFlowException)) {
-        PluginManagerCore.getLogger().error(t);
+        PluginManagerCore.INSTANCE.getLogger().error(t);
       }
       return;
     }
@@ -39,8 +39,8 @@ public final class StartupAbortedException extends RuntimeException {
   }
 
   public static void logAndExit(@NotNull Throwable t, @Nullable Logger log) {
-    PluginManagerCore.EssentialPluginMissingException essentialPluginMissingException = findCause(t, PluginManagerCore.EssentialPluginMissingException.class);
-    if (essentialPluginMissingException != null && essentialPluginMissingException.pluginIds != null) {
+    EssentialPluginMissingException essentialPluginMissingException = findCause(t, EssentialPluginMissingException.class);
+    if (essentialPluginMissingException != null) {
       StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.corrupted.installation"),
                                        BootstrapBundle.message("bootstrap.error.message.missing.essential.plugins.0.1.please.reinstall.2",
                                                essentialPluginMissingException.pluginIds.size(),
@@ -54,7 +54,7 @@ public final class StartupAbortedException extends RuntimeException {
 
     if ((log != null || Logger.isInitialized()) && !(t instanceof ProcessCanceledException)) {
       try {
-        (log == null ? PluginManagerCore.getLogger() : log).error(t);
+        (log == null ? PluginManagerCore.INSTANCE.getLogger() : log).error(t);
       }
       catch (Throwable ignore) {
       }

@@ -22,7 +22,7 @@ class DescriptorListLoadingContext(
   @JvmField val disabledPlugins: Set<PluginId> = DisabledPluginsState.getDisabledIds(),
   @JvmField val expiredPlugins: Set<PluginId> = ExpiredPluginsState.expiredPluginIds,
   private val brokenPluginVersions: Map<PluginId, Set<String?>> = getBrokenPluginVersions(),
-  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.getBuildNumber() },
+  @JvmField val productBuildNumber: () -> BuildNumber = { PluginManagerCore.buildNumber },
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
@@ -56,7 +56,7 @@ class DescriptorListLoadingContext(
   private val optionalConfigNames: MutableMap<String, PluginId>? = if (checkOptionalConfigFileUniqueness) ConcurrentHashMap() else null
 
   internal fun reportCannotLoad(file: Path, e: Throwable?) {
-    PluginManagerCore.getLogger().warn("Cannot load $file", e)
+    PluginManagerCore.logger.warn("Cannot load $file", e)
     globalErrors.add(Supplier {
       CoreBundle.message("plugin.loading.error.text.file.contains.invalid.plugin.descriptor", pluginPathToUserString(file))
     })
@@ -99,7 +99,7 @@ class DescriptorListLoadingContext(
       return false
     }
 
-    PluginManagerCore.getLogger().error("Optional config file with name $configFile already registered by $oldPluginId. " +
+    PluginManagerCore.logger.error("Optional config file with name $configFile already registered by $oldPluginId. " +
               "Please rename to ensure that lookup in the classloader by short name returns correct optional config. " +
               "Current plugin: $descriptor.")
     return true

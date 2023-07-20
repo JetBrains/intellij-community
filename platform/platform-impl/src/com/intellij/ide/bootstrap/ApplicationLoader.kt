@@ -63,7 +63,9 @@ internal suspend fun initApplicationImpl(args: List<String>,
         runPostAppInitTasks()
       }
 
-      preloadCriticalServicesJob.join()
+      subtask("waiting for preloadCriticalServicesJob") {
+        preloadCriticalServicesJob.join()
+      }
 
       asyncScope.launch {
         addActivateAndWindowsCliListeners()

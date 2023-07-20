@@ -55,7 +55,7 @@ fun updateBrokenPlugins(brokenPlugins: Map<PluginId, Set<String>>) {
   try {
     DataOutputStream(BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000)).use { out ->
       out.write(2)
-      out.writeUTF(PluginManagerCore.getBuildNumber().asString())
+      out.writeUTF(PluginManagerCore.buildNumber.asString())
       out.writeInt(brokenPlugins.size)
       for ((key, value) in brokenPlugins) {
         out.writeUTF(key.idString)
@@ -101,7 +101,7 @@ private fun tryReadBrokenPluginsFile(brokenPluginsStorage: Path): Map<PluginId, 
       }
 
       val buildNumber = stream.readUTF()
-      if (buildNumber != PluginManagerCore.getBuildNumber().toString()) {
+      if (buildNumber != PluginManagerCore.buildNumber.toString()) {
         LOG.info("Ignoring cached broken plugins file from an earlier IDE build ($buildNumber)")
         return null
       }

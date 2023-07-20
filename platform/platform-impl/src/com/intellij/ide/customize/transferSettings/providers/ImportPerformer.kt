@@ -52,7 +52,7 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
 
   override fun installPlugins(project: Project?, pluginIds: Set<PluginId>, pi: ProgressIndicator) {
     logger.info("Installing plugins")
-    val installedPlugins = PluginManagerCore.getPlugins().map { it.pluginId.idString }.toSet()
+    val installedPlugins = PluginManagerCore.plugins.map { it.pluginId.idString }.toSet()
     val pluginsToInstall = pluginIds.filter { !installedPlugins.contains(it.idString) }.toSet()
 
     val installAndEnableTask = getInstallAndEnableTask(project, pluginsToInstall, false, false, pi.modalityState) {}

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.BuildNumber
@@ -8,10 +8,9 @@ import kotlinx.coroutines.runBlocking
 import java.nio.file.Path
 
 class PluginSetTestBuilder(private val path: Path) {
-
   private var disabledPluginIds = mutableSetOf<String>()
   private var expiredPluginIds = mutableSetOf<String>()
-  private var productBuildNumber = PluginManagerCore.getBuildNumber()
+  private var productBuildNumber = PluginManagerCore.buildNumber
 
   private var context: DescriptorListLoadingContext? = null
   private var result: PluginLoadingResult? = null

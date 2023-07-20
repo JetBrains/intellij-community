@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
@@ -23,7 +23,7 @@ internal class InstallPluginTask(private val pluginIds: Set<PluginId>, val modal
     customPlugins = loadPluginsFromCustomRepositories(indicator)
     val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                  customPlugins, true))
-    PluginManagerCore.getPlugins().filterTo(descriptors) {
+    PluginManagerCore.plugins.filterTo(descriptors) {
       !it.isEnabled && PluginManagerCore.isCompatible(it) && PluginManagerFilters.getInstance().allowInstallingPlugin(it)
     }
     descriptors

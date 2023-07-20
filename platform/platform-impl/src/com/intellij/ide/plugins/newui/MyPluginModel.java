@@ -125,10 +125,10 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
   }
 
   /**
-   * @return true if changes were applied without restart
+   * @return true if changes were applied without a restart
    */
   public boolean apply(@Nullable JComponent parent) throws ConfigurationException {
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     updatePluginDependencies(pluginIdMap);
     assertCanApply(pluginIdMap);
 
@@ -1086,7 +1086,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return List.of();
     }
 
-    PluginLoadingError loadingError = PluginManagerCore.getLoadingError(pluginId);
+    PluginLoadingError loadingError = PluginManagerCore.INSTANCE.getLoadingError(pluginId);
     PluginId disabledDependency = loadingError != null ? loadingError.disabledDependency : null;
     if (disabledDependency == null) {
       return loadingError != null ?
@@ -1139,12 +1139,12 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       }
 
       if (pluginIdMap == null) {
-        pluginIdMap = PluginManagerCore.buildPluginIdMap();
+        pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
       }
 
       boolean loaded = isLoaded(pluginId);
       if (rootDescriptor instanceof IdeaPluginDescriptorImpl) {
-        PluginManagerCore.processAllNonOptionalDependencyIds((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, depId -> {
+        PluginManagerCore.INSTANCE.processAllNonOptionalDependencyIds((IdeaPluginDescriptorImpl)rootDescriptor, pluginIdMap, depId -> {
           if (depId.equals(pluginId)) {
             return FileVisitResult.CONTINUE;
           }
@@ -1211,7 +1211,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       return Stream.of();
     }
 
-    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.buildPluginIdMap();
+    Map<PluginId, IdeaPluginDescriptorImpl> pluginIdMap = PluginManagerCore.INSTANCE.buildPluginIdMap();
     return pluginIds
       .stream()
       .map(requiredPluginId -> {
@@ -1255,7 +1255,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
         continue;
       }
 
-      PluginManagerCore.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
+      PluginManagerCore.INSTANCE.processAllNonOptionalDependencies(descriptor, pluginIdMap, dependency -> {
         if (dependency.getPluginId().equals(rootId)) {
           result.add(descriptor);
           return FileVisitResult.TERMINATE;

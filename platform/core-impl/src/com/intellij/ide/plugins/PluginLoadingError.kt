@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
@@ -19,7 +19,7 @@ class PluginLoadingError internal constructor(val plugin: IdeaPluginDescriptor,
       builder.append("The ").append(descriptor.name).append(" (id=").append(descriptor.pluginId).append(", path=")
       builder.append(pluginPathToUserString(descriptor.pluginPath))
       val version = descriptor.version
-      if (version != null && !descriptor.isBundled && version != PluginManagerCore.getBuildNumber().asString()) {
+      if (version != null && !descriptor.isBundled && version != PluginManagerCore.buildNumber.asString()) {
         builder.append(", version=").append(version)
       }
       builder.append(") plugin ").append(message)

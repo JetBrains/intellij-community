@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.feedback.common.dialog
 
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
@@ -105,7 +105,7 @@ data class CommonFeedbackSystemInfoData(
     private fun getNonBundledPlugins(): List<String> = getPluginsNamesWithVersion { p: IdeaPluginDescriptor -> !p.isBundled }
 
     private fun getPluginsNamesWithVersion(filter: (IdeaPluginDescriptor) -> Boolean): List<String> =
-      PluginManagerCore.getLoadedPlugins()
+      PluginManagerCore.loadedPlugins
         .filter { filter(it) }
         .map { p: IdeaPluginDescriptor ->
           val pluginId = p.pluginId

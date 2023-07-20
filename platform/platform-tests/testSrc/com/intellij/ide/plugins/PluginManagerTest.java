@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
@@ -88,15 +88,15 @@ public class PluginManagerTest {
   @Test
   public void ignoredCompatibility() {
     TriConsumer<String, String, String> checkCompatibility = (String ideVersion, String sinceBuild, String untilBuild) -> {
-      boolean ignoreCompatibility = PluginManagerCore.isIgnoreCompatibility();
+      boolean ignoreCompatibility = PluginManagerCore.INSTANCE.isIgnoreCompatibility();
       try {
         assertIncompatible(ideVersion, sinceBuild, untilBuild);
 
-        PluginManagerCore.setIgnoreCompatibility(true);
+        PluginManagerCore.INSTANCE.setIgnoreCompatibility(true);
         assertCompatible(ideVersion, sinceBuild, untilBuild);
       }
       finally {
-        PluginManagerCore.setIgnoreCompatibility(ignoreCompatibility);
+        PluginManagerCore.INSTANCE.setIgnoreCompatibility(ignoreCompatibility);
       }
     };
 
@@ -222,7 +222,7 @@ public class PluginManagerTest {
     Path configPath = tempDir.getRoot().toPath().resolve("config-link");
     @NotNull Path target = tempDir.newDirectory("config-target").toPath();
     Files.createSymbolicLink(configPath, target);
-    DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate(configPath, "a");
+    DisabledPluginsState.Companion.saveDisabledPluginsAndInvalidate(configPath, List.of("a"));
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 
@@ -234,7 +234,7 @@ public class PluginManagerTest {
   }
 
   private static void doPluginSortTest(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
-    PluginManagerCore.getAndClearPluginLoadingErrors();
+    PluginManagerCore.INSTANCE.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     StringBuilder text = new StringBuilder();
     for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.getEnabledModules()) {
@@ -245,7 +245,7 @@ public class PluginManagerTest {
       text.append('\n');
     }
     text.append("\n\n");
-    for (HtmlChunk html : PluginManagerCore.getAndClearPluginLoadingErrors()) {
+    for (HtmlChunk html : PluginManagerCore.INSTANCE.getAndClearPluginLoadingErrors()) {
       text.append(html.toString().replace("<br/>", "\n").replace("&#39;", "")).append('\n');
     }
     UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), text.toString());
@@ -411,7 +411,7 @@ public class PluginManagerTest {
     parentContext.close();
     PluginLoadingResult result = new PluginLoadingResult(false);
     result.addAll(list, /* overrideUseIfCompatible = */ false, parentContext.productBuildNumber.invoke());
-    return PluginManagerCore.initializePlugins(parentContext, result, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
+    return PluginManagerCore.INSTANCE.initializePlugins(parentContext, result, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
   }
 
   private static byte @NotNull [] elementAsBytes(XmlElement child) throws XMLStreamException {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -62,7 +62,7 @@ class PluginSetBuilder(
               detailedMessage.append("    ").append(dep).append("\n")
             }
         }
-      PluginManagerCore.getLogger().info(detailedMessage.toString())
+      PluginManagerCore.logger.info(detailedMessage.toString())
     }
   }
 
@@ -135,7 +135,7 @@ class PluginSetBuilder(
     }
 
     if (!logMessages.isEmpty()) {
-      PluginManagerCore.getLogger().info(logMessages.joinToString(separator = "\n"))
+      PluginManagerCore.logger.info(logMessages.joinToString(separator = "\n"))
     }
     return this
   }

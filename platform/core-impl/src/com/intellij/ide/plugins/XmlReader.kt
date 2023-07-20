@@ -930,7 +930,7 @@ private fun checkConditionalIncludeIsSupported(attribute: String, pluginDescript
 private var dateTimeFormatter: DateTimeFormatter? = null
 
 private val LOG: Logger
-  get() = PluginManagerCore.getLogger()
+  get() = PluginManagerCore.logger
 
 private fun parseReleaseDate(dateString: String): LocalDate? {
   if (dateString.isEmpty() || dateString == "__DATE__") {
