@@ -52,31 +52,6 @@ internal object GitLabCreateSnippetComponentFactory {
     }
 
     return panel {
-      row(message("snippet.create.account.label")) {
-        val selectAccount = comboBox(listOf<GitLabAccount>(), ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
-          val account = accountOrNull ?: return@ListCellRenderer JBLabel("<none>")
-          JBLabel(account.name).apply {
-            toolTipText = "@ ${account.server.uri}"
-          }
-        })
-
-        selectAccount.bindItem({ createSnippetVm.glAccount.value }, ::setAccount)
-
-        val selectAccountComponent = selectAccount.component
-        selectAccountComponent.addItemListener {
-          setAccount(selectAccountComponent.selectedItem as GitLabAccount?)
-        }
-        cs.async {
-          // If accounts are updated, set the entries of the accounts list
-          createSnippetVm.glAccounts.collectLatest { accounts ->
-            selectAccountComponent.removeAllItems()
-            val selected = selectAccountComponent.selectedItem
-            accounts.forEach { selectAccountComponent.addItem(it) }
-            selectAccountComponent.selectedItem = selected
-          }
-        }
-      }
-
       row(message("snippet.create.project.label")) {
         val selectProject = comboBox(listOf<GitLabProjectCoordinates?>(null),
                                      ListCellRenderer<GitLabProjectCoordinates?> { _, value, _, _, _ ->
@@ -117,6 +92,40 @@ internal object GitLabCreateSnippetComponentFactory {
 
       row(message("snippet.create.private.label")) {
         checkBox("").bindSelected(data::isPrivate)
+      }
+
+      row(message("snippet.create.account.label")) {
+        val selectAccount = comboBox(listOf<GitLabAccount>(), ListCellRenderer<GitLabAccount?> { _, accountOrNull, _, _, _ ->
+          // The list shouldn't contain nulls, but if they do, don't render anything
+          val account = accountOrNull ?: return@ListCellRenderer null
+
+          JBLabel(account.name).apply {
+            toolTipText = "@ ${account.server.uri}" // TODO: Check that this makes sense to show
+          }
+        })
+
+        selectAccount.bindItem({ createSnippetVm.glAccount.value }, ::setAccount)
+
+        selectAccount.component.addItemListener {
+          setAccount(selectAccount.component.selectedItem as GitLabAccount?)
+        }
+        cs.async {
+          createSnippetVm.glAccounts.collectLatest { accounts ->
+            // Re-fill the list of accounts
+            selectAccount.component.removeAllItems()
+            val selected = selectAccount.component.selectedItem
+            accounts.forEach { selectAccount.component.addItem(it) }
+            selectAccount.component.selectedItem = selected
+
+            // If none is selected yet, select the first account
+            if (selectAccount.component.selectedItem == null && selectAccount.component.itemCount > 0) {
+              selectAccount.component.selectedIndex = 0
+            }
+
+            // If there are multiple accounts make the row visible
+            visible(accounts.size > 1)
+          }
+        }
       }
     }
   }

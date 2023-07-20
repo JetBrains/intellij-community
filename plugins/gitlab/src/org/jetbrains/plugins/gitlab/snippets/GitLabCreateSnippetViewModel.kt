@@ -52,9 +52,9 @@ class GitLabCreateSnippetViewModel(
    */
   val glAccount: StateFlow<GitLabAccount?> = _glAccount.asStateFlow()
 
-  private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, String?>> = glAccount
+  private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, String?>?> = glAccount
     .flatMapLatest { accountOrNull ->
-      val account = accountOrNull ?: return@flatMapLatest flowOf()
+      val account = accountOrNull ?: return@flatMapLatest flowOf(null)
       service<GitLabAccountManager>().getCredentialsState(cs, account)
         .map { Pair(account, it) }
     }
@@ -62,16 +62,14 @@ class GitLabCreateSnippetViewModel(
 
   /** Flow of [GitLabProjectCoordinates] based on the current selection of account. */
   val glRepositories: SharedFlow<List<GitLabProjectCoordinates>> = glAccountAndCredentials
-    .mapMemoized { (account, tokenOrNull) ->
+    .mapMemoized { credentials ->
+      val (account, tokenOrNull) = credentials ?: return@mapMemoized flowOf(listOf())
       val token = tokenOrNull ?: return@mapMemoized flowOf(listOf())
       service<GitLabApiManager>().getClient(token).graphQL
         .getSnippetAllowedProjects(account.server)
         .shareIn(cs.childScope(Dispatchers.IO), SharingStarted.Lazily, 1)
     }
-    .flatMapLatest {
-      println("mappin")
-      it
-    }
+    .flatMapLatest { it }
     .shareIn(cs, SharingStarted.Eagerly, 1)
 
   suspend fun setAccount(account: GitLabAccount) {
