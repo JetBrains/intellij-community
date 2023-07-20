@@ -90,6 +90,10 @@ class PyLiteralStringType private constructor(val cls: PyClass) : PyClassTypeImp
           return name?.let { PyCollectionTypeImpl.createTypeByQName(value, name, false, classes) }
         }
       }
+      else if (value is PyConditionalExpression) {
+        return PyUnionType.union(fromLiteral(value.truePart, context),
+                                 value.falsePart?.let { fromLiteral(it, context) })
+      }
       return context.getType(value ?: return null)
     }
   }
