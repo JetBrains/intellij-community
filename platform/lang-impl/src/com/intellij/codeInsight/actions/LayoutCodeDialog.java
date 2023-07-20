@@ -125,7 +125,7 @@ public class LayoutCodeDialog extends DialogWrapper {
   }
 
   private void saveCurrentConfiguration() {
-    if (myOptimizeImportsCb.isEnabled()) {
+    if (myOptimizeImportsCb.isEnabled() && myOptimizeImportsCb.isVisible()) {
       myLastRunOptions.saveOptimizeImportsState(myRunOptions.isOptimizeImports());
     }
     if (myRearrangeCodeCb.isEnabled()) {
