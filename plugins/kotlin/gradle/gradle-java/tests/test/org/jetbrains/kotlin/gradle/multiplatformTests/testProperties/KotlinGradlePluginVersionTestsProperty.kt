@@ -10,6 +10,7 @@ object KotlinGradlePluginVersionTestsProperty : KotlinTestsResolvableProperty {
     override val id: String = "KGP_VERSION"
 
     enum class Value(val acronym: String, val version: String) {
+        MinSupported("MIN", "1.7.21"),
         PreviousMajorRelease("PREV_RELEASE", "1.8.22"),
         LatestStable("STABLE", "1.9.0"),
         Latest("LATEST", KotlinGradlePluginVersions.latest.toString())
