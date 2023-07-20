@@ -28,7 +28,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
   val groupRef = createActionRef(group)
   val presentation = presentationFactory.getPresentation(group)
   val menuPeer = Menu(presentation.getText(isMnemonicEnabled))
-  menuPeer.setOnOpen(Runnable {
+  menuPeer.setOnOpen(frame) {
     try {
       Utils.fillMenu(group = groupRef.getAction(),
                      component = frame,
@@ -46,7 +46,7 @@ internal fun createMacNativeActionMenu(context: DataContext?,
     catch (e: Throwable) {
       logger<Menu>().error(e)
     }
-  }, frame)
+  }
   menuPeer.listenPresentationChanges(presentation)
 
   if (!ExperimentalUI.isNewUI() && UISettings.getInstance().showIconsInMenus) {

@@ -37,7 +37,8 @@ public class Menu extends MenuItem {
   private Runnable myOnOpen;
   private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
   private Component myComponent;
-  private boolean myIsOpened = false;
+
+  private volatile boolean myIsOpened = false;
 
   long[] myCachedPeers;
 
@@ -94,12 +95,12 @@ public class Menu extends MenuItem {
     nativeRenameAppMenuItems(ArrayUtilRt.toStringArray(replace));
   }
 
-  public void setOnOpen(@NotNull Runnable fillMenuProcedure, @NotNull Component component) {
+  public void setOnOpen(@NotNull Component component, @NotNull Runnable fillMenuProcedure) {
     this.myOnOpen = fillMenuProcedure;
     this.myComponent = component;
   }
 
-  public void setOnClose(Runnable onClose, Component component) {
+  public void setOnClose(Component component, Runnable onClose) {
     this.myOnClose = onClose;
     this.myComponent = component;
   }
