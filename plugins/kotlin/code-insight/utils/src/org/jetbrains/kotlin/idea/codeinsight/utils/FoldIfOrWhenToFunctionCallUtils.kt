@@ -27,13 +27,14 @@ object FoldIfOrWhenToFunctionCallUtils {
         return branches.filterNotNull().takeIf { it.size == branchesSize }
     }
 
+    fun canFoldByPsi(element: KtExpression): Boolean {
+        val callExpressions = element.callExpressionsFromAllBranches() ?: return false
+        return differentArgumentIndex(callExpressions) != null
+    }
+
     context(KtAnalysisSession)
-    fun canFold(element: KtExpression): Context? {
-        val branches = branches(element) ?: return null
-
-        val callExpressions = branches.mapNotNull { it.callExpression() }
-        if (branches.size != callExpressions.size) return null
-
+    fun getFoldingContext(element: KtExpression): Context? {
+        val callExpressions = element.callExpressionsFromAllBranches() ?: return null
         val differentArgumentIndex = differentArgumentIndex(callExpressions) ?: return null
 
         val headCall = callExpressions.first()
@@ -56,9 +57,7 @@ object FoldIfOrWhenToFunctionCallUtils {
     }
 
     fun fold(element: KtExpression, context: Context) {
-        val branches = branches(element) ?: return
-
-        val callExpressions = branches.mapNotNull { it.callExpression() }
+        val callExpressions = element.callExpressionsFromAllBranches() ?: return
         val headCall = callExpressions.first()
         val hasNamedArgument = callExpressions.any { call -> call.valueArguments.any { it.getArgumentName() != null } }
 
@@ -112,7 +111,14 @@ object FoldIfOrWhenToFunctionCallUtils {
         return differentArgumentIndexes.first()
     }
 
-    private fun KtExpression?.callExpression(): KtCallExpression? {
+    private fun KtExpression.callExpressionsFromAllBranches(): List<KtCallExpression>? {
+        val branches = branches(this) ?: return null
+        val callExpressions = branches.mapNotNull { it.callExpression() }
+        if (branches.size != callExpressions.size) return null
+        return callExpressions
+    }
+
+    private fun KtExpression.callExpression(): KtCallExpression? {
         val expression = if (this is KtBlockExpression) statements.singleOrNull() else this
         return when (expression) {
             is KtCallExpression -> expression
