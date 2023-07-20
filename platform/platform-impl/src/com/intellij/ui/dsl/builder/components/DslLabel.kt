@@ -68,6 +68,11 @@ class DslLabel(private val type: DslLabelType) : JEditorPane() {
     // JEditorPane.setText updates cursor and requests scrolling to cursor position if scrollable is used. Disable it
     (caret as DefaultCaret).updatePolicy = DefaultCaret.NEVER_UPDATE
 
+    // BasicTextUI adds caret width to the preferred size of the component (see usages of 'caretMargin' field in BasicTextUI),
+    // so the resulting width is 1px greater than the width specified inside updateEditorPaneText() if line length is limited.
+    // Set caret width to 0, to make the width of the component equal to the specified width.
+    putClientProperty("caretWidth", 0)
+
     foreground = when (type) {
       DslLabelType.COMMENT -> JBUI.CurrentTheme.ContextHelp.FOREGROUND
       DslLabelType.LABEL -> JBUI.CurrentTheme.Label.foreground()
