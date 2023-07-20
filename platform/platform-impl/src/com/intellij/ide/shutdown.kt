@@ -73,7 +73,7 @@ internal fun cancelAndJoinBlocking(
   @OptIn(DelicateCoroutinesApi::class)
   val dumpJob = GlobalScope.launch {
     delay(delayUntilCoroutineDump)
-    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope)}")
+    LOG.warn("$debugString: scope was not completed in $delayUntilCoroutineDump.\n${dumpCoroutines(scope = containerScope, stripDump = false)}")
   }
   try {
     joinBlocking(containerJob, dumpJob)
