@@ -65,7 +65,7 @@ class GitLabCreateSnippetViewModel(
     .mapMemoized { (account, tokenOrNull) ->
       val token = tokenOrNull ?: return@mapMemoized flowOf(listOf())
       service<GitLabApiManager>().getClient(token).graphQL
-        .getAllOwnedProjects(account.server)
+        .getSnippetAllowedProjects(account.server)
         .shareIn(cs.childScope(Dispatchers.IO), SharingStarted.Lazily, 1)
     }
     .flatMapLatest {

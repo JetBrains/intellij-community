@@ -23,23 +23,35 @@ private class CreateSnippetResult(snippet: GitLabSnippetDTO, errors: List<String
   override val value: GitLabSnippetDTO = snippet
 }
 
-suspend fun GitLabApi.GraphQL.getAllOwnedProjects(
+/**
+ * Provides a flow for underlying queries to the GitLab GQL API that lookup the projects
+ * the user is a member of and can create snippets on.
+ */
+internal suspend fun GitLabApi.GraphQL.getSnippetAllowedProjects(
   serverPath: GitLabServerPath
 ): Flow<List<GitLabProjectCoordinates>> =
   ApiPageUtil.createGQLPagesFlow { page ->
     val parameters = page.asParameters()
-    val request = gitLabQuery(serverPath, GitLabGQLQuery.GET_OWNED_PROJECTS, parameters)
-    withErrorStats(serverPath, GitLabGQLQuery.GET_OWNED_PROJECTS) {
+    val request = gitLabQuery(serverPath, GitLabGQLQuery.GET_MEMBER_PROJECTS, parameters)
+    withErrorStats(serverPath, GitLabGQLQuery.GET_MEMBER_PROJECTS) {
       loadResponse<GitLabProjectsDTO>(request, "projects").body()
     }
   }.map {
-    it.nodes.map { project ->
-      val projectPath = GitLabProjectPath(project.ownerPath, project.name)
-      GitLabProjectCoordinates(serverPath, projectPath)
-    }
+    it.nodes
+      .filter { project -> project.userPermissions.createSnippet }
+      .map { project ->
+        val projectPath = GitLabProjectPath(project.ownerPath, project.name)
+        GitLabProjectCoordinates(serverPath, projectPath)
+      }
   }.collectBatches()
 
-suspend fun GitLabApi.GraphQL.createSnippet(
+/**
+ * Sends GQL request to GitLab to create a snippet optionally under the given project,
+ * with the given title and description, visibility level, and files and file contents.
+ * A file name selection function can be passed to decide how to turn a [VirtualFile]
+ * into a file name.
+ */
+internal suspend fun GitLabApi.GraphQL.createSnippet(
   serverPath: GitLabServerPath,
   project: GitLabProjectCoordinates?,
   title: String,
