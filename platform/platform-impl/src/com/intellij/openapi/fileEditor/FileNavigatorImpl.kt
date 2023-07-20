@@ -32,11 +32,9 @@ class FileNavigatorImpl : FileNavigator {
     if (!descriptor.file.isDirectory && navigateInEditorOrNativeApp(descriptor, requestFocus)) {
       return
     }
-    else if (navigateInProjectView(descriptor.project, descriptor.file, requestFocus)) {
-      return
+    else {
+      ProjectFileNavigatorImpl.getInstance(descriptor.project).navigateInProjectView(descriptor.file, requestFocus)
     }
-    val message = IdeBundle.message("error.files.of.this.type.cannot.be.opened", ApplicationNamesInfo.getInstance().productName)
-    Messages.showErrorDialog(descriptor.project, message, IdeBundle.message("title.cannot.open.file"))
   }
 
   private fun navigateInEditorOrNativeApp(descriptor: OpenFileDescriptor, requestFocus: Boolean): Boolean {
@@ -91,16 +89,6 @@ class FileNavigatorImpl : FileNavigator {
     }
     return true
   }
-}
-
-private fun navigateInProjectView(project: Project, file: VirtualFile, requestFocus: Boolean): Boolean {
-  val context: SelectInContext = FileSelectInContext(project, file, null)
-  for (target in SelectInManager.getInstance(project).targetList) {
-    if (context.selectIn(target, requestFocus)) {
-      return true
-    }
-  }
-  return false
 }
 
 @RequiresEdt
