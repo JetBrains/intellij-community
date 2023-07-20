@@ -26,9 +26,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   implements FileReferenceOwner, PsiPolyVariantReference, LocalQuickFixProvider, EmptyResolveMessageProvider, PsiReferencesWrapper {
 
   private final List<PsiReference> myReferences = new ArrayList<>();
-  private final int myChosenOne = -1;
   private ResolveResult[] myCachedResult;
-  private @Nullable TextRange myPredefinedRange = null;
 
   public PsiDynaReference(final T psiElement) {
     super(psiElement, true);
@@ -54,7 +52,6 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
   @Override
   public void setRangeInElement(TextRange rangeInElement) {
     super.setRangeInElement(rangeInElement);
-    this.myPredefinedRange = rangeInElement;
   }
 
   @Override
