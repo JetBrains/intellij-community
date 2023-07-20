@@ -4,8 +4,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -16,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenProjectLegacyImporter;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -27,16 +24,12 @@ import java.util.*;
 public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingTestCase {
 
   private MavenProjectsManager myProjectsManager;
-  private AutoImportProjectNotificationAware myNotificationAware;
-  private ExternalSystemProjectTracker myProjectTracker;
   private MavenProjectTreeTracker myProjectsTreeTracker;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myProjectsManager = MavenProjectsManager.getInstance(myProject);
-    myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
-    myProjectTracker = ExternalSystemProjectTracker.getInstance(myProject);
     myProjectsTreeTracker = new MavenProjectTreeTracker();
 
     myProjectsManager.addProjectsTreeListener(myProjectsTreeTracker, getTestRootDisposable());
@@ -50,38 +43,52 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
 
   @Test
   public void testChangeConfigInAnotherProjectShouldNotUpdateOur() throws IOException {
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
+
     createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
+    assertNoPendingProjectForReload();
+
     VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
+    assertNoPendingProjectForReload();
+
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
   }
 
   @Test
   public void testChangeConfigInOurProjectShouldCallUpdatePomFile() throws Exception {
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
+
     VirtualFile mavenConfig = createProjectSubFile(".mvn/maven.config");
     importProject();
+    assertNoPendingProjectForReload();
+
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
-    //    assertTrue(MavenImportingManager.getInstance(myProject).isImportingInProgress());
-    assertNotEmpty(myNotificationAware.getProjectsWithNotification());
+    assertHasPendingProjectForReload();
+
+    scheduleProjectImportAndWait();
   }
 
   @Test
   public void testChangeConfigInAnotherProjectShouldCallItIfItWasAdded() throws IOException {
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
+
     VirtualFile anotherPom = createPomFile(createProjectSubDir("../another"), createPomContent("another", "another"));
     VirtualFile mavenConfig = createProjectSubFile("../another/.mvn/maven.config");
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
+
     addManagedFiles(anotherPom);
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
+
     replaceContent(mavenConfig, "-Xmx2048m -Xms1024m -XX:MaxPermSize=512m -Djava.awt.headless=true");
-    assertNotEmpty(myNotificationAware.getProjectsWithNotification());
+    assertHasPendingProjectForReload();
+
+    scheduleProjectImportAndWait();
   }
 
   @Test
   public void testSaveDocumentChangesBeforeAutoImport() throws IOException {
-    assertEmpty(myNotificationAware.getProjectsWithNotification());
+    assertNoPendingProjectForReload();
 
     assertModules("project");
 
@@ -105,19 +112,19 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
   @Test
   public void testIncrementalAutoReload() {
     assertRootProjects("project");
-    assertFalse(myNotificationAware.isNotificationVisible());
+    assertNoPendingProjectForReload();
 
     VirtualFile module1 = createModulePom("module1", createPomContent("test", "module1"));
     VirtualFile module2 = createModulePom("module2", createPomContent("test", "module2"));
 
     assertRootProjects("project");
-    assertFalse(myNotificationAware.isNotificationVisible());
+    assertNoPendingProjectForReload();
 
     addManagedFiles(module1);
     addManagedFiles(module2);
 
     assertRootProjects("project", "module1", "module2");
-    assertFalse(myNotificationAware.isNotificationVisible());
+    assertNoPendingProjectForReload();
 
     replaceDocumentString(module1, "test", "group.id");
 
@@ -180,20 +187,17 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     scheduleProjectImportAndWait();
     assertRootProjects("project");
     assertModules("project");
-    assertFalse(myNotificationAware.isNotificationVisible());
 
-    myProjectsManager.getProjectsTree()
-      .setExplicitProfiles(new MavenExplicitProfiles(List.of("junit4"), List.of("junit5")));
-    assertTrue(myNotificationAware.isNotificationVisible());
+    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(List.of("junit4"), List.of("junit5")));
+    assertHasPendingProjectForReload();
+
     scheduleProjectImportAndWait();
-    assertFalse(myNotificationAware.isNotificationVisible());
     assertMavenProjectDependencies("test:project:1", "junit:junit:4.12");
 
-    myProjectsManager.getProjectsTree()
-      .setExplicitProfiles(new MavenExplicitProfiles(List.of("junit5"), List.of("junit4")));
-    assertTrue(myNotificationAware.isNotificationVisible());
+    myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(List.of("junit5"), List.of("junit4")));
+    assertHasPendingProjectForReload();
+
     scheduleProjectImportAndWait();
-    assertFalse(myNotificationAware.isNotificationVisible());
     assertMavenProjectDependencies("test:project:1", "org.junit.jupiter:junit-jupiter-engine:5.9.1");
   }
 
@@ -202,20 +206,6 @@ public class MavenProjectsManagerWatcherTest extends MavenMultiVersionImportingT
     var mavenProject = myProjectsManager.getProjectsTree().findProject(mavenId);
     var actualDependencies = ContainerUtil.map(mavenProject.getDependencyTree(), it -> it.getArtifact().getMavenId().getKey());
     Assert.assertEquals(List.of(expectedDependencies), actualDependencies);
-  }
-
-  private void scheduleProjectImportAndWait() {
-    assertTrue(myNotificationAware.isNotificationVisible());
-    myProjectTracker.scheduleProjectRefresh();
-    waitForImportCompletion();
-    if(!isNewImportingProcess) {
-      MavenUtil.invokeAndWait(myProject, () -> {
-        // Do not save documents here, MavenProjectAware should do this before import
-        //myProjectsManager.performScheduledImportInTests();
-      });
-    }
-
-    assertFalse(myNotificationAware.isNotificationVisible());
   }
 
   private static String createPomContent(@NotNull String groupId, @NotNull String artifactId) {

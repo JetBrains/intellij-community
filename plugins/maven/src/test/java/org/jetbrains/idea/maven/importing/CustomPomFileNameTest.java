@@ -2,7 +2,6 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.maven.testFramework.MavenDomTestCase;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.junit.Test;
 
@@ -185,7 +184,8 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
       assertFalse(myProjectsManager.hasScheduledImportsInTests());
     }
 
-    myProjectsManager.enableAutoImportInTests();
+    enableAutoReload();
+
     VirtualFile m1 = createProjectSubFile("m1/customName.xml", createPomXml(
       """
         <artifactId>m1</artifactId>
@@ -205,13 +205,9 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
         </dependencies>
         """));
     type(m1, '1');
+    assertHasPendingProjectForReload();
 
-    assertTrue(ExternalSystemProjectNotificationAware.getInstance(myProject).isNotificationVisible());
-
-    importProject();
-    //if (!isNewImportingProcess) {
-    //  assertTrue(myProjectsManager.hasScheduledImportsInTests());
-    //}
+    scheduleProjectImportAndWait();
   }
 
   @Test

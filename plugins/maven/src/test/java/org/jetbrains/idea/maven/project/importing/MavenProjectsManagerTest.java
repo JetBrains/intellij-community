@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware;
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -966,7 +965,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                       </plugins>
                     </build>
                     """);
-    assertFalse(hasProjectsToBeImported());
+    assertNoPendingProjectForReload();
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -985,10 +984,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                          </plugins>
                        </build>
                        """);
-    assertTrue(hasProjectsToBeImported());
+    assertHasPendingProjectForReload();
 
     scheduleProjectImportAndWait();
-    assertFalse(hasProjectsToBeImported());
   }
 
   @Test
@@ -1010,7 +1008,7 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                       </plugins>
                     </build>
                     """);
-    assertFalse(hasProjectsToBeImported());
+    assertNoPendingProjectForReload();
 
     createProjectPom("""
                        <groupId>test</groupId>
@@ -1029,10 +1027,9 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
                          </plugins>
                        </build>
                        """);
-    assertTrue(hasProjectsToBeImported());
+    assertHasPendingProjectForReload();
 
     scheduleProjectImportAndWait();
-    assertFalse(hasProjectsToBeImported());
   }
 
   @Test
@@ -1445,18 +1442,6 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
       resolveDependenciesAndImport(); // wait of full import completion
     }
 
-  }
-
-  private boolean hasProjectsToBeImported() {
-    return ExternalSystemProjectNotificationAware.getInstance(myProject).isNotificationVisible();
-  }
-
-  private void scheduleProjectImportAndWait() {
-    assertTrue(hasProjectsToBeImported()); // otherwise all imports will be skip
-    ExternalSystemProjectTracker.getInstance(myProject).scheduleProjectRefresh();
-    resolveDependenciesAndImport();
-    resolvePlugins();
-    assertFalse(hasProjectsToBeImported()); // otherwise project settings was modified while importing
   }
 
   /**

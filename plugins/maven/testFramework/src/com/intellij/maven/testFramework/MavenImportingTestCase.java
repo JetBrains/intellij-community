@@ -10,6 +10,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware;
+import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbService;
@@ -53,6 +55,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.project.importing.*;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.io.File;
@@ -76,8 +79,14 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected MavenImportingResult myImportingResult;
   protected MavenPluginResolvedContext myPluginResolvedContext;
 
-    @Override
+  private AutoImportProjectNotificationAware myNotificationAware;
+  private AutoImportProjectTracker myProjectTracker;
+  private boolean isAutoReloadEnabled;
+
+  @Override
   protected void setUp() throws Exception {
+    isAutoReloadEnabled = false;
+
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath());
 
     super.setUp();
@@ -90,6 +99,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.getAbsolutePath());
     }
     isNewImportingProcess = Registry.is("maven.linear.import");
+
+    myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
+    myProjectTracker = AutoImportProjectTracker.getInstance(myProject);
   }
 
   @Override
@@ -583,8 +595,50 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.initForTests();
     myProjectResolver = MavenProjectResolver.getInstance(myProject);
     if (enableEventHandling) {
-      myProjectsManager.enableAutoImportInTests();
+      enableAutoReload();
     }
+  }
+
+  protected void enableAutoReload() {
+    myProjectsManager.enableAutoImportInTests();
+    isAutoReloadEnabled = true;
+  }
+
+  private void assertAutoReloadIsInitialized() {
+    assertTrue("Auto-reload is disabled for tests by default", isAutoReloadEnabled);
+  }
+
+  protected void assertHasPendingProjectForReload() {
+    assertAutoReloadIsInitialized();
+
+    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware.isNotificationVisible());
+    assertNotEmpty(myNotificationAware.getProjectsWithNotification());
+  }
+
+  protected void assertNoPendingProjectForReload() {
+    assertAutoReloadIsInitialized();
+
+    assertFalse(myNotificationAware.isNotificationVisible());
+    assertEmpty(myNotificationAware.getProjectsWithNotification());
+  }
+
+  protected void scheduleProjectImportAndWait() {
+    assertAutoReloadIsInitialized();
+
+    // otherwise all imports will be skipped
+    assertHasPendingProjectForReload();
+
+    myProjectTracker.scheduleProjectRefresh();
+    waitForImportCompletion();
+    if (!isNewImportingProcess) {
+      MavenUtil.invokeAndWait(myProject, () -> {
+        // Do not save documents here, MavenProjectAware should do this before import
+        //myProjectsManager.performScheduledImportInTests();
+      });
+    }
+
+    // otherwise project settings was modified while importing
+    assertNoPendingProjectForReload();
   }
 
   protected void updateAllProjects() {
