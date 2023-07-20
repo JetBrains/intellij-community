@@ -306,16 +306,16 @@ public class MavenUtil {
       VirtualFile child = dir.findChild(".mvn");
 
       if (child != null && child.isDirectory()) {
-        if (MavenLog.LOG.isDebugEnabled()) {
-          MavenLog.LOG.debug("found .mvn in " + child);
+        if (MavenLog.LOG.isTraceEnabled()) {
+          MavenLog.LOG.trace("found .mvn in " + child);
         }
         baseDir = dir;
         break;
       }
     }
     while ((dir = dir.getParent()) != null);
-    if (MavenLog.LOG.isDebugEnabled()) {
-      MavenLog.LOG.debug("return " + baseDir + " as baseDir");
+    if (MavenLog.LOG.isTraceEnabled()) {
+      MavenLog.LOG.trace("return " + baseDir + " as baseDir");
     }
     return baseDir;
   }

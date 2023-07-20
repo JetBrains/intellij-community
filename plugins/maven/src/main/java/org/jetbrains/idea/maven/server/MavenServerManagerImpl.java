@@ -142,7 +142,9 @@ final class MavenServerManagerImpl implements MavenServerManager {
         connector.connect();
       }
     }
-    MavenLog.LOG.debug("[connector] get " + connector);
+    if (MavenLog.LOG.isTraceEnabled()) {
+      MavenLog.LOG.trace("[connector] get " + connector);
+    }
     return connector;
   }
 
