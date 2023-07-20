@@ -18,9 +18,9 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetDTO
 import org.jetbrains.plugins.gitlab.project.GitLabProjectPath
 import java.net.http.HttpResponse
 
-private class CreateSnippetResult(snippet: GitLabSnippetDTO, errors: List<String>)
+private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<String>)
   : GitLabGraphQLMutationResultDTO<GitLabSnippetDTO>(errors) {
-  override val value: GitLabSnippetDTO = snippet
+  override val value: GitLabSnippetDTO? = snippet
 }
 
 /**

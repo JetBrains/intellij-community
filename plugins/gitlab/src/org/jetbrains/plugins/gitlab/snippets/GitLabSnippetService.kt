@@ -6,8 +6,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -20,7 +25,12 @@ import java.awt.datatransfer.StringSelection
  * Service required to get a [CoroutineScope] when performing [GitLabCreateSnippetAction].
  */
 @Service(Service.Level.PROJECT)
-class GitLabSnippetService(private val serviceScope: CoroutineScope) {
+class GitLabSnippetService(private val project: Project, private val serviceScope: CoroutineScope) {
+  /**
+   * Gets the name of a snippet entry directly from the file name.
+   */
+  private val pathFromName: (VirtualFile) -> String = { file -> file.name }
+
   /**
    * Performs the ['Create Snippet' action][GitLabCreateSnippetAction] by showing the 'Create Snippet' dialog
    * and performing the GitLab API request to create the final snippet.
@@ -30,18 +40,35 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
       val cs = this
       val vm = createVM(cs, e) ?: return@launch   // TODO: Display error (and make button unavailable)
 
+      // Await result of dialog
       if (!cs.async(Dispatchers.Main) {
           val dialog = GitLabCreateSnippetComponentFactory
-            .create(cs, e.getData(CommonDataKeys.PROJECT), vm)
+            .create(cs, project, vm)
 
           dialog.showAndGet()
         }.await()) {
         return@launch
       }
 
+      // Process result by creating the snippet, copying url, etc.
       val data = vm.data
       val api = vm.getApi() ?: return@launch       // TODO: Display error
       val server = vm.getServer() ?: return@launch // TODO: Display error
+
+      val contents = vm.contents.await()
+      val files = contents.mapNotNull { it.file }
+
+      val fileNameExtractor = if (files.isEmpty()) {
+        pathFromName
+      }
+      else {
+        when (data.pathHandlingMode) {
+          PathHandlingMode.RelativePaths -> pathFromNearestCommonAncestor(files)
+          PathHandlingMode.ProjectRelativePaths -> pathFromProjectRoot()
+          PathHandlingMode.ContentRootRelativePaths -> pathFromContentRoot()
+          PathHandlingMode.FlattenedPaths -> pathFromName
+        }
+      }
 
       val result = api.graphQL.createSnippet(
         server,
@@ -49,8 +76,10 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
         data.title,
         data.description,
         if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
-        vm.contents.await()
-      ) { it.name }.body() ?: return@launch       // TODO: Display error
+        contents,
+        fileNameExtractor
+      ).body() ?: return@launch                   // TODO: Display error
+
       val snippet = result.value ?: return@launch // TODO: Display error
       val url = snippet.webUrl
 
@@ -66,8 +95,7 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
   /**
    * Creates the view-model object for representing the creation of a snippet.
    */
-  private fun createVM(cs: CoroutineScope, e: AnActionEvent): GitLabCreateSnippetViewModel? {
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return null
+  private fun createVM(cs: CoroutineScope, e: AnActionEvent): GitLabCreateSnippetViewModel {
     val editor = e.getData(CommonDataKeys.EDITOR)                     // If editor in focus
     val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)  // If multiple files are selected
     val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)         // If in editor or on file (or on tab in file)
@@ -77,14 +105,10 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
         collectContents(editor, selectedFiles, selectedFile) ?: listOf()
       }
     }
-    val isSelectFullFiles = ReadAction.computeCancellable<Boolean, Nothing> {
-      editor?.selectionModel?.hasSelection() ?: false
-    }
 
     return GitLabCreateSnippetViewModel(
       cs,
       project,
-      isSelectFullFiles,
       contents,
       CreateSnippetViewModelData(
         "",
@@ -98,6 +122,42 @@ class GitLabSnippetService(private val serviceScope: CoroutineScope) {
         PathHandlingMode.RelativePaths
       )
     )
+  }
+
+  /**
+   * Gets the name of a snippet entry from the relative path from the content root of a file.
+   */
+  private fun pathFromContentRoot(): (VirtualFile) -> String {
+    val pfi = project.service<ProjectFileIndex>()
+    return { file ->
+      ReadAction.computeCancellable<VirtualFile?, Nothing> { pfi.getContentRootForFile(file) }
+        ?.let { root -> VfsUtilCore.getRelativePath(file, root) } ?: file.name
+    }
+  }
+
+  /**
+   * Gets the name of a snippet entry from the relative path from the project root.
+   */
+  private fun pathFromProjectRoot(): (VirtualFile) -> String {
+    val projectRoot = project.guessProjectDir() ?: return { file -> file.name }
+    return { file ->
+      VfsUtilCore.getRelativePath(file, projectRoot) ?: file.name
+    }
+  }
+
+  /**
+   * Gets the name of a snippet entry from the nearest common ancestor of all files (could be the file system root directory).
+   *
+   * @param files The collection of files from which snippet content is gathered. May never be empty.
+   */
+  private fun pathFromNearestCommonAncestor(files: Collection<VirtualFile>): (VirtualFile) -> String {
+    var closestRoot = files.first().parent
+    for (file in files.drop(1)) {
+      closestRoot = VfsUtilCore.getCommonAncestor(closestRoot, file)
+    }
+    return { file ->
+      VfsUtilCore.getRelativePath(file, closestRoot) ?: file.name
+    }
   }
 
   /**

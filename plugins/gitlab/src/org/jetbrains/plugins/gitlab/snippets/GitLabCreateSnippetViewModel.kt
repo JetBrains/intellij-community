@@ -37,7 +37,6 @@ class GitLabSnippetFileContents(
 class GitLabCreateSnippetViewModel(
   private val cs: CoroutineScope,
   val project: Project,
-  val isSelectFullFiles: Boolean,
   val contents: Deferred<List<GitLabSnippetFileContents>>,
   val data: CreateSnippetViewModelData,
 ) {
@@ -46,6 +45,7 @@ class GitLabCreateSnippetViewModel(
     .stateIn(cs, SharingStarted.Eagerly, emptySet())
 
   private val _glAccount: MutableStateFlow<GitLabAccount?> = MutableStateFlow(glAccounts.value.firstOrNull())
+
   /**
    * Flow of the currently chosen account to use.
    * By default, this will be the first account found by [GitLabAccountManager].
@@ -113,12 +113,16 @@ class CreateSnippetViewModelData(
  * being a part of the snippet.
  */
 enum class PathHandlingMode(@Nls val displayName: String, @Nls val tooltip: String? = null) {
-  /** Uses file paths relative to the project root. */
-  ProjectRelativePaths(message("snippet.create.path-mode.project-relative"), message("snippet.create.path-mode.project-relative.tooltip")),
-
   /** Uses file paths relative to the nearest common parent directory. */
-  RelativePaths(message("snippet.create.path-mode.relative"), message("snippet.create.path-mode.relative")),
+  RelativePaths(message("snippet.create.path-mode.relative"), message("snippet.create.path-mode.relative.tooltip")),
 
   /** Does not use file paths at all, only file names are used. */
-  FlattenedPaths(message("snippet.create.path-mode.none"), message("snippet.create.path-mode.none"))
+  FlattenedPaths(message("snippet.create.path-mode.none"), message("snippet.create.path-mode.none.tooltip")),
+
+  /** Uses file paths relative to the project root. */
+  ContentRootRelativePaths(message("snippet.create.path-mode.content-root-relative"),
+                           message("snippet.create.path-mode.content-root-relative.tooltip")),
+
+  /** Uses file paths relative to the project root. */
+  ProjectRelativePaths(message("snippet.create.path-mode.project-relative"), message("snippet.create.path-mode.project-relative.tooltip")),
 }
