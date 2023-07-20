@@ -42,6 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -136,8 +137,15 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
                                                               PsiElement context,
                                                               Set<String> queryNames,
                                                               Set<String> updateNames) {
+    return getCollectionQueryUpdateInfo(variable, context, queryNames, updateNames, Set.of());
+  }
+  private static QueryUpdateInfo getCollectionQueryUpdateInfo(@Nullable PsiVariable variable,
+                                                              PsiElement context,
+                                                              Set<String> queryNames,
+                                                              Set<String> updateNames,
+                                                              Set<PsiReferenceExpression> ignored) {
     QueryUpdateInfo info = new QueryUpdateInfo();
-    Visitor visitor = new Visitor(variable, queryNames, updateNames, info);
+    Visitor visitor = new Visitor(variable, queryNames, updateNames, info, ignored);
     context.accept(visitor);
     return info;
   }
@@ -147,12 +155,24 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     final Set<String> myQueryNames;
     final Set<String> myUpdateNames;
     final QueryUpdateInfo myInfo;
+    final Set<PsiReferenceExpression> myIgnored = new HashSet<>();
 
-    private Visitor(@Nullable PsiVariable variable, Set<String> queryNames, Set<String> updateNames, QueryUpdateInfo info) {
+    private Visitor(@Nullable PsiVariable variable,
+                    @NotNull Set<String> queryNames,
+                    @NotNull Set<String> updateNames,
+                    @NotNull QueryUpdateInfo info) {
       myVariable = variable;
       myQueryNames = queryNames;
       myUpdateNames = updateNames;
       myInfo = info;
+    }
+    private Visitor(@Nullable PsiVariable variable,
+                    @NotNull Set<String> queryNames,
+                    @NotNull Set<String> updateNames,
+                    @NotNull QueryUpdateInfo info,
+                    @NotNull Set<PsiReferenceExpression> ignored) {
+      this(variable, queryNames, updateNames, info);
+      myIgnored.addAll(ignored);
     }
 
     @Override
@@ -163,7 +183,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
           makeUpdated();
           makeQueried();
         }
-      } else if (ref.isReferenceTo(myVariable)) {
+      } else if (ref.isReferenceTo(myVariable) && !myIgnored.contains(ref)) {
         process(findEffectiveReference(ref));
       }
     }
@@ -505,7 +525,7 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      QueryUpdateInfo info = getCollectionQueryUpdateInfo(variable, updateNames, queryNames, ignoredClasses);
+      QueryUpdateInfo info = getCollectionQueryUpdateInfo(variable, updateNames, queryNames, ignoredClasses, Set.of());
       if (info == null) return;
       final boolean written = info.updated || updatedViaInitializer(variable);
       final boolean read = info.queried || queriedViaInitializer(variable);
@@ -578,12 +598,13 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
   private static QueryUpdateInfo getCollectionQueryUpdateInfo(@NotNull PsiLocalVariable variable,
                                                               Set<String> updateNames,
                                                               Set<String> queryNames,
-                                                              Set<String> ignoredClasses) {
+                                                              Set<String> ignoredClasses,
+                                                              Set<PsiReferenceExpression> ignored) {
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(variable, PsiCodeBlock.class);
     if (!checkVariable(variable, codeBlock, ignoredClasses)) {
       return null;
     }
-    return getCollectionQueryUpdateInfo(variable, codeBlock, queryNames, updateNames);
+    return getCollectionQueryUpdateInfo(variable, codeBlock, queryNames, updateNames, ignored);
   }
 
   /**
@@ -598,12 +619,19 @@ public class MismatchedCollectionQueryUpdateInspection extends BaseInspection {
     QueryUpdateInfo info = new QueryUpdateInfo();
     new Visitor(null, defaultQueryNames, defaultUpdateNames, info).process(effectiveReference);
     if (!info.updated) return true;
-    final PsiElement parent = effectiveReference.getParent();
+    PsiElement parent = effectiveReference.getParent();
+    Set<PsiReferenceExpression> ignored = new HashSet<>();
+    if (parent instanceof PsiAssignmentExpression assignmentExpression) {
+      if(assignmentExpression.getLExpression() instanceof PsiReferenceExpression referenceExpression){
+        ignored.add(referenceExpression);
+        parent = referenceExpression.resolve();
+      }
+    }
     if (!(parent instanceof PsiLocalVariable || parent instanceof PsiField)) return false;
     if (parent instanceof PsiField) {
       info = getCollectionQueryUpdateInfo((PsiField)parent, defaultUpdateNames, defaultQueryNames, Collections.emptySet());
     } else {
-      info = getCollectionQueryUpdateInfo((PsiLocalVariable)parent, defaultUpdateNames, defaultQueryNames, Collections.emptySet());
+      info = getCollectionQueryUpdateInfo((PsiLocalVariable)parent, defaultUpdateNames, defaultQueryNames, Collections.emptySet(), ignored);
     }
     return info != null && !info.updated;
   }
