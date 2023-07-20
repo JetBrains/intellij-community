@@ -24,3 +24,9 @@ class Impl : Parent() {
         return super.toString()
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "publicMethod(): Unit"
+// MEMBER: "protectedMethod(): Unit"

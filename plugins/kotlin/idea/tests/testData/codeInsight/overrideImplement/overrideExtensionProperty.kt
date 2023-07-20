@@ -6,3 +6,8 @@ interface A {
 class B : A {
     <caret>
 }
+
+// MEMBER: "prop: Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

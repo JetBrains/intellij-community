@@ -6,3 +6,5 @@ class Impl: B {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "foo(r: Runnable!): Unit"

@@ -6,3 +6,5 @@ interface Some {
 class SomeOther : Some {
     <caret>
 }
+
+// MEMBER: "foo(some: Int?): Int"

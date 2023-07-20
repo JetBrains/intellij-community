@@ -5,3 +5,5 @@ interface Interface {
 class InterfaceImpl : Interface {
     <caret>
 }
+
+// MEMBER: "foo(): Unit where B : Cloneable, B : Comparable<B>"

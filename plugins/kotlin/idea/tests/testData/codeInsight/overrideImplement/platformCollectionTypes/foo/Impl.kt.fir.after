@@ -5,3 +5,8 @@ class B : A {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "foo(): (Mutable)List<String!>!"

@@ -6,3 +6,8 @@ class Impl: B() {
         <selection><caret>super.foo(r)</selection>
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "foo(r: Runnable!): Unit"

@@ -7,3 +7,8 @@ class B : A {
     override val String.prop: Int
         get() = <selection><caret>TODO("Not yet implemented")</selection>
 }
+
+// MEMBER: "prop: Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

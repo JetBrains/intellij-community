@@ -12,3 +12,6 @@ class Other {
     }
 }
 
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

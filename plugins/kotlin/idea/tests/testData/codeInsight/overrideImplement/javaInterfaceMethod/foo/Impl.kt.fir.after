@@ -5,3 +5,5 @@ class Impl(): Intf {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "getFooBar(): String!"

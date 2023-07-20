@@ -11,3 +11,8 @@ open class ParentTarget {
 class ChildTarget : ParentTarget() {
     <caret>
 }
+
+// MEMBER: "targetFun(): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

@@ -6,3 +6,5 @@ interface T {
 class GC() : T {
     <caret>
 }
+
+// MEMBER: "v: Int"

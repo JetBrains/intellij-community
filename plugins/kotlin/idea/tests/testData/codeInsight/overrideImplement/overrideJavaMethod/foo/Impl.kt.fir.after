@@ -5,3 +5,8 @@ class C : A() {
         <selection><caret>return super.getAnswer(array, number, value)</selection>
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "getAnswer(array: Array<(out) String!>!, number: Int, value: Any!): Int"

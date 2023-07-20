@@ -12,3 +12,8 @@ public open class C() : B() {
         <selection><caret>super.foo()</selection>
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "foo(): Unit"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

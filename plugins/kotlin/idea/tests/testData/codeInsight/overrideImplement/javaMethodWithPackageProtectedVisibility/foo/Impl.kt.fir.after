@@ -7,3 +7,8 @@ class Impl(): Intf() {
         <selection><caret>return super.getFooBar()</selection>
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "getFooBar(): String!"

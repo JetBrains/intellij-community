@@ -6,3 +6,8 @@ class B : A() {
         return super.foo(s1, s2)
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "foo(s1: String!, s2: String!): String!"

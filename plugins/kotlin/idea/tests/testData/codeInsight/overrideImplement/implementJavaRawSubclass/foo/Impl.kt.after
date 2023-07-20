@@ -6,3 +6,5 @@ class C : A() {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "foo(x: (Mutable)List<(raw) Any?>!, y: String!): B<(raw) Any!>!"

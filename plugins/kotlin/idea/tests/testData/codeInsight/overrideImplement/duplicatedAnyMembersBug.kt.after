@@ -17,3 +17,7 @@ class B : A<String>(), I {
         return super.toString()
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

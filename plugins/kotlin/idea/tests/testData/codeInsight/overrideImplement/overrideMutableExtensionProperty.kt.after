@@ -8,3 +8,8 @@ class B : A {
         get() = <selection><caret>TODO("Not yet implemented")</selection>
         set(value) {}
 }
+
+// MEMBER: "foo: Double"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
