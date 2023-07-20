@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.JBProtocolCommand
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
-import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.waitForSmartMode
 
 open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   /**
@@ -29,13 +29,11 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       is ProtocolOpenProjectResult.Success -> openProjectResult.project
       is ProtocolOpenProjectResult.Error -> return openProjectResult.message
     }
-
-    DumbService.getInstance(project).runWhenSmart {
-      NavigatorWithinProject(project, parameters, ::locationToOffset).navigate(listOf(
-        NavigatorWithinProject.NavigationKeyPrefix.FQN,
-        NavigatorWithinProject.NavigationKeyPrefix.PATH
-      ))
-    }
+    project.waitForSmartMode()
+    NavigatorWithinProject(project, parameters, ::locationToOffset).navigate(listOf(
+      NavigatorWithinProject.NavigationKeyPrefix.FQN,
+      NavigatorWithinProject.NavigationKeyPrefix.PATH
+    ))
 
     return null
   }

@@ -11,7 +11,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import kotlin.test.assertNull
 
-class NavigatorWithinProjectTest: NavigationTestBase() {
+class NavigatorWithinProjectTest : NavigationTestBase() {
   companion object {
     @JvmField @ClassRule val appRule = ApplicationRule()
   }
@@ -115,7 +115,7 @@ class NavigatorWithinProjectTest: NavigationTestBase() {
     assertNull(column)
   }
 
-  private fun navigateByPath(path: String, locationToOffsetConverter: LocationToOffsetConverter) =
+  private suspend fun navigateByPath(path: String, locationToOffsetConverter: LocationToOffsetConverter) =
     NavigatorWithinProject(project, mapOf("path" to path), locationToOffsetConverter)
       .navigate(listOf(NavigatorWithinProject.NavigationKeyPrefix.PATH))
 
