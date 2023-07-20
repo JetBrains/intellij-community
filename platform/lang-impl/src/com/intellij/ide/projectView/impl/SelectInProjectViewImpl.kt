@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl
 
-import com.intellij.ide.FileEditorProvider
-import com.intellij.ide.FileSelectInContext
-import com.intellij.ide.SmartSelectInContext
+import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
@@ -184,6 +182,23 @@ internal class SelectInProjectViewImpl(
       withContext(Dispatchers.EDT) {
         projectView.select(elementSupplier, context.virtualFile, requestFocus, result)
       }
+  }
+
+  fun selectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
+    selectInRequests.tryEmit {
+      doSelectInAnyTarget(context, targets, requestFocus)
+    }
+  }
+
+  private suspend fun doSelectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
+    for (target in targets) {
+      if (readAction { target.canSelect(context) }) {
+        withContext(Dispatchers.EDT) {
+          target.selectIn(context, requestFocus)
+        }
+        return
+      }
+    }
   }
 
 }
