@@ -21,13 +21,9 @@ import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.ContainerUtil
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.buildtool.MavenDownloadConsole
@@ -41,7 +37,6 @@ import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.server.MavenWrapperDownloader
 import org.jetbrains.idea.maven.utils.*
-import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 
@@ -359,7 +354,7 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
                     try {
                       pluginResolver.resolvePlugins(mavenProjects.value, embeddersManager, mavenConsole, rawProgressReporter!!, syncConsole, true)
                     } catch (e: Exception) {
-                      MavenLog.LOG.warn("Plugin resolutin error", e)
+                      MavenLog.LOG.warn("Plugin resolution error", e)
                     }
                   }
                 }
