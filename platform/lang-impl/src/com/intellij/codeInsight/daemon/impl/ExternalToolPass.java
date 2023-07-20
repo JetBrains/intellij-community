@@ -9,7 +9,7 @@ import com.intellij.codeInspection.ex.InspectionProfileWrapper;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.LangBundle;
-import com.intellij.lang.annotation.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -141,7 +141,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    AnnotationSessionImpl.withSession(myFile, false, annotationHolder -> {
+    AnnotationSessionImpl.computeWithSession(myFile, false, annotationHolder -> {
       Update update = new Update(myFile) {
         @Override
         public void setRejected() {

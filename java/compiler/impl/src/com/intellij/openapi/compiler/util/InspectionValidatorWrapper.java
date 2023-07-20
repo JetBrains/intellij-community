@@ -11,7 +11,7 @@ import com.intellij.codeInspection.ex.Tools;
 import com.intellij.compiler.options.ValidationConfiguration;
 import com.intellij.lang.ExternalLanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.xml.XMLLanguage;
@@ -329,7 +329,7 @@ public class InspectionValidatorWrapper implements Validator {
 
   private Map<ProblemDescriptor, HighlightDisplayLevel> runXmlFileSchemaValidation(@NotNull XmlFile xmlFile) {
     Map<ProblemDescriptor, HighlightDisplayLevel> problemsMap = new LinkedHashMap<>();
-    return AnnotationSessionImpl.withSession(xmlFile, false, holder -> {
+    return AnnotationSessionImpl.computeWithSession(xmlFile, false, holder -> {
       List<ExternalAnnotator<?,?>> annotators = ExternalLanguageAnnotators.allForFile(XMLLanguage.INSTANCE, xmlFile);
       for (ExternalAnnotator<?, ?> annotator : annotators) {
         processAnnotator(xmlFile, holder, annotator);

@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.lang.annotation;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl;
+import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.UserDataHolder;
@@ -20,7 +21,7 @@ public class AnnotationSessionImpl extends AnnotationSession {
   private final UserDataHolder myDataHolder = new UserDataHolderBase();
 
   @ApiStatus.Internal
-  public AnnotationSessionImpl(@NotNull PsiFile file) {
+  AnnotationSessionImpl(@NotNull PsiFile file) {
     super(file);
   }
 
@@ -47,7 +48,7 @@ public class AnnotationSessionImpl extends AnnotationSession {
     myDataHolder.putUserData(key, value);
   }
 
-  public static <T> T withSession(@NotNull PsiFile psiFile, boolean batchMode, @NotNull Function<? super AnnotationHolderImpl, T> runnable) {
+  public static <T> T computeWithSession(@NotNull PsiFile psiFile, boolean batchMode, @NotNull Function<? super AnnotationHolderImpl, T> runnable) {
     AnnotationHolderImpl holder = new AnnotationHolderImpl(new AnnotationSessionImpl(psiFile), batchMode);
     try {
       return runnable.apply(holder);

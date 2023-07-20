@@ -6,7 +6,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.lang.annotation.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.mock.MockInspectionProfile;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -118,7 +118,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
   }
 
   private DomElementAnnotationHolderImpl createHolder() {
-    return AnnotationSessionImpl.withSession(myElement.getFile(), false, holder -> new DomElementAnnotationHolderImpl(true, myElement, holder));
+    return AnnotationSessionImpl.computeWithSession(myElement.getFile(), false, holder -> new DomElementAnnotationHolderImpl(true, myElement, holder));
   }
 
   private static DomElementsProblemsHolderImpl assertNotEmptyHolder(final DomElementsProblemsHolder holder1) {
@@ -168,7 +168,7 @@ public class DomHighlightingLiteTest extends DomTestCase {
       }
     };
     final StringBuilder s = new StringBuilder();
-    AnnotationSessionImpl.withSession(myElement.getFile(), false, toFill -> {
+    AnnotationSessionImpl.computeWithSession(myElement.getFile(), false, toFill -> {
       final MyDomElementsInspection inspection = new MyDomElementsInspection() {
 
         @Override

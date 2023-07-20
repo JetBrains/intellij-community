@@ -2,6 +2,7 @@
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.generation.surroundWith.SurroundWithHandler;
@@ -321,7 +322,7 @@ public final class CodeInsightTestUtil {
                                                                 @NotNull Consumer<? super Out> resultChecker) {
     Out result = annotator.doAnnotate(in);
     resultChecker.accept(result);
-    return AnnotationSessionImpl.withSession(psiFile, false, annotationHolder -> {
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
       ApplicationManager.getApplication().runReadAction(() -> annotationHolder.applyExternalAnnotatorWithContext(psiFile, annotator, result));
       annotationHolder.assertAllAnnotationsCreated();
       return List.copyOf(annotationHolder);
@@ -334,7 +335,7 @@ public final class CodeInsightTestUtil {
   @NotNull
   public static List<Annotation> testAnnotator(@NotNull Annotator annotator, @NotNull PsiElement @NotNull... elements) {
     PsiFile psiFile = elements[0].getContainingFile();
-    return AnnotationSessionImpl.withSession(psiFile, false, annotationHolder -> {
+    return AnnotationSessionImpl.computeWithSession(psiFile, false, annotationHolder -> {
       for (PsiElement element : elements) {
         annotationHolder.runAnnotatorWithContext(element, annotator);
       }

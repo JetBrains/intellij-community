@@ -18,7 +18,7 @@ package org.intellij.plugins.xpathView.util;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageAnnotators;
 import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
@@ -155,7 +155,7 @@ public final class MyPsiUtil {
         file.accept(new PsiRecursiveElementVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
-              AnnotationSessionImpl.withSession(file, false, holder -> {
+              AnnotationSessionImpl.computeWithSession(file, false, holder -> {
                 holder.runAnnotatorWithContext(element, annotator);
                 for (Annotation annotation : holder) {
                   if (annotation.getSeverity() == HighlightSeverity.ERROR) {

@@ -7,7 +7,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
-import com.intellij.lang.annotation.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -202,7 +202,7 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
       return problemHolder.getAllProblems(inspection);
     }
 
-    return AnnotationSessionImpl.withSession(domFileElement.getFile(), false, annotationHolder -> {
+    return AnnotationSessionImpl.computeWithSession(domFileElement.getFile(), false, annotationHolder -> {
       DomElementAnnotationHolder holder = new DomElementAnnotationHolderImpl(onTheFly, domFileElement, annotationHolder);
       inspection.checkFileElement(domFileElement, holder);
       //noinspection unchecked

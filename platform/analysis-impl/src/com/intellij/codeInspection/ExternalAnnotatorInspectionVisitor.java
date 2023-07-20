@@ -4,7 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.lang.annotation.AnnotationSessionImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.AnnotationSessionImpl;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -53,7 +53,7 @@ public class ExternalAnnotatorInspectionVisitor extends PsiElementVisitor {
       if (annotationResult == null) {
         return ProblemDescriptor.EMPTY_ARRAY;
       }
-      return ReadAction.compute(() -> AnnotationSessionImpl.withSession(file, true, annotationHolder -> {
+      return ReadAction.compute(() -> AnnotationSessionImpl.computeWithSession(file, true, annotationHolder -> {
         annotationHolder.applyExternalAnnotatorWithContext(file, annotator, annotationResult);
         annotationHolder.assertAllAnnotationsCreated();
         return ProblemDescriptorUtil.convertToProblemDescriptors(annotationHolder, file);
