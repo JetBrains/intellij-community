@@ -14,6 +14,8 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.*
@@ -129,7 +131,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       psiFile to document
     } ?: return
 
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val (psiFile, document) = pair
 
       if (myEditor == null || document !== myEditor!!.document) {
@@ -296,7 +298,7 @@ open class UsagePreviewPanel @JvmOverloads constructor(project: Project,
       resetEditor(infos!!)
     }
     else {
-      withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
         releaseEditor()
         removeAll()
         val newLineIndex = cannotPreviewMessage.indexOf('\n')
