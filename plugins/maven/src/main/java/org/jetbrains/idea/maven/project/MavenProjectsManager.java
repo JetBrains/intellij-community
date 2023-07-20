@@ -788,7 +788,6 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public synchronized void setExplicitProfiles(MavenExplicitProfiles profiles) {
     myProjectsTree.setExplicitProfiles(profiles);
-    scheduleUpdateAll(new MavenImportSpec(false, false, false));
   }
 
   /**

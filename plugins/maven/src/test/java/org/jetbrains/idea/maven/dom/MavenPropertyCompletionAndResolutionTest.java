@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.idea.maven.buildtool.MavenImportSpec;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfiles;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.model.MavenDomSettingsModel;
@@ -1111,6 +1112,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     }
     else {
       myProjectsManager.setExplicitProfiles(new MavenExplicitProfiles(Arrays.asList(profiles)));
+      myProjectsManager.scheduleUpdateAll(new MavenImportSpec(false, false, false));
       waitForReadingCompletion();
     }
   }
