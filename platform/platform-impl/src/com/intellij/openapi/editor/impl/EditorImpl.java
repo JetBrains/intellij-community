@@ -325,6 +325,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
+
+  public final boolean myUseInputMethodInlay = Registry.is("editor.input.method.inlay", false);
+
   /**
    * @deprecated use UISettings#getEditorFractionalMetricsHint instead
    */
@@ -3665,9 +3668,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyInputMethodHandler implements InputMethodRequests {
     private RangeMarker composedRangeMarker;
+    private Inlay<?> inlay;
 
     private @Nullable ProperTextRange getRange() {
-      if (composedRangeMarker == null) return null;
+      if (myUseInputMethodInlay || composedRangeMarker == null) return null;
       return new ProperTextRange(composedRangeMarker.getStartOffset(), composedRangeMarker.getEndOffset());
     }
 
@@ -3772,7 +3776,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public int getCommittedTextLength() {
       int length = getDocument().getTextLength();
-      if (composedRangeMarker != null) {
+      if (!myUseInputMethodInlay && composedRangeMarker != null) {
         length -= composedRangeMarker.getEndOffset() - composedRangeMarker.getStartOffset();
       }
       return length;
@@ -3804,7 +3808,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private void setInputMethodCaretPosition(@NotNull InputMethodEvent e) {
-      if (composedRangeMarker != null) {
+      if (!myUseInputMethodInlay && composedRangeMarker != null) {
         int dot = composedRangeMarker.getStartOffset();
 
         TextHitInfo caretPos = e.getCaret();
@@ -3855,8 +3859,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // old composed text deletion
       final Document doc = getDocument();
 
+      if (inlay != null) {
+        Disposer.dispose(inlay);
+        inlay = null;
+      }
       if (composedRangeMarker != null) {
-        if (!isViewer() && doc.isWritable()) {
+        if (!myUseInputMethodInlay && !isViewer() && doc.isWritable()) {
           int composedStartIndex = composedRangeMarker.getStartOffset();
           runUndoTransparent(() -> {
             if (composedRangeMarker.isValid()) {
@@ -3894,11 +3902,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           int composedTextIndex = text.getIndex();
           if (composedTextIndex < text.getEndIndex()) {
             String composedString = createComposedString(composedTextIndex, text);
-
-            runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
-
-            composedRangeMarker =
-              myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
+            if (myUseInputMethodInlay) {
+              var offset = getCaretModel().getPrimaryCaret().getOffset();
+              inlay = getInlayModel().addInlineElement(offset, new InputMethodInlayRenderer(composedString));
+              composedRangeMarker = myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset(), true);
+            } else {
+              runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
+              composedRangeMarker = myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
+            }
           }
         }
       }
