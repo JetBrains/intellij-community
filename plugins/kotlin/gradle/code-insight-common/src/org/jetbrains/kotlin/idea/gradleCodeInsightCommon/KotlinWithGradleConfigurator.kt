@@ -9,6 +9,9 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationGroupManager
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
@@ -42,6 +45,7 @@ import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
@@ -178,7 +182,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return AutoConfigurationSettings(baseModule, maxKotlinVersion)
     }
 
-    // TODO: Show this when clicking the dialog option rather immediately after
     private fun Project.showDiffPanel(changedFiles: ChangedConfiguratorFiles) {
         val diffRequests = changedFiles.getChangedFilesWithContent().mapNotNull { (f, originalContent) ->
             val virtualFile = f.virtualFile ?: return@mapNotNull null
@@ -205,7 +208,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val moduleVersions = getKotlinVersionsAndModules(project, this).first
         val jvmTargets = getModulesTargetingUnsupportedJvmAndTargetsForAllModules(listOf(module), settings.kotlinVersion).second
 
-        // TODO: Add logic to display the dialog, undo action, etc.
         val result = configureSilently(
             module.project,
             listOf(module),
@@ -214,11 +216,28 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             jvmTargets,
             "command.name.configure.kotlin.automatically"
         )
-        result.collector.showNotification()
-
-        project.showDiffPanel(result.changedFiles)
-
         ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
+
+        showKotlinAutoconfiguredNotification(project, module.name, result.changedFiles)
+    }
+
+    private fun showKotlinAutoconfiguredNotification(project: Project, moduleName: String, changedFiles: ChangedConfiguratorFiles) {
+        val notificationText = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.notification", moduleName)
+        val notification = NotificationGroupManager.getInstance()
+            .getNotificationGroup("Configure Kotlin")
+            .createNotification(
+                title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin"),
+                content = notificationText,
+                type = NotificationType.INFORMATION,
+            )
+        notification.addAction(viewAppliedChangesAction(changedFiles))
+        notification.notify(project)
+    }
+
+    private fun viewAppliedChangesAction(changedFiles: ChangedConfiguratorFiles) = NotificationAction.create(
+        KotlinProjectConfigurationBundle.message("view.code.differences.action")
+    ) { e, _ ->
+        e.project?.showDiffPanel(changedFiles)
     }
 
     private class ConfigurationResult(
@@ -272,7 +291,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             }
             if (addVersionToSettings) {
                 rootModule.getBuildScriptSettingsPsiFile()?.let {
-                    if (it.canBeConfigured() && configureSettingsFile(it, kotlinVersion, changedFiles)) { // This happens only for JVM, not for Android
+                    if (it.canBeConfigured() && configureSettingsFile(
+                            it,
+                            kotlinVersion,
+                            changedFiles
+                        )
+                    ) { // This happens only for JVM, not for Android
                         addVersionToModuleBuildScript = false
                     }
                 }
