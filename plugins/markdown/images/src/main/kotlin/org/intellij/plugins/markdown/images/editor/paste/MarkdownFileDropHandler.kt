@@ -16,8 +16,8 @@ import com.intellij.refactoring.RefactoringBundle
 import org.intellij.images.fileTypes.ImageFileTypeManager
 import org.intellij.images.fileTypes.impl.SvgFileType
 import org.intellij.plugins.markdown.editor.runForEachCaret
-import org.intellij.plugins.markdown.images.editor.images.ImageUtils
 import org.intellij.plugins.markdown.images.MarkdownImagesBundle
+import org.intellij.plugins.markdown.images.editor.ImageUtils
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.isMarkdownLanguage
 import org.intellij.plugins.markdown.settings.MarkdownCodeInsightSettings
 import java.awt.datatransfer.Transferable

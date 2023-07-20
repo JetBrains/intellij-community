@@ -11,9 +11,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.refactoring.RefactoringBundle
 import org.intellij.plugins.markdown.images.MarkdownImagesBundle
-import org.intellij.plugins.markdown.images.editor.images.ConfigureImageDialog
-import org.intellij.plugins.markdown.images.editor.images.ImageUtils
-import org.intellij.plugins.markdown.images.editor.images.MarkdownImageData
+import org.intellij.plugins.markdown.images.editor.ConfigureImageDialog
+import org.intellij.plugins.markdown.images.editor.ImageUtils
+import org.intellij.plugins.markdown.images.editor.MarkdownImageData
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 

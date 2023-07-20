@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.images.editor.images
+package org.intellij.plugins.markdown.images.editor.completion
 
 import com.intellij.codeInsight.completion.CompletionContributor
 import com.intellij.codeInsight.completion.CompletionInitializationContext

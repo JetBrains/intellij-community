@@ -1,4 +1,4 @@
-package org.intellij.plugins.markdown.images.editor.images
+package org.intellij.plugins.markdown.images.editor
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement

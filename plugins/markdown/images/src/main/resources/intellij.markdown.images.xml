@@ -16,16 +16,16 @@
                            implementation="org.intellij.plugins.markdown.images.editor.paste.MarkdownFileDropHandler"/>
 
     <completion.contributor language="Markdown"
-                            implementationClass="org.intellij.plugins.markdown.images.editor.images.MarkdownImageTagCompletionContributor"/>
+                            implementationClass="org.intellij.plugins.markdown.images.editor.completion.MarkdownImageTagCompletionContributor"/>
     <codeInsight.lineMarkerProvider language="HTML"
-                                    implementationClass="org.intellij.plugins.markdown.images.editor.images.ConfigureHtmlImageLineMarkerProvider"/>
+                                    implementationClass="org.intellij.plugins.markdown.images.editor.ConfigureHtmlImageLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.images.editor.images.ConfigureMarkdownImageLineMarkerProvider"/>
+                                    implementationClass="org.intellij.plugins.markdown.images.editor.ConfigureMarkdownImageLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="Markdown"
-                                    implementationClass="org.intellij.plugins.markdown.images.editor.images.ConfigureTextHtmlImageLineMarkerProvider"/>
+                                    implementationClass="org.intellij.plugins.markdown.images.editor.ConfigureTextHtmlImageLineMarkerProvider"/>
     <intentionAction>
       <language>Markdown</language>
-      <className>org.intellij.plugins.markdown.images.editor.images.MarkdownConfigureImageIntention</className>
+      <className>org.intellij.plugins.markdown.images.editor.MarkdownConfigureImageIntention</className>
       <bundleName>messages.MarkdownImagesBundle</bundleName>
       <categoryKey>markdown.intention.category</categoryKey>
     </intentionAction>
