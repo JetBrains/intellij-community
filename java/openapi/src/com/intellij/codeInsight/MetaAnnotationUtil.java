@@ -372,6 +372,32 @@ public abstract class MetaAnnotationUtil {
     return Stream.concat(directAnnotations, metaAnnotations);
   }
 
+  public static @NotNull Stream<PsiClass> findAnnotationsByMeta(
+    @NotNull PsiModifierListOwner listOwner,
+    @NotNull Collection<String> metaAnnotations
+  ) {
+    Stream<PsiClass> directAnnotations = Stream.of(AnnotationUtil.findAnnotations(listOwner, metaAnnotations))
+      .map(MetaAnnotationUtil::resolveAnnotationType)
+      .filter(Objects::nonNull);
+
+    Stream<PsiClass> lazyResolvedAnnotations =
+      Stream.generate(() -> getResolvedClassesInAnnotationsList(listOwner)).limit(1)
+        .flatMap(Collection::stream);
+
+    Stream<PsiClass> indirectAnnotations =
+      lazyResolvedAnnotations
+        .flatMap(psiClass -> metaAnnotations.stream()
+          .map(annotationFQN -> {
+            PsiAnnotation metaAnnotation = metaAnnotationCached(psiClass, annotationFQN);
+            if (metaAnnotation != null) return psiClass;
+
+            return null;
+          }))
+        .filter(Objects::nonNull);
+
+    return Stream.concat(directAnnotations, indirectAnnotations);
+  }
+
   private static List<PsiClass> getResolvedClassesInAnnotationsList(PsiModifierListOwner owner) {
     PsiModifierList modifierList = owner.getModifierList();
     if (modifierList != null) {
