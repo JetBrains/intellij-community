@@ -2,6 +2,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
@@ -23,7 +24,8 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
-public class TitledSeparator extends JPanel {
+public class TitledSeparator extends JPanel implements ComboBox.SelectableItem {
+
   public static final int TOP_INSET = 7;
   public static final int BOTTOM_INSET = 5;
   public static final int SEPARATOR_LEFT_INSET = 6;
@@ -62,6 +64,11 @@ public class TitledSeparator extends JPanel {
     setOpaque(false);
     updateLabelFont();
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+  }
+
+  @Override
+  public boolean isSelectable() {
+    return false;
   }
 
   @Override

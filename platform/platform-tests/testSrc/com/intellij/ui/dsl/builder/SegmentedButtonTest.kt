@@ -54,7 +54,7 @@ class SegmentedButtonTest {
       row {
         segmentedButton = segmentedButton(listOf(1, 2, 3)) {
           text = rendererText ?: "item $it"
-          toolTip = rendererToolTip
+          toolTipText = rendererToolTip
         }
       }
     }
@@ -93,5 +93,40 @@ class SegmentedButtonTest {
         }
       }
     }
+  }
+
+  @Test
+  fun testDisabledItem() {
+    lateinit var segmentedButton: SegmentedButton<Int>
+    var enabledItem1 = true
+    panel {
+      row {
+        segmentedButton = segmentedButton(listOf(1, 2)) {
+          text = "$it"
+          enabled = it != 1 || enabledItem1
+        }
+      }
+    }
+
+    segmentedButton.selectedItem = 2
+    enabledItem1 = false
+    segmentedButton.update(1)
+    assertEquals(segmentedButton.selectedItem, 2)
+
+    segmentedButton.selectedItem = 1
+    assertEquals(segmentedButton.selectedItem, 2, "Disabled item cannot be selected")
+
+    segmentedButton.selectedItem = 3
+    assertEquals(segmentedButton.selectedItem, 2, "Absent item cannot be selected")
+
+    enabledItem1 = true
+    segmentedButton.update(1)
+    assertEquals(segmentedButton.selectedItem, 2)
+
+    segmentedButton.selectedItem = null
+    assertEquals(segmentedButton.selectedItem, null)
+
+    segmentedButton.selectedItem = 1
+    assertEquals(segmentedButton.selectedItem, 1)
   }
 }

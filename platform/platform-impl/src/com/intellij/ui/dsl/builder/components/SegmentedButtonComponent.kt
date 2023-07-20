@@ -134,7 +134,7 @@ internal class SegmentedButtonComponent<T>(private val segmentedButton: Segmente
     val builder = RowsGridBuilder(this)
     for (item in segmentedButton.items) {
       val presentation = segmentedButton.presentations[item]!!
-      val action = SegmentedButtonAction(this, item, presentation.text, presentation.toolTip, null)
+      val action = SegmentedButtonAction(this, item, presentation.text, presentation.toolTipText, presentation.icon, presentation.enabled)
       val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
 
       builder.cell(button, horizontalAlign = HorizontalAlign.FILL, resizableColumn = true)
@@ -251,8 +251,14 @@ internal class SegmentedButtonComponent<T>(private val segmentedButton: Segmente
 
 private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText text: String?,
                                        @NlsActions.ActionDescription description: String?,
-                                       icon: Icon?)
+                                       icon: Icon?,
+                                       private val enabled: Boolean)
   : ToggleAction(text, description, icon), DumbAware {
+
+  override fun update(e: AnActionEvent) {
+    super.update(e)
+    e.presentation.isEnabled = enabled
+  }
 
   override fun isSelected(e: AnActionEvent): Boolean {
     return parent.selectedItem == item

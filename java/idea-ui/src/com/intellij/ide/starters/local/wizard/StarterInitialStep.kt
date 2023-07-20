@@ -124,7 +124,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : CommonS
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
           segmentedButton(starterSettings.projectTypes) {
             text = it.title
-            toolTip = it.description
+            toolTipText = it.description
           }.bind(projectTypeProperty)
 
           bottomGap(BottomGap.SMALL)

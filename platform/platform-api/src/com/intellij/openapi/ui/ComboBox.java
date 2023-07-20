@@ -32,6 +32,12 @@ import java.awt.event.*;
  * Moreover, adding and removing of action listeners isn't supported by the wrapper.
  */
 public class ComboBox<E> extends ComboBoxWithWidePopup<E> implements AWTEventListener {
+
+  @ApiStatus.Experimental
+  public interface SelectableItem {
+    boolean isSelectable();
+  }
+
   public static final String TABLE_CELL_EDITOR_PROPERTY = "tableCellEditor";
 
   private int myMinimumAndPreferredWidth;

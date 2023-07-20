@@ -3,6 +3,7 @@ package com.intellij.ui.popup.list;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComboBoxPopupState;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -254,7 +255,8 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     @Override
     public boolean isSelectable(T value) {
       Component component = myGetRenderer.get().getListCellRendererComponent(myProxyList, value, -1, false, false);
-      return !(component instanceof TitledSeparator || component instanceof JSeparator);
+      return !((component instanceof ComboBox.SelectableItem selectableItem && !selectableItem.isSelectable())
+               || component instanceof JSeparator);
     }
 
     @Override

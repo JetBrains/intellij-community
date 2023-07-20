@@ -28,9 +28,11 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
     var text: @Nls String?
 
-    var toolTip: @Nls String?
+    var toolTipText: @Nls String?
 
     var icon: Icon?
+
+    var enabled: Boolean
   }
 
   override fun visible(isVisible: Boolean): SegmentedButton<T>

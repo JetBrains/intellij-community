@@ -229,18 +229,18 @@ interface Row {
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
-  @Deprecated("Use overloaded method. API is different and text value must be assigned in new version of renderer",
-              level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use overloaded method", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> @Nls String): Cell<SegmentedButtonToolbar>
 
-  @Deprecated("Use another segmentedButton method instead", level = DeprecationLevel.HIDDEN)
+  @Deprecated("Use another segmentedButton method instead. API is different and text value must be assigned in new version of renderer",
+              level = DeprecationLevel.HIDDEN)
   @ApiStatus.Experimental
   fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> @Nls String): SegmentedButton<T>
 
   /**
-   * [renderer] converts values to visual presentation. Use [SegmentedButton.update] if text, hint, or other properties in model are changed
-   * and should be re-rendered
+   * [renderer] converts values to visual presentation. Every presentation must have non-empty text, other properties are optional.
+   * Use [SegmentedButton.update] if text, hint, or other properties in model are changed and should be re-rendered
    */
   @ApiStatus.Experimental
   fun <T> segmentedButton(items: Collection<T>, renderer: SegmentedButton.ItemPresentation.(T) -> Unit): SegmentedButton<T>
