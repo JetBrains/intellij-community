@@ -273,7 +273,12 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
       progressIndication.invokeOnCompletion { cause ->
         if (cause is CancellationException) {
-          embedder.cancelLongRunningTask(longRunningTaskId, ourToken)
+          try {
+            embedder.cancelLongRunningTask(longRunningTaskId, ourToken)
+          }
+          catch (e: Exception) {
+            MavenLog.LOG.warn("Exception in long running task cancellation", e)
+          }
         }
       }
 
