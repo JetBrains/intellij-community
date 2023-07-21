@@ -20,7 +20,7 @@ class JUnitRunConfigurationProperties(
     fun loadRunConfiguration(file: Path): JUnitRunConfigurationProperties {
       val configuration = getConfiguration(file)
       if (!configuration.getAttributeValue("type").equals(TYPE)) {
-        throw RuntimeException("Cannot load configuration from \'${file.name}\': only JUnit run configuration are supported")
+        throw RuntimeException("Cannot load configuration from '${file.name}': only JUnit run configuration are supported")
       }
 
       val moduleName = getModuleName(configuration)
@@ -30,12 +30,12 @@ class JUnitRunConfigurationProperties(
         "class" -> listOf(options.get("MAIN_CLASS_NAME")!!)
         "package" -> listOf("${options.get("PACKAGE_NAME")!!}.*")
         "pattern" -> configuration.getChild("patterns")!!.children("pattern").map { it.getAttributeValue("testClass")!! }.toList()
-        else -> throw RuntimeException("Cannot run ${file.name} configuration: \'$testKind\' test kind is not supported")
+        else -> throw RuntimeException("Cannot run ${file.name} configuration: '$testKind' test kind is not supported")
       }
 
       val forkMode = configuration.getChild("fork_mode")?.getAttributeValue("value")
       if (forkMode != null && forkMode != "none") {
-        throw RuntimeException("Cannot run ${file.name} configuration: fork mode \'$forkMode\' is not supported")
+        throw RuntimeException("Cannot run ${file.name} configuration: fork mode '$forkMode' is not supported")
       }
 
       val requiredArtifacts = configuration.getChild("method")?.children("option")

@@ -34,7 +34,6 @@ class JUnitRunConfigurationPropertiesTest {
     assertEquals("test pattern", properties.name)
     assertEquals("main-module", properties.moduleName)
     assertEquals(listOf("com.example.Test", "com.example.package..*"), properties.testClassPatterns)
-    @Suppress("SpellCheckingInspection")
     assertEquals(listOf("-ea", "-Dintellij.build.test.patterns.escaped=true"), properties.vmParameters)
     assertEquals(emptyList<String>(), properties.requiredArtifacts)
   }

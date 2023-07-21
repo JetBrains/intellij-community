@@ -151,14 +151,14 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   }
 
   private fun warnOptionIgnored(specifiedOption: String, ignoredOption: String) =
-    context.messages.warning("\'${specifiedOption}\' option is specified, so \'${ignoredOption}\' will be ignored.")
+    context.messages.warning("'${specifiedOption}' option is specified, so '${ignoredOption}' will be ignored.")
 
   private fun runTestsFromRunConfigurations(additionalJvmOptions: List<String>,
                                             runConfigurations: List<JUnitRunConfigurationProperties>,
                                             additionalSystemProperties: Map<String, String>,
                                             context: CompilationContext) {
     for (configuration in runConfigurations) {
-      spanBuilder("run \'${configuration.name}\' run configuration").useWithScope {
+      spanBuilder("run '${configuration.name}' run configuration").useWithScope {
         runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties, context)
       }
     }
@@ -168,7 +168,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                                            additionalJvmOptions: List<String>,
                                            additionalSystemProperties: Map<String, String>,
                                            context: CompilationContext) {
-    context.messages.progress("Running \'${runConfigurationProperties.name}\' run configuration")
+    context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
     runTestsProcess(mainModule = runConfigurationProperties.moduleName,
                     testGroups = null,
                     testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
@@ -219,13 +219,13 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     val testDiscovery = "intellij-test-discovery"
     val library = context.projectModel.project.libraryCollection.findLibrary(testDiscovery)
-                  ?: throw RuntimeException("Can\'t find the ${testDiscovery} library, but test discovery capturing enabled.")
+                  ?: throw RuntimeException("Can't find the ${testDiscovery} library, but test discovery capturing enabled.")
 
     val agentJar = library.getPaths(JpsOrderRootType.COMPILED)
       .firstOrNull {
         val name = it.fileName.toString()
         name.startsWith("intellij-test-discovery") && name.endsWith(".jar")
-      } ?: throw RuntimeException("Can\'t find the agent in ${testDiscovery} library, but test discovery capturing enabled.")
+      } ?: throw RuntimeException("Can't find the agent in ${testDiscovery} library, but test discovery capturing enabled.")
 
     additionalJvmOptions += "-javaagent:${agentJar}"
     val excludeRoots = context.projectModel.global.libraryCollection.getLibraries(JpsJavaSdkType.INSTANCE)
@@ -252,12 +252,12 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
                          context: CompilationContext) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
-      context.messages.error("Remote debugging is supported for junit run configurations only, but \'teamcity.remote-debug.type\' is ${testConfigurationType}")
+      context.messages.error("Remote debugging is supported for junit run configurations only, but 'teamcity.remote-debug.type' is ${testConfigurationType}")
     }
     val testObject = System.getProperty("teamcity.remote-debug.junit.type")
     val junitClass = System.getProperty("teamcity.remote-debug.junit.class")
     if (testObject != "class") {
-      val message = "Remote debugging supports debugging all test methods in a class for now, debugging isn\'t supported for \'${testObject}\'"
+      val message = "Remote debugging supports debugging all test methods in a class for now, debugging isn't supported for '${testObject}'"
       if (testObject == "method") {
         context.messages.warning(message)
         context.messages.warning("Launching all test methods in the class ${junitClass}")
@@ -342,10 +342,10 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
     val messages = context.messages
     if (isRunningInBatchMode) {
-      messages.info("Running tests from ${mainModule} matched by \'${options.batchTestIncludes}\' pattern.")
+      messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
     }
     else {
-      messages.info("Starting tests from groups \'${testGroups}\' from classpath of module \'${mainModule}\'")
+      messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
     val numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]?.toIntOrNull() ?: 1
     if (numberOfBuckets > 1) {
