@@ -122,28 +122,17 @@ object AvatarUtils {
 
 internal object Avatars {
   // "John Smith" -> "JS"
-  // "John Smith-Harris" -> "JS"
-  // "John-Smith-Harris" -> "JH"
-  // "John-Smith Harris" -> "JH"
-  // "MyProject" -> "MP"
-  // "My-Project" -> "MP"
-  // "My-Project_Strong" -> "MP"
-  // "My_Project_Strong" -> "MS"
-  // "One,Two-Four" -> "OT"
   fun initials(text: String): String {
-    val filtered = text
+    val words = text
       .filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
       .trim()
-
-    val words = (filtered.split(' ').takeIf { it.size >= 2 }
-                 ?: filtered.split(',').takeIf { it.size >= 2 }
-                 ?: filtered.split('-').takeIf { it.size >= 2 }
-                 ?: filtered.split('_').takeIf { it.size >= 2 }
-                 ?: filtered.split('`', '\'', '\"').takeIf { it.size >= 2 })
-        ?.let { listOf(it.first(), it.last()) }
-
-    if (words == null) {
-      return generateFromCamelCase(filtered)
+      .split(' ', ',', '`', '\'', '\"').filter { it.isNotBlank() }
+      .let {
+        if (it.size > 2) listOf(it.first(), it.last()) else it
+      }
+      .take(2)
+    if (words.size == 1) {
+      return generateFromCamelCase(words.first())
     }
     return words.map { it.first() }
         .joinToString("").uppercase()
