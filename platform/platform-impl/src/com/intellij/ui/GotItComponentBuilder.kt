@@ -482,11 +482,13 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         putClientProperty("gotItButton", true)
         if (useContrastColors) {
           putClientProperty("gotItButton.contrast", true)
-          foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
         }
         else if (useContrastButton) {
           // make the button bright blue as the default button
           ClientProperty.put(this, DarculaButtonUI.DEFAULT_STYLE_KEY, true)
+        }
+        if (useContrastColors || useContrastButton) {
+          foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
         }
       }
       buttonConsumer(button)
@@ -500,7 +502,6 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
         val secondaryButton = createLinkLabel(secondaryButtonText!!,
                                               JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors),
                                               isExternal = false)
-        secondaryButton.setPaintUnderline(false)
         secondaryButtonConsumer(secondaryButton)
 
         buttonPanel.add(secondaryButton)
