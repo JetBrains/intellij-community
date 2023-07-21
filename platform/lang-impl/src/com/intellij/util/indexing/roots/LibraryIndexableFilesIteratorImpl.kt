@@ -64,7 +64,7 @@ private constructor(private val libraryName: @NlsSafe String?,
   companion object {
     private val iterateOverSourceRoots = SystemProperties.getBooleanProperty("LibraryIndexableFilesIterator.iterate.over.sources", true)
 
-    fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: List<VirtualFile>? = null): List<VirtualFile> {
+    fun collectFiles(library: Library, rootType: OrderRootType, rootsToFilter: Collection<VirtualFile>? = null): List<VirtualFile> {
       val libraryRoots = library.rootProvider.getFiles(rootType)
       val rootsToIterate: List<VirtualFile> = rootsToFilter?.filter { root ->
         libraryRoots.find { libraryRoot ->
@@ -77,8 +77,8 @@ private constructor(private val libraryName: @NlsSafe String?,
     @RequiresReadLock
     @JvmStatic
     fun createIterator(library: Library,
-                       roots: List<VirtualFile>? = null,
-                       sourceRoots: List<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
+                       roots: Collection<VirtualFile>? = null,
+                       sourceRoots: Collection<VirtualFile>? = null): LibraryIndexableFilesIteratorImpl? =
       if (library is LibraryEx && library.isDisposed)
         null
       else

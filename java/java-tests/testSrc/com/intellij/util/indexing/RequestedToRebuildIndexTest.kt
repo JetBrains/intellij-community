@@ -15,6 +15,7 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import org.junit.Test
 import java.util.function.Consumer
 
@@ -38,7 +39,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     val storage = WorkspaceModel.getInstance(project).currentSnapshot
     val moduleEntity = storage.entities(ModuleEntity::class.java).iterator().next()
     assertNotNull(moduleEntity)
-    val iterators = createIterators(moduleEntity, listOf(fileA), storage)
+    val iterators = createIterators(moduleEntity, IndexingRootHolder.fromFile(fileA), storage)
     UnindexedFilesUpdater(myFixture.project, ArrayList(iterators), null,
                           "Partial reindex of one of two indexable files").queue()
   }

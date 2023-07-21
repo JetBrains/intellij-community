@@ -730,7 +730,7 @@ public abstract class DependenciesIndexedStatusServiceBaseTest {
       List<VirtualFile> actualRoots = new ArrayList<>();
       for (IndexableIteratorBuilder builder : builders) {
         assertInstanceOf(builder, ModuleRootsFileBasedIteratorBuilder.class);
-        actualRoots.addAll(((ModuleRootsFileBasedIteratorBuilder)builder).getFiles());
+        actualRoots.addAll(((ModuleRootsFileBasedIteratorBuilder)builder).getFiles().getRoots());
       }
       assertContainsElements(actualRoots, roots);
 

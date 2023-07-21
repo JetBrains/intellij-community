@@ -7,6 +7,8 @@ import com.intellij.openapi.roots.ContentIterator
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.*
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -31,6 +33,27 @@ object IndexableFilesIterationMethods {
     return roots.all { root ->
       VfsUtilCore.iterateChildrenRecursively(root, finalFileFilter, contentIterator)
     }
+  }
+
+  fun iterateRoots(
+    project: Project,
+    rootsHolder: IndexingSourceRootHolder,
+    contentIterator: ContentIterator,
+    fileFilter: VirtualFileFilter,
+    excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    val roots = rootsHolder.roots + rootsHolder.sourceRoots
+    return iterateRoots(project, roots, contentIterator, fileFilter, excludeNonProjectRoots)
+  }
+
+  fun iterateRoots(
+    project: Project,
+    roots: IndexingRootHolder,
+    contentIterator: ContentIterator,
+    fileFilter: VirtualFileFilter,
+    excludeNonProjectRoots: Boolean = true
+  ): Boolean {
+    return iterateRoots(project, roots.roots, contentIterator, fileFilter, excludeNonProjectRoots)
   }
 
   @JvmOverloads

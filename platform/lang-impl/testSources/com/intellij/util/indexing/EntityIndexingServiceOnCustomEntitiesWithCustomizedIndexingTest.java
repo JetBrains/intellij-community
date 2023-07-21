@@ -11,12 +11,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
 import com.intellij.util.indexing.customizingIteration.GenericContentEntityIterator;
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin;
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import com.intellij.util.indexing.testEntities.IndexingTestEntity;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
@@ -37,14 +37,14 @@ public class EntityIndexingServiceOnCustomEntitiesWithCustomizedIndexingTest ext
   private static class MyModuleContentIterator implements ModuleAwareContentEntityIterator {
     private final Module module;
     private final EntityReference<? extends WorkspaceEntity> reference;
-    private final Collection<VirtualFile> roots;
+    private final IndexingRootHolder roots;
 
     private MyModuleContentIterator(Module module,
                                     EntityReference<? extends WorkspaceEntity> reference,
                                     Collection<? extends VirtualFile> roots) {
       this.module = module;
       this.reference = reference;
-      this.roots = new ArrayList<>(roots);
+      this.roots = IndexingRootHolder.Companion.fromFiles(roots);
     }
 
     @Override
@@ -54,7 +54,7 @@ public class EntityIndexingServiceOnCustomEntitiesWithCustomizedIndexingTest ext
 
     @Override
     public @NotNull Set<String> getRootUrls(@NotNull Project project) {
-      return ContainerUtil.map2Set(roots, root -> root.getPath());
+      return roots.getRootUrls();
     }
 
     @Override
@@ -66,12 +66,11 @@ public class EntityIndexingServiceOnCustomEntitiesWithCustomizedIndexingTest ext
   private static class MyContentOrigin implements ModuleAwareContentEntityOrigin {
     private final Module myModule;
     private final EntityReference<?> myReference;
-    private final Collection<VirtualFile> myRoots;
+    private final IndexingRootHolder myRoots;
 
     MyContentOrigin(@NotNull Module module,
                     @NotNull EntityReference<?> reference,
-                    @NotNull Collection<VirtualFile> roots) {
-
+                    @NotNull IndexingRootHolder roots) {
       myModule = module;
       myReference = reference;
       myRoots = roots;
@@ -91,7 +90,7 @@ public class EntityIndexingServiceOnCustomEntitiesWithCustomizedIndexingTest ext
 
     @NotNull
     @Override
-    public Collection<VirtualFile> getRoots() {
+    public IndexingRootHolder getRootHolder() {
       return myRoots;
     }
 

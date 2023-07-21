@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.origin.MutableIndexingSourceRootHolder
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 
@@ -22,12 +23,15 @@ class ExternalEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
     val (custom, usual) = builders.partition { it.customization != null }
 
     val customIterators = custom.flatMap {
-      it.customization!!.createExternalEntityIterators(it.entityReference, it.roots, it.sourceRoots)
+      it.customization!!.createExternalEntityIterators(it.entityReference, it.roots)
     }
 
     val usualIterators = usual.groupBy { it.entityReference }.map {
-      ExternalEntityIndexableIteratorImpl(it.key, it.value.flatMap { builder -> builder.roots },
-                                          it.value.flatMap { builder -> builder.sourceRoots })
+      val sum = it.value.map { builder -> builder.roots }.foldRight(MutableIndexingSourceRootHolder()) { holder, mutableHolder ->
+        mutableHolder.addRoots(holder)
+        return@foldRight mutableHolder
+      }
+      ExternalEntityIndexableIteratorImpl(it.key, sum)
     }
 
     return usualIterators + customIterators

@@ -2,9 +2,10 @@
 package com.intellij.util.indexing.roots.builders
 
 import com.intellij.openapi.project.Project
+import com.intellij.util.indexing.roots.GenericContentEntityIteratorImpl
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.GenericContentEntityIteratorImpl
+import com.intellij.util.indexing.roots.origin.MutableIndexingRootHolder
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 
@@ -26,7 +27,10 @@ class GenericContentEntityIndexableIteratorHandler : IndexableIteratorBuilderHan
     }
 
     val usualIterators = usual.groupBy { it.entityReference }.map {
-      GenericContentEntityIteratorImpl(it.key, it.value.flatMap { builder -> builder.roots })
+      GenericContentEntityIteratorImpl(it.key, it.value.fold(MutableIndexingRootHolder()) { holder, builder ->
+        holder.addRoots(builder.roots)
+        return@fold holder
+      })
     }
 
     return usualIterators + customIterators

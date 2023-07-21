@@ -25,6 +25,7 @@ import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
 import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.SdkIndexableFilesIteratorImpl
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -66,7 +67,7 @@ open class IndexableFilesIndexOriginsTestBase {
   }
 
   protected fun createModuleContentOrigin(fileSpec: ContentSpec, module: com.intellij.openapi.module.Module): IndexableSetOrigin =
-    IndexableEntityProviderMethods.createIterators(module, listOf(fileSpec.file)).first().origin
+    IndexableEntityProviderMethods.createIterators(module, IndexingRootHolder.fromFile(fileSpec.file)).first().origin
 
   protected fun createLibraryOrigin(library: Library): IndexableSetOrigin =
     LibraryIndexableFilesIteratorImpl.createIteratorList(library).also { assertSize(1, it) }.first().origin

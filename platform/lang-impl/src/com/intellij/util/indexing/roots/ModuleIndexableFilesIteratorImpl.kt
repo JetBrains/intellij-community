@@ -15,9 +15,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 import org.jetbrains.annotations.ApiStatus
-import java.util.*
 
 open class ModuleIndexableFilesPolicy {
   companion object {
@@ -28,14 +28,17 @@ open class ModuleIndexableFilesPolicy {
 }
 
 /**
- * @param roots is null when iterator should just iterate all files in module, no explicit root list
+ * @param rootHolder is null when iterator should just iterate all files in module, no explicit root list
  */
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
-                                                private val roots: List<VirtualFile>?,
+                                                rootHolder: IndexingRootHolder?,
                                                 private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
   init {
-    assert(roots?.isNotEmpty() ?: true)
+    assert(!(rootHolder?.isEmpty() ?: false))
   }
+
+  private val roots = rootHolder?.roots?.let { selectRootVirtualFiles(it) }
+
 
   companion object {
 
@@ -49,9 +52,9 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       if (moduleRoots.isEmpty()) return emptyList()
 
       if (ModuleIndexableFilesPolicy.getInstance().shouldIndexSeparateRoots()) {
-        return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, listOf(it), moduleRoots.size > 1) }
+        return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFile(it), moduleRoots.size > 1) }
       }
-      return listOf(ModuleIndexableFilesIteratorImpl(module, moduleRoots.toList(), false))
+      return listOf(ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFiles(moduleRoots), false))
     }
 
     private fun getProjectModelBasedModuleRootsToIterate(module: Module): Set<VirtualFile> {
@@ -62,7 +65,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
         val result: MutableSet<VirtualFile> = LinkedHashSet()
         val moduleRootManager = ModuleRootManager.getInstance(module)
         val projectFileIndex = ProjectFileIndex.getInstance(module.getProject())
-        for (roots in Arrays.asList<Array<VirtualFile>>(
+        for (roots in listOf<Array<VirtualFile>>(
           moduleRootManager.contentRoots, moduleRootManager.sourceRoots)) {
           for (root in roots) {
             if (!projectFileIndex.isInProject(root)) continue

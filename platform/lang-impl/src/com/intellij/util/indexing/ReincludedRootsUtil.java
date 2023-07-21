@@ -18,6 +18,8 @@ import com.intellij.util.indexing.roots.IndexingContributorCustomization;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
 import com.intellij.util.indexing.roots.builders.IndexableSetContributorFilesIteratorBuilder;
 import com.intellij.util.indexing.roots.builders.SyntheticLibraryIteratorBuilder;
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet;
@@ -184,10 +186,10 @@ public final class ReincludedRootsUtil {
                                                                            Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
         if (customization == null) {
-          return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, Collections.singletonList(file));
+          return IndexableIteratorBuilders.INSTANCE.forModuleRootsFileBased(moduleId, IndexingRootHolder.Companion.fromFile(file));
         }
         return IndexableIteratorBuilders.INSTANCE.forModuleAwareCustomizedContentEntity(moduleId, entityReference,
-                                                                                        Collections.singletonList(file), customization);
+                                                                                        IndexingRootHolder.Companion.fromFile(file), customization);
       }
     }
 
@@ -195,7 +197,8 @@ public final class ReincludedRootsUtil {
       public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
-        return IndexableIteratorBuilders.INSTANCE.forGenericContentEntity(entityReference, Collections.singletonList(file), customization);
+        return IndexableIteratorBuilders.INSTANCE.forGenericContentEntity(entityReference, IndexingRootHolder.Companion.fromFile(file),
+                                                                          customization);
       }
     }
 
@@ -205,7 +208,9 @@ public final class ReincludedRootsUtil {
       public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingContributor<?, ?>> contributorMap) {
         IndexingContributorCustomization<E, ?> customization = findCustomization(entityReference, referenceMap, contributorMap);
-        return IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference, roots, sourceRoots, customization);
+        return IndexableIteratorBuilders.INSTANCE.forExternalEntity(entityReference,
+                                                                    IndexingSourceRootHolder.Companion.fromFiles(roots, sourceRoots),
+                                                                    customization);
       }
     }
 

@@ -5,28 +5,23 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.ModuleAwareContentEntityIterator;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ModuleAwareContentEntityOriginImpl;
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
 import com.intellij.platform.workspace.storage.EntityReference;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
-
-import static com.intellij.util.indexing.roots.ExternalEntityIndexableIteratorImpl.getRootsDebugStr;
 
 public class ModuleAwareContentEntityIteratorImpl implements ModuleAwareContentEntityIterator {
 
   private final Module module;
   private final EntityReference<?> entityReference;
-  private final Collection<? extends VirtualFile> roots;
+  private final IndexingRootHolder roots;
   @Nullable @NlsContexts.ProgressText
   private final String indexingProgressText;
   @Nullable @NlsContexts.ProgressText
@@ -36,19 +31,19 @@ public class ModuleAwareContentEntityIteratorImpl implements ModuleAwareContentE
 
   public ModuleAwareContentEntityIteratorImpl(@NotNull Module module,
                                               @NotNull EntityReference<?> entityReference,
-                                              @NotNull Collection<? extends VirtualFile> roots) {
+                                              @NotNull IndexingRootHolder roots) {
     this(module, entityReference, roots, null, null, null);
   }
 
   public ModuleAwareContentEntityIteratorImpl(@NotNull Module module,
                                               @NotNull EntityReference<?> entityReference,
-                                              @NotNull Collection<? extends VirtualFile> roots,
+                                              @NotNull IndexingRootHolder roots,
                                               @Nullable @NlsContexts.ProgressText String scanningProgressText,
                                               @Nullable @NlsContexts.ProgressText String indexingProgressText,
                                               @Nullable @NonNls String debugName) {
     this.module = module;
     this.entityReference = entityReference;
-    this.roots = List.copyOf(roots);
+    this.roots = roots.immutableCopyOf();
     this.indexingProgressText = indexingProgressText;
     this.scanningProgressText = scanningProgressText;
     this.debugName = debugName;
@@ -59,7 +54,7 @@ public class ModuleAwareContentEntityIteratorImpl implements ModuleAwareContentE
   public String getDebugName() {
     return debugName != null
            ? debugName
-           : "Content roots from module " + module.getName() + " from entity (" + getRootsDebugStr(roots) + ")";
+           : "Content roots from module " + module.getName() + " from entity (" + roots.getRootsDebugStr() + ")";
   }
 
   @NlsContexts.ProgressText
@@ -89,6 +84,6 @@ public class ModuleAwareContentEntityIteratorImpl implements ModuleAwareContentE
 
   @Override
   public final @NotNull Set<String> getRootUrls(@NotNull Project project) {
-    return ContainerUtil.map2Set(roots, VirtualFile::getUrl);
+    return roots.getRootUrls();
   }
 }

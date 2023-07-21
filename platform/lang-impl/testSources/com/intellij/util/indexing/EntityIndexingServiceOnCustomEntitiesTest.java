@@ -19,6 +19,8 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
 import com.intellij.util.indexing.testEntities.IndexingTestEntity;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor;
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind;
@@ -58,7 +60,7 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
     VirtualFile virtualRoot = Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(root.toPath()));
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
-      return INSTANCE.createGenericContentEntityIterators(entity.createReference(), Collections.singletonList(virtualRoot));
+      return INSTANCE.createGenericContentEntityIterators(entity.createReference(), IndexingRootHolder.Companion.fromFile(virtualRoot));
     });
   }
 
@@ -73,8 +75,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    Collections.singletonList(virtualRoot),
-                                                    Collections.emptyList());
+                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(virtualRoot),
+                                                                                                 Collections.emptyList()));
     });
   }
 
@@ -111,8 +113,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
 
     doTest(() -> createAndRegisterEntity(getUrls(virtualRoot), Collections.emptyList(), myProject), (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    Collections.emptyList(),
-                                                    Collections.singletonList(virtualRoot));
+                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.emptyList(),
+                                                                                                 Collections.singletonList(virtualRoot)));
     });
   }
 
@@ -209,7 +211,9 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       });
       return createdEntity;
     }, (entity) -> {
-      return INSTANCE.createExternalEntityIterators(entity.createReference(), Collections.singletonList(excluded), Collections.emptyList());
+      return INSTANCE.createExternalEntityIterators(entity.createReference(),
+                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(excluded),
+                                                                                                 Collections.emptyList()));
     });
   }
 
@@ -240,8 +244,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       return createdEntity;
     }, (entity) -> {
       return INSTANCE.createExternalEntityIterators(entity.createReference(),
-                                                    Collections.singletonList(excludedBefore),
-                                                    Collections.emptyList());
+                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(excludedBefore),
+                                                                                                 Collections.emptyList()));
     });
   }
 
@@ -271,8 +275,8 @@ public class EntityIndexingServiceOnCustomEntitiesTest extends EntityIndexingSer
       });
     }, () -> {
       return INSTANCE.createExternalEntityIterators(otherEntity.createReference(),
-                                                    Collections.singletonList(excluded),
-                                                    Collections.emptyList());
+                                                    IndexingSourceRootHolder.Companion.fromFiles(Collections.singletonList(excluded),
+                                                                                                 Collections.emptyList()));
     });
   }
 

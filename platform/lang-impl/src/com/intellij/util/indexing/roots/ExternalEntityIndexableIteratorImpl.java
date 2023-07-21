@@ -4,27 +4,21 @@ package com.intellij.util.indexing.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.customizingIteration.ExternalEntityIndexableIterator;
 import com.intellij.util.indexing.roots.origin.ExternalEntityOrigin;
 import com.intellij.util.indexing.roots.origin.ExternalEntityOriginImpl;
+import com.intellij.util.indexing.roots.origin.IndexingSourceRootHolder;
 import com.intellij.platform.workspace.storage.EntityReference;
-import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 public class ExternalEntityIndexableIteratorImpl implements ExternalEntityIndexableIterator {
   private final EntityReference<?> entityReference;
-  private final Collection<? extends VirtualFile> roots;
-  private final Collection<? extends VirtualFile> sourceRoots;
+  private final IndexingSourceRootHolder roots;
   @Nullable @NlsContexts.ProgressText
   private final String indexingProgressText;
   @Nullable @NlsContexts.ProgressText
@@ -33,20 +27,17 @@ public class ExternalEntityIndexableIteratorImpl implements ExternalEntityIndexa
   private final String debugName;
 
   public ExternalEntityIndexableIteratorImpl(EntityReference<?> entityReference,
-                                             Collection<? extends VirtualFile> roots,
-                                             Collection<? extends VirtualFile> sourceRoots) {
-    this(entityReference, roots, sourceRoots, null, null, null);
+                                             IndexingSourceRootHolder roots) {
+    this(entityReference, roots, null, null, null);
   }
 
   public ExternalEntityIndexableIteratorImpl(@NotNull EntityReference<?> entityReference,
-                                             @NotNull Collection<? extends VirtualFile> roots,
-                                             @NotNull Collection<? extends VirtualFile> sourceRoots,
+                                             @NotNull IndexingSourceRootHolder roots,
                                              @Nullable @NlsContexts.ProgressText String scanningProgressText,
                                              @Nullable @NlsContexts.ProgressText String indexingProgressText,
                                              @Nullable @NonNls String debugName) {
     this.entityReference = entityReference;
-    this.roots = List.copyOf(roots);
-    this.sourceRoots = List.copyOf(sourceRoots);
+    this.roots = roots.immutableCopyOf();
     this.indexingProgressText = indexingProgressText;
     this.scanningProgressText = scanningProgressText;
     this.debugName = debugName;
@@ -57,7 +48,7 @@ public class ExternalEntityIndexableIteratorImpl implements ExternalEntityIndexa
   public String getDebugName() {
     return debugName != null
            ? debugName
-           : "External roots from entity (roots=" + getRootsDebugStr(roots) + ", source roots=" + getRootsDebugStr(sourceRoots) + ")";
+           : "External roots from entity (" + roots.getRootsDebugStr() + ")";
   }
 
   @NlsContexts.ProgressText
@@ -75,34 +66,18 @@ public class ExternalEntityIndexableIteratorImpl implements ExternalEntityIndexa
   @NotNull
   @Override
   public ExternalEntityOrigin getOrigin() {
-    return new ExternalEntityOriginImpl(entityReference, roots, sourceRoots);
+    return new ExternalEntityOriginImpl(entityReference, roots);
   }
 
   @Override
   public final boolean iterateFiles(@NotNull Project project,
                                     @NotNull ContentIterator fileIterator,
                                     @NotNull VirtualFileFilter fileFilter) {
-    return IndexableFilesIterationMethods.INSTANCE.iterateRoots(project, getAllRoots(), fileIterator, fileFilter, true);
-  }
-
-  @NotNull
-  private Collection<VirtualFile> getAllRoots(){
-    ArrayList<VirtualFile> allRoots = new ArrayList<>(roots);
-    allRoots.addAll(sourceRoots);
-    return allRoots;
+    return IndexableFilesIterationMethods.INSTANCE.iterateRoots(project, roots, fileIterator, fileFilter, true);
   }
 
   @Override
   public final @NotNull Set<String> getRootUrls(@NotNull Project project) {
-    return ContainerUtil.map2Set(getAllRoots(), VirtualFile::getUrl);
-  }
-
-  @NonNls
-  @NotNull
-  public static String getRootsDebugStr(Collection<? extends VirtualFile> files) {
-    if (files.isEmpty()) {
-      return "empty";
-    }
-    return CollectionsKt.joinToString(files, ", ", "", "", 3, "...", file -> file.getName());
+    return roots.getRootUrls();
   }
 }
