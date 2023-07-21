@@ -32,11 +32,11 @@ sealed interface K2MoveTarget {
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit)
 
-    open class SourceDirectory(pkg: PsiPackage, directory: PsiDirectory) : K2MoveTarget {
+    open class SourceDirectory(pkg: PsiPackage, private val initialDirectory: PsiDirectory) : K2MoveTarget {
         final override var pkg: PsiPackage = pkg
             private set
 
-        final override var directory: PsiDirectory = directory
+        final override var directory: PsiDirectory = initialDirectory
             private set
 
         context(Panel)
@@ -69,12 +69,9 @@ sealed interface K2MoveTarget {
             destinationChooser.setData(project, directory, { s -> onError(s, destinationChooser) }, pkgChooser.childComponent)
 
             onApply {
-                (destinationChooser.comboBox.selectedItem as DirectoryChooser.ItemWrapper).directory?.let { chosen ->
-                    directory = chosen
-                }
-                directory.module?.let { module ->
-                    pkg = KotlinJavaPsiFacade.getInstance(project).findPackage(pkgChooser.text, GlobalSearchScope.moduleScope(module))
-                }
+                directory = (destinationChooser.comboBox.selectedItem as? DirectoryChooser.ItemWrapper?)?.directory ?: initialDirectory
+                val module = directory.module ?: error("Chosen directory is not a source module")
+                pkg = KotlinJavaPsiFacade.getInstance(project).findPackage(pkgChooser.text, GlobalSearchScope.moduleScope(module))
                 RecentsManager.getInstance(project).registerRecentEntry(RECENT_PACKAGE_KEY, destinationChooser.targetPackage)
             }
         }

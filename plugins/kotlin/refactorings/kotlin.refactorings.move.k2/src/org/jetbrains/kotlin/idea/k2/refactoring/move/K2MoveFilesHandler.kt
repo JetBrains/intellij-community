@@ -40,8 +40,12 @@ class K2MoveFilesHandler : MoveFileHandler() {
 
     private fun KtFile.updatePackageDirective(destination: PsiDirectory) {
         val newPackageName = JavaDirectoryService.getInstance().getPackage(destination)?.kotlinFqName ?: return
-        val newPackageDirective = KtPsiFactory(project).createPackageDirective(newPackageName)
-        packageDirective?.replace(newPackageDirective)
+        if (newPackageName.isRoot) {
+            packageDirective?.delete()
+        } else {
+            val newPackageDirective = KtPsiFactory(project).createPackageDirective(newPackageName)
+            packageDirective?.replace(newPackageDirective)
+        }
     }
 
     override fun updateMovedFile(file: PsiFile) { }
