@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
+import com.intellij.util.ui.EDT;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public final class ThreadingAssertions {
    * Asserts that the current thread is the event dispatch thread.
    */
   public static void assertEventDispatchThread() {
-    if (!ApplicationManager.getApplication().isDispatchThread()) {
+    if (!EDT.isCurrentThreadEdt()) {
       throwThreadAccessException(MUST_EXECUTE_UNDER_EDT);
     }
   }
@@ -55,7 +56,7 @@ public final class ThreadingAssertions {
    * Asserts that the current thread is <b>not</b> the event dispatch thread.
    */
   public static void assertBackgroundThread() {
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       throwThreadAccessException(MUST_NOT_EXECUTE_UNDER_EDT);
     }
   }
