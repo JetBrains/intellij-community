@@ -96,6 +96,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
     when (response) {
       is BlackFormattingResponse.Success -> {
         WriteCommandAction.writeCommandAction(project)
+          .withName(PyBundle.message("black.formatting.with.black"))
           .run<RuntimeException> { descriptor.document.setText(response.formattedText) }
       }
       is BlackFormattingResponse.Failure -> {
