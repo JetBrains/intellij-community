@@ -77,29 +77,32 @@ def display_data(table, max_cols, max_colwidth, start, end):
 
 
 def get_column_descriptions(table, max_cols, max_colwidth):
-    # type: (pd.DataFrame, int, int) -> str
-    described_df = __get_describe_df(table)
+    # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
+    described_result = __get_describe(table)
 
-    return get_data(described_df, max_cols, max_colwidth, None, None)
+    return get_data(described_result, max_cols, max_colwidth, None, None)
 
 
 def get_value_counts(table, max_cols, max_colwidth):
-    # type: (pd.DataFrame, int, int) -> str
-    count_df = __get_counts_df(table)
+    # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
+    counts_result = __get_counts(table)
 
-    return get_data(count_df, max_cols, max_colwidth, None, None)
-
-
-def __get_describe_df(table):
-    # type: (pd.DataFrame) -> pd.DataFrame
-    described_df = table.describe(percentiles=[.05, .25, .5, .75, .95],
-                                  exclude=[np.complex64, np.complex128])
-    return described_df.reindex(columns=table.columns, copy=False)
+    return get_data(counts_result, max_cols, max_colwidth, None, None)
 
 
-def __get_counts_df(table):
-    # type: (pd.DataFrame) -> pd.DataFrame
-    return table.count().to_frame().transpose()
+def __get_describe(table):
+    # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]
+    described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
+                                exclude=[np.complex64, np.complex128])
+    if type(table) is pd.Series:
+        return described_
+    else:
+        return described_.reindex(columns=table.columns, copy=False)
+
+
+def __get_counts(table):
+    # type: (Union[pd.DataFrame, pd.Series]) -> pd.DataFrame
+    return __convert_to_df(table).count().to_frame().transpose()
 
 
 # noinspection PyUnresolvedReferences

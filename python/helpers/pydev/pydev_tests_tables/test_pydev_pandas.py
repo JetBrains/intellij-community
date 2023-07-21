@@ -65,7 +65,7 @@ def setup_dataframe_many_columns():
     Here we create a fixture for tests that are related to DataFrames.
     We check that we don't miss columns for big dataframes
     """
-    return pd.read_csv('test_data/dataframe_many_columns_before.csv')
+    return pd.read_csv('test_data/pandas/dataframe_many_columns_before.csv')
 
 
 def test_info_command(setup_dataframe):
@@ -197,7 +197,7 @@ def test_get_info_format(setup_dataframe):
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/pandas_getInfo_result.txt'
+        expected_file='test_data/pandas/getInfo_result.txt'
     )
 
 
@@ -208,7 +208,7 @@ def test_describe_many_columns_check_html(setup_dataframe_many_columns):
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/dataframe_many_columns_describe_after.txt'
+        expected_file='test_data/pandas/dataframe_many_columns_describe_after.txt'
     )
 
 
@@ -219,13 +219,13 @@ def test_counts_many_columns_check_html(setup_dataframe_many_columns):
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
-        expected_file='test_data/dataframe_many_columns_counts_after.txt'
+        expected_file='test_data/pandas/dataframe_many_columns_counts_after.txt'
     )
 
 
 def test_describe_shape_numeric_types(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
-    describe_df = pandas_tables_helpers.__get_describe_df(df)
+    describe_df = pandas_tables_helpers.__get_describe(df)
 
     # for dataframes with only numeric types in columns we have 10 statistics
     assert describe_df.shape[0] == 10
@@ -235,7 +235,7 @@ def test_describe_shape_numeric_types(setup_dataframe_many_columns):
 
 def test_counts_shape(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
-    counts_df = pandas_tables_helpers.__get_counts_df(df)
+    counts_df = pandas_tables_helpers.__get_counts(df)
 
     # only one row in counts_df with the number of non-NaN-s values
     assert counts_df.shape[0] == 1
@@ -245,7 +245,7 @@ def test_counts_shape(setup_dataframe_many_columns):
 
 def test_describe_shape_all_types(setup_dataframe):
     _, _, df, _, _ = setup_dataframe
-    describe_df = pandas_tables_helpers.__get_describe_df(df)
+    describe_df = pandas_tables_helpers.__get_describe(df)
     # for dataframes with different types in columns we have 13/15 statistics
     if sys.version_info < (3, 0):
         # python2 have 2 additional statistics that we don't use: first and last
@@ -260,7 +260,7 @@ def test_describe_shape_all_types(setup_dataframe):
 
 def test_get_describe_save_columns(setup_dataframe):
     _, _, df, _, _ = setup_dataframe
-    describe_df = pandas_tables_helpers.__get_describe_df(df)
+    describe_df = pandas_tables_helpers.__get_describe(df)
     original_columns, describe_columns = df.columns.tolist(), describe_df.columns.tolist()
 
     # the number of columns is the same in described and in original
@@ -271,10 +271,38 @@ def test_get_describe_save_columns(setup_dataframe):
         assert expected == actual
 
 
+def test_get_describe_returned_types(setup_dataframe):
+    _, _, df, _, _ = setup_dataframe
+
+    assert type(pandas_tables_helpers.__get_describe(df)) == pd.DataFrame
+    assert type(pandas_tables_helpers.__get_describe(df['A'])) == pd.Series
+
+
+# We skip warning about comparison of complex values.
+# There is no opportunity to exclude this data type from describe call
+@pytest.mark.filterwarnings("ignore: Casting complex values")
+@pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
+def test_describe_series(setup_dataframe):
+    _, _, df, _, _ = setup_dataframe
+
+    resulted = ""
+
+    for column in df:
+        # we skip dates column because its data every time is different
+        if column != 'dates':
+            described_series = pandas_tables_helpers.__get_describe(df[column])
+            resulted += str(described_series) + "\n"
+
+    read_expected_from_file_and_compare_with_actual(
+        actual=resulted,
+        expected_file='test_data/pandas/series_describe.txt'
+    )
+
+
 def read_expected_from_file_and_compare_with_actual(actual, expected_file):
     with open(expected_file, 'r') as in_f:
         expected = in_f.read()
 
     # for a more convenient assertion fails messages here we compare string char by char
-    for act, exp in zip(actual, expected):
-        assert act == exp
+    for ind, (act, exp) in enumerate(zip(actual, expected)):
+        assert act == exp, "index is %s" % ind
