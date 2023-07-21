@@ -229,7 +229,13 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     if (model.isRegularExpressions) { statusText.appendText(" ").appendText(FindBundle.message("find.regex.label")) }
     if (model.fileFilter?.isNotBlank() == true) { statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask.label")) }
 
-    val clear = { model.isCaseSensitive = false; model.isWholeWordsOnly = false; model.isRegularExpressions = false;  }
+    val clear = {
+      model.isCaseSensitive = false
+      model.isWholeWordsOnly = false
+      model.isRegularExpressions = false
+      model.fileFilter = null
+    }
+
     statusText.appendLine(FindBundle.message("find.popup.clear.all.options"),
                           SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                           ActionListener { _: ActionEvent? -> clear.invoke(); rebuild.invoke() })
