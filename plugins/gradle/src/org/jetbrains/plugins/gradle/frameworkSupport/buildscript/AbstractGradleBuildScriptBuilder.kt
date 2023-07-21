@@ -1,12 +1,10 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport.buildscript
 
-import com.intellij.openapi.util.io.FileUtil.toSystemIndependentName
 import com.intellij.openapi.util.text.StringUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
-import java.io.File
 
 @ApiStatus.NonExtendable
 @Suppress("MemberVisibilityCanBePrivate")
@@ -80,9 +78,6 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
 
   override fun addBuildScriptClasspath(dependency: Expression) =
     withBuildScriptDependency { call("classpath", dependency) }
-
-  override fun addBuildScriptClasspath(vararg dependencies: File) =
-    addBuildScriptClasspath(call("files", dependencies.map { it.absolutePath }.map(::toSystemIndependentName).map(::argument)))
 
   override fun withBuildScriptMavenCentral() =
     withBuildScriptRepository {

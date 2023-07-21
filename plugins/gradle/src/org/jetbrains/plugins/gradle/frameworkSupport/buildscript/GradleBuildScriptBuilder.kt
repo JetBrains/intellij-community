@@ -5,7 +5,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import java.io.File
 
 @ApiStatus.NonExtendable
 interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : GradleBuildScriptBuilderCore<BSB> {
@@ -48,7 +47,6 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
 
   fun addBuildScriptClasspath(dependency: String): BSB
   fun addBuildScriptClasspath(dependency: Expression): BSB
-  fun addBuildScriptClasspath(vararg dependencies: File): BSB
 
   fun withMavenCentral(): BSB
   fun withBuildScriptMavenCentral(): BSB

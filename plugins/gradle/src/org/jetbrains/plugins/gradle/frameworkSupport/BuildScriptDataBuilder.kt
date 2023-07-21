@@ -7,7 +7,6 @@ import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScri
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElementBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
-import java.io.File
 import java.util.function.Consumer
 
 
@@ -98,9 +97,8 @@ class BuildScriptDataBuilder(
   override fun addTestImplementationDependency(dependency: ScriptElement.Statement.Expression) = apply { backend.addTestImplementationDependency(dependency) }
   override fun addTestRuntimeOnlyDependency(dependency: String) = apply { backend.addTestRuntimeOnlyDependency(dependency) }
   override fun addTestRuntimeOnlyDependency(dependency: ScriptElement.Statement.Expression) = apply { backend.addTestRuntimeOnlyDependency(dependency) }
-  override fun addBuildScriptClasspath(dependency: String) = apply { backend.addBuildScriptClasspath() }
-  override fun addBuildScriptClasspath(dependency: ScriptElement.Statement.Expression) = apply { backend.addBuildScriptClasspath() }
-  override fun addBuildScriptClasspath(vararg dependencies: File) = apply { backend.addBuildScriptClasspath() }
+  override fun addBuildScriptClasspath(dependency: String) = apply { backend.addBuildScriptClasspath(dependency) }
+  override fun addBuildScriptClasspath(dependency: ScriptElement.Statement.Expression) = apply { backend.addBuildScriptClasspath(dependency) }
   override fun withMavenCentral() = apply { backend.withMavenCentral() }
   override fun withBuildScriptMavenCentral() = apply { backend.withBuildScriptMavenCentral() }
   override fun applyPlugin(plugin: String) = apply { backend.applyPlugin(plugin) }

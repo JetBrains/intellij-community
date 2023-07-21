@@ -111,7 +111,7 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
     """.trimIndent()) {
       withBuildScriptPrefix { call("println", "Hello, Prefix!") }
       withBuildScriptRepository { call("repo", call("file", "build/repo")) }
-      withBuildScriptDependency { call("classpath", call("file", "build/targets/org/classpath/archive.jar")) }
+      addBuildScriptClasspath(call("file", "build/targets/org/classpath/archive.jar"))
       withBuildScriptPostfix { call("println", "Hello, Postfix!") }
       applyPlugin("gradle-build")
       addImport("org.classpath.Build")
