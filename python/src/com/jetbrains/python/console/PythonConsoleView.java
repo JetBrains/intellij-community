@@ -45,7 +45,8 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.JBColor;
@@ -428,8 +429,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   protected void print(@NotNull String text, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
-    String processedText = PyConsoleUtil.processPrompts(this, text);
-    super.print(processedText, contentType, info);
+    if (contentType.equals(ConsoleViewContentType.NORMAL_OUTPUT)) {
+      String processedText = PyConsoleUtil.processPrompts(this, text);
+      super.print(processedText, contentType, info);
+    }
+    else {
+      super.print(text, contentType, info);
+    }
   }
 
   public void detectIPython(String text, final ConsoleViewContentType outputType) {
