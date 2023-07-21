@@ -1,177 +1,149 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.facet.impl;
+package com.intellij.facet.impl
 
-import com.intellij.ProjectTopics;
-import com.intellij.facet.*;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.ModuleListener;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.xmlb.annotations.MapAnnotation;
-import com.intellij.util.xmlb.annotations.Tag;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import com.intellij.ProjectTopics
+import com.intellij.facet.*
+import com.intellij.facet.impl.ProjectFacetManagerImpl
+import com.intellij.facet.impl.ProjectFacetManagerImpl.ProjectFacetManagerState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.ModuleListener
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.WriteExternalException
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.Tag
+import org.jdom.Element
+import org.jetbrains.annotations.NonNls
+import java.util.concurrent.atomic.AtomicReference
 
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
-public final class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements PersistentStateComponent<ProjectFacetManagerImpl.ProjectFacetManagerState> {
-  @NonNls public static final String COMPONENT_NAME = "ProjectFacetManager";
-  private static final Logger LOG = Logger.getInstance(ProjectFacetManagerImpl.class);
-  private ProjectFacetManagerState myState = new ProjectFacetManagerState();
-  private final Project myProject;
-  private final AtomicReference<MultiMap<FacetTypeId<?>, Module>> myIndex = new AtomicReference<>();
+class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetManagerEx(), PersistentStateComponent<ProjectFacetManagerState?> {
+  private var myState = ProjectFacetManagerState()
+  private val myIndex = AtomicReference<MultiMap<FacetTypeId<*>, Module>>()
 
-  public ProjectFacetManagerImpl(Project project) {
-    myProject = project;
-
-    ProjectWideFacetListenersRegistry.getInstance(project).registerListener(new ProjectWideFacetAdapter<>() {
-      @Override
-      public void facetAdded(@NotNull Facet facet) {
-        myIndex.set(null);
+  init {
+    ProjectWideFacetListenersRegistry.getInstance(myProject).registerListener(object : ProjectWideFacetAdapter<Facet<*>?>() {
+      override fun facetAdded(facet: Facet<*>) {
+        myIndex.set(null)
       }
 
-      @Override
-      public void facetRemoved(@NotNull Facet facet) {
-        myIndex.set(null);
+      override fun facetRemoved(facet: Facet<*>) {
+        myIndex.set(null)
       }
-    }, project);
-    project.getMessageBus().connect().subscribe(ProjectTopics.MODULES, new ModuleListener() {
-      @Override
-      public void modulesAdded(@NotNull Project project, @NotNull List<? extends Module> modules) {
-        myIndex.set(null);
+    }, myProject)
+    myProject.getMessageBus().connect().subscribe(ProjectTopics.MODULES, object : ModuleListener {
+      override fun modulesAdded(project: Project, modules: List<Module>) {
+        myIndex.set(null)
       }
 
-      @Override
-      public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-        myIndex.set(null);
+      override fun moduleRemoved(project: Project, module: Module) {
+        myIndex.set(null)
       }
-    });
+    })
   }
 
-  @Override
-  public ProjectFacetManagerState getState() {
-    return myState;
+  override fun getState(): ProjectFacetManagerState {
+    return myState
   }
 
-  @Override
-  public void loadState(@NotNull final ProjectFacetManagerState state) {
-    myState = state;
+  override fun loadState(state: ProjectFacetManagerState) {
+    myState = state
   }
 
-  @NotNull
-  private MultiMap<FacetTypeId<?>, Module> getIndex() {
-    var index = myIndex.get();
-    if (index != null) return index;
-    return myIndex.updateAndGet(value -> value == null ? createIndex() : value);
-  }
-
-  @NotNull
-  private MultiMap<FacetTypeId<?>, Module> createIndex() {
-    MultiMap<FacetTypeId<?>, Module> index = MultiMap.createLinkedSet();
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      Arrays.stream(FacetManager.getInstance(module).getAllFacets())
-        .map(facet -> facet.getTypeId())
-        .distinct()
-        .forEach(facetTypeId -> index.putValue(facetTypeId, module));
+  private val index: MultiMap<FacetTypeId<*>, Module>
+    get() {
+      val index = myIndex.get()
+      return index ?: myIndex.updateAndGet { value: MultiMap<FacetTypeId<*>, Module>? -> value ?: createIndex() }
     }
-    return index;
-  }
 
-  @NotNull
-  @Override
-  public <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId) {
-    return ContainerUtil.concat(getIndex().get(typeId), module -> FacetManager.getInstance(module).getFacetsByType(typeId));
-  }
-
-  @NotNull
-  @Override
-  public List<Module> getModulesWithFacet(@NotNull FacetTypeId<?> typeId) {
-    return getIndex().get(typeId).stream().toList();
-  }
-
-  @Override
-  public boolean hasFacets(@NotNull FacetTypeId<?> typeId) {
-    return getIndex().containsKey(typeId);
-  }
-
-  @Override
-  public <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules) {
-    final List<F> result = new ArrayList<>();
-    for (Module module : modules) {
-      result.addAll(FacetManager.getInstance(module).getFacetsByType(typeId));
+  private fun createIndex(): MultiMap<FacetTypeId<*>, Module> {
+    val index = MultiMap.createLinkedSet<FacetTypeId<*>, Module>()
+    for (module in ModuleManager.getInstance(myProject).modules) {
+      if (!module.isDisposed) {
+        FacetManager.getInstance(module).getAllFacets()
+          .map { it.typeId }
+          .distinct()
+          .forEach { index.putValue(it, module) }
+      }
     }
-    return result;
+    return index
   }
 
-  @Override
-  public <C extends FacetConfiguration> C createDefaultConfiguration(@NotNull final FacetType<?, C> facetType) {
-    C configuration = facetType.createDefaultConfiguration();
-    DefaultFacetConfigurationState state = myState.getDefaultConfigurations().get(facetType.getStringId());
+  override fun <F : Facet<*>?> getFacets(typeId: FacetTypeId<F>): List<F> {
+    return ContainerUtil.concat(index[typeId]) { module: Module? ->
+      FacetManager.getInstance(
+        module!!).getFacetsByType(typeId)
+    }
+  }
+
+  override fun getModulesWithFacet(typeId: FacetTypeId<*>): List<Module> {
+    return index[typeId].toList()
+  }
+
+  override fun hasFacets(typeId: FacetTypeId<*>): Boolean {
+    return index.containsKey(typeId)
+  }
+
+  override fun <F : Facet<*>?> getFacets(typeId: FacetTypeId<F>, modules: Array<Module>): List<F> {
+    val result: MutableList<F> = ArrayList()
+    for (module in modules) {
+      result.addAll(FacetManager.getInstance(module).getFacetsByType(typeId))
+    }
+    return result
+  }
+
+  override fun <C : FacetConfiguration> createDefaultConfiguration(facetType: FacetType<*, C>): C {
+    val configuration = facetType.createDefaultConfiguration()
+    val state = myState.defaultConfigurations[facetType.stringId]
     if (state != null) {
-      Element defaultConfiguration = state.getDefaultConfiguration();
+      val defaultConfiguration = state.defaultConfiguration
       try {
-        FacetUtil.loadFacetConfiguration(configuration, defaultConfiguration);
+        FacetUtil.loadFacetConfiguration(configuration, defaultConfiguration)
       }
-      catch (InvalidDataException e) {
-        LOG.info(e);
+      catch (e: InvalidDataException) {
+        LOG.info(e)
       }
     }
-    return configuration;
+    return configuration
   }
 
-  @Override
-  public <C extends FacetConfiguration> void setDefaultConfiguration(@NotNull final FacetType<?, C> facetType, @NotNull final C configuration) {
-    Map<String, DefaultFacetConfigurationState> defaultConfigurations = myState.getDefaultConfigurations();
-    DefaultFacetConfigurationState state = defaultConfigurations.get(facetType.getStringId());
+  override fun <C : FacetConfiguration> setDefaultConfiguration(facetType: FacetType<*, C>, configuration: C) {
+    val defaultConfigurations = myState.defaultConfigurations
+    var state = defaultConfigurations[facetType.stringId]
     if (state == null) {
-      state = new DefaultFacetConfigurationState();
-      defaultConfigurations.put(facetType.getStringId(), state);
+      state = DefaultFacetConfigurationState()
+      defaultConfigurations[facetType.stringId] = state
     }
     try {
-      Element element = FacetUtil.saveFacetConfiguration(configuration);
-      state.setDefaultConfiguration(element);
+      val element = FacetUtil.saveFacetConfiguration(configuration)
+      state.defaultConfiguration = element
     }
-    catch (WriteExternalException e) {
-      LOG.info(e);
+    catch (e: WriteExternalException) {
+      LOG.info(e)
     }
   }
 
   @Tag("default-facet-configuration")
-  public static class DefaultFacetConfigurationState {
-    private Element myDefaultConfiguration;
-
-    @Tag("configuration")
-    public Element getDefaultConfiguration() {
-      return myDefaultConfiguration;
-    }
-
-    public void setDefaultConfiguration(final Element defaultConfiguration) {
-      myDefaultConfiguration = defaultConfiguration;
-    }
+  class DefaultFacetConfigurationState {
+    @get:Tag("configuration")
+    var defaultConfiguration: Element? = null
   }
 
-  public static class ProjectFacetManagerState {
-    private Map<String, DefaultFacetConfigurationState> myDefaultConfigurations = new HashMap<>();
+  class ProjectFacetManagerState {
+    @get:MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false,
+                       keyAttributeName = "facet-type")
+    @get:Tag("default-configurations")
+    var defaultConfigurations: MutableMap<String, DefaultFacetConfigurationState> = HashMap()
+  }
 
-    @Tag("default-configurations")
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false, //entryTagName = "default-configuration",
-                   keyAttributeName = "facet-type")
-    public Map<String, DefaultFacetConfigurationState> getDefaultConfigurations() {
-      return myDefaultConfigurations;
-    }
-
-    public void setDefaultConfigurations(final Map<String, DefaultFacetConfigurationState> defaultConfigurations) {
-      myDefaultConfigurations = defaultConfigurations;
-    }
+  companion object {
+    const val COMPONENT_NAME: @NonNls String = "ProjectFacetManager"
+    private val LOG = Logger.getInstance(ProjectFacetManagerImpl::class.java)
   }
 }
