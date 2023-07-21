@@ -22,6 +22,9 @@ interface WebSymbolDeclaredInPsi: WebSymbol, SearchTarget, RenameTarget {
 
   val textRangeInSourceElement: TextRange?
 
+  override val psiContext: PsiElement?
+    get() = sourceElement
+
   val declaration: WebSymbolDeclaration? get() =
     buildDeclaration(this)
 
