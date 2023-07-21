@@ -62,19 +62,6 @@ class ExternalAnnotationsRepositoryResolverTest: LibraryTest() {
     assertTrue(library.getFiles(annotationsRootType).isNotEmpty())
   }
 
-  fun testBatchAnnotationsSyncResolutionUsingLocation() {
-    val resolver = ExternalAnnotationsRepositoryResolver()
-    val library = createLibrary()
-
-    MavenRepoFixture(myMavenRepo).apply {
-      addAnnotationsArtifact(version = "1.0-an1")
-      generateMavenMetadata("myGroup", "myArtifact")
-    }
-
-    resolver.resolveBatch(myProject, mutableMapOf(library to mutableListOf(AnnotationsLocation("myGroup", "myArtifact", "1.0", myMavenRepoDescription.url))))
-    assertTrue(library.getFiles(annotationsRootType).isNotEmpty())
-  }
-
   @Test fun testThirdPartyAnnotationsResolution() {
     val resolver = ExternalAnnotationsRepositoryResolver()
     val library = createLibrary()

@@ -91,10 +91,6 @@ class TestExternalAnnotationsResolver : ExternalAnnotationsArtifactsResolver {
     return false
   }
 
-  override fun resolveBatch(project: Project, librariesWithLocations: MutableMap<Library, MutableCollection<AnnotationsLocation>>) {
-    attemptsCount++
-  }
-
   override fun resolveAsync(project: Project, library: Library, mavenId: String?): Promise<Library> = resolvedPromise(library)
 }
 

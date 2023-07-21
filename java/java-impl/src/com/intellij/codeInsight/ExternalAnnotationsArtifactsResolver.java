@@ -9,9 +9,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
-import java.util.Collection;
-import java.util.Map;
-
 public interface ExternalAnnotationsArtifactsResolver {
   ExtensionPointName<ExternalAnnotationsArtifactsResolver> EP_NAME =
     new ExtensionPointName<>("com.intellij.externalAnnotationsArtifactsResolver");
@@ -32,8 +29,6 @@ public interface ExternalAnnotationsArtifactsResolver {
    * @return true if resolution was successful, false otherwise
    */
   boolean resolve(@NotNull Project project, @NotNull Library library, @NotNull AnnotationsLocation annotationsLocation);
-
-  void resolveBatch(@NotNull Project project, @NotNull Map<Library, Collection<AnnotationsLocation>> librariesWithLocations);
 
   /**
    * Lookup and attach external annotations for given library in background.

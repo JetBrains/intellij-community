@@ -17,12 +17,14 @@ import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjec
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
+import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl
 import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
 import org.jetbrains.plugins.gradle.settings.GradleSettings
+import org.jetbrains.plugins.gradle.util.GradleBundle
 
 @Order(value = ExternalSystemConstants.UNORDERED)
 class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Library>() {
@@ -120,9 +122,28 @@ fun lookForLocations(project: Project, lib: Library, libData: LibraryData): Pair
 
 fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<AnnotationsLocation>>,
                                project: Project, onResolveCompleted: () -> Unit = {}){
+  val locationsToSkip = mutableSetOf<AnnotationsLocation>()
   if (providedAnnotations.isNotEmpty()) {
-    ExternalAnnotationsArtifactsResolver.EP_NAME.forEachExtensionSafe {
-      it.resolveBatch(project, providedAnnotations)
+    val total = providedAnnotations.map { it.value.size }.sum().toDouble()
+    runBackgroundableTask(GradleBundle.message("gradle.tasks.annotations.title")) { indicator ->
+      try {
+        indicator.isIndeterminate = false
+        val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
+        var index = 0
+        providedAnnotations.forEach { (lib, locations) ->
+          indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
+          locations.forEach locations@ { location ->
+            if (locationsToSkip.contains(location)) return@locations
+            if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location) } ) {
+               locationsToSkip.add(location)
+            }
+            index++
+            indicator.fraction = index / total
+          }
+        }
+      } finally {
+        onResolveCompleted()
+      }
     }
   } else {
     onResolveCompleted()
