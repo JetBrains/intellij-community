@@ -202,10 +202,9 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Ignored = load("expui/fileTypes/ignored.svg", -321420728, 2);
     /** 16x16 */ public static final @NotNull Icon Image = load("expui/fileTypes/image.svg", 1474336461, 2);
     /** 16x16 */ public static final @NotNull Icon Java = load("expui/fileTypes/java.svg", -1582472465, 2);
-    /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", -989574810, 2);
+    /** 16x16 */ public static final @NotNull Icon JavaScript = load("expui/fileTypes/javaScript.svg", -330180907, 2);
     /** 16x16 */ public static final @NotNull Icon Jest = load("expui/fileTypes/jest.svg", -332532916, 0);
     /** 16x16 */ public static final @NotNull Icon Jfr = load("expui/fileTypes/jfr.svg", 924476752, 2);
-    /** 16x16 */ public static final @NotNull Icon Jshint = load("expui/fileTypes/jshint.svg", 389498291, 2);
     /** 16x16 */ public static final @NotNull Icon Json = load("expui/fileTypes/json.svg", -2127501654, 2);
     /** 16x16 */ public static final @NotNull Icon Jsp = load("expui/fileTypes/jsp.svg", -1447994527, 2);
     /** 16x16 */ public static final @NotNull Icon Jspx = load("expui/fileTypes/jspx.svg", 1548605739, 2);
@@ -223,7 +222,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", 1475163984, 2);
     /** 16x16 */ public static final @NotNull Icon Scratch = load("expui/fileTypes/scratch.svg", -782432053, 2);
     /** 16x16 */ public static final @NotNull Icon Scratches = load("expui/fileTypes/scratches.svg", -1406379294, 2);
-    /** 16x16 */ public static final @NotNull Icon Scss = load("expui/fileTypes/scss.svg", -1373749340, 0);
     /** 16x16 */ public static final @NotNull Icon Shell = load("expui/fileTypes/shell.svg", -1124749060, 2);
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -798309148, 2);
     /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", -1496861857, 2);
