@@ -26,6 +26,10 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.*
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalMap
 import com.intellij.platform.workspace.storage.impl.indices.*
+import com.intellij.platform.workspace.storage.impl.references.ImmutableAbstractOneToOneContainer
+import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToAbstractManyContainer
+import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer
+import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToOneContainer
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
@@ -40,6 +44,7 @@ import java.util.*
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.function.ToIntFunction
+import kotlin.collections.HashMap
 import kotlin.reflect.KClass
 import kotlin.system.measureNanoTime
 
@@ -84,7 +89,7 @@ class EntityStorageSerializerImpl(
   private val versionsContributor: () -> Map<String, String> = { emptyMap() },
 ) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v50"
+    const val SERIALIZER_VERSION = "v51"
   }
 
   private val interner = HashSetInterner<SerializableEntityId>()
@@ -146,17 +151,23 @@ class EntityStorageSerializerImpl(
 
     kryo.register(ByteArray::class.java)
     kryo.register(ImmutableEntityFamily::class.java)
-    kryo.register(RefsTable::class.java)
-    kryo.register(ImmutableNonNegativeIntIntBiMap::class.java)
-    kryo.register(ImmutableIntIntUniqueBiMap::class.java)
     kryo.register(VirtualFileIndex::class.java)
     kryo.register(EntityStorageInternalIndex::class.java)
     kryo.register(SymbolicIdInternalIndex::class.java)
-    kryo.register(ImmutableNonNegativeIntIntMultiMap.ByList::class.java)
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)
     kryo.register(SerializableEntityId::class.java)
+
+    // Refs table
+    kryo.register(RefsTable::class.java)
+    kryo.register(ImmutableOneToOneContainer::class.java)
+    kryo.register(ImmutableOneToManyContainer::class.java)
+    kryo.register(ImmutableAbstractOneToOneContainer::class.java)
+    kryo.register(ImmutableOneToAbstractManyContainer::class.java)
+    kryo.register(MutableIntIntUniqueBiMap::class.java)
+    kryo.register(MutableNonNegativeIntIntBiMap::class.java)
+    kryo.register(MutableNonNegativeIntIntMultiMap.ByList::class.java)
 
     kryo.register(ChangeEntry.AddEntity::class.java)
     kryo.register(ChangeEntry.RemoveEntity::class.java)

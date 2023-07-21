@@ -290,7 +290,6 @@ sealed class MutableNonNegativeIntIntMultiMap(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is MutableNonNegativeIntIntMultiMap) return false
-    if (!super.equals(other)) return false
 
     if (!values.contentEquals(other.values)) return false
     if (links != other.links) return false

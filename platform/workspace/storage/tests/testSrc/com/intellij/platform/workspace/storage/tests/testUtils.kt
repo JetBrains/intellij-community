@@ -70,10 +70,14 @@ object SerializationRoundTripChecker {
     }
 
     // Assert refs
-    assertMapsEqual(expected.refs.oneToOneContainer, actual.refs.oneToOneContainer)
-    assertMapsEqual(expected.refs.oneToManyContainer, actual.refs.oneToManyContainer)
-    assertMapsEqual(expected.refs.abstractOneToOneContainer, actual.refs.abstractOneToOneContainer)
-    assertMapsEqual(expected.refs.oneToAbstractManyContainer, actual.refs.oneToAbstractManyContainer)
+    assertMapsEqual(expected.refs.oneToOneContainer.getInternalStructure(),
+                    actual.refs.oneToOneContainer.getInternalStructure())
+    assertMapsEqual(expected.refs.oneToManyContainer.getInternalStructure(),
+                    actual.refs.oneToManyContainer.getInternalStructure())
+    assertMapsEqual(expected.refs.abstractOneToOneContainer.getInternalStructure(),
+                    actual.refs.abstractOneToOneContainer.getInternalStructure())
+    assertMapsEqual(expected.refs.oneToAbstractManyContainer.getInternalStructure(),
+                    actual.refs.oneToAbstractManyContainer.getInternalStructure())
     assertMapsEqual(expected.indexes.virtualFileIndex.entityId2VirtualFileUrl, actual.indexes.virtualFileIndex.entityId2VirtualFileUrl)
     assertMapsEqual(expected.indexes.virtualFileIndex.vfu2EntityId, actual.indexes.virtualFileIndex.vfu2EntityId)
     // Just checking that all properties have been asserted

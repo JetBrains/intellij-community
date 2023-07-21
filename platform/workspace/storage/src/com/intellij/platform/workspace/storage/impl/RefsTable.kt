@@ -8,6 +8,10 @@ import com.intellij.util.containers.HashSetInterner
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId.ConnectionType
 import com.intellij.platform.workspace.storage.impl.containers.*
+import com.intellij.platform.workspace.storage.impl.references.*
+import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToManyContainer
+import com.intellij.platform.workspace.storage.impl.references.ImmutableOneToOneContainer
+import com.intellij.platform.workspace.storage.impl.references.MutableOneToManyContainer
 import it.unimi.dsi.fastutil.ints.IntArrayList
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.IntFunction
@@ -104,19 +108,20 @@ val ConnectionId.isOneToOne: Boolean
  * [oneToManyContainer]: [ImmutableNonNegativeIntIntBiMap] - key - child, value - parent
  */
 internal class RefsTable internal constructor(
-  override val oneToManyContainer: Map<ConnectionId, ImmutableNonNegativeIntIntBiMap>,
-  override val oneToOneContainer: Map<ConnectionId, ImmutableIntIntUniqueBiMap>,
-  override val oneToAbstractManyContainer: Map<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>,
-  override val abstractOneToOneContainer: Map<ConnectionId, BiMap<ChildEntityId, ParentEntityId>>
+  override val oneToManyContainer: ImmutableOneToManyContainer,
+  override val oneToOneContainer: ImmutableOneToOneContainer,
+  override val oneToAbstractManyContainer: ImmutableOneToAbstractManyContainer,
+  override val abstractOneToOneContainer: ImmutableAbstractOneToOneContainer
 ) : AbstractRefsTable() {
-  constructor() : this(HashMap(), HashMap(), HashMap(), HashMap())
+  constructor() : this(ImmutableOneToManyContainer(), ImmutableOneToOneContainer(),
+                       ImmutableOneToAbstractManyContainer(), ImmutableAbstractOneToOneContainer())
 }
 
 internal class MutableRefsTable(
-  override val oneToManyContainer: MutableMap<ConnectionId, NonNegativeIntIntBiMap>,
-  override val oneToOneContainer: MutableMap<ConnectionId, IntIntUniqueBiMap>,
-  override val oneToAbstractManyContainer: MutableMap<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>,
-  override val abstractOneToOneContainer: MutableMap<ConnectionId, BiMap<ChildEntityId, ParentEntityId>>
+  override val oneToManyContainer: MutableOneToManyContainer,
+  override val oneToOneContainer: MutableOneToOneContainer,
+  override val oneToAbstractManyContainer: MutableOneToAbstractManyContainer,
+  override val abstractOneToOneContainer: MutableAbstractOneToOneContainer
 ) : AbstractRefsTable() {
 
   private val oneToAbstractManyCopiedToModify: MutableSet<ConnectionId> = HashSet()
@@ -370,29 +375,18 @@ internal class MutableRefsTable(
   }
 
   fun toImmutable(): RefsTable = RefsTable(
-    oneToManyContainer.mapValues { it.value.toImmutable() },
-    oneToOneContainer.mapValues { it.value.toImmutable() },
-    oneToAbstractManyContainer.mapValues {
-      it.value.let { value ->
-        val map = LinkedBidirectionalMap<ChildEntityId, ParentEntityId>()
-        value.forEach { (k, v) -> map[k] = v }
-        map
-      }
-    },
-    abstractOneToOneContainer.mapValues {
-      it.value.let { value ->
-        val map = HashBiMap.create<ChildEntityId, ParentEntityId>()
-        value.forEach { (k, v) -> map[k] = v }
-        map
-      }
-    }
+    oneToManyContainer.toImmutable(),
+    oneToOneContainer.toImmutable(),
+    oneToAbstractManyContainer.toImmutable(),
+    abstractOneToOneContainer.toImmutable()
   )
 
   companion object {
     fun from(other: RefsTable): MutableRefsTable = MutableRefsTable(
-      HashMap(other.oneToManyContainer), HashMap(other.oneToOneContainer),
-      HashMap(other.oneToAbstractManyContainer),
-      HashMap(other.abstractOneToOneContainer))
+      other.oneToManyContainer.toMutableContainer(),
+      other.oneToOneContainer.toMutableContainer(),
+      other.oneToAbstractManyContainer.toMutableContainer(),
+      other.abstractOneToOneContainer.toMutableContainer())
   }
 
   private fun <T> Sequence<T>.mapToIntArray(action: (T) -> Int): IntArray {
@@ -415,11 +409,10 @@ internal class MutableRefsTable(
 }
 
 internal sealed class AbstractRefsTable {
-
-  internal abstract val oneToManyContainer: Map<ConnectionId, NonNegativeIntIntBiMap>
-  internal abstract val oneToOneContainer: Map<ConnectionId, IntIntUniqueBiMap>
-  internal abstract val oneToAbstractManyContainer: Map<ConnectionId, LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>
-  internal abstract val abstractOneToOneContainer: Map<ConnectionId, BiMap<ChildEntityId, ParentEntityId>>
+  internal abstract val oneToManyContainer: ReferenceContainer<NonNegativeIntIntBiMap>
+  internal abstract val oneToOneContainer: ReferenceContainer<IntIntUniqueBiMap>
+  internal abstract val oneToAbstractManyContainer: ReferenceContainer<LinkedBidirectionalMap<ChildEntityId, ParentEntityId>>
+  internal abstract val abstractOneToOneContainer: ReferenceContainer<BiMap<ChildEntityId, ParentEntityId>>
 
   fun <Parent : WorkspaceEntity, Child : WorkspaceEntity> findConnectionId(parentClass: Class<Parent>, childClass: Class<Child>): ConnectionId? {
     val parentClassId = parentClass.toClassId()
