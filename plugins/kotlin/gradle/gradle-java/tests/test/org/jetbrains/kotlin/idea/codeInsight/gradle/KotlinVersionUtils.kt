@@ -47,5 +47,3 @@ fun parseKotlinVersionRequirement(value: String): KotlinVersionRequirement {
 
     return KotlinVersionRequirement.Exact(KotlinToolingVersion(value))
 }
-
-val KotlinToolingVersion.isHmppEnabledByDefault get() = this >= KotlinToolingVersion("1.6.20-dev-6442")
