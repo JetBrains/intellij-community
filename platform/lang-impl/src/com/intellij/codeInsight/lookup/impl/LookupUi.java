@@ -265,53 +265,96 @@ final class LookupUi {
 
     LogicalPosition pos = editor.offsetToLogicalPosition(lookupStart);
     Point location = editor.logicalPositionToXY(pos);
-    location.y += editor.getLineHeight();
-    location.x -= myLookup.myCellRenderer.getTextIndent();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("START calculating lookup bounds (above the line = " + myPositionedAbove
+                + ") with preferred size " + dim
+                + " for editor offset " + lookupStart
+                + " positioned at " + location);
+    }
+    int lineHeight = editor.getLineHeight();
+    location.y += lineHeight;
+    int textIndent = myLookup.myCellRenderer.getTextIndent();
+    location.x -= textIndent;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Location after shifting by line height (" + lineHeight + ") and text indent (" + textIndent + "): " + location);
+    }
     // extra check for other borders
     final Window window = ComponentUtil.getWindow(lookupComponent);
     if (window != null) {
       final Point point = SwingUtilities.convertPoint(lookupComponent, 0, 0, window);
       location.x -= point.x;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location after shifting by the window X coordinate (" + point.x + "): " + location);
+      }
     }
 
-    SwingUtilities.convertPointToScreen(location, editor.getContentComponent());
-    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editor.getContentComponent());
+    JComponent editorComponent = editor.getContentComponent();
+    SwingUtilities.convertPointToScreen(location, editorComponent);
+    final Rectangle screenRectangle = ScreenUtil.getScreenRectangle(editorComponent);
+    if (LOG.isDebugEnabled()) {
+      var editorLocation = editorComponent.getLocationOnScreen();
+      LOG.debug("Location after converting to screen coordinates (editor component bounds " + new Rectangle(editorLocation, editorComponent.getSize()) + "): " + location);
+      LOG.debug("Editor component screen rectangle is: " + screenRectangle);
+    }
 
     if (!isPositionedAboveCaret()) {
       int shiftLow = screenRectangle.y + screenRectangle.height - (location.y + dim.height);
       myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height && location.y >= dim.height;
+      if (LOG.isDebugEnabled() && myPositionedAbove) {
+        LOG.debug("Positioning above the line because the popup won't fit below, but will fit above");
+      }
     }
     if (isPositionedAboveCaret()) {
-      location.y -= dim.height + editor.getLineHeight();
+      location.y -= dim.height + lineHeight;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location after shifting upwards by popup height plus line height to show above the line: " + location);
+      }
     }
 
     if (!screenRectangle.contains(location)) {
       location = ScreenUtil.findNearestPointOnBorder(screenRectangle, location);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location after moving it to the nearest border because it doesn't fit into the screen: " + location);
+      }
     }
 
     Rectangle candidate = new Rectangle(location, dim);
     ScreenUtil.cropRectangleToFitTheScreen(candidate);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Bounds after cropping to fit into the screen: " + candidate);
+    }
 
     if (isPositionedAboveCaret()) {
       // need to crop as well at bottom if lookup overlaps the current line
       Point caretLocation = editor.logicalPositionToXY(pos);
-      SwingUtilities.convertPointToScreen(caretLocation, editor.getContentComponent());
+      SwingUtilities.convertPointToScreen(caretLocation, editorComponent);
       int offset = location.y + dim.height - caretLocation.y;
       if (offset > 0) {
         candidate.height -= offset;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Bounds after cropping to avoid overlapping the current line: " + candidate);
+        }
       }
     }
 
     JRootPane rootPane = editor.getComponent().getRootPane();
     if (rootPane != null) {
       SwingUtilities.convertPointFromScreen(location, rootPane.getLayeredPane());
+      if (LOG.isDebugEnabled()) {
+        var rootPaneLocation = rootPane.getLocationOnScreen();
+        LOG.debug("Location after converting from screen coordinates (root pane bounds " + new Rectangle(rootPaneLocation, rootPane.getSize()) + "): " + location);
+      }
     }
     else {
-      LOG.error("editor.disposed=" + editor.isDisposed() + "; lookup.disposed=" + myLookup.isLookupDisposed() + "; editorShowing=" + editor.getContentComponent().isShowing());
+      LOG.error("editor.disposed=" + editor.isDisposed() + "; lookup.disposed=" + myLookup.isLookupDisposed() + "; editorShowing=" + editorComponent.isShowing());
     }
 
     myMaximumHeight = candidate.height;
-    return new Rectangle(location.x, location.y, dim.width, candidate.height);
+    Rectangle result = new Rectangle(location.x, location.y, dim.width, candidate.height);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END calculating lookup bounds, result: " + result);
+    }
+    return result;
   }
 
   private static class ShowCompletionSettingsAction extends AnAction implements DumbAware {
