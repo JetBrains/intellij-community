@@ -31,6 +31,7 @@ import org.apache.xerces.xni.XNIException;
 import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -269,6 +270,13 @@ public class XmlResourceResolver implements XMLEntityResolver {
         source.setCharacterStream(new StringReader(""));
         return source;
       }
+      String expandedSystemId = xmlResourceIdentifier.getExpandedSystemId();
+      if (expandedSystemId != null && isHttpUrl(expandedSystemId)) {
+        final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
+        source.setPublicId(publicId);
+        source.setCharacterStream(new StringReader("unresolved"));
+        return source;
+      }
       return null;
     }
 
@@ -286,6 +294,16 @@ public class XmlResourceResolver implements XMLEntityResolver {
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
     return source;
+  }
+
+  private static boolean isHttpUrl(@NotNull String url) {
+    try {
+      String protocol = new URL(url).getProtocol();
+      return protocol.equals("http") || protocol.equals("https");
+    }
+    catch (MalformedURLException e) {
+      return false;
+    }
   }
 
   private static PsiFile resolveByLocation(PsiFile baseFile, String location) {
