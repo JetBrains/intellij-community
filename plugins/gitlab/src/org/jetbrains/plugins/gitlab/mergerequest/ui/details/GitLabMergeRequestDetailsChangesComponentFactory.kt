@@ -7,14 +7,14 @@ import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.TransparentScrollPane
 import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
+import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel
+import com.intellij.collaboration.ui.codereview.details.model.updateSelectedChangesFromTree
 import com.intellij.collaboration.ui.codereview.setupCodeReviewProgressModel
 import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
-import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.components.panels.Wrapper
@@ -23,7 +23,6 @@ import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.isEqual
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
@@ -39,7 +38,7 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     val wrapper = Wrapper(LoadingLabel()).apply {
       bindContentIn(cs, vm.changeListVm) { res ->
         res.fold(onSuccess = {
-          createChangesTree(it)
+          createChangesTree(vm, it)
         }, onFailure = {
           SimpleHtmlPane(it.localizedMessage)
         })
@@ -52,33 +51,34 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     }
   }
 
-  private fun CoroutineScope.createChangesTree(vm: GitLabMergeRequestChangeListViewModel): JComponent {
+  private fun CoroutineScope.createChangesTree(changesVm: GitLabMergeRequestChangesViewModel,
+                                               vm: GitLabMergeRequestChangeListViewModel): JComponent {
     val changesModel = SingleValueModel<List<Change>>(emptyList())
     val tree = CodeReviewChangesTreeFactory(project, changesModel)
       .create(GitLabBundle.message("merge.request.details.changes.empty"), false).also { tree ->
         tree.doubleClickHandler = Processor { e ->
           if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
-          updateUserChangesSelection(vm, changesModel.value, tree)
+          vm.updateSelectedChangesFromTree(changesModel.value, tree)
           vm.showDiff()
           true
         }
 
         tree.enterKeyHandler = Processor {
-          updateUserChangesSelection(vm, changesModel.value, tree)
+          vm.updateSelectedChangesFromTree(changesModel.value, tree)
           vm.showDiff()
           true
         }
 
         tree.installPopupHandler(ActionManager.getInstance().getAction("GitLab.Merge.Request.Changes.Popup") as ActionGroup)
       }.apply {
-        val progressModel = GitLabMergeRequestProgressTreeModel(this@createChangesTree, vm)
+        val progressModel = GitLabMergeRequestProgressTreeModel(this@createChangesTree, changesVm)
         setupCodeReviewProgressModel(progressModel)
       }
 
     launchNow {
       // magic with selection to skip selection reset after model update
       val selectionListener = TreeSelectionListener {
-        updateUserChangesSelection(vm, changesModel.value, tree)
+        vm.updateSelectedChangesFromTree(changesModel.value, tree)
       }
 
       vm.updates.collectLatest {
@@ -87,13 +87,13 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
           changesModel.value = it.changes
         }
         when (it) {
-          is GitLabMergeRequestChangeListViewModel.Update.WithSelectAll -> {
+          is CodeReviewChangeListViewModel.Update.WithSelectAll -> {
             tree.invokeAfterRefresh {
               TreeUtil.selectFirstNode(tree)
               tree.addTreeSelectionListener(selectionListener)
             }
           }
-          is GitLabMergeRequestChangeListViewModel.Update.WithSelectChange -> {
+          is CodeReviewChangeListViewModel.Update.WithSelectChange -> {
             tree.invokeAfterRefresh {
               tree.setSelectedChanges(listOf(it.change))
               tree.addTreeSelectionListener(selectionListener)
@@ -104,27 +104,5 @@ internal class GitLabMergeRequestDetailsChangesComponentFactory(private val proj
     }
 
     return tree
-  }
-
-  private fun updateUserChangesSelection(vm: GitLabMergeRequestChangeListViewModel, allChanges: List<Change>, tree: AsyncChangesTree) {
-    var fuzzy = false
-    val changes = mutableListOf<Change>()
-    VcsTreeModelData.selected(tree).iterateRawNodes().forEach {
-      if (it.isLeaf) {
-        val change = it.userObject as? Change
-        changes.add(change!!)
-      }
-      else {
-        fuzzy = true
-      }
-    }
-    val selection = if (changes.isEmpty()) null
-    else if (fuzzy) {
-      ChangesSelection.Fuzzy(changes)
-    }
-    else {
-      ChangesSelection.Precise(allChanges, changes[0])
-    }
-    vm.updateSelectedChanges(selection)
   }
 }

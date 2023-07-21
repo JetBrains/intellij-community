@@ -1,17 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.collaboration.ui.codereview.details.model
 
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.*
 
 interface CodeReviewChangesViewModel<T> {
-  val reviewCommits: Flow<List<T>>
-  val selectedCommit: Flow<T?>
+  val reviewCommits: SharedFlow<List<T>>
+  val selectedCommit: SharedFlow<T?>
 
   /** `-1` for "all commits" mode */
-  val selectedCommitIndex: Flow<Int>
+  val selectedCommitIndex: SharedFlow<Int>
 
   fun selectCommit(index: Int)
 
@@ -26,10 +23,10 @@ abstract class CodeReviewChangesViewModelBase<T> : CodeReviewChangesViewModel<T>
   abstract override val reviewCommits: StateFlow<List<T>>
 
   private val _selectedCommitState: MutableStateFlow<T?> = MutableStateFlow(null)
-  override val selectedCommit: Flow<T?> = _selectedCommitState.asSharedFlow()
+  override val selectedCommit: SharedFlow<T?> = _selectedCommitState.asSharedFlow()
 
   protected val _selectedCommitIndexState: MutableStateFlow<Int> = MutableStateFlow(-1)
-  override val selectedCommitIndex: Flow<Int> = _selectedCommitIndexState.asSharedFlow()
+  override val selectedCommitIndex: SharedFlow<Int> = _selectedCommitIndexState.asSharedFlow()
 
   override fun selectCommit(index: Int) {
     _selectedCommitState.value = reviewCommits.value.getOrNull(index)

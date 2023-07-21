@@ -9,12 +9,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
+import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import kotlin.properties.Delegates.observable
 
 @OptIn(FlowPreview::class)
 internal class GitLabMergeRequestProgressTreeModel(
   cs: CoroutineScope,
-  vm: GitLabMergeRequestChangeListViewModel
+  vm: GitLabMergeRequestChangesViewModel
 ) : CodeReviewProgressTreeModel<Change>() {
 
   private var unresolvedThreadsCount by observable<Map<Change, Int>>(emptyMap()) { _, _, _ ->
