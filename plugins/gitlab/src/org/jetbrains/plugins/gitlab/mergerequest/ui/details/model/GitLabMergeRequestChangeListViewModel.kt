@@ -93,7 +93,7 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   val showDiffRequests: Flow<Unit> = _showDiffRequests.asSharedFlow()
 
   fun updatesChanges(parsedChanges: GitBranchComparisonResult, commitIndex: Int, changeToSelect: Change? = null) {
-    cs.launchNow {
+    cs.launch {
       stateGuard.withLock {
         val commits = parsedChanges.commits
         val commit = commitIndex.takeIf { it >= 0 }?.let { commits[it] }?.sha
@@ -114,15 +114,20 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
   }
 
   override fun updateSelectedChanges(selection: ChangesSelection?) {
-    cs.launchNow {
-      stateGuard.withLock {
+    cs.launch {
+      // do not update selection when change update is in progress
+      if (!stateGuard.tryLock()) return@launch
+      try {
         _changesSelection.value = selection
+      }
+      finally {
+        stateGuard.unlock()
       }
     }
   }
 
   override fun showDiff() {
-    cs.launchNow {
+    cs.launch {
       _showDiffRequests.emit(Unit)
     }
   }
