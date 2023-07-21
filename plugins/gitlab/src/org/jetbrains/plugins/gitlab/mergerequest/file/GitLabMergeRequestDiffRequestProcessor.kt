@@ -26,9 +26,9 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestId
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
+import com.intellij.collaboration.util.ChangesSelection
 import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffViewModel
-import org.jetbrains.plugins.gitlab.mergerequest.diff.equalChanges
+import com.intellij.collaboration.util.equalChanges
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabToolWindowProjectViewModel
 
 internal fun createMergeRequestDiffRequestProcessor(project: Project,

@@ -6,12 +6,13 @@ import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
-import git4idea.changes.GitBranchComparisonResult
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
@@ -78,7 +79,7 @@ internal class GitLabMergeRequestDiffViewModelImpl(
         { (change, _) -> change },
         { (_, diffData) -> GitLabMergeRequestDiffChangeViewModelImpl(this, currentUser, mergeRequest, diffData, discussionsViewOption) },
         { destroy() },
-        customHashingStrategy = GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY
+        customHashingStrategy = REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
       )
 
   private val _discussionsViewOption: MutableStateFlow<DiscussionsViewOption> = MutableStateFlow(DiscussionsViewOption.UNRESOLVED_ONLY)

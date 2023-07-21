@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.changes
 
+import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.TextFilePatch
@@ -29,11 +30,11 @@ class GitBranchComparisonResultImpl(private val project: Project,
   private val _changesByCommits = mutableMapOf<String, List<Change>>()
   override val changesByCommits: Map<String, List<Change>> = Collections.unmodifiableMap(_changesByCommits)
   private val _commitByChange: MutableMap<Change, String> =
-    CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
+    CollectionFactory.createCustomHashingStrategyMap(REVISION_COMPARISON_CHANGE_HASHING_STRATEGY)
   override val commitByChange: Map<Change, String> = Collections.unmodifiableMap(_commitByChange)
 
   private val _diffDataByChange: MutableMap<Change, GitTextFilePatchWithHistory> =
-    CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
+    CollectionFactory.createCustomHashingStrategyMap(REVISION_COMPARISON_CHANGE_HASHING_STRATEGY)
   override val patchesByChange: Map<Change, GitTextFilePatchWithHistory> = Collections.unmodifiableMap(_diffDataByChange)
 
   init {

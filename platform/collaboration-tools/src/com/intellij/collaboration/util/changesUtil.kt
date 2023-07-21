@@ -1,12 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.gitlab.mergerequest.diff
+package com.intellij.collaboration.util
 
 import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
-import git4idea.changes.GitBranchComparisonResult
+import org.jetbrains.annotations.ApiStatus
+import java.util.*
 
+@ApiStatus.Experimental
+@ApiStatus.Internal
 sealed class ChangesSelection(
   val changes: List<Change>,
   val selectedIdx: Int
@@ -75,7 +78,8 @@ sealed class ChangesSelection(
 val ChangesSelection.selectedChange: Change?
   get() = selectedIdx.let { changes.getOrNull(it) }
 
-internal fun ChangesSelection?.equalChanges(other: Any?): Boolean {
+@ApiStatus.Experimental
+fun ChangesSelection?.equalChanges(other: Any?): Boolean {
   if (this == null && other != null) return false
   if (this != null && other == null) return false
   if (other === this) return true
@@ -88,10 +92,14 @@ internal fun ChangesSelection?.equalChanges(other: Any?): Boolean {
   return true
 }
 
-internal fun Collection<Change>?.isEqual(other: Collection<Change>?, ordered: Boolean = false): Boolean =
-  equalsVia(other, GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY, ordered)
+@ApiStatus.Experimental
+@ApiStatus.Internal
+fun Collection<Change>?.isEqual(other: Collection<Change>?, ordered: Boolean = false): Boolean =
+  equalsVia(other, REVISION_COMPARISON_CHANGE_HASHING_STRATEGY, ordered)
 
-internal fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: HashingStrategy<E>, ordered: Boolean = false): Boolean {
+@ApiStatus.Experimental
+@ApiStatus.Internal
+fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: HashingStrategy<E>, ordered: Boolean = false): Boolean {
   if (this == null && other != null) return false
   if (this != null && other == null) return false
   if (other === this) return true
@@ -120,15 +128,33 @@ internal fun <E> Collection<E>?.equalsVia(other: Collection<E>?, strategy: Hashi
   }
 }
 
-internal fun Change.isEqual(other: Change?): Boolean =
-  GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY.equals(this, other)
+@ApiStatus.Experimental
+@ApiStatus.Internal
+fun Change.isEqual(other: Change?): Boolean =
+  REVISION_COMPARISON_CHANGE_HASHING_STRATEGY.equals(this, other)
 
+@ApiStatus.Experimental
+@ApiStatus.Internal
 //java.util.List.hashCode
-internal fun List<Change>.calcHashCode(): Int {
+fun List<Change>.calcHashCode(): Int {
   var hashCode = 1
   for (change in this) hashCode = 31 * hashCode + (change.calcHashCode())
   return hashCode
 }
 
-internal fun Change.calcHashCode(): Int =
-  GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY.hashCode(this)
+@ApiStatus.Experimental
+@ApiStatus.Internal
+fun Change.calcHashCode(): Int =
+  REVISION_COMPARISON_CHANGE_HASHING_STRATEGY.hashCode(this)
+
+@ApiStatus.Experimental
+@ApiStatus.Internal
+val REVISION_COMPARISON_CHANGE_HASHING_STRATEGY: HashingStrategy<Change> = object : HashingStrategy<Change> {
+  override fun equals(o1: Change?, o2: Change?): Boolean {
+    return o1 == o2 &&
+           o1?.beforeRevision == o2?.beforeRevision &&
+           o1?.afterRevision == o2?.afterRevision
+  }
+
+  override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
+}

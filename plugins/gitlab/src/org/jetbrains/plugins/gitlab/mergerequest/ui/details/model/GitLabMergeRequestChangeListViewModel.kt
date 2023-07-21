@@ -17,7 +17,8 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNotePosition
 import org.jetbrains.plugins.gitlab.mergerequest.data.firstNote
 import org.jetbrains.plugins.gitlab.mergerequest.data.mapToLocation
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel.Update
 import java.util.concurrent.ConcurrentHashMap
 
@@ -81,7 +82,7 @@ internal class GitLabMergeRequestChangeListViewModelImpl(
       val (parsedChanges, commit) = pair
       val changes = parsedChanges.getChanges(commit)
       val result: MutableMap<Change, Int> =
-        CollectionFactory.createCustomHashingStrategyMap(GitBranchComparisonResult.REVISION_COMPARISON_HASHING_STRATEGY)
+        CollectionFactory.createCustomHashingStrategyMap(REVISION_COMPARISON_CHANGE_HASHING_STRATEGY)
       changes.associateWithTo(result) { change ->
         val patch = parsedChanges.patchesByChange[change] ?: return@associateWithTo 0
         //TODO: cache?

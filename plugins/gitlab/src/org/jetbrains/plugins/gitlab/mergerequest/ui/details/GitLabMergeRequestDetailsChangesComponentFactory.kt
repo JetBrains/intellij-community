@@ -23,8 +23,8 @@ import com.intellij.util.Processor
 import com.intellij.util.ui.tree.TreeUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collectLatest
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
-import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
+import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.collaboration.util.isEqual
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangeListViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestChangesViewModel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle

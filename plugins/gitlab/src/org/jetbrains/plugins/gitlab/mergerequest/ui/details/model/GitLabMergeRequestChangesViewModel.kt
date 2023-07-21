@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabCommitDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequestChanges
-import org.jetbrains.plugins.gitlab.mergerequest.diff.isEqual
+import com.intellij.collaboration.util.isEqual
 
 internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewModel<GitLabCommitDTO> {
   val changeListVm: SharedFlow<Result<GitLabMergeRequestChangeListViewModel>>

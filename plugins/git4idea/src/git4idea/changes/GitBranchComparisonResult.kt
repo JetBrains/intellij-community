@@ -8,9 +8,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.openapi.diff.impl.patch.PatchHunkUtil
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.ex.isValidRanges
-import com.intellij.util.containers.HashingStrategy
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.*
 
 /**
  * Represents a set of changes in a branch compared to some other branch via three-dot-diff (via merge base)
@@ -33,18 +31,6 @@ interface GitBranchComparisonResult {
   val commitByChange: Map<Change, String>
 
   val patchesByChange: Map<Change, GitTextFilePatchWithHistory>
-
-  companion object {
-    val REVISION_COMPARISON_HASHING_STRATEGY: HashingStrategy<Change> = object : HashingStrategy<Change> {
-      override fun equals(o1: Change?, o2: Change?): Boolean {
-        return o1 == o2 &&
-               o1?.beforeRevision == o2?.beforeRevision &&
-               o1?.afterRevision == o2?.afterRevision
-      }
-
-      override fun hashCode(change: Change?) = Objects.hash(change, change?.beforeRevision, change?.afterRevision)
-    }
-  }
 }
 
 fun GitBranchComparisonResult.findCumulativeChange(commitSha: String, filePath: String): Change? {

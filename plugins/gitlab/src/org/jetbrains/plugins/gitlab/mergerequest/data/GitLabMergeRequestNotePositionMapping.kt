@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gitlab.mergerequest.data
 import com.intellij.openapi.diagnostic.logger
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.findCumulativeChange
-import org.jetbrains.plugins.gitlab.mergerequest.diff.ChangesSelection
+import com.intellij.collaboration.util.ChangesSelection
 
 interface GitLabMergeRequestNotePositionMapping {
   class Actual(val change: ChangesSelection.Precise) : GitLabMergeRequestNotePositionMapping
