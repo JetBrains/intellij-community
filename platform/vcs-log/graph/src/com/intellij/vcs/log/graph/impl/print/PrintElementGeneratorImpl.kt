@@ -20,18 +20,18 @@ import com.intellij.vcs.log.graph.impl.print.elements.SimplePrintElementImpl
 import com.intellij.vcs.log.graph.impl.print.elements.TerminalEdgePrintElement
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils.*
 import com.intellij.vcs.log.graph.utils.NormalEdge
-import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
 
-internal class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
-                                                               private val presentationManager: PrintElementPresentationManager,
-                                                               private val elementComparator: Comparator<GraphElement>,
-                                                               private val longEdgeSize: Int,
-                                                               private val visiblePartSize: Int,
-                                                               private val edgeWithArrowSize: Int) : PrintElementGenerator {
+internal class PrintElementGeneratorImpl @VisibleForTesting constructor(private val linearGraph: LinearGraph,
+                                                                        private val presentationManager: PrintElementPresentationManager,
+                                                                        private val elementComparator: Comparator<GraphElement>,
+                                                                        private val longEdgeSize: Int,
+                                                                        private val visiblePartSize: Int,
+                                                                        private val edgeWithArrowSize: Int) : PrintElementGenerator {
   private val cache = SLRUMap<Int, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2)
   private val edgesInRowGenerator = EdgesInRowGenerator(linearGraph)
 
