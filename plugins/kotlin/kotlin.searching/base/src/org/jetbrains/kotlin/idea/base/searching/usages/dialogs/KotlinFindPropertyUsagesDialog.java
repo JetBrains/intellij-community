@@ -134,9 +134,9 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                     isAbstract
                     ? KotlinBundle.message("find.declaration.implementing.properties.checkbox")
                     : KotlinBundle.message("find.declaration.overriding.properties.checkbox"),
-                    FindSettings.getInstance().isSearchOverloadedMethods(),
+                    getFindUsagesOptions().getSearchOverrides(),
                     optionsPanel,
-                    false
+                    true
             );
         }
         boolean isActual = PsiUtilsKt.hasActualModifier(property);
@@ -166,7 +166,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     @Override
     protected void update() {
-        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses));
+        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses) || isSelected(overrideUsages));
     }
 
     private static final boolean disableComponentAndDestructionSearchDefault = false;
