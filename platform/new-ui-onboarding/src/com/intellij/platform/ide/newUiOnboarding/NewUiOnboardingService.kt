@@ -32,13 +32,25 @@ internal class NewUiOnboardingService(private val project: Project, private val 
   }
 
   private fun getSteps(): List<NewUiOnboardingStep> {
-    // todo: add an ability to provide custom steps order (for other IDEs that want to customize the onboarding)
-    val stepIds = getDefaultStepsOrder()
+    val stepIds = getStepOrder()
     val stepExtensions = NewUiOnboardingStep.EP_NAME.extensions
     return stepIds.mapNotNull { id ->
       val step = stepExtensions.find { it.key == id }?.instance
       step?.takeIf { it.isAvailable() }
     }
+  }
+
+  private fun getStepOrder(): List<String> {
+    val defaultOrder = getDefaultStepsOrder()
+    val customizations = NewUiOnboardingBean.getInstance().customizations
+    if (customizations.isEmpty()) {
+      return defaultOrder
+    }
+    val mutableSteps = defaultOrder.toMutableList()
+    for (customization in customizations) {
+      customization.customize(mutableSteps)
+    }
+    return mutableSteps
   }
 
   private fun getDefaultStepsOrder(): List<String> {

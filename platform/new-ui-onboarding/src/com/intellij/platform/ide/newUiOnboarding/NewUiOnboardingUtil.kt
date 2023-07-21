@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ToolbarComboWidget
 import com.intellij.ui.ColorUtil
@@ -37,6 +38,9 @@ object NewUiOnboardingUtil {
   private const val LIGHT_SUFFIX = ""
   private const val LIGHT_HEADER_SUFFIX = "_light_header"
   private const val DARK_SUFFIX = "_dark"
+
+  val isOnboardingEnabled: Boolean
+    get() = Registry.`is`("ide.experimental.ui.onboarding") && NewUiOnboardingBean.isPresent
 
   inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
     val root = WindowManager.getInstance().getFrame(project) ?: return null
