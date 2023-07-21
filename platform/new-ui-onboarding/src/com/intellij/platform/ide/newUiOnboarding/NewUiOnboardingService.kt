@@ -25,7 +25,7 @@ internal class NewUiOnboardingService(private val project: Project, private val 
     }
   }
 
-  private fun startOnboarding() {
+  fun startOnboarding() {
     val steps = getSteps()
     val executor = NewUiOnboardingExecutor(project, steps, cs, project)
     cs.launch(Dispatchers.EDT) { executor.start() }
