@@ -30,9 +30,8 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                                      arch: JvmArchitecture,
                                      notarize: Boolean) {
   require(Files.isRegularFile(macZip))
-
-  val targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$targetName.sit")
+  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir)
+    .resolve(context.productProperties.getBaseArtifactName(context) + suffix + ".sit")
   Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
   if (context.isMacCodeSignEnabled) {
@@ -44,7 +43,7 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   if (notarize) {
     notarize(sitFile, context)
   }
-  buildDmg(sitFile, targetName, customizer, context, staple = notarize)
+  buildDmg(sitFile, builder.artifactName(suffix), customizer, context, staple = notarize)
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
   }
@@ -76,7 +75,7 @@ private suspend fun generateIntegrityManifest(sitFile: Path, sitRoot: String, co
 }
 
 private suspend fun buildDmg(sitFile: Path,
-                             targetName: String,
+                             dmgName: String,
                              customizer: MacDistributionCustomizer,
                              context: BuildContext,
                              staple: Boolean) {
@@ -94,7 +93,7 @@ private suspend fun buildDmg(sitFile: Path,
       }
       val tmpSit = Files.move(sitFile, tempDir.resolve(sitFile.fileName))
       runProcess(args = listOf("./${entrypoint.name}"), workingDir = tempDir, inheritOut = true)
-      val dmgFile = tempDir.resolve("$targetName.dmg")
+      val dmgFile = tempDir.resolve(dmgName)
       check(dmgFile.exists()) {
         "$dmgFile wasn't created"
       }

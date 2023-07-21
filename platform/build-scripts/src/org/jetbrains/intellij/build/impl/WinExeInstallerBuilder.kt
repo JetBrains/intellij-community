@@ -20,6 +20,7 @@ import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.nameWithoutExtension
 import kotlin.io.path.setLastModifiedTime
 import kotlin.time.Duration.Companion.hours
 
@@ -36,19 +37,20 @@ private val isDockerAvailable by lazy {
 }
 
 @Suppress("SpellCheckingInspection")
-internal suspend fun buildNsisInstaller(winDistPath: Path,
-                                        additionalDirectoryToInclude: Path,
-                                        suffix: String,
-                                        customizer: WindowsDistributionCustomizer,
-                                        runtimeDir: Path,
-                                        context: BuildContext): Path? {
+internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: Path,
+                                                                   additionalDirectoryToInclude: Path,
+                                                                   suffix: String,
+                                                                   customizer: WindowsDistributionCustomizer,
+                                                                   runtimeDir: Path,
+                                                                   context: BuildContext): Path? {
   if (SystemInfoRt.isMac && !isDockerAvailable) {
     Span.current().addEvent("Windows installer cannot be built on macOS without Docker")
     return null
   }
 
   val communityHome = context.paths.communityHomeDir
-  val outFileName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
+  val installerFile = context.paths.artifactDir.resolve(artifactName(suffix))
+  val outFileName = installerFile.nameWithoutExtension
   Span.current().setAttribute(outFileName, outFileName)
 
   val box = context.paths.tempDir.resolve("winInstaller$suffix")
@@ -141,7 +143,6 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
     }
   }
 
-  val installerFile = context.paths.artifactDir.resolve("$outFileName.exe")
   check(Files.exists(installerFile)) {
     "Windows installer wasn't created."
   }

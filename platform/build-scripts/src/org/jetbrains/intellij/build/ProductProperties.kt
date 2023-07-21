@@ -189,8 +189,9 @@ abstract class ProductProperties {
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
    */
-  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String =
-    getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  open fun getCrossPlatformZipFileName(applicationInfo: ApplicationInfoProperties, buildNumber: String): String {
+    return getBaseArtifactName(applicationInfo, buildNumber) + ".portable.zip"
+  }
 
   /**
    * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
@@ -224,6 +225,22 @@ abstract class ProductProperties {
    * Base file name (without an extension) for product archives and installers (*.exe, *.tar.gz, *.dmg).
    */
   abstract fun getBaseArtifactName(appInfo: ApplicationInfoProperties, buildNumber: String): String
+
+  /**
+   * `<productName>-<releaseVersion>` for release builds, e.g. ideaIC-2023.2
+   * `<productName>-<buildNumber>` for other builds, e.g. ideaIC-232.9999
+   *
+   * See [getBaseArtifactName].
+   */
+  open fun getBaseArtifactName(context: BuildContext): String {
+    val buildNumber = if (context.applicationInfo.isRelease) {
+      context.applicationInfo.fullVersion
+    }
+    else {
+      context.buildNumber
+    }
+    return getBaseArtifactName(context.applicationInfo, buildNumber)
+  }
 
   /**
    * @return an instance of the class containing properties specific for Windows distribution,

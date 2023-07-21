@@ -778,7 +778,7 @@ private fun CoroutineScope.createBuildThirdPartyLibraryListJob(entries: List<Dis
       generator.generateJson(jsonFilePath)
 
       if (context.productProperties.generateLibraryLicensesTable) {
-        val artifactNamePrefix = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+        val artifactNamePrefix = context.productProperties.getBaseArtifactName(context)
         val htmlArtifact = context.paths.artifactDir.resolve("$artifactNamePrefix-third-party-libraries.html")
         val jsonArtifact = context.paths.artifactDir.resolve("$artifactNamePrefix-third-party-libraries.json")
         Files.createDirectories(context.paths.artifactDir)

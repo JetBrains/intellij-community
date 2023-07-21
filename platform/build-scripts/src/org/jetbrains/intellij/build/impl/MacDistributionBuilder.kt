@@ -14,6 +14,7 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFile
@@ -384,7 +385,6 @@ class MacDistributionBuilder(override val context: BuildContext,
                                    notarize: Boolean,
                                    customizer: MacDistributionCustomizer,
                                    context: BuildContext) {
-    val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     val archStr = arch.name
     coroutineScope {
       if (context.options.buildMacArtifactsWithRuntime) {
@@ -397,7 +397,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                           customizer = customizer,
                           macZip = macZip,
                           isRuntimeBundled = true,
-                          suffix = suffix,
+                          suffix = suffix(arch),
                           arch = arch,
                           notarize = notarize)
         }
@@ -414,7 +414,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                           customizer = customizer,
                           macZip = macZipWithoutRuntime,
                           isRuntimeBundled = false,
-                          suffix = "-no-jdk$suffix",
+                          suffix = "-no-jdk${suffix(arch)}",
                           arch = arch,
                           notarize = notarize)
         }

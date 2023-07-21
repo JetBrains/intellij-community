@@ -15,6 +15,7 @@ import org.jetbrains.intellij.build.JvmArchitecture.Companion.currentJvmArch
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.intellij.build.io.runProcess
 import java.nio.file.Files
 import java.nio.file.Path
@@ -216,16 +217,8 @@ class RepairUtilityBuilder {
       @JvmField val distributionUrlVariable: String
     ) {
       val distributionSuffix: String
-        get() {
-          return when (arch) {
-                   JvmArchitecture.x64 -> ""
-                   JvmArchitecture.aarch64 -> "-" + arch.fileSuffix
-                 } + when (os) {
-                   OsFamily.LINUX -> ".tar.gz"
-                   OsFamily.MACOS -> ".dmg"
-                   OsFamily.WINDOWS -> ".exe"
-                 }
-        }
+        get() = OsSpecificDistributionBuilder.suffix(arch) + "." +
+                OsSpecificDistributionBuilder.extension(os)
     }
 
     fun executableFilesPatterns(context: BuildContext): List<String> {

@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.BundledRuntimeImpl.Companion.getProductPrefix
+import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder.Companion.suffix
 import org.jetbrains.intellij.build.impl.productInfo.*
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import org.jetbrains.intellij.build.io.*
@@ -70,7 +71,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   override suspend fun buildArtifacts(osAndArchSpecificDistPath: Path, arch: JvmArchitecture) {
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     setLastModifiedTime(osAndArchSpecificDistPath, context)
-    val suffix = if (arch == JvmArchitecture.x64) "" else "-${arch.fileSuffix}"
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
       if (customizer.buildTarGzWithoutBundledRuntime) {
         launch {
@@ -78,7 +78,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
                               BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
             buildTarGz(runtimeDir = null,
                        unixDistPath = osAndArchSpecificDistPath,
-                       suffix = NO_JBR_SUFFIX + suffix,
+                       suffix = NO_JBR_SUFFIX + suffix(arch),
                        arch = arch)
           }
         }
@@ -88,7 +88,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
       }
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
-      val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix)
+      val tarGzPath = buildTarGz(arch = arch, runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, suffix = suffix(arch))
       launch {
         if (arch == JvmArchitecture.x64) {
           buildSnapPackage(runtimeDir = runtimeDir, unixDistPath = osAndArchSpecificDistPath, arch = arch)
@@ -150,7 +150,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
   private suspend fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path = withContext(Dispatchers.IO) {
     val tarRoot = rootDirectoryName
-    val tarName = artifactName(context, suffix)
+    val tarName = artifactName(suffix)
     val tarPath = context.paths.artifactDir.resolve(tarName)
     val dirs = mutableListOf(context.paths.distAllDir, unixDistPath)
 
@@ -358,11 +358,6 @@ private fun generateVersionMarker(unixDistPath: Path, context: BuildContext) {
   val targetDir = unixDistPath.resolve("lib")
   Files.createDirectories(targetDir)
   Files.writeString(targetDir.resolve("build-marker-" + context.fullBuildNumber), context.fullBuildNumber)
-}
-
-private fun artifactName(buildContext: BuildContext, suffix: String?): String {
-  val baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-  return "$baseName$suffix.tar.gz"
 }
 
 private fun copyScript(sourceFile: Path,
