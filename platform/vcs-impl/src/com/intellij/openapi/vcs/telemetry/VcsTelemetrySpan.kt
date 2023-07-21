@@ -52,6 +52,10 @@ interface VcsTelemetrySpan {
       override fun getName() = "read full log from VCS"
     },
 
+    ReadFullLogFromVcsForRoot {
+      override fun getName() = "read full log from VCS for root"
+    },
+
     GetContainingBranches {
       override fun getName() = "get containing branches"
     },
