@@ -13,6 +13,20 @@ root.clientJvm.test
 
 root.clientMpp
 
+root.clientMpp.appleMain
+    libMpp.appleMain (COMPILE)
+    libMpp.commonMain (COMPILE)
+    libMpp.iosArm64Main (COMPILE)
+    libMpp.iosMain (COMPILE)
+    libMpp.nativeMain (COMPILE)
+
+root.clientMpp.appleTest
+    libMpp.appleMain (TEST)
+    libMpp.commonMain (TEST)
+    libMpp.iosArm64Main (TEST)
+    libMpp.iosMain (TEST)
+    libMpp.nativeMain (TEST)
+
 root.clientMpp.commonMain
     libMpp.commonMain (COMPILE)
 
@@ -20,18 +34,52 @@ root.clientMpp.commonTest
     libMpp.commonMain (TEST)
 
 root.clientMpp.iosArm64Main
+    libMpp.appleMain (COMPILE)
     libMpp.commonMain (COMPILE)
     libMpp.iosArm64Main (COMPILE)
+    libMpp.iosMain (COMPILE)
+    libMpp.nativeMain (COMPILE)
 
 root.clientMpp.iosArm64Test
+    libMpp.appleMain (TEST)
     libMpp.commonMain (TEST)
     libMpp.iosArm64Main (TEST)
+    libMpp.iosMain (TEST)
+    libMpp.nativeMain (TEST)
+
+root.clientMpp.iosMain
+    libMpp.appleMain (COMPILE)
+    libMpp.commonMain (COMPILE)
+    libMpp.iosArm64Main (COMPILE)
+    libMpp.iosMain (COMPILE)
+    libMpp.nativeMain (COMPILE)
+
+root.clientMpp.iosTest
+    libMpp.appleMain (TEST)
+    libMpp.commonMain (TEST)
+    libMpp.iosArm64Main (TEST)
+    libMpp.iosMain (TEST)
+    libMpp.nativeMain (TEST)
 
 root.clientMpp.jvmMain
     libMpp.jvmAdditionalNonTest (COMPILE)
 
 root.clientMpp.jvmTest
     libMpp.jvmAdditionalNonTest (TEST)
+
+root.clientMpp.nativeMain
+    libMpp.appleMain (COMPILE)
+    libMpp.commonMain (COMPILE)
+    libMpp.iosArm64Main (COMPILE)
+    libMpp.iosMain (COMPILE)
+    libMpp.nativeMain (COMPILE)
+
+root.clientMpp.nativeTest
+    libMpp.appleMain (TEST)
+    libMpp.commonMain (TEST)
+    libMpp.iosArm64Main (TEST)
+    libMpp.iosMain (TEST)
+    libMpp.nativeMain (TEST)
 
 
 Test configuration:

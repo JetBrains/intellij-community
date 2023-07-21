@@ -190,6 +190,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
 
     @Test
     @TestMetadata("projectDependenciesToMppProjectWithAdditionalCompilations")
+    @PluginTargetVersions(pluginVersion = "1.9.20-dev-6845+")
     fun `testProjectDependenciesToMppProjectWithAdditionalCompilations - KGP dependency resolution disabled`() {
         doTest {
             testClassifier = "old-import"
