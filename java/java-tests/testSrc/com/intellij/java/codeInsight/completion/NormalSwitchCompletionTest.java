@@ -87,8 +87,12 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   public void testQualifierEnumConstantInSwitch4() { doTest(); }
   @NeedsIndex.ForStandardLibrary
   public void testQualifierEnumConstantInSwitchWithObject() { doTest(); }
+  @NeedsIndex.ForStandardLibrary
+  public void testQualifierEnumConstantInSwitchWithObjectInJava20() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
+  }
   public void testQualifierEnumConstantInSwitchInJava20() {
-    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_19, () -> doTest());
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_20, () -> doTest());
   }
   public void testClassPatternInSwitch1() { doTest(); }
   public void testClassPatternInSwitch2() { doTest(); }
