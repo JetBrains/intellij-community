@@ -122,21 +122,35 @@ object AvatarUtils {
 
 internal object Avatars {
   // "John Smith" -> "JS"
+  // "John Smith-Harris" -> "JS"
+  // "John-Smith-Harris" -> "JH"
+  // "John-Smith Harris" -> "JH"
+  // "MyProject" -> "MP"
+  // "My-Project" -> "MP"
+  // "My-Project_Strong" -> "MP"
+  // "My_Project_Strong" -> "MS"
+  // "One,Two-Four" -> "OT"
+  // "Project_" -> "P"
   fun initials(text: String): String {
-    val words = text
+    val filtered = text
       .filter { !it.isHighSurrogate() && !it.isLowSurrogate() }
       .trim()
-      .split(' ', ',', '`', '\'', '\"').filter { it.isNotBlank() }
-      .let {
-        if (it.size > 2) listOf(it.first(), it.last()) else it
-      }
-      .take(2)
-    if (words.size == 1) {
-      return generateFromCamelCase(words.first())
+
+    val words = (filtered.splitAtLeast2NonEmpty(' ')
+                 ?: filtered.splitAtLeast2NonEmpty(',')
+                 ?: filtered.splitAtLeast2NonEmpty('-')
+                 ?: filtered.splitAtLeast2NonEmpty('_')
+                 ?: filtered.splitAtLeast2NonEmpty('`', '\'', '\"'))
+        ?.let { listOf(it.first(), it.last()) }
+
+    if (words == null) {
+      return generateFromCamelCase(filtered)
     }
     return words.map { it.first() }
         .joinToString("").uppercase()
   }
+
+  private fun String.splitAtLeast2NonEmpty(vararg delimiters: Char) = split(*delimiters).filter { it.isNotEmpty() }.takeIf { it.size >= 2 }
 
   private fun generateFromCamelCase(text: String): String {
     return text.filterIndexed { index, c -> index == 0 || c.isUpperCase() }
