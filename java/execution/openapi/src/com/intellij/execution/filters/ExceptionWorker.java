@@ -64,8 +64,8 @@ public class ExceptionWorker {
    * If there is no such pattern in the line, but there is a single closing bracket, then returns its location.
    * If there are no closing brackets at all, or more than one closing bracket (but none of them following a digit), then returns -1.
    */
-  private static int findRParenAfterLocation(@NotNull String line) {
-    int singleRParen = line.indexOf(')');
+  private static int findRParenAfterLocation(@NotNull String line, int startIdx) {
+    int singleRParen = line.indexOf(')', startIdx);
     int next = singleRParen;
     while (next > -1) {
       if (next >= 1 && Character.isDigit(line.charAt(next - 1))) {
@@ -84,13 +84,27 @@ public class ExceptionWorker {
     ParsedLine result = parseNormalStackTraceLine(line);
     if (result == null) result = parseYourKitLine(line);
     if (result == null) result = parseForcedLine(line);
+    if (result == null) result = parseLinchekLine(line);
     return result;
   }
 
   @Nullable
   private static ParsedLine parseNormalStackTraceLine(@NotNull String line) {
+    return parseStackTraceLine(line, false);
+  }
+
+  @Nullable
+  private static ParsedLine parseLinchekLine(@NotNull String line) {
+    if (line.startsWith("|")) {
+      return parseStackTraceLine(line, true);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ParsedLine parseStackTraceLine(@NotNull String line, boolean searchForRParenOnlyAfterAt) {
     int startIdx = findAtPrefix(line);
-    int rParenIdx = findRParenAfterLocation(line);
+    int rParenIdx = findRParenAfterLocation(line, searchForRParenOnlyAfterAt  ? startIdx : 0);
     if (rParenIdx < 0) return null;
 
     TextRange methodName = findMethodNameCandidateBefore(line, startIdx, rParenIdx);
