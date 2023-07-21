@@ -75,17 +75,11 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
                                                                   patterns, excludePatterns, excludeAnnotations,
                                                                   testTracking,
                                                                   branchCoverage, sourceMapPath));
-    if (!Registry.is("idea.coverage.thread.safe.enabled")) {
-      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false"));
+    if (!Registry.is("idea.coverage.new.tracing.enabled")) {
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=false"));
     }
-    if (!branchCoverage && Registry.is("idea.coverage.new.sampling.enabled")) {
-      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true"));
-    }
-    if (branchCoverage && Registry.is("idea.coverage.new.tracing.enabled")) {
-      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true"));
-      if (testTracking && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
-        targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
-      }
+    if (branchCoverage && testTracking && !Registry.is("idea.coverage.new.test.tracking.enabled")) {
+      targetParameters.add(request -> JavaTargetParameter.fixed("-Didea.new.test.tracking.coverage=false"));
     }
   }
 

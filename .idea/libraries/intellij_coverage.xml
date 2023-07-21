@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="intellij-coverage" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.728">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.intellij.deps:intellij-coverage-agent:1.0.731">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.728/intellij-coverage-agent-1.0.728.jar">
-          <sha256sum>dc56c290a0fe71c885ae48160f0e55cabda650c1965da5236ac8019475802b8b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.731/intellij-coverage-agent-1.0.731.jar">
+          <sha256sum>b9cf4532f3f4ce9d723ecb123badd767cbcb97a83ddbee913979fff9ec311753</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.728/intellij-coverage-agent-1.0.728.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.731/intellij-coverage-agent-1.0.731.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.728/intellij-coverage-agent-1.0.728-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/intellij-coverage-agent/1.0.731/intellij-coverage-agent-1.0.731-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
