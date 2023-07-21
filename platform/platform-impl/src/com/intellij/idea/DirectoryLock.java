@@ -157,6 +157,10 @@ final class DirectoryLock {
   }
 
   void dispose() {
+    dispose(true);
+  }
+
+  private void dispose(boolean deleteLockFile) {
     var serverChannel = myServerChannel;
     myServerChannel = null;
     if (serverChannel != null) {
@@ -169,7 +173,11 @@ final class DirectoryLock {
           }
         },
         () -> Files.deleteIfExists(myPortFile),
-        () -> Files.deleteIfExists(myLockFile));
+        () -> {
+          if (deleteLockFile) {
+            Files.deleteIfExists(myLockFile);
+          }
+        });
     }
   }
 
@@ -248,7 +256,7 @@ final class DirectoryLock {
     }
     catch (Exception e) {
       LOG.debug(e);
-      dispose();
+      dispose(false);
       throw new CannotActivateException(e);
     }
 
