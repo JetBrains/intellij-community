@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.ui.comment
 
+import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.ui.util.bindEnabledIn
 import com.intellij.collaboration.ui.util.swingAction
 import com.intellij.util.childScope
@@ -73,14 +74,7 @@ class DelegatingGitLabNoteEditingViewModel(parentCs: CoroutineScope,
     }
   }
 
-  override suspend fun destroy() {
-    try {
-      cs.coroutineContext[Job]!!.cancelAndJoin()
-    }
-    catch (e: CancellationException) {
-      // ignore, cuz we don't want to cancel the invoker
-    }
-  }
+  override suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
 interface NewGitLabNoteViewModel : GitLabNoteEditingViewModel {

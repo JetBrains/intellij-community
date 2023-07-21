@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
+import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.mapState
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
@@ -108,14 +109,7 @@ class MutableGitLabMergeRequestNote(
     data.value = item
   }
 
-  suspend fun destroy() {
-    try {
-      cs.coroutineContext[Job]!!.cancelAndJoin()
-    }
-    catch (ce: CancellationException) {
-      // ignore, cuz we don't want to cancel the invoker
-    }
-  }
+  suspend fun destroy() = cs.cancelAndJoinSilently()
 
   override fun toString(): String =
     "MutableGitLabNote(id='$id', author=$author, createdAt=$createdAt, canAdmin=$canAdmin, body=${body.value}, resolved=${resolved.value}, position=${position.value})"
@@ -170,14 +164,7 @@ class GitLabMergeRequestDraftNoteImpl(
     data.value = item
   }
 
-  suspend fun destroy() {
-    try {
-      cs.coroutineContext[Job]!!.cancelAndJoin()
-    }
-    catch (ce: CancellationException) {
-      // ignore, cuz we don't want to cancel the invoker
-    }
-  }
+  suspend fun destroy() = cs.cancelAndJoinSilently()
 
   override fun toString(): String =
     "GitLabMergeRequestDraftNoteImpl(id='$id', author=$author, createdAt=$createdAt, body=${body.value})"

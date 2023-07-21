@@ -21,7 +21,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabDiscussion
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabNote
 import org.jetbrains.plugins.gitlab.ui.comment.*
-import kotlin.coroutines.cancellation.CancellationException
 
 private typealias DiscussionsFlow = Flow<Collection<GitLabMergeRequestDiffDiscussionViewModel>>
 private typealias NewDiscussionsFlow = Flow<Map<DiffLineLocation, NewGitLabNoteViewModel>>
@@ -139,14 +138,7 @@ internal class GitLabMergeRequestDiffChangeViewModelImpl(
     }
   }
 
-  suspend fun destroy() {
-    try {
-      cs.coroutineContext[Job]!!.cancelAndJoin()
-    }
-    catch (e: CancellationException) {
-      // ignore, cuz we don't want to cancel the invoker
-    }
-  }
+  suspend fun destroy() = cs.cancelAndJoinSilently()
 }
 
 private fun transferToOtherSide(patch: TextFilePatch, location: DiffLineLocation): Int? {

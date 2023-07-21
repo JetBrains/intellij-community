@@ -157,56 +157,56 @@ fun <ID : Any, T, R> Flow<Iterable<T>>.associateBy(sourceIdentifier: (T) -> ID,
                                                    update: (suspend R.(T) -> Unit)? = null,
                                                    customHashingStrategy: HashingStrategy<ID>? = null)
   : Flow<Map<ID, R>> = channelFlow {
-    val cs = this
-    var initial = true
-    var prevResult = createLinkedMap<ID, R>(customHashingStrategy)
+  val cs = this
+  var initial = true
+  var prevResult = createLinkedMap<ID, R>(customHashingStrategy)
 
-    collect { items ->
-      var hasStructureChanges = false
-      val newItemsIdSet = if (customHashingStrategy == null) {
-        items.mapTo(LinkedHashSet(), sourceIdentifier)
-      }
-      else {
-        CollectionFactory.createLinkedCustomHashingStrategySet(customHashingStrategy).let {
-          items.mapTo(it, sourceIdentifier)
-        }
-      }
-
-      // remove missing
-      val iter = prevResult.iterator()
-      while (iter.hasNext()) {
-        val (key, exisingResult) = iter.next()
-        if (!newItemsIdSet.contains(key)) {
-          iter.remove()
-          hasStructureChanges = true
-          exisingResult.destroy()
-        }
-      }
-
-      val result = createLinkedMap<ID, R>(customHashingStrategy)
-      // add new or update existing
-      for (item in items) {
-        val id = sourceIdentifier(item)
-
-        val existing = prevResult[id]
-        if (existing != null && update != null) {
-          existing.update(item)
-          result[id] = existing
-        }
-        else {
-          result[id] = mapper(cs, item)
-          hasStructureChanges = true
-        }
-      }
-
-      prevResult = result
-      if (hasStructureChanges || initial) {
-        initial = false
-        send(result)
+  collect { items ->
+    var hasStructureChanges = false
+    val newItemsIdSet = if (customHashingStrategy == null) {
+      items.mapTo(LinkedHashSet(), sourceIdentifier)
+    }
+    else {
+      CollectionFactory.createLinkedCustomHashingStrategySet(customHashingStrategy).let {
+        items.mapTo(it, sourceIdentifier)
       }
     }
-  awaitClose()
+
+    // remove missing
+    val iter = prevResult.iterator()
+    while (iter.hasNext()) {
+      val (key, exisingResult) = iter.next()
+      if (!newItemsIdSet.contains(key)) {
+        iter.remove()
+        hasStructureChanges = true
+        exisingResult.destroy()
+      }
+    }
+
+    val result = createLinkedMap<ID, R>(customHashingStrategy)
+    // add new or update existing
+    for (item in items) {
+      val id = sourceIdentifier(item)
+
+      val existing = prevResult[id]
+      if (existing != null && update != null) {
+        existing.update(item)
+        result[id] = existing
+      }
+      else {
+        result[id] = mapper(cs, item)
+        hasStructureChanges = true
+      }
+    }
+
+    prevResult = result
+    if (hasStructureChanges || initial) {
+      initial = false
+      send(result)
+    }
   }
+  awaitClose()
+}
 
 private fun <ID : Any, R> createLinkedMap(customHashingStrategy: HashingStrategy<ID>?): MutableMap<ID, R> =
   if (customHashingStrategy == null) {
@@ -250,3 +250,16 @@ fun <T> Flow<T>.asResultFlow(): Flow<Result<T>> =
  */
 fun <T> Flow<Result<T>>.throwFailure(): Flow<T> =
   map { it.getOrThrow() }
+
+/**
+ * Cancel the scope, await its completion but ignore the completion exception if any to void cancelling the caller
+ */
+suspend fun CoroutineScope.cancelAndJoinSilently() {
+  val cs = this
+  val job = cs.coroutineContext[Job] ?: error("Missing Job in $cs")
+  try {
+    job.cancelAndJoin()
+  }
+  catch (ignored: Exception) {
+  }
+}

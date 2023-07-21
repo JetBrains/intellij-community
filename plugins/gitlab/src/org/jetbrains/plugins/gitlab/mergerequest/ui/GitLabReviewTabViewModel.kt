@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.ui
 
+import com.intellij.collaboration.async.cancelAndJoinSilently
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.toolwindow.ReviewTabViewModel
 import com.intellij.openapi.application.EDT
@@ -18,7 +19,6 @@ import org.jetbrains.plugins.gitlab.mergerequest.diff.selectedChange
 import org.jetbrains.plugins.gitlab.mergerequest.file.GitLabMergeRequestsFilesController
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModel
 import org.jetbrains.plugins.gitlab.mergerequest.ui.details.model.GitLabMergeRequestDetailsLoadingViewModelImpl
-import kotlin.coroutines.cancellation.CancellationException
 
 internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
   @OptIn(ExperimentalCoroutinesApi::class)
@@ -89,14 +89,7 @@ internal sealed interface GitLabReviewTabViewModel : ReviewTabViewModel {
     }
 
 
-    override suspend fun destroy() {
-      try {
-        cs.coroutineContext[Job]!!.cancelAndJoin()
-      }
-      catch (e: CancellationException) {
-        // ignore, cuz we don't want to cancel the invoker
-      }
-    }
+    override suspend fun destroy() = cs.cancelAndJoinSilently()
   }
 
   suspend fun destroy()
