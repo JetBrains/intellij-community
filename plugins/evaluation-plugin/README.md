@@ -42,7 +42,7 @@ HTML-reports contain examples of source code with the results of invocation, so 
 ```json5
 {
   "mode": "TOKENS", // call completion only in meaningful tokens or everywhere; possible values: TOKENS, ALL
-  "invokeOnEachChar": true, // close popup after unsuccessful completion and invoke again
+  "invokeOnEachChar": true, // close popup after unsuccessful completion and invoke again (only for line-completion-golf feature)
   "topN": 5, // take only N top proposals, applying after filtering by source
   "checkToken": true, // accept first word of the proposal if it matches and there is no full match in the session
   "checkLine": true, // accept multi token proposals
