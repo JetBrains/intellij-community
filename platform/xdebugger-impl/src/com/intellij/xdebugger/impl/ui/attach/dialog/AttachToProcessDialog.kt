@@ -104,7 +104,7 @@ open class AttachToProcessDialog(
   private val columnsLayout = application.getService(AttachDialogColumnsLayoutService::class.java).getColumnsLayout()
 
   private val localAttachView = AttachToLocalProcessView(project, state, columnsLayout, attachDebuggerProviders)
-  private val remoteAttachView = AttachToRemoteProcessView(project, state, columnsLayout, attachHostProviders, attachDebuggerProviders)
+  private val externalAttachViews: List<AttachToProcessView>
   private val allViews: List<AttachToProcessView>
   private var currentAttachView = AtomicLazyProperty<AttachToProcessView> { localAttachView }
 
@@ -120,8 +120,9 @@ open class AttachToProcessDialog(
   init {
     title = XDebuggerBundle.message("xdebugger.attach.action").trimEnd('.')
 
-    val externalProcessViews = XAttachToProcessViewProvider.getProcessViews(project, state, columnsLayout, attachDebuggerProviders)
-    allViews = listOf(localAttachView, remoteAttachView) + externalProcessViews
+    externalAttachViews = XAttachToProcessViewProvider
+      .getProcessViews(project, state, columnsLayout, attachDebuggerProviders, attachHostProviders)
+    allViews = listOf(localAttachView) + externalAttachViews
     viewsPanel = panel { row { segmentedButton(allViews) { text = it.getName() }.bind(currentAttachView) } }
 
     northToolbar = createNorthToolbar()
@@ -130,8 +131,7 @@ open class AttachToProcessDialog(
     currentAttachView.afterChange { updateView(it) }
     val view = when (defaultHostType) {
       AttachDialogHostType.LOCAL -> localAttachView
-      AttachDialogHostType.REMOTE -> if (attachHostProviders.any()) remoteAttachView else localAttachView
-      AttachDialogHostType.DOCKER -> externalProcessViews.firstOrNull { it.getHostType() == AttachDialogHostType.DOCKER } ?: localAttachView
+      else -> externalAttachViews.firstOrNull { it.getHostType() == defaultHostType } ?: localAttachView
     }
 
     currentAttachView.set(view)
@@ -528,7 +528,7 @@ open class AttachToProcessDialog(
   }
 
   fun setShowLocalView(localViewDefault: Boolean) {
-    val viewToSelect = if (localViewDefault) localAttachView else remoteAttachView
+    val viewToSelect = if (localViewDefault) localAttachView else externalAttachViews.firstOrNull() ?: localAttachView
     if (currentAttachView.get() == viewToSelect) {
       return
     }
