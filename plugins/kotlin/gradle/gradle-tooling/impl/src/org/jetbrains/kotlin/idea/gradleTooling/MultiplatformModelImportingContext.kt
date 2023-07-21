@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.ENABLE_KGP_DEPENDENCY_RESOLUTION
+import org.jetbrains.kotlin.idea.gradleTooling.GradleImportProperties.IS_HMPP_ENABLED
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinExtensionReflection
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMultiplatformImportReflection
 import org.jetbrains.kotlin.idea.projectModel.*
@@ -63,6 +64,7 @@ interface MultiplatformModelImportingContext : KotlinSourceSetContainer, HasDepe
 }
 
 internal fun MultiplatformModelImportingContext.getProperty(property: GradleImportProperties): Boolean = project.getProperty(property)
+internal val MultiplatformModelImportingContext.isHMPPEnabled get() = getProperty(IS_HMPP_ENABLED)
 
 internal fun Project.getProperty(property: GradleImportProperties): Boolean {
     val explicitValueIfAny = try {
