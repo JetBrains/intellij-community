@@ -371,7 +371,8 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myProviders.entrySet()) {
           VirtualFile root = entry.getKey();
           VcsLogProvider provider = entry.getValue();
-          runWithSpanThrows(myTracer, "read full log from VCS for " + root.getName(), scopeSpan -> {
+          runWithSpanThrows(myTracer, LogData.ReadFullLogFromVcsForRoot.getName(), scopeSpan -> {
+            scopeSpan.setAttribute("rootName", root.getName());
             List<GraphCommit<Integer>> graphCommits = new ArrayList<>();
             VcsLogProvider.LogData data = provider.readAllHashes(root, commit -> graphCommits.add(compactCommit(commit, root)));
             logInfo.put(root, graphCommits);
