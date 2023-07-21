@@ -227,7 +227,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
     if (model.isCaseSensitive) { statusText.appendText(FindBundle.message("find.popup.case.sensitive.label")) }
     if (model.isWholeWordsOnly) { statusText.appendText(" ").appendText(FindBundle.message("find.whole.words.label")) }
     if (model.isRegularExpressions) { statusText.appendText(" ").appendText(FindBundle.message("find.regex.label")) }
-    if (model.fileFilter?.isNotBlank() == true) { statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask")) }
+    if (model.fileFilter?.isNotBlank() == true) { statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask.label")) }
 
     val clear = { model.isCaseSensitive = false; model.isWholeWordsOnly = false; model.isRegularExpressions = false;  }
     statusText.appendLine(FindBundle.message("find.popup.clear.all.options"),
