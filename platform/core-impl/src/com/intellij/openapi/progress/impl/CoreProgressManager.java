@@ -957,13 +957,18 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   @Override
   public <X> X silenceGlobalIndicator(@NotNull Supplier<? extends X> computable) {
     long id = Thread.currentThread().getId();
-    ProgressIndicator indicator = currentIndicators.get(id);
-    setCurrentIndicator(id, null);
+    ProgressIndicator topLevelIndicator = threadTopLevelIndicators.remove(id);
+    ProgressIndicator currentIndicator = currentIndicators.remove(id);
     try {
       return computable.get();
     }
     finally {
-      setCurrentIndicator(id, indicator);
+      if (currentIndicator != null) {
+        currentIndicators.put(id, currentIndicator);
+      }
+      if (topLevelIndicator != null) {
+        threadTopLevelIndicators.put(id, topLevelIndicator);
+      }
     }
   }
 
