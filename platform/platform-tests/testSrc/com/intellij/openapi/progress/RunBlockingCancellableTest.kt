@@ -2,6 +2,7 @@
 package com.intellij.openapi.progress
 
 import com.intellij.concurrency.currentThreadContextOrNull
+import com.intellij.openapi.application.impl.ModalityStateEx
 import com.intellij.openapi.progress.impl.ProgressState
 import com.intellij.util.timeoutRunBlocking
 import kotlinx.coroutines.*
@@ -53,6 +54,18 @@ class RunBlockingCancellableTest : CancellationTest() {
 
       assertNull(Cancellation.currentJob())
       assertNotNull(ProgressManager.getGlobalProgressIndicator())
+    }
+  }
+
+  @Test
+  fun `with indicator non-cancellable context`() {
+    val modalityState = ModalityStateEx()
+    withIndicator(EmptyProgressIndicator(modalityState)) {
+      ProgressManager.getInstance().computeInNonCancelableSection<_, Nothing> {
+        assertSame(modalityState, ProgressManager.getInstance().currentProgressModality)
+        runBlockingCancellable {}
+        assertSame(modalityState, ProgressManager.getInstance().currentProgressModality) // IDEA-325853
+      }
     }
   }
 
