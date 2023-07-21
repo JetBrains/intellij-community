@@ -185,7 +185,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     override fun getPresentableText(error: Throwable): @Nls String = when (error) {
       is GithubMissingTokenException -> CollaborationToolsBundle.message("account.token.missing")
       is GithubAuthenticationException -> GithubBundle.message("credentials.invalid.auth.data", "")
-      else -> GithubBundle.message("clone.error.load.repositories")
+      else -> CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
     }
 
     override fun getAction(account: GithubAccount, error: Throwable) = when (error) {

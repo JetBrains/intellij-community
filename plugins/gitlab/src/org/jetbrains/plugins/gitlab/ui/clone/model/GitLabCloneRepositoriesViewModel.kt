@@ -15,19 +15,18 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.childScope
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabApiImpl
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.authentication.ui.GitLabAccountsDetailsProvider
+import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneException
 import org.jetbrains.plugins.gitlab.ui.clone.GitLabCloneListItem
 import org.jetbrains.plugins.gitlab.ui.clone.model.GitLabCloneRepositoriesViewModel.SearchModel
 import org.jetbrains.plugins.gitlab.ui.clone.presentation
+import java.net.ConnectException
 import java.net.MalformedURLException
 import java.net.URL
 import java.nio.file.Paths
@@ -48,6 +47,8 @@ internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel 
 
   fun setDirectoryPath(path: String)
 
+  fun reload()
+
   fun doClone(checkoutListener: CheckoutProvider.Listener)
 
   sealed interface SearchModel {
@@ -60,7 +61,8 @@ internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel 
 internal class GitLabCloneRepositoriesViewModelImpl(
   private val project: Project,
   parentCs: CoroutineScope,
-  private val accountManager: GitLabAccountManager
+  private val accountManager: GitLabAccountManager,
+  private val switchToLoginAction: (GitLabAccount) -> Unit
 ) : GitLabCloneRepositoriesViewModel {
   private val vcsNotifier: VcsNotifier = project.service<VcsNotifier>()
 
@@ -68,6 +70,8 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   private val taskLauncher: SingleCoroutineLauncher = SingleCoroutineLauncher(cs)
   override val isLoading: Flow<Boolean> = taskLauncher.busy
+
+  private val reloadRepositoriesRequest: MutableSharedFlow<Unit> = MutableSharedFlow(replay = 1)
 
   override val accountsUpdatedRequest: SharedFlow<Set<GitLabAccount>> = accountManager.accountsState.transformLatest { accounts ->
     emit(accounts)
@@ -84,14 +88,15 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   private val _selectedItem: MutableStateFlow<GitLabCloneListItem?> = MutableStateFlow(null)
 
-  override val items: SharedFlow<List<GitLabCloneListItem>> = accountsUpdatedRequest.transformLatest { accounts ->
-    taskLauncher.launch {
-      val repositories = accounts.flatMap { account ->
-        collectRepositoriesByAccount(account)
+  override val items: SharedFlow<List<GitLabCloneListItem>> = combine(reloadRepositoriesRequest, accountsUpdatedRequest, ::Pair)
+    .transformLatest { (_, accounts) ->
+      taskLauncher.launch {
+        val repositories = accounts.flatMap { account ->
+          collectRepositoriesByAccount(account)
+        }
+        emit(repositories)
       }
-      emit(repositories)
-    }
-  }.modelFlow(cs, thisLogger())
+    }.modelFlow(cs, thisLogger())
 
   private val _searchValue: MutableStateFlow<String> = MutableStateFlow("")
   override val searchValue: SharedFlow<SearchModel> = _searchValue.mapState(cs) { text ->
@@ -133,6 +138,12 @@ internal class GitLabCloneRepositoriesViewModelImpl(
     directoryPath.value = path
   }
 
+  override fun reload() {
+    cs.launch {
+      reloadRepositoriesRequest.emit(Unit)
+    }
+  }
+
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
     val selectedUrl = _selectedUrl.value ?: error("Clone button is enabled when repository is not selected")
     val directoryPath = directoryPath.value
@@ -160,18 +171,31 @@ internal class GitLabCloneRepositoriesViewModelImpl(
   }
 
   private suspend fun collectRepositoriesByAccount(account: GitLabAccount): List<GitLabCloneListItem> {
-    val token = accountManager.findCredentials(account) ?: return listOf(
-      GitLabCloneListItem.Error(account, CollaborationToolsBundle.message("account.token.missing"))
-    )
-    val apiClient = GitLabApiImpl { token }
-    val currentUser = apiClient.graphQL.getCurrentUser(account.server) ?: return listOf(
-      GitLabCloneListItem.Error(account, CollaborationToolsBundle.message("http.status.error.refresh.token"))
-    )
-    val accountRepositories = currentUser.projectMemberships.map { projectMember ->
-      GitLabCloneListItem.Repository(account, projectMember)
+    return withContext(Dispatchers.IO) {
+      try {
+        val token = accountManager.findCredentials(account) ?: return@withContext listOf(
+          GitLabCloneListItem.Error(account, GitLabCloneException.MissingAccessToken { switchToLoginAction(account) })
+        )
+        val apiClient = GitLabApiImpl { token }
+        val currentUser = apiClient.graphQL.getCurrentUser(account.server) ?: return@withContext listOf(
+          GitLabCloneListItem.Error(account, GitLabCloneException.RevokedToken { switchToLoginAction(account) })
+        )
+        val accountRepositories = currentUser.projectMemberships.map { projectMember ->
+          GitLabCloneListItem.Repository(account, projectMember)
+        }
+        accountRepositories.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (_: ConnectException) {
+        listOf(GitLabCloneListItem.Error(account, GitLabCloneException.ConnectionError(::reload)))
+      }
+      catch (e: Throwable) {
+        val errorMessage = e.localizedMessage ?: CollaborationToolsBundle.message("clone.dialog.error.load.repositories")
+        listOf(GitLabCloneListItem.Error(account, GitLabCloneException.Unknown(errorMessage, ::reload)))
+      }
     }
-
-    return accountRepositories.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.presentation() })
   }
 
   private fun notifyCreateDirectoryFailed(message: String) {
