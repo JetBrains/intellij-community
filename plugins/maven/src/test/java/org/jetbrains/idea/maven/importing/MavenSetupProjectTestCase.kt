@@ -5,13 +5,10 @@ import com.intellij.ide.actions.ImportProjectAction
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
-import com.intellij.openapi.externalSystem.util.performAction
 import com.intellij.openapi.externalSystem.util.performActionAsync
 import com.intellij.openapi.externalSystem.util.performOpenAction
 import com.intellij.openapi.project.Project
@@ -20,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.closeOpenedProjectsIfFailAsync
 import com.intellij.testFramework.utils.module.assertModules
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jetbrains.concurrency.asDeferred
 import org.jetbrains.idea.maven.project.MavenGeneralSettings
@@ -80,14 +76,8 @@ abstract class MavenSetupProjectTestCase : MavenMultiVersionImportingTestCase() 
   }
 
   suspend fun attachProjectFromScriptAsync(project: Project, projectFile: VirtualFile): Project {
-    performAction(
-      action = object : AnAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-          runBlocking {
-            AddFileAsMavenProjectAction().actionPerformedAsync(e)
-          }
-        }
-      },
+    performActionAsync(
+      action = { AddFileAsMavenProjectAction().actionPerformedAsync(it) },
       project = project,
       systemId = SYSTEM_ID,
       selectedFile = projectFile,
