@@ -3,6 +3,7 @@ package com.jetbrains.python.black
 
 import com.intellij.ide.actionsOnSave.impl.ActionsOnSaveFileDocumentManagerListener.ActionOnSave
 import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.command.WriteCommandAction
@@ -25,6 +26,8 @@ class BlackFormatterActionOnSave : ActionOnSave() {
 
   companion object {
     val LOG = thisLogger()
+    const val BLACK_ACTION_ON_SAVE_ERROR_NOTIFICATION_GROUP_ID = "Black action on save error"
+    const val BLACK_ACTION_ON_SAVE_FILE_IGNORED_NOTIFICATION_GROUP_ID = "Black action on save file ignored"
   }
 
   override fun isEnabledForProject(project: Project): Boolean = Registry.`is`("black.formatter.support.enabled")
@@ -96,7 +99,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
           .run<RuntimeException> { descriptor.document.setText(response.formattedText) }
       }
       is BlackFormattingResponse.Failure -> {
-        reportFailure(response.title, response.description, project)
+        reportFailure(response.title, response.getPopupMessage(), project)
       }
       is BlackFormattingResponse.Ignored -> {
         reportIgnored(response.title, response.description, project)
@@ -105,18 +108,21 @@ class BlackFormatterActionOnSave : ActionOnSave() {
   }
 
   private fun reportFailure(@Nls title: String, @Nls message: String, project: Project) {
-    Notifications.Bus.notify(
-      Notification(BlackFormattingService.NOTIFICATION_GROUP_ID,
-                   title,
-                   message, NotificationType.ERROR), project)
+    val notification = Notification(BLACK_ACTION_ON_SAVE_ERROR_NOTIFICATION_GROUP_ID,
+                                    title,
+                                    message, NotificationType.ERROR)
+    Notifications.Bus.notify(notification, project)
   }
 
-  // [TODO] add `do not show again` option
   private fun reportIgnored(@Nls title: String, @Nls message: String, project: Project) {
-    Notifications.Bus.notify(
-      Notification(BlackFormattingService.NOTIFICATION_GROUP_ID,
-                   title,
-                   message, NotificationType.INFORMATION), project)
+    val notification = Notification(BLACK_ACTION_ON_SAVE_FILE_IGNORED_NOTIFICATION_GROUP_ID,
+                                    title,
+                                    message, NotificationType.INFORMATION)
+    notification.addAction(NotificationAction
+      .createSimpleExpiring(PyBundle.message("black.advertising.service.dont.show.again.label")) {
+        notification.setDoNotAskFor(project)
+      })
+    Notifications.Bus.notify(notification, project)
   }
 
   private data class Descriptor(val document: Document, val virtualFile: VirtualFile)
