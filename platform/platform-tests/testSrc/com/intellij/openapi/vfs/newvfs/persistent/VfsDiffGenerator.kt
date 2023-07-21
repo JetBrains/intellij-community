@@ -65,7 +65,7 @@ object VfsDiffGenerator {
     var idsVisited = 0
 
     val rootsBase = baseVfs.listRoots().toList()
-    val rootsTarget = baseVfs.listRoots().toList()
+    val rootsTarget = targetVfs.listRoots().toList()
     if (rootsBase != rootsTarget) {
       diff.add(DiffElement.RootsDiff(rootsBase - rootsTarget.toSet(), rootsTarget - rootsBase.toSet()))
     }
@@ -141,8 +141,8 @@ object VfsDiffGenerator {
     val baseCachesDir = Path.of(args[0])
     val targetCachesDir = Path.of(args[1])
 
-    val baseVfs = FSRecordsImpl.connect(baseCachesDir)
-    val targetVfs = FSRecordsImpl.connect(targetCachesDir)
+    val baseVfs = FSRecordsImpl.connect(baseCachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
+    val targetVfs = FSRecordsImpl.connect(targetCachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
     val diff: DiffResult
 
     AutoCloseable {

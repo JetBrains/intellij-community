@@ -66,10 +66,11 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
   }
 
   fun suggestAutomaticRecoveryIfAllowed() {
+    val vfsLog = PersistentFS.getInstance().vfsLog ?: return
     if (!shouldSuggestAutomaticRecovery.get() || isRecoveryRunning.get()) return
     if (!tryAcquireAutomaticRecoverySuggestion()) return
 
-    val queryContext = PersistentFS.getInstance().vfsLog.query()
+    val queryContext = vfsLog.query()
 
     coroutineScope.launch {
       val recoveryPoints = queryContext.getRecoveryPoints()

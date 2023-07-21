@@ -126,6 +126,7 @@ public class VFSInitializationBenchmark {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList()
     );
     return initResult.connection;

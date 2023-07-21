@@ -11,7 +11,7 @@ import kotlin.system.exitProcess
 object VfsRecoveryFromVfsLogTest {
   fun fullRecoveryIsIdentity(cachesDir: Path, dirForRecoveredCaches: Path = cachesDir.resolveSibling("recovered-caches")) {
     println("testing recovery")
-    val vfsLog = VfsLogImpl(cachesDir / "vfslog", true)
+    val vfsLog = VfsLogImpl(PersistentFSPaths(cachesDir).vfsLogStorage, true)
     vfsLog.query().use {
       println("VfsLog state: begin=${it.begin().getPosition()}, end=${it.end().getPosition()}, " +
               "compacted position=${it.getBaseSnapshot({ throw AssertionError() }, { throw AssertionError() })
@@ -29,8 +29,8 @@ object VfsRecoveryFromVfsLogTest {
     check(recoveryResult.fileStateCounts.getOrElse(VfsRecoveryUtils.RecoveryState.BOTCHED) { 0 } == 0)
     check(recoveryResult.botchedAttributesCount == 0.toLong())
 
-    val baseVfs = FSRecordsImpl.connect(cachesDir)
-    val recoveredVfs = FSRecordsImpl.connect(dirForRecoveredCaches)
+    val baseVfs = FSRecordsImpl.connect(cachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
+    val recoveredVfs = FSRecordsImpl.connect(dirForRecoveredCaches, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
 
     AutoCloseable {
       baseVfs.dispose()
@@ -39,6 +39,7 @@ object VfsRecoveryFromVfsLogTest {
       val diff = VfsDiffGenerator.buildDiff(baseVfs, recoveredVfs)
       println(diff)
       check(diff.elements.isEmpty())
+      check(diff.filesVisited > 10)
     }
     vfsLog.dispose()
   }
@@ -64,21 +65,21 @@ object VfsRecoveryFromVfsLogTest {
     }
   }
 
+  // remember to run with -Didea.vfs.log-vfs-operations.enabled=true
   @JvmStatic
   fun main(args: Array<String>) {
     require(args.size in 1..2) { "Arguments: <path to caches folder> [<position to force compaction to>]" }
+    val cachesDir = args[0].toNioPath()
+    val cachesCopy = cachesDir.resolveSibling("caches-tmp-test-dir")
+    println("making a caches copy $cachesDir -> $cachesCopy")
+    if (cachesCopy.exists()) cachesCopy.deleteRecursively()
+    cachesDir.copyToRecursively(cachesCopy, followLinks = true, overwrite = true)
+
     if (args.size == 1) {
-      val cachesDir = args[0].toNioPath()
-      doubleRecoveryIsIdentity(cachesDir)
+      doubleRecoveryIsIdentity(cachesCopy)
     } else {
       check(args.size == 2)
-      val cachesDir = args[0].toNioPath()
       val targetPosition = args[1].toLong()
-
-      val cachesCopy = cachesDir.resolveSibling("caches-tmp-test-dir")
-      println("making a caches copy $cachesDir -> $cachesCopy")
-      if (cachesCopy.exists()) cachesCopy.deleteRecursively()
-      cachesDir.copyToRecursively(cachesCopy, followLinks = true, overwrite = true)
 
       val vfsLog = VfsLogImpl(cachesCopy / "vfslog", true)
       for (i in 4 downTo 1) {

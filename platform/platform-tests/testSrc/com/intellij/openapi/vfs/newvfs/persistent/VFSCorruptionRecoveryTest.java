@@ -5,7 +5,10 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.testFramework.TemporaryDirectory;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -85,6 +88,7 @@ public class VFSCorruptionRecoveryTest {
           cachesDir,
           FSRecordsImpl.currentImplementationVersion(),
           FSRecordsImpl.USE_CONTENT_HASHES,
+          false,
           Collections.emptyList(),
           Collections.emptyList()
         );
@@ -128,6 +132,7 @@ public class VFSCorruptionRecoveryTest {
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
         FSRecordsImpl.USE_CONTENT_HASHES,
+        false,
         Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
       );
@@ -160,6 +165,7 @@ public class VFSCorruptionRecoveryTest {
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
         FSRecordsImpl.USE_CONTENT_HASHES,
+        false,
         Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
       );

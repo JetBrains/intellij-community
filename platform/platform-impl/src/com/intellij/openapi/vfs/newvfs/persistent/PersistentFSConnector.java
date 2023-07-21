@@ -2,14 +2,16 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.io.*;
+import com.intellij.util.io.CorruptedException;
+import com.intellij.util.io.VersionUpdatedException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
@@ -18,7 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -49,10 +51,11 @@ final class PersistentFSConnector {
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
                                                          int version,
                                                          boolean useContentHashes,
+                                                         boolean enableVfsLog,
                                                          List<ConnectionInterceptor> interceptors) {
     connectDisconnectLock.lock();
     try {
-      return init(cachesDir, version, useContentHashes, interceptors);
+      return init(cachesDir, version, useContentHashes, enableVfsLog, interceptors);
     }
     finally {
       connectDisconnectLock.unlock();
@@ -74,6 +77,7 @@ final class PersistentFSConnector {
   private static @NotNull VFSInitializationResult init(@NotNull Path cachesDir,
                                                        int expectedVersion,
                                                        boolean useContentHashes,
+                                                       boolean enableVfsLog,
                                                        List<ConnectionInterceptor> interceptors) {
     List<Throwable> attemptsFailures = new ArrayList<>();
     long initializationStartedNs = System.nanoTime();
@@ -83,6 +87,7 @@ final class PersistentFSConnector {
           cachesDir,
           expectedVersion,
           useContentHashes,
+          enableVfsLog,
           interceptors,
           RECOVERERS
         );
@@ -115,6 +120,7 @@ final class PersistentFSConnector {
   static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
                                                  int currentImplVersion,
                                                  boolean useContentHashes,
+                                                 boolean enableVfsLog,
                                                  @NotNull List<ConnectionInterceptor> interceptors,
                                                  @NotNull List<VFSRecoverer> recoverers) throws IOException {
     //RC: Mental model behind VFS initialization:
@@ -161,8 +167,14 @@ final class PersistentFSConnector {
     Files.createDirectories(basePath);
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, useContentHashes);
+    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, useContentHashes, enableVfsLog);
     try {
+      if (VfsLog.isVfsTrackingEnabled()) {
+        vfsLoader.replaceStoragesIfMarkerPresent();
+      }
+
+      // TODO from vfslog recoverer
+
       vfsLoader.failIfCorruptionMarkerPresent();
 
       //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
@@ -214,7 +226,7 @@ final class PersistentFSConnector {
       return connection;
     }
     catch (Throwable e) { // IOException, IllegalArgumentException, AssertionError
-      LOG.info("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
+      LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
       try {
         vfsLoader.closeAndDeleteEverything();
       }

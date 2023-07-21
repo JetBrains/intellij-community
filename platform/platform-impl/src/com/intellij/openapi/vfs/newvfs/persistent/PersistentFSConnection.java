@@ -16,6 +16,7 @@ import com.intellij.openapi.util.io.GentleFlusherBase;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.ExceptionUtil;
@@ -95,6 +96,8 @@ public final class PersistentFSConnection {
    */
   private final @NotNull SimpleStringPersistentEnumerator myEnumeratedAttributes;
 
+  private final @Nullable VfsLogEx myVfsLog;
+
   private volatile boolean myDirty;
 
   private final @Nullable Closeable flushingTask;
@@ -111,6 +114,7 @@ public final class PersistentFSConnection {
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
+                         @Nullable VfsLogEx vfsLog,
                          @NotNull NotNullLazyValue<IntList> freeRecords,
                          @NotNull VFSRecoveryInfo info,
                          @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
@@ -126,6 +130,7 @@ public final class PersistentFSConnection {
     myAttributesStorage = wrapAttributes(attributes, interceptors);
     myContents = wrapContents(contents, interceptors);
     myContentHashesEnumerator = contentHashesEnumerator;
+    myVfsLog = vfsLog;
     myPersistentFSPaths = paths;
     this.freeRecords = freeRecords;
     myEnumeratedAttributes = enumeratedAttributes;
@@ -166,6 +171,8 @@ public final class PersistentFSConnection {
       .toList();
     return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
   }
+
+  @Nullable VfsLogEx getVfsLog() { return myVfsLog; }
 
   @NotNull("Vfs must be initialized")
   SimpleStringPersistentEnumerator getEnumeratedAttributes() {
@@ -275,7 +282,8 @@ public final class PersistentFSConnection {
                   myNames,
                   myAttributesStorage,
                   myContentHashesEnumerator,
-                  myContents);
+                  myContents,
+                  myVfsLog);
   }
 
 
@@ -297,7 +305,8 @@ public final class PersistentFSConnection {
                             @Nullable ScannableDataEnumeratorEx<String> names,
                             @Nullable AbstractAttributesStorage attributes,
                             @Nullable ContentHashEnumerator contentHashesEnumerator,
-                            @Nullable RefCountingContentStorage contents) throws IOException {
+                            @Nullable RefCountingContentStorage contents,
+                            @Nullable VfsLogEx vfsLog) throws IOException {
     if (names instanceof Closeable) {//implies != null
       ((Closeable)names).close();
     }
@@ -316,6 +325,10 @@ public final class PersistentFSConnection {
 
     if (records != null) {
       records.close();
+    }
+
+    if (vfsLog != null) {
+      vfsLog.dispose();
     }
   }
 

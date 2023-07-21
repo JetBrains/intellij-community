@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.lang.annotation.ElementType;
@@ -119,5 +120,5 @@ public abstract class PersistentFS extends ManagingFS {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  public abstract @NotNull VfsLog getVfsLog();
+  public abstract @Nullable VfsLog getVfsLog();
 }

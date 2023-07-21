@@ -25,6 +25,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWrit
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
@@ -118,6 +120,10 @@ public final class FSRecordsImpl {
       ExceptionUtil.rethrow(error);
     };
 
+  public static final ErrorHandler ON_ERROR_RETHROW = (__, error) -> {
+    ExceptionUtil.rethrow(error);
+  };
+
   public static ErrorHandler getDefaultErrorHandler() {
     if (VfsLog.isVfsTrackingEnabled()) {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
@@ -174,13 +180,13 @@ public final class FSRecordsImpl {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
-    final int mainVFSFormatVersion = 60;
+    //bumped main version (60 -> 61) because VfsLog is now a part of VFS structure
+    final int mainVFSFormatVersion = 61;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-           nextMask(false, // feel free to re-use
+           nextMask(VfsLog.isVfsTrackingEnabled() ? VfsLogImpl.VERSION % 7 + 1 : 0, 3,
            nextMask(INLINE_ATTRIBUTES,
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
            nextMask(false, // feel free to re-use
@@ -205,11 +211,12 @@ public final class FSRecordsImpl {
 
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
                                @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
-    return connect(storagesDirectoryPath, connectionInterceptors, getDefaultErrorHandler());
+    return connect(storagesDirectoryPath, connectionInterceptors, VfsLog.isVfsTrackingEnabled(), getDefaultErrorHandler());
   }
 
   static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
                                @NotNull List<ConnectionInterceptor> connectionInterceptors,
+                               boolean enableVfsLog,
                                @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
@@ -220,6 +227,7 @@ public final class FSRecordsImpl {
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
+        enableVfsLog,
         connectionInterceptors
       );
 
@@ -399,6 +407,7 @@ public final class FSRecordsImpl {
     return connection.isDirty();
   }
 
+  @Nullable VfsLogEx getVfsLog() { return connection.getVfsLog(); }
 
   //========== record allocations: ========================================
 

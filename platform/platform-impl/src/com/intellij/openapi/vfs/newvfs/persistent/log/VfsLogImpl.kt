@@ -18,6 +18,7 @@ import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.io.IOException
 import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
@@ -52,6 +53,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class VfsLogImpl(
   private val storagePath: Path,
   private val readOnly: Boolean = false,
+  // TODO telemetry toggle
 ) : VfsLogEx {
   var version by PersistentVar.integer(storagePath / "version")
     private set
@@ -404,6 +406,8 @@ class VfsLogImpl(
     private const val NOT_CLOSED_PROPERLY: Int = 0xBADC105
     private const val CLOSED_PROPERLY: Int = 0xC105ED
 
+    @JvmStatic
+    @Throws(IOException::class)
     fun clearStorage(storagePath: Path) {
       if (storagePath.isDirectory()) {
         var deletedAnything = false

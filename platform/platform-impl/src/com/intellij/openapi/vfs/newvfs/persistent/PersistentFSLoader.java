@@ -11,6 +11,9 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlo
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
+import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -57,6 +60,7 @@ public final class PersistentFSLoader {
   private final PersistentFSPaths vfsPaths;
 
   public final boolean useContentHashes;
+  public final boolean enableVfsLog;
 
   public final @NotNull Path namesFile;
   public final @NotNull Path attributesFile;
@@ -64,9 +68,12 @@ public final class PersistentFSLoader {
   public final @NotNull Path contentsHashesFile;
   public final @NotNull Path recordsFile;
   public final @NotNull Path enumeratedAttributesFile;
+  public final @NotNull Path vfsLogDir;
 
   public final @NotNull Path corruptionMarkerFile;
+  public final @NotNull Path storagesReplacementMarkerFile;
 
+  private @Nullable VfsLogEx vfsLog = null;
   private PersistentFSRecordsStorage recordsStorage = null;
   private ScannableDataEnumeratorEx<String> namesStorage = null;
   private AbstractAttributesStorage attributesStorage = null;
@@ -96,30 +103,46 @@ public final class PersistentFSLoader {
 
 
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
-                     boolean useContentHashes) {
+                     boolean useContentHashes,
+                     boolean enableVfsLog) {
     recordsFile = persistentFSPaths.storagePath("records");
     namesFile = persistentFSPaths.storagePath("names");
     attributesFile = persistentFSPaths.storagePath("attributes");
     contentsFile = persistentFSPaths.storagePath("content");
     contentsHashesFile = persistentFSPaths.storagePath("contentHashes");
     enumeratedAttributesFile = persistentFSPaths.storagePath("attributes_enums");
+    vfsLogDir = persistentFSPaths.getVfsLogStorage();
 
     corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
+    storagesReplacementMarkerFile = persistentFSPaths.getStoragesReplacementMarkerFile();
 
     vfsPaths = persistentFSPaths;
 
     this.useContentHashes = useContentHashes;
+    this.enableVfsLog = enableVfsLog;
+  }
+
+  public boolean replaceStoragesIfMarkerPresent() throws IOException {
+    var applied = VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(storagesReplacementMarkerFile);
+    if (applied) LOG.info("PersistentFS storages replacement was applied");
+    return applied;
   }
 
   public void failIfCorruptionMarkerPresent() throws IOException {
     if (Files.exists(corruptionMarkerFile)) {
-      // TODO on vfs corruption vfslog must be erased because enumerators are lost (force compaction to erase everything)
       final List<String> corruptionCause = Files.readAllLines(corruptionMarkerFile, UTF_8);
       throw new VFSInitException(SCHEDULED_REBUILD, "Corruption marker file found\n\tcontent: " + corruptionCause);
     }
   }
 
   public void initializeStorages(@NotNull ExecutorService pool) throws Exception {
+    if (enableVfsLog) {
+      vfsLog = new VfsLogImpl(vfsLogDir, false);
+    }
+    else {
+      vfsLog = null;
+    }
+
     Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = pool.submit(
       () -> createFileNamesEnumerator(namesFile)
     );
@@ -130,7 +153,7 @@ public final class PersistentFSLoader {
       () -> createContentStorage(contentsFile, useContentHashes)
     );
     Future<PersistentFSRecordsStorage> recordsStorageFuture = pool.submit(
-      () -> PersistentFSRecordsStorageFactory.createStorage(recordsFile)
+      () -> createRecordsStorage(recordsFile)
     );
 
     //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
@@ -246,7 +269,7 @@ public final class PersistentFSLoader {
       LOG.trace(t);
     }
 
-    PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentHashesEnumerator, contentsStorage);
+    PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentHashesEnumerator, contentsStorage, vfsLog);
 
     boolean deleted = FileUtil.delete(corruptionMarkerFile.toFile());
     if (!deleted) {
@@ -302,6 +325,15 @@ public final class PersistentFSLoader {
     if (!deleted) {
       LOG.info("Can't delete " + enumeratedAttributesFile);
     }
+
+    if (vfsLog != null) {
+      try {
+        VfsLogImpl.clearStorage(vfsLogDir);
+      }
+      catch (IOException e) {
+        LOG.info("Can't clear " + vfsLogDir, e);
+      }
+    }
   }
 
   public PersistentFSConnection createConnection(@NotNull List<ConnectionInterceptor> interceptors) throws IOException {
@@ -313,6 +345,7 @@ public final class PersistentFSLoader {
       contentsStorage,
       contentHashesEnumerator,
       attributesEnumerator,
+      vfsLog,
       reusableFileIdsLazy,
       new VFSRecoveryInfo(
         problemsRecovered,
@@ -440,14 +473,15 @@ public final class PersistentFSLoader {
         addProblem(NAME_STORAGE_INCOMPLETE,
                    "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
         return false;
-      }
-      int reCheckNameId = namesStorage.tryEnumerate(name);
-      if (reCheckNameId != nameId) {
-        addProblem(NAME_STORAGE_INCOMPLETE,
-                   "namesEnumerator is corrupted: file[#" + fileId + "]" +
-                   ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
-        );
-        return false;
+      } else {
+        int reCheckNameId = namesStorage.tryEnumerate(name);
+        if (reCheckNameId != nameId) {
+          addProblem(NAME_STORAGE_INCOMPLETE,
+                     "namesEnumerator is corrupted: file[#" + fileId + "]" +
+                     ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
+          );
+          return false;
+        }
       }
     }
     catch (Throwable t) {
@@ -482,7 +516,20 @@ public final class PersistentFSLoader {
            && contentsStorage().getRecordsCount() == 0;
   }
 
-  public static @NotNull AbstractAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
+
+  public @NotNull AbstractAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
+    AbstractAttributesStorage storage = createAttributesStorage_makeStorage(attributesFile);
+    if (vfsLog != null) {
+      var attributesInterceptors = vfsLog.getConnectionInterceptors().stream()
+        .filter(AttributesInterceptor.class::isInstance)
+        .map(AttributesInterceptor.class::cast)
+        .toList();
+      storage = InterceptorInjection.INSTANCE.injectInAttributes(storage, attributesInterceptors);
+    }
+    return storage;
+  }
+
+  private static @NotNull AbstractAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       LOG.info("VFS uses new (streamlined) attributes storage");
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
@@ -542,8 +589,21 @@ public final class PersistentFSLoader {
     }
   }
 
-  public static @NotNull RefCountingContentStorageImpl createContentStorage(@NotNull Path contentsFile,
-                                                                            boolean useContentHashes) throws IOException {
+  public @NotNull RefCountingContentStorage createContentStorage(@NotNull Path contentsFile,
+                                                                 boolean useContentHashes) throws IOException {
+    RefCountingContentStorage storage = createContentStorage_makeStorage(contentsFile, useContentHashes);
+    if (vfsLog != null) {
+      var contentInterceptors = vfsLog.getConnectionInterceptors().stream()
+        .filter(ContentsInterceptor.class::isInstance)
+        .map(ContentsInterceptor.class::cast)
+        .toList();
+      storage = InterceptorInjection.INSTANCE.injectInContents(storage, contentInterceptors);
+    }
+    return storage;
+  }
+
+  private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile,
+                                                                                     boolean useContentHashes) throws IOException {
     // sources usually zipped with 4x ratio
     return new RefCountingContentStorageImpl(
       contentsFile,
@@ -555,6 +615,18 @@ public final class PersistentFSLoader {
 
   public static @NotNull ContentHashEnumerator createContentHashStorage(@NotNull Path contentsHashesFile) throws IOException {
     return new ContentHashEnumerator(contentsHashesFile, PERSISTENT_FS_STORAGE_CONTEXT);
+  }
+
+  public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
+    PersistentFSRecordsStorage storage = PersistentFSRecordsStorageFactory.createStorage(recordsFile);
+    if (vfsLog != null) {
+      var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
+        .filter(RecordsInterceptor.class::isInstance)
+        .map(RecordsInterceptor.class::cast)
+        .toList();
+      storage = InterceptorInjection.INSTANCE.injectInRecords(storage, recordsInterceptors);
+    }
+    return storage;
   }
 
   /** @return common version of all 3 storages, or -1, if their versions are differ (i.e. inconsistent) */

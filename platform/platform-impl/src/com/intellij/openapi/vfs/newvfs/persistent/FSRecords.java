@@ -12,7 +12,8 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.*;
 import java.io.DataInputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.IntPredicate;
@@ -91,13 +93,13 @@ public final class FSRecords {
 
   //========== lifecycle: =====================================================
 
-  static synchronized FSRecordsImpl connect(@NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
-    return connect(connectionInterceptors, FSRecordsImpl.getDefaultErrorHandler());
+  static synchronized FSRecordsImpl connect() throws UncheckedIOException {
+    return connect(VfsLog.isVfsTrackingEnabled(), FSRecordsImpl.getDefaultErrorHandler());
   }
 
-  static synchronized FSRecordsImpl connect(@NotNull List<ConnectionInterceptor> connectionInterceptors,
+  static synchronized FSRecordsImpl connect(boolean enableVfsLog,
                                             @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
-    FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), connectionInterceptors, errorHandler);
+    FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), Collections.emptyList(), enableVfsLog, errorHandler);
     impl = _impl;
     return _impl;
   }
@@ -150,6 +152,7 @@ public final class FSRecords {
     return implOrFail().isDirty();
   }
 
+  static @Nullable VfsLogEx getVfsLog() { return implOrFail().getVfsLog(); }
 
   //========== record allocation/deletion: ====================================
 

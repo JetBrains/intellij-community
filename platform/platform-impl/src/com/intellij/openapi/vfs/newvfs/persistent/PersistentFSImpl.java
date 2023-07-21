@@ -29,7 +29,6 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -47,7 +46,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -90,8 +88,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private volatile VfsData myVfsData;
 
   private final Application app;
-
-  private VfsLogEx myVfsLog;
 
   public PersistentFSImpl(@NotNull Application app) {
     this.app = app;
@@ -141,23 +137,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     connect();
   }
 
-  private void initVfsLog() {
-    var readOnly = !VfsLog.isVfsTrackingEnabled();
-    var paths = new PersistentFSPaths(Path.of(FSRecords.getCachesDir()));
-    var vfsLogPath = paths.getVfsLogStorage();
-    // forcefully erase VfsLog storages if the feature is disabled (or vfs is corrupted) so that when it will be
-    // enabled again we won't consider old data as a source for recovery
-    if (!VfsLog.isVfsTrackingEnabled() || Files.exists(paths.getCorruptionMarkerFile())) {
-      try {
-        VfsLogImpl.Companion.clearStorage(vfsLogPath);
-      }
-      catch (Throwable e) {
-        LOG.error("failed to clear the storage of VfsLog", e);
-      }
-    }
-    myVfsLog = new VfsLogImpl(vfsLogPath, readOnly);
-  }
-
   @ApiStatus.Internal
   public void connect() {
     myIdToDirCache.clear();
@@ -184,27 +163,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         vfsPeer = null;
       }
       LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
-      if (myVfsLog != null) {
-        myVfsLog.dispose();
-      }
     }
   }
 
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
-      if (VfsLog.isVfsTrackingEnabled()) {
-        try {
-          if (VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(Path.of(FSRecords.getCachesDir()))) {
-            LOG.info("FSRecords storages replacement was applied");
-          }
-        }
-        catch (Throwable e) {
-          LOG.error("FSRecords storages replacement has failed", e);
-        }
-      }
-      initVfsLog();
-      vfsPeer = FSRecords.connect(myVfsLog.getConnectionInterceptors());
+      vfsPeer = FSRecords.connect();
       activity.end();
     }
   }
@@ -886,7 +851,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count, false);
         List<VFileEvent> events = List.of(event);
         fireBeforeEvents(getPublisher(), events);
-        myVfsLog.getVFileEventApplicationListener().beforeApply(event);
+        VfsLogEx vfsLog = getVfsLogEx();
+        if (vfsLog != null) vfsLog.getVFileEventApplicationListener().beforeApply(event);
         IOException exception = null;
 
         NewVirtualFileSystem fs = getFileSystem(file);
@@ -914,7 +880,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
             long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
             long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
             executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-            myVfsLog.getVFileEventApplicationListener().afterApply(event, exception);
+            if (vfsLog != null) vfsLog.getVFileEventApplicationListener().afterApply(event, exception);
             fireAfterEvents(getPublisher(), events);
           }
         }
@@ -1897,7 +1863,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying " + event);
     }
-    myVfsLog.getVFileEventApplicationListener().beforeApply(event);
+    VfsLogEx vfsLog = getVfsLogEx();
+    if (vfsLog != null) vfsLog.getVFileEventApplicationListener().beforeApply(event);
     Throwable exception = null;
     try {
       if (event instanceof VFileCreateEvent) {
@@ -1953,7 +1920,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.error(e);
     }
     finally {
-      myVfsLog.getVFileEventApplicationListener().afterApply(event, exception);
+      if (vfsLog != null) vfsLog.getVFileEventApplicationListener().afterApply(event, exception);
     }
   }
 
@@ -2248,8 +2215,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull VfsLog getVfsLog() {
-    return myVfsLog;
+  public @Nullable VfsLog getVfsLog() {
+    return FSRecords.getVfsLog();
+  }
+
+  private static @Nullable VfsLogEx getVfsLogEx() {
+    return FSRecords.getVfsLog();
   }
 
   @TestOnly

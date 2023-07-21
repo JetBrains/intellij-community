@@ -50,6 +50,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 @ApiStatus.Experimental
+@ApiStatus.Internal
 object VfsRecoveryUtils {
   fun createStoragesReplacementMarker(oldCachesDir: Path, newCachesDir: Path) {
     val marker = PersistentFSPaths(oldCachesDir).storagesReplacementMarkerFile
@@ -59,14 +60,18 @@ object VfsRecoveryUtils {
     )
   }
 
+  @JvmOverloads
   @OptIn(ExperimentalPathApi::class)
-  fun applyStoragesReplacementIfMarkerExists(cachesDir: Path): Boolean {
-    val marker = PersistentFSPaths(cachesDir).storagesReplacementMarkerFile
-    if (marker.notExists()) return false
+  fun applyStoragesReplacementIfMarkerExists(
+    storagesReplacementMarkerFile: Path,
+    cachesBackupRelativePath: Path? = Path.of("../caches-backup")
+  ): Boolean {
+    if (storagesReplacementMarkerFile.notExists()) return false
+    val cachesDir = storagesReplacementMarkerFile.parent
 
-    val newCachesDirPath = marker.readLines().firstOrNull()
+    val newCachesDirPath = storagesReplacementMarkerFile.readLines().firstOrNull()
     LOG.info("storages replacement marker detected: new caches content is in $newCachesDirPath")
-    marker.delete() // consume
+    storagesReplacementMarkerFile.delete() // consume
     if (newCachesDirPath == null) return false
 
     val newCachesDir = cachesDir.resolve(newCachesDirPath).normalize()
@@ -83,15 +88,18 @@ object VfsRecoveryUtils {
       return false
     }
 
-    val backupDir = cachesDir.parent / "caches-backup"
-    if (backupDir.exists()) {
-      LOG.info("deleting an old backup")
-      backupDir.deleteRecursively()
+    if (cachesBackupRelativePath != null) {
+      if (cachesBackupRelativePath.exists()) {
+        LOG.info("deleting an old backup")
+        cachesBackupRelativePath.deleteRecursively()
+      }
+      cachesDir.moveTo(cachesBackupRelativePath)
+      LOG.info("created a backup successfully")
     }
-
-    cachesDir.moveTo(backupDir)
-    LOG.info("created a backup successfully")
-
+    if (cachesDir.exists()) {
+      LOG.info("deleting current caches")
+      cachesDir.deleteRecursively()
+    }
     newCachesDir.moveTo(cachesDir, true)
     LOG.info("successfully replaced storages")
     return true
@@ -246,8 +254,9 @@ object VfsRecoveryUtils {
 
       val newFsRecords = FSRecordsImpl.connect(
         newStorageDir,
-        emptyList(), // vfs log is altered manually, tracking every operation anew is too costly
-        FSRecordsImpl.ErrorHandler { records, error ->
+        emptyList(),
+        false, // vfs log is altered manually, tracking every operation anew is too costly
+        FSRecordsImpl.ErrorHandler { _, error ->
           recoveryFail("Failed to recover VFS due to an error in new FSRecords", error)
         }
       )
@@ -274,7 +283,6 @@ object VfsRecoveryUtils {
       reportStage(3)
       ctx.setupChildrenAttr(childrenCacheMap, superRootChildrenByAttr, maxFileId)
 
-      // mark unused as deleted
       reportStage(4)
       ctx.markUnusedAsDeleted(maxFileId)
 
@@ -603,9 +611,7 @@ object VfsRecoveryUtils {
   private fun copyVfsLog(oldStorageDir: Path,
                          newStorageDir: Path,
                          point: OperationLogStorage.Iterator) {
-    if (oldStorageDir == newStorageDir) {
-      throw IllegalArgumentException("oldStorageDir == newStorageDir")
-    }
+    require(oldStorageDir != newStorageDir) { "oldStorageDir == newStorageDir" }
     try {
       (PersistentFS.getInstance().vfsLog as? VfsLogEx)?.flush()
     }
@@ -614,6 +620,7 @@ object VfsRecoveryUtils {
     // if there are pending writes it is okay, because we overwrite the size property anyway
     val oldPaths = PersistentFSPaths(oldStorageDir)
     val newPaths = PersistentFSPaths(newStorageDir)
+    require(!newPaths.vfsLogStorage.exists()) { "vfsLog exists in new caches directory" }
     oldPaths.vfsLogStorage.copyRecursively(newPaths.vfsLogStorage)
     val operationsSizePath = newPaths.vfsLogStorage / "operations" / "size"
     if (!operationsSizePath.exists()) {

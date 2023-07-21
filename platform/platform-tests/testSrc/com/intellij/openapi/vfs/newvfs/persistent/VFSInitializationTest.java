@@ -43,6 +43,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     final PersistentFSRecordsStorage records = connection.getRecords();
@@ -61,6 +62,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
 
@@ -80,6 +82,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     final PersistentFSRecordsStorage records = connection.getRecords();
@@ -100,6 +103,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
 
@@ -118,6 +122,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     assertEquals(
@@ -134,6 +139,7 @@ public class VFSInitializationTest {
         cachesDir,
         differentVersion,
         true,
+        false,
         Collections.emptyList(), PersistentFSConnector.RECOVERERS
       );
       fail(
@@ -159,6 +165,7 @@ public class VFSInitializationTest {
       cachesDir,
       /*version: */ 1,
       true,
+      false,
       Collections.emptyList()
     );
     PersistentFSConnection connection = initializationResult.connection;
@@ -254,6 +261,7 @@ public class VFSInitializationTest {
             cachesDir,
             fsRecords.getVersion(),
             FSRecordsImpl.USE_CONTENT_HASHES,
+            false,
             Collections.emptyList(),
             Collections.emptyList()
           );
@@ -329,6 +337,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     try {
@@ -344,6 +353,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     try {
@@ -365,6 +375,7 @@ public class VFSInitializationTest {
       cachesDir,
       version,
       true,
+      false,
       Collections.emptyList(), PersistentFSConnector.RECOVERERS
     );
     connection.doForce();
@@ -380,6 +391,7 @@ public class VFSInitializationTest {
           cachesDir,
           version,
           true,
+          false,
           Collections.emptyList(), PersistentFSConnector.RECOVERERS
         );
         fail("VFS init must fail with NOT_CLOSED_SAFELY");
@@ -411,6 +423,7 @@ public class VFSInitializationTest {
             cachesDir,
             version,
             true,
+            false,
             Collections.emptyList()
           );
           //PersistentFSConnector.disconnect(initResult.connection);

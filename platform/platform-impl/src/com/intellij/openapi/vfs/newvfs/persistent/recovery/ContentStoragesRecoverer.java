@@ -7,7 +7,6 @@ import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.storage.RecordIdIterator;
 import com.intellij.util.io.storage.RefCountingContentStorage;
-import com.intellij.util.io.storage.RefCountingContentStorageImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -59,8 +58,7 @@ public class ContentStoragesRecoverer implements VFSRecoverer {
         contentStorage.dispose();
         IOUtil.deleteAllFilesStartingWith(loader.contentsFile);
 
-        RefCountingContentStorageImpl emptyContentStorage = PersistentFSLoader.createContentStorage(loader.contentsFile,
-                                                                                                    loader.useContentHashes);
+        RefCountingContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile, loader.useContentHashes);
         ContentHashEnumerator emptyHashesEnumerator = PersistentFSLoader.createContentHashStorage(loader.contentsHashesFile);
         loader.setContentsStorage(emptyContentStorage);
         loader.setContentHashesEnumerator(emptyHashesEnumerator);

@@ -21,7 +21,7 @@ class RecoverVfsFromLogAction : RecoveryAction {
   override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = VfsLog.isVfsTrackingEnabled
 
   override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
-    val log = PersistentFS.getInstance().vfsLog
+    val log = PersistentFS.getInstance().vfsLog ?: throw IllegalStateException("action called with VfsLog disabled")
 
     try {
       log.query().use {
