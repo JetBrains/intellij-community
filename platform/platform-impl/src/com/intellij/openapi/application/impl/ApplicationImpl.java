@@ -15,9 +15,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.client.ClientAwareComponentManager;
-import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.progress.impl.ProgressResult;
@@ -44,6 +42,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.Propagation;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
@@ -55,7 +54,6 @@ import kotlin.coroutines.EmptyCoroutineContext;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.*;
-import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -76,14 +74,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(ApplicationImpl.class);
   }
-
-  static final String MUST_NOT_EXECUTE_INSIDE_READ_ACTION = "Must not execute inside read action";
-  static final String MUST_EXECUTE_INSIDE_READ_ACTION = "Read access is allowed from inside read-action or Event Dispatch Thread (EDT) only (see Application.runReadAction())";
-  static final String MUST_EXECUTE_INSIDE_WRITE_ACTION = "Write access is allowed inside write-action only (see Application.runWriteAction())";
-  static final String MUST_EXECUTE_UNDER_EDT = "Access is allowed from Event Dispatch Thread (EDT) only";
-  static final String MUST_NOT_EXECUTE_UNDER_EDT = "Access from Event Dispatch Thread (EDT) is not allowed";
-
-  private static final String DOCUMENTATION_LINK = "; see https://jb.gg/ij-platform-threading for details";
 
   final ReadMostlyRWLock myLock;
 
@@ -1042,25 +1032,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertReadAccessAllowed() {
-    if (!isReadAccessAllowed()) {
-      getLogger().error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
-    }
+    ThreadingAssertions.assertReadAccess();
   }
 
   @Override
   public void assertReadAccessNotAllowed() {
-    if (isReadAccessAllowed()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_INSIDE_READ_ACTION);
-    }
-  }
-
-  private static @NotNull String describe(@Nullable Thread o) {
-    return o == null ? "null" : o + " " + System.identityHashCode(o);
-  }
-
-  private static Thread getEventQueueThread() {
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    return AWTAccessor.getEventQueueAccessor().getDispatchThread(eventQueue);
+    ThreadingAssertions.assertNoReadAccess();
   }
 
   @Override
@@ -1070,39 +1047,17 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertIsDispatchThread() {
-    if (!isDispatchThread()) {
-      throwThreadAccessException(MUST_EXECUTE_UNDER_EDT);
-    }
+    ThreadingAssertions.assertEventDispatchThread();
   }
 
   @Override
   public void assertIsNonDispatchThread() {
-    if (isDispatchThread()) {
-      throwThreadAccessException(MUST_NOT_EXECUTE_UNDER_EDT);
-    }
-  }
-
-  private static void throwThreadAccessException(@NotNull @NonNls String message) {
-    throw createThreadAccessException(message);
-  }
-
-  private static @NotNull RuntimeExceptionWithAttachments createThreadAccessException(@NonNls @NotNull String message) {
-    return new RuntimeExceptionWithAttachments(message + DOCUMENTATION_LINK + "\n" + getThreadDetails(),
-                                               new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
-  }
-
-  private static @NotNull String getThreadDetails() {
-    Thread current = Thread.currentThread();
-    Thread edt = getEventQueueThread();
-    return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() + ")" +
-           "\nSystemEventQueueThread: " + (edt == current ? "(same)" : describe(edt));
+    ThreadingAssertions.assertBackgroundThread();
   }
 
   @Override
   public void assertWriteIntentLockAcquired() {
-    if (!isWriteIntentLockAcquired()) {
-      throwThreadAccessException("Access is allowed from write thread only");
-    }
+    ThreadingAssertions.assertWriteIntentReadAccess();
   }
 
   @Override
@@ -1325,9 +1280,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertWriteAccessAllowed() {
-    if (!isWriteAccessAllowed()) {
-      throwThreadAccessException(MUST_EXECUTE_INSIDE_WRITE_ACTION);
-    }
+    ThreadingAssertions.assertWriteAccess();
   }
 
   @Override

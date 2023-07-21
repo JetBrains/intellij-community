@@ -13,6 +13,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
 
+import static com.intellij.util.concurrency.ThreadingAssertions.*;
+
 /**
  * Ensures that the instrumenter of the Threading Model annotations (such as {@link RequiresEdt}) is in sync with
  * the source code of the Platform.
@@ -49,7 +51,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testEdtActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_UNDER_EDT, ()-> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_UNDER_EDT, ()-> throwExecutionExceptionCauseFromBackground(
       () -> runEdtAction()));
   }
 
@@ -71,7 +73,7 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testReadActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_INSIDE_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_READ_ACTION, () -> throwExecutionExceptionCauseFromBackground(
       () -> runReadAction()));
   }
 
@@ -80,16 +82,16 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testWriteActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> runWriteAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> runWriteAction());
   }
 
   public void testWriteActionInBackground() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_INSIDE_WRITE_ACTION, () -> throwExecutionExceptionCauseFromBackground(
       () -> runWriteAction()));
   }
 
   public void testNonReadActionOnEdt() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_NOT_EXECUTE_INSIDE_READ_ACTION, () -> runNonReadAction());
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_INSIDE_READ_ACTION, () -> runNonReadAction());
   }
 
   public void testNonReadActionInBackground() throws Throwable {
@@ -97,12 +99,12 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
   }
 
   public void testNonReadActionInBackgroundWithReadLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_NOT_EXECUTE_INSIDE_READ_ACTION,
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_NOT_EXECUTE_INSIDE_READ_ACTION,
                  () -> throwExecutionExceptionCauseFromBackground(() -> ReadAction.run(() -> runNonReadAction())));
   }
 
   public void testNonReadActionInBackgroundWithWriteLock() {
-    assertThrows(RuntimeExceptionWithAttachments.class, ApplicationImpl.MUST_EXECUTE_UNDER_EDT,
+    assertThrows(RuntimeExceptionWithAttachments.class, MUST_EXECUTE_UNDER_EDT,
                  () -> throwExecutionExceptionCauseFromBackground(() -> WriteAction.run(() -> runNonReadAction())));
   }
 

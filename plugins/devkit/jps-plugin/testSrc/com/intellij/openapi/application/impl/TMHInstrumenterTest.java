@@ -26,6 +26,9 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_EXECUTE_UNDER_EDT;
+import static com.intellij.util.concurrency.ThreadingAssertions.MUST_NOT_EXECUTE_UNDER_EDT;
+
 public class TMHInstrumenterTest extends UsefulTestCase {
   private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
 
@@ -54,7 +57,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   public void testConstructor() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     testClass.aClass.getDeclaredConstructor().newInstance();
-    assertThrows(Throwable.class, ApplicationImpl.MUST_EXECUTE_UNDER_EDT,
+    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT,
                  () -> executeInBackground(() -> testClass.aClass.getDeclaredConstructor().newInstance()));
   }
 
@@ -67,7 +70,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   public void testRequiresBackgroundThreadAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     executeInBackground(() -> invokeMethod(testClass.aClass));
-    assertThrows(Throwable.class, ApplicationImpl.MUST_NOT_EXECUTE_UNDER_EDT, () -> invokeMethod(testClass.aClass));
+    assertThrows(Throwable.class, MUST_NOT_EXECUTE_UNDER_EDT, () -> invokeMethod(testClass.aClass));
   }
 
   public void testRequiresReadLockAssertion() throws Exception {
@@ -112,7 +115,7 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   private void doEdtTest() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     invokeMethod(testClass.aClass);
-    assertThrows(Throwable.class, ApplicationImpl.MUST_EXECUTE_UNDER_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
+    assertThrows(Throwable.class, MUST_EXECUTE_UNDER_EDT, () -> executeInBackground(() -> invokeMethod(testClass.aClass)));
   }
 
   private @NotNull TestClass getInstrumentedTestClass() throws IOException {
