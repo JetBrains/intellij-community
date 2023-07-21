@@ -3349,6 +3349,29 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
                 runTest("../testData/basic/common/visibility/VisibilityPrivateToThisWithWrongThis.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../testData/basic/common/when")
+        public static class When extends AbstractJvmBasicCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("smartCast.kt")
+            public void testSmartCast() throws Exception {
+                runTest("../testData/basic/common/when/smartCast.kt");
+            }
+
+            @TestMetadata("smartCast2.kt")
+            public void testSmartCast2() throws Exception {
+                runTest("../testData/basic/common/when/smartCast2.kt");
+            }
+
+            @TestMetadata("smartCast3.kt")
+            public void testSmartCast3() throws Exception {
+                runTest("../testData/basic/common/when/smartCast3.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
