@@ -105,14 +105,10 @@ class GradleHighlightingPerformanceTest : GradleCodeInsightTestCase() {
         setProjectName("GradleCompletionPerformanceTest")
       }
       withBuildFile(gradleVersion) {
-        withPrefix {
-          call("plugins") {
-            call("id", string("java"))
-            call("id", string("groovy"))
-            call("id", string("scala"))
-          }
-        }
-        addRepository("mavenCentral()")
+        withPlugin("java")
+        withPlugin("groovy")
+        withPlugin("scala")
+        withMavenCentral()
         withPostfix {
           call("dependencies") {
 

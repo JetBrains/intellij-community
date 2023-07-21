@@ -96,12 +96,12 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
 
   override fun applyPlugin(plugin: String) =
     withPrefix {
-      call("apply", argument("plugin", string(plugin)))
+      call("apply", "plugin" to plugin)
     }
 
   override fun applyPluginFrom(path: String) =
     withPrefix {
-      call("apply", argument("from", string(path)))
+      call("apply", "from" to path)
     }
 
   override fun withPlugin(id: String, version: String?) =
