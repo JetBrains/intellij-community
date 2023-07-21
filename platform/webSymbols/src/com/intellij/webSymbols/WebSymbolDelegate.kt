@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webSymbols
 
+import com.intellij.find.usages.api.SearchTarget
+import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
@@ -15,9 +17,11 @@ import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
+import com.intellij.webSymbols.search.SearchTargetWebSymbol
+import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import javax.swing.Icon
 
-abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
+abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol, SearchTargetWebSymbol {
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
@@ -93,6 +97,14 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
 
   override fun isExclusiveFor(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
     delegate.isExclusiveFor(namespace, kind)
+
+  override val searchTarget: WebSymbolSearchTarget?
+    get() = when (delegate) {
+      is SearchTargetWebSymbol -> delegate.searchTarget
+      is SearchTargetSymbol -> delegate.searchTarget as? WebSymbolSearchTarget
+      is SearchTarget -> WebSymbolSearchTarget.create(delegate)
+      else -> null
+    }
 
   protected fun renameTargetFromDelegate(): RenameTarget =
     when (delegate) {
