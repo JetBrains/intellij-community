@@ -48,21 +48,21 @@ def __create_config():
 
 
 def get_column_descriptions(table, max_cols, max_colwidth):
-    # type: (pl.DataFrame, int, int) -> str
-    described_df = __get_describe_df(table)
+    # type: (Union[pl.DataFrame, pl.Series], int, int) -> str
+    described_results = __get_describe(table)
 
-    return get_data(described_df, max_cols, max_colwidth, None, None)
+    return get_data(described_results, max_cols, max_colwidth, None, None)
 
 
 # Polars compute NaN-s in describe. So, we don't need get_value_counts for Polars
 def get_value_counts(table, max_cols, max_colwidth):
-    # type: (pl.DataFrame, int, int) -> str
+    # type: (Union[pl.DataFrame, pl.Series], int, int) -> str
     return
 
 
-def __get_describe_df(table):
-    # type: (pl.DataFrame) -> pl.DataFrame
-    if 'describe' in table.columns:
+def __get_describe(table):
+    # type: (Union[pl.DataFrame, pl.Series]) -> pl.DataFrame
+    if type(table) == pl.DataFrame and 'describe' in table.columns:
         import random
         random_suffix = ''.join([chr(random.randint(97, 122)) for _ in range(5)])
         described_df = table\
