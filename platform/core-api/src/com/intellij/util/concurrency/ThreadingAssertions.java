@@ -11,7 +11,6 @@ import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
 import java.awt.*;
 
@@ -110,14 +109,9 @@ public final class ThreadingAssertions {
 
   private static @NotNull String getThreadDetails() {
     Thread current = Thread.currentThread();
-    Thread edt = getEventQueueThread();
+    Thread edt = EDT.getEventDispatchThread();
     return "Current thread: " + describe(current) + " (EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() + ")\n" +
            "SystemEventQueueThread: " + (edt == current ? "(same)" : describe(edt));
-  }
-
-  private static Thread getEventQueueThread() {
-    EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    return AWTAccessor.getEventQueueAccessor().getDispatchThread(eventQueue);
   }
 
   private static @NotNull String describe(@Nullable Thread o) {
