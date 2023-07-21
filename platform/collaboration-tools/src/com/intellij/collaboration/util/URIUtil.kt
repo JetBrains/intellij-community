@@ -22,6 +22,7 @@ object URIUtil {
   }
 
   fun isValidHttpUri(uri: String): Boolean {
+    if (uri.isBlank()) return false
     return try {
       normalizeAndValidateHttpUri(uri)
       true
