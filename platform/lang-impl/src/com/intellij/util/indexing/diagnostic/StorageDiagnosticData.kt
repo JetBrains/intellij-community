@@ -4,14 +4,14 @@ package com.intellij.util.indexing.diagnostic
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.intellij.platform.diagnostic.telemetry.Storage
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import com.intellij.platform.diagnostic.telemetry.Storage
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -25,6 +25,7 @@ import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
 import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
 import java.nio.file.Path
 import java.time.Instant
 import java.time.LocalDateTime
@@ -92,6 +93,9 @@ object StorageDiagnosticData {
     catch (e: AlreadyDisposedException){
       //e.g. IDEA-313757
       thisLogger().info("Can't collect storage statistics: ${e.message} -- probably, already a shutdown?")
+    }
+    catch (e: IOException) {
+      thisLogger().warn(e)
     }
     catch (e: Exception) {
       thisLogger().error(e)
