@@ -19,6 +19,8 @@ import kotlinx.coroutines.yield
 import java.net.URL
 
 class RunWidgetStep : NewUiOnboardingStep {
+  private val ideHelpTopic = "run-debug-configuration.html"
+
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val actionButton = NewUiOnboardingUtil.findUiComponent(project) { button: ActionButtonWithText ->
       button.action is RedesignedRunConfigurationSelector
@@ -34,9 +36,9 @@ class RunWidgetStep : NewUiOnboardingStep {
     yield()  // wait for run configurations popup to be shown (it is a coroutine's invokeLater alternative)
 
     val anyRunConfigAvailable = RunManager.getInstance(project).allConfigurationsList.isNotEmpty()
-    val ideHelpUrl = URL("https://www.jetbrains.com/help/idea/run-debug-configuration.html")
+    val ideHelpLink = NewUiOnboardingUtil.getHelpLink(ideHelpTopic)
     val builder = GotItComponentBuilder {
-      val linkText = browserLink(NewUiOnboardingBundle.message("run.widget.step.link"), ideHelpUrl)
+      val linkText = browserLink(NewUiOnboardingBundle.message("run.widget.step.link"), URL(ideHelpLink))
       if (anyRunConfigAvailable) {
         NewUiOnboardingBundle.message("run.widget.step.text.config.exist", linkText)
       }

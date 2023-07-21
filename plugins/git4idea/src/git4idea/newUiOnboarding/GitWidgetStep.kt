@@ -25,6 +25,8 @@ import java.awt.Point
 import java.net.URL
 
 class GitWidgetStep : NewUiOnboardingStep {
+  private val ideHelpTopic = "version-control-integration.html"
+
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val widget = NewUiOnboardingUtil.findUiComponent(project) { widget: ToolbarComboWidget ->
       ClientProperty.get(widget, CustomComponentAction.ACTION_KEY) is GitToolbarWidgetAction
@@ -44,11 +46,11 @@ class GitWidgetStep : NewUiOnboardingStep {
       GitBundle.message("newUiOnboarding.git.widget.step.text.with.repo")
     }
     else GitBundle.message("newUiOnboarding.git.widget.step.text.no.repo")
-    val ideHelpUrl = URL("https://www.jetbrains.com/help/idea/version-control-integration.html")
 
+    val ideHelpLink = NewUiOnboardingUtil.getHelpLink(ideHelpTopic)
     val builder = GotItComponentBuilder(text)
       .withHeader(GitBundle.message("newUiOnboarding.git.widget.step.header"))
-      .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), ideHelpUrl)
+      .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), URL(ideHelpLink))
 
     val popupPoint = Point(popup.content.width + JBUI.scale(4), JBUI.scale(32))
     val point = NewUiOnboardingUtil.convertPointToFrame(project, popup.content, popupPoint) ?: return null
