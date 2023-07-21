@@ -315,7 +315,7 @@ public class PlaybackRunner {
           throw new RuntimeException("Cannot find file to include at line " + line + ": " + file.getAbsolutePath());
         }
         try {
-          String include = FileUtil.loadFile(file);
+          String include = FileUtil.loadFile(file, true);
           commands.add(new CommandDescriptor(PrintCommand.PREFIX + " " + eachLine, line, scriptDir));
           List<CommandDescriptor> includeCommands = includeScript(include, file.getParentFile());
           commands.addAll(includeCommands);
