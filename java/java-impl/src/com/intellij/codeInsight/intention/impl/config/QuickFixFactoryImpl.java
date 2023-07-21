@@ -439,7 +439,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createChangeExtendsToImplementsFix(@NotNull PsiClass aClass, @NotNull PsiClassType classToExtendFrom) {
-    return new ChangeExtendsToImplementsFix(aClass, classToExtendFrom);
+    return new ChangeExtendsToImplementsFix(aClass, classToExtendFrom).asIntention();
   }
 
   @NotNull

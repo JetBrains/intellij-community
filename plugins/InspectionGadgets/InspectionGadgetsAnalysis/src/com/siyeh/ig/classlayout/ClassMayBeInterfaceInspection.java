@@ -15,12 +15,13 @@
  */
 package com.siyeh.ig.classlayout;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -32,7 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.memory.InnerClassReferenceVisitor;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -71,11 +71,11 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     return new ClassMayBeInterfaceFix();
   }
 
-  private static class ClassMayBeInterfaceFix extends InspectionGadgetsFix {
+  private static class ClassMayBeInterfaceFix extends ModCommandQuickFix {
 
     @Override
     @NotNull
@@ -84,12 +84,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
-    public void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiIdentifier classNameIdentifier = (PsiIdentifier)descriptor.getPsiElement();
       final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
       final SearchScope searchScope = interfaceClass.getUseScope();
@@ -98,28 +93,11 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false)) {
         elements.add(inheritor);
       }
-      if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) {
-        return;
-      }
-      WriteAction.run(() -> {
-        moveSubClassExtendsToImplements(elements);
-        changeClassToInterface(interfaceClass);
-        moveImplementsToExtends(interfaceClass);
+      return ModCommands.psiUpdate(interfaceClass, (cls, updater) -> {
+        moveSubClassExtendsToImplements(ContainerUtil.map(elements, updater::getWritable));
+        changeClassToInterface(cls);
+        moveImplementsToExtends(cls);
       });
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      final PsiIdentifier classNameIdentifier = (PsiIdentifier)previewDescriptor.getPsiElement();
-      final PsiClass interfaceClass = (PsiClass)classNameIdentifier.getParent();
-      // In preview, limit search to current file only
-      List<PsiClass> inheritorsInThisFile = SyntaxTraverser.psiTraverser(classNameIdentifier.getContainingFile()).filter(PsiClass.class)
-        .filter(cls -> cls.isInheritor(interfaceClass, false))
-        .toList();
-      moveSubClassExtendsToImplements(ContainerUtil.prepend(inheritorsInThisFile, interfaceClass));
-      changeClassToInterface(interfaceClass);
-      moveImplementsToExtends(interfaceClass);
-      return IntentionPreviewInfo.DIFF;
     }
 
     private static void changeClassToInterface(PsiClass aClass) {
@@ -258,7 +236,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       return allMethodsPublicAbstract(aClass) && allFieldsPublicStaticFinal(aClass) && allInnerClassesPublic(aClass);
     }
 
-    private boolean allFieldsPublicStaticFinal(PsiClass aClass) {
+    private static boolean allFieldsPublicStaticFinal(PsiClass aClass) {
       boolean allFieldsStaticFinal = true;
       final PsiField[] fields = aClass.getFields();
       for (final PsiField field : fields) {
@@ -292,7 +270,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       return true;
     }
 
-    private boolean allInnerClassesPublic(PsiClass aClass) {
+    private static boolean allInnerClassesPublic(PsiClass aClass) {
       final PsiClass[] innerClasses = aClass.getInnerClasses();
       for (PsiClass innerClass : innerClasses) {
         if (!innerClass.hasModifierProperty(PsiModifier.PUBLIC)) {

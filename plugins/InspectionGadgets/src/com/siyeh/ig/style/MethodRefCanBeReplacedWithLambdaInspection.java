@@ -3,8 +3,11 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
+import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -39,7 +42,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
   @Nullable
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected LocalQuickFix buildFix(Object... infos) {
     final PsiMethodReferenceExpression methodReferenceExpression = (PsiMethodReferenceExpression)infos[0];
     final boolean onTheFly = (Boolean)infos[1];
     if (LambdaRefactoringUtil.canConvertToLambdaWithoutSideEffects(methodReferenceExpression)) {
@@ -61,7 +64,7 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     }
   }
 
-  private static class MethodRefToLambdaFix extends InspectionGadgetsFix {
+  private static class MethodRefToLambdaFix extends PsiUpdateModCommandQuickFix {
     @Nls
     @NotNull
     @Override
@@ -70,45 +73,27 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement();
-      if (element instanceof PsiMethodReferenceExpression) {
-        doFix(project, (PsiMethodReferenceExpression)element);
+    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
+      if (element instanceof PsiMethodReferenceExpression methodRef) {
+        LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, false, true);
       }
-    }
-
-    protected void doFix(Project project, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
-      LambdaRefactoringUtil.convertMethodReferenceToLambda(methodReferenceExpression, false, true);
     }
   }
 
-  private static class SideEffectsMethodRefToLambdaFix extends MethodRefToLambdaFix {
+  private static class SideEffectsMethodRefToLambdaFix extends InspectionGadgetsFix {
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return ApplicationManager.getApplication().isUnitTestMode() ? (InspectionGadgetsBundle
-                                                                       .message("side.effects.method.ref.to.lambda.fix.family.name",
-                                                                                super.getFamilyName())) : super.getFamilyName();
+      return ApplicationManager.getApplication().isUnitTestMode() ?
+             (InspectionGadgetsBundle.message("side.effects.method.ref.to.lambda.fix.family.name",
+                                              InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix"))) :
+             InspectionGadgetsBundle.message("method.ref.can.be.replaced.with.lambda.quickfix");
     }
 
     @Override
     public boolean startInWriteAction() {
       return false;
-    }
-
-    @Override
-    protected void doFix(Project project, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
-      DataManager.getInstance()
-                 .getDataContextFromFocusAsync()
-                 .onSuccess(context -> {
-                   final Editor editor = CommonDataKeys.EDITOR.getData(context);
-                   if (editor != null) {
-                     CommandProcessor.getInstance()
-                                     .executeCommand(project, () -> doFixAndRemoveSideEffects(editor, methodReferenceExpression),
-                                                     getFamilyName(), null);
-                   }
-                 });
     }
 
     @Override
@@ -119,6 +104,22 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
       }
       LambdaRefactoringUtil.convertMethodReferenceToLambda(methodRef, false, true);
       return IntentionPreviewInfo.DIFF;
+    }
+
+    @Override
+    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiMethodReferenceExpression methodRef) {
+        DataManager.getInstance()
+          .getDataContextFromFocusAsync()
+          .onSuccess(context -> {
+            final Editor editor = CommonDataKeys.EDITOR.getData(context);
+            if (editor != null) {
+              CommandProcessor.getInstance()
+                .executeCommand(project, () -> doFixAndRemoveSideEffects(editor, methodRef), getFamilyName(), null);
+            }
+          });
+      }
     }
 
     private static void doFixAndRemoveSideEffects(@NotNull Editor editor, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
