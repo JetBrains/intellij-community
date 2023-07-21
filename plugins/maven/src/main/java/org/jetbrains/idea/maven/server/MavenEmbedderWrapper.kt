@@ -68,7 +68,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
       serverWorkspaceMap,
       updateSnapshots
     )
-    val results = runLongRunningTaskAsync(
+    val results = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveProjects(taskId, request, ourToken) },
       progressReporter, syncConsole, console)
     if (transformer !== RemotePathTransformerFactory.Transformer.ID) {
@@ -104,7 +104,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                        indicator: ProgressIndicator?,
                        syncConsole: MavenSyncConsole?,
                        console: MavenConsole?): List<MavenArtifact> {
-    return runLongRunningTask(
+    return runLongRunningTaskBlocking(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, requests, ourToken) },
       indicator, syncConsole, console)
   }
@@ -142,7 +142,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
         MavenLog.LOG.warn("Cannot resolve plugin: $mavenPluginId")
       }
     }
-    return runLongRunningTaskAsync(
+    return runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskId -> embedder.resolvePlugins(taskId, pluginResolutionRequests, ourToken) },
       progressReporter, syncConsole, console)
   }
@@ -168,7 +168,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                   console: MavenConsole?): List<MavenGoalExecutionResult> {
     val indicator = progressIndicator?.indicator
     val syncConsole = progressIndicator?.syncConsole
-    return runLongRunningTask(
+    return runLongRunningTaskBlocking(
       LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, requests, goal, ourToken) },
       indicator, syncConsole, console)
   }
@@ -218,45 +218,55 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @ApiStatus.Obsolete
   @Throws(MavenProcessCanceledException::class)
-  protected fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
-                                       indicator: ProgressIndicator?,
-                                       syncConsole: MavenSyncConsole?,
-                                       console: MavenConsole?): R {
+  private fun <R> runLongRunningTaskBlocking(task: LongRunningEmbedderTask<R>,
+                                             indicator: ProgressIndicator?,
+                                             syncConsole: MavenSyncConsole?,
+                                             console: MavenConsole?): R {
     val longRunningTaskId = UUID.randomUUID().toString()
     val embedder = getOrCreateWrappee()
 
-    return runLongRunningTask(embedder, longRunningTaskId, task, indicator, syncConsole, console)
-  }
-
-  @Throws(MavenProcessCanceledException::class)
-  protected suspend fun <R> runLongRunningTaskAsync(task: LongRunningEmbedderTask<R>,
-                                                    progressReporter: RawProgressReporter?,
-                                                    syncConsole: MavenSyncConsole?,
-                                                    console: MavenConsole?): R {
-    val longRunningTaskId = UUID.randomUUID().toString()
-    val embedder = getOrCreateWrappee()
-
-    return runLongRunningTaskAsync(embedder, longRunningTaskId, progressReporter, syncConsole, console, task)
-  }
-
-  private fun <R> runLongRunningTask(embedder: MavenServerEmbedder,
-                                     longRunningTaskId: String,
-                                     task: LongRunningEmbedderTask<R>,
-                                     indicator: ProgressIndicator?,
-                                     syncConsole: MavenSyncConsole?,
-                                     console: MavenConsole?): R {
     @Suppress("RAW_RUN_BLOCKING")
     return runBlocking {
-      return@runBlocking runLongRunningTaskAsync(embedder, longRunningTaskId, indicator, syncConsole, console, task)
+      val progressIndication = launch {
+        while (isActive) {
+          delay(500)
+          blockingContext {
+            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
+            indicator?.fraction = status.fraction()
+            console?.handleConsoleEvents(status.consoleEvents())
+            syncConsole?.handleDownloadEvents(status.downloadEvents())
+            if (null != indicator && indicator.isCanceled) {
+              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
+                throw CancellationException()
+              }
+            }
+          }
+        }
+      }
+
+      try {
+        withContext(Dispatchers.IO) {
+          blockingContext {
+            task.run(embedder, longRunningTaskId)
+          }
+        }
+      }
+      catch (e: Exception) {
+        throw MavenProcessCanceledException(e)
+      }
+      finally {
+        progressIndication.cancelAndJoin()
+      }
     }
   }
 
-  private suspend inline fun <R> runLongRunningTaskAsync(embedder: MavenServerEmbedder,
-                                                         longRunningTaskId: String,
-                                                         progressReporter: RawProgressReporter?,
-                                                         syncConsole: MavenSyncConsole?,
-                                                         console: MavenConsole?,
-                                                         task: LongRunningEmbedderTask<R>): R {
+  @Throws(MavenProcessCanceledException::class)
+  private suspend fun <R> runLongRunningTask(task: LongRunningEmbedderTask<R>,
+                                             progressReporter: RawProgressReporter?,
+                                             syncConsole: MavenSyncConsole?,
+                                             console: MavenConsole?): R {
+    val longRunningTaskId = UUID.randomUUID().toString()
+    val embedder = getOrCreateWrappee()
 
     return coroutineScope {
       val progressIndication = launch {
@@ -278,47 +288,6 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
           }
           catch (e: Exception) {
             MavenLog.LOG.warn("Exception in long running task cancellation", e)
-          }
-        }
-      }
-
-      try {
-        withContext(Dispatchers.IO) {
-          blockingContext {
-            task.run(embedder, longRunningTaskId)
-          }
-        }
-      }
-      catch (e: Exception) {
-        throw MavenProcessCanceledException(e)
-      }
-      finally {
-        progressIndication.cancelAndJoin()
-      }
-    }
-  }
-
-  private suspend inline fun <R> runLongRunningTaskAsync(embedder: MavenServerEmbedder,
-                                                         longRunningTaskId: String,
-                                                         indicator: ProgressIndicator?,
-                                                         syncConsole: MavenSyncConsole?,
-                                                         console: MavenConsole?,
-                                                         task: LongRunningEmbedderTask<R>): R {
-
-    return coroutineScope {
-      val progressIndication = launch {
-        while (isActive) {
-          delay(500)
-          blockingContext {
-            val status = embedder.getLongRunningTaskStatus(longRunningTaskId, ourToken)
-            indicator?.fraction = status.fraction()
-            console?.handleConsoleEvents(status.consoleEvents())
-            syncConsole?.handleDownloadEvents(status.downloadEvents())
-            if (null != indicator && indicator.isCanceled) {
-              if (embedder.cancelLongRunningTask(longRunningTaskId, ourToken)) {
-                throw CancellationException()
-              }
-            }
           }
         }
       }
