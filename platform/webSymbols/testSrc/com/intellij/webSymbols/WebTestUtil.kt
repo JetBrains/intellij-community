@@ -56,6 +56,8 @@ import com.intellij.webSymbols.query.WebSymbolsQueryExecutorFactory
 import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.File
+import kotlin.math.max
+import kotlin.math.min
 
 internal val webSymbolsTestsDataPath get() = "${PlatformTestUtil.getCommunityPath()}/platform/webSymbols/testData/"
 
@@ -410,31 +412,34 @@ fun CodeInsightTestFixture.checkGTDUOutcome(expectedOutcome: GotoDeclarationOrUs
   if (signature != null) {
     moveToOffsetBySignature(signature)
   }
+  val actualSignature = signature ?: editor.currentPositionSignature
   val editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file)
   val offset = editor.caretModel.offset
   val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: file
   val gtduOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcomeInNonBlockingReadAction(editor, file, offset)
-  Assert.assertEquals(signature,
+  Assert.assertEquals(actualSignature,
                       expectedOutcome,
                       gtduOutcome)
 }
 
-fun CodeInsightTestFixture.checkGotoDeclaration(expectedOffset: Int, expectedFileName: String? = null) {
-  checkGotoDeclaration(null, expectedOffset, expectedFileName)
-}
-
-fun CodeInsightTestFixture.checkGotoDeclaration(signature: String?, expectedOffset: Int, expectedFileName: String? = null) {
-  checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, signature)
+fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarationSignature: String, expectedFileName: String? = null) {
+  checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, fromSignature)
+  val actualSignature = fromSignature ?: editor.currentPositionSignature
   performEditorAction("GotoDeclaration")
   val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevel
-  if (targetEditor == null) throw NullPointerException(signature)
+  if (targetEditor == null) throw NullPointerException(actualSignature)
+  val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)!!
   if (expectedFileName != null) {
-    assertEquals(signature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
+    assertEquals(actualSignature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
   }
   else {
-    assertEquals(signature, targetEditor, editor.topLevel)
+    assertEquals(actualSignature, targetEditor, editor.topLevel)
   }
-  assertEquals(signature, expectedOffset, targetEditor.caretModel.offset)
+  if (!declarationSignature.contains("<caret>") || targetFile.findOffsetBySignature(declarationSignature) != targetEditor.caretModel.offset) {
+    assertEquals("For go to from: $actualSignature",
+                 declarationSignature + if(!declarationSignature.contains("<caret>")) "" else (" [" + file.findOffsetBySignature(declarationSignature) + "]"),
+                 targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
+  }
 }
 
 fun CodeInsightTestFixture.checkListByFile(actualList: List<String>, @TestDataFile expectedFile: String, containsCheck: Boolean) {
@@ -559,6 +564,16 @@ fun doCompletionItemsTest(fixture: CodeInsightTestFixture,
     }
   }
 }
+
+private val Editor.currentPositionSignature: String
+  get() {
+    val caretPos = caretModel.offset
+    val text = document.text
+    return (text.substring(max(0, caretPos - 15), caretPos) + "<caret>" +
+           text.substring(caretPos, min(caretPos + 15, text.length)))
+      .replace("\n", "\\n")
+  }
+
 
 private val Editor.topLevel
   get() = if (this is EditorWindow) delegate else this
