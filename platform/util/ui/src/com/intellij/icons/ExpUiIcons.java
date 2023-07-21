@@ -218,7 +218,7 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Patch = load("expui/fileTypes/patch.svg", -706028010, 2);
     /** 16x16 */ public static final @NotNull Icon Perl = load("expui/fileTypes/perl.svg", 108994589, 2);
     /** 16x16 */ public static final @NotNull Icon Properties = load("expui/fileTypes/properties.svg", -560303724, 2);
-    /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", 1620243355, 2);
+    /** 16x16 */ public static final @NotNull Icon React = load("expui/fileTypes/react.svg", -751586533, 2);
     /** 16x16 */ public static final @NotNull Icon Regexp = load("expui/fileTypes/regexp.svg", 1958077143, 2);
     /** 16x16 */ public static final @NotNull Icon Sbt = load("expui/fileTypes/sbt.svg", -984587052, 2);
     /** 16x16 */ public static final @NotNull Icon Scala = load("expui/fileTypes/scala.svg", 1475163984, 2);
