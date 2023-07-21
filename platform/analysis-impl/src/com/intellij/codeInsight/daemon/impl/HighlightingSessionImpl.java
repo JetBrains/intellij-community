@@ -230,7 +230,10 @@ public final class HighlightingSessionImpl implements HighlightingSession {
 
   @Override
   public String toString() {
-    return "HighlightingSessionImpl: myVisibleRange:"+myVisibleRange+"; myPsiFile: "+myPsiFile+ (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"");
+    return "HighlightingSessionImpl: " +
+           "myVisibleRange:"+myVisibleRange+
+           "; myPsiFile: "+myPsiFile+ " (" + myPsiFile.getClass() + ")"+
+           (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"");
   }
 
   // compute additional stuff in background thread
