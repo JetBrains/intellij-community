@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.PopupHandler
 import kotlinx.coroutines.CoroutineScope
@@ -22,12 +21,11 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRCommitsViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -41,7 +39,7 @@ internal object GHPRDetailsComponentFactory {
     branchesVm: CodeReviewBranchesViewModel,
     reviewStatusVm: GHPRStatusViewModel,
     reviewFlowVm: GHPRReviewFlowViewModel,
-    commitsVm: GHPRCommitsViewModel,
+    changesVm: GHPRChangesViewModel,
     dataProvider: GHPRDataProvider,
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
@@ -49,7 +47,7 @@ internal object GHPRDetailsComponentFactory {
   ): JComponent {
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(scope, commitsVm) { commit: GHCommit ->
+      add(CodeReviewDetailsCommitsComponentFactory.create(scope, changesVm) { commit: GHCommit ->
         createCommitsPopupPresenter(commit, securityService.ghostUser)
       })
       add(CodeReviewDetailsBranchComponentFactory.create(scope, branchesVm))
@@ -77,9 +75,9 @@ internal object GHPRDetailsComponentFactory {
                                                               htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
-      add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, commitsVm.selectedCommit,
+      add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
-                                                               createCommitsPopupPresenter(commit, commitsVm.ghostUser)
+                                                               createCommitsPopupPresenter(commit, securityService.ghostUser)
                                                              },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))

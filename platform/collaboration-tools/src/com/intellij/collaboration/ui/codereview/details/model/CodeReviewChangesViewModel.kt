@@ -28,7 +28,7 @@ abstract class CodeReviewChangesViewModelBase<T> : CodeReviewChangesViewModel<T>
   private val _selectedCommitState: MutableStateFlow<T?> = MutableStateFlow(null)
   override val selectedCommit: Flow<T?> = _selectedCommitState.asSharedFlow()
 
-  private val _selectedCommitIndexState: MutableStateFlow<Int> = MutableStateFlow(-1)
+  protected val _selectedCommitIndexState: MutableStateFlow<Int> = MutableStateFlow(-1)
   override val selectedCommitIndex: Flow<Int> = _selectedCommitIndexState.asSharedFlow()
 
   override fun selectCommit(index: Int) {
