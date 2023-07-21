@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -37,6 +38,11 @@ import kotlin.time.Duration.Companion.seconds
 
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider, DumbAware {
   override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      return null
+    }
+
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
@@ -222,7 +228,13 @@ private fun getSuggestionData(
   fileType: FileType,
 ): PluginAdvertiserEditorNotificationProvider.AdvertiserSuggestion? {
   val marketplaceRequests = MarketplaceRequests.getInstance()
-  val jbPluginsIds = marketplaceRequests.loadCachedJBPlugins() ?: return null
+  val jbPluginsIds: Set<PluginId> = if (!ApplicationManager.getApplication().isUnitTestMode) {
+    marketplaceRequests.loadCachedJBPlugins() ?: return null
+  }
+  else {
+    emptySet()
+  }
+
   val ideExtensions = marketplaceRequests.extensionsForIdes ?: return null
 
   val extensionOrFileName = extensionsData.extensionOrFileName
