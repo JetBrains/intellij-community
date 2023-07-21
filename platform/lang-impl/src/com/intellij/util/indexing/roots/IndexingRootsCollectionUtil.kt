@@ -249,7 +249,7 @@ internal class WorkspaceIndexingRootsBuilder(private val ignoreModuleRoots: Bool
                             storage: EntityStorage) {
     val initialIterators = ArrayList<IndexableFilesIterator>()
     for ((module, roots) in moduleRoots.entries) {
-      initialIterators.add(ModuleIndexableFilesIteratorImpl(module, roots, true))
+      initialIterators.addAll(IndexableEntityProviderMethods.createIterators(module, roots))
     }
     for (description in descriptions) {
       when (description) {

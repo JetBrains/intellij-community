@@ -34,11 +34,11 @@ object IndexableEntityProviderMethods {
   }
 
   fun createIterators(module: Module, roots: IndexingRootHolder): Collection<IndexableFilesIterator> {
-    return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
+    return ModuleIndexableFilesIteratorImpl.createIterators(module, roots)
   }
 
   fun createModuleContentIterators(module: Module): Collection<IndexableFilesIterator> {
-    return listOf(ModuleIndexableFilesIteratorImpl(module, null, true))
+    return ModuleIndexableFilesIteratorImpl.createIterators(module)
   }
 
   fun createIterators(entity: ModuleEntity, entityStorage: EntityStorage, project: Project): Collection<IndexableFilesIterator> {

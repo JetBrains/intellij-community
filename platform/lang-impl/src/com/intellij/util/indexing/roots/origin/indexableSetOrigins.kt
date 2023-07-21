@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IndexableSetContributor
 import com.intellij.util.indexing.roots.kind.*
 import org.jetbrains.annotations.NonNls
+import kotlin.math.min
 
 internal data class ModuleRootOriginImpl(override val module: Module,
                                          override val roots: List<VirtualFile>?,
@@ -52,6 +53,42 @@ internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>
 
   override fun isEmpty(): Boolean {
     return roots.isEmpty() && nonRecursiveRoots.isEmpty()
+  }
+
+  override fun size(): Int {
+    return roots.size + nonRecursiveRoots.size
+  }
+
+  override fun split(maxSizeOfHolder: Int): Collection<IndexingRootHolder> {
+    val rootsSize = roots.size
+    val nonRecursiveRootsSize = nonRecursiveRoots.size
+    if (rootsSize + nonRecursiveRootsSize <= maxSizeOfHolder) {
+      return listOf(this)
+    }
+    val half = maxSizeOfHolder / 2
+    val result = mutableListOf<IndexingRootHolder>()
+    var i = rootsSize
+    var j = nonRecursiveRootsSize
+    while (i > 0 || j > 0) {
+      if (i >= half && j >= half) {
+        result.add(IndexingRootHolder.fromFiles(roots.subList(i - half, i), nonRecursiveRoots.subList(j - half, j)))
+        i -= half
+        j -= half
+      }
+      else if (i < half) {
+        val jDiff = min(j, maxSizeOfHolder - i)
+        result.add(IndexingRootHolder.fromFiles(roots.subList(0, i), nonRecursiveRoots.subList(j - jDiff, j)))
+        i = 0
+        j -= jDiff
+      }
+      else /*if (j < half )*/ {
+        val iDiff = min(i, maxSizeOfHolder - j)
+        result.add(IndexingRootHolder.fromFiles(roots.subList(i - iDiff, i), nonRecursiveRoots.subList(0, j)))
+        i -= iDiff
+        j = 0
+      }
+    }
+    return result
   }
 
   override val rootUrls: Set<String>

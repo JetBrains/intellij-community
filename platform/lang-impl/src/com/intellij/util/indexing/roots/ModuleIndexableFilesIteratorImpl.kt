@@ -30,11 +30,11 @@ open class ModuleIndexableFilesPolicy {
 /**
  * @param rootHolder is null when iterator should just iterate all files in module, no explicit root list
  */
-internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
-                                                rootHolder: IndexingRootHolder?,
-                                                private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
+internal class ModuleIndexableFilesIteratorImpl private constructor(private val module: Module,
+                                                                    rootHolder: IndexingRootHolder?,
+                                                                    private val printRootsInDebugName: Boolean) : ModuleIndexableFilesIterator {
   init {
-    assert(!(rootHolder?.isEmpty() ?: false))
+    assert(rootHolder?.isEmpty() != true)
   }
 
   private val roots = rootHolder?.roots?.let { selectRootVirtualFiles(it) }
@@ -42,6 +42,19 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
 
 
   companion object {
+
+    fun createIterators(module: Module, roots: IndexingRootHolder): Collection<IndexableFilesIterator> {
+      // 100 is a totally magic constant here, designed to help Rider to avoid indexing all non-recursive roots with one iterator => on a
+      // single thread
+      if (roots.size() > 100) {
+        return roots.split(100).map { rootSublists -> ModuleIndexableFilesIteratorImpl(module, rootSublists, true) }
+      }
+      return setOf(ModuleIndexableFilesIteratorImpl(module, roots, true))
+    }
+
+    fun createIterators(module: Module): Collection<IndexableFilesIterator> {
+      return listOf(ModuleIndexableFilesIteratorImpl(module, null, true))
+    }
 
     @JvmStatic
     @ApiStatus.ScheduledForRemoval

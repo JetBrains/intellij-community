@@ -2,10 +2,10 @@
 package com.intellij.util.indexing.roots.origin
 
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.workspace.storage.EntityReference
 import com.intellij.util.indexing.roots.kind.ContentOrigin
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin
-import com.intellij.platform.workspace.storage.EntityReference
 
 interface ModuleAwareContentEntityOrigin : ModuleContentOrigin {
   val reference: EntityReference<*>
@@ -29,6 +29,8 @@ interface IndexingRootHolder {
   fun immutableCopyOf(): IndexingRootHolder
   fun getRootsDebugStr(): String
   fun isEmpty(): Boolean
+  fun size(): Int
+  fun split(maxSizeOfHolder: Int): Collection<IndexingRootHolder>
 
   companion object {
     fun fromFiles(roots: List<VirtualFile>, nonRecursiveRoots: List<VirtualFile>): IndexingRootHolder {
