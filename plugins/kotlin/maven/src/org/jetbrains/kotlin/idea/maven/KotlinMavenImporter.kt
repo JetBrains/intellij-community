@@ -7,7 +7,7 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -88,7 +88,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        runReadAction {
+        ApplicationManager.getApplication().invokeAndWait {
             KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
         }
         module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, null)
@@ -504,7 +504,7 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
             val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
 
-            runReadAction {
+            ApplicationManager.getApplication().invokeAndWait {
                 kotlinFacet.configuration.settings.implementedModuleNames =
                     implemented.map { manager.findModule(it)?.name ?: it.displayName }
             }
