@@ -969,6 +969,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinConstructorParameterUsages.0.kt");
             }
 
+            @TestMetadata("kotlinConstructorParameterUsagesOverrides.0.kt")
+            public void testKotlinConstructorParameterUsagesOverrides() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinConstructorParameterUsagesOverrides.0.kt");
+            }
+
             @TestMetadata("kotlinDefaultAnnotationParameterUsages.0.kt")
             public void testKotlinDefaultAnnotationParameterUsages() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinDefaultAnnotationParameterUsages.0.kt");

@@ -259,7 +259,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
                 val symbol = element.getSymbol() as? KtCallableSymbol ?: return emptyList()
 
-                val allSuperMethods = ((symbol as? KtValueParameterSymbol)?.generatedPrimaryConstructorProperty ?: symbol).getAllOverriddenSymbols()
+                val allSuperMethods = symbol.getAllOverriddenSymbols()
                 val deepestSuperMethods = allSuperMethods.filter {
                     when (it) {
                         is KtFunctionSymbol -> !it.isOverride

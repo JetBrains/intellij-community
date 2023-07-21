@@ -2311,6 +2311,19 @@ public abstract class FindUsagesWithCompilerReferenceIndexTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
+            public static class TestKotlinConstructorParameterUsagesOverrides extends AbstractFindUsagesWithCompilerReferenceIndexTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinConstructorParameterUsagesOverrides.0.kt")
+                public void testKotlinConstructorParameterUsagesOverrides() throws Exception {
+                    runTest("../../idea/tests/testData/findUsages/kotlin/findParameterUsages/kotlinConstructorParameterUsagesOverrides.0.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("../../idea/tests/testData/findUsages/kotlin/findParameterUsages")
             public static class TestKotlinDefaultAnnotationParameterUsages extends AbstractFindUsagesWithCompilerReferenceIndexTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
