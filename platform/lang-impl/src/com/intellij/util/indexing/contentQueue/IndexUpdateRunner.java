@@ -454,7 +454,7 @@ public final class IndexUpdateRunner {
   private static void signalThatFileIsUnloaded(long fileLength) {
     ourLoadedBytesLimitLock.lock();
     try {
-      assert ourTotalBytesLoadedIntoMemory >= fileLength;
+      LOG.assertTrue(ourTotalBytesLoadedIntoMemory >= fileLength);
       ourTotalBytesLoadedIntoMemory -= fileLength;
       if (ourTotalBytesLoadedIntoMemory < SOFT_MAX_TOTAL_BYTES_LOADED_INTO_MEMORY) {
         ourLoadedBytesAreReleasedCondition.signalAll();
