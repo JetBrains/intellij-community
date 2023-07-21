@@ -16,12 +16,14 @@ import java.awt.Point
 import java.net.URL
 
 class ToolWindowLayoutsStep : NewUiOnboardingStep {
+  private val ideHelpTopic = "tool-windows.html"
+
   override suspend fun performStep(project: Project, disposable: CheckedDisposable): NewUiOnboardingStepData? {
     val ideFrame = WindowManager.getInstance().getFrame(project) ?: return null
+    val ideHelpLink = NewUiOnboardingUtil.getHelpLink(ideHelpTopic)
     val builder = GotItComponentBuilder(NewUiOnboardingBundle.message("tool.window.layouts.step.text"))
       .withHeader(NewUiOnboardingBundle.message("tool.window.layouts.step.header"))
-      .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"),
-                       URL("https://www.jetbrains.com/help/idea/tool-windows.html"))
+      .withBrowserLink(NewUiOnboardingBundle.message("gotIt.learn.more"), URL(ideHelpLink))
     val lottiePageData = withContext(Dispatchers.IO) {
       NewUiOnboardingUtil.createLottieAnimationPage(LOTTIE_JSON_PATH, ToolWindowLayoutsStep::class.java.classLoader)
     }

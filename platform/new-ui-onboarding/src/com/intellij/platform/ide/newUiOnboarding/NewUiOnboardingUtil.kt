@@ -42,6 +42,11 @@ object NewUiOnboardingUtil {
   val isOnboardingEnabled: Boolean
     get() = Registry.`is`("ide.experimental.ui.onboarding") && NewUiOnboardingBean.isPresent
 
+  fun getHelpLink(topic: String): String {
+    val ideHelpName = NewUiOnboardingBean.getInstance().ideHelpName
+    return "https://www.jetbrains.com/help/$ideHelpName/$topic"
+  }
+
   inline fun <reified T : Component> findUiComponent(project: Project, predicate: (T) -> Boolean): T? {
     val root = WindowManager.getInstance().getFrame(project) ?: return null
     findUiComponent(root, predicate)?.let { return it }
