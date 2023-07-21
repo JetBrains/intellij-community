@@ -1032,7 +1032,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void assertReadAccessAllowed() {
-    ThreadingAssertions.assertReadAccess();
+    ThreadingAssertions.softAssertReadAccess();
   }
 
   @Override

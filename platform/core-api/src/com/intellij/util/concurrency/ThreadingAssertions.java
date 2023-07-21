@@ -63,7 +63,7 @@ public final class ThreadingAssertions {
   /**
    * Asserts that the current thread has read access.
    */
-  public static void assertReadAccess() {
+  public static void softAssertReadAccess() {
     if (!ApplicationManager.getApplication().isReadAccessAllowed()) {
       getLogger().error(createThreadAccessException(MUST_EXECUTE_INSIDE_READ_ACTION));
     }
