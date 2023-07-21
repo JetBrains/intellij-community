@@ -375,7 +375,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
 
   @Override
   public <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass) {
-    return XDebuggerSettings.EXTENSION_POINT.findExtension(aClass);
+    return XDebuggerSettingManagerImpl.getInstanceImpl().getSettings(aClass);
   }
 
   @Override
