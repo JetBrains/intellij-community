@@ -42,6 +42,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
     val showInCenter = gotItData.position == null
     val builder = gotItData.builder
     builder.withStepNumber("${ind + 1}/${steps.size}")
+      .onEscapePressed { finishOnboarding() }
 
     if (ind < steps.lastIndex) {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.next"))
