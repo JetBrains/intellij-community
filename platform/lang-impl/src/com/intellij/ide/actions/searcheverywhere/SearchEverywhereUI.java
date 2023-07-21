@@ -26,6 +26,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.impl.FontInfo;
@@ -81,6 +82,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
@@ -340,7 +342,16 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         continue;
       }
 
-      return ((SearchFieldActionsContributor)contributor).createRightActions(() -> {
+      Function1<AnAction, Unit> registerShortcut = action -> {
+        ShortcutSet shortcut = ActionUtil.getMnemonicAsShortcut(action);
+        if (shortcut != null) {
+          action.setShortcutSet(shortcut);
+          action.registerCustomShortcutSet(shortcut, this);
+        }
+        return Unit.INSTANCE;
+      };
+
+      return ((SearchFieldActionsContributor)contributor).createRightActions(registerShortcut, () -> {
         scheduleRebuildList(SearchRestartReason.TEXT_SEARCH_OPTION_CHANGED);
       });
     }
@@ -1743,7 +1754,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         @Override
         public String getTooltip() {
           return action instanceof TextSearchRightActionAction
-                 ? ((TextSearchRightActionAction)action).getTooltipText()
+                 ? ((TextSearchRightActionAction)action).getTooltip()
                  : action.getTemplatePresentation().getDescription();
         }
 
