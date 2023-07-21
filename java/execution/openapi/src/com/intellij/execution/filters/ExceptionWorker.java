@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.filters;
 
 import com.intellij.openapi.util.TextRange;
@@ -59,22 +59,24 @@ public class ExceptionWorker {
     return startIdx < 0 ? line.indexOf(AT_PREFIX) : startIdx;
   }
 
+  /**
+   * Returns the location of the leftmost closing bracket following a digit: '\d)'
+   * If there is no such pattern in the line, but there is a single closing bracket, then returns its location.
+   * If there are no closing brackets at all, or more than one closing bracket (but none of them following a digit), then returns -1.
+   */
   private static int findRParenAfterLocation(@NotNull String line) {
-    int afterDigit = -1;
-    int rParenCandidate = line.lastIndexOf(')');
-    boolean singleOccurrence = true;
-    while (rParenCandidate > 0) {
-      if (Character.isDigit(line.charAt(rParenCandidate - 1))) {
-        afterDigit = rParenCandidate;
+    int singleRParen = line.indexOf(')');
+    int next = singleRParen;
+    while (next > -1) {
+      if (next >= 1 && Character.isDigit(line.charAt(next - 1))) {
+        return next;
       }
-      int prev = line.lastIndexOf(')', rParenCandidate - 1);
-      if (prev < 0 && singleOccurrence) {
-        return rParenCandidate;
+      next = line.indexOf(')', next + 1);
+      if (next != -1) { // found a second closing bracket
+        singleRParen = -1;
       }
-      rParenCandidate = prev;
-      singleOccurrence = false;
     }
-    return afterDigit;
+    return singleRParen;
   }
 
   @Nullable
