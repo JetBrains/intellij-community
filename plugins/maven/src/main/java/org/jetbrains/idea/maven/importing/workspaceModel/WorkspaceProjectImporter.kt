@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
@@ -35,6 +36,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.ExceptionUtil
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.findModule
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -51,6 +53,7 @@ import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 import java.util.function.Function
+import kotlin.coroutines.cancellation.CancellationException
 
 internal val WORKSPACE_CONFIGURATOR_EP: ExtensionPointName<MavenWorkspaceConfigurator> = ExtensionPointName.create(
   "org.jetbrains.idea.maven.importing.workspaceConfigurator")
@@ -462,7 +465,7 @@ internal class WorkspaceProjectImporter(
             configurator.configureMavenProject(context.apply { mavenProjectWithModules = projectWithModules })
           }
           catch (e: Exception) {
-            MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.configureMavenProject, skipping it.", e)
+            logErrorIfNotControlFlow("configureMavenProject", e)
           }
         }
       }
@@ -486,7 +489,7 @@ internal class WorkspaceProjectImporter(
           configurator.beforeModelApplied(context)
         }
         catch (e: Exception) {
-          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.beforeModelApplied, skipping it.", e)
+          logErrorIfNotControlFlow("beforeModelApplied", e)
         }
       }
     }
@@ -509,10 +512,21 @@ internal class WorkspaceProjectImporter(
           configurator.afterModelApplied(context)
         }
         catch (e: Exception) {
-          MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.afterModelApplied, skipping it.", e)
+          logErrorIfNotControlFlow("afterModelApplied", e)
         }
       }
     }
+  }
+
+  private fun logErrorIfNotControlFlow(methodName: String, e: Exception) {
+    if (e is ControlFlowException) {
+      ExceptionUtil.rethrowAllAsUnchecked(e)
+    }
+    if (e is CancellationException) {
+      throw e
+    }
+    if (myProject.isDisposed) return
+    MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
   }
 
   private fun configLegacyFacets(mavenProjectsWithModules: List<MavenProjectWithModulesData<Module>>,
