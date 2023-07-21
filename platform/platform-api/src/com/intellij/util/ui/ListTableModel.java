@@ -83,7 +83,6 @@ public class ListTableModel<Item> extends TableViewModel<Item> implements Editab
 
   @Override
   public void setItems(@NotNull List<Item> items) {
-    if (items.equals(myItems)) return;
     myItems = items;
     fireTableDataChanged();
   }
