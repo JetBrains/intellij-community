@@ -12,42 +12,42 @@ import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.test.util.addDependency
 import java.nio.file.Paths
 
-typealias ProjectLibrariesByNames = Map<String, Library>
-typealias ModulesByNames = Map<String, Module>
+typealias ProjectLibrariesByName = Map<String, Library>
+typealias ModulesByName = Map<String, Module>
 
 abstract class AbstractProjectStructureTest<S : TestProjectStructure> : AbstractMultiModuleTest() {
     protected fun initializeProjectStructure(
         path: String,
         parser: TestProjectStructureParser<S>,
-    ): Triple<S, ProjectLibrariesByNames, ModulesByNames> {
+    ): Triple<S, ProjectLibrariesByName, ModulesByName> {
         val testStructure = TestProjectStructureReader.readToTestStructure(
             Paths.get(path),
             testProjectStructureParser = parser,
         )
 
-        val projectLibrariesByNames = testStructure.libraries.associate { libraryData ->
+        val projectLibrariesByName = testStructure.libraries.associate { libraryData ->
             libraryData.name to createProjectLibrary(libraryData.name)
         }
 
-        val modulesByNames = testStructure.modules.associate { moduleData ->
+        val modulesByName = testStructure.modules.associate { moduleData ->
             moduleData.name to createEmptyModule(moduleData.name)
         }
 
-        val duplicateNames = projectLibrariesByNames.keys.intersect(modulesByNames.keys)
+        val duplicateNames = projectLibrariesByName.keys.intersect(modulesByName.keys)
         if (duplicateNames.isNotEmpty()) {
             error("Test project libraries and modules may not share names. Duplicate names: ${duplicateNames.joinToString()}.")
         }
 
         testStructure.modules.forEach { moduleData ->
-            val module = modulesByNames.getValue(moduleData.name)
+            val module = modulesByName.getValue(moduleData.name)
             moduleData.dependsOnModules.forEach { dependencyName ->
-                projectLibrariesByNames[dependencyName]
+                projectLibrariesByName[dependencyName]
                     ?.let { library -> module.addDependency(library) }
-                    ?: module.addDependency(modulesByNames.getValue(dependencyName))
+                    ?: module.addDependency(modulesByName.getValue(dependencyName))
             }
         }
 
-        return Triple(testStructure, projectLibrariesByNames, modulesByNames)
+        return Triple(testStructure, projectLibrariesByName, modulesByName)
     }
 
     private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(project, name)

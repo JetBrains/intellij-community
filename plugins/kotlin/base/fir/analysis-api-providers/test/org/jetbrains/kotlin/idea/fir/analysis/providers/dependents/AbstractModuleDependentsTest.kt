@@ -18,6 +18,10 @@ import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.Tes
 import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectEntityReferenceParser
 import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectLibraryReference
 import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectModuleReference
+import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsJsonObjectList
+import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsStringList
+import org.jetbrains.kotlin.idea.fir.analysis.providers.ProjectLibrariesByName
+import org.jetbrains.kotlin.idea.fir.analysis.providers.ModulesByName
 
 abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<ModuleDependentsTestProjectStructure>() {
     override fun isFirPlugin(): Boolean = true
@@ -25,46 +29,60 @@ abstract class AbstractModuleDependentsTest : AbstractProjectStructureTest<Modul
     override fun getTestDataDirectory(): File =
         KotlinRoot.DIR.resolve("base").resolve("fir").resolve("analysis-api-providers").resolve("testData").resolve("moduleDependents")
 
+    private val moduleDependentsProvider get() = KotlinModuleDependentsProvider.getInstance(project)
+
     protected fun doTest(path: String) {
-        val (testStructure, projectLibrariesByName, modulesByNames) =
+        val (testStructure, projectLibrariesByName, modulesByName) =
             initializeProjectStructure(path, ModuleDependentsTestProjectStructureParser)
 
-        val targetModule = when (val target = testStructure.target) {
+        assertNotEmpty(testStructure.targets)
+
+        testStructure.targets.forEach { checkTarget(it, projectLibrariesByName, modulesByName) }
+    }
+
+    private fun checkTarget(
+        target: ModuleDependentsTestTarget,
+        projectLibrariesByName: ProjectLibrariesByName,
+        modulesByName: ModulesByName,
+    ) {
+        val entityReference = target.entityReference
+
+        val targetModule = when (entityReference) {
             is TestProjectLibraryReference ->
-                LibraryInfoCache.getInstance(project)[projectLibrariesByName.getValue(target.name)].first().toKtModule()
+                LibraryInfoCache.getInstance(project)[projectLibrariesByName.getValue(entityReference.name)].first().toKtModule()
 
             is TestProjectModuleReference ->
-                modulesByNames.getValue(target.name).getMainKtSourceModule()!!
+                modulesByName.getValue(entityReference.name).getMainKtSourceModule()!!
         }
-
-        val moduleDependentsProvider = KotlinModuleDependentsProvider.getInstance(project)
 
         val directDependents = moduleDependentsProvider.getDirectDependents(targetModule)
         assertEquals(
-            testStructure.directDependents,
+            "Direct dependents of ${entityReference.name}:",
+            target.directDependents,
             directDependents.map { (it as KtSourceModule).moduleName }.toSet(),
         )
 
         val transitiveDependents = moduleDependentsProvider.getTransitiveDependents(targetModule)
         assertEquals(
-            testStructure.transitiveDependents,
+            "Transitive dependents of ${entityReference.name}:",
+            target.transitiveDependents,
             transitiveDependents.map { (it as KtSourceModule).moduleName }.toSet(),
         )
     }
 }
 
+/**
+ * The module dependents test supports multiple module/library targets, which allows checking module dependents of all `KtModule`s defined
+ * in the project structure, without duplicating the same project structure in multiple tests.
+ */
 data class ModuleDependentsTestProjectStructure(
     override val libraries: List<TestProjectLibrary>,
     override val modules: List<TestProjectModule>,
-    val target: TestProjectEntityReference,
-    val directDependents: Set<String>,
-    val transitiveDependents: Set<String>,
+    val targets: List<ModuleDependentsTestTarget>,
 ) : TestProjectStructure
 
 private object ModuleDependentsTestProjectStructureParser : TestProjectStructureParser<ModuleDependentsTestProjectStructure> {
-    private const val TARGET_FIELD = "target"
-    private const val DIRECT_DEPENDENTS_FIELD = "directDependents"
-    private const val TRANSITIVE_DEPENDENTS_FIELD = "transitiveDependents"
+    private const val TARGETS_FIELD = "targets"
 
     override fun parse(
         libraries: List<TestProjectLibrary>,
@@ -73,8 +91,28 @@ private object ModuleDependentsTestProjectStructureParser : TestProjectStructure
     ): ModuleDependentsTestProjectStructure = ModuleDependentsTestProjectStructure(
         libraries,
         modules,
-        json.getAsJsonObject(TARGET_FIELD).let(TestProjectEntityReferenceParser::parse),
-        json.getAsJsonArray(DIRECT_DEPENDENTS_FIELD)!!.map { it.asString }.toSet(),
-        json.getAsJsonArray(TRANSITIVE_DEPENDENTS_FIELD)!!.map { it.asString }.toSet(),
+        json.getAsJsonObjectList(TARGETS_FIELD)!!.map(ModuleDependentsTestTargetParser::parse),
     )
+}
+
+data class ModuleDependentsTestTarget(
+    val entityReference: TestProjectEntityReference,
+    val directDependents: Set<String>,
+    val transitiveDependents: Set<String>,
+)
+
+private object ModuleDependentsTestTargetParser {
+    private const val DIRECT_DEPENDENTS_FIELD = "directDependents"
+    private const val TRANSITIVE_DEPENDENTS_FIELD = "transitiveDependents"
+
+    fun parse(json: JsonObject): ModuleDependentsTestTarget {
+        // We can parse `json` as the entity reference itself to avoid boilerplate around the entity reference.
+        val entityReference = TestProjectEntityReferenceParser.parse(json)
+
+        return ModuleDependentsTestTarget(
+            entityReference,
+            json.getAsStringList(DIRECT_DEPENDENTS_FIELD)!!.toSet(),
+            json.getAsStringList(TRANSITIVE_DEPENDENTS_FIELD)!!.toSet(),
+        )
+    }
 }

@@ -7,11 +7,13 @@ import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 /**
  * A reference that points to a library or module in the test project structure.
  */
-sealed interface TestProjectEntityReference
+sealed interface TestProjectEntityReference {
+    val name: String
+}
 
-data class TestProjectLibraryReference(val name: String) : TestProjectEntityReference
+data class TestProjectLibraryReference(override val name: String) : TestProjectEntityReference
 
-data class TestProjectModuleReference(val name: String) : TestProjectEntityReference
+data class TestProjectModuleReference(override val name: String) : TestProjectEntityReference
 
 object TestProjectEntityReferenceParser {
     private const val LIBRARY_FIELD = "library"

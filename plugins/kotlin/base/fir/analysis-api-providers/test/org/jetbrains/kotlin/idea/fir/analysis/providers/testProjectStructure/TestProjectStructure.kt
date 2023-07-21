@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
-import com.google.gson.JsonPrimitive
+import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsStringList
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 
 interface TestProjectStructure {
@@ -40,7 +40,7 @@ object TestProjectModuleParser {
 
     fun parse(json: JsonElement): TestProjectModule {
         require(json is JsonObject)
-        val dependencies = json.getAsJsonArray(DEPENDS_ON_FIELD)?.map { (it as JsonPrimitive).asString } ?: emptyList()
+        val dependencies = json.getAsStringList(DEPENDS_ON_FIELD) ?: emptyList()
         return TestProjectModule(
             json.getString("name"),
             dependencies

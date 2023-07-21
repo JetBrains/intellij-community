@@ -1,9 +1,0 @@
-{
-    "modules" : [
-        { "name": "A", "dependsOn": ["A"] },
-        { "name": "B", "dependsOn": ["A"] }
-    ],
-    "target": { "module": "A" },
-    "directDependents": ["B"],
-    "transitiveDependents": ["B"]
-}
