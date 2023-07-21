@@ -324,7 +324,7 @@ public abstract class PythonSdkFlavor<D extends PyFlavorData> {
    * It only validates path for local target, hence use {@link #sdkSeemsValid(Sdk, PyFlavorData, TargetEnvironmentConfiguration)} instead
    */
   public boolean isValidSdkPath(@NotNull File file) {
-    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).startsWith("python");
+    return StringUtil.toLowerCase(FileUtilRt.getNameWithoutExtension(file.getName())).contains("python");
   }
 
   @Nullable
