@@ -34,7 +34,7 @@ private class MeetNewUiToolWindowFactory : ToolWindowFactory, DumbAware {
     val propertiesComponent = PropertiesComponent.getInstance()
     if (isNotificationSilentMode(project)
         || !propertiesComponent.getBoolean(ExperimentalUI.NEW_UI_FIRST_SWITCH)
-        || Registry.`is`("ide.experimental.ui.onboarding", false)) {
+        || MeetNewUiCustomization.firstOrNull()?.showToolWindowOnStartup() == false) {
       return
     }
 

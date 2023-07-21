@@ -513,5 +513,7 @@
     <extensionPoint name="emptyIntentionProvider" interface="com.intellij.codeInsight.daemon.impl.EmptyIntentionProvider" dynamic="true"/>
 
     <extensionPoint name="idePerformanceListener" interface="com.intellij.diagnostic.PerformanceListener" dynamic="true"/>
+
+    <extensionPoint name="meetNewUiCustomization" interface="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

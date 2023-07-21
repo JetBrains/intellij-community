@@ -18,6 +18,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStartupActivity"/>
+    <meetNewUiCustomization implementation="com.intellij.platform.ide.newUiOnboarding.MeetNewUiOnboardingCustomization"/>
     <registryKey key="ide.experimental.ui.onboarding" defaultValue="false"
                  description="Show the dialog on startup after first New UI switch with a proposal to start the onboarding."/>
   </extensions>
