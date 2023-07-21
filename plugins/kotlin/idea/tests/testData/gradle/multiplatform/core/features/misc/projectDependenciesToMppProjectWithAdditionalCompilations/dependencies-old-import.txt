@@ -13,6 +13,12 @@ root.clientJvm.test
 
 root.clientMpp
 
+root.clientMpp.appleMain
+    libMpp.commonMain (COMPILE)
+
+root.clientMpp.appleTest
+    libMpp.commonMain (TEST)
+
 root.clientMpp.commonMain
     libMpp.commonMain (COMPILE)
 
@@ -27,6 +33,12 @@ root.clientMpp.iosArm64Test
     libMpp.commonMain (TEST)
     libMpp.iosArm64Main (TEST)
 
+root.clientMpp.iosMain
+    libMpp.commonMain (COMPILE)
+
+root.clientMpp.iosTest
+    libMpp.commonMain (TEST)
+
 root.clientMpp.jvmMain
     libMpp.commonMain (COMPILE)
     libMpp.jvmAdditionalNonTest (COMPILE)
@@ -36,6 +48,12 @@ root.clientMpp.jvmTest
     libMpp.commonMain (TEST)
     libMpp.jvmAdditionalNonTest (TEST)
     libMpp.jvmMain (TEST)
+
+root.clientMpp.nativeMain
+    libMpp.commonMain (COMPILE)
+
+root.clientMpp.nativeTest
+    libMpp.commonMain (TEST)
 
 
 Test configuration:
