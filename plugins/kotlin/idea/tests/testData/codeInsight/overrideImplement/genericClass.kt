@@ -14,5 +14,6 @@ class <caret>C : I<Int> {
     }
 }
 
-// MEMBER: "a(t: Int, u: U): Unit"
+// MEMBER_K2: "<U> a(t: Int, u: U): Unit"
+// MEMBER_K1: "a(t: Int, u: U): Unit"
 // MEMBER: "c(t: Int): Unit"

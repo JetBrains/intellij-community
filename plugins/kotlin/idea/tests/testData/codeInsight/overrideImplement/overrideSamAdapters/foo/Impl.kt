@@ -8,4 +8,5 @@ class Impl: B() {
 // MEMBER: "equals(other: Any?): Boolean"
 // MEMBER: "hashCode(): Int"
 // MEMBER: "toString(): String"
-// MEMBER: "foo(r: Runnable!): Unit"
+// MEMBER_K2: "foo(r: Runnable?): Unit"
+// MEMBER_K1: "foo(r: Runnable!): Unit"

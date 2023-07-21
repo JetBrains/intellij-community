@@ -20,9 +20,14 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.renderer.base.KaKeywordsRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaCallableReturnTypeFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.bodies.KaParameterDefaultValueRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.invokeShortening
 import org.jetbrains.kotlin.idea.core.insertMembersAfter
@@ -298,6 +303,7 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
                     updateBatch()
                     currentAnchor = entry.psi
                 }
+
                 is MemberEntry.NewEntry -> {
                     currentBatch += entry.psi
                 }
@@ -356,12 +362,24 @@ private fun getMembersOrderedByRelativePositionsInSuperTypes(
     companion object {
         @KaExperimentalApi
         val renderer = KaDeclarationRendererForSource.WITH_SHORT_NAMES.with {
+            keywordsRenderer = KaKeywordsRenderer.NONE
+
+            returnTypeFilter = KaCallableReturnTypeFilter.ALWAYS
+
+            parameterDefaultValueRenderer = KaParameterDefaultValueRenderer.THREE_DOTS
+
+            typeRenderer = typeRenderer.with {
+                expandedTypeRenderingMode = KaExpandedTypeRenderingMode.RENDER_ABBREVIATED_TYPE_WITH_EXPANDED_TYPE_COMMENT
+            }
             annotationRenderer = annotationRenderer.with {
                 annotationFilter = KaRendererAnnotationsFilter.NONE
             }
             modifiersRenderer = modifiersRenderer.with {
-                keywordsRenderer = keywordsRenderer.with { keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.OVERRIDE_KEYWORD) }
+                keywordsRenderer = keywordsRenderer.with {
+                    keywordFilter = KaRendererKeywordFilter.onlyWith(KtTokens.VARARG_KEYWORD)
+                }
             }
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
         }
     }
 

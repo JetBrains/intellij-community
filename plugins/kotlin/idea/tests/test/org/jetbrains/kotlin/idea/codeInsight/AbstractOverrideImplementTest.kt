@@ -251,8 +251,10 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
 
         val testFile = File(testDataDirectory, "$fileNameWithoutExtension.kt")
 
+        val frontendDependentDirective = if (isFirPlugin) MEMBER_K2_DIRECTIVE_PREFIX else MEMBER_K1_DIRECTIVE_PREFIX
         val actualMemberTexts = chooserObjects.map { it.text }.toLinkedSet()
-        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).toLinkedSet()
+        val expectedMemberTexts = InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), MEMBER_DIRECTIVE_PREFIX).toLinkedSet() +
+                                  InTextDirectivesUtils.findListWithPrefixes(testFile.readText(), frontendDependentDirective)
 
         if (addMissingDirectives) {
             actualMemberTexts
@@ -289,5 +291,7 @@ abstract class AbstractOverrideImplementTest<T : ClassMember> : KotlinLightCodeI
     companion object {
         protected const val MEMBER_TEXT = "MEMBER"
         protected const val MEMBER_DIRECTIVE_PREFIX = "// $MEMBER_TEXT:"
+        protected const val MEMBER_K1_DIRECTIVE_PREFIX = "// ${MEMBER_TEXT}_K1:"
+        protected const val MEMBER_K2_DIRECTIVE_PREFIX = "// ${MEMBER_TEXT}_K2:"
     }
 }

@@ -4,4 +4,5 @@ class Impl(): Intf {
     <caret>
 }
 
-// MEMBER: "fooBar(i: Int, s: Array<(out) String!>!, foo: Any!): Unit"
+// MEMBER_K2: "fooBar(i: Int, s: Array<out String?>?, foo: Any?): Unit"
+// MEMBER_K1: "fooBar(i: Int, s: Array<(out) String!>!, foo: Any!): Unit"
