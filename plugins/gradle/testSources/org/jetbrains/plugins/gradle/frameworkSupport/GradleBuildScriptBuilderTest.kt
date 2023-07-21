@@ -357,4 +357,42 @@ class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
       withJUnit()
     }
   }
+
+  @Test
+  fun `test string escaping`() {
+    assertBuildScript(groovyScript = """
+      |def string = 'simple string'
+      |println "string with ${'$'}string interpolation"
+      |println '/example/unix/path'
+      |println 'C:\\example\\win\\path'
+      |println 'string with \' quote'
+      |println 'string with " quote'
+      |println 'multi-line\n joined\n string'
+      |println 'multi-line\n raw\n string'
+    """.trimMargin(), kotlinScript = """
+      |var string = "simple string"
+      |println("string with ${'$'}string interpolation")
+      |println("/example/unix/path")
+      |println("C:\\example\\win\\path")
+      |println("string with ' quote")
+      |println("string with \" quote")
+      |println("multi-line\n joined\n string")
+      |println("multi-line\n raw\n string")
+    """.trimMargin()) {
+      withPostfix {
+        property("string", "simple string")
+        call("println", "string with ${'$'}string interpolation")
+        call("println", "/example/unix/path")
+        call("println", "C:\\example\\win\\path")
+        call("println", "string with ' quote")
+        call("println", "string with \" quote")
+        call("println", "multi-line\n joined\n string")
+        call("println", """
+          |multi-line
+          | raw
+          | string
+        """.trimMargin())
+      }
+    }
+  }
 }
