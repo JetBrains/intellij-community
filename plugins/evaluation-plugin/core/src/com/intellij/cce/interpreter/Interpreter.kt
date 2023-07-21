@@ -7,13 +7,14 @@ import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
 import java.nio.file.Paths
 
-class Interpreter(private val actionsInvoker: ActionsInvoker,
-                  private val featureInvoker: FeatureInvoker,
+class Interpreter(private val invokersFactory: InvokersFactory,
                   private val handler: InterpretationHandler,
                   private val filter: InterpretFilter,
                   private val projectPath: String?) {
 
   fun interpret(fileActions: FileActions, sessionHandler: (Session) -> Unit): List<Session> {
+    val actionsInvoker = invokersFactory.createActionsInvoker()
+    val featureInvoker = invokersFactory.createFeatureInvoker()
     val sessions = mutableListOf<Session>()
     val filePath = if (projectPath == null) fileActions.path else Paths.get(projectPath).resolve(fileActions.path).toString()
     val needToClose = !actionsInvoker.isOpen(filePath)

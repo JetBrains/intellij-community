@@ -8,6 +8,7 @@ import com.intellij.cce.evaluable.common.CommonActionsInvoker
 import com.intellij.cce.evaluation.step.*
 import com.intellij.cce.interpreter.ActionsInvoker
 import com.intellij.cce.interpreter.FeatureInvoker
+import com.intellij.cce.interpreter.InvokersFactory
 import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
@@ -21,9 +22,10 @@ class BackgroundStepFactory(
   private val evaluationRootInfo: EvaluationRootInfo
 ) : StepFactory {
 
-  private val actionsInvoker: ActionsInvoker = CommonActionsInvoker(project)
-
-  private val featureInvoker: FeatureInvoker = feature.getFeatureInvoker(project, Language.resolve(config.language), config.strategy)
+  private val invokersFactory = object : InvokersFactory {
+    override fun createActionsInvoker(): ActionsInvoker = CommonActionsInvoker(project)
+    override fun createFeatureInvoker(): FeatureInvoker = feature.getFeatureInvoker(project, Language.resolve(config.language), config.strategy)
+  }
 
   override fun generateActionsStep(): EvaluationStep {
     return ActionsGenerationStep(config, config.language, evaluationRootInfo,
@@ -31,14 +33,14 @@ class BackgroundStepFactory(
   }
 
   override fun interpretActionsStep(): EvaluationStep =
-    ActionsInterpretationStep(config.interpret, config.language, actionsInvoker, featureInvoker, project)
+    ActionsInterpretationStep(config.interpret, config.language, invokersFactory, project)
 
   override fun generateReportStep(): EvaluationStep =
     ReportGenerationStep(inputWorkspacePaths?.map { EvaluationWorkspace.open(it) },
                          config.reports.sessionsFilters, config.reports.comparisonFilters, project, feature)
 
   override fun interpretActionsOnNewWorkspaceStep(): EvaluationStep =
-    ActionsInterpretationOnNewWorkspaceStep(config, actionsInvoker, featureInvoker, project)
+    ActionsInterpretationOnNewWorkspaceStep(config, invokersFactory, project)
 
   override fun reorderElements(): EvaluationStep =
     ReorderElementsStep(config, project)
