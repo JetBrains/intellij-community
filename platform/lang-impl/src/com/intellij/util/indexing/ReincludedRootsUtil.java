@@ -161,7 +161,7 @@ public final class ReincludedRootsUtil {
       references.add(entityReference);
     }
 
-    private void addExternalRoots(EntityReference<?> entityReference, Collection<VirtualFile> roots, Collection<VirtualFile> sourceRoots) {
+    private void addExternalRoots(EntityReference<?> entityReference, List<VirtualFile> roots, List<VirtualFile> sourceRoots) {
       filesFromExternal.add(new ExternalRootData<>(entityReference, roots, sourceRoots));
       references.add(entityReference);
     }
@@ -203,8 +203,8 @@ public final class ReincludedRootsUtil {
     }
 
     private record ExternalRootData<E extends WorkspaceEntity>(@NotNull EntityReference<E> entityReference,
-                                                               @NotNull Collection<VirtualFile> roots,
-                                                               @NotNull Collection<VirtualFile> sourceRoots) {
+                                                               @NotNull List<VirtualFile> roots,
+                                                               @NotNull List<VirtualFile> sourceRoots) {
       public @NotNull Collection<IndexableIteratorBuilder> createBuilders(Map<EntityReference<?>, WorkspaceEntity> referenceMap,
                                                                           Map<Class<WorkspaceEntity>, CustomizingIndexingPresentationContributor<?>> contributorMap) {
         IndexableIteratorPresentation presentation = findPresentation(entityReference, referenceMap, contributorMap);

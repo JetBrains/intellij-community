@@ -55,7 +55,7 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       if (ModuleIndexableFilesPolicy.getInstance().shouldIndexSeparateRoots()) {
         return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFile(it), moduleRoots.size > 1) }
       }
-      return listOf(ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFiles(moduleRoots), false))
+      return listOf(ModuleIndexableFilesIteratorImpl(module, IndexingRootHolder.fromFiles(moduleRoots.toList()), false))
     }
 
     private fun getProjectModelBasedModuleRootsToIterate(module: Module): Set<VirtualFile> {

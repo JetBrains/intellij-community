@@ -39,8 +39,8 @@ internal data class GenericContentEntityOriginImpl(override val reference: Entit
 internal data class ExternalEntityOriginImpl(override val reference: EntityReference<*>,
                                              override val rootHolder: IndexingSourceRootHolder) : ExternalEntityOrigin
 
-internal open class IndexingRootHolderImpl(override val roots: Collection<VirtualFile>,
-                                           override val nonRecursiveRoots: Collection<VirtualFile>) : IndexingRootHolder {
+internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>,
+                                           override val nonRecursiveRoots: List<VirtualFile>) : IndexingRootHolder {
 
   override fun immutableCopyOf(): IndexingRootHolder {
     return IndexingRootHolderImpl(java.util.List.copyOf(roots), java.util.List.copyOf(nonRecursiveRoots))
@@ -72,8 +72,8 @@ internal open class IndexingRootHolderImpl(override val roots: Collection<Virtua
   }
 }
 
-internal class MutableIndexingRootHolder(override var roots: MutableCollection<VirtualFile> = mutableListOf(),
-                                         override val nonRecursiveRoots: MutableCollection<VirtualFile> = mutableListOf()) :
+internal class MutableIndexingRootHolder(override var roots: MutableList<VirtualFile> = mutableListOf(),
+                                         override val nonRecursiveRoots: MutableList<VirtualFile> = mutableListOf()) :
   IndexingRootHolderImpl(roots, nonRecursiveRoots) {
   fun addRoots(value: IndexingRootHolder) {
     roots.addAll(value.roots)
@@ -88,10 +88,10 @@ internal class MutableIndexingRootHolder(override var roots: MutableCollection<V
   }
 }
 
-internal open class IndexingSourceRootHolderImpl(override val roots: Collection<VirtualFile>,
-                                                 override val nonRecursiveRoots: Collection<VirtualFile>,
-                                                 override val sourceRoots: Collection<VirtualFile>,
-                                                 override val nonRecursiveSourceRoots: Collection<VirtualFile>) : IndexingSourceRootHolder {
+internal open class IndexingSourceRootHolderImpl(override val roots: List<VirtualFile>,
+                                                 override val nonRecursiveRoots: List<VirtualFile>,
+                                                 override val sourceRoots: List<VirtualFile>,
+                                                 override val nonRecursiveSourceRoots: List<VirtualFile>) : IndexingSourceRootHolder {
   override fun immutableCopyOf(): IndexingSourceRootHolder {
     return IndexingSourceRootHolderImpl(java.util.List.copyOf(roots), java.util.List.copyOf(nonRecursiveRoots),
                                         java.util.List.copyOf(sourceRoots), java.util.List.copyOf(nonRecursiveSourceRoots))
@@ -130,10 +130,10 @@ internal open class IndexingSourceRootHolderImpl(override val roots: Collection<
   }
 }
 
-internal class MutableIndexingSourceRootHolder(override val roots: MutableCollection<VirtualFile> = mutableListOf(),
-                                               override val nonRecursiveRoots: MutableCollection<VirtualFile> = mutableListOf(),
-                                               override val sourceRoots: MutableCollection<VirtualFile> = mutableListOf(),
-                                               override val nonRecursiveSourceRoots: MutableCollection<VirtualFile> = mutableListOf()) :
+internal class MutableIndexingSourceRootHolder(override val roots: MutableList<VirtualFile> = mutableListOf(),
+                                               override val nonRecursiveRoots: MutableList<VirtualFile> = mutableListOf(),
+                                               override val sourceRoots: MutableList<VirtualFile> = mutableListOf(),
+                                               override val nonRecursiveSourceRoots: MutableList<VirtualFile> = mutableListOf()) :
   IndexingSourceRootHolderImpl(roots, nonRecursiveRoots, sourceRoots, nonRecursiveSourceRoots) {
   fun addRoots(value: IndexingSourceRootHolder) {
     roots.addAll(value.roots)

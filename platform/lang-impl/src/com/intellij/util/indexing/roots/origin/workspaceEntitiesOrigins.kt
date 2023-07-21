@@ -23,19 +23,19 @@ interface ExternalEntityOrigin : IndexableSetOrigin {
 }
 
 interface IndexingRootHolder {
-  val roots: Collection<VirtualFile>
-  val nonRecursiveRoots: Collection<VirtualFile>
+  val roots: List<VirtualFile>
+  val nonRecursiveRoots: List<VirtualFile>
   val rootUrls: Set<String>
   fun immutableCopyOf(): IndexingRootHolder
   fun getRootsDebugStr(): String
   fun isEmpty(): Boolean
 
   companion object {
-    fun fromFiles(roots: Collection<VirtualFile>, nonRecursiveRoots: Collection<VirtualFile>): IndexingRootHolder {
+    fun fromFiles(roots: List<VirtualFile>, nonRecursiveRoots: List<VirtualFile>): IndexingRootHolder {
       return IndexingRootHolderImpl(roots, nonRecursiveRoots)
     }
 
-    fun fromFiles(roots: Collection<VirtualFile>): IndexingRootHolder {
+    fun fromFiles(roots: List<VirtualFile>): IndexingRootHolder {
       return IndexingRootHolderImpl(roots, emptyList())
     }
 
@@ -46,24 +46,24 @@ interface IndexingRootHolder {
 }
 
 interface IndexingSourceRootHolder {
-  val roots: Collection<VirtualFile>
-  val nonRecursiveRoots: Collection<VirtualFile>
-  val sourceRoots: Collection<VirtualFile>
-  val nonRecursiveSourceRoots: Collection<VirtualFile>
+  val roots: List<VirtualFile>
+  val nonRecursiveRoots: List<VirtualFile>
+  val sourceRoots: List<VirtualFile>
+  val nonRecursiveSourceRoots: List<VirtualFile>
   val rootUrls: Set<String>
   fun immutableCopyOf(): IndexingSourceRootHolder
   fun getRootsDebugStr(): String
   fun isEmpty(): Boolean
 
   companion object {
-    fun fromFiles(roots: Collection<VirtualFile>, sourceRoots: Collection<VirtualFile>): IndexingSourceRootHolder {
+    fun fromFiles(roots: List<VirtualFile>, sourceRoots: List<VirtualFile>): IndexingSourceRootHolder {
       return IndexingSourceRootHolderImpl(roots, emptyList(), sourceRoots, emptyList())
     }
 
-    fun fromFiles(roots: Collection<VirtualFile>,
-                  nonRecursiveRoots: Collection<VirtualFile>,
-                  sourceRoots: Collection<VirtualFile>,
-                  nonRecursiveSourceRoots: Collection<VirtualFile>): IndexingSourceRootHolder {
+    fun fromFiles(roots: List<VirtualFile>,
+                  nonRecursiveRoots: List<VirtualFile>,
+                  sourceRoots: List<VirtualFile>,
+                  nonRecursiveSourceRoots: List<VirtualFile>): IndexingSourceRootHolder {
       return IndexingSourceRootHolderImpl(roots, nonRecursiveRoots, sourceRoots, nonRecursiveSourceRoots)
     }
   }
