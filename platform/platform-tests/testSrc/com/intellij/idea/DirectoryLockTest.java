@@ -186,6 +186,7 @@ public abstract sealed class DirectoryLockTest {
     var lock2 = createLock(configDir, systemDir2);
     assertNull(lock1.lockOrActivate(currentDir, List.of()));
     assertThatThrownBy(() -> lock2.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
+    assertThatThrownBy(() -> lock2.lockOrActivate(currentDir, List.of())).isInstanceOf(CannotActivateException.class);
   }
 
   @Test
