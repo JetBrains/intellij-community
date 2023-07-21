@@ -160,7 +160,6 @@ public class DependenciesIndexedStatusService {
 
   @Nullable
   public Pair<@NotNull Collection<? extends IndexableIteratorBuilder>, @NotNull StatusMark> getDeltaWithLastIndexedStatus() {
-    //todo[lene] move from EDT thread, wrap into cancellable read action
     if (!shouldBeUsed()) return null;
     MyStatus statusBefore;
     synchronized (LOCK) {

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * //todo[lene]
+ * Provides opportunity to specify UI and diagnostic messages for indexing entities.
  */
 @ApiStatus.OverrideOnly
 @ApiStatus.Experimental

@@ -169,7 +169,7 @@ class PerProjectIndexingQueue(private val project: Project) {
   // Accepting `List<VirtualFile>` delays the moment when we know that many files have changed, and we need a dumb mode.
   // Accepting [VirtualFile] without intermediate buffering ([PerProviderSink] is essentially a non-thread safe buffer) and adding
   // them directly to [filesSoFar] will likely slow down the process (though this assumption is not properly verified)
-  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) { //todo[lene] write to a set
+  private fun addFiles(iterator: IndexableFilesIterator, files: List<VirtualFile>, scanningId: Long) {
     lock.read {
       filesSoFar.compute(iterator) { _, old ->
         return@compute if (old == null) ArrayList(files) else old + files

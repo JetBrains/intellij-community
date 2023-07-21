@@ -192,7 +192,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Langu
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, moduleSdks);
 
-    if (needToReparseOpenFiles) {//todo[lene] move it after updating SDKs?
+    if (needToReparseOpenFiles) {
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) {
           return;
