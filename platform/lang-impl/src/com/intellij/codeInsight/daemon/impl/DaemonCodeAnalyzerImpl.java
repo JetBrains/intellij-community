@@ -309,9 +309,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   @Override
   public @NotNull List<HighlightInfo> runMainPasses(@NotNull PsiFile psiFile, @NotNull Document document, @NotNull ProgressIndicator progress) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    if (ApplicationManager.getApplication().isReadAccessAllowed()) {
-      throw new IllegalStateException("Must run highlighting outside read action, external annotators do not support checkCanceled");
-    }
     assertMyFile(psiFile.getProject(), psiFile);
 
     GlobalInspectionContextBase.assertUnderDaemonProgress();
