@@ -71,7 +71,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
                 targets = importingContext.targets,
                 extraFeatures = ExtraFeaturesImpl(
                     coroutinesState = coroutinesState,
-                    isHMPPEnabled = importingContext.getProperty(IS_HMPP_ENABLED),
+                    isHMPPEnabled = importingContext.isHMPPEnabled,
                 ),
                 kotlinNativeHome = kotlinNativeHome,
                 dependencyMap = importingContext.dependencyMapper.toDependencyMap(),
@@ -126,7 +126,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     private fun computeSourceSetsDeferredInfo(importingContext: MultiplatformModelImportingContext) {
         for (sourceSet in importingContext.sourceSets) {
-            if (!importingContext.getProperty(IS_HMPP_ENABLED)) {
+            if (!importingContext.isHMPPEnabled) {
                 val name = sourceSet.name
                 if (name == COMMON_MAIN_SOURCE_SET_NAME) {
                     sourceSet.isTestComponent = false
@@ -162,7 +162,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
             return
         }
 
-        if (!getProperty(IS_HMPP_ENABLED) && !isDeclaredSourceSet(sourceSet)) {
+        if (!isHMPPEnabled && !isDeclaredSourceSet(sourceSet)) {
             // intermediate source sets should be common if HMPP is disabled
             sourceSet.actualPlatforms.pushPlatforms(KotlinPlatform.COMMON)
             return
@@ -175,7 +175,6 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
     }
 
     private fun MultiplatformModelImportingContext.shouldCoerceToCommon(sourceSet: KotlinSourceSetImpl): Boolean {
-        val isHMPPEnabled = getProperty(IS_HMPP_ENABLED)
         val coerceRootSourceSetsToCommon = getProperty(COERCE_ROOT_SOURCE_SETS_TO_COMMON)
         val isRoot = sourceSet.name == COMMON_MAIN_SOURCE_SET_NAME || sourceSet.name == COMMON_TEST_SOURCE_SET_NAME
 
