@@ -1,4 +1,6 @@
 // ERROR: This annotation is not applicable to target 'member property with backing field'
+import kotlin.concurrent.Volatile
+
 internal class A {
     @Deprecated("")
     @Volatile
