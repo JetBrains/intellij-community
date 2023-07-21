@@ -7,13 +7,15 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -88,8 +90,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        ApplicationManager.getApplication().invokeAndWait {
-            KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
+        runBlockingCancellable {
+            writeAction {
+                KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
+            }
         }
         module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, null)
         module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
@@ -504,9 +508,14 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
             val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
             val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
 
-            ApplicationManager.getApplication().invokeAndWait {
-                kotlinFacet.configuration.settings.implementedModuleNames =
+            runBlockingCancellable {
+                val names = readAction {
                     implemented.map { manager.findModule(it)?.name ?: it.displayName }
+                }
+
+                writeAction { 
+                    kotlinFacet.configuration.settings.implementedModuleNames = names
+                }
             }
         }
     }
