@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.ModalityState;
@@ -31,6 +31,13 @@ public class EmptyProgressIndicator extends EmptyProgressIndicatorBase implement
     return myIsCanceled;
   }
 
+  /**
+   * @deprecated instead of using this function somewhere higher in the stacktrace,
+   * make sure the indicator is installed by whoever calls the function which calls {@code notNullize},
+   * or, in other words, make sure {@link ProgressManager#getGlobalProgressIndicator()} returns non-null value.
+   * This function is dangerous because it makes the code effectively non-cancellable suppressing any assertions.
+   */
+  @Deprecated
   public static @NotNull ProgressIndicator notNullize(@Nullable ProgressIndicator indicator) {
     return indicator != null ? indicator : new EmptyProgressIndicator();
   }
