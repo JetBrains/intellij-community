@@ -96,7 +96,7 @@ public final class ConfigImportHelper {
   private static final String PLIST = "Info.plist";
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
-  private static final Set<String> SESSION_FILES = Set.of(CUSTOM_MARKER_FILE_NAME, PORT_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
+  private static final Set<String> SESSION_FILES = Set.of(CUSTOM_MARKER_FILE_NAME, LOCK_FILE, PORT_LOCK_FILE, TOKEN_FILE, USER_WEB_TOKEN);
 
   private ConfigImportHelper() { }
 
