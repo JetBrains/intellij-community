@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="rd-text" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2023.2.3">
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-text:2023.3.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.2.3/rd-text-2023.2.3.jar">
-          <sha256sum>1c51b2c8aeeb9c1aadcf0a78516ca045e35785e480dc83af111afcf8e79a467b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.0/rd-text-2023.3.0.jar">
+          <sha256sum>5023a3a9800d4f9edaaded642d899119c7404c6de5c926606dac2cb883b3c1e2</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.2.3/rd-text-2023.2.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.0/rd-text-2023.3.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.2.3/rd-text-2023.2.3-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.0/rd-text-2023.3.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.2.3/rd-text-2023.2.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-text/2023.3.0/rd-text-2023.3.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
