@@ -53,6 +53,7 @@ import static java.awt.event.InputEvent.META_MASK;
 
 public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
   static final int NEXT_STEP_AREA_WIDTH = 20;
+  private static final int DEFAULT_MAX_ROW_COUNT = 30;
 
   private static final Logger LOG = Logger.getInstance(ListPopupImpl.class);
   protected final PopupInlineActionsSupport myPopupInlineActionsSupport = PopupInlineActionsSupport.Companion.create(this);
@@ -66,7 +67,6 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private ListPopupModel myListModel;
 
   private int myIndexForShowingChild = -1;
-  private int myMaxRowCount = 30;
   private boolean myAutoHandleBeforeShow;
   private boolean myShowSubmenuOnHover;
 
@@ -93,8 +93,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   public void setMaxRowCount(int maxRowCount) {
     if (maxRowCount <= 0) return;
-    myMaxRowCount = maxRowCount;
-    myList.setVisibleRowCount(myMaxRowCount);
+    myList.setVisibleRowCount(maxRowCount);
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
@@ -259,7 +258,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     ListPopupStep<Object> step = getListStep();
     myListModel = new ListPopupModel(this, getSpeedSearch(), step);
     myList = new MyList();
-    myList.setVisibleRowCount(myMaxRowCount);
+    myList.setVisibleRowCount(DEFAULT_MAX_ROW_COUNT);
     if (myStep.getTitle() != null) {
       myList.getAccessibleContext().setAccessibleName(myStep.getTitle());
     }
