@@ -60,6 +60,9 @@ public class DefaultTypingActionsExtension implements TypingActionsExtension {
                      int endOffset,
                      int anchorColumn,
                      boolean indentBeforeReformat) {
+    if (startOffset < 0 || endOffset > editor.getDocument().getTextLength() || endOffset < startOffset) {
+      throw new IllegalArgumentException("Invalid offsets: startOffset="+startOffset+"; endOffset="+endOffset+"; document length="+editor.getDocument().getTextLength());
+    }
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     switch (howtoReformat) {
       case CodeInsightSettings.INDENT_BLOCK -> indentBlock(project, editor, startOffset, endOffset, anchorColumn);
