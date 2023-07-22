@@ -1,18 +1,20 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
@@ -59,10 +61,12 @@ open class AddAnnotationFix(
         class ContainingClass(val name: String?) : Kind()
     }
 
-    object TypeVarianceConflictFactory : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
-            val typeReference = diagnostic.psiElement.parent as? KtTypeReference ?: return null
-            return AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self)
+    object TypeVarianceConflictFactory :
+        QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+            val typeReference = psiElement.parent as? KtTypeReference ?: return emptyList()
+            return listOf(AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self))
         }
     }
+
 }
