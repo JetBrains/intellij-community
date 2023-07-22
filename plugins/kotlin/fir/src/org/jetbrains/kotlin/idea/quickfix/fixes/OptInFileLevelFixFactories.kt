@@ -2,11 +2,9 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import com.intellij.psi.PsiElement
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KtFirDiagnostic
-import org.jetbrains.kotlin.idea.base.util.names.FqNames
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.diagnosticFixFactories
 import org.jetbrains.kotlin.idea.quickfix.UseOptInFileAnnotationFix
 import org.jetbrains.kotlin.idea.util.findAnnotation
@@ -16,10 +14,9 @@ import org.jetbrains.kotlin.psi.KtAnnotationEntry
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
-import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
-object OptInFileLevelFixesFactories {
-    val optInFileLevelFixesFactories =
+object OptInFileLevelFixFactories {
+    val optInFileLevelFixFactories =
         diagnosticFixFactories(
             KtFirDiagnostic.OptInUsage::class,
             KtFirDiagnostic.OptInUsageError::class,
@@ -27,8 +24,8 @@ object OptInFileLevelFixesFactories {
             KtFirDiagnostic.OptInOverrideError::class
         ) { diagnostic ->
             val element = diagnostic.psi.findParentOfType<KtElement>() ?: return@diagnosticFixFactories emptyList()
-            val optInMarkerFqName = optInMarkerFqName(diagnostic) ?: return@diagnosticFixFactories emptyList()
-            val optInFqName = optInFqName() ?: return@diagnosticFixFactories emptyList()
+            val optInMarkerFqName = OptInFixUtils.optInMarkerFqName(diagnostic) ?: return@diagnosticFixFactories emptyList()
+            val optInFqName = OptInFixUtils.optInFqName() ?: return@diagnosticFixFactories emptyList()
             val containingFile = element.containingKtFile
 
             return@diagnosticFixFactories listOf(
@@ -43,20 +40,4 @@ object OptInFileLevelFixesFactories {
     context (KtAnalysisSession)
     private fun findFileAnnotation(file: KtFile, optInFqName: FqName): KtAnnotationEntry? =
         file.fileAnnotationList?.findAnnotation(ClassId.topLevel(optInFqName))
-
-    private fun optInMarkerFqName(diagnostic: KtFirDiagnostic<PsiElement>) = when (diagnostic) {
-        is KtFirDiagnostic.OptInUsage -> diagnostic.optInMarkerFqName
-        is KtFirDiagnostic.OptInUsageError -> diagnostic.optInMarkerFqName
-        is KtFirDiagnostic.OptInOverride -> diagnostic.optInMarkerFqName
-        is KtFirDiagnostic.OptInOverrideError -> diagnostic.optInMarkerFqName
-        else -> null
-    }
-
-    context (KtAnalysisSession)
-    private fun optInFqName(): FqName? = OptInNames.OPT_IN_FQ_NAME.takeIf { it.annotationApplicable() }
-        ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME.takeIf { it.annotationApplicable() }
-
-    context (KtAnalysisSession)
-    private fun FqName.annotationApplicable() = getClassOrObjectSymbolByClassId(ClassId.topLevel(this)) != null
-
 }
