@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingScope
-import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
-import com.intellij.collaboration.ui.SingleValueModel
-import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangesTreeFactory
-import com.intellij.collaboration.ui.codereview.setupCodeReviewProgressModel
+import com.intellij.collaboration.ui.LoadingLabel
+import com.intellij.collaboration.ui.codereview.changes.CodeReviewChangeListComponentFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
+import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPresenter
+import com.intellij.collaboration.ui.util.bindContentIn
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -16,31 +17,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager.Companion.EDITOR_TAB_DIFF_PREVIEW
-import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
-import com.intellij.util.containers.TreeTraversal
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.tree.TreeUtil
-import com.intellij.vcsUtil.VcsUtil
-import git4idea.changes.GitBranchComparisonResult
-import git4idea.changes.findCumulativeChange
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import org.jetbrains.annotations.Nls
-import org.jetbrains.plugins.github.api.data.GHCommit
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.flowOf
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase.Companion.createAndSetupDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffPreview
-import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
+import org.jetbrains.plugins.github.pullrequest.GHPRCombinedDiffPreviewBase
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -49,16 +43,16 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingMod
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsComponentFactory
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRBranchesViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRChangeListViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModelImpl
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRReviewFlowViewModelImpl
+import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.tree.DefaultMutableTreeNode
-import javax.swing.tree.TreeNode
 
-internal class GHPRViewComponentFactory(private val actionManager: ActionManager,
+internal class GHPRViewComponentFactory(actionManager: ActionManager,
                                         private val project: Project,
                                         private val dataContext: GHPRDataContext,
                                         pullRequest: GHPRIdentifier,
@@ -117,14 +111,14 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                                      dataProvider.changesData,
                                                      dataProvider.reviewData,
                                                      disposable)
-      val changesVm = GHPRChangesViewModel(scope, project, dataContext, dataProvider)
+      val changesVm = GHPRChangesViewModelImpl(scope, project, dataContext, dataProvider)
 
       GHPRDetailsComponentFactory.create(scope,
                                          project,
                                          reviewDetailsVm, reviewBranchesVm, reviewStatusVm, reviewFlowVm, changesVm,
                                          dataProvider,
                                          dataContext.securityService, dataContext.avatarIconsProvider,
-                                         createCommitFilesBrowserComponent(scope, changesVm))
+                                         scope.createChangesComponent(changesVm))
     }.apply {
       isOpaque = true
       background = UIUtil.getListBackground()
@@ -132,153 +126,55 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
     }
   }
 
-  private fun createCommitFilesBrowserComponent(scope: CoroutineScope, changesVm: GHPRChangesViewModel): JComponent {
-    return GHLoadingPanelFactory(
-      changesVm.changesLoadingModel,
-      null,
-      GithubBundle.message("cannot.load.changes"),
-      changesVm.changesLoadingErrorHandler
-    ).createWithUpdatesStripe(uiDisposable) { parent, model ->
-      val commitChangesModel = createCommitChangesModel(scope, model, changesVm)
-      val tree = createChangesTree(
-        parent,
-        commitChangesModel,
-        GithubBundle.message("pull.request.does.not.contain.changes")
-      ) { dataId: String ->
-        when {
-          GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId) -> getPullRequestFiles()
-          GHPRChangesViewModel.DATA_KEY.`is`(dataId) -> changesVm
-          else -> null
-        }
+  private fun CoroutineScope.createChangesComponent(changesVm: GHPRChangesViewModel): JComponent {
+    val cs = this
+    return Wrapper(LoadingLabel()).apply {
+      isOpaque = false
+
+      bindContentIn(cs, changesVm.changeListVm) { result ->
+        result.fold(
+          onSuccess = { createChangesPanel(changesVm, it) },
+          onFailure = { createChangesErrorComponent(changesVm, it) }
+        )
       }
-
-      tree.addTreeSelectionListener {
-        val selection = tree.let { VcsTreeModelData.getListSelectionOrAll(it).map { it as? Change } }
-        // do not reset selection to zero
-        if (!selection.isEmpty) {
-          changesVm.setSelection(selection)
-        }
-      }
-
-      scope.launchNow {
-        changesVm.diffFilePathSelectionEvents.collect {
-          if (it != null) {
-            tree.selectFile(it)
-          }
-        }
-      }
-
-      tree.setupCodeReviewProgressModel(changesVm.progressModel)
-
-      val controller = object : GHPRCommitBrowserComponentController {
-        override fun selectCommit(oid: String) {
-          val selectedCommit = changesVm.reviewCommits.value.indexOfFirst { it.abbreviatedOid == oid }
-          changesVm.selectCommit(selectedCommit)
-          CollaborationToolsUIUtil.focusPanel(tree)
-        }
-
-        override fun selectChange(oid: String?, filePath: String) {
-          changesVm.selectCommit(-1)
-
-          tree.invokeAfterRefresh {
-            if (oid == null) {
-              tree.selectFile(VcsUtil.getFilePath(filePath, false))
-            }
-            else {
-              val change = model.value.findCumulativeChange(oid, filePath)
-              if (change == null) {
-                tree.selectFile(VcsUtil.getFilePath(filePath, false))
-              }
-              else {
-                tree.selectChange(change)
-              }
-            }
-          }
-          CollaborationToolsUIUtil.focusPanel(tree)
-        }
-      }
-      ClientProperty.put(tree, GHPRCommitBrowserComponentController.KEY, controller)
-
-      val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
-      ScrollableContentBorder.setup(scrollPane, Side.TOP_AND_BOTTOM, parent)
-      return@createWithUpdatesStripe scrollPane
     }
   }
 
-  private fun createCommitChangesModel(
-    scope: CoroutineScope,
-    changesProviderModel: SingleValueModel<GitBranchComparisonResult>,
-    commitsAndFilesVm: GHPRChangesViewModel
-  ): SingleValueModel<Collection<Change>> {
-    val changesState = MutableStateFlow(changesProviderModel.value)
-    changesProviderModel.addAndInvokeListener {
-      changesState.value = it
-    }
-    val selectedChanges = combine(changesState, commitsAndFilesVm.selectedCommit) { changes, commit ->
-      if (commit == null) {
-        changes.changes
-      }
-      else {
-        changes.changesByCommits[commit.oid].orEmpty()
-      }
-    }
-    val commitChangesModel: SingleValueModel<Collection<Change>> = SingleValueModel(emptyList())
-    scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      selectedChanges.collect {
-        commitChangesModel.value = it
-      }
-    }
-    return commitChangesModel
-  }
+  private fun CoroutineScope.createChangesPanel(changesVm: GHPRChangesViewModel,
+                                                changeListVm: GHPRChangeListViewModel): JComponent {
+    val tree = CodeReviewChangeListComponentFactory.createIn(this, changeListVm, changeListVm.progressModel,
+                                                             GithubBundle.message("pull.request.does.not.contain.changes"))
+    ClientProperty.put(tree, GHPRCommitBrowserComponentController.KEY, changesVm)
 
-  private fun createChangesTree(
-    parentPanel: JPanel,
-    model: SingleValueModel<Collection<Change>>,
-    emptyTextText: @Nls String,
-    getCustomData: ChangesTree.(String) -> Any? = { null }
-  ): AsyncChangesTree {
-    val tree = CodeReviewChangesTreeFactory(project, model).create(emptyTextText)
+    val scrollPane = ScrollPaneFactory.createScrollPane(tree, true)
+    val stripe = CollaborationToolsUIUtil.wrapWithProgressStripe(this, changeListVm.isUpdating, scrollPane)
+    ScrollableContentBorder.setup(scrollPane, Side.TOP_AND_BOTTOM, stripe)
 
-    tree.addSelectionListener {
-      if (tree.isFocusOwner) {
-        GHPRStatisticsCollector.logChangeSelected(project)
-      }
-    }
-
-    val diffPreviewController = createAndSetupDiffPreview(tree, GHPRDiffPreview(dataProvider.id, dataContext.filesManager))
-
-    tree.installPopupHandler(actionManager.getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
-
-    DataManager.registerDataProvider(parentPanel) { dataId ->
+    DataManager.registerDataProvider(stripe) { dataId ->
       when {
-        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> diffPreviewController.activePreview
-        tree.isShowing -> tree.getCustomData(dataId) ?: tree.getData(dataId)
+        EDITOR_TAB_DIFF_PREVIEW.`is`(dataId) -> changeListVm
+        tree.isShowing ->
+          when {
+            GHPRActionKeys.PULL_REQUEST_FILES.`is`(dataId) -> tree.getPullRequestFiles()
+            GHPRChangeListViewModel.DATA_KEY.`is`(dataId) -> changeListVm
+            else -> null
+          } ?: tree.getData(dataId)
         else -> null
       }
     }
+    tree.installPopupHandler(ActionManager.getInstance().getAction("Github.PullRequest.Changes.Popup") as ActionGroup)
 
-    return tree
+    return stripe
   }
 
-  companion object {
-    private fun ChangesTree.selectChange(toSelect: Change) {
-      val rowInTree = findRowContainingChange(root, toSelect)
-      if (rowInTree == -1) return
-      setSelectionRow(rowInTree)
-      TreeUtil.showRowCentered(this, rowInTree, false)
+  private fun CoroutineScope.createChangesErrorComponent(changesVm: GHPRChangesViewModel, error: Throwable): JComponent {
+    val errorPresenter = object : ErrorStatusPresenter<Throwable> {
+      override fun getErrorTitle(error: Throwable): String = GithubBundle.message("cannot.load.changes")
+      override fun getErrorDescription(error: Throwable): String? = error.localizedMessage
+      override fun getErrorAction(error: Throwable): Action = changesVm.changesLoadingErrorHandler.getActionForError(error)
     }
-
-    private fun ChangesTree.findRowContainingChange(root: TreeNode, toSelect: Change): Int {
-      val targetNode = TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).find { node ->
-        node is DefaultMutableTreeNode && node.userObject?.let {
-          it is Change &&
-          it == toSelect &&
-          it.beforeRevision == toSelect.beforeRevision &&
-          it.afterRevision == toSelect.afterRevision
-        } ?: false
-      }
-      return if (targetNode != null) TreeUtil.getRowForNode(this, targetNode as DefaultMutableTreeNode) else -1
-    }
+    val errorPanel = ErrorStatusPanelFactory.create(this, flowOf(error), errorPresenter)
+    return CollaborationToolsUIUtil.moveToCenter(errorPanel)
   }
 }
 

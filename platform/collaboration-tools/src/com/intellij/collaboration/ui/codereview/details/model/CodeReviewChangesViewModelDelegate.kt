@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.CoroutineScope
@@ -39,7 +40,7 @@ class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewMode
         }
 
         fun updateCommit(commit: String?, change: Change? = null) {
-          val existingCommit = commit?.takeIf { commitsSet.contains(it) }
+          val existingCommit = if (commit == null) null else commits.find { it.startsWith(commit) }
           _selectedCommit.value = existingCommit
           vm.updatesChanges(changes.getChanges(existingCommit), change)
         }
@@ -69,6 +70,21 @@ class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewMode
             }
             is ChangesRequest.SelectChange -> {
               updateCommit(changes.commitsByChange[request.change], request.change)
+            }
+            is ChangesRequest.SelectCommitAndFile -> {
+              val changeSet = changes.getChanges(request.commitSha)
+              val change = changeSet.find {
+                it.afterRevision?.file == request.filePath || it.beforeRevision?.file == request.filePath
+              }
+              updateCommit(request.commitSha, change)
+            }
+            is ChangesRequest.SelectFile -> {
+              val commit = _selectedCommit.value
+              val changeSet = changes.getChanges(commit)
+              val change = changeSet.find {
+                it.afterRevision?.file == request.filePath || it.beforeRevision?.file == request.filePath
+              }
+              updateCommit(commit, change)
             }
           }
         }
@@ -104,6 +120,18 @@ class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewMode
       selectionRequests.emit(ChangesRequest.SelectChange(change))
     }
   }
+
+  fun selectChange(commitSha: String?, filePath: FilePath) {
+    cs.launchNow {
+      selectionRequests.emit(ChangesRequest.SelectCommitAndFile(commitSha, filePath))
+    }
+  }
+
+  fun selectFile(filePath: FilePath) {
+    cs.launchNow {
+      selectionRequests.emit(ChangesRequest.SelectFile(filePath))
+    }
+  }
 }
 
 private sealed interface ChangesRequest {
@@ -112,6 +140,8 @@ private sealed interface ChangesRequest {
   object NextCommit : ChangesRequest
   object PrevCommit : ChangesRequest
   data class SelectChange(val change: Change) : ChangesRequest
+  data class SelectCommitAndFile(val commitSha: String?, val filePath: FilePath) : ChangesRequest
+  data class SelectFile(val filePath: FilePath) : ChangesRequest
 }
 
 class CodeReviewChangesContainer(val summaryChanges: List<Change>,

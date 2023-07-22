@@ -18,28 +18,3 @@ interface CodeReviewChangesViewModel<T> {
 
   fun commitHash(commit: T): String
 }
-
-abstract class CodeReviewChangesViewModelBase<T> : CodeReviewChangesViewModel<T> {
-  abstract override val reviewCommits: StateFlow<List<T>>
-
-  private val _selectedCommitState: MutableStateFlow<T?> = MutableStateFlow(null)
-  override val selectedCommit: SharedFlow<T?> = _selectedCommitState.asSharedFlow()
-
-  protected val _selectedCommitIndexState: MutableStateFlow<Int> = MutableStateFlow(-1)
-  override val selectedCommitIndex: SharedFlow<Int> = _selectedCommitIndexState.asSharedFlow()
-
-  override fun selectCommit(index: Int) {
-    _selectedCommitState.value = reviewCommits.value.getOrNull(index)
-    _selectedCommitIndexState.value = index
-  }
-
-  override fun selectNextCommit() {
-    _selectedCommitIndexState.value++
-    _selectedCommitState.value = reviewCommits.value[_selectedCommitIndexState.value]
-  }
-
-  override fun selectPreviousCommit() {
-    _selectedCommitIndexState.value--
-    _selectedCommitState.value = reviewCommits.value[_selectedCommitIndexState.value]
-  }
-}

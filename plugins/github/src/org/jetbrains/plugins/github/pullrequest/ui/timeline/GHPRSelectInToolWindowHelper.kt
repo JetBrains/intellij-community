@@ -23,7 +23,7 @@ class GHPRSelectInToolWindowHelper(private val project: Project, private val pul
       it.repositoryContentController
     }.successOnEdt {
       it.viewPullRequest(pullRequest)?.selectChange(oid, filePath)
-      it.openPullRequestDiff(pullRequest, false)
+      it.openPullRequestDiff(pullRequest, true)
     }
   }
 }
