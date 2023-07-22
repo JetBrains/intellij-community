@@ -501,21 +501,17 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }.distinct()
 
     private fun setImplementedModuleName(kotlinFacet: KotlinFacet, mavenProject: MavenProject, module: Module) {
-        if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) {
-            kotlinFacet.configuration.settings.implementedModuleNames = emptyList()
-        } else {
-            val manager = MavenProjectsManager.getInstance(module.project)
-            val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
-            val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
+        runBlockingCancellable {
+            val names = readAction {
+                if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) return@readAction emptyList()
+                val manager = MavenProjectsManager.getInstance(module.project)
+                val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
+                val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
+                implemented.map { manager.findModule(it)?.name ?: it.displayName }
+            }
 
-            runBlockingCancellable {
-                val names = readAction {
-                    implemented.map { manager.findModule(it)?.name ?: it.displayName }
-                }
-
-                writeAction { 
-                    kotlinFacet.configuration.settings.implementedModuleNames = names
-                }
+            writeAction {
+                kotlinFacet.configuration.settings.implementedModuleNames = names
             }
         }
     }
