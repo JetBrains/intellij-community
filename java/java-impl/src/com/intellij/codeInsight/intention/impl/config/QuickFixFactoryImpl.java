@@ -18,7 +18,6 @@ import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.UnimplementInterfaceAction;
 import com.intellij.codeInspection.dataFlow.fix.DeleteSwitchLabelFix;
-import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.IntentionName;
@@ -64,7 +63,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 public final class QuickFixFactoryImpl extends QuickFixFactory {
   private static final Logger LOG = Logger.getInstance(QuickFixFactoryImpl.class);
@@ -728,12 +726,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter,
                                                                                 boolean excludingHierarchy) {
     if (excludingHierarchy) {
-      Function<InspectionProfileEntry, InspectionProfileEntry> extractor =
-        profileEntry -> profileEntry instanceof UnusedDeclarationInspectionBase
-                        ? ((UnusedDeclarationInspectionBase)profileEntry).getSharedLocalInspectionTool()
-                        : profileEntry;
-      return SetInspectionOptionFix.createFix(UnusedSymbolLocalInspectionBase.SHORT_NAME, "myCheckParameterExcludingHierarchy",
-                                              JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false, extractor);
+      return new SetInspectionOptionFix(new UnusedSymbolLocalInspectionBase(), "myCheckParameterExcludingHierarchy",
+                                        JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false);
     }
     else {
       return new SafeDeleteFix(parameter);
