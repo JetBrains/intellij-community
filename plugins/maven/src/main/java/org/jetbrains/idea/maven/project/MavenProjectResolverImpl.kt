@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project
 
 import com.intellij.build.events.MessageEvent
 import com.intellij.openapi.progress.RawProgressReporter
+import com.intellij.openapi.progress.checkCancelled
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
@@ -87,6 +88,7 @@ internal class MavenProjectResolverImpl(private val myProject: Project) : MavenP
                                 workspaceMap: MavenWorkspaceMap?,
                                 updateSnapshots: Boolean): Collection<MavenProjectWithHolder> {
     if (mavenProjects.isEmpty()) return listOf()
+    checkCancelled()
     val names = mavenProjects.map { it.displayName }
     val text = StringUtil.shortenPathWithEllipsis(StringUtil.join(names, ", "), 200)
     progressReporter.text(MavenProjectBundle.message("maven.resolving.pom", text))
