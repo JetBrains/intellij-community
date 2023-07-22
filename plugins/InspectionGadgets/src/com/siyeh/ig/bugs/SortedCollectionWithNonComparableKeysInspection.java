@@ -2,11 +2,11 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
@@ -50,15 +50,15 @@ public class SortedCollectionWithNonComparableKeysInspection extends AbstractBas
         if (type == null || type.isRaw()) return;
         PsiType elementType = ArrayUtil.getFirstElement(type.getParameters());
         if (elementType == null || TypeUtils.isJavaLangObject(elementType)) return;
-        LocalQuickFix fix = null;
+        ModCommandAction fix = null;
         if (elementType instanceof PsiClassType && ((PsiClassType)elementType).resolve() instanceof PsiTypeParameter) {
           if (IGNORE_TYPE_PARAMETERS) return;
           String message = JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.option.type.parameters");
-          fix = new SetInspectionOptionFix(SortedCollectionWithNonComparableKeysInspection.this, "IGNORE_TYPE_PARAMETERS", message, true);
+          fix = new UpdateInspectionOptionFix(SortedCollectionWithNonComparableKeysInspection.this, "IGNORE_TYPE_PARAMETERS", message, true);
         }
         if (InheritanceUtil.isInheritor(elementType, CommonClassNames.JAVA_LANG_COMPARABLE)) return;
-        holder.registerProblem(expression, JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.message"),
-                               LocalQuickFix.notNullElements(fix));
+        holder.problem(expression, JavaBundle.message("inspection.sorted.collection.with.non.comparable.keys.message"))
+          .maybeFix(fix).register();
       }
     };
   }

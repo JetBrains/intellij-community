@@ -18,7 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -67,9 +67,9 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     final boolean addNullCheck = ((Boolean)infos[1]).booleanValue();
     StringEqualsEmptyStringFix mainFix = new StringEqualsEmptyStringFix(useIsEmpty, addNullCheck);
     if (addNullCheck) {
-      SetInspectionOptionFix disableFix = new SetInspectionOptionFix(
+      LocalQuickFix disableFix = new UpdateInspectionOptionFix(
         this, "SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL",
-        InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check"), true);
+        InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check"), true).asQuickFix();
       return new LocalQuickFix[]{mainFix, disableFix};
     }
     return new LocalQuickFix[]{mainFix};

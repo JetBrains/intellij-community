@@ -18,7 +18,7 @@ package com.siyeh.ig.controlflow;
 import com.intellij.codeInsight.daemon.impl.quickfix.ConvertSwitchToIfIntention;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -82,10 +82,10 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       fixes.add(new UnwrapSwitchStatementFix(branchCount));
     }
     if (patternSwitch) {
-      fixes.add(new SetInspectionOptionFix(this, "ignorePatternSwitch",
-                                           InspectionGadgetsBundle.message(
-                                                               "switch.statement.with.too.few.branches.ignore.pattern.option"),
-                                           true));
+      fixes.add(new UpdateInspectionOptionFix(this, "ignorePatternSwitch",
+                                              InspectionGadgetsBundle.message(
+                                                "switch.statement.with.too.few.branches.ignore.pattern.option"),
+                                              true).asQuickFix());
     }
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }

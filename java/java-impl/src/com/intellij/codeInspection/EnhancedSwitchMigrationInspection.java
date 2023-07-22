@@ -71,15 +71,17 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
           List<LocalQuickFix> fixes = new ArrayList<>();
           fixes.add(new ReplaceWithSwitchExpressionFix(replacer.getType()));
           if (!myWarnOnlyOnExpressionConversion && replacer.getType() == ReplacementType.Statement) {
-            fixes.add(new SetInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myWarnOnlyOnExpressionConversion",
-                                                 JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
-                                                 true));
+            fixes.add(new UpdateInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myWarnOnlyOnExpressionConversion",
+                                                    JavaBundle.message("inspection.switch.expression.migration.warn.only.on.expression"),
+                                                    true).asQuickFix());
           }
           if (replacer.getType() == ReplacementType.Expression && replacer.getMaxNumberStatementsInBranch() != null && replacer.getMaxNumberStatementsInBranch() > 1) {
             int newMaxValue = replacer.getMaxNumberStatementsInBranch() - 1;
-            fixes.add(new SetInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myMaxNumberStatementsForBranch",
-                                                 JavaBundle.message("inspection.switch.expression.migration.option.expression.max.statements", newMaxValue),
-                                                 newMaxValue));
+            fixes.add(new UpdateInspectionOptionFix(EnhancedSwitchMigrationInspection.this, "myMaxNumberStatementsForBranch",
+                                                    JavaBundle.message(
+                                                      "inspection.switch.expression.migration.option.expression.max.statements",
+                                                      newMaxValue),
+                                                    newMaxValue).asQuickFix());
           }
           holder.registerProblem(switchKeyword, JavaBundle.message("inspection.switch.expression.migration.inspection.switch.description"),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));

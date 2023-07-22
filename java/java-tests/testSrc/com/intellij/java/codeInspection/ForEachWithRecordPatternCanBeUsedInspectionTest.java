@@ -3,8 +3,9 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.ForEachWithRecordPatternCanBeUsedInspection;
-import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.InspectionGadgetsBundle;
@@ -58,17 +59,11 @@ public class ForEachWithRecordPatternCanBeUsedInspectionTest extends LightJavaCo
     myFixture.enableInspections(inspection);
     myFixture.configureByFiles("before" + getTestName(false) + ".java");
 
-    IntentionAction action;
-    if (checkAll) {
-      action = myFixture.findSingleIntention(
-        InspectionsBundle.message("fix.all.inspection.problems.in.file",
-                                  InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.display.name")));
-    }
-    else {
-
-      action = myFixture.findSingleIntention(InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name"));
-    }
+    IntentionAction action = myFixture.findSingleIntention(InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.fix.family.name"));
     assertNotNull(action);
+    if (checkAll) {
+      action = IntentionManager.getInstance().createFixAllIntention(new LocalInspectionToolWrapper(inspection), action);
+    }
 
     if (checkPreview) {
       myFixture.checkPreviewAndLaunchAction(action);

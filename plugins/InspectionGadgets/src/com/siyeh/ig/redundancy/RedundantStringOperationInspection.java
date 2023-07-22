@@ -157,9 +157,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       if (argumentList.isEmpty()) {
         LocalQuickFix[] fixes = {
           new StringConstructorFix(true),
-          new SetInspectionOptionFix(
+          new UpdateInspectionOptionFix(
             myInspection, "ignoreStringConstructor",
-            InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
+            InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true).asQuickFix()};
         return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                  InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);
@@ -186,9 +186,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         if (charArrayCreationArgument != null) {
           LocalQuickFix[] fixes = {
             new ReplaceWithValueOfFix(),
-            new SetInspectionOptionFix(
+            new UpdateInspectionOptionFix(
               myInspection, "ignoreStringConstructor",
-              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
+              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true).asQuickFix()};
           return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                    JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "String.valueOf()"),
                                                    ProblemHighlightType.WARNING, myIsOnTheFly, fixes);
@@ -198,9 +198,9 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
             (PsiUtil.isLanguageLevel7OrHigher(expression) || !STRING_SUBSTRING.matches(arg))) {
           LocalQuickFix[] fixes = {
             new StringConstructorFix(false),
-            new SetInspectionOptionFix(
+            new UpdateInspectionOptionFix(
               myInspection, "ignoreStringConstructor",
-              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
+              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true).asQuickFix()};
           return myManager.createProblemDescriptor(anchor, (TextRange)null,
                                                    InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myIsOnTheFly, fixes);

@@ -581,11 +581,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                method.getName());
     holder.problem(annoName, msg)
       .maybeFix(AddAnnotationPsiFix.createAddNotNullFix(method))
-      .fix(new SetInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
-                                      JavaAnalysisBundle
-                                        .message(
-                                          "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
-                                      false))
+      .fix(new UpdateInspectionOptionFix(this, "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL",
+                                         JavaAnalysisBundle.message(
+                                           "inspection.data.flow.turn.off.nullable.returning.notnull.quickfix"),
+                                         false))
       .register();
   }
 

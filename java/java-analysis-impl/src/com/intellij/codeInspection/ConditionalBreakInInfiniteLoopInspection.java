@@ -67,12 +67,10 @@ public class ConditionalBreakInInfiniteLoopInspection extends AbstractBaseJavaLo
           fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile)};
         }
         else {
-          SetInspectionOptionFix setInspectionOptionFix =
-            new SetInspectionOptionFix(ConditionalBreakInInfiniteLoopInspection.this,
-                                       "noConversionToDoWhile",
-                                       JavaBundle.message(
-                                         "inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
-                                       true);
+          LocalQuickFix setInspectionOptionFix =
+            new UpdateInspectionOptionFix(ConditionalBreakInInfiniteLoopInspection.this, "noConversionToDoWhile",
+                                          JavaBundle.message("inspection.conditional.break.in.infinite.loop.no.conversion.with.do.while"),
+                                          true).asQuickFix();
           fixes = new LocalQuickFix[]{new LoopTransformationFix(noConversionToDoWhile), setInspectionOptionFix};
         }
         ProblemHighlightType highlightType;

@@ -2,7 +2,7 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.core.JavaPsiBundle;
@@ -57,8 +57,8 @@ public class CommentedOutCodeInspection extends BaseInspection {
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     int lines = (int)infos[0];
     return new LocalQuickFix[]{new DeleteCommentedOutCodeFix(), new UncommentCodeFix(),
-      new SetInspectionOptionFix(
-        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1),
+      new UpdateInspectionOptionFix(
+        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1).asQuickFix(),
     };
   }
 

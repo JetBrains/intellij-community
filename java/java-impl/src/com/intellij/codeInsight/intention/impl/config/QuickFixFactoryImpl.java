@@ -726,8 +726,8 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   public @NotNull IntentionAction createSafeDeleteUnusedParameterInHierarchyFix(@NotNull PsiParameter parameter,
                                                                                 boolean excludingHierarchy) {
     if (excludingHierarchy) {
-      return new SetInspectionOptionFix(new UnusedSymbolLocalInspectionBase(), "myCheckParameterExcludingHierarchy",
-                                        JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false);
+      return new UpdateInspectionOptionFix(new UnusedSymbolLocalInspectionBase(), "myCheckParameterExcludingHierarchy",
+                                           JavaErrorBundle.message("parameter.excluding.hierarchy.disable.text"), false).asIntention();
     }
     else {
       return new SafeDeleteFix(parameter);

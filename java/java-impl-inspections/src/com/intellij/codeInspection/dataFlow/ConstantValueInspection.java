@@ -213,13 +213,14 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
     if (reporter.isOnTheFly()) {
       if (ref instanceof PsiReferenceExpression) {
-        fixes.add(new SetInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
-                                             JavaAnalysisBundle.message("inspection.data.flow.turn.off.constant.references.quickfix"),
-                                             false));
+        fixes.add(new UpdateInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
+                                                JavaAnalysisBundle.message("inspection.data.flow.turn.off.constant.references.quickfix"),
+                                                false).asQuickFix());
       }
       if (isAssertion) {
-        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                             JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+        fixes.add(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                                JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"),
+                                                true).asQuickFix());
       }
     }
     ContainerUtil.addIfNotNull(fixes, new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, ref, new TrackingRunner.ValueDfaProblemType(value)));
@@ -450,8 +451,9 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (!isCoveredBySurroundingFix(psiAnchor, evaluatesToTrue)) {
       ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
       if (isAssertion && reporter.isOnTheFly()) {
-        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                             JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
+        fixes.add(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                                JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"),
+                                                true).asQuickFix());
       }
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }

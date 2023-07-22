@@ -13,7 +13,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
@@ -69,14 +69,14 @@ public class NotNullFieldNotInitializedInspection extends AbstractBaseJavaLocalI
 
         List<LocalQuickFix> fixes = new ArrayList<>();
         if (implicitWrite) {
-          fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
-                                               IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
-                                               JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true));
+          fixes.add(new UpdateInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
+                                                  IGNORE_IMPLICITLY_WRITTEN_FIELDS_NAME,
+                                                  JavaBundle.message("inspection.notnull.field.not.initialized.option.implicit"), true).asQuickFix());
         }
         if (writtenInSetup) {
-          fixes.add(new SetInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
-                                               IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
-                                               JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true));
+          fixes.add(new UpdateInspectionOptionFix(NotNullFieldNotInitializedInspection.this,
+                                                  IGNORE_FIELDS_WRITTEN_IN_SETUP_NAME,
+                                                  JavaBundle.message("inspection.notnull.field.not.initialized.option.setup"), true).asQuickFix());
         }
         if (ownAnnotation) {
           fixes.add(QuickFixFactory.getInstance().createDeleteFix(annotation, JavaBundle.message("quickfix.text.remove.not.null.annotation")));

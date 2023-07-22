@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.migration;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -47,8 +48,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
     if (indexed) {
       return new LocalQuickFix[]{
         new ForCanBeForeachFix(ignoreUntypedCollections),
-        new SetInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
-                                                     InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false),
+        new UpdateInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
+                                      InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false).asQuickFix(),
       };
     }
     return new LocalQuickFix[]{new ForCanBeForeachFix(ignoreUntypedCollections)};

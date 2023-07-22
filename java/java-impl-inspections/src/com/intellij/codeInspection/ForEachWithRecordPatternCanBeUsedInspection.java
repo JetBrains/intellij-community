@@ -172,16 +172,17 @@ public class ForEachWithRecordPatternCanBeUsedInspection extends AbstractBaseJav
           int length = context.recordClass.getRecordComponents().length;
           if (length > 1) {
             fixes.add(
-              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
+              new UpdateInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxComponentCounts",
                                          InspectionGadgetsBundle.message(
-                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length), length - 1));
+                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.number.disabled", length),
+                                            length - 1).asQuickFix());
           }
           Integer level = context.level;
           if (level != null && level > 0) {
             fixes.add(
-              new SetInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
+              new UpdateInspectionOptionFix(ForEachWithRecordPatternCanBeUsedInspection.this, "maxLevel",
                                          InspectionGadgetsBundle.message(
-                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), level - 1));
+                                           "inspection.enhanced.for.with.record.pattern.can.be.used.maximum.depth.disabled", level), level - 1).asQuickFix());
           }
           holder.registerProblem(identifier,
                                  InspectionGadgetsBundle.message("inspection.enhanced.for.with.record.pattern.can.be.used.message"),

@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CleanupLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -80,7 +83,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (turnOffOption != null) {
       OptCheckbox checkbox = (OptCheckbox)Objects.requireNonNull(getOptionsPane().findControl(turnOffOption));
       String message = StringUtil.unescapeXmlEntities(checkbox.label().label());
-      fixes.add(new SetInspectionOptionFix(this, turnOffOption, message, true));
+      fixes.add(new UpdateInspectionOptionFix(this, turnOffOption, message, true).asQuickFix());
     }
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }

@@ -2,7 +2,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -102,8 +102,8 @@ public class EqualsWithItselfInspection extends BaseInspection {
   protected LocalQuickFix buildFix(Object... infos) {
     final Boolean canEnableOption = (Boolean)infos[0];
     return canEnableOption ?
-           new SetInspectionOptionFix(this, "ignoreNonFinalClassesInTest",
-                                                        InspectionGadgetsBundle.message("equals.with.itself.option"), true) : null;
+           new UpdateInspectionOptionFix(this, "ignoreNonFinalClassesInTest",
+                                         InspectionGadgetsBundle.message("equals.with.itself.option"), true).asQuickFix() : null;
   }
 
   private class EqualsWithItselfVisitor extends BaseInspectionVisitor {

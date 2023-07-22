@@ -8,10 +8,10 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
-import com.intellij.codeInspection.SetInspectionOptionFix;
+import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -115,7 +115,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       PsiTypeElement typeElement = ((PsiVariable)element).getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         final String optionText = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type");
-        fixes.add(new SetInspectionOptionFix(this, "doNotWeakenInferredVariableType", optionText, true));
+        fixes.add(new UpdateInspectionOptionFix(this, "doNotWeakenInferredVariableType", optionText, true).asQuickFix());
       }
     }
     for (PsiClass weakestClass : weakerClasses) {
