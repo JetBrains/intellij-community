@@ -3,6 +3,7 @@ package com.intellij.collaboration.ui.codereview.details.model
 
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModel.Update
 import com.intellij.collaboration.util.ChangesSelection
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -14,6 +15,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 interface CodeReviewChangeListViewModel {
+  val project: Project
+
   /**
    * Flow of updates to changelist state
    */
@@ -29,13 +32,18 @@ interface CodeReviewChangeListViewModel {
    */
   fun updateSelectedChanges(selection: ChangesSelection?)
 
+  /**
+   * Show diff preview for [changesSelection]
+   */
+  fun showDiffPreview()
+
   sealed class Update(val changes: List<Change>) {
     class WithSelectAll(changes: List<Change>) : Update(changes)
     class WithSelectChange(changes: List<Change>, val change: Change) : Update(changes)
   }
 }
 
-open class MutableCodeReviewChangeListViewModel(parentCs: CoroutineScope) : CodeReviewChangeListViewModel {
+abstract class MutableCodeReviewChangeListViewModel(parentCs: CoroutineScope) : CodeReviewChangeListViewModel {
   protected val cs = parentCs.childScope()
 
   private val _updates = MutableSharedFlow<Update>(replay = 1)

@@ -9,6 +9,7 @@ import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangesV
 import com.intellij.collaboration.util.REVISION_COMPARISON_CHANGE_HASHING_STRATEGY
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.childScope
 import com.intellij.util.containers.CollectionFactory
@@ -40,6 +41,7 @@ internal interface GitLabMergeRequestChangesViewModel : CodeReviewChangesViewMod
 private val LOG = logger<GitLabMergeRequestChangesViewModel>()
 
 internal class GitLabMergeRequestChangesViewModelImpl(
+  private val project: Project,
   parentCs: CoroutineScope,
   mergeRequest: GitLabMergeRequest
 ) : GitLabMergeRequestChangesViewModel,
@@ -55,7 +57,7 @@ internal class GitLabMergeRequestChangesViewModelImpl(
   }
 
   private val delegate = CodeReviewChangesViewModelDelegate(cs, changesContainer) {
-    GitLabMergeRequestChangeListViewModelImpl(this)
+    GitLabMergeRequestChangeListViewModelImpl(project, this)
   }
 
   override val reviewCommits: SharedFlow<List<GitLabCommitDTO>> =

@@ -40,7 +40,6 @@ import javax.swing.JPanel
 
 internal object GitLabMergeRequestDetailsComponentFactory {
   fun createDetailsComponent(
-    project: Project,
     scope: CoroutineScope,
     detailsLoadingVm: GitLabMergeRequestDetailsLoadingViewModel,
     accountVm: GitLabAccountViewModel,
@@ -60,7 +59,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
           }
           is GitLabMergeRequestDetailsLoadingViewModel.LoadingState.Result -> {
             val detailsVm = loadingState.detailsVm
-            val detailsPanel = createDetailsComponent(project, detailsVm, avatarIconsProvider).apply {
+            val detailsPanel = createDetailsComponent(detailsVm, avatarIconsProvider).apply {
               val actionGroup = ActionManager.getInstance().getAction("GitLab.Merge.Request.Details.Popup") as ActionGroup
               PopupHandler.installPopupMenu(this, actionGroup, ActionPlaces.POPUP)
 
@@ -83,7 +82,6 @@ internal object GitLabMergeRequestDetailsComponentFactory {
   }
 
   private fun CoroutineScope.createDetailsComponent(
-    project: Project,
     detailsVm: GitLabMergeRequestDetailsViewModel,
     avatarIconsProvider: IconsProvider<GitLabUserDTO>
   ): JComponent {
@@ -126,7 +124,7 @@ internal object GitLabMergeRequestDetailsComponentFactory {
                                                              commitPresentation = { commit -> createCommitInfoPresenter(commit) },
                                                              htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.COMMIT_INFO_GAPS))
-      add(GitLabMergeRequestDetailsChangesComponentFactory(project).create(cs, changesVm),
+      add(GitLabMergeRequestDetailsChangesComponentFactory.create(cs, changesVm),
           CC().grow().shrinkPrioY(200))
       add(GitLabMergeRequestDetailsStatusChecksComponentFactory.create(cs, statusVm, detailsReviewFlowVm, avatarIconsProvider),
           CC().growX().gap(ReviewDetailsUIUtil.STATUSES_GAPS).maxHeight("${ReviewDetailsUIUtil.STATUSES_MAX_HEIGHT}"))
