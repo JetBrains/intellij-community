@@ -420,7 +420,7 @@ public interface IntentionPreviewInfo {
    * @param toSelect    predicate, which returns true if the option should be selected in preview
    * @return a presentation describing that the action will add the specified option to the options list
    */
-  static IntentionPreviewInfo addListOption(@NotNull List<@NlsSafe String> updatedList,
+  static IntentionPreviewInfo.Html addListOption(@NotNull List<@NlsSafe String> updatedList,
                                             @NotNull @Nls String title,
                                             @NotNull Predicate<String> toSelect) {
     int maxToList = Math.min(7, updatedList.size() + 2);

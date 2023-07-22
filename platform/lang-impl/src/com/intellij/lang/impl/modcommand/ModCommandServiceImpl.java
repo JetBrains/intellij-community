@@ -1,19 +1,31 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
+import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.options.*;
+import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
-import com.intellij.modcommand.ModCommandService;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ObjectUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
+
+import static com.intellij.openapi.util.text.HtmlChunk.tag;
+import static com.intellij.openapi.util.text.HtmlChunk.text;
 
 public class ModCommandServiceImpl implements ModCommandService {
   @Override
@@ -44,5 +56,98 @@ public class ModCommandServiceImpl implements ModCommandService {
   @Override
   public @NotNull ModCommand psiUpdate(@NotNull ActionContext context, @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     return PsiUpdateImpl.psiUpdate(context, updater);
+  }
+
+  @Override
+  public <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
+    @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater) {
+
+    InspectionToolWrapper<?, ?> tool = InspectionProfileManager.getInstance(context.getProject())
+      .getCurrentProfile().getInspectionTool(inspection.getShortName(), context);
+    if (tool == null) {
+      throw new IllegalArgumentException("Tool not found: " + inspection.getShortName());
+    }
+    InspectionProfileEntry copiedTool = tool.createCopy().getTool();
+    if (copiedTool.getClass() != inspection.getClass()) {
+      throw new IllegalArgumentException(
+        "Invalid class: " + copiedTool.getClass() + "!=" + inspection.getClass() + " (id: " + inspection.getShortName() + ")");
+    }
+    List<@NotNull OptControl> controls = inspection.getOptionsPane().allControls();
+    final Element options = new Element("copy");
+    inspection.writeSettings(options);
+    copiedTool.readSettings(options);
+    //noinspection unchecked
+    updater.accept((T)copiedTool);
+    OptionController oldController = inspection.getOptionController();
+    OptionController newController = copiedTool.getOptionController();
+    List<ModUpdateInspectionOptions.ModifiedInspectionOption> modifiedOptions = new ArrayList<>();
+    for (OptControl control : controls) {
+      Object oldValue = oldController.getOption(control.bindId());
+      Object newValue = newController.getOption(control.bindId());
+      if (oldValue != null && newValue != null && !oldValue.equals(newValue)) {
+        modifiedOptions.add(new ModUpdateInspectionOptions.ModifiedInspectionOption(control.bindId(), oldValue, newValue));
+      }
+    }
+    return modifiedOptions.isEmpty() ? ModCommands.nop() : new ModUpdateInspectionOptions(inspection.getShortName(), modifiedOptions);
+  }
+
+  @Override
+  public @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
+    InspectionToolWrapper<?, ?> tool =
+      InspectionProfileManager.getInstance(context.project()).getCurrentProfile().getInspectionTool(options.inspectionShortName(), context.file());
+    if (tool == null) {
+      return HtmlChunk.empty();
+    }
+    HtmlBuilder builder = new HtmlBuilder();
+    for (var option : options.options()) {
+      builder.append(createOptionPreview(tool.getTool(), option));
+    }
+    return builder.toFragment();
+  }
+
+  private static @NotNull HtmlChunk createOptionPreview(@NotNull InspectionProfileEntry inspection,
+                                               ModUpdateInspectionOptions.@NotNull ModifiedInspectionOption option) {
+    OptPane pane = inspection.getOptionsPane();
+    Object newValue = option.newValue();
+    if (newValue instanceof Boolean value) {
+      OptCheckbox control = ObjectUtils.tryCast(pane.findControl(option.bindId()), OptCheckbox.class);
+      if (control == null) return HtmlChunk.empty();
+      HtmlChunk label = text(control.label().label());
+      HtmlChunk.Element checkbox = tag("input").attr("type", "checkbox").attr("readonly", "true");
+      if (value) {
+        checkbox = checkbox.attr("checked", "true");
+      }
+      HtmlChunk info = tag("table")
+        .child(tag("tr").children(
+          tag("td").child(checkbox),
+          tag("td").child(label)
+        ));
+      return new HtmlBuilder().append(value ? AnalysisBundle.message("set.inspection.option.description.check")
+                                       : AnalysisBundle.message("set.inspection.option.description.uncheck"))
+          .br().br().append(info).toFragment();
+    }
+    if (newValue instanceof Integer value) {
+      OptNumber control = ObjectUtils.tryCast(pane.findControl(option.bindId()), OptNumber.class);
+      if (control == null) return HtmlChunk.empty();
+      LocMessage.PrefixSuffix prefixSuffix = control.splitLabel().splitLabel();
+      HtmlChunk.Element input = tag("input").attr("type", "text").attr("value", value)
+        .attr("size", value.toString().length() + 1).attr("readonly", "true");
+      HtmlChunk info = tag("table").child(tag("tr").children(
+        tag("td").child(text(prefixSuffix.prefix())),
+        tag("td").child(input),
+        tag("td").child(text(prefixSuffix.suffix()))
+      ));
+      return new HtmlBuilder().append(AnalysisBundle.message("set.inspection.option.description.input"))
+          .br().br().append(info).br().toFragment();
+    }
+    if (newValue instanceof List<?> list) {
+      OptStringList control = ObjectUtils.tryCast(pane.findControl(option.bindId()), OptStringList.class);
+      if (control == null) return HtmlChunk.empty();
+      List<?> oldList = (List<?>)option.oldValue();
+      //noinspection unchecked
+      return IntentionPreviewInfo.addListOption((List<String>)list, control.label().label(), value -> !oldList.contains(value)).content();
+      
+    }
+    throw new IllegalStateException("Value of type " + newValue.getClass() + " is not supported");
   }
 }

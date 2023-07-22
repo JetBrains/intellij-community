@@ -3,6 +3,7 @@ package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import com.siyeh.ig.bugs.ResultOfObjectAllocationIgnoredInspection;
@@ -14,7 +15,13 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public class IgnoreClassFixTest extends LightQuickFixParameterizedTestCase {
+public class AddToInspectionOptionListFixTest extends LightQuickFixParameterizedTestCase {
+
+  @Override
+  protected void setUp() throws Exception {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+    super.setUp();
+  }
 
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {

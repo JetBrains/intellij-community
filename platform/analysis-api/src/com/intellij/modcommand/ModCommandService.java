@@ -2,10 +2,12 @@
 package com.intellij.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,14 @@ public interface ModCommandService {
    */
   @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
                                 @NotNull Consumer<@NotNull ModPsiUpdater> updater);
+
+  /**
+   * Implementation of ModCommands.updateOption; should not be used directly 
+   */
+  <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
+    @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater);
+
+  @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options);
 
   /**
    * @return an instance of this service

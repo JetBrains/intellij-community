@@ -2,6 +2,7 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
@@ -22,7 +23,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -64,8 +64,8 @@ public class SizeReplaceableByIsEmptyInspection extends BaseInspection {
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
       if (name != null) {
-        result.add(new IgnoreClassFix(name, ignoredTypes,
-                                      InspectionGadgetsBundle.message("size.replaceable.by.isempty.fix.ignore.calls", methodName, name)));
+        String message = InspectionGadgetsBundle.message("size.replaceable.by.isempty.fix.ignore.calls", methodName, name);
+        result.add(new AddToInspectionOptionListFix<>(this, message, name, tool -> tool.ignoredTypes));
       }
     }
     result.add(new SizeReplaceableByIsEmptyFix());

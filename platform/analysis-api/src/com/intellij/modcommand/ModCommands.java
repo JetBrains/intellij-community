@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.modcommand;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -95,6 +96,18 @@ public final class ModCommands {
     return highlight(EditorColors.SEARCH_RESULT_ATTRIBUTES, elements);
   }
 
+  /**
+   * @param context context PSI element to retrieve proper copy of the tool 
+   * @param inspection inspection instance to update (used as template, should not be changed)
+   * @param updater updater function that receives a separate inspection instance and can change its options.
+   *                Only options accessible via {@link InspectionProfileEntry#getOptionsPane()} will be tracked.
+   * @param <T> inspection class
+   * @return a command to update an inspection option
+   */
+  public static <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
+    @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater) {
+    return ModCommandService.getInstance().updateOption(context, inspection, updater);
+  }
   /**
    * @param context a context of the original action
    * @param updater a function that accepts an updater, so it can query writable copies from it and perform modifications;

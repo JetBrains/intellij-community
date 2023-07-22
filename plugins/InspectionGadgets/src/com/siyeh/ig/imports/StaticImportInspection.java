@@ -16,6 +16,7 @@
 package com.siyeh.ig.imports;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
@@ -33,7 +34,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +62,10 @@ public class StaticImportInspection extends BaseInspection {
     final PsiClass aClass = importStaticStatement.resolveTargetClass();
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
-      result.add(new IgnoreClassFix(name, allowedClasses, InspectionGadgetsBundle.message("static.import.fix.ignore.class", name)));
+      if (name != null) {
+        result.add(new AddToInspectionOptionListFix<>(this, InspectionGadgetsBundle.message("static.import.fix.ignore.class", name), name,
+                                                      tool -> tool.allowedClasses));
+      }
     }
     result.add(buildFix(infos));
     return result.toArray(LocalQuickFix.EMPTY_ARRAY);

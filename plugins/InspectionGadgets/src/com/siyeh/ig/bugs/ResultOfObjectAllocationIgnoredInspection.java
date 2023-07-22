@@ -2,6 +2,8 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
@@ -12,7 +14,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -46,18 +47,19 @@ public class ResultOfObjectAllocationIgnoredInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    final List<InspectionGadgetsFix> result = new SmartList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    final List<LocalQuickFix> result = new SmartList<>();
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass != null) {
       final String name = aClass.getQualifiedName();
       if (name != null) {
-        result.add(new IgnoreClassFix(name, ignoredClasses, InspectionGadgetsBundle.message("result.of.object.allocation.fix.name", name)));
+        result.add(new AddToInspectionOptionListFix<>(this, InspectionGadgetsBundle.message("result.of.object.allocation.fix.name", name), 
+                                                      name, tool -> tool.ignoredClasses));
       }
     }
     ContainerUtil.addIfNotNull(result, SuppressForTestsScopeFix.build(this, expression));
-    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override

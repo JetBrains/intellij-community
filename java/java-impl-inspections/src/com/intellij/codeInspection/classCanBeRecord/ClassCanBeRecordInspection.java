@@ -2,17 +2,15 @@
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
-import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.classCanBeRecord.ConvertToRecordFix.RecordCandidate;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
@@ -21,8 +19,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -71,8 +67,8 @@ public class ClassCanBeRecordInspection extends BaseInspection {
   }
 
   @Override
-  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
-    List<InspectionGadgetsFix> fixes = new SmartList<>();
+  protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
+    List<LocalQuickFix> fixes = new SmartList<>();
     fixes.add(new ConvertToRecordFix(myConversionStrategy == ConversionStrategy.SHOW_AFFECTED_MEMBERS, suggestAccessorsRenaming,
                                      myIgnoredAnnotations));
     boolean isOnTheFly = (boolean)infos[0];
@@ -85,13 +81,15 @@ public class ClassCanBeRecordInspection extends BaseInspection {
           for (PsiAnnotation annotation : annotations) {
             String fqn = annotation.getQualifiedName();
             if (fqn != null) {
-              fixes.add(new AddIgnoredAnnotationFix(fqn));
+              fixes.add(new AddToInspectionOptionListFix<>(
+                this, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", fqn),
+                fqn, tool -> tool.myIgnoredAnnotations));
             }
           }
         }
       }
     }
-    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
+    return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   @Override
@@ -144,36 +142,6 @@ public class ClassCanBeRecordInspection extends BaseInspection {
     @Nls
     String getMessage() {
       return JavaBundle.message(messageKey);
-    }
-  }
-
-  private class AddIgnoredAnnotationFix extends InspectionGadgetsFix {
-    @NlsSafe private final @NotNull String myPackagePrefix;
-
-    private AddIgnoredAnnotationFix(@NotNull String packagePrefix) {
-      myPackagePrefix = packagePrefix;
-    }
-
-    @Override
-    public @NotNull String getName() {
-      return JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.name", myPackagePrefix);
-    }
-
-    @Override
-    public @NotNull String getFamilyName() {
-      return JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated.fix.family.name");
-    }
-
-    @Override
-    public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-      List<@NlsSafe String> prefixes = StreamEx.of(myIgnoredAnnotations).append(myPackagePrefix).sorted().toList();
-      return IntentionPreviewInfo.addListOption(prefixes, myPackagePrefix, JavaBundle.message("class.can.be.record.suppress.conversion.if.annotated"));
-    }
-
-    @Override
-    protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myIgnoredAnnotations.add(myPackagePrefix);
-      ProjectInspectionProfileManager.getInstance(project).fireProfileChanged();
     }
   }
 }

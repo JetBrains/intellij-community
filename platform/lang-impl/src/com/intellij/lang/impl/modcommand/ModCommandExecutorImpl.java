@@ -13,6 +13,9 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ex.InspectionProfileModifiableModelKt;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
@@ -27,6 +30,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.command.undo.BasicUndoableAction;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.*;
@@ -61,10 +66,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
@@ -123,7 +125,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     }
     if (command instanceof ModNavigate || command instanceof ModHighlight ||
         command instanceof ModCopyToClipboard || command instanceof ModRenameSymbol ||
-        command instanceof ModStartTemplate) {
+        command instanceof ModStartTemplate || command instanceof ModUpdateInspectionOptions) {
       return Result.INTERACTIVE;
     }
     if (command instanceof ModShowConflicts showConflicts) {
@@ -200,7 +202,51 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
     if (command instanceof ModStartTemplate startTemplate) {
       return executeStartTemplate(context, startTemplate, editor);
     }
+    if (command instanceof ModUpdateInspectionOptions updateOptions) {
+      return executeUpdateInspectionOptions(context, updateOptions);
+    }
     throw new IllegalArgumentException("Unknown command: " + command);
+  }
+
+  private static boolean executeUpdateInspectionOptions(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
+    VirtualFile vFile = context.file().getVirtualFile();
+    Project project = context.project();
+    setOption(project, vFile, options, true);
+    UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction(vFile) {
+      @Override
+      public void undo() {
+        setOption(project, vFile, options, false);
+      }
+
+      @Override
+      public void redo() {
+        setOption(project, vFile, options, true);
+      }
+    });
+    return true;
+  }
+
+  private static void setOption(@NotNull Project project, VirtualFile vFile, @NotNull ModUpdateInspectionOptions options, boolean newValue) {
+    PsiFile file = PsiManager.getInstance(project).findFile(vFile);
+    if (file == null) return;
+    InspectionProfileModifiableModelKt.modifyAndCommitProjectProfile(project, model -> {
+      InspectionToolWrapper<?, ?> tool = model.getInspectionTool(options.inspectionShortName(), file);
+      if (tool == null) {
+        throw new IllegalStateException("Inspection not found: " + options.inspectionShortName());
+      }
+      InspectionProfileEntry inspection = tool.getTool();
+      for (ModUpdateInspectionOptions.ModifiedInspectionOption option : options.options()) {
+        Object value = newValue ? option.newValue() : option.oldValue();
+        if (value instanceof List<?> list) {
+          @SuppressWarnings("unchecked")
+          List<Object> oldList = (List<Object>)Objects.requireNonNull(inspection.getOptionController().getOption(option.bindId()));
+          oldList.clear();
+          oldList.addAll(list);
+        } else {
+          inspection.getOptionController().setOption(option.bindId(), value);
+        }
+      }
+    });
   }
 
   private boolean executeChooseMember(@NotNull ActionContext context, @NotNull ModChooseMember modChooser, @Nullable Editor editor) {

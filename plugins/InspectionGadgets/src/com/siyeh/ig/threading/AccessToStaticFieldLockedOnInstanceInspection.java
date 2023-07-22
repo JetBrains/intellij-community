@@ -18,6 +18,7 @@ package com.siyeh.ig.threading;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ConcurrencyAnnotationsManager;
 import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.*;
@@ -27,7 +28,6 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
@@ -55,11 +55,13 @@ public class AccessToStaticFieldLockedOnInstanceInspection extends BaseInspectio
   protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression expression = (PsiExpression)infos[0];
     final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
-    if (aClass == null) {
-      return null;
-    }
+    if (aClass == null) return null;
     final String name = aClass.getQualifiedName();
-    return new IgnoreClassFix(name, ignoredClasses, InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.fix.name", name));
+    if (name == null) return null;
+    return new AddToInspectionOptionListFix<>(this,
+                                              InspectionGadgetsBundle.message("access.to.static.field.locked.on.instance.fix.name", name),
+                                              name,
+                                              tool -> tool.ignoredClasses);
   }
 
   @Override

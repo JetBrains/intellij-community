@@ -199,6 +199,9 @@ public final class IntentionPreviewUtils {
         navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
           AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
       }
+      else if (command instanceof ModUpdateInspectionOptions options) {
+        navigateInfo = new IntentionPreviewInfo.Html(ModCommandService.getInstance().createOptionsPreview(context, options));
+      }
     }
     return customDiffList.isEmpty() ? navigateInfo :
            customDiffList.size() == 1 ? customDiffList.get(0) :
