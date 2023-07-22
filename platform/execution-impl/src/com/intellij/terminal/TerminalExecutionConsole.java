@@ -390,7 +390,7 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
     @Override
     protected TerminalStarter createTerminalStarter(@NotNull JediTerminal terminal, @NotNull TtyConnector connector) {
-      return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager()) {
+      return new TerminalStarter(terminal, connector, myDataStream, myTerminalWidget.getTypeAheadManager(), getExecutorServiceManager()) {
         @Override
         public byte[] getCode(int key, int modifiers) {
           if (key == KeyEvent.VK_ENTER && modifiers == 0 && myEnterKeyDefaultCodeEnabled) {

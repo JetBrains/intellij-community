@@ -279,11 +279,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   }
 
   @Override
-  protected boolean isRetina() {
-    return UIUtil.isRetina();
-  }
-
-  @Override
   protected BufferedImage createBufferedImage(int width, int height) {
     return ImageUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
   }
