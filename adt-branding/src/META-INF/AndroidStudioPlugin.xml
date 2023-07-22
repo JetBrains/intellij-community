@@ -8,4 +8,5 @@ optional dependency on the module 'com.intellij.modules.androidstudio' declared 
   <module value="com.intellij.modules.androidstudio"/>
   <module value="com.intellij.modules.java-capable"/>
   <module value="com.intellij.modules.python-core-capable"/>
+  <module value="com.intellij.modules.cidr.ide"/>
 </idea-plugin>
