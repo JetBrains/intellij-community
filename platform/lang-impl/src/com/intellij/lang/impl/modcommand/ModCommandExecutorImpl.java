@@ -525,11 +525,11 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
 
     Editor editor = getEditor(project, file);
     if (editor == null) return false;
-    if (selectionStart != -1 && selectionEnd != -1) {
-      editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
-    }
     if (caret != -1) {
       editor.getCaretModel().moveToOffset(caret);
+    }
+    if (selectionStart != -1 && selectionEnd != -1) {
+      editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
     return true;
   }
