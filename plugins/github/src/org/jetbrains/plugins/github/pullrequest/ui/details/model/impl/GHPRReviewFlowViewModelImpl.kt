@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details.model.impl
 
+import com.intellij.collaboration.async.nestedDisposable
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.SingleValueModel
 import com.intellij.collaboration.ui.asStateFlow
@@ -36,18 +37,17 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import kotlin.coroutines.cancellation.CancellationException
 
-internal class GHPRReviewFlowViewModelImpl(
+class GHPRReviewFlowViewModelImpl internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
-  detailsModel: SingleValueModel<GHPullRequest>,
+  private val detailsState: StateFlow<GHPullRequest>,
   private val repositoryDataService: GHPRRepositoryDataService,
   private val securityService: GHPRSecurityService,
   private val avatarIconsProvider: GHAvatarIconsProvider,
   private val dataProvider: GHPRDetailsDataProvider,
   private val stateData: GHPRStateDataProvider,
   private val changesData: GHPRChangesDataProvider,
-  reviewDataProvider: GHPRReviewDataProvider,
-  disposable: Disposable
+  reviewDataProvider: GHPRReviewDataProvider
 ) : GHPRReviewFlowViewModel {
   private val cs = parentCs.childScope()
 
@@ -57,8 +57,6 @@ internal class GHPRReviewFlowViewModelImpl(
   private val ghostUser = securityService.ghostUser
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
-
-  private val detailsState: StateFlow<GHPullRequest> = detailsModel.asStateFlow()
 
   // TODO: handle error
   private val mergeabilityState: StateFlow<GHPRMergeabilityState?> = stateData.mergeabilityState
@@ -200,7 +198,7 @@ internal class GHPRReviewFlowViewModelImpl(
   }
 
   init {
-    reviewDataProvider.addPendingReviewListener(disposable) {
+    reviewDataProvider.addPendingReviewListener(cs.nestedDisposable()) {
       reviewDataProvider.loadPendingReview().thenAccept { pendingComments ->
         _pendingCommentsState.value = pendingComments?.commentsCount ?: 0
       }

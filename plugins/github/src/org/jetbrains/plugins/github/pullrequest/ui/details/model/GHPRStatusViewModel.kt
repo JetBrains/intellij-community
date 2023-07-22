@@ -32,12 +32,10 @@ private val LOG = logger<GHPRStatusViewModel>()
 class GHPRStatusViewModelImpl(
   parentCs: CoroutineScope,
   private val project: Project,
-  detailsModel: SingleValueModel<GHPullRequest>,
+  detailsState: StateFlow<GHPullRequest>,
   stateData: GHPRStateDataProvider
 ) : GHPRStatusViewModel {
   private val cs = parentCs.childScope()
-
-  private val detailsState = detailsModel.asStateFlow()
 
   override val viewerDidAuthor: Boolean = detailsState.value.viewerDidAuthor
 

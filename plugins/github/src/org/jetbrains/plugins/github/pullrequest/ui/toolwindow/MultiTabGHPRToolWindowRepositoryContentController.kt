@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.collaboration.async.DisposingMainScope
+import com.intellij.collaboration.async.disposingMainScope
 import com.intellij.collaboration.ui.toolwindow.refreshReviewListOnSelection
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
@@ -166,8 +167,12 @@ internal class MultiTabGHPRToolWindowRepositoryContentController(
 
   private fun createAndAddPRContent(id: GHPRIdentifier): Content {
     val contentDisposable = Disposer.newDisposable()
+    val vm = GHPRInfoViewModel(project, contentDisposable.disposingMainScope(), dataContext, id)
+    val uiDisposable = Disposer.newDisposable().also {
+      Disposer.register(contentDisposable, it)
+    }
     val title = "#${id.number}"
-    val component = GHPRViewComponentFactory(ActionManager.getInstance(), project, dataContext, id, contentDisposable).create()
+    val component = GHPRViewComponentFactory(ActionManager.getInstance(), project, vm).create(uiDisposable.disposingMainScope())
     val content = contentManager.factory.createContent(component, title, false).apply {
       setDisposer(contentDisposable)
       isCloseable = true

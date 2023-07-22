@@ -18,21 +18,21 @@ import git4idea.remote.hosting.changesSignalFlow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 
-internal class GHPRBranchesViewModel(
+@ApiStatus.Experimental
+class GHPRBranchesViewModel internal constructor(
   parentCs: CoroutineScope,
   private val project: Project,
   private val mapping: GHGitRepositoryMapping,
-  detailsModel: SingleValueModel<GHPullRequest>
+  private val detailsState: StateFlow<GHPullRequest>
 ) : CodeReviewBranchesViewModel {
   private val cs = parentCs.childScope()
 
   private val gitRepository = mapping.remote.repository
-
-  private val detailsState: StateFlow<GHPullRequest> = detailsModel.asStateFlow()
 
   private val targetBranch: StateFlow<String> = detailsState.mapState(cs) {
     it.baseRefName

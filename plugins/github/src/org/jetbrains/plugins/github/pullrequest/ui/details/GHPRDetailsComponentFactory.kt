@@ -3,8 +3,6 @@ package org.jetbrains.plugins.github.pullrequest.ui.details
 
 import com.intellij.collaboration.ui.SimpleHtmlPane
 import com.intellij.collaboration.ui.codereview.details.*
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewBranchesViewModel
-import com.intellij.collaboration.ui.codereview.details.model.CodeReviewDetailsViewModel
 import com.intellij.collaboration.ui.util.emptyBorders
 import com.intellij.collaboration.ui.util.gap
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -23,9 +21,7 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRReviewFlowViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.GHPRStatusViewModel
-import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRChangesViewModel
+import org.jetbrains.plugins.github.pullrequest.ui.details.model.impl.GHPRDetailsViewModel
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -35,11 +31,7 @@ internal object GHPRDetailsComponentFactory {
   fun create(
     scope: CoroutineScope,
     project: Project,
-    reviewDetailsVm: CodeReviewDetailsViewModel,
-    branchesVm: CodeReviewBranchesViewModel,
-    reviewStatusVm: GHPRStatusViewModel,
-    reviewFlowVm: GHPRReviewFlowViewModel,
-    changesVm: GHPRChangesViewModel,
+    detailsVm: GHPRDetailsViewModel,
     dataProvider: GHPRDataProvider,
     securityService: GHPRSecurityService,
     avatarIconsProvider: GHAvatarIconsProvider,
@@ -47,14 +39,14 @@ internal object GHPRDetailsComponentFactory {
   ): JComponent {
     val commitsAndBranches = JPanel(MigLayout(LC().emptyBorders().fill(), AC().gap("push"))).apply {
       isOpaque = false
-      add(CodeReviewDetailsCommitsComponentFactory.create(scope, changesVm) { commit: GHCommit ->
+      add(CodeReviewDetailsCommitsComponentFactory.create(scope, detailsVm.changesVm) { commit: GHCommit ->
         createCommitsPopupPresenter(commit, securityService.ghostUser)
       })
-      add(CodeReviewDetailsBranchComponentFactory.create(scope, branchesVm))
+      add(CodeReviewDetailsBranchComponentFactory.create(scope, detailsVm.branchesVm))
     }
-    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, reviewStatusVm, reviewFlowVm, securityService,
+    val statusChecks = GHPRStatusChecksComponentFactory.create(scope, project, detailsVm.statusVm, detailsVm.reviewFlowVm, securityService,
                                                                avatarIconsProvider)
-    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, reviewDetailsVm.reviewRequestState, reviewFlowVm,
+    val actionsComponent = GHPRDetailsActionsComponentFactory.create(scope, project, detailsVm.reviewRequestState, detailsVm.reviewFlowVm,
                                                                      dataProvider)
     val actionGroup = ActionManager.getInstance().getAction("Github.PullRequest.Details.Popup") as ActionGroup
 
@@ -68,14 +60,14 @@ internal object GHPRDetailsComponentFactory {
     )).apply {
       isOpaque = false
 
-      add(CodeReviewDetailsTitleComponentFactory.create(scope, reviewDetailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
+      add(CodeReviewDetailsTitleComponentFactory.create(scope, detailsVm, GithubBundle.message("open.on.github.action"), actionGroup,
                                                         htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.TITLE_GAPS))
-      add(CodeReviewDetailsDescriptionComponentFactory.create(scope, reviewDetailsVm, actionGroup, ::showTimelineAction,
+      add(CodeReviewDetailsDescriptionComponentFactory.create(scope, detailsVm, actionGroup, ::showTimelineAction,
                                                               htmlPaneFactory = { SimpleHtmlPane() }),
           CC().growX().gap(ReviewDetailsUIUtil.DESCRIPTION_GAPS))
       add(commitsAndBranches, CC().growX().gap(ReviewDetailsUIUtil.COMMIT_POPUP_BRANCHES_GAPS))
-      add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, changesVm.selectedCommit,
+      add(CodeReviewDetailsCommitInfoComponentFactory.create(scope, detailsVm.changesVm.selectedCommit,
                                                              commitPresentation = { commit ->
                                                                createCommitsPopupPresenter(commit, securityService.ghostUser)
                                                              },
