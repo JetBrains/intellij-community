@@ -2,5 +2,6 @@
   "mainFile": "foo/MemberEnd.kt",
   "type": "MOVE_KOTLIN_NESTED_CLASS",
   "targetClass": "bar.MemberNewEnd",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": "false"
 }

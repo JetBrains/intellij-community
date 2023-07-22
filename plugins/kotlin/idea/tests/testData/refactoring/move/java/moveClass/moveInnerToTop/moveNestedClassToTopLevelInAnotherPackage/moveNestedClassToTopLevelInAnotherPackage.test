@@ -1,5 +1,7 @@
 {
   "mainFile": "a/main.java",
   "type": "MOVE_INNER_CLASS",
-  "targetPackage": "b"
+  "targetPackage": "b",
+  "enabledInK2": "false",
+  "enabledInK2": "false"
 }

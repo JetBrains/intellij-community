@@ -1,5 +1,7 @@
 {
   "mainFile": "a/main.java",
   "type": "MOVE_TOP_LEVEL_CLASSES_TO_INNER",
-  "targetClass": "b.B"
+  "targetClass": "b.B",
+  "enabledInK2": "false",
+  "enabledInK2": "false"
 }

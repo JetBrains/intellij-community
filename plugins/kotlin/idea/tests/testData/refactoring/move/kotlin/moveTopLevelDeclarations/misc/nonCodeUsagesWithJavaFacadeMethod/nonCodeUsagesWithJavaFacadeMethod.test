@@ -1,5 +1,6 @@
 {
   "mainFile": "code/test.kt",
   "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
-  "targetPackage": "code.anotherPackage"
+  "targetPackage": "code.anotherPackage",
+  "enabledInK2": "false"
 }

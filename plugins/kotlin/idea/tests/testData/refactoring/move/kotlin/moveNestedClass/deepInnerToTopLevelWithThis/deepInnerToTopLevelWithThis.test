@@ -2,5 +2,6 @@
   "mainFile": "test.kt",
   "type": "MOVE_KOTLIN_NESTED_CLASS",
   "outerInstanceParameter": "b",
-  "withRuntime": "true"
+  "withRuntime": "true",
+  "enabledInK2": "false"
 }

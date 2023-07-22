@@ -42,10 +42,12 @@ abstract class AbstractMultifileRefactoringTest : KotlinLightCodeInsightFixtureT
 
     protected abstract fun runRefactoring(path: String, config: JsonObject, rootDir: VirtualFile, project: Project)
 
-    protected fun doTest(unused: String) {
+    protected open fun isEnabled(config: JsonObject): Boolean = true
+
+    protected open fun doTest(unused: String) {
         val testFile = dataFile()
         val config = JsonParser.parseString(FileUtil.loadFile(testFile, true)) as JsonObject
-
+        if (!isEnabled(config)) return
         doTestCommittingDocuments(testFile) { rootDir ->
             val opts = config.getNullableString("customCompilerOpts")?.prefixIfNot("// ") ?: ""
             withCustomCompilerOptions(opts, project, module) {
