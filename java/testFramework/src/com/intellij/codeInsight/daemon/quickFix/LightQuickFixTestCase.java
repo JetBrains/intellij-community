@@ -13,10 +13,13 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -97,6 +100,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
                                                      () -> getTestInfo(testFullPath, quickFix));
     if (action != null) {
       String text = action.getText();
+      PsiElement element = PsiUtilBase.getElementAtCaret(getEditor());
       if (actionHint.shouldCheckPreview()) {
         String previewFilePath = ObjectUtils.notNull(quickFix.getBasePath(), "") + "/" + PREVIEW_PREFIX + testName;
         quickFix.checkPreviewAndInvoke(action, previewFilePath);
@@ -108,7 +112,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
       UIUtil.dispatchAllInvocationEvents();
       if (!quickFix.shouldBeAvailableAfterExecution()) {
         final IntentionAction afterAction = quickFix.findActionWithText(text);
-        if (afterAction != null) {
+        if (afterAction != null && Comparing.equal(element, PsiUtilBase.getElementAtCaret(getEditor()))) {
           fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
         }
       }

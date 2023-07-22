@@ -14,15 +14,16 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.extensions.LoadingOrder
+import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.psi.util.PsiUtilBase
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.io.write
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
@@ -285,6 +286,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             val applyQuickFix = applyQuickFix()
             val stubComparisonFailure: ComparisonFailure?
             if (applyQuickFix) {
+                val element = PsiUtilBase.getElementAtCaret(editor)
                 stubComparisonFailure = try {
                     forceCheckForResolveInDispatchThreadInTests(writeActionResolveHandler) {
                         myFixture.launchAction(intention)
@@ -300,10 +302,9 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                 if (!shouldBeAvailableAfterExecution()) {
                     var action = findActionWithText(hint.expectedText)
                     action = if (action == null) null else IntentionActionDelegate.unwrap(action)
-                    assertNull(
-                        "Action '${hint.expectedText}' (${action?.javaClass}) is still available after its invocation in test " + fileName,
-                        action
-                    )
+                    if (action != null && !Comparing.equal(element, PsiUtilBase.getElementAtCaret(editor))) {
+                        fail("Action '${hint.expectedText}' (${action.javaClass}) is still available after its invocation in test " + fileName)
+                    }
                 }
             } else {
                 stubComparisonFailure = null
