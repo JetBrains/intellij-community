@@ -21,7 +21,7 @@ internal object OptInFixesUtils {
     }
 
     fun optInFqName(moduleDescriptor: ModuleDescriptor) = OptInNames.OPT_IN_FQ_NAME.takeIf { annotationExists(moduleDescriptor, it) }
-        ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
+            ?: FqNames.OptInFqNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 
     fun annotationExists(moduleDescriptor: ModuleDescriptor, fqName: FqName): Boolean =
         moduleDescriptor.resolveClassByFqName(fqName, NoLookupLocation.FROM_IDE) != null

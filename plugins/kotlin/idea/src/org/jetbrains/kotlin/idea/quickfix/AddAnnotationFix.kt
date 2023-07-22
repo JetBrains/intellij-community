@@ -7,24 +7,26 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.util.addAnnotation
+import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 open class AddAnnotationFix(
     element: KtElement,
-    private val annotationFqName: FqName,
+    private val annotationClassId: ClassId,
     private val kind: Kind = Kind.Self,
     private val argumentClassFqName: FqName? = null,
     private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
 ) : KotlinQuickFixAction<KtElement>(element) {
     override fun getText(): String {
         val annotationArguments = (argumentClassFqName?.shortName()?.let { "($it::class)" } ?: "")
-        val annotationCall = annotationFqName.shortName().asString() + annotationArguments
+        val annotationCall = annotationClassId.shortClassName.asString() + annotationArguments
         return when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
             Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
@@ -44,9 +46,9 @@ open class AddAnnotationFix(
             val psiFactory = KtPsiFactory(project)
             annotationEntry.valueArgumentList?.addArgument(psiFactory.createArgument(annotationInnerText))
                 ?: annotationEntry.addAfter(psiFactory.createCallArguments("($annotationInnerText)"), annotationEntry.lastChild)
-            ShortenReferences.DEFAULT.process(annotationEntry)
+            ShortenReferencesFacility.getInstance().shorten(annotationEntry)
         } else {
-            element.addAnnotation(annotationFqName, annotationInnerText, searchForExistingEntry = false)
+            element.addAnnotation(annotationClassId, annotationInnerText, searchForExistingEntry = false)
         }
     }
 
@@ -60,7 +62,7 @@ open class AddAnnotationFix(
     object TypeVarianceConflictFactory : KotlinSingleIntentionActionFactory() {
         override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val typeReference = diagnostic.psiElement.parent as? KtTypeReference ?: return null
-            return AddAnnotationFix(typeReference, FqName("kotlin.UnsafeVariance"), Kind.Self)
+            return AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self)
         }
     }
 }

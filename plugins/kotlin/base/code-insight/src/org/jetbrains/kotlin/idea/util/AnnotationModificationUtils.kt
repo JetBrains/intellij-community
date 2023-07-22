@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.util
 
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.KotlinPsiHeuristics
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.*
@@ -45,6 +46,28 @@ fun KtModifierListOwner.addAnnotation(
         addToExistingAnnotation
     )
 }
+
+fun KtElement.addAnnotation(annotationClassId: ClassId, annotationInnerText: String? = null, searchForExistingEntry: Boolean) {
+    when (this) {
+        is KtModifierListOwner -> addAnnotation(annotationClassId, annotationInnerText, searchForExistingEntry = searchForExistingEntry)
+        else -> {
+            val annotationText = AnnotationModificationHelper.buildAnnotationText(annotationClassId.asSingleFqName(), annotationInnerText)
+
+            val placeholderText = "ORIGINAL_ELEMENT_WILL_BE_INSERTED_HERE"
+            val annotatedExpression = KtPsiFactory(project).createExpression(annotationText + "\n" + placeholderText)
+
+            val copy = this.copy()
+
+            val afterReplace = this.replace(annotatedExpression) as KtAnnotatedExpression
+            val annotationEntry = afterReplace.annotationEntries.first()
+            val toReplace = afterReplace.findElementAt(afterReplace.textLength)!!
+            check(toReplace.text == placeholderText)
+            toReplace.replace(copy)
+            ShortenReferencesFacility.getInstance().shorten(annotationEntry)
+        }
+    }
+}
+
 
 fun KtAnnotated.findAnnotation(
     annotationClassId: ClassId,
