@@ -2,16 +2,13 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.psi.PsiElement
-import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.util.findParentOfType
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.resolveClassByFqName
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors.*
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
@@ -72,13 +69,13 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
                 // propose to add a propagating annotation first, and in all other cases
                 // the non-propagating opt-in annotation should be default.
                 // The same logic applies to the similar conditional expressions onward.
-                isOverrideError -> HighPriorityPropagateOptInAnnotationFix(targetElement, annotationClassId, kind)
+                isOverrideError -> OptInFixes.HighPriorityPropagateOptInAnnotationFix(targetElement, annotationClassId, kind)
 
-                targetElement.isSubclassOptPropagateApplicable(annotationFqName) -> PropagateOptInAnnotationFix(
+                targetElement.isSubclassOptPropagateApplicable(annotationFqName) -> OptInFixes.PropagateOptInAnnotationFix(
                     targetElement, ClassId.topLevel(OptInNames.SUBCLASS_OPT_IN_REQUIRED_FQ_NAME), kind, annotationFqName
                 )
 
-                else -> PropagateOptInAnnotationFix(targetElement, annotationClassId, kind)
+                else -> OptInFixes.PropagateOptInAnnotationFix(targetElement, annotationClassId, kind)
             }
             result.add(quickFix)
         }
@@ -87,8 +84,8 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInClassId)?.createSmartPointer()
 
             val quickFix =
-                if (isOverrideError) UseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, existingAnnotationEntry)
-                else HighPriorityUseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, existingAnnotationEntry)
+                if (isOverrideError) OptInFixes.UseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, existingAnnotationEntry)
+                else OptInFixes.HighPriorityUseOptInAnnotationFix(targetElement, optInClassId, kind, annotationFqName, existingAnnotationEntry)
 
             result.add(quickFix)
         }
@@ -208,122 +205,5 @@ internal object OptInFixesFactory : KotlinIntentionActionsFactory() {
             apiFqName == annotationFqName
         }
     }
-
-
-    /**
-     * A specialized subclass of [AddAnnotationFix] that adds @OptIn(...) annotations to declarations,
-     * containing classes, or constructors.
-     *
-     * This class reuses the parent's [invoke] method but overrides the [getText] method to provide
-     * more descriptive opt-in-specific messages.
-     *
-     * @param element a declaration to annotate
-     * @param optInClassId fully qualified opt-in class id
-     * @param kind the annotation kind (desired scope)
-     * @param argumentClassFqName the fully qualified name of the annotation to opt-in
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
-     *
-     */
-    private open class UseOptInAnnotationFix(
-        element: KtElement,
-        optInClassId: ClassId,
-        private val kind: Kind,
-        private val argumentClassFqName: FqName,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationFix(element, optInClassId, kind, argumentClassFqName, existingAnnotationEntry) {
-
-        override fun getText(): String {
-            val argumentText = argumentClassFqName.shortName().asString()
-            return when {
-                kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.use.statement", argumentText)
-                kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.use.constructor", argumentText)
-                kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.use.declaration", argumentText, kind.name ?: "?")
-                kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name != null -> KotlinBundle.message(
-                    "fix.opt_in.text.use.containing.object",
-                    argumentText,
-                    kind.name
-                )
-
-                kind is Kind.ContainingClass && element is KtObjectDeclaration && kind.name == null -> KotlinBundle.message(
-                    "fix.opt_in.text.use.containing.anonymous.object",
-                    argumentText
-                )
-
-                kind is Kind.ContainingClass -> KotlinBundle.message("fix.opt_in.text.use.containing.class", argumentText, kind.name ?: "?")
-                else -> error("Unexpected kind type")
-            }
-        }
-
-        override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
-    }
-
-    private class HighPriorityUseOptInAnnotationFix(
-        element: KtElement,
-        optInClassId: ClassId,
-        kind: Kind,
-        argumentClassFqName: FqName,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : UseOptInAnnotationFix(element, optInClassId, kind, argumentClassFqName, existingAnnotationEntry), HighPriorityAction
-
-
-    /**
-     * A specialized subclass of [AddAnnotationFix] that adds propagating opted-in annotations
-     * to declarations, containing classes, or constructors.
-     *
-     * This class reuses the parent's [invoke] method but overrides the [getText] method to provide
-     * more descriptive opt-in-specific messages.
-     *
-     * @param element a declaration to annotate
-     * @param annotationClassId fully qualified annotation class id
-     * @param kind the annotation kind (desired scope)
-     * @param argumentClassFqName the qualified class name to be added to the annotation entry in the format '::class'
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
-     *
-     */
-    private open class PropagateOptInAnnotationFix(
-        element: KtDeclaration,
-        private val annotationClassId: ClassId,
-        private val kind: Kind,
-        private val argumentClassFqName: FqName? = null,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : AddAnnotationFix(element, annotationClassId, Kind.Self, argumentClassFqName, existingAnnotationEntry) {
-
-        override fun getText(): String {
-            val annotationName = annotationClassId.shortClassName.asString()
-            val annotationEntry = if (argumentClassFqName != null) "(${argumentClassFqName.shortName().asString()}::class)" else ""
-            val argumentText = annotationName + annotationEntry
-            return when {
-                kind is Kind.Self -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, "?")
-                kind is Kind.Constructor -> KotlinBundle.message("fix.opt_in.text.propagate.constructor", argumentText)
-                kind is Kind.Declaration -> KotlinBundle.message("fix.opt_in.text.propagate.declaration", argumentText, kind.name ?: "?")
-                kind is Kind.ContainingClass && element is KtObjectDeclaration -> KotlinBundle.message(
-                    "fix.opt_in.text.propagate.containing.object", argumentText, kind.name ?: "?"
-                )
-
-                kind is Kind.ContainingClass -> KotlinBundle.message(
-                    "fix.opt_in.text.propagate.containing.class", argumentText, kind.name ?: "?"
-                )
-
-                else -> error("Unexpected kind type")
-            }
-        }
-
-        override fun getFamilyName(): String = KotlinBundle.message("fix.opt_in.annotation.family")
-    }
-
-    /**
-     * A high-priority version of [PropagateOptInAnnotationFix] (for overridden constructor case)
-     *
-     * @param element a declaration to annotate
-     * @param annotationClassId fully qualified annotation class id
-     * @param kind the annotation kind (desired scope)
-     * @param existingAnnotationEntry the already existing annotation entry (if any)
-     */
-    private class HighPriorityPropagateOptInAnnotationFix(
-        element: KtDeclaration,
-        annotationClassId: ClassId,
-        kind: Kind,
-        existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
-    ) : PropagateOptInAnnotationFix(element, annotationClassId, kind, null, existingAnnotationEntry), HighPriorityAction
 
 }
