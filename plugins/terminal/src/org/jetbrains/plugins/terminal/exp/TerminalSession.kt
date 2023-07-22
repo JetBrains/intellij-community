@@ -4,28 +4,22 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.util.ConcurrencyUtil
+import com.intellij.terminal.TerminalExecutorServiceManagerImpl
 import com.jediterm.core.typeahead.TerminalTypeAheadManager
 import com.jediterm.core.util.TermSize
-import com.jediterm.terminal.RequestOrigin
-import com.jediterm.terminal.TerminalStarter
-import com.jediterm.terminal.TtyBasedArrayDataStream
-import com.jediterm.terminal.TtyConnector
+import com.jediterm.terminal.*
 import com.jediterm.terminal.model.JediTermDebouncerImpl
 import com.jediterm.terminal.model.JediTermTypeAheadModel
 import com.jediterm.terminal.model.StyleState
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.awt.event.KeyEvent
-import java.util.concurrent.ExecutorService
-
-private var sessionIndex = 1
 
 class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposable {
   val model: TerminalModel
   lateinit var terminalStarter: TerminalStarter
 
-  private val terminalExecutor: ExecutorService = ConcurrencyUtil.newSingleScheduledThreadExecutor("Terminal-${sessionIndex++}")
+  private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
   private val textBuffer: TerminalTextBuffer
   val controller: TerminalController
@@ -45,13 +39,13 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
 
     val typeAheadTerminalModel = JediTermTypeAheadModel(controller, textBuffer, settings)
     typeAheadManager = TerminalTypeAheadManager(typeAheadTerminalModel)
-    val typeAheadDebouncer = JediTermDebouncerImpl(typeAheadManager::debounce, TerminalTypeAheadManager.MAX_TERMINAL_DELAY)
+    val typeAheadDebouncer = JediTermDebouncerImpl(typeAheadManager::debounce, TerminalTypeAheadManager.MAX_TERMINAL_DELAY, executorServiceManager)
     typeAheadManager.setClearPredictionsDebouncer(typeAheadDebouncer)
   }
 
   fun start(ttyConnector: TtyConnector) {
-    terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager)
-    terminalExecutor.submit {
+    terminalStarter = TerminalStarter(controller, ttyConnector, TtyBasedArrayDataStream(ttyConnector), typeAheadManager, executorServiceManager)
+    executorServiceManager.unboundedExecutorService.submit {
       terminalStarter.start()
     }
   }
@@ -77,7 +71,7 @@ class TerminalSession(settings: JBTerminalSystemSettingsProviderBase) : Disposab
   }
 
   override fun dispose() {
-    terminalExecutor.shutdown()
+    executorServiceManager.shutdownWhenAllExecuted()
     // Can be disposed before session is started
     if (this::terminalStarter.isInitialized) {
       terminalStarter.close()
