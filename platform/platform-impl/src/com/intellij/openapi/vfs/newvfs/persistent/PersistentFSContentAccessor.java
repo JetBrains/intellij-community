@@ -65,13 +65,7 @@ public final class PersistentFSContentAccessor {
     try {
       final int contentRecordId = myFSConnection.getRecords().getContentRecordId(fileId);
       if (contentRecordId != 0) {
-        //IDEA-302595: we really don't use refCounts for anything now, with contentHashes introduction
-        //             contentStorage really works as an append-only log, with no defrag/GC. And also
-        //             refCounting is prone to unexpected app shutdowns anyway.
-        final int refCount = myFSConnection.getContents().getRefCount(contentRecordId);
-        if (refCount > 0) {
-          releaseContentRecord(contentRecordId);
-        }
+        releaseContentRecord(contentRecordId);
       }
     }
     finally {
@@ -79,10 +73,22 @@ public final class PersistentFSContentAccessor {
     }
   }
 
-  void releaseContentRecord(int contentId) throws IOException {
+  void releaseContentRecord(int contentRecordId) throws IOException {
     myLock.writeLock().lock();
     try {
-      myFSConnection.getContents().releaseRecord(contentId);
+      RefCountingContentStorage contentStorage = myFSConnection.getContents();
+      //IDEA-302595: Don't decrement counter if already 0.
+      // Ideally, it is a bug if we ever reach here with refCount==0 -- attempt to release something
+      // that was already released. But in practice, refCount mechanic currently is not smooth enough
+      // to rely on the invariant 'contentStorage.refCount == count of contentId references across the
+      // app'. Ref-counting is prone to unexpected app shutdowns, and with contentHashes introduction,
+      // contentStorage works mostly as an append-only log anyway. So I see no reason to blow logs with
+      // useless warnings -- better just make releaseContentRecord() idempotent, allowing to release
+      // the same contentId as many times as one wants:
+      final int refCount = contentStorage.getRefCount(contentRecordId);
+      if (refCount > 0) {
+        contentStorage.releaseRecord(contentRecordId);
+      }
     }
     finally {
       myLock.writeLock().unlock();
