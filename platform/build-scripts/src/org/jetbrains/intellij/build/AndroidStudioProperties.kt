@@ -130,6 +130,8 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         spec.withModule("intellij.cidr.util", spec.mainJarName)
         spec.withModule("intellij.cidr.util.serializer", spec.mainJarName)
         spec.withModule("intellij.cidr.util.ui", spec.mainJarName)
+        spec.withModule("intellij.cidr.asm", spec.mainJarName)
+        spec.withModule("intellij.cidr.asm.debugger", spec.mainJarName)
         // Note the following are in CLionProperties.groovy but we don't include them since
         // they were never shipped with Android Studio before.
         //   * intellij.cidr.toolchains
