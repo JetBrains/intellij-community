@@ -23,7 +23,9 @@ import java.util.function.Function;
 import static com.intellij.util.BitUtil.isSet;
 
 public abstract class PersistentFS extends ManagingFS {
-  interface Flags {
+  @ApiStatus.Internal
+  public interface Flags {
+    //@formatter:off
     int CHILDREN_CACHED                  =           0b0001;
     int IS_DIRECTORY                     =           0b0010;
     int IS_READ_ONLY                     =           0b0100;
@@ -37,7 +39,7 @@ public abstract class PersistentFS extends ManagingFS {
     int CHILDREN_CASE_SENSITIVITY_CACHED = 0b0010_0000_0000;  // 'true' if this directory's case sensitivity is known
     int FREE_RECORD_FLAG                 = 0b0100_0000_0000;
     int OFFLINE_BY_DEFAULT               = 0b1000_0000_0000;
-
+    //@formatter:on
     static int getAllValidFlags() { return 0xFFF; }
   }
 
@@ -83,12 +85,15 @@ public abstract class PersistentFS extends ManagingFS {
 
   public static @NotNull FileAttributes.CaseSensitivity areChildrenCaseSensitive(@Attributes int attributes) {
     if (!isDirectory(attributes)) {
-      throw new IllegalArgumentException("CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
+      throw new IllegalArgumentException(
+        "CHILDREN_CASE_SENSITIVE flag defined for directories only but got file: 0b" + Integer.toBinaryString(attributes));
     }
     if (!isSet(attributes, Flags.CHILDREN_CASE_SENSITIVITY_CACHED)) {
       return FileAttributes.CaseSensitivity.UNKNOWN;
     }
-    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE) ? FileAttributes.CaseSensitivity.SENSITIVE : FileAttributes.CaseSensitivity.INSENSITIVE;
+    return isSet(attributes, Flags.CHILDREN_CASE_SENSITIVE)
+           ? FileAttributes.CaseSensitivity.SENSITIVE
+           : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
 
   public abstract int storeUnlinkedContent(byte @NotNull [] bytes);
