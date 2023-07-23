@@ -633,7 +633,7 @@ abstract class ComponentManagerImpl(
   final override suspend fun <T : Any> getServiceAsync(keyClass: Class<T>): T {
     val result = getServiceAsyncIfDefined(keyClass)
     if (result == null && isLightServiceSupported && isLightService(keyClass)) {
-      return getOrCreateLightServiceAdapater(keyClass).getInstanceAsync(componentManager = this, keyClass = keyClass)
+      return getOrCreateLightServiceAdapter(keyClass).getInstanceAsync(componentManager = this, keyClass = keyClass)
     }
     return result ?: throw RuntimeException("service is not defined for $keyClass")
   }
@@ -663,7 +663,7 @@ abstract class ComponentManagerImpl(
 
     if (isLightServiceSupported && isLightService(serviceClass)) {
       if (createIfNeeded) {
-        return getOrCreateLightServiceAdapater(serviceClass)
+        return getOrCreateLightServiceAdapter(serviceClass)
           .getInstance(componentManager = this, keyClass = serviceClass, createIfNeeded = true)!!
       }
       else {
@@ -694,6 +694,7 @@ abstract class ComponentManagerImpl(
       throw PluginException.createByClass("Light service class $serviceClass must be final", null, serviceClass)
     }
 
+    @Suppress("DEPRECATION")
     val result = getComponent(serviceClass) ?: return null
     PluginException.logPluginError(LOG,
       "$key requested as a service, but it is a component - " +
@@ -703,7 +704,7 @@ abstract class ComponentManagerImpl(
     return result
   }
 
-  private fun <T : Any> getOrCreateLightServiceAdapater(serviceClass: Class<T>): BaseComponentAdapter {
+  private fun <T : Any> getOrCreateLightServiceAdapter(serviceClass: Class<T>): BaseComponentAdapter {
     val adapter = componentKeyToAdapter.computeIfAbsent(serviceClass.name) {
       val classLoader = serviceClass.classLoader
       LightServiceComponentAdapter(
