@@ -64,6 +64,10 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
       findModel.fileFilter = FindSettings.getInstance().fileMask
       addActionListener(ActionListener { rebuild() })
 
+      findModel.addObserver {
+        if (findModel.fileFilter == null) selectedItem = emptyText
+      }
+
       (editor.editorComponent as JTextField).also {
         it.background = JBUI.CurrentTheme.BigPopup.searchFieldBackground()
         it.addFocusListener(object : FocusAdapter() {
