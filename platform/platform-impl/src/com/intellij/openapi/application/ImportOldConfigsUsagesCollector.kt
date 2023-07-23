@@ -1,112 +1,105 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application;
+package com.intellij.openapi.application
 
-import com.intellij.ide.ApplicationInitializedListener;
-import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.eventLog.events.EventId2;
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
-import com.intellij.openapi.application.ImportOldConfigsUsagesCollector.ImportOldConfigsState.InitialImportScenario;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
+import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import javax.swing.JRadioButton
 
-import javax.swing.*;
-
-import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
-import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
-
-final class ImportOldConfigsUsagesCollector extends CounterUsagesCollector {
-  private static final EventLogGroup EVENT_GROUP = new EventLogGroup("import.old.config", 4);
-  private static final EventId2<ImportOldConfigType, Boolean> IMPORT_DIALOG_SHOWN_EVENT =
-    EVENT_GROUP.registerEvent("import.dialog.shown", Enum("selected", ImportOldConfigType.class), Boolean("config_folder_exists"));
-  private static final EventId1<InitialImportScenario> INITIAL_IMPORT_SCENARIO =
-    EVENT_GROUP.registerEvent("import.initially", Enum("initial_import_scenario", InitialImportScenario.class));
-
-  @Override
-  public EventLogGroup getGroup() {
-    return EVENT_GROUP;
+internal class ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
+  companion object {
+    private val EVENT_GROUP = EventLogGroup("import.old.config", 4)
+    private val IMPORT_DIALOG_SHOWN_EVENT = EVENT_GROUP.registerEvent("import.dialog.shown",
+                                                                      Enum("selected", ImportOldConfigType::class.java),
+                                                                      Boolean("config_folder_exists"))
+    private val INITIAL_IMPORT_SCENARIO = EVENT_GROUP.registerEvent("import.initially",
+                                                                    Enum("initial_import_scenario", ImportOldConfigsState.InitialImportScenario::class.java))
   }
 
-  static final class Trigger implements ApplicationInitializedListener {
-    @Override
-    public void componentsInitialized() {
-      ImportOldConfigsState state = ImportOldConfigsState.getInstance();
-      InitialImportScenario initialImportScenario = state.getInitialImportScenario();
+  override fun getGroup(): EventLogGroup = EVENT_GROUP
+
+  internal class Trigger : ApplicationInitializedListener {
+    override fun componentsInitialized() {
+      val state = ImportOldConfigsState.getInstance()
+      val initialImportScenario = state.initialImportScenario
       if (initialImportScenario != null) {
-        INITIAL_IMPORT_SCENARIO.log(initialImportScenario);
+        INITIAL_IMPORT_SCENARIO.log(initialImportScenario)
       }
       if (state.wasOldConfigPanelOpened()) {
-        IMPORT_DIALOG_SHOWN_EVENT.log(state.getType(), state.doesSourceConfigFolderExist());
+        IMPORT_DIALOG_SHOWN_EVENT.log(state.type, state.doesSourceConfigFolderExist())
       }
     }
   }
 
-  static final class ImportOldConfigsState {
-    private static final ImportOldConfigsState ourInstance = new ImportOldConfigsState();
+  enum class ImportOldConfigType {
+    FROM_PREVIOUS,
+    FROM_CUSTOM,
+    DO_NOT_IMPORT,
+    OTHER,
+    NOT_INITIALIZED
+  }
+}
 
-    public static @NotNull ImportOldConfigsState getInstance() {
-      return ourInstance;
-    }
+internal class ImportOldConfigsState {
+  @Volatile
+  var initialImportScenario: InitialImportScenario? = null
+    private set
 
-    private volatile @Nullable InitialImportScenario myInitialImportScenario = null;
-    private volatile boolean myOldConfigPanelWasOpened = false;
-    private volatile boolean mySourceConfigFolderExists = false;
-    private volatile @NotNull ImportOldConfigType myType = ImportOldConfigType.NOT_INITIALIZED;
+  @Volatile
+  private var oldConfigPanelWasOpened = false
 
-    public enum InitialImportScenario {
-      CLEAN_CONFIGS,
-      IMPORTED_FROM_PREVIOUS_VERSION,
-      IMPORTED_FROM_OTHER_PRODUCT,
-      IMPORTED_FROM_CLOUD,
-      CONFIG_DIRECTORY_NOT_FOUND,
-      SHOW_DIALOG_NO_CONFIGS_FOUND,
-      SHOW_DIALOG_CONFIGS_ARE_TOO_OLD,
-      SHOW_DIALOG_REQUESTED_BY_PROPERTY,
-      IMPORT_SETTINGS_ACTION,
-      RESTORE_DEFAULT_ACTION
-    }
+  @Volatile
+  private var sourceConfigFolderExists = false
 
-    public void reportImportScenario(@NotNull InitialImportScenario strategy) {
-      myInitialImportScenario = strategy;
-    }
+  @Volatile
+  var type: ImportOldConfigsUsagesCollector.ImportOldConfigType = ImportOldConfigsUsagesCollector.ImportOldConfigType.NOT_INITIALIZED
+    private set
 
-    private @Nullable InitialImportScenario getInitialImportScenario() {
-      return myInitialImportScenario;
-    }
+  companion object {
+    fun getInstance(): ImportOldConfigsState = ImportOldConfigsState()
 
-    public void saveImportOldConfigType(@NotNull JRadioButton previous,
-                                        @NotNull JRadioButton custom,
-                                        @NotNull JRadioButton doNotImport,
-                                        boolean configFolderExists) {
-      myOldConfigPanelWasOpened = true;
-      mySourceConfigFolderExists = configFolderExists;
-      myType = getOldImportType(previous, custom, doNotImport);
-    }
-
-    private static @NotNull ImportOldConfigType getOldImportType(@NotNull JRadioButton previous,
-                                                                 @NotNull JRadioButton custom,
-                                                                 @NotNull JRadioButton doNotImport) {
-      if (previous.isSelected()) return ImportOldConfigType.FROM_PREVIOUS;
-      if (custom.isSelected()) return ImportOldConfigType.FROM_CUSTOM;
-      if (doNotImport.isSelected()) return ImportOldConfigType.DO_NOT_IMPORT;
-      return ImportOldConfigType.OTHER;
-    }
-
-
-    public boolean wasOldConfigPanelOpened() {
-      return myOldConfigPanelWasOpened;
-    }
-
-    public boolean doesSourceConfigFolderExist() {
-      return mySourceConfigFolderExists;
-    }
-
-    public @NotNull ImportOldConfigType getType() {
-      return myType;
+    private fun getOldImportType(previous: JRadioButton,
+                                 custom: JRadioButton,
+                                 doNotImport: JRadioButton): ImportOldConfigsUsagesCollector.ImportOldConfigType {
+      if (previous.isSelected) {
+        return ImportOldConfigsUsagesCollector.ImportOldConfigType.FROM_PREVIOUS
+      }
+      if (custom.isSelected) {
+        return ImportOldConfigsUsagesCollector.ImportOldConfigType.FROM_CUSTOM
+      }
+      return if (doNotImport.isSelected) ImportOldConfigsUsagesCollector.ImportOldConfigType.DO_NOT_IMPORT else ImportOldConfigsUsagesCollector.ImportOldConfigType.OTHER
     }
   }
 
-  public enum ImportOldConfigType {
-    FROM_PREVIOUS, FROM_CUSTOM, DO_NOT_IMPORT, OTHER, NOT_INITIALIZED
+  enum class InitialImportScenario {
+    CLEAN_CONFIGS,
+    IMPORTED_FROM_PREVIOUS_VERSION,
+    IMPORTED_FROM_OTHER_PRODUCT,
+    IMPORTED_FROM_CLOUD,
+    CONFIG_DIRECTORY_NOT_FOUND,
+    SHOW_DIALOG_NO_CONFIGS_FOUND,
+    SHOW_DIALOG_CONFIGS_ARE_TOO_OLD,
+    SHOW_DIALOG_REQUESTED_BY_PROPERTY,
+    IMPORT_SETTINGS_ACTION,
+    RESTORE_DEFAULT_ACTION
   }
+
+  fun reportImportScenario(strategy: InitialImportScenario) {
+    initialImportScenario = strategy
+  }
+
+  fun saveImportOldConfigType(previous: JRadioButton,
+                              custom: JRadioButton,
+                              doNotImport: JRadioButton,
+                              configFolderExists: Boolean) {
+    oldConfigPanelWasOpened = true
+    sourceConfigFolderExists = configFolderExists
+    type = getOldImportType(previous, custom, doNotImport)
+  }
+
+  fun wasOldConfigPanelOpened(): Boolean = oldConfigPanelWasOpened
+
+  fun doesSourceConfigFolderExist(): Boolean = sourceConfigFolderExists
 }
