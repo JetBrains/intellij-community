@@ -6,6 +6,8 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields.Boolean
 import com.intellij.internal.statistic.eventLog.events.EventFields.Enum
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import javax.swing.JRadioButton
 
 internal class ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
@@ -21,14 +23,16 @@ internal class ImportOldConfigsUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
   internal class Trigger : ApplicationInitializedListener {
-    override fun componentsInitialized() {
-      val state = ImportOldConfigsState.getInstance()
-      val initialImportScenario = state.initialImportScenario
-      if (initialImportScenario != null) {
-        INITIAL_IMPORT_SCENARIO.log(initialImportScenario)
-      }
-      if (state.wasOldConfigPanelOpened()) {
-        IMPORT_DIALOG_SHOWN_EVENT.log(state.type, state.doesSourceConfigFolderExist())
+    override suspend fun execute(asyncScope: CoroutineScope) {
+      asyncScope.launch {
+        val state = ImportOldConfigsState.getInstance()
+        val initialImportScenario = state.initialImportScenario
+        if (initialImportScenario != null) {
+          INITIAL_IMPORT_SCENARIO.log(initialImportScenario)
+        }
+        if (state.wasOldConfigPanelOpened()) {
+          IMPORT_DIALOG_SHOWN_EVENT.log(state.type, state.doesSourceConfigFolderExist())
+        }
       }
     }
   }
