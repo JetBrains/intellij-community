@@ -161,6 +161,8 @@ class GitUpdateInfoAsLog(private val project: Project,
     })
   }
 
+  fun viewCommitsInLogUi() = findOrCreateLogUi(createRangeFilter(), true)
+
   fun viewUserCommitsInLogUi(user: VcsUser) {
     val userFilter = VcsLogFilterObject.fromUser(user)
     val rangeFilter = createRangeFilter()
