@@ -271,29 +271,37 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val initServiceContainerJob = launch {
-    initServiceContainer(app = appDeferred.await(), pluginSetDeferred = pluginSetDeferred)
-  }
-
   val appRegisteredJob = CompletableDeferred<Unit>()
-
-  val preloadCriticalServicesJob = async {
-    preInitApp(app = appDeferred.await(),
-               asyncScope = asyncScope,
-               initServiceContainerJob = initServiceContainerJob,
-               initLafJob = initLafJob,
-               telemetryInitJob = telemetryInitJob,
-               log = logDeferred.await(),
-               appRegisteredJob = appRegisteredJob,
-               euaDocumentDeferred = euaDocumentDeferred)
-  }
 
   val appLoaded = launch {
     val app = appDeferred.await()
 
+    val initServiceContainerJob = launch {
+      initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+    }
+
+    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
+      null
+    }
+    else {
+      async(CoroutineName("eua document")) {
+        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = asyncScope)
+      }
+    }
+
+    val preloadCriticalServicesJob = async(CoroutineName("app pre-initialization")) {
+      initServiceContainerJob.join()
+      preInitApp(app = app,
+                 asyncScope = asyncScope,
+                 initLafJob = initLafJob,
+                 log = logDeferred.await(),
+                 appRegisteredJob = appRegisteredJob,
+                 euaTaskDeferred = euaTaskDeferred)
+    }
+
     // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
     if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-      asyncScope.launch(CoroutineName("coroutine debug probes init")) {
+      launch(CoroutineName("coroutine debug probes init")) {
         enableCoroutineDump()
         JBR.getJstack()?.includeInfoFrom {
           """
@@ -304,12 +312,13 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    appRegisteredJob.join()
     initServiceContainerJob.join()
+    appRegisteredJob.join()
 
     initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
                         app = app,
                         preloadCriticalServicesJob = preloadCriticalServicesJob,
+                        telemetryInitJob = telemetryInitJob,
                         asyncScope = asyncScope)
   }
 

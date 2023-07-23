@@ -6,27 +6,22 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.subtask
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ApplicationLoadListener
-import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.laf.UiThemeProviderListManager
-import com.intellij.idea.AppMode
 import com.intellij.idea.AppStarter
-import com.intellij.idea.prepareShowEuaIfNeededTask
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
@@ -48,48 +43,17 @@ internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferre
 internal suspend fun preInitApp(app: ApplicationImpl,
                                 asyncScope: CoroutineScope,
                                 log: Logger,
-                                initServiceContainerJob: Job,
                                 initLafJob: Job,
                                 appRegisteredJob: Job,
-                                telemetryInitJob: Job,
-                                euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
+                                euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   coroutineScope {
-    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = asyncScope)
-      }
-    }
-
-    launch(CoroutineName("telemetry waiting")) {
-      try {
-        telemetryInitJob.join()
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        log.error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-      }
-    }
-
-    if (app.isInternal && !app.isHeadlessEnvironment) {
-      launch {
-        IconLoader.setStrictGlobally(true)
-      }
-    }
-
-    initServiceContainerJob.join()
-
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
     }
     else {
       launch(CoroutineName("icon mapping loading")) {
         runCatching {
-          app.service<IconMapLoader>().preloadIconMapping()
+          app.serviceAsync<IconMapLoader>().preloadIconMapping()
         }.getOrLogException(log)
       }
     }
@@ -127,9 +91,13 @@ internal suspend fun preInitApp(app: ApplicationImpl,
 
       coroutineScope {
         loadIconMapping?.join()
-        // used by LafManager
-        app.serviceAsync<UISettings>()
-        app.serviceAsync<UiThemeProviderListManager>()
+        launch {
+          // used by LafManager
+          app.serviceAsync<UISettings>()
+        }
+        launch(CoroutineName("UiThemeProviderListManager preloading")) {
+          app.serviceAsync<UiThemeProviderListManager>()
+        }
       }
 
       subtask("laf initialization", RawSwingDispatcher) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -20,7 +20,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 
-class PluginManagerUsageCollector : CounterUsagesCollector() {
+internal class PluginManagerUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = EVENT_GROUP
 
   companion object {
@@ -56,7 +56,6 @@ class PluginManagerUsageCollector : CounterUsagesCollector() {
       PLUGIN_CARD_OPENED.log(getPluginInfoByDescriptor(descriptor), it.type, it.getPluginIndex(descriptor.pluginId))
     }
 
-    @JvmStatic
     fun thirdPartyAcceptanceCheck(result: DialogAcceptanceResultEnum) {
       THIRD_PARTY_ACCEPTANCE_CHECK.getIfInitializedOrNull()?.log(result)
     }

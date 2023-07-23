@@ -7,14 +7,18 @@ package com.intellij.ide.bootstrap
 
 import com.intellij.diagnostic.subtask
 import com.intellij.ide.*
-import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
+import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
 import com.intellij.idea.*
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
+import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.ui.AppIcon
@@ -29,6 +33,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
@@ -47,7 +52,8 @@ fun initApplication(context: InitAppContext) {
 internal suspend fun initApplicationImpl(args: List<String>,
                                          app: ApplicationImpl,
                                          asyncScope: CoroutineScope,
-                                         preloadCriticalServicesJob: Job) {
+                                         preloadCriticalServicesJob: Job,
+                                         telemetryInitJob: Job) {
   val starter = subtask("app initialization") {
     val deferredStarter = subtask("app starter creation") {
       createAppStarterAsync(args)
@@ -67,12 +73,24 @@ internal suspend fun initApplicationImpl(args: List<String>,
         preloadCriticalServicesJob.join()
       }
 
-      asyncScope.launch {
-        addActivateAndWindowsCliListeners()
+      launch(CoroutineName("telemetry waiting")) {
+        try {
+          telemetryInitJob.join()
+        }
+        catch (e: CancellationException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          LOG.error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
+        }
       }
 
-      asyncScope.launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
-        PluginManagerMain.checkThirdPartyPluginsAllowed()
+      asyncScope.launch {
+        launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
+          checkThirdPartyPluginsAllowed()
+        }
+
+        addActivateAndWindowsCliListeners()
       }
 
       appInitListeners.await()
@@ -245,5 +263,16 @@ fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedList
     launch {
       listener.execute(asyncScope)
     }
+  }
+}
+
+private suspend fun checkThirdPartyPluginsAllowed() {
+  val noteAccepted = PluginManagerCore.isThirdPartyPluginsNoteAccepted() ?: return
+  if (noteAccepted) {
+    serviceAsync<UpdateSettings>().isThirdPartyPluginsAllowed = true
+    PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED)
+  }
+  else  {
+    PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED)
   }
 }

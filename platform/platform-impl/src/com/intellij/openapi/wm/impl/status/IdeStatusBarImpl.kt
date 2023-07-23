@@ -315,7 +315,7 @@ open class IdeStatusBarImpl internal constructor(
     val anyModality = ModalityState.any().asContextElement()
     val items: List<WidgetBean> = subtask("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = withContext(Dispatchers.EDT + anyModality) {
+        val component = subtask(widget.ID(), Dispatchers.EDT + anyModality) {
           val component = wrap(widget)
           if (component is StatusBarWidgetWrapper) {
             component.beforeUpdate()
@@ -331,19 +331,17 @@ open class IdeStatusBarImpl internal constructor(
       }
     }
 
-    withContext(Dispatchers.EDT + anyModality) {
-      subtask("status bar widget adding") {
-        for (item in items) {
-          widgetMap.put(item.widget.ID(), item)
-        }
-
-        val panel = rightPanel
-        for (item in items) {
-          panel.add(item.component)
-        }
-
-        sortRightWidgets()
+    withContext(Dispatchers.EDT + anyModality + CoroutineName("status bar widget adding")) {
+      for (item in items) {
+        widgetMap.put(item.widget.ID(), item)
       }
+
+      val panel = rightPanel
+      for (item in items) {
+        panel.add(item.component)
+      }
+
+      sortRightWidgets()
     }
 
     if (listeners.hasListeners()) {

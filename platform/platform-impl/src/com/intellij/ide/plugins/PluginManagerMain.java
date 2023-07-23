@@ -168,7 +168,7 @@ public final class PluginManagerMain {
     }
   }
 
-  public static class MyHyperlinkListener extends HyperlinkAdapter {
+  public static final class MyHyperlinkListener extends HyperlinkAdapter {
     @Override
     protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
       JEditorPane pane = (JEditorPane)e.getSource();
@@ -200,7 +200,7 @@ public final class PluginManagerMain {
         }
 
         PluginId dependantId = dependency.getPluginId();
-        // If there is no installed plugin implementing the module, then it can only be a platform module which cannot be disabled
+        // If there is no installed plugin implementing the module, then it can only be a platform module that cannot be disabled
         if (PluginManagerCore.isModuleDependency(dependantId) &&
             PluginManagerCore.INSTANCE.findPluginByModuleDependency(dependantId) == null) {
           continue;
@@ -354,7 +354,7 @@ public final class PluginManagerMain {
 
     var updateSettings = UpdateSettings.getInstance();
     if (updateSettings.isThirdPartyPluginsAllowed()) {
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
+      PluginManagerUsageCollector.Companion.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.AUTO_ACCEPTED);
       return true;
     }
 
@@ -373,24 +373,12 @@ public final class PluginManagerMain {
     var noText = CommonBundle.getCancelButtonText();
     if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
       updateSettings.setThirdPartyPluginsAllowed(true);
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
+      PluginManagerUsageCollector.Companion.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
       return true;
     }
     else {
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
+      PluginManagerUsageCollector.Companion.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
       return false;
-    }
-  }
-
-  @ApiStatus.Internal
-  public static void checkThirdPartyPluginsAllowed() {
-    Boolean noteAccepted = PluginManagerCore.INSTANCE.isThirdPartyPluginsNoteAccepted();
-    if (noteAccepted == Boolean.TRUE) {
-      UpdateSettings.getInstance().setThirdPartyPluginsAllowed(true);
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.ACCEPTED);
-    }
-    else if (noteAccepted == Boolean.FALSE) {
-      PluginManagerUsageCollector.thirdPartyAcceptanceCheck(DialogAcceptanceResultEnum.DECLINED);
     }
   }
 }

@@ -52,9 +52,6 @@ private val standardDisablingFilter: () -> RGBImageFilter = { UIUtil.getGrayFilt
 
 private val colorPatchCache = ConcurrentHashMap<Int, MutableMap<LongArray, MutableMap<Icon, Icon>>>()
 
-@Volatile
-private var STRICT_GLOBAL = false
-
 internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
 
 /**
@@ -65,10 +62,6 @@ internal val fakeComponent: JComponent by lazy { object : JComponent() {} }
  * @see com.intellij.util.IconUtil
  */
 object IconLoader {
-  fun setStrictGlobally(strict: Boolean) {
-    STRICT_GLOBAL = strict
-  }
-
   @JvmStatic
   fun installPathPatcher(patcher: IconPathPatcher) {
     updateTransform { it.withPathPatcher(patcher) }
@@ -466,7 +459,7 @@ private fun updateTransform(updater: Function<in IconTransform, IconTransform>) 
 private fun findIcon(originalPath: String,
                      aClass: Class<*>?,
                      classLoader: ClassLoader,
-                     strict: Boolean = STRICT_GLOBAL,
+                     strict: Boolean = false,
                      deferUrlResolve: Boolean): Icon? {
   if (deferUrlResolve) {
     return findIconUsingDeprecatedImplementation(originalPath = originalPath,
@@ -489,7 +482,7 @@ fun findIconUsingDeprecatedImplementation(originalPath: String,
                                           classLoader: ClassLoader,
                                           aClass: Class<*>?,
                                           toolTip: Supplier<String?>? = null,
-                                          strict: Boolean = STRICT_GLOBAL): Icon? {
+                                          strict: Boolean = false): Icon? {
   var effectiveClassLoader = classLoader
   val startTime = StartUpMeasurer.getCurrentTimeIfEnabled()
   val patchedPath = patchIconPath(originalPath = originalPath, classLoader = effectiveClassLoader)

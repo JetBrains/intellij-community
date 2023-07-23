@@ -83,7 +83,7 @@ internal val isFloatingMenuBarSupported: Boolean
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                                             loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
   @JvmField
-  internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
 
   private var toolbar: JComponent? = null
 
