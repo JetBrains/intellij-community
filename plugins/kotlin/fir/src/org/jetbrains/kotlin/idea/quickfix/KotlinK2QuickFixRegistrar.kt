@@ -267,6 +267,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
 
         registerApplicator(OptInAnnotationWrongTargetFixFactory.optInAnnotationWrongTargetFixFactory)
         registerApplicators(OptInFileLevelFixFactories.optInFileLevelFixFactories)
+        registerApplicators(OptInFixFactories.optInFixFactories)
     }
 
 

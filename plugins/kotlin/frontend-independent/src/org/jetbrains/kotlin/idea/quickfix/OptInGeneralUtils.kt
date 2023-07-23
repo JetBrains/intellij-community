@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -27,7 +26,7 @@ abstract class OptInGeneralUtilsBase {
         annotationFqName: FqName,
         annotationClassId: ClassId,
         isOverrideError: Boolean
-    ): KotlinQuickFixAction<KtElement>? {
+    ): AddAnnotationFix? {
         if (KtPsiUtil.isLocal(targetElement)) return null
         if (actualTargetList.none { it in applicableTargets }) return null
 
@@ -52,7 +51,7 @@ abstract class OptInGeneralUtilsBase {
         optInClassId: ClassId,
         annotationFqName: FqName,
         isOverrideError: Boolean
-    ): KotlinQuickFixAction<KtElement> {
+    ): AddAnnotationFix {
         val existingAnnotationEntry = (targetElement as? KtAnnotated)?.findAnnotation(optInClassId)?.createSmartPointer()
 
         return if (isOverrideError) {

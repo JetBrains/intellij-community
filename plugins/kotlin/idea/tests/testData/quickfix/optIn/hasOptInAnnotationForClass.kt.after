@@ -1,6 +1,4 @@
 // "Opt in for 'B' on containing class 'C'" "true"
-// IGNORE_FIR
-// WITH_STDLIB
 @RequiresOptIn
 annotation class A
 

@@ -18,18 +18,42 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../../idea/tests/testData/quickfix/optIn")
-public class K2MultiFileQuickFixTestGenerated extends AbstractK2MultiFileQuickFixTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
-    }
+public abstract class K2MultiFileQuickFixTestGenerated extends AbstractK2MultiFileQuickFixTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/optIn/multifile")
+    public static class Multifile extends AbstractK2MultiFileQuickFixTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
 
-    @TestMetadata("reservedKeywordPackage.test")
-    public void testReservedKeywordPackage() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/optIn/reservedKeywordPackage.test");
-    }
+        @TestMetadata("apiFromJava.test")
+        public void testApiFromJava() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/multifile/apiFromJava.test");
+        }
 
-    @TestMetadata("reservedKeywordPackage2.test")
-    public void testReservedKeywordPackage2() throws Exception {
-        runTest("../../../idea/tests/testData/quickfix/optIn/reservedKeywordPackage2.test");
+        @TestMetadata("apiFromJava2.test")
+        public void testApiFromJava2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/multifile/apiFromJava2.test");
+        }
+
+        @TestMetadata("apiFromJava3.test")
+        public void testApiFromJava3() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/multifile/apiFromJava3.test");
+        }
+
+        @TestMetadata("apiFromJava4.test")
+        public void testApiFromJava4() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/multifile/apiFromJava4.test");
+        }
+
+        @TestMetadata("reservedKeywordPackage.test")
+        public void testReservedKeywordPackage() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/multifile/reservedKeywordPackage.test");
+        }
+
+        @TestMetadata("reservedKeywordPackage2.test")
+        public void testReservedKeywordPackage2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/optIn/multifile/reservedKeywordPackage2.test");
+        }
     }
 }

@@ -1,8 +1,5 @@
 // "Opt in for 'MyExperimentalAPI' on containing class 'Bar'" "true"
-// IGNORE_FIR
 // PRIORITY: HIGH
-// COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
-// WITH_STDLIB
 
 package a.b
 

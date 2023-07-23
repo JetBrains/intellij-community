@@ -11322,6 +11322,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/basicFunctionNotApplicable.kt");
             }
 
+            @TestMetadata("basicFunctionNotApplicableFir.kt")
+            public void testBasicFunctionNotApplicableFir() throws Exception {
+                runTest("testData/quickfix/optIn/basicFunctionNotApplicableFir.kt");
+            }
+
             @TestMetadata("basicModule.kt")
             public void testBasicModule() throws Exception {
                 runTest("testData/quickfix/optIn/basicModule.kt");
@@ -11432,9 +11437,24 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/optIn/nestedClasses.kt");
             }
 
+            @TestMetadata("nestedClassesFir.kt")
+            public void testNestedClassesFir() throws Exception {
+                runTest("testData/quickfix/optIn/nestedClassesFir.kt");
+            }
+
             @TestMetadata("newFileAnnotationWithPackage.kt")
             public void testNewFileAnnotationWithPackage() throws Exception {
                 runTest("testData/quickfix/optIn/newFileAnnotationWithPackage.kt");
+            }
+
+            @TestMetadata("nonTopLevelAnnotation.kt")
+            public void testNonTopLevelAnnotation() throws Exception {
+                runTest("testData/quickfix/optIn/nonTopLevelAnnotation.kt");
+            }
+
+            @TestMetadata("nonTopLevelAnnotation2.kt")
+            public void testNonTopLevelAnnotation2() throws Exception {
+                runTest("testData/quickfix/optIn/nonTopLevelAnnotation2.kt");
             }
 
             @TestMetadata("optInUnused.kt")
@@ -11445,6 +11465,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("override.kt")
             public void testOverride() throws Exception {
                 runTest("testData/quickfix/optIn/override.kt");
+            }
+
+            @TestMetadata("overrideFir.kt")
+            public void testOverrideFir() throws Exception {
+                runTest("testData/quickfix/optIn/overrideFir.kt");
             }
 
             @TestMetadata("propagateOptIn.kt")
@@ -11485,6 +11510,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             @TestMetadata("propagateOptIn8.kt")
             public void testPropagateOptIn8() throws Exception {
                 runTest("testData/quickfix/optIn/propagateOptIn8.kt");
+            }
+
+            @TestMetadata("propagateOptIn8Fir.kt")
+            public void testPropagateOptIn8Fir() throws Exception {
+                runTest("testData/quickfix/optIn/propagateOptIn8Fir.kt");
             }
 
             @TestMetadata("propagateSubclassOptInRequired.kt")

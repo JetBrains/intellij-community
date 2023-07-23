@@ -1,6 +1,4 @@
 // "Opt in for 'B' on 'root'" "true"
-// IGNORE_FIR
-// WITH_STDLIB
 @RequiresOptIn
 annotation class A
 
