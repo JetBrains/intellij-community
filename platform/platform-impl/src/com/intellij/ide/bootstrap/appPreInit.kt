@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.PluginSet
 import com.intellij.ide.ui.IconMapLoader
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.laf.UiThemeProviderListManager
 import com.intellij.idea.AppMode
 import com.intellij.idea.AppStarter
 import com.intellij.idea.prepareShowEuaIfNeededTask
@@ -124,9 +125,13 @@ internal suspend fun preInitApp(app: ApplicationImpl,
         }
       }
 
-      loadIconMapping?.join()
-      // preloaded as a part of preloadCriticalServices, used by LafManager
-      app.serviceAsync<UISettings>()
+      coroutineScope {
+        loadIconMapping?.join()
+        // used by LafManager
+        app.serviceAsync<UISettings>()
+        app.serviceAsync<UiThemeProviderListManager>()
+      }
+
       subtask("laf initialization", RawSwingDispatcher) {
         app.serviceAsync<LafManager>()
       }
