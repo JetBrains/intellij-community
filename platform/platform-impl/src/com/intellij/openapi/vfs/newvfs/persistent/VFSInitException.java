@@ -8,16 +8,16 @@ import java.io.IOException;
 
 /** Carries errorCategory so different categories frequencies could be monitored */
 @ApiStatus.Internal
-public class VFSLoadException extends IOException {
+public class VFSInitException extends IOException {
   private final @NotNull ErrorCategory errorCategory;
 
-  public VFSLoadException(@NotNull ErrorCategory errorCategory,
+  public VFSInitException(@NotNull ErrorCategory errorCategory,
                           @NotNull String message) {
     super(message);
     this.errorCategory = errorCategory;
   }
 
-  public VFSLoadException(@NotNull ErrorCategory errorCategory,
+  public VFSInitException(@NotNull ErrorCategory errorCategory,
                           @NotNull String message,
                           @NotNull Throwable cause) {
     super(message, cause);
@@ -34,19 +34,13 @@ public class VFSLoadException extends IOException {
   }
 
   public enum ErrorCategory {
-    /** Nothing: VFS initialized and loaded just fine */
-    NONE,
-
-    /** No VFS yet -> empty one was built from scratch */
-    INITIAL,
-
     /** Rebuild marker was found */
     SCHEDULED_REBUILD,
 
-    /** Application wasn't closed properly, VFS storages are fractured */
+    /** Application wasn't closed properly, VFS storages are likely fractured */
     NOT_CLOSED_PROPERLY,
 
-    /** Current VFS impl (code) version != VFS on-disk format version */
+    /** Current VFS implementation (i.e. code) version != VFS on-disk format version */
     IMPL_VERSION_MISMATCH,
 
     /** Name storage is not able to resolve existing reference */

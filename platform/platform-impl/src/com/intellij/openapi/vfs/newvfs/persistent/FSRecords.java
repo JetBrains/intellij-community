@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWrit
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.Processor;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.DataOutputStream;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -27,7 +26,6 @@ import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
 
@@ -139,20 +137,6 @@ public final class FSRecords {
 
   public static long getCreationTimestamp() {
     return implOrFail().getCreationTimestamp();
-  }
-
-  /** Intermediate failures met during VFS initialization (if any) */
-  public static List<Throwable> initializationFailures() {
-    return implOrFail().initializationFailures();
-  }
-
-  /** Were VFS storages created anew this run, or we read already filled */
-  public static boolean wasCreateANew() {
-    return implOrFail().wasCreatedANew();
-  }
-
-  public static long totalInitializationDuration(@NotNull TimeUnit unit) {
-    return implOrFail().totalInitializationDuration(unit);
   }
 
   //========== modifications counters: ========================================
@@ -273,7 +257,6 @@ public final class FSRecords {
   static @NotNull ListResult update(@NotNull VirtualFile parent,
                                     int parentId,
                                     @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
-    SlowOperations.assertSlowOperationsAreAllowed();
     return implOrFail().update(parent, parentId, childrenConvertor);
   }
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.openjdk.jmh.annotations.*;
@@ -121,7 +122,7 @@ public class VFSInitializationBenchmark {
 
   private static PersistentFSConnection initVFS(Path cachesDir,
                                                 int version) {
-    PersistentFSConnector.InitializationResult initResult = PersistentFSConnector.connect(
+    VFSInitializationResult initResult = PersistentFSConnector.connect(
       cachesDir,
       version,
       true,

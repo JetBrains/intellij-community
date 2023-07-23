@@ -24,9 +24,11 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferRead
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataOutputStream;
@@ -43,7 +45,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Function;
 import java.util.function.IntPredicate;
@@ -135,7 +136,7 @@ public final class FSRecordsImpl {
   private final @NotNull ErrorHandler errorHandler;
 
   /** Additional information about how VFS was initialized */
-  private final @NotNull PersistentFSConnector.InitializationResult initializationResult;
+  private final @NotNull VFSInitializationResult initializationResult;
 
   /**
    * Right now invertedNameIndex looks like a property of PersistentFSConnection -- but this is only because now it
@@ -213,7 +214,7 @@ public final class FSRecordsImpl {
     }
     try {
       int currentVersion = currentImplementationVersion();
-      PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
+      VFSInitializationResult initializationResult = PersistentFSConnector.connect(
         storagesDirectoryPath,
         currentVersion,
         USE_CONTENT_HASHES,
@@ -286,7 +287,7 @@ public final class FSRecordsImpl {
                         @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy,
                         int currentVersion,
                         @NotNull ErrorHandler errorHandler,
-                        @NotNull PersistentFSConnector.InitializationResult initializationResult) {
+                        @NotNull VFSInitializationResult initializationResult) {
     this.connection = connection;
     this.contentAccessor = contentAccessor;
     this.attributeAccessor = attributeAccessor;
@@ -341,11 +342,11 @@ public final class FSRecordsImpl {
 
   //========== general FS records properties: ========================================
 
-  int getVersion() {
+  public int getVersion() {
     return currentVersion;
   }
 
-  long getCreationTimestamp() {
+  public long getCreationTimestamp() {
     try {
       checkNotDisposed();
       return connection.getTimestamp();
@@ -355,18 +356,9 @@ public final class FSRecordsImpl {
     }
   }
 
-  List<Throwable> initializationFailures() {
-    return Collections.unmodifiableList(initializationResult.attemptsFailures);
+  public VFSInitializationResult initializationResult(){
+    return initializationResult;
   }
-
-  boolean wasCreatedANew() {
-    return initializationResult.vfsCreatedAnew;
-  }
-
-  long totalInitializationDuration(@NotNull TimeUnit unit) {
-    return unit.convert(initializationResult.totalInitializationDurationNs, NANOSECONDS);
-  }
-
 
   //========== modifications counters: ========================================
 
@@ -588,6 +580,7 @@ public final class FSRecordsImpl {
   @NotNull ListResult update(@NotNull VirtualFile parent,
                              int parentId,
                              @NotNull Function<? super ListResult, ListResult> childrenConvertor) {
+    SlowOperations.assertSlowOperationsAreAllowed();
     assert parentId > 0 : parentId;
     ListResult children = list(parentId);
     ListResult result = childrenConvertor.apply(children);
@@ -1243,15 +1236,6 @@ public final class FSRecordsImpl {
     invertedNameIndexLazy.getValue().checkConsistency();
   }
 
-  void checkSanity() {
-    try {
-      recordAccessor.checkSanity();
-    }
-    catch (IOException e) {
-      throw handleError(e);
-    }
-  }
-
   @NotNull String describeAlreadyCreatedFile(int fileId,
                                              int nameId) {
     //RC: Actually, this method is better to be in VfsData class from there it is called.
@@ -1275,7 +1259,7 @@ public final class FSRecordsImpl {
   //========== accessors for diagnostics & sanity checks: ========================
 
 
-  PersistentFSConnection connection() {
+  public PersistentFSConnection connection() {
     return connection;
   }
 

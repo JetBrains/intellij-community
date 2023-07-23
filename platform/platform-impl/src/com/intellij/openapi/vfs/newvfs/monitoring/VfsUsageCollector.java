@@ -5,13 +5,16 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.newvfs.monitoring.VFSInitializationConditionsToFusReporter.VFSInitKind;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException;
-import com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.Long;
+import java.util.List;
+import java.util.stream.Stream;
 
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Boolean;
 import static com.intellij.internal.statistic.eventLog.events.EventFields.Enum;
@@ -22,7 +25,7 @@ import static com.intellij.internal.statistic.eventLog.events.EventFields.*;
 public final class VfsUsageCollector extends CounterUsagesCollector {
   private static final int DURATION_THRESHOLD_MS = 100;
 
-  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 11);
+  private static final EventLogGroup GROUP_VFS = new EventLogGroup("vfs", 12);
 
 
   /* ================== EVENT_INITIAL_REFRESH: ====================================================== */
@@ -77,25 +80,32 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
   /* ================== EVENT_VFS_INITIALIZATION: ====================================================== */
 
   /** What causes VFS rebuild (if any) */
-  private static final EnumEventField<VFSLoadException.ErrorCategory> FIELD_REBUILD_CAUSE = Enum("rebuild_cause", ErrorCategory.class);
+  private static final EnumEventField<VFSInitKind> FIELD_INITIALIZATION_KIND = Enum("init_kind", VFSInitKind.class);
   /**
    * How many attempts to init VFS were made.
-   * In regular caqse, it is only 1 attempt, but could be >1 if VFS was rebuilt.
+   * In regular caqse, it is only 1 atte22mpt, but could be >1 if VFS was rebuilt.
    */
   private static final IntEventField FIELD_INITIALIZATION_ATTEMPTS = Int("init_attempts");
-  /** Timestamp current VFS was created & initialized */
+  /** Timestamp current VFS was created & initialized (ms, unix origin) */
   private static final LongEventField FIELD_CREATION_TIMESTAMP = Long("creation_timestamp");
-  /** Current VFS implementation version, see {@link FSRecords#getVersion()} */
+  /** Current VFS implementation version, see {@link com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl#getVersion()} */
   private static final IntEventField FIELD_IMPL_VERSION = Int("impl_version");
   private static final LongEventField FIELD_TOTAL_INIT_DURATION_MS = Long("init_duration_ms");
+  private static final StringListEventField FIELD_ERRORS_HAPPENED = StringList(
+    "errors_happened",
+    Stream.of(VFSInitException.ErrorCategory.values())
+      .map(Enum::name)
+      .toList()
+  );
 
   private static final VarargEventId EVENT_VFS_INITIALIZATION = GROUP_VFS.registerVarargEvent(
     "initialization",
-    FIELD_REBUILD_CAUSE,
+    FIELD_INITIALIZATION_KIND,
     FIELD_CREATION_TIMESTAMP,
     FIELD_INITIALIZATION_ATTEMPTS,
     FIELD_IMPL_VERSION,
-    FIELD_TOTAL_INIT_DURATION_MS
+    FIELD_TOTAL_INIT_DURATION_MS,
+    FIELD_ERRORS_HAPPENED
   );
 
   /* ================== EVENT_VFS_HEALTH_CHECK: ====================================================== */
@@ -252,14 +262,16 @@ public final class VfsUsageCollector extends CounterUsagesCollector {
 
   public static void logVfsInitialization(int vfsImplementationVersion,
                                           long vfsCreationTimestamp,
+                                          @NotNull VFSInitKind initKind,
+                                          @NotNull List<VFSInitException.ErrorCategory> errorsHappened,
                                           int initializationAttempts,
-                                          @NotNull VFSLoadException.ErrorCategory rebuildCause,
                                           long totalInitializationDurationMs) {
     EVENT_VFS_INITIALIZATION.log(
-      FIELD_REBUILD_CAUSE.with(rebuildCause),
+      FIELD_INITIALIZATION_KIND.with(initKind),
       FIELD_CREATION_TIMESTAMP.with(vfsCreationTimestamp),
       FIELD_INITIALIZATION_ATTEMPTS.with(initializationAttempts),
       FIELD_IMPL_VERSION.with(vfsImplementationVersion),
+      FIELD_ERRORS_HAPPENED.with(ContainerUtil.map(errorsHappened, Enum::name)),
       FIELD_TOTAL_INIT_DURATION_MS.with(totalInitializationDurationMs)
     );
   }

@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocatio
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -18,6 +19,8 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +34,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.*;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
@@ -42,7 +45,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * <li>For cleanup: if an attempt to initialize VFS is failed, we need to carefully clean up all intermediate
  * states -- otherwise uncleaned remnants could fail the next attempt also.</li>
  * <li>For a recovery: if VFS opened/initialized with some problems -- this class keeps that partially-initialized
- * state for {@link com.intellij.openapi.vfs.newvfs.persistent.recovery.Recoverer}s to fix.</li>
+ * state for {@link VFSRecoverer}s to fix.</li>
  * </ol>
  */
 @ApiStatus.Internal
@@ -77,10 +80,13 @@ public class PersistentFSLoader {
 
 
   /** List of errors we met during VFS loading, but were able to +/- recover from */
-  private final List<VFSLoadException> problemsDuringLoad = new ArrayList<>();
-  private final List<VFSLoadException> problemsRecovered = new ArrayList<>();
+  private final List<VFSInitException> problemsDuringLoad = new ArrayList<>();
+  private final List<VFSInitException> problemsRecovered = new ArrayList<>();
 
-  private final IntList directoriesIdsToRefresh = new IntArrayList();
+  /** Directories those children are messed up, hence need refresh from the actual FS */
+  private final IntSet directoriesIdsToRefresh = new IntOpenHashSet();
+  /** Files that were messed up completely and were removed */
+  private final IntSet filesIdsToInvalidate = new IntOpenHashSet();
 
   /**
    * true if during the recovery content storage was re-created, and previous contentIds are now
@@ -109,7 +115,7 @@ public class PersistentFSLoader {
     if (Files.exists(corruptionMarkerFile)) {
       // TODO on vfs corruption vfslog must be erased because enumerators are lost (force compaction to erase everything)
       final List<String> corruptionCause = Files.readAllLines(corruptionMarkerFile, UTF_8);
-      throw new VFSLoadException(SCHEDULED_REBUILD, "Corruption marker file found\n\tcontent: " + corruptionCause);
+      throw new VFSInitException(SCHEDULED_REBUILD, "Corruption marker file found\n\tcontent: " + corruptionCause);
     }
   }
 
@@ -222,8 +228,8 @@ public class PersistentFSLoader {
       //                      => UNRECOGNIZED (I guess it is a rare case, most probably happens for users playing
       //                         hard with their IDE installations, most likely they are our QAs -- so the case
       //                         doesn't worth dedicated enum constant)
-      VFSLoadException.ErrorCategory rebuildCause = commonVersion > 0 ? IMPL_VERSION_MISMATCH : UNRECOGNIZED;
-      throw new VFSLoadException(
+      VFSInitException.ErrorCategory rebuildCause = commonVersion > 0 ? IMPL_VERSION_MISMATCH : UNRECOGNIZED;
+      throw new VFSInitException(
         rebuildCause,
         "FS repository detected version(=" + commonVersion + ") != current version(=" + currentImplVersion + ") -> VFS needs rebuild"
       );
@@ -311,23 +317,22 @@ public class PersistentFSLoader {
       new VFSRecoveryInfo(
         problemsRecovered,
         invalidateContentIds,
-        directoriesIdsToRefresh
+        directoriesIdsToRefresh,
+        filesIdsToInvalidate
       ),
       interceptors
     );
   }
 
-  public void quickSelfCheck() throws IOException {
-    //VFS errors early on startup cause terrifying UX error messages -- it is much better to catch VFS
+  public void selfCheck() throws IOException {
+    //VFS errors early on startup cause terrifying UX error messages. It is much better to catch VFS
     // corruption early on and rebuild VFS from 0.
     //But we also don't want to always check each VFS file on startup -- it delays regular startup
     // (i.e. without corruptions) quite a lot.
-    //So the tradeoff: we use few heuristics to quickly check for the most likely signs of corruption:
+    //So the tradeoff: we use few heuristics to quickly check for the most likely signs of corruption,
+    // and if we find any such sign -- switch to more vigilant checking:
 
-
-    boolean vigilantMode = false;
     if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-      vigilantMode = true;
       addProblem(NOT_CLOSED_PROPERLY, "FS repository wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
     }
 
@@ -335,7 +340,6 @@ public class PersistentFSLoader {
       int largestId = contentHashesEnumerator.getLargestId();
       int liveRecordsCount = contentsStorage.getRecordsCount();
       if (largestId != liveRecordsCount) {
-        vigilantMode = true;
         addProblem(CONTENT_STORAGES_NOT_MATCH,
                    "Content storage is not match content hash enumerator: " +
                    "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
@@ -347,69 +351,45 @@ public class PersistentFSLoader {
       addProblem(UNRECOGNIZED, "Attributes enumerator is empty, while attributesStorage is !empty");
     }
 
-    //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
-    //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
-    //Check every file is quite slow, but it is definitely worth checking _some_. A tradeoff:
-    // check only fileId=1, 2, 4, 8... -- always < 32 checks, given fileId is int32.
     int maxAllocatedID = recordsStorage.maxAllocatedID();
-    //look for the first error of each kind:
+
+    //Faster to look only for the first error of each kind:
     boolean nameStorageHasErrors = false;
     boolean contentHashesStorageHasErrors = false;
-    for (int fileId = 1; fileId <= maxAllocatedID; fileId *= 2) {
-      int nameId = recordsStorage.getNameId(fileId);
-      int contentId = recordsStorage.getContentRecordId(fileId);
 
-      if (!nameStorageHasErrors) {
-        if (nameId != DataEnumeratorEx.NULL_ID) {
-          try {
-            String name = namesStorage.valueOf(nameId);
-            if (name == null) {
-              addProblem(NAME_STORAGE_INCOMPLETE,
-                         "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
-              nameStorageHasErrors = true;
-            }
-            int reCheckNameId = namesStorage.tryEnumerate(name);
-            if (reCheckNameId != nameId) {
-              addProblem(NAME_STORAGE_INCOMPLETE,
-                         "namesEnumerator is corrupted: file[#" + fileId + "]" +
-                         ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
-              );
-              nameStorageHasErrors = true;
-            }
-          }
-          catch (Throwable t) {
-            addProblem(NAME_STORAGE_INCOMPLETE,
-                       "file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", t
-            );
+    //Try to resolve few nameId/contentId against apt enumerators -- which is quite likely fails
+    //if enumerators' files are corrupted anyhow, hence serves as a self-check heuristic.
+    //Check every file is quite slow, but it is definitely worth checking _some_.
+    // A tradeoff: if there were no signs of corruption -- check only fileId=2, 4, 8...
+    // -- always < 32 checks, given fileId is int32.
+    if(problemsDuringLoad.isEmpty()) {
+      for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId *= 2) {
+        if (!nameStorageHasErrors) {
+          if (!nameResolvedSuccessfully(fileId)) {
             nameStorageHasErrors = true;
           }
         }
-      }
 
-      if (!contentHashesStorageHasErrors) {
-        if (contentHashesEnumerator != null
-            && contentId != DataEnumeratorEx.NULL_ID) {
-          try {
-            byte[] contentHash = contentHashesEnumerator.valueOf(contentId);
-            if (contentHash == null) {
-              addProblem(CONTENT_STORAGES_INCOMPLETE,
-                         "file[#" + fileId + "].contentId(=" + contentId + ") is not present in contentHashesEnumerator"
-              );
-              contentHashesStorageHasErrors = true;
-            }
-            int reCheckContentId = contentHashesEnumerator.tryEnumerate(contentHash);
-            if (reCheckContentId != contentId) {
-              addProblem(CONTENT_STORAGES_INCOMPLETE,
-                         "contentHashesEnumerator is corrupted: file[#" + fileId + "]" +
-                         ".contentId(=" + contentId + ") -> [" + Arrays.toString(contentHash) + "] -> tryEnumerate() -> " + reCheckContentId
-              );
-              contentHashesStorageHasErrors = true;
-            }
+        if (!contentHashesStorageHasErrors) {
+          if (!contentResolvedSuccessfully(fileId)) {
+            contentHashesStorageHasErrors = true;
           }
-          catch (Throwable t) {
-            addProblem(CONTENT_STORAGES_INCOMPLETE,
-                       "file[#" + fileId + "].contentId(=" + contentId + ") failed resolution in contentHashesEnumerator", t
-            );
+        }
+      }
+    }
+
+    //...If there are some errors, or other signs of possible corruption
+    // -> switch to full scan
+    if (!problemsDuringLoad.isEmpty()) {
+      for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId++) {
+        if (!nameStorageHasErrors) {
+          if (!nameResolvedSuccessfully(fileId)) {
+            nameStorageHasErrors = true;
+          }
+        }
+
+        if (!contentHashesStorageHasErrors) {
+          if (!contentResolvedSuccessfully(fileId)) {
             contentHashesStorageHasErrors = true;
           }
         }
@@ -417,20 +397,82 @@ public class PersistentFSLoader {
     }
   }
 
-  private void addProblem(@NotNull VFSLoadException.ErrorCategory type,
+  private boolean contentResolvedSuccessfully(int fileId) throws IOException {
+    int contentId = recordsStorage.getContentRecordId(fileId);
+    if (contentHashesEnumerator != null
+        && contentId != DataEnumeratorEx.NULL_ID) {
+      try {
+        byte[] contentHash = contentHashesEnumerator.valueOf(contentId);
+        if (contentHash == null) {
+          addProblem(CONTENT_STORAGES_INCOMPLETE,
+                     "file[#" + fileId + "].contentId(=" + contentId + ") is not present in contentHashesEnumerator"
+          );
+          return false;
+        }
+        int reCheckContentId = contentHashesEnumerator.tryEnumerate(contentHash);
+        if (reCheckContentId != contentId) {
+          addProblem(CONTENT_STORAGES_INCOMPLETE,
+                     "contentHashesEnumerator is corrupted: file[#" + fileId + "]" +
+                     ".contentId(=" + contentId + ") -> [" + Arrays.toString(contentHash) + "] -> tryEnumerate() -> " + reCheckContentId
+          );
+          return false;
+        }
+      }
+      catch (Throwable t) {
+        addProblem(CONTENT_STORAGES_INCOMPLETE,
+                   "file[#" + fileId + "].contentId(=" + contentId + ") failed resolution in contentHashesEnumerator", t
+        );
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private boolean nameResolvedSuccessfully(int fileId) throws IOException {
+    int nameId = recordsStorage.getNameId(fileId);
+    if (nameId == DataEnumeratorEx.NULL_ID) {
+      return false;
+    }
+    try {
+      String name = namesStorage.valueOf(nameId);
+      if (name == null) {
+        addProblem(NAME_STORAGE_INCOMPLETE,
+                   "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
+        return false;
+      }
+      int reCheckNameId = namesStorage.tryEnumerate(name);
+      if (reCheckNameId != nameId) {
+        addProblem(NAME_STORAGE_INCOMPLETE,
+                   "namesEnumerator is corrupted: file[#" + fileId + "]" +
+                   ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
+        );
+        return false;
+      }
+    }
+    catch (Throwable t) {
+      addProblem(NAME_STORAGE_INCOMPLETE,
+                 "file[#" + fileId + "].nameId(=" + nameId + ") failed resolution in namesEnumerator", t
+      );
+      return false;
+    }
+    return true;
+  }
+
+  private void addProblem(@NotNull VFSInitException.ErrorCategory type,
                           @NotNull String message) {
     addProblem(type, message, null);
   }
 
-  private void addProblem(@NotNull VFSLoadException.ErrorCategory type,
+  private void addProblem(@NotNull VFSInitException.ErrorCategory type,
                           @NotNull String message,
                           @Nullable Throwable cause) {
     LOG.warn("[VFS load problem]: " + message, cause);
     if (cause == null) {
-      this.problemsDuringLoad.add(new VFSLoadException(type, message));
+      this.problemsDuringLoad.add(new VFSInitException(type, message));
     }
     else {
-      this.problemsDuringLoad.add(new VFSLoadException(type, message, cause));
+      this.problemsDuringLoad.add(new VFSInitException(type, message, cause));
     }
   }
 
@@ -439,7 +481,6 @@ public class PersistentFSLoader {
            && attributesStorage.isEmpty()
            && contentsStorage().getRecordsCount() == 0;
   }
-
 
   public static @NotNull AbstractAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
@@ -575,40 +616,6 @@ public class PersistentFSLoader {
     return reusableFileIdsLazy;
   }
 
-  public List<VFSLoadException> problemsDuringLoad() {
-    return Collections.unmodifiableList(problemsDuringLoad);
-  }
-
-  public List<VFSLoadException> problemsDuringLoad(@NotNull VFSLoadException.ErrorCategory firstCategory,
-                                                   @NotNull VFSLoadException.ErrorCategory... restCategories) {
-    EnumSet<VFSLoadException.ErrorCategory> categories = EnumSet.of(firstCategory, restCategories);
-    return problemsDuringLoad.stream()
-      .filter(p -> categories.contains(p.category()))
-      .toList();
-  }
-
-  public void problemsRecovered(@NotNull List<VFSLoadException> recovered) {
-    problemsDuringLoad.removeAll(recovered);
-    problemsRecovered.addAll(recovered);
-  }
-
-  public void problemsRecoveryFailed(@NotNull List<VFSLoadException> triedToRecover,
-                                     @NotNull VFSLoadException.ErrorCategory category,
-                                     @NotNull String message){
-    problemsRecoveryFailed(triedToRecover, category, message, /*cause: */ null);
-  }
-  public void problemsRecoveryFailed(@NotNull List<VFSLoadException> triedToRecover,
-                                     @NotNull VFSLoadException.ErrorCategory category,
-                                     @NotNull String message,
-                                     @Nullable Throwable cause) {
-    problemsDuringLoad.removeAll(triedToRecover);
-    VFSLoadException recoveryFailed = (cause == null) ?
-                                      new VFSLoadException(category, message) :
-                                      new VFSLoadException(category, message, cause);
-    triedToRecover.forEach(recoveryFailed::addSuppressed);
-    problemsDuringLoad.add(recoveryFailed);
-  }
-
 
   public void setNamesStorage(ScannableDataEnumeratorEx<String> namesStorage) {
     this.namesStorage = namesStorage;
@@ -630,11 +637,54 @@ public class PersistentFSLoader {
     this.attributesEnumerator = attributesEnumerator;
   }
 
+
+  // ============================== for VFSRecoverer to use: ============================================================
+
+  public List<VFSInitException> problemsDuringLoad() {
+    return Collections.unmodifiableList(problemsDuringLoad);
+  }
+
+  public List<VFSInitException> problemsDuringLoad(@NotNull VFSInitException.ErrorCategory firstCategory,
+                                                   @NotNull VFSInitException.ErrorCategory... restCategories) {
+    EnumSet<VFSInitException.ErrorCategory> categories = EnumSet.of(firstCategory, restCategories);
+    return problemsDuringLoad.stream()
+      .filter(p -> categories.contains(p.category()))
+      .toList();
+  }
+
+  public void problemsWereRecovered(@NotNull List<VFSInitException> recovered) {
+    problemsDuringLoad.removeAll(recovered);
+    problemsRecovered.addAll(recovered);
+  }
+
+  public void problemsRecoveryFailed(@NotNull List<VFSInitException> triedToRecover,
+                                     @NotNull VFSInitException.ErrorCategory category,
+                                     @NotNull String message) {
+    problemsRecoveryFailed(triedToRecover, category, message, /*cause: */ null);
+  }
+
+  public void problemsRecoveryFailed(@NotNull List<VFSInitException> triedToRecover,
+                                     @NotNull VFSInitException.ErrorCategory category,
+                                     @NotNull String message,
+                                     @Nullable Throwable cause) {
+    problemsDuringLoad.removeAll(triedToRecover);
+    VFSInitException recoveryFailed = (cause == null) ?
+                                      new VFSInitException(category, message) :
+                                      new VFSInitException(category, message, cause);
+    triedToRecover.forEach(recoveryFailed::addSuppressed);
+    problemsDuringLoad.add(recoveryFailed);
+  }
+
+
   public void contentIdsInvalidated(boolean invalidated) {
     this.invalidateContentIds = invalidated;
   }
 
   public void postponeDirectoryRefresh(int directoryIdToRefresh) {
     this.directoriesIdsToRefresh.add(directoryIdToRefresh);
+  }
+
+  public void postponeFileInvalidation(int fileId) {
+    this.filesIdsToInvalidate.add(fileId);
   }
 }

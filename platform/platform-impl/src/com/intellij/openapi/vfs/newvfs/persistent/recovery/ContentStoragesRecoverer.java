@@ -15,22 +15,24 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage.NULL_ID;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.CONTENT_STORAGES_INCOMPLETE;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.CONTENT_STORAGES_NOT_MATCH;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.CONTENT_STORAGES_INCOMPLETE;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.CONTENT_STORAGES_NOT_MATCH;
 
 /**
  * Knows how to recover CONTENT_STORAGES_XXX error categories:
- * 1. if ContentStorage is not corrupted -> rebuild ContentHashes storage from it
- * 2. if ContentStorage is corrupted -> clears both ContentStorage & ContentHashesStorage,
+ * <ol>
+ * <li>if ContentStorage is not corrupted -> rebuild ContentHashes storage from it</li>
+ * <li>if ContentStorage is corrupted -> clears both ContentStorage & ContentHashesStorage,
  *    and sets all .contentId references to NULL_ID. (This should invalidate local history
- *    also)
+ *    later on)</li>
+ * </ol>
  */
-public class ContentStoragesRecoverer implements Recoverer {
+public class ContentStoragesRecoverer implements VFSRecoverer {
   private static final Logger LOG = Logger.getInstance(ContentStoragesRecoverer.class);
 
   @Override
   public void tryRecover(@NotNull PersistentFSLoader loader) {
-    List<VFSLoadException> contentStoragesProblems = loader.problemsDuringLoad(
+    List<VFSInitException> contentStoragesProblems = loader.problemsDuringLoad(
       CONTENT_STORAGES_NOT_MATCH,
       CONTENT_STORAGES_INCOMPLETE
     );
@@ -46,7 +48,7 @@ public class ContentStoragesRecoverer implements Recoverer {
 
         //If contentStorage is OK -> try to re-create contentHashesEnumerator, and re-fill it by contentsStorage data:
         tryRebuildHashesStorageByContentStorage(loader);
-        loader.problemsRecovered(contentStoragesProblems);
+        loader.problemsWereRecovered(contentStoragesProblems);
         LOG.info("ContentHashesEnumerator was successfully rebuild, ContentStorage was verified along the way");
       }
       catch (IOException ex) {
@@ -68,7 +70,7 @@ public class ContentStoragesRecoverer implements Recoverer {
 
         //inform others (LocalHistory) that old contentIds are no longer valid:
         loader.contentIdsInvalidated(true);
-        loader.problemsRecovered(contentStoragesProblems);
+        loader.problemsWereRecovered(contentStoragesProblems);
         LOG.info("ContentStorage is found broken -> fixed by invalidating all the content refs (LocalHistory is lost)");
       }
     }
@@ -89,7 +91,7 @@ public class ContentStoragesRecoverer implements Recoverer {
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       int contentId = records.getContentRecordId(fileId);
       if (contentId != NULL_ID) {
-        try(var stream = contentStorage.readStream(contentId)){
+        try (var stream = contentStorage.readStream(contentId)) {
           stream.readAllBytes();
         }
       }

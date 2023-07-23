@@ -91,7 +91,7 @@ public class VFSCorruptionRecoveryTest {
         filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
       }
       catch (IOException ex) {
-        if (ex instanceof VFSLoadException vfsLoadEx) {
+        if (ex instanceof VFSInitException vfsLoadEx) {
           System.out.println(fileToDelete.getFileName().toString() + " removed -> " + vfsLoadEx.category());
         }
       }

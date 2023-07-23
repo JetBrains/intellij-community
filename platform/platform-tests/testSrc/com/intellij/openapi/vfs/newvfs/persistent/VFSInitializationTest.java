@@ -4,6 +4,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TemporaryDirectory;
 import com.intellij.util.io.PageCacheUtils;
@@ -19,8 +20,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorageFactory.RecordsStorageKind.*;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.IMPL_VERSION_MISMATCH;
-import static com.intellij.openapi.vfs.newvfs.persistent.VFSLoadException.ErrorCategory.NOT_CLOSED_PROPERLY;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.IMPL_VERSION_MISMATCH;
+import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.NOT_CLOSED_PROPERLY;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.Assert.*;
 
@@ -138,7 +139,7 @@ public class VFSInitializationTest {
       fail(
         "VFS opening must fail, since the supplied 'current' version is different from that was used to initialize on-disk structures before");
     }
-    catch (VFSLoadException e) {
+    catch (VFSInitException e) {
       assertEquals(
         "rebuildCause must be IMPL_VERSION_MISMATCH",
         e.category(),
@@ -154,7 +155,7 @@ public class VFSInitializationTest {
     final String corruptionReason = "VFS corrupted because I said so";
     final String corruptionCauseMessage = "Something happens here";
 
-    final PersistentFSConnector.InitializationResult initializationResult = PersistentFSConnector.connect(
+    final VFSInitializationResult initializationResult = PersistentFSConnector.connect(
       cachesDir,
       /*version: */ 1,
       true,
@@ -259,7 +260,7 @@ public class VFSInitializationTest {
           filesNotLeadingToVFSRebuild.add(fileToDelete.getFileName().toString());
         }
         catch (IOException ex) {
-          if (ex instanceof VFSLoadException vfsLoadEx) {
+          if (ex instanceof VFSInitException vfsLoadEx) {
             System.out.println(fileToDelete.getFileName().toString() + " removed -> " + vfsLoadEx.category());
           }
         }
@@ -383,7 +384,7 @@ public class VFSInitializationTest {
         );
         fail("VFS init must fail with NOT_CLOSED_SAFELY");
       }
-      catch (VFSLoadException requestToRebuild) {
+      catch (VFSInitException requestToRebuild) {
         //OK, this is what we expect:
         assertEquals(
           "rebuildCause must be NOT_CLOSED_PROPERLY",
