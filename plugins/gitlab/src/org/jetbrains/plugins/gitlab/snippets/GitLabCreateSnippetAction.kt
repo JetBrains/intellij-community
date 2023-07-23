@@ -4,17 +4,9 @@ package org.jetbrains.plugins.gitlab.snippets
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.vfs.VirtualFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import org.jetbrains.plugins.gitlab.GitlabIcons
-import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.messagePointer
 
 class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create.action.title"),
@@ -28,6 +20,10 @@ class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
+    val canOpen = e.getData(CommonDataKeys.PROJECT)
+                    ?.service<GitLabSnippetService>()
+                    ?.canOpenDialog(e) ?: false
 
+    e.presentation.isEnabledAndVisible = canOpen
   }
 }

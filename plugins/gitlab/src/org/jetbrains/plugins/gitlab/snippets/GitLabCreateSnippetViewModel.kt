@@ -38,6 +38,7 @@ class GitLabCreateSnippetViewModel(
   private val cs: CoroutineScope,
   val project: Project,
   val contents: Deferred<List<GitLabSnippetFileContents>>,
+  val availablePathModes: Set<PathHandlingMode>,
   val data: CreateSnippetViewModelData,
 ) {
   /** Flow of GitLab accounts taken from [GitLabAccountManager]. */

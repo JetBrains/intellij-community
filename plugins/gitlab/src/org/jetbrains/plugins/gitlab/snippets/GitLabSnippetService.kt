@@ -14,6 +14,7 @@ import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.isFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -26,6 +27,10 @@ import java.awt.datatransfer.StringSelection
  */
 @Service(Service.Level.PROJECT)
 class GitLabSnippetService(private val project: Project, private val serviceScope: CoroutineScope) {
+  companion object {
+    const val GL_SNIPPET_FILES_LIMIT = 10
+  }
+
   /**
    * Gets the name of a snippet entry directly from the file name.
    */
@@ -38,7 +43,15 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   fun performCreateSnippetAction(e: AnActionEvent) {
     serviceScope.launch(Dispatchers.Default) {
       val cs = this
-      val vm = createVM(cs, e) ?: return@launch   // TODO: Display error (and make button unavailable)
+
+      val editor = e.getData(CommonDataKeys.EDITOR)
+      val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+      val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+
+      val files = collectNonBinaryFiles(listOfNotNull(editor?.virtualFile).ifEmpty { null }
+                                        ?: selectedFiles
+                                        ?: listOfNotNull(selectedFile))
+      val vm = createVM(cs, e, files)
 
       // Await result of dialog
       if (!cs.async(Dispatchers.Main) {
@@ -56,19 +69,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
       val server = vm.getServer() ?: return@launch // TODO: Display error
 
       val contents = vm.contents.await()
-      val files = contents.mapNotNull { it.file }
 
-      val fileNameExtractor = if (files.isEmpty()) {
-        pathFromName
-      }
-      else {
-        when (data.pathHandlingMode) {
-          PathHandlingMode.RelativePaths -> pathFromNearestCommonAncestor(files)
-          PathHandlingMode.ProjectRelativePaths -> pathFromProjectRoot()
-          PathHandlingMode.ContentRootRelativePaths -> pathFromContentRoot()
-          PathHandlingMode.FlattenedPaths -> pathFromName
-        }
-      }
+      val fileNameExtractor = getFileNameExtractor(files, data.pathHandlingMode)
 
       val result = api.graphQL.createSnippet(
         server,
@@ -93,23 +95,60 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   }
 
   /**
+   * Gets the file name extractor function for the given [PathHandlingMode] using the given set of [files][VirtualFile].
+   * If the list of files are empty, the name selector used should not matter (and no dialog should be opened anyway),
+   * the default name selector is then returned, which is to just take the file name as snippet file name.
+   */
+  private fun getFileNameExtractor(files: List<VirtualFile>,
+                                   pathHandlingMode: PathHandlingMode): (VirtualFile) -> String =
+    if (files.isEmpty()) {
+      pathFromName
+    }
+    else {
+      when (pathHandlingMode) {
+        PathHandlingMode.RelativePaths -> pathFromNearestCommonAncestor(files)
+        PathHandlingMode.ProjectRelativePaths -> pathFromProjectRoot()
+        PathHandlingMode.ContentRootRelativePaths -> pathFromContentRoot()
+        PathHandlingMode.FlattenedPaths -> pathFromName
+      }
+    }
+
+  /**
+   * Checks whether the user should be able to see and click the 'Create Snippet' button.
+   */
+  fun canOpenDialog(e: AnActionEvent): Boolean {
+    if (project.isDefault) {
+      return false
+    }
+
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    val files = collectNonBinaryFiles(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+                                      ?: listOfNotNull(file))
+
+    if (editor != null) {
+      return editor.document.textLength != 0
+    }
+
+    return files.size in 1..GL_SNIPPET_FILES_LIMIT
+  }
+
+  /**
    * Creates the view-model object for representing the creation of a snippet.
    */
-  private fun createVM(cs: CoroutineScope, e: AnActionEvent): GitLabCreateSnippetViewModel {
-    val editor = e.getData(CommonDataKeys.EDITOR)                     // If editor in focus
-    val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)  // If multiple files are selected
-    val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)         // If in editor or on file (or on tab in file)
+  private fun createVM(cs: CoroutineScope, e: AnActionEvent, files: List<VirtualFile>): GitLabCreateSnippetViewModel {
+    val contents = cs.async(Dispatchers.IO) { collectContents(e) }
 
-    val contents = cs.async(Dispatchers.IO) {
-      ReadAction.computeCancellable<List<GitLabSnippetFileContents>?, Nothing> {
-        collectContents(editor, selectedFiles, selectedFile) ?: listOf()
-      }
+    val availablePathHandlingModes = PathHandlingMode.values().filter {
+      val extractor = getFileNameExtractor(files, it)
+      files.map(extractor).toSet().size == files.size // Check that there are no duplicates when mapped
     }
 
     return GitLabCreateSnippetViewModel(
       cs,
       project,
       contents,
+      availablePathHandlingModes.toSet(),
       CreateSnippetViewModelData(
         "",
         "",
@@ -122,6 +161,49 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         PathHandlingMode.RelativePaths
       )
     )
+  }
+
+  /**
+   * Collects all non-binary files under the given files or directories, including those files
+   * or directories. Files are collected and returned as a list, which is guaranteed to contain
+   * at most [limit] number of elements.
+   *
+   * @return The list of collected files with at most [limit] elements.
+   */
+  private fun collectNonBinaryFiles(files: List<VirtualFile>): List<VirtualFile> {
+    val collection = mutableSetOf<VirtualFile>()
+    files.forEach {
+      if (it.collectNonBinaryFilesImpl(collection)) {
+        return collection.toList()
+      }
+    }
+    return collection.toList()
+  }
+
+  /**
+   * Collects all non-binary files under this file/directory, including this file if this [VirtualFile]
+   * is indeed a non-binary file. Files are collected in [collection], which is guaranteed to contain
+   * exactly [limit]+1 number of elements when `true` is returned, or less than or equal to [limit]
+   * number of elements when `false` is returned.
+   *
+   * @return `true` if the limit is reached, `false`, if not.
+   */
+  private fun VirtualFile.collectNonBinaryFilesImpl(collection: MutableSet<VirtualFile>): Boolean {
+    if (isFile && fileType.isBinary || collection.size > GL_SNIPPET_FILES_LIMIT || isRecursiveOrCircularSymlink) {
+      return collection.size > GL_SNIPPET_FILES_LIMIT
+    }
+
+    if (this.isFile) {
+      collection += this
+    }
+
+    children?.forEach {
+      if (it.collectNonBinaryFilesImpl(collection)) {
+        return true
+      }
+    }
+
+    return false
   }
 
   /**
@@ -161,6 +243,23 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   }
 
   /**
+   * Collects the contents that are supposed to be part of the snippet from the given action event.
+   *
+   * @return All file contents that are selected and not empty.
+   */
+  private fun collectContents(e: AnActionEvent): List<GitLabSnippetFileContents> {
+    val editor = e.getData(CommonDataKeys.EDITOR)                     // If editor in focus
+    val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)  // If multiple files are selected
+    val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)         // If in editor or on file (or on tab in file)
+
+    return ReadAction.computeCancellable<List<GitLabSnippetFileContents>, Nothing> {
+      collectContents(editor, selectedFiles, selectedFile)
+        ?.filter { it.capturedContents.isNotEmpty() }
+      ?: listOf()
+    }
+  }
+
+  /**
    * Collects the contents from [Editor], or list of [files][VirtualFile], or [file][VirtualFile] in that order.
    * The first content holder that is not `null` will be used.
    */
@@ -170,13 +269,10 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     if (editor != null) {
       editor.collectContents()?.let(::listOf)
     }
-    else if (files != null) {
-      files.map { f ->
+    else {
+      collectNonBinaryFiles(files?.toList() ?: listOfNotNull(file)).map { f ->
         f.collectContents() ?: GitLabSnippetFileContents(f, "")
       }
-    }
-    else {
-      file?.collectContents()?.let(::listOf)
     }
 
   /**

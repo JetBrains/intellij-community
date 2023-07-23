@@ -79,7 +79,8 @@ internal object GitLabCreateSnippetComponentFactory {
       }
 
       row(message("snippet.create.path-mode")) {
-        comboBox(PathHandlingMode.values().toList(),
+        // TODO: Maybe make option unavailable, problem is making the item unselectable
+        comboBox(createSnippetVm.availablePathModes,
                  ListCellRenderer { _, value, _, _, _ ->
                    JLabel(value?.displayName).apply {
                      toolTipText = value?.tooltip
