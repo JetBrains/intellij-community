@@ -12,6 +12,8 @@ import com.intellij.ide.actions.SearchEverywhereBaseAction
 import com.intellij.ide.actions.SearchEverywhereClassifier
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.AbstractGotoSEContributor.createContext
+import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.Companion.SE_TAB_TOPIC
+import com.intellij.ide.actions.searcheverywhere.SETabSwitcherListener.SETabSwitchedEvent
 import com.intellij.ide.actions.searcheverywhere.footer.createTextExtendedInfo
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.ide.util.scopeChooser.ScopeModel
@@ -19,6 +21,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.progress.ProgressIndicator
@@ -145,6 +148,15 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       if (model.isWholeWordsOnly != word.get()) word.set(model.isWholeWordsOnly)
     }
 
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe<SETabSwitcherListener>(
+      SE_TAB_TOPIC, object : SETabSwitcherListener {
+      override fun tabSwitched(event: SETabSwitchedEvent) {
+        case.set(false)
+        regexp.set(false)
+        word.set(false)
+      }
+    })
+
     val onDisposeLocal = onDispose
     onDispose = {
       onDisposeLocal.invoke()
@@ -153,7 +165,9 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
 
     model.addObserver(findModelObserver)
 
-    return listOf(CaseSensitiveAction(case, registerShortcut, onChanged), WordAction(word, registerShortcut, onChanged), RegexpAction(regexp, registerShortcut, onChanged))
+    return listOf(CaseSensitiveAction(case, registerShortcut, onChanged),
+                  WordAction(word, registerShortcut, onChanged),
+                  RegexpAction(regexp, registerShortcut, onChanged))
   }
 
   override fun getDataForItem(element: SearchEverywhereItem, dataId: String): Any? {
@@ -229,10 +243,18 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
 
     statusText.appendLine(FindBundle.message("message.nothingFound.used.options")).appendLine("")
 
-    if (model.isCaseSensitive) { statusText.appendText(FindBundle.message("find.popup.case.sensitive.label")) }
-    if (model.isWholeWordsOnly) { statusText.appendText(" ").appendText(FindBundle.message("find.whole.words.label")) }
-    if (model.isRegularExpressions) { statusText.appendText(" ").appendText(FindBundle.message("find.regex.label")) }
-    if (model.fileFilter?.isNotBlank() == true) { statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask.label")) }
+    if (model.isCaseSensitive) {
+      statusText.appendText(FindBundle.message("find.popup.case.sensitive.label"))
+    }
+    if (model.isWholeWordsOnly) {
+      statusText.appendText(" ").appendText(FindBundle.message("find.whole.words.label"))
+    }
+    if (model.isRegularExpressions) {
+      statusText.appendText(" ").appendText(FindBundle.message("find.regex.label"))
+    }
+    if (model.fileFilter?.isNotBlank() == true) {
+      statusText.appendText(" ").appendText(FindBundle.message("find.popup.filemask.label"))
+    }
 
     val clear = {
       model.isCaseSensitive = false
