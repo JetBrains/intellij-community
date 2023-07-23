@@ -152,7 +152,7 @@ private fun bootstrap(startupTimings: MutableList<Any>) {
   addBootstrapTiming("properties loading", startupTimings)
 
   PathManager.customizePaths()
-  addBootstrapTiming("plugin updates install", startupTimings)
+  addBootstrapTiming("customizePaths", startupTimings)
 
   // this check must be performed before system directories are locked
   if (!AppMode.isCommandLine() || java.lang.Boolean.getBoolean(AppMode.FORCE_PLUGIN_UPDATES)) {
