@@ -10,13 +10,13 @@ import kotlinx.coroutines.CoroutineScope
 
 private class CustomExportersListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
-    val spanExporters = mutableListOf<AsyncSpanExporter>()
-    val metricsExporters = mutableListOf<MetricsExporterEntry>()
-
     val providers = OTelExportersProvider.EP.extensionList
     if (providers.isEmpty()) {
       return
     }
+
+    val spanExporters = mutableListOf<AsyncSpanExporter>()
+    val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
     for (provider in providers) {
       if (provider.isTracingAvailable()) {
@@ -28,9 +28,9 @@ private class CustomExportersListener : ApplicationInitializedListener {
         metricsExporters.add(MetricsExporterEntry(metrics, duration))
       }
     }
-    TelemetryManager.getInstance().apply {
-      addSpansExporters(spanExporters)
-      addMetricsExporters(metricsExporters)
-    }
+
+    val telemetryManager = TelemetryManager.getInstance()
+    telemetryManager.addSpansExporters(spanExporters)
+    telemetryManager.addMetricsExporters(metricsExporters)
   }
 }
