@@ -1,9 +1,26 @@
 <html>
 <body>
-Reports empty classes and Java files without any defined classes.
-<p>A class is empty if it
-doesn't contain any fields, methods, constructors, or initializers. Empty classes often remain
+Reports empty classes and empty Java files.
+<p>A class is empty if it doesn't contain any fields, methods, constructors, or initializers. Empty classes are sometimes left over
   after significant changes or refactorings.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  class Example {
+    List&lt;String&gt; getList() {
+       return new ArrayList&lt;&gt;() {
+
+       };
+    }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Example {
+    List&lt;String&gt; getList() {
+       return new ArrayList&lt;&gt;();
+    }
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>Configure the inspection:</p>
 <ul>
