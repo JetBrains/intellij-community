@@ -82,7 +82,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   @Nullable
   @Override
   public String getAdvertisement() {
-    if (Registry.is("search.everywhere.footer.extended.info")) return null;
+    if (SearchEverywhereUI.isExtendedInfoEnabled()) return null;
 
     ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     @NlsSafe String altEnter = getFirstKeyboardShortcutText(altEnterShortcutSet);

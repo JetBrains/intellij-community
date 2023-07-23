@@ -155,7 +155,7 @@ public final class SearchEverywhereHeader {
         switchToTab(selectedTab);
         SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(
           myProject, SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(selectedTab.getReportableID()));
-        if (Registry.is("search.everywhere.footer.extended.info")) {
+        if (SearchEverywhereUI.isExtendedInfoEnabled()) {
           ApplicationManager.getApplication().getMessageBus().syncPublisher(SETabSwitcherListener.Companion.getSE_TAB_TOPIC())
             .tabSwitched(new SETabSwitcherListener.SETabSwitchedEvent(selectedTab));
         }

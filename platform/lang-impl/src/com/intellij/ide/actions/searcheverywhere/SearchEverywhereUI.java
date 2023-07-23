@@ -549,7 +549,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     ExtendableTextComponent.Extension leftExt = new ExtendableTextComponent.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
-        return Registry.is("search.everywhere.footer.extended.info") ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
+        return isExtendedInfoEnabled() ? AllIcons.Actions.SearchWithHistory : AllIcons.Actions.Search;
       }
 
       @Override
@@ -564,7 +564,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
       @Override
       public Runnable getActionOnClick() {
-        if (!Registry.is("search.everywhere.footer.extended.info")) return null;
+        if (!isExtendedInfoEnabled()) return null;
 
         Rectangle bounds = ((TextFieldWithPopupHandlerUI)mySearchField.getUI()).getExtensionIconBounds(this);
         Point point = bounds.getLocation();
@@ -596,7 +596,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   @Override
   protected @NotNull JPanel createFooterPanel(@NotNull JPanel panel) {
-    if (!Registry.is("search.everywhere.footer.extended.info")) return super.createFooterPanel(panel);
+    if (!isExtendedInfoEnabled()) return super.createFooterPanel(panel);
 
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(
       SETabSwitcherListener.Companion.getSE_TAB_TOPIC(), new SETabSwitcherListener() {
@@ -822,7 +822,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
 
       showDescriptionForIndex(myResultsList.getSelectedIndex());
-      if (Registry.is("search.everywhere.footer.extended.info")) {
+      if (isExtendedInfoEnabled()) {
         if (selectedValue != null && myExtendedInfoComponent != null) {
           myExtendedInfoComponent.updateElement(selectedValue);
         }
@@ -854,6 +854,10 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
         }
       }
     });
+  }
+  
+  static boolean isExtendedInfoEnabled() {
+    return Registry.is("search.everywhere.footer.extended.info") || ApplicationManager.getApplication().isInternal();
   }
 
   /**
