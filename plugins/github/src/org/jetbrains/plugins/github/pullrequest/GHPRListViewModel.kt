@@ -10,10 +10,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionListModel
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -83,6 +81,9 @@ class GHPRListViewModel internal constructor(
   private val searchHistoryModel = GHPRSearchHistoryModel(project.service<GHPRListPersistentSearchHistory>())
   val searchVm = GHPRSearchPanelViewModel(cs, project, repositoryDataService, searchHistoryModel, dataContext.securityService.currentUser)
 
+  private val _focusRequests = Channel<Unit>(1)
+  internal val focusRequests: Flow<Unit> = _focusRequests.receiveAsFlow()
+
   init {
     cs.launchNow {
       searchVm.searchState.collectLatest {
@@ -100,5 +101,9 @@ class GHPRListViewModel internal constructor(
     if (listLoader.canLoadMore()) {
       listLoader.loadMore()
     }
+  }
+
+  fun requestFocus() {
+    _focusRequests.trySend(Unit)
   }
 }

@@ -2,7 +2,9 @@
 package org.jetbrains.plugins.github.pullrequest.ui.list
 
 import com.intellij.collaboration.async.combineAndCollect
+import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.list.error.ErrorStatusPanelFactory
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes
@@ -11,6 +13,7 @@ import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.StatusText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.yield
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
@@ -39,6 +42,13 @@ internal class GHPRListPanelController(
     scope.launch {
       combineAndCollect(listVm.loading, listVm.searchVm.searchState) { isLoading, searchValue ->
         updateEmptyText(isLoading, searchValue)
+      }
+    }
+
+    scope.launchNow {
+      listVm.focusRequests.collect {
+        yield()
+        CollaborationToolsUIUtil.focusPanel(mainPanel)
       }
     }
   }

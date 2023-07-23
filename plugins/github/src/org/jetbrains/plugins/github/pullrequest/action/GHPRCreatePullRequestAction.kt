@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
-import com.intellij.collaboration.async.CompletableFutureUtil.composeOnEdt
-import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -10,9 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowController
-import java.util.function.Supplier
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowViewModel
 
 internal class GHPRCreatePullRequestAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -21,10 +17,9 @@ internal class GHPRCreatePullRequestAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     with(e) {
-      val twController = project?.service<GHPRToolWindowController>()
-      val twAvailable = project != null && twController != null && twController.isAvailable()
-      val componentController = twController?.getContentController()?.repositoryContentController?.getNow(null)
-      val twInitialized = project != null && componentController != null
+      val vm = project?.service<GHPRToolWindowViewModel>()
+      val twAvailable = project != null && vm != null && vm.isAvailable.value
+      val twInitialized = project != null && vm != null && vm.projectVm.value != null
 
       if (place == ActionPlaces.TOOLWINDOW_TITLE) {
         presentation.isEnabledAndVisible = twInitialized
@@ -38,11 +33,8 @@ internal class GHPRCreatePullRequestAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val twController = e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowController>()
-    twController.activate().composeOnEdt {
-      it.repositoryContentController
-    }.successOnEdt {
-      it.createPullRequest()
+    e.getRequiredData(PlatformDataKeys.PROJECT).service<GHPRToolWindowViewModel>().activateAndAwaitProject {
+      createPullRequest()
     }
   }
 }

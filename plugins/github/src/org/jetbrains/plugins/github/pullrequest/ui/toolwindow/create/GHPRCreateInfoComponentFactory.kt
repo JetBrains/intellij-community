@@ -22,7 +22,6 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextArea
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
 import git4idea.GitPushUtil
@@ -40,6 +39,8 @@ import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestRequestedReviewer
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowProjectViewModel
+import org.jetbrains.plugins.github.pullrequest.GHPRToolWindowTab
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -48,7 +49,6 @@ import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowRepositoryContentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import java.awt.Component
@@ -62,7 +62,7 @@ import javax.swing.text.Document
 internal class GHPRCreateInfoComponentFactory(private val project: Project,
                                               private val settings: GithubPullRequestsProjectUISettings,
                                               private val dataContext: GHPRDataContext,
-                                              private val viewController: GHPRToolWindowRepositoryContentController) {
+                                              private val projectVm: GHPRToolWindowProjectViewModel) {
 
   fun create(directionModel: MergeDirectionModel<GHGitRepositoryMapping>,
              titleDocument: Document,
@@ -88,8 +88,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         if (discard == Messages.NO) return
 
         progressIndicator.cancel()
-        viewController.viewList()
-        viewController.resetNewPullRequestView()
+        projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
         createLoadingModel.future = null
         existenceCheckLoadingModel.reset()
       }
@@ -281,9 +280,9 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
           .thenCompose { adjustLabels(it, labels) }
           .successOnEdt {
             if (!progressIndicator.isCanceled) {
-              viewController.viewPullRequest(it.prId)
+              projectVm.viewPullRequest(it.prId)
               settings.recentNewPullRequestHead = headRepo.repository
-              viewController.resetNewPullRequestView()
+              projectVm.closeTab(GHPRToolWindowTab.NewPullRequest)
             }
             it
           }
@@ -332,7 +331,7 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       addHyperlinkListener(object : HyperlinkAdapter() {
         override fun hyperlinkActivated(e: HyperlinkEvent) {
           if (e.description == "VIEW") {
-            loadingModel.result?.let(viewController::viewPullRequest)
+            loadingModel.result?.let(projectVm::viewPullRequest)
           }
           else {
             BrowserUtil.browse(e.description)

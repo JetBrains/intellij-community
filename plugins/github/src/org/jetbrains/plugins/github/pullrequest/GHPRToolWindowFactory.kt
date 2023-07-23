@@ -2,70 +2,83 @@
 package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
+import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.EmptyAction
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
-import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
-import com.intellij.ui.ClientProperty
 import com.intellij.util.cancelOnDispose
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
+import com.intellij.util.childScope
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.*
+import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSelectPullRequestForFileAction
 import org.jetbrains.plugins.github.pullrequest.action.GHPRSwitchRemoteAction
-import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowContentController
-import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.MultiTabGHPRToolWindowContentController
-import org.jetbrains.plugins.github.util.GHHostedRepositoriesManager
 
 internal class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
-  companion object {
-    const val ID = "Pull Requests"
-  }
+  override fun init(toolWindow: ToolWindow) =
+    toolWindow.project.service<GHPRToolWindowController>().manageAvailability(toolWindow)
 
-  override fun init(toolWindow: ToolWindow) {
-    toolWindow.project.coroutineScope.launch {
-      val repositoriesManager = toolWindow.project.service<GHHostedRepositoriesManager>()
-      withContext<Unit>(Dispatchers.EDT) {
-        repositoriesManager.knownRepositoriesState.collect {
-          toolWindow.isAvailable = it.isNotEmpty()
-        }
+  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) =
+    project.service<GHPRToolWindowController>().manageContent(toolWindow)
+
+  override fun shouldBeAvailable(project: Project): Boolean = false
+}
+
+@Service(Service.Level.PROJECT)
+private class GHPRToolWindowController(private val project: Project, parentCs: CoroutineScope) {
+  private val cs = parentCs.childScope(Dispatchers.Main)
+
+  @RequiresEdt
+  fun manageAvailability(toolWindow: ToolWindow) {
+    cs.launch {
+      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
+      vm.isAvailable.collect {
+        toolWindow.isAvailable = it
       }
     }.cancelOnDispose(toolWindow.disposable)
   }
 
-  override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
-    with(toolWindow as ToolWindowEx) {
-      component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
-      setTitleActions(listOf(
-        EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), toolWindow.component),
-        GHPRSelectPullRequestForFileAction(),
-      ))
-      setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
+  @RequiresEdt
+  fun manageContent(toolWindow: ToolWindow) {
+    toolWindow.component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true")
 
-      // so it's not closed when all content is removed
-      dontHideOnEmptyContent()
-    }
+    cs.launch {
+      val vm = project.serviceAsync<GHPRToolWindowViewModel>()
 
-    val controller = MultiTabGHPRToolWindowContentController(
-      toolWindow.disposable, project,
-      project.service<GHHostedRepositoriesManager>(),
-      service<GHAccountManager>(),
-      project.service<GHRepositoryConnectionManager>(),
-      project.service<GithubPullRequestsProjectUISettings>(),
-      toolWindow
-    )
+      coroutineScope {
+        toolWindow.contentManager.addDataProvider {
+          if (GHPRActionKeys.PULL_REQUESTS_PROJECT_VM.`is`(it)) vm.projectVm.value
+          else null
+        }
 
-    ClientProperty.put(toolWindow.component, GHPRToolWindowContentController.KEY, controller)
+        // so it's not closed when all content is removed
+        toolWindow.dontHideOnEmptyContent()
+        val componentFactory = GHPRToolWindowTabComponentFactory(project, vm)
+        manageReviewToolwindowTabs(this, toolWindow, vm, componentFactory, GithubBundle.message("toolwindow.stripe.Pull_Requests"))
+
+        toolWindow.setTitleActions(listOf(
+          EmptyAction.registerWithShortcutSet("Github.Create.Pull.Request", CommonShortcuts.getNew(), toolWindow.component),
+          GHPRSelectPullRequestForFileAction(),
+        ))
+        toolWindow.setAdditionalGearActions(DefaultActionGroup(GHPRSwitchRemoteAction()))
+
+        launch {
+          vm.activationRequests.collect {
+            toolWindow.activate {}
+          }
+        }
+
+        awaitCancellation()
+      }
+    }.cancelOnDispose(toolWindow.contentManager)
   }
-
-  override fun shouldBeAvailable(project: Project): Boolean = false
 }
