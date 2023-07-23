@@ -1,6 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.highlighter
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.highlighting
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerFactoryBase
@@ -11,19 +10,14 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
-import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.bindingContextUtil.getTargetFunction
-import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
-class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
+abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         val returnOrThrow = when (val parent = target.parent) {
             is KtReturnExpression, is KtThrowExpression -> parent
@@ -58,7 +52,35 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
             ?: getOnLambdaCallUsageHandler(editor, file, target)
     }
 
-    private class OnExitUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression, val highlightReferences: Boolean = false) :
+    protected abstract fun getRelevantReturnDeclaration(returnExpression: KtReturnExpression): KtDeclarationWithBody?
+
+    protected abstract fun isInlinedArgument(declaration: KtDeclarationWithBody): Boolean
+
+    protected fun getRelevantDeclaration(expression: KtExpression): KtDeclarationWithBody? {
+        if (expression is KtReturnExpression) {
+            getRelevantReturnDeclaration(expression)?.let { return it }
+        }
+
+        if (expression is KtThrowExpression || expression is KtReturnExpression) {
+            for (parent in expression.parents) {
+                if (parent is KtDeclarationWithBody) {
+                    if (parent is KtPropertyAccessor) {
+                        return parent
+                    }
+
+                    if (InlineUtil.canBeInlineArgument(parent) && !isInlinedArgument(parent)) {
+                        return parent
+                    }
+                }
+            }
+
+            return null
+        }
+
+        return expression.parents.filterIsInstance<KtDeclarationWithBody>().firstOrNull()
+    }
+
+    private inner class OnExitUsagesHandler(editor: Editor, file: PsiFile, val target: KtExpression, val highlightReferences: Boolean = false) :
         HighlightUsagesHandlerBase<PsiElement>(editor, file) {
 
         override fun getTargets() = listOf(target)
@@ -72,7 +94,7 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                 if (target is KtFunctionLiteral) {
                     target
                 } else {
-                    target.getRelevantDeclaration()
+                    getRelevantDeclaration(target)
                 }
 
             if (target is KtReturnExpression || target is KtThrowExpression) {
@@ -85,20 +107,35 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                 }
             }
 
+            val lastLambdaExpression = (relevantFunction as? KtFunctionLiteral)?.bodyExpression?.statements?.lastOrNull()
+
             relevantFunction?.accept(object : KtVisitorVoid() {
+                private var withinLastLambdaExpression: Boolean = false
+
                 override fun visitKtElement(element: KtElement) {
                     ProgressIndicatorProvider.checkCanceled()
                     element.acceptChildren(this)
                 }
 
                 override fun visitExpression(expression: KtExpression) {
-                    if (relevantFunction is KtFunctionLiteral) {
-                        if (occurrenceForFunctionLiteralReturnExpression(expression)) {
-                            return
+                    var withinLastLambdaExpressionChanged = false
+                    if (!withinLastLambdaExpression && lastLambdaExpression == expression) {
+                        withinLastLambdaExpression = true
+                        withinLastLambdaExpressionChanged = true
+                    }
+                    try {
+                        if (relevantFunction is KtFunctionLiteral) {
+                            if (occurrenceForFunctionLiteralReturnExpression(expression)) {
+                                return
+                            }
+                        }
+
+                        super.visitExpression(expression)
+                    } finally {
+                        if (withinLastLambdaExpressionChanged) {
+                            withinLastLambdaExpression = false
                         }
                     }
-
-                    super.visitExpression(expression)
                 }
 
                 private fun occurrenceForFunctionLiteralReturnExpression(expression: KtExpression): Boolean {
@@ -108,12 +145,11 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                         return false
                     }
 
-                    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)
-                    if (bindingContext == BindingContext.EMPTY || !expression.isUsedAsResultOfLambda(bindingContext)) {
+                    if (!withinLastLambdaExpression) {
                         return false
                     }
 
-                    if (expression.getRelevantDeclaration() != relevantFunction) {
+                    if (getRelevantDeclaration(expression) != relevantFunction) {
                         return false
                     }
 
@@ -122,7 +158,7 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                 }
 
                 private fun visitReturnOrThrow(expression: KtExpression) {
-                    if (expression.getRelevantDeclaration() == relevantFunction) {
+                    if (getRelevantDeclaration(expression) == relevantFunction) {
                         addOccurrence(expression)
                     }
                 }
@@ -139,31 +175,4 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
 
         override fun highlightReferences() = highlightReferences
     }
-}
-
-private fun KtExpression.getRelevantDeclaration(): KtDeclarationWithBody? {
-    if (this is KtReturnExpression) {
-        val targetFunction = getTargetFunction(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) as? KtDeclarationWithBody
-        if (targetFunction != null) return targetFunction
-    }
-
-    if (this is KtThrowExpression || this is KtReturnExpression) {
-        for (parent in parents) {
-            if (parent is KtDeclarationWithBody) {
-                if (parent is KtPropertyAccessor) {
-                    return parent
-                }
-
-                if (InlineUtil.canBeInlineArgument(parent) &&
-                    !InlineUtil.isInlinedArgument(parent as KtFunction, parent.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL), false)
-                ) {
-                    return parent
-                }
-            }
-        }
-
-        return null
-    }
-
-    return parents.filterIsInstance<KtDeclarationWithBody>().firstOrNull()
 }

@@ -3,6 +3,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingPassFactory"/>
+
+    <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
