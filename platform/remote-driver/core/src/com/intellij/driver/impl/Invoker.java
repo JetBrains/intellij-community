@@ -337,12 +337,17 @@ public class Invoker implements InvokerMBean {
       // take into account argument types
       for (Method method : targetMethods) {
         if (areTypesCompatible(method.getParameterTypes(), argumentTypes)) {
-          return new CallTarget(clazz, method);
+          return buildCallTarget(clazz, method);
         }
       }
     }
 
-    return new CallTarget(clazz, targetMethods.get(0));
+    return buildCallTarget(clazz, targetMethods.get(0));
+  }
+
+  private static @NotNull CallTarget buildCallTarget(Class<?> clazz, Method method) {
+    method.setAccessible(true);
+    return new CallTarget(clazz, method);
   }
 
   private static @NotNull List<@Nullable Class<?>> getArgumentTypes(Object[] transformedArgs) {
@@ -411,12 +416,21 @@ public class Invoker implements InvokerMBean {
         projectInstance = getReference(call.getSessionId(), projectRef.id());
       }
 
+      Class<?> serviceClass = clazz;
+      String serviceInterface = ((ServiceCall)call).getServiceInterface();
+      if (serviceInterface != null) {
+        serviceClass = findServiceInterface(clazz, serviceInterface);
+        if (serviceClass == null) {
+          throw new IllegalStateException("Unable to find interface " + serviceInterface + " for service " + clazz);
+        }
+      }
+
       Object instance;
-      if (projectInstance instanceof Project) { // todo assert
-        instance = ((Project)projectInstance).getService(clazz);
+      if (projectInstance instanceof Project) {
+        instance = ((Project)projectInstance).getService(serviceClass);
       }
       else {
-        instance = ApplicationManager.getApplication().getService(clazz);
+        instance = ApplicationManager.getApplication().getService(serviceClass);
       }
       return instance;
     }
@@ -435,6 +449,25 @@ public class Invoker implements InvokerMBean {
     }
 
     throw new UnsupportedOperationException("Unsupported call type " + call);
+  }
+
+  private static @Nullable Class<?> findServiceInterface(@NotNull Class<?> clazz, @NotNull String serviceInterface) {
+    for (Class<?> anInterface : clazz.getInterfaces()) {
+      if (serviceInterface.equals(anInterface.getName())) {
+        return anInterface;
+      }
+    }
+
+    Class<?> superclass = clazz.getSuperclass();
+    if (superclass != null) {
+      if (serviceInterface.equals(superclass.getName())) {
+        return superclass;
+      }
+
+      return findServiceInterface(superclass, serviceInterface);
+    }
+
+    return null;
   }
 
   private Object @NotNull [] transformArgs(@NotNull RemoteCall call) {

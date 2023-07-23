@@ -8,6 +8,7 @@ import com.intellij.driver.sdk.ui.DEFAULT_FIND_TIMEOUT_SECONDS
 import com.intellij.driver.sdk.ui.keyboard.WithKeyboard
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.RobotService
+import com.intellij.driver.sdk.waitFor
 import java.awt.Point
 import java.time.Duration
 

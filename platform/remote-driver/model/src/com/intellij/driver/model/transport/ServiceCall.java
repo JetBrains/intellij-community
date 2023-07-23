@@ -11,6 +11,7 @@ public final class ServiceCall extends RemoteCall {
   private static final long serialVersionUID = 1L;
 
   private final Ref projectRef;
+  private final String serviceInterface;
 
   public ServiceCall(int sessionId,
                      String timedSpan,
@@ -20,13 +21,19 @@ public final class ServiceCall extends RemoteCall {
                      String className,
                      String methodName,
                      Object[] args,
-                     @Nullable Ref projectRef) {
+                     @Nullable Ref projectRef,
+                     @Nullable String serviceInterface) {
     super(sessionId, timedSpan, pluginId, dispatcher, lockSemantics, className, methodName, args);
     this.projectRef = projectRef;
+    this.serviceInterface = serviceInterface;
   }
 
   public Ref getProjectRef() {
     return projectRef;
+  }
+
+  public @Nullable String getServiceInterface() {
+    return serviceInterface;
   }
 
   @Override

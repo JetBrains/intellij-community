@@ -172,7 +172,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             remote.value,
             method.name,
             convertArgsToPass(args),
-            null
+            null,
+            remote.serviceInterface.takeIf { it.isNotBlank() }
           )
           val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
@@ -205,7 +206,8 @@ internal class DriverImpl(host: JmxHost?) : Driver {
             remote.value,
             method.name,
             convertArgsToPass(args),
-            (project as RefWrapper).getRef()
+            (project as RefWrapper).getRef(),
+            remote.serviceInterface.takeIf { it.isNotBlank() }
           )
           val callResult = makeCall(call)
           convertResult(callResult, method, getPluginId(remote))
