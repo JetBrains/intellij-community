@@ -36,17 +36,17 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * This class is just an 'instance holder' -- actual implementation is an {@link FSRecordsImpl} instance,
  * all methods delegate to it.
- *
+ * <p>
  * Current policy: avoid use of this class outside of VFS impl code, inside VFS impl code migrate to use
- * the {@link FSRecordsImpl} _instance_ obtained by {@link #connect(List)}.
- *
+ * the {@link FSRecordsImpl} _instance_ obtained by {@link #connect(List)}/{@link #getInstance()}.
+ * <p>
  * This is very low-level API, intended to be used only by VFS implementation code only -- mainly
  * {@link PersistentFSImpl}. Inside VFS implementation all the calls should go through the instance
  * obtained by {@link #connect(List)}. Current usages of static methods should be gradually migrated.
  * {@link FSRecords#getInstance()} method could be used to help with migration.
- *
+ * <p>
  * At the end I plan to convert {@link FSRecordsImpl} a regular {@link com.intellij.openapi.components.Service},
- * and {@link FSRecords#implOrFail()} -- to a usual .getInstance() method.
+ * with a usual .getInstance() method.
  */
 @ApiStatus.Internal
 public final class FSRecords {
@@ -116,7 +116,7 @@ public final class FSRecords {
   }
 
 
-  static @NotNull FSRecordsImpl implOrFail() {
+  private static @NotNull FSRecordsImpl implOrFail() {
     FSRecordsImpl _impl = impl;
     if (_impl == null || _impl.isDisposed()) {
       throw alreadyDisposed();
@@ -125,7 +125,8 @@ public final class FSRecords {
     return _impl;
   }
 
-  public static @NotNull FSRecordsImpl getInstance(){
+  /** @throws AlreadyDisposedException if VFS is disposed (or not yet initialized) */
+  public static @NotNull FSRecordsImpl getInstance() throws AlreadyDisposedException {
     return implOrFail();
   }
 

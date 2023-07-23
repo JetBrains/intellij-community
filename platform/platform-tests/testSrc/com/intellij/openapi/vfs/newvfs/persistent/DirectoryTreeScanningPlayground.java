@@ -191,7 +191,7 @@ public class DirectoryTreeScanningPlayground {
   @Ignore("Not finished yet")
   public void scanWithNIOWalkTreeCreatingFSRecordsEntries() throws IOException {
     final long startedAtNs = System.nanoTime();
-    FSRecordsImpl records = FSRecords.implOrFail();
+    FSRecordsImpl records = FSRecords.getInstance();
 
     Files.walkFileTree(ROOT.toPath(), new SimpleFileVisitor<>() {
       @Override

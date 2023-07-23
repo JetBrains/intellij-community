@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus;
 public class VFSErrorsToFUSReporter implements AppLifecycleListener {
   @Override
   public void appWillBeClosed(boolean isRestart) {
-    FSRecordsImpl impl = FSRecords.implOrFail();
+    FSRecordsImpl impl = FSRecords.getInstance();
     long sessionDurationMs = System.currentTimeMillis() - ApplicationManager.getApplication().getStartTime();
 
     VfsUsageCollector.logVfsInternalErrors(

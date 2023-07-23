@@ -30,7 +30,7 @@ internal class CheckVFSHealthAction : AnAction(ActionsBundle.message("action.Che
       withModalProgress(ModalTaskOwner.guess(),
                         ActionsBundle.message("action.CheckVfsSanity.progress"),
                         TaskCancellation.nonCancellable()) {
-        val checker = VFSHealthChecker(FSRecords.implOrFail(), FSRecords.LOG)
+        val checker = VFSHealthChecker(FSRecords.getInstance(), FSRecords.LOG)
         checker.checkHealth(checkForOrphanRecords = true)
       }
     }
