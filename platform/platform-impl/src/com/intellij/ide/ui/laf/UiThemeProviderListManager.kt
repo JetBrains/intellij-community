@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet")
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.ui.laf
 
@@ -12,24 +12,18 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.OutboundSemiGraph
-import java.util.*
 
 // separate service to avoid using LafManager in the EditorColorsManagerImpl initialization
 @Service(Service.Level.APP)
 internal class UiThemeProviderListManager {
   companion object {
-    @JvmStatic
     fun getInstance(): UiThemeProviderListManager = service()
-
-    private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
-
-    private fun editorColorsManager() = EditorColorsManager.getInstance() as EditorColorsManagerImpl
   }
 
   @Volatile
-  private var lafMap = computeMap()
+  private var lafMap: Map<UIThemeBasedLookAndFeelInfo, TargetUIType> = computeMap()
 
-  private val lafList
+  private val lafList: Set<UIThemeBasedLookAndFeelInfo>
     get() = lafMap.keys
 
   fun getLaFs(): List<UIThemeBasedLookAndFeelInfo> = lafList.toList()
@@ -46,7 +40,7 @@ internal class UiThemeProviderListManager {
 
     val parentTheme = findParentTheme(lafList, provider.parentTheme)
     val theme = provider.createTheme(parentTheme) ?: return null
-    editorColorsManager().handleThemeAdded(theme)
+    editorColorManager().handleThemeAdded(theme)
     val newLaF = UIThemeBasedLookAndFeelInfo(theme)
     lafMap = lafMap + Pair(newLaF, provider.targetUI)
     return newLaF
@@ -54,22 +48,9 @@ internal class UiThemeProviderListManager {
 
   fun themeProviderRemoved(provider: UIThemeProvider): UIThemeBasedLookAndFeelInfo? {
     val oldLaF = findLaFByProviderId(provider) ?: return null
-
     lafMap = lafMap - oldLaF
-    editorColorsManager().handleThemeRemoved(oldLaF.theme)
+    editorColorManager().handleThemeRemoved(oldLaF.theme)
     return oldLaF
-  }
-
-  private operator fun <K, V> SortedMap<K, out V>.plus(pair: Pair<K, V>): SortedMap<K, V> {
-    val res = TreeMap(this)
-    res[pair.first] = pair.second
-    return res
-  }
-
-  private operator fun <K, V> SortedMap<K, out V>.minus(key: K): SortedMap<K, V> {
-    val res = TreeMap(this)
-    res.remove(key)
-    return res
   }
 
   private fun findLaFById(id: String) = lafList.find { it.theme.id == id }
@@ -78,38 +59,37 @@ internal class UiThemeProviderListManager {
 }
 
 private fun computeMap(): Map<UIThemeBasedLookAndFeelInfo, TargetUIType> {
-  val map = mutableMapOf<UIThemeBasedLookAndFeelInfo, TargetUIType>()
-
-  val orderedProviders = sortTopologically(UIThemeProvider.EP_NAME.extensions.asList(), { it.id }, { it.parentTheme })
+  val map = LinkedHashMap<UIThemeBasedLookAndFeelInfo, TargetUIType>()
+  val orderedProviders = sortTopologically(UIThemeProvider.EP_NAME.extensionList, { it.id }, { it.parentTheme })
   for (provider in orderedProviders) {
     val parentTheme = findParentTheme(map.keys, provider.parentTheme)
     val theme = UIThemeBasedLookAndFeelInfo(provider.createTheme(parentTheme) ?: continue)
-    map[theme] = provider.targetUI
+    map.put(theme, provider.targetUI)
   }
-
   return map
 }
 
 private fun findParentTheme(themes: Collection<UIThemeBasedLookAndFeelInfo>, parentId: String?): UITheme? {
-  if (parentId == null) return null
-  return themes.map { it.theme }.find { it.id == parentId }
+  if (parentId == null) {
+    return null
+  }
+  return themes.asSequence().map { it.theme }.find { it.id == parentId }
 }
 
 private fun <T, K> sortTopologically(list: List<T>, idFun: (T) -> K, parentIdFun: (T) -> K?): List<T> {
   val mapById = list.associateBy(idFun)
-
-  val graph: OutboundSemiGraph<T> = object : OutboundSemiGraph<T> {
-    override fun getNodes(): Collection<T> {
-      return list
-    }
+  val graph = object : OutboundSemiGraph<T> {
+    override fun getNodes(): Collection<T> = list
 
     override fun getOut(n: T): Iterator<T> {
-      val parentId = parentIdFun(n)
-      val parent = mapById[parentId]
+      val parent = mapById.get(parentIdFun(n))
       return listOfNotNull(parent).iterator()
     }
   }
 
-  val builder: DFSTBuilder<T> = DFSTBuilder(graph)
-  return builder.sortedNodes.reversed()
+  return DFSTBuilder(graph).sortedNodes.reversed()
 }
+
+private const val DEFAULT_LIGHT_THEME_ID = "JetBrainsLightTheme"
+
+private fun editorColorManager() = EditorColorsManager.getInstance() as EditorColorsManagerImpl

@@ -284,7 +284,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @TestOnly
   public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String themeName) {
     assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
-    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
+    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
       if (themeName.equals(theme.getName())) {
         String scheme = theme.getEditorScheme();
@@ -317,7 +317,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
-    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.getInstance().getLaFs()) {
+    for (UIThemeBasedLookAndFeelInfo laf : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
       UITheme theme = laf.getTheme();
       String[] schemes = theme.getAdditionalEditorSchemes();
       PluginDescriptor pluginDescriptor = getPluginDescriptor(theme);
@@ -632,7 +632,8 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         LOG.warn(myState.colorScheme + " color scheme is missing");
       }
       noStateLoaded();
-    } else {
+    }
+    else {
       themeIsCustomized = true;
       Ref<EditorColorsScheme> schemeRef = Ref.create(colorsScheme);
       String schemeName = colorsScheme.getName();
@@ -752,7 +753,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       return;
     }
 
-    @NotNull MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
@@ -763,22 +764,25 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
           boolean isDark = ColorUtil.isDark(scheme.getDefaultBackground());
           String neededThemeName = isDark ? "Solarized Dark" : "Solarized Light";
 
-          Optional<UIThemeBasedLookAndFeelInfo> neededTheme =
-            UiThemeProviderListManager.getInstance().getLaFs().stream().filter((theme) -> {
-              return theme.getName().equals(neededThemeName);
-            }).findFirst();
-
+          UIThemeBasedLookAndFeelInfo neededTheme = null;
+          for (UIThemeBasedLookAndFeelInfo theme : UiThemeProviderListManager.Companion.getInstance().getLaFs()) {
+            if (theme.getName().equals(neededThemeName)) {
+              neededTheme = theme;
+              break;
+            }
+          }
           Notification notification = new Notification("ColorSchemeDeprecation",
                                                        IdeBundle.message("notification.title.solarized.color.scheme.deprecation"),
                                                        "",
                                                        NotificationType.ERROR);
-          if (neededTheme.isPresent()) {
+          if (neededTheme != null) {
             notification.setContent(IdeBundle.message("notification.content.solarized.color.scheme.deprecation.enable", name, neededThemeName));
+            UIThemeBasedLookAndFeelInfo finalNeededTheme = neededTheme;
             notification.addAction(new NotificationAction(IdeBundle.message("notification.title.enable.action.solarized.color.scheme.deprecation", neededThemeName)) {
               @Override
               public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
                 LafManager lafManager = LafManager.getInstance();
-                lafManager.setCurrentLookAndFeel(neededTheme.get(), false);
+                lafManager.setCurrentLookAndFeel(finalNeededTheme, false);
                 lafManager.updateUI();
                 notification.expire();
               }
