@@ -145,8 +145,9 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       if (model.isWholeWordsOnly != word.get()) word.set(model.isWholeWordsOnly)
     }
 
+    val onDisposeLocal = onDispose
     onDispose = {
-      onDispose.invoke()
+      onDisposeLocal.invoke()
       model.removeObserver(findModelObserver)
     }
 
