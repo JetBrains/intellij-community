@@ -1,9 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.*
@@ -13,19 +13,19 @@ import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
-abstract class IndexDataInitializer<T>(val name: String) : Callable<T?> {
+abstract class IndexDataInitializer<T>(private val name: String) : Callable<T?> {
   override fun call(): T? {
     val log = thisLogger()
     val started = Instant.now()
-    return try {
+    try {
       val tasks = prepareTasks()
       val activity = StartUpMeasurer.startActivity("$name storages initialization")
-      runParallelTasks(tasks, true)
+      runParallelTasks(tasks = tasks, checkAppDisposed = true)
       val result = finish()
       val message = getInitializationFinishedMessage(result)
       activity.end()
       log.info("Index data initialization done: ${Duration.between(started, Instant.now()).toMillis()} ms. " + message)
-      result
+      return result
     }
     catch (t: Throwable) {
       log.error("Index data initialization failed", t)
@@ -40,8 +40,6 @@ abstract class IndexDataInitializer<T>(val name: String) : Callable<T?> {
   protected abstract fun prepareTasks(): Collection<ThrowableRunnable<*>>
 
   companion object {
-    private val LOG = Logger.getInstance(IndexDataInitializer::class.java)
-
     @OptIn(ExperimentalCoroutinesApi::class)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
 
@@ -81,7 +79,7 @@ abstract class IndexDataInitializer<T>(val name: String) : Callable<T?> {
         throw e
       }
       catch (t: Throwable) {
-        LOG.error(t)
+        logger<IndexDataInitializer<*>>().error(t)
       }
     }
   }
