@@ -57,6 +57,7 @@ internal object GitLabCreateSnippetComponentFactory {
                                      ListCellRenderer<GitLabProjectCoordinates?> { _, value, _, _, _ ->
                                        JBLabel(value?.projectPath?.toString() ?: message("snippet.create.project.none"))
                                      })
+          .widthGroup("right")
           .bindItem(data::onProject)
 
         cs.async {
@@ -71,11 +72,15 @@ internal object GitLabCreateSnippetComponentFactory {
       row(message("snippet.create.title.label")) {
         textField().applyToComponent {
           toolTipText = message("snippet.create.title.tooltip")
-        }.bindText(data::title)
+        }
+          .widthGroup("right")
+          .bindText(data::title)
       }
 
       row(message("snippet.create.description.label")) {
-        textArea().bindText(data::description)
+        textArea()
+          .widthGroup("right")
+          .bindText(data::description)
       }
 
       row(message("snippet.create.path-mode")) {
@@ -88,6 +93,7 @@ internal object GitLabCreateSnippetComponentFactory {
                  }).applyToComponent {
           toolTipText = message("snippet.create.path-mode.tooltip")
         }
+          .widthGroup("right")
           .bindItem({ data.pathHandlingMode }, { data.pathHandlingMode = it!! })
       }
 
@@ -106,8 +112,8 @@ internal object GitLabCreateSnippetComponentFactory {
             toolTipText = "@ ${account.server.uri}" // TODO: Check that this makes sense to show
           }
         })
-
-        selectAccount.bindItem({ createSnippetVm.glAccount.value }, ::setAccount)
+          .widthGroup("right")
+          .bindItem({ createSnippetVm.glAccount.value }, ::setAccount)
 
         selectAccount.component.addItemListener {
           setAccount(selectAccount.component.selectedItem as GitLabAccount?)

@@ -3,11 +3,16 @@ package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.registerOrReplaceServiceInstance
+import kotlinx.coroutines.flow.MutableStateFlow
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import org.jetbrains.plugins.gitlab.testutil.getGitLabTestDataPath
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.mock
@@ -22,8 +27,26 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
     return path
   }
 
+  private fun createMockAccount(): GitLabAccount {
+    val acc = mock<GitLabAccount>()
+    whenever(acc.id).thenReturn("550")
+    whenever(acc.name).thenReturn("user")
+
+    return acc
+  }
+
+  private fun setAccountManager(accounts: Set<GitLabAccount>) {
+    val accountManager = mock<GitLabAccountManager>()
+    whenever(accountManager.accountsState).thenReturn(MutableStateFlow(accounts))
+
+    val application = ApplicationManager.getApplication()
+    application.registerOrReplaceServiceInstance(GitLabAccountManager::class.java, accountManager, application)
+  }
+
   fun `test - canOpenDialog checks for nested files`() {
     val lfs = LocalFileSystem.getInstance()
+
+    setAccountManager(setOf(createMockAccount()))
 
     val e = mock<AnActionEvent>()
     whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
@@ -36,6 +59,8 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   fun `test - canOpenDialog is false for empty files`() {
     val lfs = LocalFileSystem.getInstance()
     val file = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file/empty.txt"))
+
+    setAccountManager(setOf(createMockAccount()))
 
     val document = mock<Document>()
     whenever(document.text).thenReturn("")
@@ -57,6 +82,8 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
     val emptyFile = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file/empty.txt"))
     val nonEmptyFile = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt"))
 
+    setAccountManager(setOf(createMockAccount()))
+
     val document = mock<Document>()
     whenever(document.text).thenReturn("")
     whenever(document.textLength).thenReturn(0)
@@ -76,11 +103,26 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
   fun `test - canOpenDialog is true for directory with empty file`() {
     val lfs = LocalFileSystem.getInstance()
 
+    setAccountManager(setOf(createMockAccount()))
+
     val e = mock<AnActionEvent>()
     whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
     whenever(e.getData(eq(CommonDataKeys.VIRTUAL_FILE))).thenReturn(
       lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file")))
 
     assertTrue(project.service<GitLabSnippetService>().canOpenDialog(e))
+  }
+
+  fun `test - canOpenDialog is false when there are no accounts`() {
+    val lfs = LocalFileSystem.getInstance()
+
+    setAccountManager(setOf())
+
+    val e = mock<AnActionEvent>()
+    whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
+    whenever(e.getData(eq(CommonDataKeys.VIRTUAL_FILE))).thenReturn(
+      lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt")))
+
+    assertFalse(project.service<GitLabSnippetService>().canOpenDialog(e))
   }
 }

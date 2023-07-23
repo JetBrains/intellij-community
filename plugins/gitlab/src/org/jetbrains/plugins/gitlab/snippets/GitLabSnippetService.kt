@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
+import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
 import java.awt.datatransfer.StringSelection
 
 /**
@@ -117,7 +118,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * Checks whether the user should be able to see and click the 'Create Snippet' button.
    */
   fun canOpenDialog(e: AnActionEvent): Boolean {
-    if (project.isDefault) {
+    if (project.isDefault || service<GitLabAccountManager>().accountsState.value.isEmpty()) {
       return false
     }
 
