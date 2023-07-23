@@ -127,6 +127,7 @@ internal suspend fun initApplicationImpl(args: List<String>,
   ZipFilePool.POOL = null
 }
 
+@VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")
@@ -258,9 +259,10 @@ fun findStarter(key: String): ApplicationStarter? {
   return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
 }
 
+@VisibleForTesting
 fun CoroutineScope.callAppInitialized(listeners: List<ApplicationInitializedListener>, asyncScope: CoroutineScope) {
   for (listener in listeners) {
-    launch {
+    launch(CoroutineName(listener::class.java.name)) {
       listener.execute(asyncScope)
     }
   }
