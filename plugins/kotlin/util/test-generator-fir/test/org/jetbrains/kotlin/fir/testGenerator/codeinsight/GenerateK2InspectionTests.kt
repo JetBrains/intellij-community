@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.idea.kdoc.Abs
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2InspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2LocalInspectionTest
 import org.jetbrains.kotlin.idea.k2.inspections.tests.AbstractK2MultiFileLocalInspectionTest
+import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2MultiFileQuickFixTest
 import org.jetbrains.kotlin.idea.k2.quickfix.tests.AbstractK2QuickFixTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
@@ -66,6 +67,11 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/optIn", pattern = pattern)
             model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)
             model("${idea}/quickfix/protectedInFinal", pattern = pattern)
+        }
+
+        testClass<AbstractK2MultiFileQuickFixTest> {
+            val pattern = Patterns.forRegex("""^(\w+)\.((before\.Main\.\w+)|(test))$""")
+            model("${idea}/quickfix/optIn", pattern = pattern, testMethodName = "doTestWithExtraFile")
         }
 
         testClass<AbstractK2MultiFileLocalInspectionTest> {
