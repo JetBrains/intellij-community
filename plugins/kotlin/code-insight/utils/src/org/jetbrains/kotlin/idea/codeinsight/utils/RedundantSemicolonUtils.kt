@@ -4,6 +4,9 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.util.elementType
+import com.intellij.psi.util.nextLeafs
+import com.intellij.psi.util.prevLeafs
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.util.match
 import org.jetbrains.kotlin.idea.util.isLineBreak
@@ -83,6 +86,12 @@ private fun isSemicolonRequired(semicolon: PsiElement): Boolean {
         // enum; class Foo
         return true
     }
+
+    if (prevSibling is KtClass &&
+        prevSibling.isLocal &&
+        semicolon.nextLeafs.firstOrNull { it !is PsiWhiteSpace && it !is PsiComment }.elementType == KtTokens.LPAR &&
+        semicolon.prevLeafs.firstOrNull { it !is PsiWhiteSpace && it !is PsiComment }.elementType != KtTokens.RPAR
+    ) return true
 
     if (nextSibling is KtPrefixExpression && nextSibling.operationToken == KtTokens.EXCL) {
         val typeElement = semicolon.prevLeaf()?.getStrictParentOfType<KtTypeReference>()?.typeElement
