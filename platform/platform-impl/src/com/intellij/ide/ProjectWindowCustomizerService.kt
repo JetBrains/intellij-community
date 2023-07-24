@@ -33,12 +33,6 @@ import java.util.*
 import javax.swing.Icon
 import javax.swing.JComponent
 
-private fun getProjectPath(project: Project, recentProjectManager: RecentProjectsManagerBase): String {
-  return recentProjectManager.getProjectPath(project) ?: project.basePath ?: run {
-    //thisLogger().warn("Impossible: no path for project $project")
-    ""
-  }
-}
 
 @Service(Service.Level.PROJECT)
 private class ProjectWindowCustomizerIconCache(private val project: Project) {
@@ -54,7 +48,7 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
     })
 
     // Save into the project workspace whatever was generated on Welcome screen if project workspace doesn't have info
-    project.basePath?.let {
+    ProjectWindowCustomizerService.projectPath(project)?.let {
       val migrated = WorkspaceProjectColorStorage(project).getDataIfEmptyFrom(RecentProjectColorStorage(it))
       if (!migrated) {
         ProjectWindowCustomizerService.getInstance().clearToolbarColorsAndInMemoryCache(project)
@@ -63,9 +57,8 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   }
 
   private fun getIconRaw(): Icon {
-    val recentProjectsManager = RecentProjectsManagerBase.getInstanceEx()
-    val path = getProjectPath(project, recentProjectsManager)
-    return recentProjectsManager.getProjectIcon(path = path, isProjectValid = true, iconSize = 16)
+    val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = 16)
   }
 }
 
@@ -114,6 +107,9 @@ class ProjectWindowCustomizerService : Disposable {
       }
       return result
     }
+
+    @Internal
+    fun projectPath(project: Project): String? = RecentProjectsManagerBase.getInstanceEx().getProjectPath(project) ?: project.basePath
   }
 
   private var wasGradientPainted = isForceColorfulToolbar()
@@ -429,7 +425,7 @@ private class WorkspaceProjectColorStorage(val project: Project): ProjectColorSt
 
   private var isMigrating = false
 
-  override val projectPath: String? get() = project.basePath
+  override val projectPath: String? get() = ProjectWindowCustomizerService.projectPath(project)
   private val manager: ProjectColorInfoManager get() = ProjectColorInfoManager.getInstance(project)
 
   val isEmpty: Boolean get() = (customColor?.isNotEmpty() != true) && (associatedIndex?.let { it >= 0 } != true)

@@ -778,8 +778,8 @@ int32 "extendedState"
   @Internal
   fun updateProjectColor(project: Project) {
     val info = ProjectColorInfoManager.getInstance(project).recentProjectColorInfo
-    val baseDir = project.basePath ?: return
-    updateProjectColor(Path.of(baseDir), info)
+    val projectPath = ProjectWindowCustomizerService.projectPath(project) ?: return
+    updateProjectColor(Path.of(projectPath), info)
   }
 
   @Internal
