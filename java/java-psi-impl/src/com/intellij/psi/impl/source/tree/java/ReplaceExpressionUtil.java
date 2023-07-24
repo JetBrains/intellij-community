@@ -77,7 +77,7 @@ public final class ReplaceExpressionUtil {
              i == JavaElementType.CLASS_OBJECT_ACCESS_EXPRESSION ||
              i == JavaElementType.LAMBDA_EXPRESSION ||
              i == JavaElementType.SWITCH_EXPRESSION ||
-             i == JavaElementType.TEMPLATE) {
+             i == JavaElementType.TEMPLATE_EXPRESSION) {
       return false;
     }
 
@@ -151,7 +151,7 @@ public final class ReplaceExpressionUtil {
              i == JavaElementType.METHOD_REF_EXPRESSION ||
              i == JavaElementType.LAMBDA_EXPRESSION ||
              i == JavaElementType.EMPTY_EXPRESSION ||
-             i == JavaElementType.TEMPLATE) {
+             i == JavaElementType.TEMPLATE_EXPRESSION) {
       return 14;
     }
     else {

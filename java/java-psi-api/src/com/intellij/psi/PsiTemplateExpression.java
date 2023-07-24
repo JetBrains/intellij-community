@@ -15,7 +15,7 @@ public interface PsiTemplateExpression extends PsiExpression {
   /**
    * @return the template processor expression.
    */
-  @NotNull PsiExpression getProcessor();
+  @Nullable PsiExpression getProcessor();
 
   /**
    * Get the argument type, which can be a string literal, text block or template.

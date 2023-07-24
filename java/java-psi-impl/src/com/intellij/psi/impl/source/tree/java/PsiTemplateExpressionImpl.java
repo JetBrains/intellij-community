@@ -3,6 +3,8 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +28,14 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
   }
 
   @Override
-  public @NotNull PsiExpression getProcessor() {
-    return (PsiExpression)getFirstChild();
+  public @Nullable PsiExpression getProcessor() {
+    final PsiElement child = getFirstChild();
+    return child instanceof PsiExpression ? (PsiExpression)child : null;
   }
 
   @Override
   public @NotNull ArgumentType getArgumentType() {
-    PsiElement lastChild = getLastChild();
+    final PsiElement lastChild = getLastChild();
     if (lastChild instanceof PsiTemplate) {
       return ArgumentType.TEMPLATE;
     }
@@ -44,7 +47,7 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
 
   @Override
   public @Nullable PsiTemplate getTemplate() {
-    PsiElement lastChild = getLastChild();
+    final PsiElement lastChild = getLastChild();
     return lastChild instanceof PsiTemplate ? (PsiTemplate)lastChild : null;
   }
 
