@@ -958,6 +958,14 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
     }
   }
 
+  /**
+   * Adds comments until the next label statement in a switch branch.
+   * If comments exist, <code>builder</code> will end with '\n'
+   *
+   * @param ct      the CommentTracker object for tracking comments
+   * @param branch  the SwitchBranch object representing a switch branch
+   * @param builder the StringBuilder object to append comments to
+   */
   private static void addCommentsUntilNextLabel(CommentTracker ct, SwitchBranch branch, StringBuilder builder) {
     PsiElement label = ContainerUtil.find(branch.myUsedElements, e -> e instanceof PsiSwitchLabelStatement);
     if (!(label instanceof PsiSwitchLabelStatement labelStatement)) {
