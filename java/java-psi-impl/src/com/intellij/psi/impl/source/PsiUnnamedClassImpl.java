@@ -5,13 +5,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public @Nullable PsiClass getSuperClass() {
-    return null;
+    return JavaPsiFacade.getInstance(getProject()).findClass(CommonClassNames.JAVA_LANG_OBJECT, getResolveScope());
   }
 
   @Override
@@ -89,7 +89,7 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public PsiClassType @NotNull [] getSuperTypes() {
-    return PsiClassType.EMPTY_ARRAY; // TODO java.lang.Object
+    return new PsiClassType[] { PsiType.getJavaLangObject(getManager(), getResolveScope()) };
   }
 
   @Override
@@ -189,15 +189,12 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
-    if (this.equals(baseClass)) {
-      return true;
-    }
-    return CommonClassNames.JAVA_LANG_OBJECT.equals(baseClass.getQualifiedName());
+    return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
   @Override
   public boolean isInheritorDeep(@NotNull PsiClass baseClass, @Nullable PsiClass classToByPass) {
-    return isInheritor(baseClass, true); // TODO
+    return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
   @Override
@@ -232,7 +229,7 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public boolean hasModifierProperty(@NotNull String name) {
-    return false; // TODO
+    return name.equals(PsiModifier.FINAL) || name.equals(PsiModifier.PACKAGE_LOCAL);
   }
 
   @Override
