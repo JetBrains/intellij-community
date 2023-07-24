@@ -49,7 +49,7 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectImpl.Companion.PROJECT_PATH
-import com.intellij.openapi.project.impl.ProjectImpl.Companion.preloadServices
+import com.intellij.openapi.project.impl.ProjectImpl.Companion.schedulePreloadServices
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
@@ -1223,7 +1223,7 @@ private suspend fun initProject(file: Path,
       projectInitObserver?.rawProjectDeferred?.complete(project)
 
       if (preloadServices) {
-        preloadServices(project)
+        schedulePreloadServices(project)
       }
 
       launch {

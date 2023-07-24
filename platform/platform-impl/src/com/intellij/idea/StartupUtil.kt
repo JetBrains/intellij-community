@@ -274,64 +274,15 @@ fun CoroutineScope.startApplication(args: List<String>,
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   val appLoaded = launch {
-    val app = appDeferred.await()
-
-    val initServiceContainerJob = launch {
-      initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
-    }
-
-    val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
-      null
-    }
-    else {
-      async(CoroutineName("eua document")) {
-        prepareShowEuaIfNeededTask(document = euaDocumentDeferred.await(), asyncScope = asyncScope)
-      }
-    }
-
-    val initConfigurationStoreJob = launch {
-      initServiceContainerJob.join()
-      initConfigurationStore(app)
-    }
-
-    val preloadCriticalServicesJob = async(CoroutineName("app pre-initialization")) {
-      initConfigurationStoreJob.join()
-      preInitApp(app = app,
-                 asyncScope = asyncScope,
-                 initLafJob = initLafJob,
-                 log = logDeferred.await(),
-                 appRegisteredJob = appRegisteredJob,
-                 euaTaskDeferred = euaTaskDeferred)
-    }
-
-    // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
-    if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-      launch(CoroutineName("coroutine debug probes init")) {
-        enableCoroutineDump()
-        JBR.getJstack()?.includeInfoFrom {
-          """
-    $COROUTINE_DUMP_HEADER
-    ${dumpCoroutines(stripDump = false)}
-    """
-        }
-      }
-    }
-
-    initServiceContainerJob.join()
-
-    val appInitListeners = async(CoroutineName("app init listener preload")) {
-      getAppInitializedListeners(app)
-    }
-
-    initConfigurationStoreJob.join()
-    appRegisteredJob.join()
-
-    initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
-                        appInitListeners = appInitListeners,
-                        app = app,
-                        preloadCriticalServicesJob = preloadCriticalServicesJob,
-                        telemetryInitJob = telemetryInitJob,
-                        asyncScope = asyncScope)
+    loadApp(app = appDeferred.await(),
+            pluginSetDeferred = pluginSetDeferred,
+            euaDocumentDeferred = euaDocumentDeferred,
+            asyncScope = asyncScope,
+            initLafJob = initLafJob,
+            logDeferred = logDeferred,
+            appRegisteredJob = appRegisteredJob,
+            args = args,
+            telemetryInitJob = telemetryInitJob)
   }
 
   launch {
@@ -356,10 +307,11 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 }
 
-fun isConfigImportNeeded(configPath: Path): Boolean =
-  !Files.exists(configPath) ||
-  Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
-  customTargetDirectoryToImportConfig != null
+fun isConfigImportNeeded(configPath: Path): Boolean {
+  return !Files.exists(configPath) ||
+         Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)) ||
+         customTargetDirectoryToImportConfig != null
+}
 
 /**
  * Directory where the configuration files should be imported to.

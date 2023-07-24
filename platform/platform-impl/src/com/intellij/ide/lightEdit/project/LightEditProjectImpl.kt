@@ -19,18 +19,15 @@ import kotlinx.coroutines.launch
 import java.io.File
 import java.nio.file.Path
 
+private const val NAME = "LightEditProject"
+
+private val projectPath: Path
+  get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
+
 internal class LightEditProjectImpl private constructor(projectPath: Path) :
   ProjectImpl(parent = ApplicationManager.getApplication() as ComponentManagerImpl,
               filePath = projectPath,
               projectName = NAME), LightEditCompatible {
-  companion object {
-    private val LOG = logger<LightEditProjectImpl>()
-    private const val NAME = "LightEditProject"
-
-    private val projectPath: Path
-      get() = Path.of(PathManager.getConfigPath() + File.separator + "light-edit")
-  }
-
   constructor() : this(projectPath)
 
   init {
@@ -38,7 +35,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     customizeRegisteredComponents()
     componentStore.setPath(projectPath, false, null)
     runUnderModalProgressIfIsEdt {
-      preloadServices(this@LightEditProjectImpl)
+      schedulePreloadServices(this@LightEditProjectImpl)
       launch {
         this@LightEditProjectImpl.createComponentsNonBlocking()
       }
@@ -51,7 +48,7 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
   private fun customizeRegisteredComponents() {
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
     if (pluginDescriptor == null) {
-      LOG.error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
+      logger<LightEditProjectImpl>().error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
       return
     }
 

@@ -3,7 +3,6 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
-import com.intellij.diagnostic.subtask
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.ContainerDescriptor
@@ -87,8 +86,8 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")
-    internal suspend fun preloadServices(project: ProjectImpl) {
-      subtask("project service preloading (sync)") {
+    internal fun CoroutineScope.schedulePreloadServices(project: ProjectImpl) {
+      launch(CoroutineName("project service preloading (sync)")) {
         project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                                 activityPrefix = "project ",
                                 syncScope = this,

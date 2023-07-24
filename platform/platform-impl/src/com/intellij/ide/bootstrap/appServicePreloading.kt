@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.PathMacros
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -25,6 +24,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
@@ -66,16 +66,15 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 
   asyncScope.launch {
+    pathMacroJob.join()
+
     launch {
-      pathMacroJob.join()
       app.serviceAsync<RegistryManager>()
     }
 
     if (app.isHeadlessEnvironment) {
       return@launch
     }
-
-    pathMacroJob.join()
 
     launch {
       // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
@@ -97,8 +96,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
     subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
 
-    // serviceAsync is not supported for light services
-    app.service<ScreenReaderStateManager>()
+    app.serviceAsync<ScreenReaderStateManager>()
   }
 }
 
@@ -126,7 +124,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
     app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                         activityPrefix = "",
                         syncScope = this,
-                        asyncScope = asyncScope + CoroutineName("app service preloading (async)"))
+                        asyncScope = app.coroutineScope.childScope(CoroutineName("app service preloading (async)")))
   }
 
   launch {
