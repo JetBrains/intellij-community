@@ -21,7 +21,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcsUtil.VcsUtil
 
-abstract class VcsStatusMerger<S> {
+abstract class VcsStatusMerger<S, Path> {
   fun merge(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
     statuses.singleOrNull()?.let { s -> return s.map { MergedStatusInfo(it) } }
 
@@ -44,12 +44,12 @@ abstract class VcsStatusMerger<S> {
     return result
   }
 
-  fun merge(path: CharSequence, statuses: List<S>): S {
+  fun merge(path: Path, statuses: List<S>): S {
     val types = statuses.map { getType(it) }.distinct()
 
     if (types.size == 1) {
       if (types.single() == Change.Type.MOVED) {
-        var renamedFrom: CharSequence? = null
+        var renamedFrom: Path? = null
         for (status in statuses) {
           if (renamedFrom == null) {
             renamedFrom = getFirstPath(status)
@@ -66,18 +66,18 @@ abstract class VcsStatusMerger<S> {
     else createStatus(Change.Type.MODIFICATION, path, null)
   }
 
-  private fun getPath(info: S): CharSequence? {
+  private fun getPath(info: S): Path? {
     when (getType(info)) {
       Change.Type.MODIFICATION, Change.Type.NEW, Change.Type.DELETED -> return getFirstPath(info)
       Change.Type.MOVED -> return getSecondPath(info)
     }
   }
 
-  protected abstract fun createStatus(type: Change.Type, path: CharSequence, secondPath: CharSequence?): S
+  protected abstract fun createStatus(type: Change.Type, path: Path, secondPath: Path?): S
 
-  protected abstract fun getFirstPath(info: S): CharSequence
+  protected abstract fun getFirstPath(info: S): Path
 
-  protected abstract fun getSecondPath(info: S): CharSequence?
+  protected abstract fun getSecondPath(info: S): Path?
 
   protected abstract fun getType(info: S): Change.Type
 
@@ -117,7 +117,7 @@ data class VcsFileStatusInfo(val typeByte: Byte, val first: CharSequence, val se
   val type: Change.Type get() = Change.Type.values()[typeByte.toInt()]
 }
 
-class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo>() {
+class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>() {
   override fun createStatus(type: Change.Type, path: CharSequence, secondPath: CharSequence?): VcsFileStatusInfo {
     return VcsFileStatusInfo(type, path, secondPath)
   }
@@ -129,7 +129,7 @@ class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo>() {
   override fun getType(info: VcsFileStatusInfo): Change.Type = info.type
 }
 
-abstract class VcsChangesMerger : VcsStatusMerger<Change>() {
+abstract class VcsChangesMerger : VcsStatusMerger<Change, CharSequence>() {
   override fun createStatus(type: Change.Type, path: CharSequence, secondPath: CharSequence?): Change {
     when (type) {
       Change.Type.NEW -> return createChange(type, null, VcsUtil.getFilePath(path.toString()))
