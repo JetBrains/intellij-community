@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.trackers
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
@@ -154,6 +155,35 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
             actionUnderWriteAction = { property.delegate!!.delete() },
             assertion = { before, after ->
                 assertNull(property.delegate)
+                assertNotSame(before, after)
+            }
+        )
+    }
+
+    //TODO
+    fun `_test reorder accessors`() {
+        val file = myFixture.configureByText("usage.kt", """var x: String
+    get() {
+        return ""
+    }
+    set(v: String) {
+        // test
+    }
+""") as KtFile
+
+        val property = file.declarations.first() as KtProperty
+        val getter = property.getter!!
+        val docManager = PsiDocumentManager.getInstance(project)
+        val document = docManager.getDocument(file)!!
+        val text = getter.text
+
+        doTest(
+            actionUnderWriteAction = {
+                document.deleteString(getter.textRange.startOffset, getter.textRange.endOffset)
+                document.insertString(document.textLength - 1, text)
+                docManager.commitDocument(document)
+            },
+            assertion = { before, after ->
                 assertNotSame(before, after)
             }
         )
