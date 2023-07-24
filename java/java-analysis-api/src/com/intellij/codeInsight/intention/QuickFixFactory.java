@@ -602,6 +602,12 @@ public abstract class QuickFixFactory {
    */
   public abstract @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass);
 
+  /**
+   * @param localClass class to convert
+   * @return a fix that converts a local class to an inner class
+   */
+  public abstract @NotNull IntentionAction createConvertLocalToInnerAction(@NotNull PsiClass localClass);
+
   public abstract @NotNull IntentionAction createSplitSwitchBranchWithSeveralCaseValuesAction();
 
   /**

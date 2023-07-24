@@ -1118,9 +1118,12 @@ public final class HighlightClassUtil {
                                                        @NotNull PsiJavaCodeReferenceElement elementToHighlight) {
     if (superClass.hasModifierProperty(PsiModifier.SEALED)) {
       if (PsiUtil.isLocalClass(aClass)) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(elementToHighlight)
           .descriptionAndTooltip(JavaErrorBundle.message("local.classes.must.not.extend.sealed.classes"));
+        IntentionAction action = QuickFixFactory.getInstance().createConvertLocalToInnerAction(aClass);
+        info.registerFix(action, null, null, null, null);
+        return info;
       }
 
       PsiClassType[] permittedTypes = superClass.getPermitsListTypes();

@@ -1175,7 +1175,12 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public @NotNull IntentionAction createConvertAnonymousToInnerAction(@NotNull PsiAnonymousClass anonymousClass) {
-    return new MoveAnonymousToInnerFix(anonymousClass);
+    return new MoveAnonymousOrLocalToInnerFix(anonymousClass);
+  }
+
+  @Override
+  public @NotNull IntentionAction createConvertLocalToInnerAction(@NotNull PsiClass localClass) {
+    return new MoveAnonymousOrLocalToInnerFix(localClass);
   }
 
   private final static class RemoveRedundantLambdaParameterTypesFix extends RemoveRedundantParameterTypesFix {

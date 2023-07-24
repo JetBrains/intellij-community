@@ -2,7 +2,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 
 public abstract class JavaRefactoringActionHandlerFactory {
   public static JavaRefactoringActionHandlerFactory getInstance() {
@@ -15,7 +15,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
    * is not implemented.
    */
-  public abstract RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> createAnonymousToInnerHandler();
+  public abstract RefactoringActionHandlerOnPsiElement<PsiClass> createAnonymousToInnerHandler();
 
   /**
    * Creates handler for Pull Members Up refactoring.<p>

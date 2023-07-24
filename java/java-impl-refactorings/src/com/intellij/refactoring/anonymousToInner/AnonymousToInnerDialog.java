@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.ui.NameSuggestionsField;
@@ -29,7 +30,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private static final Logger LOG = Logger.getInstance(AnonymousToInnerDialog.class);
 
   private final Project myProject;
-  private final PsiAnonymousClass myAnonClass;
+  private final PsiClass myAnonOrLocalClass;
   private final boolean myShowCanBeStatic;
 
   private NameSuggestionsField myNameField;
@@ -37,13 +38,17 @@ class AnonymousToInnerDialog extends DialogWrapper{
   private final Map<PsiVariable,VariableInfo> myVariableToInfoMap = new HashMap<>();
   private JCheckBox myCbMakeStatic;
 
-  AnonymousToInnerDialog(Project project, PsiAnonymousClass anonClass, final VariableInfo[] variableInfos, boolean showCanBeStatic) {
+  AnonymousToInnerDialog(Project project, PsiClass anonOrLocalClass, final VariableInfo[] variableInfos, boolean showCanBeStatic) {
     super(project, true);
+    if (!(anonOrLocalClass instanceof PsiAnonymousClass) && !PsiUtil.isLocalClass(anonOrLocalClass)) {
+      throw new IllegalArgumentException();
+    }
     myProject = project;
-    myAnonClass = anonClass;
+    myAnonOrLocalClass = anonOrLocalClass;
     myShowCanBeStatic = showCanBeStatic;
 
-    setTitle(AnonymousToInnerHandler.getRefactoringName());
+    setTitle(anonOrLocalClass instanceof PsiAnonymousClass ? JavaRefactoringBundle.message("anonymousToInner.refactoring.name") :
+             JavaRefactoringBundle.message("localToInner.refactoring.name"));
 
     for (VariableInfo info : variableInfos) {
       myVariableToInfoMap.put(info.variable, info);
@@ -54,12 +59,19 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     init();
 
-    final String[] names = suggestNewClassNames(myAnonClass);
+    final String[] names = suggestNewClassNames(myAnonOrLocalClass);
     myNameField.setSuggestions(names);
     myNameField.selectNameWithoutExtension();
   }
 
-  public static String[] suggestNewClassNames(PsiAnonymousClass anonymousClass) {
+  public static String[] suggestNewClassNames(PsiClass anonOrLocalClass) {
+    String className = anonOrLocalClass.getName();
+    if (className != null) {
+      return new String[]{className};
+    }
+    if (!(anonOrLocalClass instanceof PsiAnonymousClass anonymousClass)) {
+      return new String[]{"MyClass"};
+    }
     String name = anonymousClass.getBaseClassReference().getReferenceName();
     PsiType[] typeParameters = anonymousClass.getBaseClassReference().getTypeParameters();
 
@@ -142,7 +154,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
         errorString = RefactoringMessageUtil.getIncorrectIdentifierMessage(innerClassName);
       }
       else{
-        PsiElement targetContainer = AnonymousToInnerHandler.findTargetContainer(myAnonClass);
+        PsiElement targetContainer = AnonymousToInnerHandler.findTargetContainer(myAnonOrLocalClass);
         if (targetContainer instanceof PsiClass targetClass) {
           PsiClass[] innerClasses = targetClass.getInnerClasses();
           for (PsiClass innerClass : innerClasses) {
@@ -160,7 +172,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
 
     if (errorString != null) {
       CommonRefactoringUtil.showErrorMessage(
-        AnonymousToInnerHandler.getRefactoringName(),
+        JavaRefactoringBundle.message("anonymousToInner.refactoring.name"),
         errorString,
         HelpID.ANONYMOUS_TO_INNER,
         myProject);
@@ -188,7 +200,7 @@ class AnonymousToInnerDialog extends DialogWrapper{
   }
 
   private JComponent createParametersPanel() {
-    JPanel panel = new ParameterTablePanel(myProject, myVariableData, myAnonClass) {
+    JPanel panel = new ParameterTablePanel(myProject, myVariableData, myAnonOrLocalClass) {
       @Override
       protected void updateSignature() {
       }

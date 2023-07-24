@@ -18,8 +18,8 @@ package com.siyeh.ig.jdk;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -68,7 +68,10 @@ public class VarargParameterInspection extends BaseInspection {
 
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiMethod method = (PsiMethod)element.getParent();
+      process(updater, (PsiMethod)element.getParent());
+    }
+
+    private static void process(@Nullable ModPsiUpdater updater, PsiMethod method) {
       final PsiParameterList parameterList = method.getParameterList();
       final PsiParameter[] parameters = parameterList.getParameters();
       if (parameters.length == 0) {
@@ -82,7 +85,8 @@ public class VarargParameterInspection extends BaseInspection {
       if (typeElement == null) {
         return;
       }
-      final List<PsiElement> refElements = ContainerUtil.map(getReferences(method), e -> updater.getWritable(e));
+      final List<PsiElement> refElements = updater == null ? getReferences(method) : 
+                                           ContainerUtil.map(getReferences(method), e -> updater.getWritable(e));
       performModification(method, parameters, lastParameter, typeElement, refElements);
     }
 
@@ -186,5 +190,14 @@ public class VarargParameterInspection extends BaseInspection {
         registerMethodError(method);
       }
     }
+  }
+
+  /**
+   * Silently updates method to make it non-vararg
+   * 
+   * @param method method to convert
+   */
+  public static void convertVarargMethodToArray(@NotNull PsiMethod method) {
+    VarargParameterFix.process(null, method);
   }
 }

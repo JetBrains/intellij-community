@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.openapi.impl;
 
-import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
@@ -27,7 +27,7 @@ import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 
 public class JavaRefactoringActionHandlerFactoryImpl extends JavaRefactoringActionHandlerFactory {
   @Override
-  public RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> createAnonymousToInnerHandler() {
+  public RefactoringActionHandlerOnPsiElement<PsiClass> createAnonymousToInnerHandler() {
     return new AnonymousToInnerHandler();
   }
 

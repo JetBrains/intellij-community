@@ -5,7 +5,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
@@ -13,8 +13,8 @@ import com.intellij.refactoring.RefactoringActionHandlerOnPsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MoveAnonymousToInnerFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-  public MoveAnonymousToInnerFix(@NotNull PsiAnonymousClass aClass) {
+public class MoveAnonymousOrLocalToInnerFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+  public MoveAnonymousOrLocalToInnerFix(@NotNull PsiClass aClass) {
     super(aClass);
   }
 
@@ -24,9 +24,9 @@ public class MoveAnonymousToInnerFix extends LocalQuickFixAndIntentionActionOnPs
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    RefactoringActionHandlerOnPsiElement<PsiAnonymousClass> handler =
+    RefactoringActionHandlerOnPsiElement<PsiClass> handler =
       JavaRefactoringActionHandlerFactory.getInstance().createAnonymousToInnerHandler();
-    handler.invoke(project, editor, (PsiAnonymousClass)startElement);
+    handler.invoke(project, editor, (PsiClass)startElement);
   }
 
   @Override
