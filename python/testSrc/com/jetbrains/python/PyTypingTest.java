@@ -2484,7 +2484,7 @@ public class PyTypingTest extends PyTestCase {
              T = TypeVar('T')
              Ts = TypeVarTuple('Ts')
 
-             MyType = Tuple[int, T, *Ts]
+             MyType = Tuple[int, *Ts, T]
 
              t: MyType[str, bool, float]
              expr = t
@@ -2509,7 +2509,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-53105
-  public void testGenericVariadicsIntersects() {
+  public void testChainOfGenericAliasesWithTypeVarTupleReplacedByGenericUnpackedTuple() {
     doTest("tuple[int, str, bool, list[str], dict[str, int]]",
            """
              from typing import Tuple, TypeVarTuple, TypeVar
@@ -2526,9 +2526,25 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  public void testChainOfGenericAliasesWithTypeVarReplacedByGenericType() {
+    doTest("tuple[int, list[str]]",
+           """
+             from typing import Tuple, TypeVarTuple, TypeVar
+
+             T = TypeVar('T')
+             T2 = TypeVar('T2')
+
+             MyType = Tuple[int, T]
+             MyType1 = MyType[list[T2]]
+
+             t: MyType1[str]
+             expr = t
+             """);
+  }
+
   // PY-53105
   public void testGenericVariadicsIntersectsSameName() {
-    doTest("tuple[int, str, bool, list[str], dict[str, int]]",
+    doTest("tuple[int, str, bool, Any]",
            """
              from typing import Tuple, TypeVarTuple, TypeVar
 
@@ -2606,7 +2622,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testVariadicGenericMatchWithHomogeneousGenericVariadicAmbiguousMatchActualGenericFirst() {
-    doTest("Array[int, str]","""
+    doTest("Array[*(float, ...), int, float, str]", """
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2632,7 +2648,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsNotUnifiedBothAmbiguousMatch() {
-    doTest("Array[int, str]","""
+    doTest("Array[*(int, ...), int, int, str]", """
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2790,7 +2806,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsNotUnifiedBothExpectedExpandTwoArguments() {
-    doTest("Array[float, bool, list[str]]","""
+    doTest("Any","""
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2816,7 +2832,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericVariadicsNotUnifiedBothExpectedExpandTwoArgumentsGenericVariadic() {
-    doTest("Array[float, float, *Shape142, list[str], list[str]]","""
+    doTest("Any","""
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2842,7 +2858,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericVariadicsNotUnifiedBothExpectedExpandTwoDifferentArgumentsGenericVariadic() {
-    doTest("Array[float, *Shape, bool, list[str]] | Array[*Shape]","""
+    doTest("Any","""
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2869,7 +2885,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsNotUnifiedBothExpectedExpandNotExactLeft() {
-    doTest("Array[*(Any, ...), list[str]]","""
+    doTest("Any","""
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2896,7 +2912,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsNotUnifiedBothExpectedExpandNotExactRight() {
-    doTest("Array[float, *(Any, ...)]","""
+    doTest("Any","""
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -2923,7 +2939,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicsNotUnifiedBothActualSwallowAllExpected() {
-    doTest("Array[*Shape1]","""
+    doTest("Any","""
                     from __future__ import annotations
                                        
                     from typing import TypeVarTuple
@@ -3584,7 +3600,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-53105
   public void testGenericVariadicDecoratorWithArgumentCalledAsFunction() {
-    doTest("(tuple[str, int]) -> tuple[int, str, float]",
+    doTest("(LiteralString, int) -> tuple[int, str, float]",
            """
             from typing import Callable, TypeVar, TypeVarTuple, Tuple
                                     
@@ -3878,6 +3894,34 @@ public class PyTypingTest extends PyTestCase {
              
              arg: Sub[int]
              expr = f(arg)
+             """);
+  }
+
+  public void testTypeOfArgsParameterAnnotatedWithTypeVarTuple() {
+    doTest("tuple[*Ts]",
+           """
+             from typing import TypeVarTuple
+             
+             Ts = TypeVarTuple("Ts")
+             
+             def f(*args: *Ts):
+                 expr = args
+             """);
+  }
+
+  public void testTypeOfArgsParameterAnnotatedWithBoundUnpackedTuple() {
+    doTest("tuple[int, str]",
+           """
+             def f(*args: *tuple[int, str]):
+                 expr = args
+             """);
+  }
+
+  public void testTypeOfArgsParameterAnnotatedWithUnboundUnpackedTuple() {
+    doTest("tuple[int, ...]",
+           """
+             def f(*args: *tuple[int, ...]):
+                 expr = args
              """);
   }
 

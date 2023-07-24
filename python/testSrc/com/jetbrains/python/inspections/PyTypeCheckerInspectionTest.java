@@ -1300,7 +1300,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                            def accepts_anything(x: str) -> None:
                                pass
 
-                           func(<warning descr="Expected type '(Any) -> None' (matched generic type '(T) -> None'), got '(x: str) -> None' instead">accepts_anything</warning>)
+                           func(<warning descr="Expected type '(T) -> None', got '(x: str) -> None' instead">accepts_anything</warning>)
                            """)
     );
   }

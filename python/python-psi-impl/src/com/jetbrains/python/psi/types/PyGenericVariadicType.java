@@ -1,94 +1,67 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.types;
 
+import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ProcessingContext;
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-public class PyGenericVariadicType extends PyGenericType {
+public final class PyGenericVariadicType implements PyTypeParameterType {
+  private final @NotNull String myName;
+  private final @Nullable PyQualifiedNameOwner myScopeOwner;
+  private final PyTargetExpression myTarget;
+  
+  private final @Nullable List<PyType> myElementTypes;
   private final boolean myIsHomogeneous;
 
-  @Nullable
-  private final List<PyType> myElementTypes;
-
   public PyGenericVariadicType(@NotNull String name) {
-    this(name, false, null, null);
+    this(name, false, null);
   }
 
-  public PyGenericVariadicType(@NotNull String name, boolean isHomogeneous, @Nullable List<PyType> elementTypes,
-                               @Nullable PyQualifiedNameOwner scopeOwner) {
-    super(name, null, false, null);
+  public PyGenericVariadicType(@NotNull String name, boolean isHomogeneous, @Nullable List<PyType> elementTypes) {
+    this(name, null, isHomogeneous, elementTypes, null);
+  }
+
+  private PyGenericVariadicType(@NotNull String name, @Nullable PyTargetExpression target,
+                                boolean isHomogeneous, @Nullable List<PyType> elementTypes, @Nullable PyQualifiedNameOwner scopeOwner) {
+    myName = name;
+    myTarget = target;
     myElementTypes = elementTypes;
     myIsHomogeneous = isHomogeneous;
-  }
-
-  public PyGenericVariadicType(@NotNull String name, boolean isDefinition, @Nullable PyTargetExpression target,
-                               boolean isHomogeneous, @Nullable List<PyType> elementTypes, @Nullable PyQualifiedNameOwner scopeOwner) {
-    super(name, null, isDefinition, target);
-    myElementTypes = elementTypes;
-    myIsHomogeneous = isHomogeneous;
-    if (scopeOwner != null) {
-      setScopeOwner(scopeOwner);
-    }
+    myScopeOwner = scopeOwner;
   }
 
   @NotNull
-  @Override
-  public PyGenericType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
-    return new PyGenericVariadicType(myName, isDefinition(), getDeclarationElement(), myIsHomogeneous, myElementTypes, scopeOwner);
+  public PyGenericVariadicType withScopeOwner(@Nullable PyQualifiedNameOwner scopeOwner) {
+    return new PyGenericVariadicType(myName, myTarget, myIsHomogeneous, myElementTypes, scopeOwner);
   }
 
-  @NotNull
-  @Override
-  public PyGenericType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
-    return new PyGenericVariadicType(myName, isDefinition(), targetExpression, myIsHomogeneous, myElementTypes, getScopeOwner());
-  }
-
-  @NotNull
-  @Override
-  public PyGenericVariadicType withAlias(@Nullable PyTargetExpression alias) {
-    return new PyGenericVariadicType(myName, isDefinition(), alias, myIsHomogeneous, myElementTypes, getScopeOwner());
-  }
-
-  @NotNull
-  public PyGenericVariadicType withDifferentName() {
-    return new PyGenericVariadicType(myName + "142", isDefinition(), null, myIsHomogeneous, myElementTypes, getScopeOwner());
-  }
-
-  @NotNull
-  public PyGenericVariadicType withElementTypes(boolean isHomogeneous, @NotNull List<PyType> elementTypes) {
-    var resultElementTypes = new ArrayList<>(elementTypes);
-    for (int i = 0; i < elementTypes.size(); ++i) {
-      var elementType = elementTypes.get(i);
-      if (equals(elementType)) {
-        resultElementTypes.set(i, ((PyGenericVariadicType)elementType).withDifferentName());
-      }
-    }
-    return new PyGenericVariadicType(myName, isDefinition(), getDeclarationElement(), isHomogeneous, resultElementTypes, getScopeOwner());
-  }
-
-  @NotNull
-  @Override
-  public PyGenericVariadicType toggleIsDefinition() {
-    return new PyGenericVariadicType(myName, !isDefinition(), getDeclarationElement(), myIsHomogeneous, myElementTypes, getScopeOwner());
+  public PyGenericVariadicType withTargetExpression(@Nullable PyTargetExpression targetExpression) {
+    return new PyGenericVariadicType(myName, targetExpression, myIsHomogeneous, myElementTypes, myScopeOwner);
   }
 
   @NotNull
   public static PyGenericVariadicType fromElementTypes(@NotNull List<PyType> elementTypes) {
-    return new PyGenericVariadicType("", false, elementTypes, null);
+    return new PyGenericVariadicType("", false, elementTypes);
   }
 
   @NotNull
   public static PyGenericVariadicType homogeneous(@Nullable PyType type) {
+    if (type instanceof PyGenericVariadicType) {
+      throw new IllegalArgumentException("Unpacked tuple of a TypeVarTuple or another unpacked tuple cannot be constructed");
+    }
     var elementTypes = new ArrayList<PyType>();
     elementTypes.add(type);
-    return new PyGenericVariadicType("", true, elementTypes, null);
+    return new PyGenericVariadicType("", true, elementTypes);
   }
 
   @NotNull
@@ -103,6 +76,11 @@ public class PyGenericVariadicType extends PyGenericType {
   }
 
   @Override
+  public @Nullable PyQualifiedNameOwner getScopeOwner() {
+    return myScopeOwner;
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) {
       return true;
@@ -111,7 +89,7 @@ public class PyGenericVariadicType extends PyGenericType {
       return false;
     }
     final PyGenericVariadicType type = (PyGenericVariadicType)o;
-    return myName.equals(type.myName) && isDefinition() == type.isDefinition() && Objects.equals(getScopeOwner(), type.getScopeOwner()) &&
+    return myName.equals(type.myName) && Objects.equals(getScopeOwner(), type.getScopeOwner()) &&
            Objects.equals(myElementTypes, type.myElementTypes);
   }
 
@@ -143,41 +121,72 @@ public class PyGenericVariadicType extends PyGenericType {
   }
 
   public boolean isHomogeneous() {
-    return myIsHomogeneous;
+    return isUnpackedTupleType() && myIsHomogeneous;
   }
 
-  public boolean isMapped(@NotNull Map<PyGenericVariadicType, PyGenericVariadicType> typeVarTuples) {
-    if (myIsHomogeneous) return false;
-    if (myElementTypes != null && typeVarTuples.containsKey(this)) {
-      assert false;
-    }
-    if (myElementTypes != null) return true;
-    return typeVarTuples.containsKey(this) && typeVarTuples.get(this).myElementTypes != null;
-  }
-
-  @Nullable
-  public List<PyType> getMappedElementTypes(@NotNull Map<PyGenericVariadicType, PyGenericVariadicType> typeVarTuples) {
-    if (myIsHomogeneous) return null;
-    if (myElementTypes != null && typeVarTuples.containsKey(this)) {
-      assert false;
-    }
-    if (myElementTypes != null) return myElementTypes;
-
-    if (!typeVarTuples.containsKey(this)) return null;
-    var mapped = typeVarTuples.get(this);
-    if (mapped == null) return null;
-    if (mapped.isHomogeneous()) {
-      return List.of(mapped);
-    }
-    if (mapped.myElementTypes == null && !mapped.toString().equals(toString())) {
-      return List.of(mapped);
-    }
-    return mapped.myElementTypes;
+  public boolean isUnspecified() {
+    return isHomogeneous() && myElementTypes != null && myElementTypes.size() == 1 && myElementTypes.get(0) == null;
   }
 
   @Nullable
   public PyType getIteratedItemType() {
     if (myElementTypes == null) return null;
     return PyUnionType.union(myElementTypes);
+  }
+
+  public @Nullable List<PyType> getElementTypes() {
+    return myElementTypes != null ? Collections.unmodifiableList(myElementTypes) : null;
+  }
+
+  public boolean isUnpackedTupleType() {
+    return myName.isEmpty();
+  }
+
+  @Override
+  public boolean isBuiltin() {
+    return false;
+  }
+
+  @Override
+  public void assertValid(String message) {
+
+  }
+
+  @Override
+  public @Nullable List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                                    @Nullable PyExpression location,
+                                                                    @NotNull AccessDirection direction,
+                                                                    @NotNull PyResolveContext resolveContext) {
+    return null;
+  }
+
+  @Override
+  public Object[] getCompletionVariants(String completionPrefix, PsiElement location, ProcessingContext context) {
+    return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public String toString() {
+    if (myName.isEmpty()) {
+      return "PyGenericVariadicType: " + getElementTypesToStr();
+    }
+    else {
+      String scopeName = myScopeOwner != null ? Objects.requireNonNullElse(myScopeOwner.getQualifiedName(), myScopeOwner.getName()) : null;
+      return "PyGenericVariadicType: " + (scopeName != null ? scopeName + ":" : "") + myName;
+    }
+  }
+
+  public @Nullable PyTupleType asTupleType(@NotNull PsiElement anchor) {
+    if (isUnpackedTupleType()) {
+      if (isHomogeneous()) {
+        return PyTupleType.createHomogeneous(anchor, getElementTypes().get(0));
+      }
+      else {
+        return PyTupleType.create(anchor, getElementTypes());
+      }
+    }
+    else {
+      return PyTupleType.create(anchor, Collections.singletonList(this));
+    }
   }
 }

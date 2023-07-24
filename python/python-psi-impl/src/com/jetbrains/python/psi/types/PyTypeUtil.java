@@ -26,10 +26,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -93,6 +90,9 @@ public final class PyTypeUtil {
 
   @Nullable
   public static PyTupleType toPositionalContainerType(@NotNull PsiElement anchor, @Nullable PyType elementType) {
+    if (elementType instanceof PyGenericVariadicType genericVariadicType) {
+      return genericVariadicType.asTupleType(anchor);
+    }
     return PyTupleType.createHomogeneous(anchor, elementType);
   }
 

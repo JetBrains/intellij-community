@@ -1362,127 +1362,152 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
                  "foo(y)\n" +
                  "\n" +
                  "z: Array[int]\n" +
-                 "foo(<warning descr=\"Expected type 'Array[int, *(Any, ...), str]' (matched generic type 'Array[int, *(Any, ...), str]'), got 'Array[int]' instead\">z</warning>)\n" +
+                 "foo(<warning descr=\"Expected type 'Array[int, *(Any, ...), str]', got 'Array[int]' instead\">z</warning>)\n" +
                  "\n" +
                  "t: Array[str]\n" +
-                 "foo(<warning descr=\"Expected type 'Array[int, *(Any, ...), str]' (matched generic type 'Array[int, *(Any, ...), str]'), got 'Array[str]' instead\">t</warning>)\n" +
+                 "foo(<warning descr=\"Expected type 'Array[int, *(Any, ...), str]', got 'Array[str]' instead\">t</warning>)\n" +
                  "\n" +
                  "k: Array[int, int]\n" +
-                 "foo(<warning descr=\"Expected type 'Array[int, *(Any, ...), str]' (matched generic type 'Array[int, *(Any, ...), str]'), got 'Array[int, int]' instead\">k</warning>)\n");
+                 "foo(<warning descr=\"Expected type 'Array[int, *(Any, ...), str]', got 'Array[int, int]' instead\">k</warning>)\n");
   }
 
   // PY-53105
   public void testVariadicGenericStarArgsNamedParameters() {
-    doTestByText("from typing import Tuple, TypeVarTuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(a: str, *args: *Tuple[*Ts, int], b: str, c: bool) -> None: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo('', 1, True, [1], 42, b='', c=True)\n" +
-                 "foo('', 42, b='', c=True)\n" +
-                 "foo('', True, 42, c=True, b='')\n" +
-                 "\n" +
-                 "<warning descr=\"No arguments for types ('(*Ts,int)')\">foo('', b='', c=True)</warning>\n" +
-                 "foo('', <warning descr=\"Expected type 'int', got 'LiteralString' instead\">''</warning>, b='', c=True)\n" +
-                 "foo('', '', <warning descr=\"Expected type 'int', got 'list[bool]' instead\">[False]</warning>, b='', c=True)\n" +
-                 "foo('', '', '', '', <warning descr=\"Expected type 'int', got 'float' instead\">1.1</warning>, b='', c=True)\n");
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(a: str, *args: *Tuple[*Ts, int], b: str, c: bool) -> None: ...
+
+
+                   foo('', 1, True, [1], 42, b='', c=True)
+                   foo('', 42, b='', c=True)
+                   foo('', True, 42, c=True, b='')
+
+                   foo('', b='', c=True<warning descr="Parameter 'args' unfilled, expected '*(*Ts,int)'">)</warning>
+                   foo('', <warning descr="Expected type '*(int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString)' instead">''</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*(LiteralString,int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString,list)' instead">''</warning>, <warning descr="Expected type '*(LiteralString,int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString,list)' instead">[False]</warning>, b='', c=True)
+                   foo('', <warning descr="Expected type '*(LiteralString,LiteralString,LiteralString,int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,float)' instead">''</warning>, <warning descr="Expected type '*(LiteralString,LiteralString,LiteralString,int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,float)' instead">''</warning>, <warning descr="Expected type '*(LiteralString,LiteralString,LiteralString,int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,float)' instead">''</warning>, <warning descr="Expected type '*(LiteralString,LiteralString,LiteralString,int)' (matched generic type '*(*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,float)' instead">1.1</warning>, b='', c=True)
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericStarArgsTupleAndUnpackedTuple() {
-    doTestByText("from typing import Tuple, TypeVarTuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo(('', 1), '', '', 1, 1, b='')\n" +
-                 "foo((1,1), '', 1, 1, 1, b='')\n" +
-                 "foo(('',), '', '', 1, b='')\n" +
-                 "foo((), '', 1, b='')\n" +
-                 "foo(([], {}), '', [], {}, 1, b='')\n" +
-                 "\n" +
-                 "<warning descr=\"No arguments for types ('(str,*Ts,int)')\">foo(('', 1), b='')</warning>\n" +
-                 "foo(('', 1), '', '', <warning descr=\"Expected type 'int', got 'LiteralString' instead\">''</warning>, 1, b='')\n" +
-                 "foo((1,1), '', 1, 1<warning descr=\"No arguments for types ('(int)')\">,</warning> b='')\n" +
-                 "foo(('',), '', <warning descr=\"Expected type 'LiteralString', got 'int' instead\">1</warning>, 1, b='')\n" +
-                 "x: Any\n" +
-                 "foo((), '', 42, <warning descr=\"The type is not expected\">x</warning>, b='')\n" +
-                 "foo(([], {}), '', [], {}<warning descr=\"No arguments for types ('(int)')\">,</warning> b='')\n");
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
+
+
+                   foo(('', 1), '', '', 1, 1, b='')
+                   foo((1,1), '', 1, 1, 1, b='')
+                   foo(('',), '', '', 1, b='')
+                   foo((), '', 1, b='')
+                   foo(([], {}), '', [], {}, 1, b='')
+
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*(str,LiteralString,int,int)'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">''</warning>, <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, b='')
+                   x: Any
+                   foo((), <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">''</warning>, <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">42</warning>, <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">''</warning>, <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">[]</warning>, <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">{}</warning>, b='')
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericStarArgsOfVariadicGeneric() {
-    doTestByText("from typing import Tuple, TypeVarTuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(*args: Tuple[*Ts]): ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo((0,), (1,))\n" +
-                 "foo(<warning descr=\"Expected type 'tuple[*Ts]' (matched generic type 'tuple[*Ts]'), got '*((int),(int, int))' instead\">(0,)</warning>, <warning descr=\"Expected type 'tuple[*Ts]' (matched generic type 'tuple[*Ts]'), got '*((int),(int, int))' instead\">(1, 2)</warning>)\n" +
-                 "foo(<warning descr=\"Expected type 'tuple[*Ts]' (matched generic type 'tuple[*Ts]'), got '*((int),(LiteralString))' instead\">(0,)</warning>, <warning descr=\"Expected type 'tuple[*Ts]' (matched generic type 'tuple[*Ts]'), got '*((int),(LiteralString))' instead\">('1',)</warning>)\n");
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(*args: Tuple[*Ts]): ...
+
+
+                   foo((0,), (1,))
+                   foo((0,), <warning descr="Expected type 'tuple[int]' (matched generic type 'tuple[*Ts]'), got 'tuple[int, int]' instead">(1, 2)</warning>)
+                   # *tuple[int | str] is inferred for *Ts
+                   foo((0,), ('1',))
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericStarArgsOfVariadicGenericPrefixSuffix() {
-    doTestByText("from typing import Tuple, TypeVarTuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(*args: Tuple[int, *Ts, str]): ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo((0,''), (1,''))\n" +
-                 "foo((0, [1], {}, ''), (1, [1], {}, ''))\n" +
-                 "\n" +
-                 "foo(<warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, list, LiteralString))' instead\">(0, [1], {}, '')</warning>, <warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, list, LiteralString))' instead\">(1, [1], '')</warning>)\n" +
-                 "foo(<warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, list, TypedDict, LiteralString))' instead\">(0, [1], {}, '')</warning>, <warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, list, TypedDict, LiteralString))' instead\">(1, ['1'], {}, '')</warning>)\n" +
-                 "foo(<warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, LiteralString))' instead\">(0, [1], {}, '')</warning>, <warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, LiteralString))' instead\">(1, '')</warning>)\n" +
-                 "foo(<warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, list, TypedDict, int))' instead\">(0, [1], {}, '')</warning>, <warning descr=\"Expected type 'tuple[int, *Ts, str]' (matched generic type 'tuple[int, *Ts, str]'), got '*((int, list, TypedDict, LiteralString),(int, list, TypedDict, int))' instead\">(1, [1], {}, 1)</warning>)\n");
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
+
+
+                   foo(('', 1), '', '', 1, 1, b='')
+                   foo((1,1), '', 1, 1, 1, b='')
+                   foo(('',), '', '', 1, b='')
+                   foo((), '', 1, b='')
+                   foo(([], {}), '', [], {}, 1, b='')
+
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*(str,LiteralString,int,int)'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">''</warning>, <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, b='')
+                   x: Any
+                   foo((), <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">''</warning>, <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">42</warning>, <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">''</warning>, <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">[]</warning>, <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">{}</warning>, b='')
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericStarArgsPrefixSuffix() {
-    doTestByText("from typing import Tuple, TypeVarTuple\n" +
-                 "\n" +
-                 "Ts = TypeVarTuple('Ts')\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(*args: *Tuple[int, *Tuple[str, ...], str]) -> None: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo(1, '')\n" +
-                 "foo(1, '', '')\n" +
-                 "foo(1, '', '', '', '', '', '')\n" +
-                 "\n" +
-                 "foo(1, <warning descr=\"Expected type 'str', got 'int' instead\">1</warning>)\n" +
-                 "foo(<warning descr=\"Expected type 'int', got 'LiteralString' instead\">''</warning>, '')\n" +
-                 "foo(1, '', '', <warning descr=\"Expected type 'str', got 'int' instead\">1</warning>, '', '', '')\n");
+    doTestByText("""
+                   from typing import Tuple, TypeVarTuple
+
+                   Ts = TypeVarTuple('Ts')
+
+
+                   def foo(a: Tuple[*Ts], *args: *Tuple[str, *Ts, int], b: str) -> None: ...
+
+
+                   foo(('', 1), '', '', 1, 1, b='')
+                   foo((1,1), '', 1, 1, 1, b='')
+                   foo(('',), '', '', 1, b='')
+                   foo((), '', 1, b='')
+                   foo(([], {}), '', [], {}, 1, b='')
+
+                   foo(('', 1), b=''<warning descr="Parameter 'args' unfilled, expected '*(str,LiteralString,int,int)'">)</warning>
+                   foo(('', 1), <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,LiteralString,LiteralString,int)' instead">1</warning>, b='')
+                   foo((1,1), <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">''</warning>, <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, <warning descr="Expected type '*(str,int,int,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, b='')
+                   foo(('',), <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">''</warning>, <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, <warning descr="Expected type '*(str,LiteralString,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,int)' instead">1</warning>, b='')
+                   x: Any
+                   foo((), <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">''</warning>, <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">42</warning>, <warning descr="Expected type '*(str,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,int,Any)' instead">x</warning>, b='')
+                   foo(([], {}), <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">''</warning>, <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">[]</warning>, <warning descr="Expected type '*(str,list,TypedDict,int)' (matched generic type '*(str,*Ts,int)'), got '*(LiteralString,list,TypedDict)' instead">{}</warning>, b='')
+                   """);
   }
 
   // PY-53105
   public void testVariadicGenericStarArgsUnboundTuple() {
-    doTestByText("from typing import Tuple\n" +
-                 "\n" +
-                 "\n" +
-                 "def foo(*args: *Tuple[int, ...]) -> None: ...\n" +
-                 "\n" +
-                 "\n" +
-                 "foo()\n" +
-                 "foo(1)\n" +
-                 "foo(1, 2, 3)\n" +
-                 "\n" +
-                 "foo(<warning descr=\"Expected type 'int', got 'LiteralString' instead\">''</warning>)\n" +
-                 "foo(1, <warning descr=\"Expected type 'int', got 'LiteralString' instead\">''</warning>)\n");
+    doTestByText("""
+                   from typing import Tuple
+
+
+                   def foo(*args: *Tuple[int, ...]) -> None: ...
+
+
+                   foo()
+                   foo(1)
+                   foo(1, 2, 3)
+
+                   foo(<warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>)
+                   foo(1, <warning descr="Expected type 'int', got 'LiteralString' instead">''</warning>)
+                   """);
   }
 
   // PY-53105
@@ -1877,5 +1902,10 @@ def foo(param: str | int) -> TypeGuard[str]:
     return <warning descr="Expected type 'bool', got 'str | int' instead">param</warning>
       """)
     );
+  }
+
+  // PY-16994
+  public void testCallableArity() {
+    doTest();
   }
 }

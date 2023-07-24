@@ -3,10 +3,7 @@ package com.jetbrains.python.codeInsight.typing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -38,6 +35,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyTypeParameterMapping.Option;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -402,7 +400,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
                                      TYPE_VAR_TUPLE.equals(initializedClass.getQualifiedName()))) {
       // `typing.TypeVar` call should be assigned to a target and hence should be processed by [getReferenceType]
       // but the corresponding type is also returned here to suppress type checker on `T = TypeVar("T")` assignment.
-      return Ref.create(getGenericTypeFromTypeVar(callSite, context));
+      return Ref.create(getTypeParameterTypeFromDeclaration(callSite, context));
     }
 
     if (initializedClass != null && callSite instanceof PyCallExpression && PyNames.DICT.equals(initializedClass.getQualifiedName())) {
@@ -480,7 +478,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
 
       final PyExpression assignedValue = PyTypingAliasStubType.getAssignedValueStubLike(target);
       if (assignedValue != null) {
-        final PyType type = getGenericTypeFromTypeVar(assignedValue, context);
+        final PyType type = getTypeParameterTypeFromDeclaration(assignedValue, context);
         if (type != null) {
           return Ref.create(type);
         }
@@ -630,20 +628,14 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       List<PyTypeParameterType> superTypeParameters = collectTypeParameters(superClassType.getPyClass(), context);
       List<PyType> superTypeArguments = superClassType instanceof PyCollectionType parameterized ?
                                         parameterized.getElementTypes() : Collections.emptyList();
-      if (ContainerUtil.exists(superTypeParameters, it -> it instanceof PyGenericVariadicType)) {
-        var substitutions = new PyTypeChecker.GenericSubstitutions();
-        var matchContext = PyTypeChecker.getMatchContext(context.myContext, substitutions);
-        List<PyType> superTypes = new ArrayList<>(superTypeParameters);
-        PyTypeChecker.matchElementTypes(superTypes, superTypeArguments, matchContext, false, false);
-        results.putAll(substitutions.getTypeVars());
-        results.putAll(substitutions.getTypeVarTuples());
-      }
-      else {
-        for (int i = 0; i < superTypeParameters.size(); i++) {
-          PyTypeParameterType superTypeParameter = superTypeParameters.get(i);
-          PyType superTypeArgument = ContainerUtil.getOrElse(superTypeArguments, i, null);
-          if (!superTypeParameter.equals(superTypeArgument)) {
-            results.put(superTypeParameter, superTypeArgument);
+      PyTypeParameterMapping mapping =
+        PyTypeParameterMapping.mapByShape(superTypeParameters, superTypeArguments, Option.MAP_UNMATCHED_EXPECTED_TYPES_TO_ANY);
+      if (mapping != null) {
+        for (Couple<PyType> pair : mapping.getMappedTypes()) {
+          PyType expectedType = pair.getFirst();
+          PyType actualType = pair.getSecond();
+          if (!expectedType.equals(actualType)) {
+            results.put(expectedType, actualType);
           }
         }
       }
@@ -856,13 +848,13 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
       if (collection != null) {
         return Ref.create(collection);
       }
-      final PyType genericType = getGenericTypeFromTypeVar(resolved, context);
-      if (genericType != null) {
-        return Ref.create(anchorTypeParameter(typeHint, genericType, context));
+      final PyType typeParameter = getTypeParameterTypeFromDeclaration(resolved, context);
+      if (typeParameter != null) {
+        return Ref.create(anchorTypeParameter(typeHint, typeParameter, context));
       }
-      final PyType genericVariadicType = getGenericVariadicType(resolved, context.getTypeContext());
-      if (genericVariadicType != null) {
-        return Ref.create(anchorTypeParameter(typeHint, genericVariadicType, context));
+      final PyType unpackedType = getUnpackedType(resolved, context.getTypeContext());
+      if (unpackedType != null) {
+        return Ref.create(unpackedType);
       }
       final PyType paramSpecType = getParamSpecType(resolved, context);
       if (paramSpecType != null) {
@@ -967,13 +959,14 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   @Nullable
   private static PyType anchorTypeParameter(@NotNull PyExpression typeHint, @Nullable PyType type, @NotNull Context context) {
     PyTargetExpression targetExpr = context.getTypeAliasStack().isEmpty() ? null : context.getTypeAliasStack().peek();
-    final PyGenericType typeVar = as(type, PyGenericType.class);
-    if (typeVar != null) {
+    if (type instanceof PyTypeVarTypeImpl typeVar) {
       return typeVar.withScopeOwner(getTypeParameterScope(typeVar.getName(), typeHint, context)).withTargetExpression(targetExpr);
     }
-    final PyParamSpecType paramSpec = as(type, PyParamSpecType.class);
-    if (paramSpec != null) {
+    if (type instanceof PyParamSpecType paramSpec) {
       return paramSpec.withScopeOwner(getTypeParameterScope(paramSpec.getName(), typeHint, context)).withTargetExpression(targetExpr);
+    }
+    if (type instanceof PyGenericVariadicType typeVarTuple) {
+      return typeVarTuple.withScopeOwner(getTypeParameterScope(typeVarTuple.getName(), typeHint, context)).withTargetExpression(targetExpr);
     }
     return type;
   }
@@ -1472,7 +1465,7 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   @Nullable
-  private static PyGenericType getGenericTypeFromTypeVar(@NotNull PsiElement element, @NotNull Context context) {
+  private static PyTypeParameterType getTypeParameterTypeFromDeclaration(@NotNull PsiElement element, @NotNull Context context) {
     if (element instanceof PyCallExpression assignedCall) {
       final PyExpression callee = assignedCall.getCallee();
       if (callee != null) {
@@ -1541,7 +1534,10 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
           .map(parameter -> new PyTypingTypeProvider().getParameterType(parameter, (PyFunction)owner, context))
           .map(Ref::deref)
           .map(paramType -> PyTypeChecker.collectGenerics(paramType, context.getTypeContext()))
-          .flatMap(generics -> StreamEx.<PyTypeParameterType>of(generics.getTypeVars()).append(generics.getParamSpecs()))
+          .flatMap(generics -> StreamEx.<PyTypeParameterType>of(generics.getTypeVars())
+            .append(generics.getParamSpecs())
+            .append(generics.getTypeVarTuples())
+          )
           .findFirst(type -> name.equals(type.getName()))
           .orElse(null);
       }
@@ -1569,22 +1565,22 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   }
 
   @Nullable
-  public static PyType getGenericVariadicType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
-    if (!(element instanceof PyStarExpression)) return null;
-    var expression = ((PyStarExpression)element).getExpression();
-    if (!(expression instanceof PyReferenceExpression) && !(expression instanceof PySubscriptionExpression)) return null;
+  public static PyType getUnpackedType(@NotNull PsiElement element, @NotNull TypeEvalContext context) {
+    // TODO Add support for Unpacked here
+    if (!(element instanceof PyStarExpression starExpression)) return null;
+    var typeHint = starExpression.getExpression();
+    if (!(typeHint instanceof PyReferenceExpression) && !(typeHint instanceof PySubscriptionExpression)) return null;
 
-    var typeRef = getType(expression, context);
+    var typeRef = getType(typeHint, context);
     if (typeRef == null) return null;
     var expressionType = typeRef.get();
 
-    if (expressionType instanceof final PyTupleType tupleType) {
-      return new PyGenericVariadicType("", tupleType.isHomogeneous(), tupleType.getElementTypes(), null);
+    if (expressionType instanceof PyTupleType tupleType) {
+      return new PyGenericVariadicType("", tupleType.isHomogeneous(), tupleType.getElementTypes());
     }
     if (expressionType instanceof PyGenericVariadicType) {
       return expressionType;
     }
-
     return null;
   }
 
@@ -1728,15 +1724,6 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
         }
         if (element != null) {
           elements.add(Pair.create(null, element));
-        }
-      }
-    }
-    else if (expression instanceof PyStarExpression) {
-      var expressionExpression = ((PyStarExpression)expression).getExpression();
-      if (expressionExpression != null) {
-        var type = context.getType(expressionExpression);
-        if (type instanceof PyGenericVariadicType) {
-          return tryResolvingWithAliases(expressionExpression, context);
         }
       }
     }

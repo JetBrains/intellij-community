@@ -99,9 +99,9 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
       if (expected is PyTypedDictType) {
         return null
       }
-      val substitution = substitutions?.let { PyTypeChecker.substitute(expected, it, context) }
-                         ?: if (expected is PyGenericType) expected.bound else expected
-      if (containsLiteral(substitution)) {
+      val substitution = if (substitutions != null) PyTypeChecker.substitute(expected, substitutions, context) else expected
+      val substitutionOrBound = if (substitution is PyTypeVarType) substitution.bound else substitution
+      if (containsLiteral(substitutionOrBound)) {
         return fromLiteralValue(expression, context)
       }
       return null
