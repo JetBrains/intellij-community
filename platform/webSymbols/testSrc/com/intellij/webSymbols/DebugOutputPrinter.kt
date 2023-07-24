@@ -8,7 +8,7 @@ open class DebugOutputPrinter {
 
   private val stack = mutableSetOf<Any>()
 
-  protected var indent = " "
+  protected open val indent = " "
 
   fun printValue(value: Any): String =
     StringBuilder().printValue(0, value).toString()
