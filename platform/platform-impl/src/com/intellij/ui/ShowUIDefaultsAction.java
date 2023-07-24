@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TextCopyProvider;
 import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -17,31 +16,26 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.ui.components.JBCheckBox;
-import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.picker.ColorListener;
 import com.intellij.ui.speedSearch.FilteringTableModel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.*;
-import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBEmptyBorder;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.DocumentEvent;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
@@ -73,28 +67,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         init();
       }
 
-      public JBTable myTable;
-      public JBTextField mySearchField;
-      private static final String SEARCH_FIELD_HISTORY_KEY = "LaFDialog.filter";
-      private static final String COLORS_ONLY_KEY = "LaFDialog.ColorsOnly";
-      private static final String LAST_SELECTED_KEY = "LaFDialog.lastSelectedElement";
-      public JBCheckBox myColorsOnly;
+      private ShowUIDefaultsContent content;
 
       @Override
       protected void doOKAction() {
         super.doOKAction();
         LafManager.getInstance().updateUI();
-        PropertiesComponent.getInstance().setValue(SEARCH_FIELD_HISTORY_KEY, mySearchField.getText());
-        Object selected = myTable.getValueAt(myTable.getSelectedRow(), 0);
-        if (selected instanceof Pair) {
-          PropertiesComponent.getInstance().setValue(LAST_SELECTED_KEY, ((Pair<?, ?>)selected).first.toString());
-        }
-      }
-
-      @Nullable
-      @Override
-      public JComponent getPreferredFocusedComponent() {
-        return mySearchField;
+        content.storeState();
       }
 
       @Nullable
@@ -105,9 +84,6 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
 
       @Override
       protected JComponent createCenterPanel() {
-        mySearchField = new JBTextField(40);
-        mySearchField.setText(PropertiesComponent.getInstance().getValue(SEARCH_FIELD_HISTORY_KEY, ""));
-        JPanel top = UI.PanelFactory.panel(mySearchField).withLabel(IdeBundle.message("label.ui.filter")).createPanel();
         final JBTable table = new JBTable(createFilteringModel()) {
           @Override
           public boolean editCellAt(int row, int column, EventObject e) {
@@ -155,9 +131,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   updateValue(pair, new JBEmptyBorder(newInsets), row, column);
                   changed.set(true);
                 }
-              } else if (value instanceof Insets) {
-                Insets i = (Insets)value;
-
+              } else if (value instanceof Insets i) {
                 String oldInsets = String.format("%d,%d,%d,%d", i.top, i.left, i.bottom, i.right);
                 Insets newInsets = editInsets(key.toString(), oldInsets);
                 if (newInsets != null) {
@@ -193,7 +167,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                   LafManager.getInstance().repaintUI();
                 });
               }
-              PropertiesComponent.getInstance().setValue(LAST_SELECTED_KEY, key.toString());
+              PropertiesComponent.getInstance().setValue(ShowUIDefaultsContent.LAST_SELECTED_KEY, key.toString());
             }
             return false;
           }
@@ -254,54 +228,12 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         TableSpeedSearch.installOn(table, (o, cell) -> cell.column == 1 ? null : String.valueOf(o));
         table.setShowGrid(false);
         TableHoverListener.DEFAULT.removeFrom(table);
-        myTable = table;
-        mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
-          @Override
-          protected void textChanged(@NotNull DocumentEvent e) {
-            updateFilter();
-          }
-        });
 
-        ScrollingUtil.installActions(myTable, true, mySearchField);
-
-        myColorsOnly = new JBCheckBox(IdeBundle.message("checkbox.colors.only"), PropertiesComponent.getInstance().getBoolean(COLORS_ONLY_KEY, false)) {
-          @Override
-          public void addNotify() {
-            super.addNotify();
-            updateFilter();
-            String key = PropertiesComponent.getInstance().getValue(LAST_SELECTED_KEY);
-            if (key != null) {
-              for (int i = 0; i < myTable.getRowCount(); i++) {
-                Object valueAt = myTable.getModel().getValueAt(i, 0);
-                if (valueAt instanceof Pair<?,?> && key.equals(((Pair<?, ?>)valueAt).first)) {
-                  myTable.getSelectionModel().setLeadSelectionIndex(i);
-                  myTable.getSelectionModel().setSelectionInterval(i, i);
-                  ScrollingUtil.ensureIndexIsVisible(myTable, i, 1);
-                  return;
-                }
-              }
-              ScrollingUtil.ensureSelectionExists(myTable);
-            }
-          }
-        };
-        myColorsOnly.addActionListener(new ActionListener() {
-          @Override
-          public void actionPerformed(ActionEvent e) {
-            PropertiesComponent.getInstance().setValue(COLORS_ONLY_KEY, myColorsOnly.isSelected(), false);
-            updateFilter();
-          }
-        });
-        JPanel pane = ToolbarDecorator.createDecorator(myTable)
-          .setToolbarPosition(ActionToolbarPosition.BOTTOM)
-          .setAddAction((x) -> addNewValue())
-          .createPanel();
-        BorderLayoutPanel panel = simplePanel(simplePanel(pane).withBorder(JBUI.Borders.empty(5, 0)))
-          .addToTop(top)
-          .addToBottom(myColorsOnly);
+        content = new ShowUIDefaultsContent(table);
         DataProvider provider = dataId -> {
           if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-            if ((mySearchField.hasFocus() && StringUtil.isEmpty(mySearchField.getSelectedText())) || myTable.hasFocus()) {
-              int[] rows = myTable.getSelectedRows();
+            if ((content.searchField.hasFocus() && StringUtil.isEmpty(content.searchField.getSelectedText())) || content.table.hasFocus()) {
+              int[] rows = content.table.getSelectedRows();
               if (rows.length > 0) {
                   return new TextCopyProvider() {
                     @Override
@@ -314,7 +246,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                       List<String> result = new ArrayList<>();
                       String tail = rows.length > 1 ? "," : "";
                       for (int row : rows) {
-                        var pair = (Pair<?, ?>)myTable.getModel().getValueAt(row, 0);
+                        var pair = (Pair<?, ?>)content.table.getModel().getValueAt(row, 0);
                         if (pair.second instanceof Color) {
                           result.add("\"" + pair.first.toString() + "\": \"" + ColorUtil.toHtmlColor((Color)pair.second) + "\"" + tail);
                         } else {
@@ -330,47 +262,10 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           }
           return null;
         };
-        DataManager.registerDataProvider(myTable, provider);
-        DataManager.registerDataProvider(mySearchField, provider);
-        return panel;
-      }
+        DataManager.registerDataProvider(content.table, provider);
+        DataManager.registerDataProvider(content.searchField, provider);
 
-      private void addNewValue() {
-        ApplicationManager.getApplication().invokeLater(() -> new ShowUIDefaultsAddValue(myTable, true, (name, value) -> {
-          String key = name.trim();
-          String val = value.trim();
-          if (!key.isEmpty() && !val.isEmpty()) {
-            UIManager.put(key, UITheme.parseValue(key, val));
-            myTable.setModel(createFilteringModel());
-            updateFilter();
-          }
-          return null;
-        }).show());
-      }
-
-      private void updateFilter() {
-        FilteringTableModel<?> model = (FilteringTableModel<?>)myTable.getModel();
-        if (StringUtil.isEmpty(mySearchField.getText()) && !myColorsOnly.isSelected()) {
-          model.setFilter(null);
-          return;
-        }
-
-        MinusculeMatcher matcher = NameUtil.buildMatcher("*" + mySearchField.getText(), NameUtil.MatchingCaseSensitivity.NONE);
-        model.setFilter(pair -> {
-          Object obj = ((Pair<?, ?>)pair).second;
-          String value;
-          if (obj == null) {
-            value = "null";
-          } else if (obj instanceof Color) {
-            value = ColorUtil.toHtmlColor((Color)obj);
-          } else {
-            value = obj.toString();
-          }
-
-          value = ((Pair<?, ?>)pair).first.toString() + " " + value;
-          return (!myColorsOnly.isSelected() || obj instanceof Color) && matcher.matches(value);
-        });
-
+        return content.panel;
       }
 
       private @Nullable <T> T editNumber(String key, String value, Function<? super String, ? extends T> parser) {
@@ -553,7 +448,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static FilteringTableModel<Object> createFilteringModel() {
+  static FilteringTableModel<Object> createFilteringModel() {
     DefaultTableModel model = new DefaultTableModel(getUIDefaultsData(), new Object[]{"Name", "Value"}) {
       @Override
       public boolean isCellEditable(int row, int column) {
