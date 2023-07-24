@@ -13,14 +13,12 @@ import com.intellij.usageView.UsageViewShortNameLocation
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.base.psi.unwrapIfLabeled
 import org.jetbrains.kotlin.util.match
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isElseIf
-import org.jetbrains.kotlin.idea.intentions.loopToCallChain.unwrapIfLabeled
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getCallNameExpression
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentsInParentheses
 import kotlin.reflect.KClass
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 
@@ -78,7 +76,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
 
         private fun StringBuilder.appendCallArguments(callExpression: KtCallExpression) {
             var argumentText = "($ellipsis)"
-            val arguments = callExpression.getValueArgumentsInParentheses()
+            val arguments = callExpression.valueArguments.filter { it !is KtLambdaArgument } as List<ValueArgument>
             when (arguments.size) {
                 0 -> argumentText = "()"
                 1 -> {
@@ -236,7 +234,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
         }
 
         private fun elseIfPrefix(then: KtContainerNode): String {
-            return if ((then.parent as KtIfExpression).isElseIf()) "if $ellipsis else " else ""
+            return if ((then.parent as KtIfExpression).parent.node.elementType == KtNodeTypes.ELSE) "if $ellipsis else " else ""
         }
     }
 
@@ -249,7 +247,7 @@ class KotlinBreadcrumbsInfoProvider : BreadcrumbsProvider {
         override fun elementInfo(element: KtContainerNode): String {
             val ifExpression = element.parent as KtIfExpression
             val then = ifExpression.thenNode
-            val ifInfo = if (ifExpression.isElseIf() || then == null) "if" else IfThenHandler.elementInfo(then)
+            val ifInfo = if (ifExpression.parent.node.elementType == KtNodeTypes.ELSE || then == null) "if" else IfThenHandler.elementInfo(then)
             return "$ifInfo $ellipsis else"
         }
 

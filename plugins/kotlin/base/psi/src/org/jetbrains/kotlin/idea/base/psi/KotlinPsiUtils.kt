@@ -21,7 +21,6 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.isTopLevelInFileOrScript
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 val KtClassOrObject.classIdIfNonLocal: ClassId?
@@ -233,3 +232,10 @@ fun ValueArgument.findSingleLiteralStringTemplateText(): String? {
 }
 
 fun PsiElement.isInsideAnnotationEntryArgumentList(): Boolean = parentOfType<KtValueArgumentList>()?.parent is KtAnnotationEntry
+
+fun KtExpression.unwrapIfLabeled(): KtExpression {
+    var statement = this
+    while (true) {
+        statement = statement.parent as? KtLabeledExpression ?: return statement
+    }
+}
