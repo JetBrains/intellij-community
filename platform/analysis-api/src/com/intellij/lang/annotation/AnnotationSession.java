@@ -13,6 +13,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This class holds a context during running {@link Annotator},
+ * which can access it via {@link AnnotationHolder#getCurrentAnnotationSession()}.
+ * This class is not intended for instantiating manually, and all its methods are effectively abstract (not marked as such yet due to compatibility reasons).
+ */
 @ApiStatus.NonExtendable
 public /*abstract*/ class AnnotationSession implements UserDataHolder {
   private final PsiFile myFile;
