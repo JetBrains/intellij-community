@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.AboutPopupDescriptionProvider;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -37,7 +38,6 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.*;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -198,32 +198,31 @@ public class AboutDialog extends DialogWrapper {
     addEmptyLine(box);
 
     //Link to open-source projects
-    HyperlinkLabel openSourceSoftware = new HyperlinkLabel();
-    //noinspection DialogTitleCapitalization
-    openSourceSoftware.setTextWithHyperlink(IdeBundle.message("about.box.powered.by.open.source"));
+    HyperlinkLabel openSourceSoftware = hyperlinkLabel(IdeBundle.message("about.box.powered.by"));
     openSourceSoftware.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
         showOssInfo(box);
       }
     });
-    openSourceSoftware.setFont(getDefaultTextFont());
-    JBLabel poweredBy = new JBLabel(IdeBundle.message("about.box.powered.by") + " ").withFont(getDefaultTextFont());
-    BorderLayoutPanel panel = JBUI.Panels.simplePanel(openSourceSoftware).addToLeft(poweredBy);
-    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    box.add(panel);
+    box.add(openSourceSoftware);
 
     //Copyright
-    int year = LocalDate.now().getYear();
-    @NlsSafe String copyrightText = String.format(Locale.ROOT, "Copyright © %s–%d %s", appInfo.getCopyrightStart(), year, appInfo.getCompanyName());
-    box.add(label(copyrightText, getDefaultTextFont()));
+    var year = Integer.toString(LocalDate.now().getYear());
+    var copyright = hyperlinkLabel(IdeBundle.message("about.box.copyright", appInfo.getCopyrightStart(), year, appInfo.getCompanyName()));
+    copyright.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
+        BrowserUtil.browse(appInfo.getCompanyURL());
+      }
+    });
+    box.add(copyright);
     addEmptyLine(box);
 
     return box;
   }
 
-  @NotNull
-  public static Pair<String, String> getBuildInfo(ApplicationInfoEx appInfo) {
+  public static @NotNull Pair<String, String> getBuildInfo(ApplicationInfoEx appInfo) {
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
     String buildInfoNonLocalized = MessageFormat.format("Build #{0}", appInfo.getBuild().asString());
     Date buildDate = appInfo.getBuildDate().getTime();
@@ -249,9 +248,16 @@ public class AboutDialog extends DialogWrapper {
   }
 
   private static JLabel label(@NlsContexts.Label String text, JBFont font) {
-    JBLabel label = new JBLabel(text).withFont(font);
+    var label = new JBLabel(text).withFont(font);
     label.setCopyable(true);
     return label;
+  }
+
+  private static HyperlinkLabel hyperlinkLabel(@NlsContexts.LinkLabel String textWithLink) {
+    var hyperlinkLabel = new HyperlinkLabel();
+    hyperlinkLabel.setTextWithHyperlink(textWithLink);
+    hyperlinkLabel.setFont(getDefaultTextFont());
+    return hyperlinkLabel;
   }
 
   public String getExtendedAboutText() {
