@@ -7,6 +7,9 @@ import com.intellij.execution.actions.StopAction
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.impl.ExecutionManagerImpl
 import com.intellij.execution.impl.isOfSameType
+import com.intellij.execution.runToolbar.environment
+import com.intellij.execution.runToolbar.getRunToolbarProcess
+import com.intellij.execution.runToolbar.isRunning
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes
@@ -56,31 +59,56 @@ const val CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH = 8
 const val CONFIGURATION_NAME_NON_TRIM_MAX_LENGTH = 33 + CONFIGURATION_NAME_TRIM_SUFFIX_LENGTH
 
 @Service(Service.Level.PROJECT)
-class RunWidgetManager(private val project: Project)  {
+class RunWidgetResumeManager(private val project: Project)  {
   companion object {
 
-    fun getInstance(project: Project): RunWidgetManager = project.service()
+    fun getInstance(project: Project): RunWidgetResumeManager = project.service()
 
-    @JvmStatic
-    val isResumeActive: Boolean
-      get() = ExperimentalUI.isNewUI() && RegistryManager.getInstance().`is`("ide.experimental.ui.show.resume")
-
-    @JvmStatic
-    fun shouldHideDisabledDebugActions(place: String): Boolean {
-      return isResumeActive && ActionPlaces.isNewUiToolbarPlace(place)
-    }
+    private val isSecondActive: Boolean
+      get() = ExperimentalUI.isNewUI() && RegistryManager.getInstance().`is`("ide.experimental.ui.show.resume.second")
   }
 
-  fun isResumeAvailable(): Boolean {
-    return isResumeActive && RunManagerEx.getInstanceEx(project).selectedConfiguration?.let { conf ->
-        isProcessStarted(conf, ToolWindowId.DEBUG)
+  val isResumeActive: Boolean
+    get() = ExperimentalUI.isNewUI() && RegistryManager.getInstance().`is`("ide.experimental.ui.show.resume") && isDebugStarted()
+
+  fun isFirstVersionAvailable(): Boolean {
+    return isResumeActive && !isSecondActive
+  }
+
+  fun isSecondVersionAvailable(): Boolean {
+    return isResumeActive && isSecondActive
+  }
+
+  fun shouldMoveRun(): Boolean {
+    if(!isResumeActive) return false
+
+    if(isFirstVersionAvailable()) return true
+
+    if(isSecondVersionAvailable()) {
+      return RunManagerEx.getInstanceEx(project).selectedConfiguration?.let { conf ->
+        getDebugDescriptor(conf) != null
       } ?: false
+    }
+
+    return false
   }
 
-  private fun isProcessStarted(configuration: RunnerAndConfigurationSettings, executorId: String): Boolean {
+  fun getDebugDescriptor(configuration: RunnerAndConfigurationSettings): RunContentDescriptor? {
+    return getStarted(configuration, ToolWindowId.DEBUG)
+  }
+
+  private fun isDebugStarted(): Boolean {
+    return ExecutionManagerImpl.getAllDescriptors(project)
+      .mapNotNull { it.environment() }
+      .filter { it.contentToReuse != null && it.getRunToolbarProcess() != null }
+      .filter { it.isRunning() == true }.any { it.executor.id == ToolWindowId.DEBUG }
+  }
+
+  private fun getStarted(configuration: RunnerAndConfigurationSettings, executorId: String): RunContentDescriptor? {
     val executionManager = ExecutionManagerImpl.getInstance(project)
-    val executor = executionManager.getRunningDescriptors { configuration === it }.flatMap { executionManager.getExecutors(it) }.firstOrNull()
-    return executor?.id == executorId
+    return executionManager.getRunningDescriptors { configuration === it }.firstOrNull {
+      executionManager.getExecutors(it).firstOrNull { executor -> executor.id == executorId } != null
+    }
   }
 }
 
@@ -169,9 +197,13 @@ private class RedesignedRunToolbarWrapper : WindowHeaderPlaceholder() {
 class RunToolbarTopLevelExecutorActionGroup : ActionGroup() {
   override fun isPopup() = false
 
+  override fun getActionUpdateThread(): ActionUpdateThread {
+    return ActionUpdateThread.EDT
+  }
+
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val selectedInDebug = e?.project?.let { project ->
-      RunWidgetManager.getInstance(project).isResumeAvailable()
+      RunWidgetResumeManager.getInstance(project).shouldMoveRun()
     } ?: false
     val list = if(selectedInDebug)
       listOf(IdeActions.ACTION_DEFAULT_DEBUGGER)
@@ -377,7 +409,7 @@ private class MoreRunToolbarActions : TogglePopupAction(
       }
     }
   }
-  override fun getActionUpdateThread() = ActionUpdateThread.BGT
+  override fun getActionUpdateThread() = ActionUpdateThread.EDT
 }
 
 internal val excludeRunAndDebug: (Executor) -> Boolean = {
@@ -391,7 +423,7 @@ internal val excludeDebug: (Executor) -> Boolean = {
 
 private fun createOtherRunnersSubgroup(runConfiguration: RunnerAndConfigurationSettings?, project: Project): DefaultActionGroup {
   if (runConfiguration != null) {
-    val exclude = if(RunWidgetManager.getInstance(project).isResumeAvailable()) excludeDebug else excludeRunAndDebug
+    val exclude = if(RunWidgetResumeManager.getInstance(project).shouldMoveRun()) excludeDebug else excludeRunAndDebug
     return RunConfigurationsComboBoxAction.SelectConfigAction(runConfiguration, project, exclude)
   }
   if (RunConfigurationsComboBoxAction.hasRunCurrentFileItem(project)) {

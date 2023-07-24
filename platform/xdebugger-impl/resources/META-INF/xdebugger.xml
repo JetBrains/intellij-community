@@ -31,6 +31,8 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
+
+    <projectService overrides="true" serviceInterface="com.intellij.execution.InlineResumeCreator" serviceImplementation="com.intellij.xdebugger.impl.runToolbar.XDebuggerInlineResumeCreator"/>
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
@@ -128,6 +130,12 @@
   </extensions>
 
   <actions>
+    <action class="com.intellij.xdebugger.impl.runToolbar.ConfigurationXDebuggerResumeAction">
+      <add-to-group group-id="compositeResumeGroup"/>
+    </action>
+    <action class="com.intellij.xdebugger.impl.runToolbar.CurrentSessionXDebuggerResumeAction">
+      <add-to-group group-id="compositeResumeGroup"/>
+    </action>
     <group id="XDebugger.AttachGroup">
       <action id="XDebugger.AttachToProcess" class="com.intellij.xdebugger.impl.actions.AttachToProcessAction"/>
       <add-to-group group-id="RunMenu" anchor="before" relative-to-action="editRunConfigurations"/>

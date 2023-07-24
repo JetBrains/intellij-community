@@ -1336,6 +1336,9 @@
                             implementationClass="com.intellij.codeInsight.template.postfix.completion.PostfixTemplateCompletionContributor"
                             order="last"/>
 
+    <projectService serviceInterface="com.intellij.execution.InlineResumeCreator"
+                    serviceImplementation="com.intellij.execution.DefaultInlineResumeCreator"/>
+
     <projectService serviceInterface="com.intellij.execution.AdditionalRunningOptions"
                     serviceImplementation="com.intellij.execution.EmptyAdditionalRunningOptions"/>
     <projectService serviceInterface="com.intellij.execution.ExecutionManager"

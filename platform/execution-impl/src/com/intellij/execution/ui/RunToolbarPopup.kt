@@ -54,6 +54,7 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import javax.swing.*
+import kotlin.collections.ArrayList
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -286,16 +287,24 @@ private fun createRunConfigurationWithInlines(runExecutor: Executor,
 ): SelectRunConfigurationWithInlineActions {
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
-  val inlineActions = if (showRerunAndStopButtons)
-    listOf(
+  val inlineActions = ArrayList<AnAction>()
+  if (showRerunAndStopButtons) {
+    if(RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable()) {
+      InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)?.let {
+        inlineActions.add(it)
+      }
+    }
+
+    inlineActions.addAll(listOf(
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
       StopConfigurationInlineAction(activeExecutor, conf)
-    )
-  else
-    listOf(
+    ))
+  } else {
+    inlineActions.addAll(listOf(
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
       ExecutorRegistryImpl.RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
-    )
+    ))
+  }
 
   val result = SelectRunConfigurationWithInlineActions(inlineActions, conf, project, shouldBeShown)
   if (showRerunAndStopButtons) {
