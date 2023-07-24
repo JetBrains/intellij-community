@@ -106,11 +106,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   internal class MyStartupActivity : VcsStartupActivity {
+    override val order: Int
+      get() = VcsInitObject.OTHER_INITIALIZATION.order
+
     override fun runActivity(project: Project) {
       getInstanceImpl(project).startListenForEditors()
     }
-
-    override fun getOrder(): Int = VcsInitObject.OTHER_INITIALIZATION.order
   }
 
   private fun startListenForEditors() {

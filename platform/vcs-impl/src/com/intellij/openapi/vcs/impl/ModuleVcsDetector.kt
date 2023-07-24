@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diagnostic.runActivity
@@ -18,7 +18,7 @@ import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcsUtil.VcsUtil
 
-class ModuleVcsDetector(private val project: Project) {
+internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) { ProjectLevelVcsManagerImpl.getInstanceImpl(project) }
 
   private val queue = MergingUpdateQueue("ModuleVcsDetector", 1000, true, null, project, null, Alarm.ThreadToUse.POOLED_THREAD).also {
@@ -153,12 +153,11 @@ class ModuleVcsDetector(private val project: Project) {
       }
     }
 
+    override val order: Int
+      get() = VcsInitObject.MAPPINGS.order + 10
+
     override fun runActivity(project: Project) {
       project.service<ModuleVcsDetector>().startDetection()
-    }
-
-    override fun getOrder(): Int {
-      return VcsInitObject.MAPPINGS.order + 10
     }
   }
 }

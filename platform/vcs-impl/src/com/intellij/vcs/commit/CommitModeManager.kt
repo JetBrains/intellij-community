@@ -39,6 +39,9 @@ internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
 @Service(Service.Level.PROJECT)
 class CommitModeManager(private val project: Project) : Disposable {
   internal class MyStartupActivity : VcsStartupActivity {
+    override val order: Int
+      get() = VcsInitObject.MAPPINGS.order + 50
+
     override fun runActivity(project: Project) {
       @Suppress("TestOnlyProblems")
       if (project is ProjectEx && project.isLight) {
@@ -51,8 +54,6 @@ class CommitModeManager(private val project: Project) : Disposable {
         commitModeManager.updateCommitMode()
       }
     }
-
-    override fun getOrder(): Int = VcsInitObject.MAPPINGS.order + 50
   }
 
   private var commitMode: CommitMode = CommitMode.PendingCommitMode
@@ -92,7 +93,7 @@ class CommitModeManager(private val project: Project) : Disposable {
   @CalledInAny
   fun getCurrentCommitMode() = commitMode
 
-  internal fun canSetNonModal(): Boolean {
+  private fun canSetNonModal(): Boolean {
     if (isForceNonModalCommit.asBoolean()) return true
     val activeVcses = ProjectLevelVcsManager.getInstance(project).allActiveVcss
     return activeVcses.isNotEmpty() && activeVcses.all { it.type == VcsType.distributed }

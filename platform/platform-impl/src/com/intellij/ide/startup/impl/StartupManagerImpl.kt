@@ -236,10 +236,13 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       val traceContext = Context.current()
 
       project as ComponentManagerImpl
-      StartupActivity.POST_STARTUP_ACTIVITY.processExtensions { activity, pluginDescriptor ->
+      for (item in StartupActivity.POST_STARTUP_ACTIVITY.filterableLazySequence()) {
+        val activity = item.instance ?: continue
         if (isProjectLightEditCompatible && activity !is LightEditCompatible) {
-          return@processExtensions
+          continue
         }
+
+        val pluginDescriptor = item.pluginDescriptor
 
         if (activity is ProjectActivity) {
           if (async) {
@@ -248,7 +251,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
           else {
             activity.execute(project)
           }
-          return@processExtensions
+          continue
         }
 
         @Suppress("SSBasedInspection", "UsagesOfObsoleteApi")
@@ -258,7 +261,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
               runActivityAndMeasureDuration(activity as StartupActivity, pluginDescriptor.pluginId)
             }
           }
-          return@processExtensions
+          continue
         }
         else if (!isProjectLightEditCompatible) {
           // DumbService.unsafeRunWhenSmart throws an assertion in LightEdit mode, see LightEditDumbService.unsafeRunWhenSmart
@@ -523,7 +526,6 @@ private fun launchActivity(activity: ProjectActivity, project: Project, pluginId
     }
   }
 }
-
 
 // allow `invokeAndWait` inside startup activities
 private suspend fun waitAndProcessInvocationEventsInIdeEventQueue(startupManager: StartupManagerImpl) {
