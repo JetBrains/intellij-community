@@ -229,10 +229,16 @@ class JarPackager private constructor(private val outputDir: Path,
 
         // sort because projectStructureMapping is a concurrent collection
         // call invariantSeparatorsPathString because the result of Path ordering is platform-dependent
+
+        // also, put libraries from Maven repo ahead of others, for them to not depend on the lexicographical order of Maven repo and source path
+        val localMavenRepo = Path.of(System.getProperty("user.home"), ".m2", "repository")
+        fun isFromLocalMavenRepo(path: Path) = path.startsWith(localMavenRepo)
+
         list +
         unpackedModules.sortedWith(compareBy({ it.moduleName }, { it.path.invariantSeparatorsPathString })) +
         packager.libraryEntries.sortedWith(compareBy({ it.path.invariantSeparatorsPathString },
                                                      { it.type },
+                                                     { it.libraryFile?.let(::isFromLocalMavenRepo) != true },
                                                      { it.libraryFile?.invariantSeparatorsPathString }))
       }
     }
