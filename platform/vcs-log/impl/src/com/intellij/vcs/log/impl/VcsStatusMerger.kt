@@ -19,7 +19,6 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.vcsUtil.VcsUtil
 
 abstract class VcsStatusMerger<S, Path> {
   fun merge(statuses: List<List<S>>): List<MergedStatusInfo<S>> {
@@ -129,32 +128,32 @@ class VcsFileStatusInfoMerger : VcsStatusMerger<VcsFileStatusInfo, CharSequence>
   override fun getType(info: VcsFileStatusInfo): Change.Type = info.type
 }
 
-abstract class VcsChangesMerger : VcsStatusMerger<Change, CharSequence>() {
-  override fun createStatus(type: Change.Type, path: CharSequence, secondPath: CharSequence?): Change {
-    when (type) {
-      Change.Type.NEW -> return createChange(type, null, VcsUtil.getFilePath(path.toString()))
-      Change.Type.DELETED -> return createChange(type, VcsUtil.getFilePath(path.toString()), null)
-      Change.Type.MOVED -> return createChange(type, VcsUtil.getFilePath(path.toString()), VcsUtil.getFilePath(secondPath.toString()))
-      Change.Type.MODIFICATION -> return createChange(type, VcsUtil.getFilePath(path.toString()), VcsUtil.getFilePath(path.toString()))
+abstract class VcsChangesMerger : VcsStatusMerger<Change, FilePath>() {
+  override fun createStatus(type: Change.Type, path: FilePath, secondPath: FilePath?): Change {
+    return when (type) {
+      Change.Type.NEW -> createChange(type, null, path)
+      Change.Type.DELETED -> createChange(type, path, null)
+      Change.Type.MOVED -> createChange(type, path, secondPath)
+      Change.Type.MODIFICATION -> createChange(type, path, path)
     }
   }
 
   protected abstract fun createChange(type: Change.Type, beforePath: FilePath?, afterPath: FilePath?): Change
 
   fun mergedChange(path: FilePath, changesToParents: List<Change>): MergedChange {
-    return MergedChange.SimpleMergedChange(merge(path.path, changesToParents), changesToParents)
+    return MergedChange.SimpleMergedChange(merge(path, changesToParents), changesToParents)
   }
 
-  override fun getFirstPath(info: Change): CharSequence {
+  override fun getFirstPath(info: Change): FilePath {
     return when (info.type) {
-      Change.Type.MODIFICATION, Change.Type.NEW -> info.afterRevision!!.file.path
-      Change.Type.DELETED, Change.Type.MOVED -> info.beforeRevision!!.file.path
+      Change.Type.MODIFICATION, Change.Type.NEW -> info.afterRevision!!.file
+      Change.Type.DELETED, Change.Type.MOVED -> info.beforeRevision!!.file
     }
   }
 
-  override fun getSecondPath(info: Change): CharSequence? {
+  override fun getSecondPath(info: Change): FilePath? {
     return when (info.type) {
-      Change.Type.MOVED -> info.afterRevision!!.file.path
+      Change.Type.MOVED -> info.afterRevision!!.file
       else -> null
     }
   }
