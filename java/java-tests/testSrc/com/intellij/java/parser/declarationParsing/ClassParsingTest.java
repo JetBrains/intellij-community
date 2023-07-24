@@ -84,4 +84,7 @@ public class ClassParsingTest extends JavaParsingTestCase {
   public void testUnnamedClass3() {
     doTest(true);
   }
+  public void testUnnamedClass4() {
+    doTest(true);
+  }
 }

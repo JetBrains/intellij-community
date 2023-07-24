@@ -66,7 +66,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   public PsiClass @NotNull [] getClasses() {
     StubElement<?> stub = getGreenStub();
     if (stub != null) {
-      return stub.getChildrenByType(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY);
+      return stub.getChildrenByType(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);
     }
 
     return calcTreeElement().getChildrenAsPsiElements(Constants.CLASS_BIT_SET, PsiClass.ARRAY_FACTORY);

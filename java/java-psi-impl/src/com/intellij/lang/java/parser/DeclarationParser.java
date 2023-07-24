@@ -125,30 +125,6 @@ public class DeclarationParser {
       parseClassBodyWithBraces(builder, isAnnotation, isEnum);
     }
 
-    if (context == Context.FILE) {
-      boolean declarationsAfterEnd = false;
-
-      while (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.RBRACE) {
-        final PsiBuilder.Marker position = builder.mark();
-        final PsiBuilder.Marker extra = parse(builder, Context.CLASS);
-        if (extra != null && AFTER_END_DECLARATION_SET.contains(exprType(extra))) {
-          if (!declarationsAfterEnd) {
-            error(builder, JavaPsiBundle.message("expected.class.or.interface"), extra);
-          }
-          declarationsAfterEnd = true;
-          position.drop();
-        }
-        else {
-          position.rollbackTo();
-          break;
-        }
-      }
-
-      if (declarationsAfterEnd) {
-        expectOrError(builder, JavaTokenType.RBRACE, "expected.rbrace");
-      }
-    }
-
     done(declaration, JavaElementType.CLASS);
     return declaration;
   }
