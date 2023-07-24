@@ -54,6 +54,7 @@ class GradleDaemonServices {
         result.addAll(daemonStates)
       }
     }
+    result.unique(true, Comparator.comparing(DaemonState::getPid))
     return result
   }
 
