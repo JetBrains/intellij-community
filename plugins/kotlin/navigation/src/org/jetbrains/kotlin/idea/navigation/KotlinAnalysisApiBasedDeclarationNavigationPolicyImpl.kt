@@ -88,19 +88,19 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         declaration: KtCallableDeclaration,
         scope: GlobalSearchScope,
         project: Project
-    ): KtCallableDeclaration? {
+    ): KtElement? {
         val declarationName = declaration.name ?: return null
         when (declaration) {
             is KtParameter -> {
                 val owner = declaration.getOwningCallable() ?: return null
-                val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, project) ?: return null
+                val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, project) as? KtCallableDeclaration ?: return null
                 return correspondingOwner.valueParameters.firstOrNull { it.name == declarationName }
             }
             is KtPrimaryConstructor -> {
                 val containingClass = declaration.containingClassOrObject ?: return null
                 val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, project) as? KtClassOrObject
                     ?: return null
-                return correspondingOwner.primaryConstructor
+                return correspondingOwner.primaryConstructor ?: correspondingOwner
             }
             else -> {
                 val candidates = when (val containingClass = declaration.containingClassOrObject) {
