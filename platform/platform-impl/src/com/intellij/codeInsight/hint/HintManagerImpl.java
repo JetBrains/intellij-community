@@ -198,9 +198,28 @@ public class HintManagerImpl extends HintManager {
 
   static void doShowInGivenLocation(final LightweightHint hint, final Editor editor, Point p, HintHint hintInfo, boolean updateSize) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
+
     JComponent externalComponent = getExternalComponent(editor);
     Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
+    p = adjustPopupLocation(p, size, hint, hintInfo, externalComponent);
 
+    if(hint.isShouldBeReopen()){
+      hint.hide(true);
+    }
+    if (hint.isVisible()) {
+      if (updateSize) {
+        hint.pack();
+      }
+      hint.updatePosition(hintInfo.getPreferredPosition());
+      hint.updateLocation(p.x, p.y);
+    }
+    else {
+      hint.show(externalComponent, p.x, p.y, editor.getContentComponent(), hintInfo);
+    }
+  }
+
+  @NotNull
+  private static Point adjustPopupLocation(Point p, Dimension size, LightweightHint hint, HintHint hintInfo, JComponent externalComponent) {
     if (hint.isRealPopup() || hintInfo.isPopupForced()) {
       final Point point = new Point(p);
       SwingUtilities.convertPointToScreen(point, externalComponent);
@@ -222,21 +241,7 @@ public class HintManagerImpl extends HintManager {
     else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, externalComponent.getWidth() - size.width);
     }
-
-    if(hint.isShouldBeReopen()){
-      hint.hide(true);
-    }
-
-    if (hint.isVisible()) {
-      if (updateSize) {
-        hint.pack();
-      }
-      hint.updatePosition(hintInfo.getPreferredPosition());
-      hint.updateLocation(p.x, p.y);
-    }
-    else {
-      hint.show(externalComponent, p.x, p.y, editor.getContentComponent(), hintInfo);
-    }
+    return p;
   }
 
   public static void updateLocation(final LightweightHint hint, final Editor editor, Point p) {
