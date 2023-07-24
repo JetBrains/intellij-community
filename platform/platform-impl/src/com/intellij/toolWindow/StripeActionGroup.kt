@@ -1,11 +1,11 @@
 package com.intellij.toolWindow
 
 import com.intellij.icons.AllIcons
+import com.intellij.icons.ExpUiIcons
 import com.intellij.ide.HelpTooltip
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.actions.ToolWindowsGroup
 import com.intellij.ide.ui.NotRoamableUiSettings
-import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener.Companion.fireSchemaChanged
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -225,8 +225,8 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
   override fun update(e: AnActionEvent) {
     super.update(e)
     val pinned = Toggleable.isSelected(e.presentation)
-    e.presentation.icon = AllIcons.Toolbar.Pin
-    e.presentation.selectedIcon = getPinIcon(pinned)
+    e.presentation.icon = if (!pinned) ExpUiIcons.General.Pin else ExpUiIcons.General.PinSelected
+    e.presentation.selectedIcon = if (!pinned) ExpUiIcons.General.PinHovered else ExpUiIcons.General.PinSelectedHovered
     e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
   }
 }
