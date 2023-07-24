@@ -17,7 +17,7 @@ import com.intellij.ui.table.JBTable
 import java.awt.Color
 import javax.swing.UIManager
 
-class ShowUIDefaultsContent(@JvmField val table: JBTable) {
+internal class ShowUIDefaultsContent(@JvmField val table: JBTable) {
 
   companion object {
     const val LAST_SELECTED_KEY = "LaFDialog.lastSelectedElement"
@@ -35,6 +35,7 @@ class ShowUIDefaultsContent(@JvmField val table: JBTable) {
         .columns(40)
         .text(PropertiesComponent.getInstance().getValue(SEARCH_FIELD_HISTORY_KEY, ""))
         .onChanged { updateFilter() }
+        .align(AlignX.FILL)
         .focused()
         .component
     }
