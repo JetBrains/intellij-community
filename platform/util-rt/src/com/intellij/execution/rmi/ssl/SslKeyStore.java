@@ -20,7 +20,7 @@ import java.util.List;
 public final class SslKeyStore extends DelegateKeyStore {
   public static final String SSL_DEFERRED_KEY_LOADING = "sslDeferredKeyLoading";
   public static final String SSL_DEFERRED_CA_LOADING = "sslDeferredCaLoading";
-  public static final String NAME = "idea-key-store";
+  private static final String NAME = "idea-key-store";
   private static final List<KeyEntry> ourAdded = new ArrayList<>();
   private int myAdded;
   static {
@@ -29,6 +29,10 @@ public final class SslKeyStore extends DelegateKeyStore {
 
   public SslKeyStore() {
     super("PKCS12");
+  }
+
+  public static KeyStore getInstance() throws KeyStoreException {
+    return KeyStore.getInstance(NAME);
   }
 
   public static void setDefault() {

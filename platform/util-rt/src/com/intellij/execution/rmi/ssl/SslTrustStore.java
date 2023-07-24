@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 
 public final class SslTrustStore extends DelegateKeyStore {
   private static final Logger LOG = Logger.getLogger(SslTrustStore.class.getCanonicalName());
-  public static final String NAME = "idea-trust-store";
+  private static final String NAME = "idea-trust-store";
   static {
     ourProvider.setProperty("KeyStore." + NAME, SslTrustStore.class.getName());
   }
@@ -31,6 +31,10 @@ public final class SslTrustStore extends DelegateKeyStore {
 
   public SslTrustStore() {
     super(KeyStore.getDefaultType());
+  }
+
+  public static String getType() {
+    return NAME;
   }
 
   public static void setDefault() {
