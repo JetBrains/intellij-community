@@ -4,6 +4,7 @@ package com.intellij.compiler.cache.client
 import com.intellij.compiler.cache.client.JpsServerAuthExtension.Companion.getInstance
 import com.intellij.compiler.cache.ui.CompilerCacheNotifications
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
@@ -14,7 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 @Service(Service.Level.PROJECT)
-class CompilerCacheServerAuthService(private val project: Project, private val scope: CoroutineScope) {
+class CompilerCacheServerAuthService(private val project: Project, private val scope: CoroutineScope) : Disposable {
   fun getRequestHeaders(): Map<String, String> {
     return getRequestHeaders(false)
   }
@@ -32,7 +33,7 @@ class CompilerCacheServerAuthService(private val project: Project, private val s
     val authHeader = authExtension.getAuthHeader(force)
     if (authHeader == null) {
       scope.launch {
-        JpsServerAuthExtension.checkAuthenticated(project, project) {
+        JpsServerAuthExtension.checkAuthenticated(getInstance(project), project) {
           thisLogger().info("User authentication for JPS Cache download complete successfully")
         }
       }
@@ -44,5 +45,8 @@ class CompilerCacheServerAuthService(private val project: Project, private val s
   companion object {
     @JvmStatic
     fun getInstance(project: Project): CompilerCacheServerAuthService = project.service()
+  }
+
+  override fun dispose() {
   }
 }

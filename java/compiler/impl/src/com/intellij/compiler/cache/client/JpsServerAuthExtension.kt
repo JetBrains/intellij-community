@@ -52,7 +52,7 @@ interface JpsServerAuthExtension {
       if (authExtension == null) {
         val userData = project.getUserData(NOTIFICATION_SHOWN_KEY)
         if (userData == null) {
-          project.putUserData(NOTIFICATION_SHOWN_KEY, java.lang.Boolean.TRUE)
+          project.putUserData(NOTIFICATION_SHOWN_KEY, true)
           withContext(Dispatchers.EDT) {
             CompilerCacheNotifications.ATTENTION
               .createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
