@@ -290,6 +290,7 @@ internal class SettingsSyncConfigurable : BoundConfigurable(message("title.setti
           SettingsSyncEventsStatistics.ENABLED_MANUALLY.log(SettingsSyncEventsStatistics.EnabledMethod.GET_FROM_SERVER)
         }
         EnableSettingsSyncDialog.Result.PUSH_LOCAL -> {
+          SettingsSyncSettings.getInstance().applyFromState(dialog.syncSettings)
           SettingsSyncSettings.getInstance().syncEnabled = true
           syncEnabler.pushSettingsToServer()
           if (remoteSettings != null) {
