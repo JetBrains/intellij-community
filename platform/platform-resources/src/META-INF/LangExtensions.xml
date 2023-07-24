@@ -95,7 +95,7 @@
                         serviceImplementation="com.intellij.formatting.FormattingProgressTaskFactory"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.ex.util.EditorFacade"
                         serviceImplementation="com.intellij.formatting.EditorFacadeImpl"/>
-    <applicationService serviceInterface="com.intellij.lang.injection.InjectionEditService"
+    <applicationService serviceInterface="com.intellij.injected.editor.InjectionEditService"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.InjectionEditServiceImpl"/>
 
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
@@ -701,8 +701,6 @@
     <navbar implementation="com.intellij.ide.navigationToolbar.DefaultNavBarExtension" id="defaultNavbar" order="last"/>
     <applicationService serviceInterface="com.intellij.ide.navigationToolbar.NavBarModelBuilder"
                         serviceImplementation="com.intellij.ide.navigationToolbar.NavBarModelBuilderImpl"/>
-    <applicationService serviceInterface="com.intellij.modcommand.ModCommandService"
-                        serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandServiceImpl"/>
     <applicationService serviceInterface="com.intellij.modcommand.ModCommandExecutor"
                         serviceImplementation="com.intellij.lang.impl.modcommand.ModCommandExecutorImpl"/>
 

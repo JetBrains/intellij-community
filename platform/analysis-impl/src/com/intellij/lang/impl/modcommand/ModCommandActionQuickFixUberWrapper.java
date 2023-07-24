@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.NewUiValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +97,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
 
   @Override
   public Icon getIcon(int flags) {
-    if (ExperimentalUI.isNewUI()) return null;
+    if (NewUiValue.isEnabled()) return null;
     ModCommandAction.Presentation presentation = getPresentation();
     return presentation == null ? null : presentation.icon();
   }

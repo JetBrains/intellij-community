@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.NewUiValue;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +91,7 @@ import java.util.Objects;
 
   @Override
   public Icon getIcon(int flags) {
-    return ExperimentalUI.isNewUI() || myPresentation == null ? null : myPresentation.icon();
+    return NewUiValue.isEnabled() || myPresentation == null ? null : myPresentation.icon();
   }
 
   public @NotNull ModCommandAction action() { return myAction; }
