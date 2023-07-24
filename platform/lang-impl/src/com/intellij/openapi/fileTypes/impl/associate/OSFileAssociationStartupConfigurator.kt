@@ -8,28 +8,33 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypesBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.util.messages.SimpleMessageBusConnection
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.Nls
 
 private class OSFileAssociationStartupConfigurator : ApplicationInitializedListener {
-  override fun componentsInitialized() {
-    val preferences = OSFileAssociationPreferences.getInstance()
-    if (preferences.fileTypeNames.isEmpty() || !preferences.ideLocationChanged()) {
-      return
-    }
+  override suspend fun execute(asyncScope: CoroutineScope) {
+    asyncScope.launch {
+      val preferences = serviceAsync<OSFileAssociationPreferences>()
+      if (preferences.fileTypeNames.isEmpty() || !preferences.ideLocationChanged()) {
+        return@launch
+      }
 
-    logger<OSFileAssociationStartupConfigurator>().info("Restoring file type associations on IDE location change")
-    val connection = ApplicationManager.getApplication().getMessageBus().simpleConnect()
-    val resultHandler = MyResultHandler(connection)
-    connection.subscribe(AppLifecycleListener.TOPIC, resultHandler)
-    connection.subscribe(ProjectManager.TOPIC, resultHandler)
-    OSAssociateFileTypesUtil.restoreAssociations(resultHandler)
-    preferences.updateIdeLocationHash()
+      logger<OSFileAssociationStartupConfigurator>().info("Restoring file type associations on IDE location change")
+      val connection = ApplicationManager.getApplication().getMessageBus().simpleConnect()
+      val resultHandler = MyResultHandler(connection)
+      connection.subscribe(AppLifecycleListener.TOPIC, resultHandler)
+      connection.subscribe(ProjectManager.TOPIC, resultHandler)
+      OSAssociateFileTypesUtil.restoreAssociations(resultHandler)
+      preferences.updateIdeLocationHash()
+    }
   }
 }
 

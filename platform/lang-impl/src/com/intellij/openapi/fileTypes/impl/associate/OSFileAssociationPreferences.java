@@ -1,28 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl.associate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.DigestUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-@Service(Service.Level.APP)
+@Service
 @State(name = "OSFileAssociationPreferences", storages =  @Storage(value = "osFileIdePreferences.xml", roamingType = RoamingType.DISABLED))
 public final class OSFileAssociationPreferences implements PersistentStateComponent<OSFileAssociationPreferences> {
-  private final static Logger LOG = Logger.getInstance(OSFileAssociationPreferences.class);
-
   public List<String> fileTypeNames = new ArrayList<>();
   public String ideLocationHash;
 
@@ -54,23 +50,18 @@ public final class OSFileAssociationPreferences implements PersistentStateCompon
     ideLocationHash = getIdeLocationHash();
   }
 
-  private static @Nullable String getIdeLocationHash() {
-    try {
-      MessageDigest messageDigest = MessageDigest.getInstance("MD5");
-      messageDigest.update(PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
-      StringBuilder result = new StringBuilder();
-      for (byte b : messageDigest.digest()) {
-        result.append(String.format("%02X", b));
-      }
-      return result.toString();
+  private static @NotNull String getIdeLocationHash() {
+    MessageDigest messageDigest = DigestUtil.md5();
+    messageDigest.update(PathManager.getHomePath().getBytes(StandardCharsets.UTF_8));
+    StringBuilder result = new StringBuilder();
+    for (byte b : messageDigest.digest()) {
+      result.append(String.format("%02X", b));
     }
-    catch (NoSuchAlgorithmException e) {
-      LOG.error(e);
-    }
-    return null;
+    return result.toString();
   }
 
   public boolean contains(@NotNull FileType fileType) {
+    //noinspection SSBasedInspection
     return fileTypeNames.stream().anyMatch(name->name.equals(fileType.getName()));
   }
 }
