@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.java.library.JavaLibraryUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,7 +11,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiPackage;
-import com.intellij.psi.util.CachedValueProvider.Result;
+import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import de.plushnikov.intellij.plugin.Version;
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +21,8 @@ import java.util.List;
 
 public final class LombokLibraryUtil {
 
+  private static final Logger LOG = Logger.getInstance(LombokLibraryUtil.class);
+
   private static final String LOMBOK_PACKAGE = "lombok.experimental";
 
   public static boolean hasLombokLibrary(@NotNull Project project) {
@@ -29,10 +30,14 @@ public final class LombokLibraryUtil {
       return false;
     }
     ApplicationManager.getApplication().assertReadAccessAllowed();
-    return JavaLibraryUtil.hasLibraryJar(project, "org.projectlombok:lombok");
+    return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
+      PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(LOMBOK_PACKAGE);
+      return new CachedValueProvider.Result<>(aPackage, ProjectRootManager.getInstance(project));
+    }) != null;
   }
 
-  public static @NotNull String getLombokVersionCached(@NotNull Project project) {
+  @NotNull
+  public static String getLombokVersionCached(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       String lombokVersion = null;
       try {
@@ -42,13 +47,14 @@ public final class LombokLibraryUtil {
         throw e;
       }
       catch (Throwable e) {
-        Logger.getInstance(LombokLibraryUtil.class).error(e);
+        LOG.error(e);
       }
-      return new Result<>(StringUtil.notNullize(lombokVersion), ProjectRootManager.getInstance(project));
+      return new CachedValueProvider.Result<>(StringUtil.notNullize(lombokVersion), ProjectRootManager.getInstance(project));
     });
   }
 
-  private static @Nullable String getLombokVersionInternal(@NotNull Project project) {
+  @Nullable
+  private static String getLombokVersionInternal(@NotNull Project project) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(LOMBOK_PACKAGE);
     if (aPackage != null) {
       PsiDirectory[] directories = aPackage.getDirectories();
