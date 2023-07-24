@@ -160,7 +160,7 @@ public class AnnotateVcsVirtualFileAction {
         filePath = ((VcsFileRevisionEx)revision).getPath();
       }
       else {
-        filePath = VcsUtil.getFilePath(file.getPath());
+        filePath = VcsUtil.getFilePath(file);
       }
       revisionNumber = revision != null ? revision.getRevisionNumber() : null;
     }
