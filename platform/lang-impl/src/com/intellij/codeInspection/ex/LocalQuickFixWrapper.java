@@ -13,6 +13,7 @@ import com.intellij.codeInspection.ui.InspectionToolPresentation;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
 import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -67,10 +68,10 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
   @Override
-  protected void applyFix(@NotNull final Project project,
-                          @NotNull final GlobalInspectionContextImpl context,
-                          final CommonProblemDescriptor @NotNull [] descriptors,
-                          @NotNull final Set<? super PsiElement> ignoredElements) {
+  protected @NotNull BatchExecutionResult applyFix(@NotNull final Project project,
+                                                   @NotNull final GlobalInspectionContextImpl context,
+                                                   final CommonProblemDescriptor @NotNull [] descriptors,
+                                                   @NotNull final Set<? super PsiElement> ignoredElements) {
     if (myFix instanceof BatchQuickFix) {
       final List<PsiElement> collectedElementsToIgnore = new ArrayList<>();
       final Runnable refreshViews = () -> {
@@ -96,10 +97,11 @@ public class LocalQuickFixWrapper extends QuickFixAction {
         fixApplicator.run();
       }
 
-      return;
+      return ModCommandExecutor.Result.SUCCESS;
     }
 
     boolean restart = false;
+    BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (CommonProblemDescriptor descriptor : descriptors) {
       if (descriptor == null) continue;
       final QuickFix<?>[] fixes = descriptor.getFixes();
@@ -109,10 +111,12 @@ public class LocalQuickFixWrapper extends QuickFixAction {
           if (fix instanceof ModCommandQuickFix modCommandQuickFix) {
             ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
             ModCommand command = modCommandQuickFix.perform(project, problemDescriptor);
-            ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(problemDescriptor), command);
+            result = result.compose(
+              ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(problemDescriptor), command));
           } else {
             //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
             fix.applyFix(project, descriptor);
+            result = ModCommandExecutor.Result.SUCCESS;
           }
           restart = true;
           ignore(ignoredElements, descriptor, true, context);
@@ -122,6 +126,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     if (restart) {
       DaemonCodeAnalyzer.getInstance(project).restart();
     }
+    return result;
   }
 
   @Override
@@ -150,8 +155,8 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       InspectionToolPresentation presentation = context.getPresentation(myToolWrapper);
       presentation.resolveProblem(descriptor);
     }
-    if (descriptor instanceof ProblemDescriptor) {
-      PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+    if (descriptor instanceof ProblemDescriptor problemDescriptor) {
+      PsiElement element = problemDescriptor.getPsiElement();
       if (element != null) {
         ignoredElements.add(element);
       }

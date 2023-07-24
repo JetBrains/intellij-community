@@ -13,6 +13,11 @@ import com.intellij.codeInspection.ui.InspectionResultsView;
 import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.AccessToken;
@@ -36,6 +41,7 @@ import com.intellij.ui.ClickListener;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,6 +51,8 @@ import java.util.*;
 
 public abstract class QuickFixAction extends AnAction implements CustomComponentAction {
   private static final Logger LOG = Logger.getInstance(QuickFixAction.class);
+  private static final NotificationGroup BATCH_QUICK_FIX_MESSAGES =
+    NotificationGroupManager.getInstance().getNotificationGroup("Batch quick fix");
 
   public static final QuickFixAction[] EMPTY = new QuickFixAction[0];
   protected final InspectionToolWrapper<?,?> myToolWrapper;
@@ -137,10 +145,11 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
 
-  protected void applyFix(@NotNull Project project,
-                          @NotNull GlobalInspectionContextImpl context,
-                          CommonProblemDescriptor @NotNull [] descriptors,
-                          @NotNull Set<? super PsiElement> ignoredElements) {
+  protected @NotNull BatchExecutionResult applyFix(@NotNull Project project,
+                                                   @NotNull GlobalInspectionContextImpl context,
+                                                   CommonProblemDescriptor @NotNull [] descriptors,
+                                                   @NotNull Set<? super PsiElement> ignoredElements) {
+    return ModCommandExecutor.Result.SUCCESS;
   }
 
   private void doApplyFix(@NotNull Project project,
@@ -165,6 +174,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
                                      Set<? super PsiElement> ignoredElements) {
     final String templatePresentationText = getTemplatePresentation().getText();
     assert templatePresentationText != null;
+    Ref<@Nls String> messageRef = Ref.create();
     CommandProcessor.getInstance().executeCommand(project, () -> {
       CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
       boolean startInWriteAction = startInWriteAction();
@@ -179,8 +189,14 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
         progressTask.setMinIterationTime(200);
         progressTask.setTask(performFixesTask);
         ProgressManager.getInstance().run(progressTask);
+        messageRef.set(performFixesTask.getResultMessage(templatePresentationText));
       }
     }, templatePresentationText, null);
+    String message = messageRef.get();
+    if (message != null) {
+      BATCH_QUICK_FIX_MESSAGES.createNotification(message, NotificationType.WARNING)
+        .notify(project);
+    }
   }
 
   private void doApplyFix(final RefEntity @NotNull [] refElements, @NotNull InspectionResultsView view) {
@@ -305,9 +321,9 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
 
     @Override
     protected void applyFix(Project project, CommonProblemDescriptor descriptor) {
-      if (descriptor instanceof ProblemDescriptor &&
-          ((ProblemDescriptor)descriptor).getStartElement() == null &&
-          ((ProblemDescriptor)descriptor).getEndElement() == null) {
+      if (descriptor instanceof ProblemDescriptor problemDescriptor &&
+          problemDescriptor.getStartElement() == null &&
+          problemDescriptor.getEndElement() == null) {
         if (LOG.isDebugEnabled()) {
           LOG.debug("Invalidated psi for " + descriptor);
         }
@@ -315,7 +331,9 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
       }
 
       try {
-        QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+        BatchExecutionResult result =
+          QuickFixAction.this.applyFix(myProject, myContext, new CommonProblemDescriptor[]{descriptor}, myIgnoredElements);
+        myResultCount.merge(result, 1, Integer::sum);
       }
       catch (ProcessCanceledException e) {
         throw e;

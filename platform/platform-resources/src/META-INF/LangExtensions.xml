@@ -1354,6 +1354,7 @@
     <notificationGroup id="Services Tool Window" displayType="STICKY_BALLOON" isLogByDefault="true" bundle="messages.ExecutionBundle"
                        key="notification.group.services"
                        notificationIds="run.dashboard.multiple.run.configurations"/>
+    <notificationGroup id="Batch quick fix" displayType="BALLOON" bundle="messages.LangBundle" key="notification.group.batch.quick.fix"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager"
                     serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>
     <postStartupActivity implementation="com.intellij.execution.services.ServiceViewStartupActivity"/>
