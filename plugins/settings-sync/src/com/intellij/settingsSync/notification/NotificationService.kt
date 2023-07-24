@@ -1,12 +1,12 @@
 package com.intellij.settingsSync.notification
 
 import com.intellij.notification.Notification
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.settingsSync.RestartReason
 
-interface NotificationService {
+internal interface NotificationService {
   companion object {
-    fun getInstance(): NotificationService = ApplicationManager.getApplication().getService(NotificationService::class.java)
+    fun getInstance(): NotificationService = service<NotificationService>()
   }
 
   fun notifyZipSizeExceed()

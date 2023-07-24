@@ -3,7 +3,6 @@ package com.intellij.settingsSync
 import com.intellij.ide.GeneralSettings
 import com.intellij.testFramework.registerExtension
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
@@ -55,7 +54,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
     })
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
-    SettingsSynchronizer.syncSettings()
+    fireSettingsChanged()
     bridge.waitForAllExecuted()
 
     val expectedContent = TestSettingsProvider().serialize(state)
@@ -76,7 +75,7 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
       provided(settingsProvider.id, localState)
     }))
 
-    SettingsSynchronizer.syncSettings()
+    fireSettingsChanged()
     bridge.waitForAllExecuted()
 
     val expectedState = TestState(property = "Server value", foo = "Local value")

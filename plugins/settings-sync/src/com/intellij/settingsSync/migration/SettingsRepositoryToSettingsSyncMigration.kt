@@ -26,10 +26,21 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.*
 import java.util.concurrent.ScheduledExecutorService
-import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
 
 private const val SETTINGS_REPOSITORY_ID = "org.jetbrains.settingsRepository"
+
+private val LOG = logger<SettingsRepositoryToSettingsSyncMigration>()
+
+private val SPECIAL_FILES = listOf(".git", "config.json")
+
+private val OS_PREFIXES = listOf(
+  "_mac" to "mac",
+  "_windows" to "windows",
+  "_linux" to "linux",
+  "_freebsd" to "freebsd",
+  "_unix" to "unix"
+)
 
 internal class SettingsRepositoryToSettingsSyncMigration {
   fun getLocalDataIfAvailable(appConfigDir: Path): SettingsSnapshot? {
@@ -90,75 +101,60 @@ internal class SettingsRepositoryToSettingsSyncMigration {
     return SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo()), fileStates,
                             plugins = null, emptyMap(), emptySet())
   }
+}
 
-  private fun showNotificationAboutUnbundling(executorService: ScheduledExecutorService) {
-    val installOldPluginAction = NotificationAction.createSimpleExpiring(
-      @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
-      SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
-      PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
-      SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(INSTALL_SETTINGS_REPOSITORY)
+private fun showNotificationAboutUnbundling(executorService: ScheduledExecutorService) {
+  val installOldPluginAction = NotificationAction.createSimpleExpiring(
+    @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
+    SettingsSyncBundle.message("settings.repository.unbundled.notification.action.install.settings.repository")) {
+    PluginManagerProxy.getInstance().createInstaller(notifyErrors = true).installPlugins(listOf(PluginId.getId(SETTINGS_REPOSITORY_ID)))
+    SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(INSTALL_SETTINGS_REPOSITORY)
+  }
+  val useNewSettingsSyncAction = NotificationAction.createSimpleExpiring(
+    @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
+    SettingsSyncBundle.message("settings.repository.unbundled.notification.action.use.new.settings.sync")) {
+    SettingsSyncSettings.getInstance().syncEnabled = true
+    executorService.submit {
+      SettingsSyncMain.getInstance().controls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
-    val useNewSettingsSyncAction = NotificationAction.createSimpleExpiring(
-      @Suppress("DialogTitleCapitalization") // name of plugin is capitalized
-      SettingsSyncBundle.message("settings.repository.unbundled.notification.action.use.new.settings.sync")) {
-      SettingsSyncSettings.getInstance().syncEnabled = true
-      executorService.submit {
-        SettingsSyncMain.getInstance().controls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
-      }
-      SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(USE_NEW_SETTINGS_SYNC)
-    }
-    NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
-      .createNotification(
-        title = SettingsSyncBundle.message("settings.repository.unbundled.notification.title"),
-        content = SettingsSyncBundle.message("settings.repository.unbundled.notification.description"),
-        type = NotificationType.INFORMATION)
-      .addAction(installOldPluginAction)
-      .addAction(useNewSettingsSyncAction)
-      .notify(null)
+    SettingsSyncEventsStatistics.SETTINGS_REPOSITORY_NOTIFICATION_ACTION.log(USE_NEW_SETTINGS_SYNC)
+  }
+  NotificationGroupManager.getInstance().getNotificationGroup(NOTIFICATION_GROUP)
+    .createNotification(
+      title = SettingsSyncBundle.message("settings.repository.unbundled.notification.title"),
+      content = SettingsSyncBundle.message("settings.repository.unbundled.notification.description"),
+      type = NotificationType.INFORMATION)
+    .addAction(installOldPluginAction)
+    .addAction(useNewSettingsSyncAction)
+    .notify(null)
+}
+
+internal fun migrateIfNeeded(executorService: ScheduledExecutorService) {
+  if (PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
+    return
   }
 
-  internal companion object {
-    private val LOG = logger<SettingsRepositoryToSettingsSyncMigration>()
+  val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration()
+  if (settingsRepositoryMigration.isLocalDataAvailable(PathManager.getConfigDir())) {
+    LOG.info("Migrating from the Settings Repository")
+    val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir())
+    if (snapshot != null) {
+      backupCurrentConfig()
+      TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
 
-    private val SPECIAL_FILES = listOf(".git", "config.json")
-
-    private val OS_PREFIXES = listOf(
-      "_mac" to "mac",
-      "_windows" to "windows",
-      "_linux" to "linux",
-      "_freebsd" to "freebsd",
-      "_unix" to "unix"
-    )
-
-    fun migrateIfNeeded(executorService: ScheduledExecutorService) {
-      if (PluginManager.isPluginInstalled(PluginId.getId(SETTINGS_REPOSITORY_ID))) {
-        return
-      }
-
-      val settingsRepositoryMigration = SettingsRepositoryToSettingsSyncMigration()
-      if (settingsRepositoryMigration.isLocalDataAvailable(PathManager.getConfigDir())) {
-        LOG.info("Migrating from the Settings Repository")
-        executorService.schedule(Runnable {
-          val snapshot = settingsRepositoryMigration.getLocalDataIfAvailable(PathManager.getConfigDir())
-          if (snapshot != null) {
-            backupCurrentConfig()
-            TemplateSettings.getInstance() // Required for live templates to be migrated correctly, see IDEA-303831
-
-            SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
-                                        PathManager.getConfigDir()) { false }.applyToIde(snapshot, null)
-            settingsRepositoryMigration.showNotificationAboutUnbundling(executorService)
-            SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
-          }
-        }, 0, TimeUnit.SECONDS)
-      }
-    }
-
-    private fun backupCurrentConfig() {
-      val configDir = PathManager.getConfigDir()
-      val tempBackupDir = Files.createTempDirectory(configDir.fileName.toString() + "-backup-" + UUID.randomUUID())
-      LOG.info("Backup config from ${configDir} to ${tempBackupDir}")
-      FileUtil.copyDir(configDir.toFile(), tempBackupDir.toFile())
-      ConfigBackup(PathManager.getConfigDir()).moveToBackup(tempBackupDir)
+      SettingsSyncIdeMediatorImpl(ApplicationManager.getApplication().stateStore as ComponentStoreImpl,
+                                  PathManager.getConfigDir()) { false }.applyToIde(snapshot, null)
+      showNotificationAboutUnbundling(executorService)
+      SettingsSyncEventsStatistics.MIGRATED_FROM_SETTINGS_REPOSITORY.log()
     }
   }
+}
+
+
+private fun backupCurrentConfig() {
+  val configDir = PathManager.getConfigDir()
+  val tempBackupDir = Files.createTempDirectory(configDir.fileName.toString() + "-backup-" + UUID.randomUUID())
+  LOG.info("Backup config from ${configDir} to ${tempBackupDir}")
+  FileUtil.copyDir(configDir.toFile(), tempBackupDir.toFile())
+  ConfigBackup(PathManager.getConfigDir()).moveToBackup(tempBackupDir)
 }

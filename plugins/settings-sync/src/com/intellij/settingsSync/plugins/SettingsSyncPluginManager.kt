@@ -1,9 +1,13 @@
 package com.intellij.settingsSync.plugins
 
-import com.intellij.ide.plugins.*
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.PluginEnableStateChangedListener
+import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.ide.plugins.PluginStateManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -16,8 +20,8 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.TestOnly
 import java.time.Instant
 
+@Service
 internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Disposable {
-
   private val pluginInstallationStateListener = PluginInstallationStateListener()
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()

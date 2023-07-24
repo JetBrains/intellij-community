@@ -17,10 +17,7 @@
   <depends optional="true" config-file="settingsSync-performance-plugin-support.xml">com.jetbrains.performancePlugin</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncMain"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
-    <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncEvents"/>
-    <applicationService serviceImplementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager"/>
     <applicationService serviceImplementation="com.intellij.settingsSync.notification.NotificationServiceImpl"
                         serviceInterface="com.intellij.settingsSync.notification.NotificationService"/>
     <!--suppress PluginXmlDynamicPlugin -->

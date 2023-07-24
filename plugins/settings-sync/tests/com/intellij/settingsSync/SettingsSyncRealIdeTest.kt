@@ -18,9 +18,6 @@ import com.intellij.testFramework.replaceService
 import com.intellij.util.io.readText
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -191,7 +188,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
                                                             setOf(fileState), null, emptyMap(), emptySet()))
 
     waitForSettingsToBeApplied(generalSettings) {
-      SettingsSynchronizer.syncSettings()
+      fireSettingsChanged()
     }
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
   }
@@ -323,7 +320,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
     executeAndWaitUntilPushed {
       waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance()) {
-        SettingsSynchronizer.syncSettings() // merge will happen here
+        fireSettingsChanged() // merge will happen here
       }
     }
 

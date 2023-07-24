@@ -1,15 +1,16 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
 @ApiStatus.Internal
-class SettingsSyncEvents : Disposable {
-
+@Service
+internal class SettingsSyncEvents : Disposable {
   private val eventDispatcher = EventDispatcher.create(SettingsSyncEventListener::class.java)
 
   fun addListener(listener: SettingsSyncEventListener) {
@@ -41,7 +42,7 @@ class SettingsSyncEvents : Disposable {
   }
 
   companion object {
-    fun getInstance(): SettingsSyncEvents = ApplicationManager.getApplication().getService(SettingsSyncEvents::class.java)
+    fun getInstance(): SettingsSyncEvents = service<SettingsSyncEvents>()
   }
 
   override fun dispose() {
@@ -49,14 +50,14 @@ class SettingsSyncEvents : Disposable {
   }
 }
 
-interface SettingsSyncEventListener : EventListener {
+internal interface SettingsSyncEventListener : EventListener {
   fun categoriesStateChanged() {}
   fun settingChanged(event: SyncSettingsEvent) {}
   fun enabledStateChanged(syncEnabled: Boolean) {}
   fun restartRequired(reason: RestartReason) {}
 }
 
-sealed class RestartReason: Comparable<RestartReason> {
+internal sealed class RestartReason: Comparable<RestartReason> {
   abstract val sortingPriority: Int
   abstract fun getNotificationSubMessage(): String
 
@@ -79,28 +80,28 @@ sealed class RestartReason: Comparable<RestartReason> {
   }
 }
 
-class RestartForPluginInstall(private val plugins: Collection<String>) : RestartReason() {
+internal class RestartForPluginInstall(private val plugins: Collection<String>) : RestartReason() {
   override val sortingPriority = 0
   override fun getNotificationSubMessage(): String {
     return SettingsSyncBundle.message("sync.restart.notification.submessage.plugins", "install", plugins.joinToString(", "))
   }
 }
 
-class RestartForPluginEnable(private val plugins: Collection<String>) : RestartReason() {
+internal class RestartForPluginEnable(private val plugins: Collection<String>) : RestartReason() {
   override val sortingPriority = 1
   override fun getNotificationSubMessage(): String {
     return SettingsSyncBundle.message("sync.restart.notification.submessage.plugins", "enable", plugins.joinToString(", "))
   }
 }
 
-class RestartForPluginDisable(private val plugins: Collection<String>) : RestartReason() {
+internal class RestartForPluginDisable(private val plugins: Collection<String>) : RestartReason() {
   override val sortingPriority = 2
   override fun getNotificationSubMessage(): String {
     return SettingsSyncBundle.message("sync.restart.notification.submessage.plugins", "disable", plugins.joinToString(", "))
   }
 }
 
-object RestartForNewUI : RestartReason() {
+internal object RestartForNewUI : RestartReason() {
   override val sortingPriority = 3
   override fun getNotificationSubMessage(): String {
     return SettingsSyncBundle.message("sync.restart.notification.submessage.registry")

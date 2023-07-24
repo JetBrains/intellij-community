@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.openapi.components.SettingsCategory
-import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
@@ -37,7 +36,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   private fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
-    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
@@ -298,7 +297,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
@@ -318,7 +317,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    val controls = SettingsSyncMain.init(application, disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
 
@@ -327,7 +326,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
     val task2 = Callable {
-      SettingsSynchronizer.syncSettings()
+      fireSettingsChanged()
     }
 
     executeAndWaitUntilPushed {
@@ -395,7 +394,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   private fun syncSettingsAndWait() {
-    SettingsSynchronizer.syncSettings()
+    fireSettingsChanged()
     bridge.waitForAllExecuted()
   }
 
