@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -312,17 +313,22 @@ public final class PatchApplier {
     }
 
     myFailedPatches.addAll(myVerifier.filterBadFileTypePatches());
-    ApplyPatchStatus result = myFailedPatches.isEmpty() ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
+    ApplyPatchStatus initStatus = myFailedPatches.isEmpty() ? null : ApplyPatchStatus.FAILURE;
 
     List<PatchAndFile> textPatches = myVerifier.getTextPatches();
     List<PatchAndFile> binaryPatches = myVerifier.getBinaryPatches();
+
+    ApplyPatchStatus applyStatus;
     try {
       markInternalOperation(textPatches, true);
-      return ApplyPatchStatus.and(result, actualApply(ContainerUtil.concat(textPatches, binaryPatches), myCommitContext));
+      applyStatus = actualApply(ContainerUtil.concat(textPatches, binaryPatches), myCommitContext);
     }
     finally {
       markInternalOperation(textPatches, false);
     }
+
+    ApplyPatchStatus status = ApplyPatchStatus.and(initStatus, applyStatus);
+    return ObjectUtils.notNull(status, ApplyPatchStatus.SUCCESS); // return SUCCESS if nothing was done
   }
 
   private @NotNull ApplyPatchStatus createFiles() {
@@ -363,8 +369,8 @@ public final class PatchApplier {
     vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
   }
 
-  private @NotNull ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> patches,
-                                                @Nullable CommitContext commitContext) {
+  private @Nullable ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> patches,
+                                                 @Nullable CommitContext commitContext) {
     ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     try {
       return applyList(patches, context, commitContext);
@@ -375,10 +381,10 @@ public final class PatchApplier {
     }
   }
 
-  private @NotNull ApplyPatchStatus applyList(@NotNull List<PatchAndFile> patches,
-                                              @NotNull ApplyPatchContext context,
-                                              @Nullable CommitContext commitContext) throws IOException {
-    ApplyPatchStatus status = ApplyPatchStatus.SUCCESS;
+  private @Nullable ApplyPatchStatus applyList(@NotNull List<PatchAndFile> patches,
+                                               @NotNull ApplyPatchContext context,
+                                               @Nullable CommitContext commitContext) throws IOException {
+    ApplyPatchStatus status = null;
     for (PatchAndFile patch : patches) {
       ApplyFilePatchBase<?> applyFilePatch = patch.getApplyPatch();
       ApplyPatchStatus patchStatus = ApplyPatchAction.applyContent(myProject, applyFilePatch, context, patch.getFile(), commitContext,
