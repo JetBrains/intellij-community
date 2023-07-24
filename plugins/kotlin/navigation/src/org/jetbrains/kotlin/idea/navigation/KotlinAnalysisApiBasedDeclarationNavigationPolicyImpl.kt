@@ -117,6 +117,9 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     else -> {
                         val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, project) as? KtClassOrObject
                             ?: return null
+                        if (declaration is KtProperty && correspondingOwner.isData() && !declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
+                            correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }?.let { return it }
+                        }
                         correspondingOwner.declarations
                     }
                 }

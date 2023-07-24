@@ -128,6 +128,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("dataClass.kt")
+            public void testDataClass() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties/dataClass.kt");
+            }
+
             @TestMetadata("list_size.kt")
             public void testList_size() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/properties/list_size.kt");
