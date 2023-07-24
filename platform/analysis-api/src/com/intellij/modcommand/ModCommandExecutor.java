@@ -17,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public interface ModCommandExecutor {
   /**
    * Executes given {@link ModCommand} interactively (may require user input, navigate into editors, etc.).
+   * Must be executed inside command (see {@link com.intellij.openapi.command.CommandProcessor}) and without write lock.
    *
    * @param context current context
    * @param command a command to execute
@@ -27,6 +28,7 @@ public interface ModCommandExecutor {
 
   /**
    * Executes given {@link ModCommand} in batch (applies default options, do not navigate)
+   * Must be executed inside command (see {@link com.intellij.openapi.command.CommandProcessor}) and without write lock.
    *
    * @param context current context
    * @param command a command to execute
@@ -42,6 +44,9 @@ public interface ModCommandExecutor {
     return ApplicationManager.getApplication().getService(ModCommandExecutor.class);
   }
 
+  /**
+   * Result of batch execution
+   */
   sealed interface BatchExecutionResult {
     default @NotNull BatchExecutionResult compose(@NotNull BatchExecutionResult next) {
       if (next == Result.NOTHING || next.equals(this) || this instanceof Error || this == Result.CONFLICTS) return this;
@@ -49,7 +54,10 @@ public interface ModCommandExecutor {
       if (this == Result.ABORT || next == Result.ABORT) return Result.ABORT;
       return Result.SUCCESS;
     }
-    
+
+    /**
+     * @return message to display in the UI that describes the execution result
+     */
     @NotNull @Nls String getMessage();
   }
   
