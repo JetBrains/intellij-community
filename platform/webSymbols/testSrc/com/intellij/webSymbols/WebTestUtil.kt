@@ -104,7 +104,7 @@ fun CodeInsightTestFixture.checkLookupItems(
 ) {
   val hasDir = expectedDataLocation.isNotEmpty()
 
-  fun checkDocumentation(fileSuffix: String = "") {
+  fun checkLookupDocumentation(fileSuffix: String = "") {
     if (!checkDocumentation) return
     val lookupsToCheck = renderLookupItems(false, false, lookupFilter = lookupItemFilter).filter { it.isNotBlank() }
     val lookupElements = lookupElements!!.asSequence().associateBy { it.lookupString }
@@ -131,7 +131,7 @@ fun CodeInsightTestFixture.checkLookupItems(
         expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
         containsCheck
       )
-      checkDocumentation()
+      checkLookupDocumentation()
     }
     else {
       locations.forEachIndexed { index, location ->
@@ -143,7 +143,7 @@ fun CodeInsightTestFixture.checkLookupItems(
           expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
           containsCheck
         )
-        checkDocumentation(".${index + 1}")
+        checkLookupDocumentation(".${index + 1}")
       }
     }
   }
