@@ -85,7 +85,7 @@ public final class VcsUtil {
    * @return true if the given file resides under the root associated with any vcs
    */
   public static boolean isFileUnderVcs(Project project, @NotNull @NonNls String file) {
-    return getVcsFor(project, getFilePath(file)) != null;
+    return getVcsFor(project, getFilePath(file, false)) != null;
   }
 
   public static boolean isFileUnderVcs(Project project, @NotNull FilePath file) {
@@ -105,7 +105,7 @@ public final class VcsUtil {
   }
 
   public static boolean isFileForVcs(@NotNull @NonNls String path, Project project, AbstractVcs host) {
-    return getVcsFor(project, getFilePath(path)) == host;
+    return getVcsFor(project, getFilePath(path, false)) == host;
   }
 
   @Nullable
