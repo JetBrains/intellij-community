@@ -36,11 +36,11 @@ class CodeReviewChangesViewModelDelegate<T : MutableCodeReviewChangeListViewMode
         val commits = changes.commits
         val commitsSet = commits.toSet()
         val initialCommit = _selectedCommit.updateAndGet {
-          if (commitsSet.contains(it)) it else null
+          it.takeIf { commitsSet.contains(it) }
         }
 
         fun updateCommit(commit: String?, change: Change? = null) {
-          val existingCommit = if (commit == null) null else commits.find { it.startsWith(commit) }
+          val existingCommit = commit.takeIf { commitsSet.contains(it) }
           _selectedCommit.value = existingCommit
           vm.updatesChanges(changes.getChanges(existingCommit), change)
         }
