@@ -59,8 +59,28 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
 
   @Override
   public @Nullable PsiType getType() {
-    // todo calculate type of this expression from processor type
-    return PsiType.getJavaLangString(getManager(), getResolveScope());
+    final PsiExpression processor = getProcessor();
+    if (processor ==  null) return null;
+    final PsiType type = processor.getType();
+    if (type == null) return null;
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+    final PsiClassType processorType = factory.createTypeByFQClassName("java.lang.StringTemplate.Processor", processor.getResolveScope());
+    if (!TypeConversionUtil.isAssignable(processorType, type)) return null;
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      if (aClass == null) continue;
+
+      final PsiClass processorClass = processorType.resolve();
+      if (processorClass == null) continue;
+      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(processorClass, aClass, resolveResult.getSubstitutor());
+      if (substitutor == null) continue;
+      final PsiMethod[] methods = processorClass.findMethodsByName("process", false);
+      if (methods.length != 1) continue;
+      return substitutor.substitute(methods[0].getReturnType());
+    }
+
+    return null;
   }
 
   @Override

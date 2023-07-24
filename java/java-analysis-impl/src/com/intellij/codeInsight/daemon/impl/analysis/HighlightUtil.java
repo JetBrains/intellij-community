@@ -2212,6 +2212,39 @@ public final class HighlightUtil {
     return null;
   }
 
+  static HighlightInfo.Builder checkTemplateExpression(@NotNull PsiTemplateExpression templateExpression) {
+    PsiExpression processor = templateExpression.getProcessor();
+    if (processor == null) {
+      String message = JavaErrorBundle.message("processor.missing.from.string.template.expression");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(templateExpression).descriptionAndTooltip(message);
+    }
+    PsiType type = processor.getType();
+    if (type == null) return null;
+
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
+    PsiClassType processorType = factory.createTypeByFQClassName("java.lang.StringTemplate.Processor", processor.getResolveScope());
+    if (!TypeConversionUtil.isAssignable(processorType, type)) {
+      return createIncompatibleTypeHighlightInfo(processorType, type, processor.getTextRange(), 0);
+    }
+
+    PsiClass processorClass = processorType.resolve();
+    if (processorClass == null) return null;
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      PsiClass aClass = resolveResult.getElement();
+      if (aClass == null) continue;
+      PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(processorClass, aClass, resolveResult.getSubstitutor());
+      if (substitutor == null) continue;
+      Map<PsiTypeParameter, PsiType> substitutionMap = substitutor.getSubstitutionMap();
+      if (substitutionMap.isEmpty() || substitutionMap.containsValue(null)) {
+        String text = JavaErrorBundle.message("raw.processor.type.not.allowed", type.getCanonicalText());
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(processor).descriptionAndTooltip(text);
+      }
+    }
+
+    return null;
+  }
+
   static HighlightInfo.Builder checkTryResourceIsAutoCloseable(@NotNull PsiResourceListElement resource) {
     PsiType type = resource.getType();
     if (type == null) return null;

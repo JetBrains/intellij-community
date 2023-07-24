@@ -910,15 +910,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
-  public void visitTemplate(@NotNull PsiTemplate expression) {
-    visitExpression(expression);
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    super.visitTemplateExpression(expression);
 
-    PsiElement parent = expression.getParent();
-    if (!(parent instanceof PsiTemplateExpression)) {
-      String message = JavaErrorBundle.message("processor.missing.from.string.template.expression");
-      HighlightInfo.Builder highlightInfo =
-        HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-      add(highlightInfo);
+    add(HighlightUtil.checkTemplateExpression(expression));
+    if (!myHolder.hasErrorResults()) {
+      add(HighlightUtil.checkUnhandledExceptions(expression));
     }
   }
 

@@ -25,12 +25,19 @@ public class LightStringTemplatesHighlightingTest extends LightJavaCodeInsightFi
       package java.lang;
       public interface StringTemplate {
         Processor<String, RuntimeException> STR = null;
+        Processor<StringTemplate, RuntimeException> RAW = st -> st;
         
         @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES)
         @FunctionalInterface
         public interface Processor<R, E extends Throwable> {
           R process(StringTemplate stringTemplate) throws E;
         }
+      }""");
+    myFixture.addClass("""
+      package java.util;
+      public final class FormatProcessor implements Processor<String, RuntimeException> {
+        private FormatProcessor(Locale locale) {}
+        public static final FormatProcessor FMT = new FormatProcessor(Locale.ROOT);
       }""");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
