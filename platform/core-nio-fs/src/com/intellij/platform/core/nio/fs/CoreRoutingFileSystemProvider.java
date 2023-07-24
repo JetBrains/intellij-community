@@ -4,6 +4,7 @@ package com.intellij.platform.core.nio.fs;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.FileChannel;
@@ -231,6 +232,21 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   @Override
   public FileChannel newFileChannel(Path path, Set<? extends OpenOption> options, FileAttribute<?>... attrs) throws IOException {
     return getProvider(path).newFileChannel(unwrap(path), options, attrs);
+  }
+
+  /** Used in {@link sun.nio.ch.UnixDomainSockets#getPathBytes}. */
+  @SuppressWarnings("unused")
+  public byte[] getSunPathForSocketFile(Path path) {
+    if (isMountedFSPath(path)) {
+      throw new IllegalArgumentException(path.toString());
+    }
+    String jnuEncoding = System.getProperty("sun.jnu.encoding");
+    try {
+      return path.toString().getBytes(jnuEncoding);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new IllegalStateException("sun.jnu.encoding=" + jnuEncoding, e);
+    }
   }
 
   private boolean isInitialized() {

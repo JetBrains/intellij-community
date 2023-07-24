@@ -27,10 +27,7 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -102,6 +99,16 @@ final class DirectoryLock {
   }
 
   private static boolean areUdsSupported(Path file) {
+    var fs = file.getFileSystem();
+    if (fs.getClass().getModule() != Object.class.getModule()) {
+      try {
+        fs.provider().getClass().getMethod("getSunPathForSocketFile", Path.class);
+      }
+      catch (NoSuchMethodException | SecurityException e) {
+        return false;
+      }
+    }
+
     if (!SystemInfoRt.isUnix) {
       try {
         SocketChannel.open(StandardProtocolFamily.UNIX).close();
@@ -112,7 +119,7 @@ final class DirectoryLock {
       catch (IOException ignored) { }
     }
 
-    return file.getFileSystem().getClass().getModule() == Object.class.getModule();
+    return true;
   }
 
   /**
