@@ -258,24 +258,11 @@ public class XmlResourceResolver implements XMLEntityResolver {
 
     if (psiFile == null) {
       if (publicId != null && publicId.contains(":/")) {
-        try {
-          myErrorReporter.processError(
-            new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
-        }
-        catch (SAXException ignore) {
-
-        }
-        final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
-        source.setPublicId(publicId);
-        source.setCharacterStream(new StringReader(""));
-        return source;
+        return reportUnresolvedUrl(xmlResourceIdentifier, publicId, "");
       }
       String expandedSystemId = xmlResourceIdentifier.getExpandedSystemId();
       if (expandedSystemId != null && isHttpUrl(expandedSystemId)) {
-        final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
-        source.setPublicId(publicId);
-        source.setCharacterStream(new StringReader("unresolved"));
-        return source;
+        return reportUnresolvedUrl(xmlResourceIdentifier, publicId, "unresolved");
       }
       return null;
     }
@@ -293,6 +280,20 @@ public class XmlResourceResolver implements XMLEntityResolver {
     source.setBaseSystemId(null);
     source.setCharacterStream(new StringReader(psiFile.getText()));
 
+    return source;
+  }
+
+  @NotNull
+  private XMLInputSource reportUnresolvedUrl(XMLResourceIdentifier xmlResourceIdentifier, String publicId, String defaultText) {
+    try {
+      myErrorReporter.processError(
+        new SAXParseException(XmlPsiBundle.message("xml.inspections.validate.external.resource.is.not.registered", publicId), publicId, null, 0, 0), ValidateXmlActionHandler.ProblemType.ERROR);
+    }
+    catch (SAXException ignore) {
+    }
+    final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
+    source.setPublicId(publicId);
+    source.setCharacterStream(new StringReader(defaultText));
     return source;
   }
 
