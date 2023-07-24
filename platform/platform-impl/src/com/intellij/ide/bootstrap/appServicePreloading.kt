@@ -126,7 +126,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
     app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                         activityPrefix = "",
                         syncScope = this,
-                        asyncScope = asyncScope)
+                        asyncScope = asyncScope + CoroutineName("app service preloading (async)"))
   }
 
   launch {
@@ -146,9 +146,9 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
       @Suppress("DEPRECATION")
       val extensionPoint = app.extensionArea.getExtensionPoint<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity")
       @Suppress("DEPRECATION")
-      ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { preloadingActivity, pluginDescriptor ->
-        launch {
-          executePreloadActivity(preloadingActivity, pluginDescriptor)
+      ExtensionPointName<com.intellij.openapi.application.PreloadingActivity>("com.intellij.preloadingActivity").processExtensions { activity, pluginDescriptor ->
+        launch(CoroutineName(activity.javaClass.name)) {
+          executePreloadActivity(activity, pluginDescriptor)
         }
       }
       extensionPoint.reset()
@@ -158,7 +158,6 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
 
 @Suppress("DEPRECATION")
 private suspend fun executePreloadActivity(activity: com.intellij.openapi.application.PreloadingActivity, descriptor: PluginDescriptor) {
-  val measureActivity = StartUpMeasurer.startActivity(activity.javaClass.name, ActivityCategory.PRELOAD_ACTIVITY, descriptor.pluginId.idString)
   try {
     activity.execute()
   }
@@ -166,9 +165,7 @@ private suspend fun executePreloadActivity(activity: com.intellij.openapi.applic
     throw e
   }
   catch (e: Throwable) {
-    logger<com.intellij.openapi.application.PreloadingActivity>().error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
-  }
-  finally {
-    measureActivity.end()
+    logger<com.intellij.openapi.application.PreloadingActivity>()
+      .error(PluginException("cannot execute preloading activity ${activity.javaClass.name}", e, descriptor.pluginId))
   }
 }

@@ -289,8 +289,13 @@ fun CoroutineScope.startApplication(args: List<String>,
       }
     }
 
-    val preloadCriticalServicesJob = async(CoroutineName("app pre-initialization")) {
+    val initConfigurationStoreJob = launch {
       initServiceContainerJob.join()
+      initConfigurationStore(app)
+    }
+
+    val preloadCriticalServicesJob = async(CoroutineName("app pre-initialization")) {
+      initConfigurationStoreJob.join()
       preInitApp(app = app,
                  asyncScope = asyncScope,
                  initLafJob = initLafJob,
@@ -313,9 +318,16 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
 
     initServiceContainerJob.join()
+
+    val appInitListeners = async(CoroutineName("app init listener preload")) {
+      getAppInitializedListeners(app)
+    }
+
+    initConfigurationStoreJob.join()
     appRegisteredJob.join()
 
     initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },
+                        appInitListeners = appInitListeners,
                         app = app,
                         preloadCriticalServicesJob = preloadCriticalServicesJob,
                         telemetryInitJob = telemetryInitJob,

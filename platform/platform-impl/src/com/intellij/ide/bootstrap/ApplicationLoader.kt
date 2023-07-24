@@ -53,24 +53,17 @@ internal suspend fun initApplicationImpl(args: List<String>,
                                          app: ApplicationImpl,
                                          asyncScope: CoroutineScope,
                                          preloadCriticalServicesJob: Job,
-                                         telemetryInitJob: Job) {
+                                         telemetryInitJob: Job,
+                                         appInitListeners: Deferred<List<ApplicationInitializedListener>>) {
   val starter = subtask("app initialization") {
     val deferredStarter = subtask("app starter creation") {
       createAppStarterAsync(args)
     }
 
     val appInitializedListeners = coroutineScope {
-      val appInitListeners = async(CoroutineName("app init listener preload")) {
-        getAppInitializedListeners(app)
-      }
-
       // doesn't block app start-up
       asyncScope.launch(CoroutineName("post app init tasks")) {
         runPostAppInitTasks()
-      }
-
-      subtask("waiting for preloadCriticalServicesJob") {
-        preloadCriticalServicesJob.join()
       }
 
       launch(CoroutineName("telemetry waiting")) {
@@ -103,6 +96,10 @@ internal suspend fun initApplicationImpl(args: List<String>,
     deferredStarter.await()
   }
 
+  subtask("waiting for preloadCriticalServicesJob") {
+    preloadCriticalServicesJob.join()
+  }
+
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
     if (starter is ModernApplicationStarter) {
       subtask("${starter.javaClass.simpleName}.start") {
@@ -127,7 +124,6 @@ internal suspend fun initApplicationImpl(args: List<String>,
   ZipFilePool.POOL = null
 }
 
-@VisibleForTesting
 fun getAppInitializedListeners(app: Application): List<ApplicationInitializedListener> {
   val extensionArea = app.extensionArea as ExtensionsAreaImpl
   val point = extensionArea.getExtensionPoint<ApplicationInitializedListener>("com.intellij.applicationInitializedListener")

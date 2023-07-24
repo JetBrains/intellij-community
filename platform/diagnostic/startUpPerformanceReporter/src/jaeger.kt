@@ -108,7 +108,8 @@ private suspend fun writeInProtobufFormat(absoluteStartTimeNano: Long,
       rootSpan
     }
     else {
-      activityToSpan.get(activity.parent)!!
+      val span = activityToSpan.get(activity.parent)
+      span!!
     }
 
     val span = Span(

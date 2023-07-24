@@ -15,11 +15,9 @@ import java.nio.file.Path
 private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 
 @ApiStatus.Internal
-fun isSettingsSyncEnabledByKey(): Boolean =
-  SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
+fun isSettingsSyncEnabledByKey(): Boolean = SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, true)
 
-internal fun isSettingsSyncEnabledInSettings(): Boolean =
-  SettingsSyncSettings.getInstance().syncEnabled
+internal fun isSettingsSyncEnabledInSettings(): Boolean = SettingsSyncSettings.getInstance().syncEnabled
 
 internal const val SETTINGS_SYNC_STORAGE_FOLDER = "settingsSync"
 

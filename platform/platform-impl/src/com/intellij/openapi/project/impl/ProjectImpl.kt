@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.runInAutoSaveDisabledMode
 import com.intellij.configurationStore.saveSettings
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.runUnderModalProgressIfIsEdt
 import com.intellij.ide.plugins.ContainerDescriptor
@@ -41,9 +42,7 @@ import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.namedChildScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Runnable
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
@@ -88,19 +87,21 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
 
     // for light projects, preload only services that are essential
     // ("await" means "project component loading activity is completed only when all such services are completed")
-    internal fun CoroutineScope.preloadServices(project: ProjectImpl) {
-      project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                              activityPrefix = "project ",
-                              syncScope = this,
-                              onlyIfAwait = project.isLight,
-                              asyncScope = project.asyncPreloadServiceScope)
+    internal suspend fun preloadServices(project: ProjectImpl) {
+      subtask("project service preloading (sync)") {
+        project.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                                activityPrefix = "project ",
+                                syncScope = this,
+                                onlyIfAwait = project.isLight,
+                                asyncScope = project.asyncPreloadServiceScope)
+      }
     }
   }
 
   // used by Rider
   @Internal
   @JvmField
-  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope()
+  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope(CoroutineName("project service preloading (async)"))
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 

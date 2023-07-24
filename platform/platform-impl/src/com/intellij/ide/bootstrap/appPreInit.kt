@@ -25,7 +25,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.VisibleForTesting
 
 internal suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
   val pluginSet = subtask("plugin descriptor init waiting") {
@@ -57,8 +56,6 @@ internal suspend fun preInitApp(app: ApplicationImpl,
         }.getOrLogException(log)
       }
     }
-
-    initConfigurationStore(app)
 
     launch(CoroutineName("critical services preloading")) {
       preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
@@ -113,7 +110,6 @@ internal suspend fun preInitApp(app: ApplicationImpl,
   }
 }
 
-@VisibleForTesting
 suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configPath = PathManager.getConfigDir()
 
