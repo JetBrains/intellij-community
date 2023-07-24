@@ -13,9 +13,7 @@ import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.LowMemoryWatcher
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
@@ -36,7 +34,6 @@ import com.intellij.workspaceModel.ide.getInstance
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
   companion object {
     val EP_NAME: ExtensionPointName<WorkspaceFileIndexContributor<*>> = ExtensionPointName("com.intellij.workspaceModel.fileIndexContributor")
-    private val BRANCH_INDEX_DATA_KEY = Key.create<Pair<Long, WorkspaceFileIndexData>>("BRANCH_WORKSPACE_FILE_INDEX")
   }
 
   @Volatile
