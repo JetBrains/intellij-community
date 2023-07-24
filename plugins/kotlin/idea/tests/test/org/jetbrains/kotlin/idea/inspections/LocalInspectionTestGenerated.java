@@ -16457,6 +16457,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unnecessaryVariable/propertyCopy.kt");
             }
 
+            @TestMetadata("simpleReturn.kt")
+            public void testSimpleReturn() throws Exception {
+                runTest("testData/inspectionsLocal/unnecessaryVariable/simpleReturn.kt");
+            }
+
             @TestMetadata("topLevelCopy.kt")
             public void testTopLevelCopy() throws Exception {
                 runTest("testData/inspectionsLocal/unnecessaryVariable/topLevelCopy.kt");
