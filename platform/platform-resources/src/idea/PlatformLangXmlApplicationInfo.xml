@@ -5,6 +5,7 @@
   <logo url="/idea_community_logo.png"/>
   <icon ico="idea_CE.ico" svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
   <names product="IDEA" fullname="IntelliJ IDEA"/>
+  <productUrl url="https://www.jetbrains.com/idea/"/>
 
   <plugins url="https://plugins.jetbrains.com/"/>
   <update-urls check="https://www.jetbrains.com/updates/updates.xml"

@@ -68,6 +68,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
   private String myWelcomeScreenDialog;
+  private String myProductUrl;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
   private String mySupportUrl;
@@ -177,6 +178,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "welcome-wizard": {
           myWelcomeScreenDialog = getAttributeValue(child, "dialog");
+        }
+        break;
+
+        case "productUrl": {
+          myProductUrl = child.getAttributeValue("url");
         }
         break;
 
@@ -511,6 +517,11 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   @Override
   public boolean isPreview() {
     return !myEAP && myVersionSuffix != null && ("Preview".equalsIgnoreCase(myVersionSuffix) || myVersionSuffix.startsWith("RC"));
+  }
+
+  @Override
+  public String getProductUrl() {
+    return myProductUrl;
   }
 
   @Override
