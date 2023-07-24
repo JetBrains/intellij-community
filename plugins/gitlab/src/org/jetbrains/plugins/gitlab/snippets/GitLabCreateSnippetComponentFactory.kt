@@ -34,13 +34,19 @@ internal object GitLabCreateSnippetComponentFactory {
         init()
       }
 
-      override fun createCenterPanel(): JComponent = createPanel(cs, createSnippetVm)
+      override fun createCenterPanel(): JComponent =
+        createPanel(cs, createSnippetVm) {
+          this.isOKActionEnabled = it
+        }
     }
 
   /**
    * Creates the central form panel for filling in Snippet information.
    */
-  private fun createPanel(cs: CoroutineScope, createSnippetVm: GitLabCreateSnippetViewModel): JComponent {
+  private fun createPanel(cs: CoroutineScope, createSnippetVm: GitLabCreateSnippetViewModel, whenValid: (Boolean) -> Unit): JComponent {
+    // Start with empty title, thus an incomplete form
+    whenValid(false)
+
     val data = createSnippetVm.data
 
     fun setAccount(glAccount: GitLabAccount?) {
@@ -74,6 +80,9 @@ internal object GitLabCreateSnippetComponentFactory {
           toolTipText = message("snippet.create.title.tooltip")
         }
           .widthGroup("right")
+          .onChanged {
+            whenValid(it.text.isNotEmpty())
+          }
           .bindText(data::title)
       }
 
