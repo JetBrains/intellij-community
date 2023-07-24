@@ -2,11 +2,8 @@
 package com.intellij.compiler.cache.client
 
 import com.intellij.compiler.cache.client.JpsServerAuthExtension.Companion.getInstance
-import com.intellij.compiler.cache.ui.CompilerCacheNotifications
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -23,10 +20,8 @@ class CompilerCacheServerAuthService(private val project: Project, private val s
   fun getRequestHeaders(force: Boolean): Map<String, String> {
     val authExtension = getInstance()
     if (authExtension == null) {
-      val message = JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work")
       ApplicationManager.getApplication().invokeLater {
-        CompilerCacheNotifications.ATTENTION.createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
-                                                                message, NotificationType.WARNING).notify(project)
+        JpsServerAuthExtension.notifyMissingRequiredPlugin(project)
       }
       return emptyMap()
     }

@@ -2,14 +2,21 @@
 package com.intellij.compiler.cache.client
 
 import com.intellij.compiler.cache.ui.CompilerCacheNotifications
-import com.intellij.notification.NotificationListener
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
+import com.intellij.ide.plugins.PluginEnabler
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import kotlinx.coroutines.Dispatchers
@@ -45,6 +52,27 @@ interface JpsServerAuthExtension {
 
     fun getInstance(): JpsServerAuthExtension? = EP_NAME.extensionList.firstOrNull()
 
+    private val SPACE_PLUGIN_ID = PluginId.getId("com.jetbrains.space")
+
+    private val INSTALL_PLUGIN_ACTION by lazy {
+      object : NotificationAction(JavaCompilerBundle.messagePointer("notification.action.install.space.plugin")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          installAndEnable(e.project, setOf(SPACE_PLUGIN_ID)) {
+            notification.expire()
+          }
+        }
+      }
+    }
+
+    private val ENABLE_PLUGIN_ACTION by lazy {
+      object : NotificationAction(JavaCompilerBundle.messagePointer("notification.action.enable.space.plugin")) {
+        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+          PluginEnabler.getInstance().enableById(setOf(SPACE_PLUGIN_ID))
+          notification.expire()
+        }
+      }
+    }
+
     suspend fun checkAuthenticated(parentDisposable: Disposable, project: Project, onAuthCompleted: Runnable) {
       val disposable = Disposer.newDisposable()
       Disposer.register(parentDisposable, disposable)
@@ -54,24 +82,38 @@ interface JpsServerAuthExtension {
         if (userData == null) {
           project.putUserData(NOTIFICATION_SHOWN_KEY, true)
           withContext(Dispatchers.EDT) {
-            CompilerCacheNotifications.ATTENTION
-              .createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
-                                  JavaCompilerBundle.message(
-                                    "notification.content.internal.authentication.plugin.required.for.correct.work"),
-                                  NotificationType.WARNING)
-              .setListener(NotificationListener.URL_OPENING_LISTENER)
-              .notify(project)
+            notifyMissingRequiredPlugin(project)
           }
         }
-        thisLogger().warn("JetBrains Internal Authentication plugin is required for the correct work. Please enable it.")
+        thisLogger().warn("Space plugin is required for the correct work. Please enable it.")
         return
       }
       withContext(Dispatchers.IO) {
-        authExtension.checkAuthenticated("Jps Caches Downloader", disposable, Runnable {
+        authExtension.checkAuthenticated(JavaCompilerBundle.message("notification.title.jps.caches.downloader"), disposable, Runnable {
           Disposer.dispose(disposable)
           onAuthCompleted.run()
         })
       }
+    }
+
+    internal fun notifyMissingRequiredPlugin(project: Project) {
+      val plugin = PluginManagerCore.getPlugin(SPACE_PLUGIN_ID)
+      val action = when {
+        plugin == null -> INSTALL_PLUGIN_ACTION
+        plugin is IdeaPluginDescriptorImpl && plugin.isDeleted -> null
+        !plugin.isEnabled -> ENABLE_PLUGIN_ACTION
+        else -> return
+      }
+      CompilerCacheNotifications.ATTENTION
+        .createNotification(JavaCompilerBundle.message("notification.title.jps.caches.downloader"),
+                            JavaCompilerBundle.message("notification.content.space.plugin.required.for.correct.work"),
+                            NotificationType.WARNING)
+        .apply {
+          if (action != null) {
+            addAction(action)
+          }
+        }
+        .notify(project)
     }
   }
 }
