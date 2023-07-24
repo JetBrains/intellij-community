@@ -6,10 +6,12 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -20,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.black.configuration.BlackFormatterConfiguration
 import org.jetbrains.annotations.Nls
-import kotlin.coroutines.cancellation.CancellationException
 
 class BlackFormatterActionOnSave : ActionOnSave() {
 
@@ -83,7 +84,7 @@ class BlackFormatterActionOnSave : ActionOnSave() {
       )
     }.onFailure { exception ->
       when (exception) {
-        is CancellationException -> { /* ignore */ }
+        is ProcessCanceledException -> { /* ignore */ }
         else -> {
           LOG.warn(exception)
           reportFailure(PyBundle.message("black.exception.error.message"), exception.localizedMessage, project)
