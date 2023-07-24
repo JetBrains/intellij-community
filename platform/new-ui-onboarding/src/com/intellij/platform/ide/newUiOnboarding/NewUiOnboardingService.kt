@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStatistics.OnboardingStartingPlace
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -15,13 +16,16 @@ import kotlinx.coroutines.launch
 internal class NewUiOnboardingService(private val project: Project, private val cs: CoroutineScope) {
   fun showOnboardingDialog() {
     val dialog = NewUiOnboardingDialog(project)
+    NewUiOnboardingStatistics.logWelcomeDialogShown()
     val startTour = dialog.showAndGet()
     if (startTour) {
       startOnboarding()
+      NewUiOnboardingStatistics.logOnboardingStarted(OnboardingStartingPlace.WELCOME_DIALOG)
     }
     else {
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MEET_NEW_UI)
       toolWindow?.activate(null)
+      NewUiOnboardingStatistics.logWelcomeDialogSkipPressed()
     }
   }
 
