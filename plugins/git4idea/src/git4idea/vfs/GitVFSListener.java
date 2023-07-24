@@ -180,8 +180,8 @@ public final class GitVFSListener extends VcsVFSListener {
         toForceMove.add(movedInfo);
       }
       else {
-        toRemove.add(VcsUtil.getFilePath(oldPath));
-        toAdd.add(VcsUtil.getFilePath(newPath));
+        toRemove.add(movedInfo.getOldPath());
+        toAdd.add(movedInfo.getNewPath());
       }
     }
 
@@ -222,8 +222,8 @@ public final class GitVFSListener extends VcsVFSListener {
             dirtyPaths.addAll(paths);
           }
           //perform force move if needed
-          Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(VcsUtil.getFilePath(info.myNewPath), info));
-          dirtyPaths.addAll(map(toForceMove, fileInfo -> VcsUtil.getFilePath(fileInfo.myOldPath)));
+          Map<FilePath, MovedFileInfo> filesToForceMove = map2Map(toForceMove, info -> Pair.create(info.getNewPath(), info));
+          dirtyPaths.addAll(map(toForceMove, fileInfo -> fileInfo.getOldPath()));
           for (Map.Entry<VirtualFile, List<FilePath>> toForceMoveEntry : GitUtil.sortFilePathsByGitRootIgnoringMissing(myProject, filesToForceMove.keySet()).entrySet()) {
             List<FilePath> paths = toForceMoveEntry.getValue();
             toRefresh.addAll(executeForceMove(toForceMoveEntry.getKey(), paths, filesToForceMove));
@@ -265,7 +265,7 @@ public final class GitVFSListener extends VcsVFSListener {
       MovedFileInfo info = filesToMove.get(file);
       GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.MV);
       h.addParameters("-f");
-      h.addRelativePaths(VcsUtil.getFilePath(info.myOldPath), VcsUtil.getFilePath(info.myNewPath));
+      h.addRelativePaths(info.getOldPath(), info.getNewPath());
       Git.getInstance().runCommand(h);
       toRefresh.add(new File(info.myOldPath));
       toRefresh.add(new File(info.myNewPath));

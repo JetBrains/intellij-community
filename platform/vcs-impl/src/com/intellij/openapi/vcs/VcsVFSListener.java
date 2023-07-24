@@ -72,6 +72,14 @@ public abstract class VcsVFSListener implements Disposable {
     public boolean isCaseSensitive() {
       return myFile.isCaseSensitive();
     }
+
+    public @NotNull FilePath getOldPath() {
+      return VcsUtil.getFilePath(myOldPath, myFile.isDirectory());
+    }
+
+    public @NotNull FilePath getNewPath() {
+      return VcsUtil.getFilePath(myNewPath, myFile.isDirectory());
+    }
   }
 
   protected static class AllDeletedFiles {
