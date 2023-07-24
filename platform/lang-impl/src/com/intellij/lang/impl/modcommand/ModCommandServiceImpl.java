@@ -9,14 +9,21 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,8 +98,69 @@ public class ModCommandServiceImpl implements ModCommandService {
     return modifiedOptions.isEmpty() ? ModCommands.nop() : new ModUpdateInspectionOptions(inspection.getShortName(), modifiedOptions);
   }
 
+  @ApiStatus.Experimental
   @Override
-  public @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
+  public @NotNull IntentionPreviewInfo getPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context) {
+    Project project = context.project();
+    PsiFile file = context.file();
+    List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
+    IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
+    for (ModCommand command : modCommand.unpack()) {
+      if (command instanceof ModUpdateFileText modFile) {
+        VirtualFile vFile = modFile.file();
+        var currentFile =
+          vFile.equals(file.getOriginalFile().getVirtualFile()) ||
+          vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile());
+        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(),
+                                                               currentFile ? null : vFile.getName(), modFile.oldText(), modFile.newText(), true));
+      }
+      else if (command instanceof ModCreateFile createFile) {
+        VirtualFile vFile = createFile.file();
+        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), "", createFile.text(), true));
+      }
+      else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
+        PsiFile target = PsiManager.getInstance(project).findFile(navigate.file());
+        if (target != null) {
+          navigateInfo = IntentionPreviewInfo.navigate(target, navigate.caret());
+        }
+      }
+      else if (command instanceof ModChooseAction target) {
+        return getChoosePreview(context, target);
+      }
+      else if (command instanceof ModChooseMember target) {
+        return getPreview(target.nextCommand().apply(target.defaultSelection()), context);
+      }
+      else if (command instanceof ModShowConflicts showConflicts) {
+        return getPreview(showConflicts.nextStep(), context);
+      }
+      else if (command instanceof ModDisplayMessage message) {
+        if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
+          return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
+            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(), IntentionPreviewInfo.InfoKind.ERROR);
+        }
+      }
+      else if (command instanceof ModCopyToClipboard copy) {
+        navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
+          AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
+      }
+      else if (command instanceof ModUpdateInspectionOptions options) {
+        navigateInfo = new IntentionPreviewInfo.Html(createOptionsPreview(context, options));
+      }
+    }
+    return customDiffList.isEmpty() ? navigateInfo :
+           customDiffList.size() == 1 ? customDiffList.get(0) :
+           new IntentionPreviewInfo.MultiFileDiff(customDiffList);
+  }
+
+  private static @NotNull IntentionPreviewInfo getChoosePreview(@NotNull ActionContext context, @NotNull ModChooseAction target) {
+    return target.actions().stream()
+      .filter(action -> action.getPresentation(context) != null)
+      .findFirst()
+      .map(action -> action.generatePreview(context))
+      .orElse(IntentionPreviewInfo.EMPTY);
+  }
+
+  private static @NotNull HtmlChunk createOptionsPreview(@NotNull ActionContext context, @NotNull ModUpdateInspectionOptions options) {
     InspectionToolWrapper<?, ?> tool =
       InspectionProfileManager.getInstance(context.project()).getCurrentProfile().getInspectionTool(options.inspectionShortName(), context.file());
     if (tool == null) {

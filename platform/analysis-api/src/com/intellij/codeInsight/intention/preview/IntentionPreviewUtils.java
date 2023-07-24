@@ -1,31 +1,22 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.preview;
 
-import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.*;
+import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction.ActionContext;
+import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Utils to support intention preview feature
@@ -139,6 +130,7 @@ public final class IntentionPreviewUtils {
   /**
    * @return current imaginary editor used for preview; null if we are not in preview session
    */
+  @Contract(pure = true)
   public static @Nullable Editor getPreviewEditor() {
     return PREVIEW_EDITOR.get();
   }
@@ -146,6 +138,7 @@ public final class IntentionPreviewUtils {
   /**
    * @return true if intention preview is currently being computed in this thread
    */
+  @Contract(pure = true)
   public static boolean isIntentionPreviewActive() {
     return PREVIEW_EDITOR.get() != null;
   }
@@ -156,63 +149,8 @@ public final class IntentionPreviewUtils {
    * @return default preview for a given ModCommand
    */
   @ApiStatus.Experimental
+  @Contract(pure = true)
   public static @NotNull IntentionPreviewInfo getModCommandPreview(@NotNull ModCommand modCommand, @NotNull ActionContext context) {
-    Project project = context.project();
-    PsiFile file = context.file();
-    List<IntentionPreviewInfo.CustomDiff> customDiffList = new ArrayList<>();
-    IntentionPreviewInfo navigateInfo = IntentionPreviewInfo.EMPTY;
-    for (ModCommand command : modCommand.unpack()) {
-      if (command instanceof ModUpdateFileText modFile) {
-        VirtualFile vFile = modFile.file();
-        var currentFile =
-          vFile.equals(file.getOriginalFile().getVirtualFile()) ||
-          vFile.equals(InjectedLanguageManager.getInstance(project).getTopLevelFile(file).getOriginalFile().getVirtualFile());
-        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), 
-                                                               currentFile ? null : vFile.getName(), modFile.oldText(), modFile.newText(), true));
-      }
-      else if (command instanceof ModCreateFile createFile) {
-        VirtualFile vFile = createFile.file();
-        customDiffList.add(new IntentionPreviewInfo.CustomDiff(vFile.getFileType(), vFile.getName(), "", createFile.text(), true));
-      }
-      else if (command instanceof ModNavigate navigate && navigate.caret() != -1) {
-        PsiFile target = PsiManager.getInstance(project).findFile(navigate.file());
-        if (target != null) {
-          navigateInfo = IntentionPreviewInfo.navigate(target, navigate.caret());
-        }
-      }
-      else if (command instanceof ModChooseAction target) {
-        return getChoosePreview(context, target);
-      }
-      else if (command instanceof ModChooseMember target) {
-        return getModCommandPreview(target.nextCommand().apply(target.defaultSelection()), context);
-      }
-      else if (command instanceof ModShowConflicts showConflicts) {
-        return getModCommandPreview(showConflicts.nextStep(), context);
-      }
-      else if (command instanceof ModDisplayMessage message) {
-        if (message.kind() == ModDisplayMessage.MessageKind.ERROR) {
-          return new IntentionPreviewInfo.Html(new HtmlBuilder().append(
-            AnalysisBundle.message("preview.cannot.perform.action")).br().append(message.messageText()).toFragment(), IntentionPreviewInfo.InfoKind.ERROR);
-        }
-      }
-      else if (command instanceof ModCopyToClipboard copy) {
-        navigateInfo = new IntentionPreviewInfo.Html(HtmlChunk.text(
-          AnalysisBundle.message("preview.copy.to.clipboard", StringUtil.shortenTextWithEllipsis(copy.content(), 50, 10))));
-      }
-      else if (command instanceof ModUpdateInspectionOptions options) {
-        navigateInfo = new IntentionPreviewInfo.Html(ModCommandService.getInstance().createOptionsPreview(context, options));
-      }
-    }
-    return customDiffList.isEmpty() ? navigateInfo :
-           customDiffList.size() == 1 ? customDiffList.get(0) :
-           new IntentionPreviewInfo.MultiFileDiff(customDiffList);
-  }
-
-  private static @NotNull IntentionPreviewInfo getChoosePreview(@NotNull ActionContext context, @NotNull ModChooseAction target) {
-    return target.actions().stream()
-      .filter(action -> action.getPresentation(context) != null)
-      .findFirst()
-      .map(action -> action.generatePreview(context))
-      .orElse(IntentionPreviewInfo.EMPTY);
+    return ModCommandService.getInstance().getPreview(modCommand, context);
   }
 }
