@@ -133,6 +133,7 @@ public final class IncProjectBuilder {
       context = createContext(scope);
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
+        context.checkCanceled();
         if (scope.isAffected(target)) {
           BuildOperations.ensureFSStateInitialized(context, target, true);
           final FilesDelta delta = fsState.getEffectiveFilesDelta(context, target);

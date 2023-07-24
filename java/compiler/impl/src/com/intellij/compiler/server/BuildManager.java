@@ -2355,10 +2355,11 @@ public final class BuildManager implements Disposable {
         myRequestedCancelState = mayInterruptIfRunning;
         return true;
       }
-      for (TaskFuture<?> delegate : getDelegates()) {
-        delegate.cancel(mayInterruptIfRunning);
+      boolean cancelled = false;
+      for (TaskFuture<?> delegate : delegates) {
+        cancelled |= delegate.cancel(mayInterruptIfRunning);
       }
-      return isDone();
+      return cancelled;
     }
 
     @Override
