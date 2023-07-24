@@ -2,17 +2,12 @@ package com.intellij.settingsSync
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.*
-import com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase
-import com.intellij.configurationStore.schemeManager.SchemeManagerImpl
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
-import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
@@ -300,7 +295,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
   private fun getOrCreateLock(fileSpec: String) = fileSpecsToLocks.computeIfAbsent(fileSpec) { ReentrantReadWriteLock() }
 
   companion object {
-    val LOG = logger<SettingsSyncIdeMediatorImpl>()
+    private val LOG = logger<SettingsSyncIdeMediatorImpl>()
 
     internal fun <T: Any> findProviderById(id: String, state: T): SettingsProvider<T>? {
       val provider = SettingsProvider.SETTINGS_PROVIDER_EP.findFirstSafe(Predicate { it.id == id })

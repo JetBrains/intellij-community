@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.components.stateStore
 import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.util.SystemProperties
@@ -19,25 +20,24 @@ fun isSettingsSyncEnabledByKey(): Boolean = SystemProperties.getBooleanProperty(
 
 internal fun isSettingsSyncEnabledInSettings(): Boolean = SettingsSyncSettings.getInstance().syncEnabled
 
-internal const val SETTINGS_SYNC_STORAGE_FOLDER = "settingsSync"
+internal const val SETTINGS_SYNC_STORAGE_FOLDER: String = "settingsSync"
 
 @ApiStatus.Internal
 @Service
 class SettingsSyncMain : Disposable {
   val controls: SettingsSyncControls
-  private val componentStore: ComponentStoreImpl
 
   init {
-    val application = ApplicationManager.getApplication()
     val appConfigPath = PathManager.getConfigDir()
-    val settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER)
-    val remoteCommunicator = CloudConfigServerCommunicator()
-
-    componentStore = application.stateStore as ComponentStoreImpl
-    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore, appConfigPath, enabledCondition = {
+    val componentStore = ApplicationManager.getApplication().stateStore as ComponentStoreImpl
+    val ideMediator = SettingsSyncIdeMediatorImpl(componentStore = componentStore, rootConfig = appConfigPath, enabledCondition = {
       isSettingsSyncEnabledByKey() && isAvailable() && isSettingsSyncEnabledInSettings()
     })
-    controls = init(this, settingsSyncStorage, appConfigPath, remoteCommunicator, ideMediator)
+    controls = init(parentDisposable = this,
+                    settingsSyncStorage = appConfigPath.resolve(SETTINGS_SYNC_STORAGE_FOLDER),
+                    appConfigPath = appConfigPath,
+                    remoteCommunicator = CloudConfigServerCommunicator(),
+                    ideMediator = ideMediator)
   }
 
   override fun dispose() {
@@ -50,9 +50,8 @@ class SettingsSyncMain : Disposable {
   }
 
   companion object {
-
     fun isAvailable(): Boolean {
-      return ApplicationManager.getApplication().getServiceIfCreated(SettingsSyncMain::class.java) != null
+      return ApplicationManager.getApplication().serviceIfCreated<SettingsSyncMain>() != null
     }
 
     fun getInstance(): SettingsSyncMain = service<SettingsSyncMain>()
