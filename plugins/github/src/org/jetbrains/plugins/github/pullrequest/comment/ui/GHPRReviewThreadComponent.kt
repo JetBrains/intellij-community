@@ -107,7 +107,15 @@ object GHPRReviewThreadComponent {
     return Wrapper().also {
       scopeProvider.activateWith(it)
 
-      val fileNameClickListener = flowOf(ActionListener { selectInToolWindowHelper.selectChange(thread.commit?.oid, thread.filePath) })
+      val fileNameClickListener = flowOf(ActionListener {
+        val commit = if (thread.isOutdated || thread.commit?.oid == null) {
+          thread.originalCommit?.oid
+        }
+        else {
+          null
+        }
+        selectInToolWindowHelper.selectChange(commit, thread.filePath)
+      })
       scopeProvider.doInScope {
         val comp = TimelineDiffComponentFactory.createDiffWithHeader(this, vm, thread.filePath, fileNameClickListener) {
           createDiff(thread, project)
