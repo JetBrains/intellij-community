@@ -5,6 +5,7 @@ import com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.platform.ide.newUiOnboarding.NewUiOnboardingStatistics.OnboardingStartingPlace
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 
@@ -15,6 +16,7 @@ class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
       row.link(NewUiOnboardingBundle.message("start.tour")) {
         NewUiOnboardingService.getInstance(project).startOnboarding()
         ToolWindowManagerEx.getInstanceEx(project).hideToolWindow(ToolWindowId.MEET_NEW_UI, true)
+        NewUiOnboardingStatistics.logOnboardingStarted(OnboardingStartingPlace.CONFIGURE_NEW_UI_TOOLWINDOW)
       }.customize(UnscaledGaps(left = 16))
     }
   }
