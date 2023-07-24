@@ -1552,6 +1552,8 @@
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.BuildQuickAction" listGroupID="MainToolbarQuickActions.Run" />
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.CoverageQuickAction" listGroupID="MainToolbarQuickActions.Run" />
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" listGroupID="MainToolbarQuickActions.Run" />
+
+    <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
@@ -1612,7 +1614,7 @@
   </applicationListeners>
 
   <projectListeners>
-    <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsListener"
               activeInHeadlessMode="false"
               activeInTestMode="false"
               topic="com.intellij.notification.Notifications"/>

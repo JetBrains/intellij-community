@@ -524,5 +524,6 @@
 
     <extensionPoint name="meetNewUiCustomization" interface="com.intellij.ide.ui.experimental.meetNewUi.MeetNewUiCustomization" dynamic="true"/>
 
+    <extensionPoint name="notificationRouter" interface="com.intellij.notification.NotificationRouter" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

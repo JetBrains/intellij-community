@@ -182,7 +182,7 @@
 
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
-    <listener class="com.intellij.notification.impl.NotificationsManagerImpl$MyNotificationListener"
+    <listener class="com.intellij.notification.impl.NotificationsListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.notification.impl.NotificationsConfigurationImpl$MyNotificationListener"
               topic="com.intellij.notification.Notifications"/>
