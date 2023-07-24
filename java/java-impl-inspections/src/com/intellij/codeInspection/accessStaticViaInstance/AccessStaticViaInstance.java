@@ -10,6 +10,6 @@ public class AccessStaticViaInstance extends AccessStaticViaInstanceBase {
   @Override
   protected LocalQuickFix createAccessStaticViaInstanceFix(PsiReferenceExpression expr,
                                                            JavaResolveResult result) {
-    return new AccessStaticViaInstanceFix(expr, result).asQuickFix();
+    return LocalQuickFix.from(new AccessStaticViaInstanceFix(expr, result));
   }
 }

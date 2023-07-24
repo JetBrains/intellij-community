@@ -162,9 +162,9 @@ public class EmptyStatementBodyInspection extends BaseInspection {
     @NotNull
     private static LocalQuickFix createFix(@NotNull PsiStatement statement, PsiExpression expression) {
       if (expression == null) {
-        return new DeleteElementFix(statement).asQuickFix();
+        return LocalQuickFix.from(new DeleteElementFix(statement));
       }
-      return new DeleteSideEffectsAwareFix(statement, expression).asQuickFix();
+      return LocalQuickFix.from(new DeleteSideEffectsAwareFix(statement, expression));
     }
 
     private boolean isEmpty(PsiElement element) {

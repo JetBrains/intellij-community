@@ -214,7 +214,7 @@ public final class DuplicateStringLiteralInspection extends AbstractBaseJavaLoca
           if (!isAccessible && containingClass.getQualifiedName() == null) {
             continue;
           }
-          fixes.add(new ReplaceFix(field, originalExpression).asQuickFix());
+          fixes.add(LocalQuickFix.from(new ReplaceFix(field, originalExpression)));
         }
       }
     }

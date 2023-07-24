@@ -11,6 +11,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.options.OptCheckbox;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -108,7 +109,9 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     if (deprecatedElement instanceof PsiMethod method && methodCall != null) {
       PsiMethod replacement = findReplacementInJavaDoc(method, methodCall);
       if (replacement != null) {
-        return new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement).asQuickFix();
+        ModCommandAction action =
+          new ReplaceMethodCallFix((PsiMethodCallExpression)elementToHighlight.getParent().getParent(), replacement);
+        return LocalQuickFix.from(action);
       }
     }
     if (deprecatedElement instanceof PsiField field) {
@@ -116,7 +119,8 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
       if (referenceExpression != null) {
         PsiMember replacement = findReplacementInJavaDoc(field, referenceExpression);
         if (replacement != null) {
-          return new ReplaceFieldReferenceFix(referenceExpression, replacement).asQuickFix();
+          ModCommandAction action = new ReplaceFieldReferenceFix(referenceExpression, replacement);
+          return LocalQuickFix.from(action);
         }
       }
     }

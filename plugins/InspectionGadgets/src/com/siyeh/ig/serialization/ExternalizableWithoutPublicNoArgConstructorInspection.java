@@ -2,8 +2,8 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.AddDefaultConstructorFix;
-import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -29,7 +29,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspection extends BaseI
         // can't create constructor for anonymous class
         return null;
       }
-      return new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC).asQuickFix();
+      return LocalQuickFix.from(new AddDefaultConstructorFix(aClass, PsiModifier.PUBLIC));
     }
     else {
       return new MakeConstructorPublicFix();

@@ -183,7 +183,7 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
                 int startOffsetInDocComment = refHolder.getTextOffset() - docComment.getTextOffset();
                 int endOffsetInDocComment =
                   refHolder.getTextOffset() + refText.length() + adjacent.getTextLength() - docComment.getTextOffset();
-                fix = new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment).asQuickFix();
+                fix = LocalQuickFix.from(new UrlToHtmlFix(docComment, startOffsetInDocComment, endOffsetInDocComment));
               }
             }
           }
@@ -250,7 +250,8 @@ public class JavaDocReferenceInspection extends LocalInspectionTool {
     fixes.add(new RemoveTagFix(tagName, paramName));
 
     if (isOnTheFly && element != null && REPORT_INACCESSIBLE) {
-      fixes.add(new UpdateInspectionOptionFix(this, "REPORT_INACCESSIBLE", JavaBundle.message("disable.report.inaccessible.symbols.fix"), false).asQuickFix());
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this, "REPORT_INACCESSIBLE", JavaBundle.message("disable.report.inaccessible.symbols.fix"), false)));
     }
 
     holder.registerProblem(holder.getManager().createProblemDescriptor(

@@ -23,6 +23,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
@@ -276,9 +277,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                var -> VariableAccessUtils.variableIsUsed(var, var.getDeclarationScope()))) {
         return;
       }
+      ModCommandAction action = new RedundantInstanceofFix(expression);
       reporter.registerProblem(expression,
                                JavaAnalysisBundle.message("dataflow.message.redundant.instanceof"),
-                               new RedundantInstanceofFix(expression).asQuickFix());
+                               LocalQuickFix.from(action));
     });
   }
 

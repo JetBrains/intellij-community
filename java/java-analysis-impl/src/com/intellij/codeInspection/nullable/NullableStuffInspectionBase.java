@@ -11,6 +11,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
@@ -175,12 +176,14 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
             PsiElement parent = context.getParent();
             if (parent instanceof PsiJavaCodeReferenceElement) {
               if (outerCtx.resolve() instanceof PsiPackage) {
+                ModCommandAction action = new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation);
                 reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.applied.to.package",
-                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asQuickFix());
+                                        LocalQuickFix.from(action));
               }
               else {
+                ModCommandAction action = new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation);
                 reportIncorrectLocation(holder, annotation, listOwner, "inspection.nullable.problems.outer.type",
-                                        new MoveAnnotationOnStaticMemberQualifyingTypeFix(annotation).asQuickFix());
+                                        LocalQuickFix.from(action));
               }
             }
             if (parent instanceof PsiReferenceList) {

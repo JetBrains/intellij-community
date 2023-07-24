@@ -54,7 +54,7 @@ public class DefaultNotLastCaseInSwitchInspection extends BaseInspection impleme
         }
       }
     }
-    return new MakeDefaultLastCaseFix(lbl).asQuickFix();
+    return LocalQuickFix.from(new MakeDefaultLastCaseFix(lbl));
   }
 
   @Override

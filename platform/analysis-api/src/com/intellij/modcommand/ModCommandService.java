@@ -34,12 +34,7 @@ public interface ModCommandService {
                                                                                                          @NotNull PsiElement psiElement);
 
   /**
-   * @param action action to wrap
-   * @return the action adapted to {@link LocalQuickFix} interface. The adapter is not perfect. In particular,
-   * its {@link LocalQuickFix#getName()} simply returns the result of {@link ModCommandAction#getFamilyName()}. If the client
-   * of the quick-fix is ModCommand-aware, it can use {@link #unwrap(LocalQuickFix)} to get
-   * the action back.
-   * @see ModCommandAction#asQuickFix()
+   * Implementation of {@link LocalQuickFix#from(ModCommandAction)}. Should not be used directly
    */
   @NotNull LocalQuickFix wrapToQuickFix(@NotNull ModCommandAction action);
 

@@ -78,9 +78,9 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
 
       private void register(CompareInfo info, PsiElement nameElement) {
         if (!suggestFloatingCompare && info.myMayChangeSemantics) return;
-        LocalQuickFix turnOffFloating = info.myMayChangeSemantics ? new UpdateInspectionOptionFix(
+        LocalQuickFix turnOffFloating = info.myMayChangeSemantics ? LocalQuickFix.from(new UpdateInspectionOptionFix(
           UseCompareMethodInspection.this, "suggestFloatingCompare",
-          JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false).asQuickFix() : null;
+          JavaAnalysisBundle.message("inspection.use.compare.method.turn.off.double"), false)) : null;
         holder.registerProblem(nameElement, JavaAnalysisBundle.message("inspection.expression.can.be.replaced.with.message", info.myClass.getClassName() + ".compare"),
                                LocalQuickFix.notNullElements(new ReplaceWithPrimitiveCompareFix(info.getReplacementText()), turnOffFloating));
       }

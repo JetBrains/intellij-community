@@ -62,7 +62,7 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspection extends BaseIns
   protected LocalQuickFix buildFix(Object... infos) {
     final PsiExpression argument = (PsiExpression)infos[0];
     final PsiType type = (PsiType)infos[1];
-    return new AddTypeCastFix(type, argument).asQuickFix();
+    return LocalQuickFix.from(new AddTypeCastFix(type, argument));
   }
 
   @Override

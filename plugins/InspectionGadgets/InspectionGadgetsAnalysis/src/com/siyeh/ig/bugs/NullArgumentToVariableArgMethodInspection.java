@@ -54,8 +54,8 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
     final PsiType type1 = (PsiType)infos[1];
     final PsiType type2 = (PsiType)infos[2];
     return new LocalQuickFix[] {
-      new AddTypeCastFix(type1, argument).asQuickFix(),
-      new AddTypeCastFix(type2, argument).asQuickFix(),
+      LocalQuickFix.from(new AddTypeCastFix(type1, argument)),
+      LocalQuickFix.from(new AddTypeCastFix(type2, argument)),
     };
   }
 

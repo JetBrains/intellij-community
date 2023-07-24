@@ -340,7 +340,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
         if (value instanceof PsiExpression expression) {
           Object constantValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, null, false);
           if (argumentValue.equals(constantValue)) {
-            return new ReplaceWithMagicConstantFix(argument, value).asQuickFix();
+            return LocalQuickFix.from(new ReplaceWithMagicConstantFix(argument, value));
           }
         }
       }
@@ -377,7 +377,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
           }
         }
         if (!flags.isEmpty()) {
-          return new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)).asQuickFix();
+          return LocalQuickFix.from(new ReplaceWithMagicConstantFix(argument, flags.toArray(PsiAnnotationMemberValue.EMPTY_ARRAY)));
         }
       }
     }

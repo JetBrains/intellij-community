@@ -59,7 +59,7 @@ public class RegistrationProblemsInspection extends DevKitUastInspectionBase {
             ProblemHolderUtilKt.registerUProblem(holder, uClass,
                                                  DevKitBundle.message("inspections.registration.problems.incompatible.message",
                                                                       componentClass.getQualifiedName()),
-                                                 fix == null ? LocalQuickFix.EMPTY_ARRAY : new LocalQuickFix[] {fix.asQuickFix()});
+                                                 LocalQuickFix.notNullElements(LocalQuickFix.from(fix)));
           }
         }
         if (ActionType.ACTION.isOfType(checkedClass) && !hasNoArgConstructor(checkedClass)) {

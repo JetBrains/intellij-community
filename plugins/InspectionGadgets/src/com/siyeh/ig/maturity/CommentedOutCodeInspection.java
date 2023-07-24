@@ -57,8 +57,8 @@ public class CommentedOutCodeInspection extends BaseInspection {
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     int lines = (int)infos[0];
     return new LocalQuickFix[]{new DeleteCommentedOutCodeFix(), new UncommentCodeFix(),
-      new UpdateInspectionOptionFix(
-        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1).asQuickFix(),
+      LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this, "minLines", InspectionGadgetsBundle.message("inspection.commented.out.code.disable.short.fragments"), lines + 1)),
     };
   }
 

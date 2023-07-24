@@ -101,9 +101,8 @@ public class EqualsWithItselfInspection extends BaseInspection {
   @Nullable
   protected LocalQuickFix buildFix(Object... infos) {
     final Boolean canEnableOption = (Boolean)infos[0];
-    return canEnableOption ?
-           new UpdateInspectionOptionFix(this, "ignoreNonFinalClassesInTest",
-                                         InspectionGadgetsBundle.message("equals.with.itself.option"), true).asQuickFix() : null;
+    return canEnableOption ? LocalQuickFix.from(new UpdateInspectionOptionFix(
+      this, "ignoreNonFinalClassesInTest", InspectionGadgetsBundle.message("equals.with.itself.option"), true)) : null;
   }
 
   private class EqualsWithItselfVisitor extends BaseInspectionVisitor {

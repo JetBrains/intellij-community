@@ -16,7 +16,6 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -148,17 +147,17 @@ public class EnumSwitchStatementWhichMissesCasesInspection extends AbstractBaseJ
         }
         if (constants.isEmpty()) return;
         String message = buildErrorString(aClass.getQualifiedName(), constants);
-        LocalQuickFix fix = new CreateEnumMissingSwitchBranchesFix(switchBlock, constants).asQuickFix();
+        var fix = new CreateEnumMissingSwitchBranchesFix(switchBlock, constants);
         if (highlighting == ProblemHighlightType.INFORMATION ||
             InspectionProjectProfileManager.isInformationLevel(getShortName(), switchBlock)) {
-          holder.registerProblem(switchBlock, message, highlighting, fix);
+          holder.problem(switchBlock, message).highlight(highlighting).fix(fix).register();
         }
         else {
           int length = switchBlock.getFirstChild().getTextLength();
-          holder.registerProblem(switchBlock, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new TextRange(0, length), fix);
+          holder.problem(switchBlock, message).range(new TextRange(0, length)).fix(fix).register();
           if (isOnTheFly) {
             TextRange range = new TextRange(length, switchBlock.getTextLength());
-            holder.registerProblem(switchBlock, message, ProblemHighlightType.INFORMATION, range, fix);
+            holder.problem(switchBlock, message).highlight(ProblemHighlightType.INFORMATION).range(range).fix(fix).register();
           }
         }
       }

@@ -280,7 +280,7 @@ public class ProblemsHolder {
     @Contract(value = "_ -> this", mutates = "this")
     @CheckReturnValue
     public ProblemBuilder fix(@NotNull ModCommandAction action) {
-      myFixes.add(action.asQuickFix());
+      myFixes.add(LocalQuickFix.from(action));
       return this;
     }
 
@@ -305,7 +305,7 @@ public class ProblemsHolder {
     @CheckReturnValue
     public ProblemBuilder maybeFix(@Nullable ModCommandAction action) {
       if (action != null) {
-        myFixes.add(action.asQuickFix());
+        myFixes.add(LocalQuickFix.from(action));
       }
       return this;
     }

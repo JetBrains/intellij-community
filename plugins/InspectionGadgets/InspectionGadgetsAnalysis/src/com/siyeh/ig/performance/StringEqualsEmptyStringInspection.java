@@ -67,9 +67,9 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
     final boolean addNullCheck = ((Boolean)infos[1]).booleanValue();
     StringEqualsEmptyStringFix mainFix = new StringEqualsEmptyStringFix(useIsEmpty, addNullCheck);
     if (addNullCheck) {
-      LocalQuickFix disableFix = new UpdateInspectionOptionFix(
+      LocalQuickFix disableFix = LocalQuickFix.from(new UpdateInspectionOptionFix(
         this, "SUPPRESS_FOR_VALUES_WHICH_COULD_BE_NULL",
-        InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check"), true).asQuickFix();
+        InspectionGadgetsBundle.message("string.equals.empty.string.option.do.not.add.null.check"), true));
       return new LocalQuickFix[]{mainFix, disableFix};
     }
     return new LocalQuickFix[]{mainFix};

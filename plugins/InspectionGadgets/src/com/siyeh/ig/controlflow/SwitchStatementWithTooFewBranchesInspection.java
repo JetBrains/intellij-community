@@ -82,10 +82,10 @@ public class SwitchStatementWithTooFewBranchesInspection extends BaseInspection 
       fixes.add(new UnwrapSwitchStatementFix(branchCount));
     }
     if (patternSwitch) {
-      fixes.add(new UpdateInspectionOptionFix(this, "ignorePatternSwitch",
-                                              InspectionGadgetsBundle.message(
-                                                "switch.statement.with.too.few.branches.ignore.pattern.option"),
-                                              true).asQuickFix());
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+        this, "ignorePatternSwitch",
+        InspectionGadgetsBundle.message("switch.statement.with.too.few.branches.ignore.pattern.option"),
+        true)));
     }
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }

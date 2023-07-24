@@ -17,6 +17,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
+import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -203,7 +204,8 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (constant.value() instanceof Boolean) {
       fixes.add(createSimplifyBooleanExpressionFix(ref, (Boolean)constant.value()));
     } else {
-      fixes.add(new ReplaceWithConstantValueFix(ref, presentableName, presentableName).asQuickFix());
+      ModCommandAction action = new ReplaceWithConstantValueFix(ref, presentableName, presentableName);
+      fixes.add(LocalQuickFix.from(action));
     }
     Object value = constant.value();
     boolean isAssertion = isAssertionEffectively(ref, constant);
@@ -213,14 +215,16 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     }
     if (reporter.isOnTheFly()) {
       if (ref instanceof PsiReferenceExpression) {
-        fixes.add(new UpdateInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
-                                                JavaAnalysisBundle.message("inspection.data.flow.turn.off.constant.references.quickfix"),
-                                                false).asQuickFix());
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
+                                                                   JavaAnalysisBundle.message(
+                                                                     "inspection.data.flow.turn.off.constant.references.quickfix"),
+                                                                   false)));
       }
       if (isAssertion) {
-        fixes.add(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                                JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"),
-                                                true).asQuickFix());
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                                                   JavaAnalysisBundle.message(
+                                                                     "inspection.data.flow.turn.off.true.asserts.quickfix"),
+                                                                   true)));
       }
     }
     ContainerUtil.addIfNotNull(fixes, new FindDfaProblemCauseFix(IGNORE_ASSERT_STATEMENTS, ref, new TrackingRunner.ValueDfaProblemType(value)));
@@ -451,9 +455,10 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
     if (!isCoveredBySurroundingFix(psiAnchor, evaluatesToTrue)) {
       ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
       if (isAssertion && reporter.isOnTheFly()) {
-        fixes.add(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                                JavaAnalysisBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"),
-                                                true).asQuickFix());
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                                                   JavaAnalysisBundle.message(
+                                                                     "inspection.data.flow.turn.off.true.asserts.quickfix"),
+                                                                   true)));
       }
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
     }
@@ -480,9 +485,7 @@ public class ConstantValueInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static @Nullable LocalQuickFix createSimplifyBooleanExpressionFix(PsiElement element, final boolean value) {
-    SimplifyBooleanExpressionFix fix = createSimplifyBooleanFix(element, value);
-    if (fix == null) return null;
-    return fix.asQuickFix();
+    return LocalQuickFix.from(createSimplifyBooleanFix(element, value));
   }
 
   private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {

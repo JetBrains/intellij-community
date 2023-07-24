@@ -2,8 +2,8 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -32,7 +32,12 @@ public class RedundantEscapeInRegexReplacementInspection extends BaseInspection 
   @Override
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
     final boolean buildFix = (Boolean)infos[1];
-    return buildFix ? new RedundantEscapeInRegexReplacementFix().asQuickFix() : null;
+    if (buildFix) {
+      return LocalQuickFix.from(new RedundantEscapeInRegexReplacementFix());
+    }
+    else {
+      return null;
+    }
   }
 
   @Override

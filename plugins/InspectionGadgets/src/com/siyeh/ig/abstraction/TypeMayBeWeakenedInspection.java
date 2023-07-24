@@ -115,7 +115,7 @@ public class TypeMayBeWeakenedInspection extends BaseInspection {
       PsiTypeElement typeElement = ((PsiVariable)element).getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         final String optionText = InspectionGadgetsBundle.message("inspection.type.may.be.weakened.do.not.weaken.inferred.variable.type");
-        fixes.add(new UpdateInspectionOptionFix(this, "doNotWeakenInferredVariableType", optionText, true).asQuickFix());
+        fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, "doNotWeakenInferredVariableType", optionText, true)));
       }
     }
     for (PsiClass weakestClass : weakerClasses) {

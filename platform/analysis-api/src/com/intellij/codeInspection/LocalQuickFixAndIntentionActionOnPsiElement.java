@@ -74,7 +74,7 @@ public abstract class LocalQuickFixAndIntentionActionOnPsiElement extends LocalQ
 
   /**
    * This method exists to provide compatibility bridges. Use of it is discouraged. When possible, prefer
-   * {@link ModCommandAction#asIntention()} or {@link ModCommandAction#asQuickFix()}
+   * {@link ModCommandAction#asIntention()} or {@link LocalQuickFix#from(ModCommandAction)}
    * @param action action to delegate to
    * @param psiElement some context element. Mostly unused but should remain valid in order the action to be executed
    * @return a wrapper that extends {@link LocalQuickFixAndIntentionActionOnPsiElement} and delegates to the action

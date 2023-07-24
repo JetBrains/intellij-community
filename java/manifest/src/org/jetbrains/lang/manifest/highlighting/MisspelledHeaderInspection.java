@@ -84,7 +84,7 @@ public final class MisspelledHeaderInspection extends LocalInspectionTool {
 
           List<LocalQuickFix> fixes = new ArrayList<>();
           for (Suggestion match : matches) {
-            fixes.add(new HeaderRenameQuickFix(header, match.getWord()).asQuickFix());
+            fixes.add(LocalQuickFix.from(new HeaderRenameQuickFix(header, match.getWord())));
             if (fixes.size() == MAX_SUGGESTIONS) break;
           }
           if (bestMatch == null || bestMatch.getMetrics() > TYPO_DISTANCE) {

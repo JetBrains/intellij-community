@@ -50,8 +50,8 @@ public class ReflectionForUnavailableAnnotationInspection extends BaseInspection
     else if (infos.length == 2) {
       PsiAnnotation retentionAnnotation = (PsiAnnotation)infos[1];
       String text = getText((PsiClass)infos[0]);
-      return new ChangeAnnotationParameterQuickFix(retentionAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, runtimeRef, text)
-        .asQuickFix();
+      return LocalQuickFix.from(
+        new ChangeAnnotationParameterQuickFix(retentionAnnotation, PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME, runtimeRef, text));
     }
     assert false;
     return null;

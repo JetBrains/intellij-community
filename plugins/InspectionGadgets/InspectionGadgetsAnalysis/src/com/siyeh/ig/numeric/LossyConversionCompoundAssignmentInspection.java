@@ -31,7 +31,7 @@ public class LossyConversionCompoundAssignmentInspection extends BaseInspection 
   protected @Nullable LocalQuickFix buildFix(Object... infos) {
     PsiType lType = (PsiType)infos[1];
     PsiExpression rExpression = (PsiExpression)infos[2];
-    return new AddTypeCastFix(lType, rExpression).asQuickFix();
+    return LocalQuickFix.from(new AddTypeCastFix(lType, rExpression));
   }
 
   @Override

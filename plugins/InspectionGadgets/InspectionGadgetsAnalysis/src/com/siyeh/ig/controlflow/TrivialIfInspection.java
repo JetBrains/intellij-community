@@ -83,7 +83,7 @@ public class TrivialIfInspection extends BaseInspection implements CleanupLocalI
     if (turnOffOption != null) {
       OptCheckbox checkbox = (OptCheckbox)Objects.requireNonNull(getOptionsPane().findControl(turnOffOption));
       String message = StringUtil.unescapeXmlEntities(checkbox.label().label());
-      fixes.add(new UpdateInspectionOptionFix(this, turnOffOption, message, true).asQuickFix());
+      fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(this, turnOffOption, message, true)));
     }
     return fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
   }

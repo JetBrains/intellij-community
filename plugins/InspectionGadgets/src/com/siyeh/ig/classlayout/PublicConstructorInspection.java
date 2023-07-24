@@ -23,7 +23,7 @@ public class PublicConstructorInspection extends BaseInspection {
   @Nullable
   @Override
   protected LocalQuickFix buildFix(Object... infos) {
-    return new ReplaceConstructorWithFactoryAction().asQuickFix();
+    return LocalQuickFix.from(new ReplaceConstructorWithFactoryAction());
   }
 
   @NotNull

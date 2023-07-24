@@ -63,7 +63,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
   @Override
   protected @Nullable LocalQuickFix createDeleteLabelFix(PsiCaseLabelElement label) {
-    return new DeleteSwitchLabelFix(label, true).asQuickFix();
+    return LocalQuickFix.from(new DeleteSwitchLabelFix(label, true));
   }
 
   private static boolean isVolatileFieldReference(PsiExpression qualifier) {
@@ -191,7 +191,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     if (!HighlightingFeature.PATTERNS_IN_SWITCH.isAvailable(qualifier)) return;
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(qualifier.getParent());
     if (parent instanceof PsiSwitchBlock block && PsiUtil.skipParenthesizedExprDown(block.getExpression()) == qualifier) {
-      fixes.add(new CreateNullBranchFix(block).asQuickFix());
+      fixes.add(LocalQuickFix.from(new CreateNullBranchFix(block)));
     }
   }
 

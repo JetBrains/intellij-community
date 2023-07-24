@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
@@ -82,16 +81,6 @@ public interface ModCommandAction extends CommonIntentionAction {
   @Contract(pure = true)
   default @NotNull IntentionAction asIntention() {
     return ModCommandService.getInstance().wrap(this);
-  }
-
-  /**
-   * @return this action adapted to {@link LocalQuickFix} interface. The adapter is not perfect. In particular,
-   * its {@link LocalQuickFix#getName()} simply returns the result of {@link #getFamilyName()}. If the client
-   * of the quick-fix is ModCommand-aware, it can use {@link ModCommandService#unwrap(LocalQuickFix)} to get
-   * this ModCommandAction back.
-   */
-  default @NotNull LocalQuickFix asQuickFix() {
-    return ModCommandService.getInstance().wrapToQuickFix(this);
   }
 
   @Override

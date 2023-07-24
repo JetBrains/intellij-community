@@ -110,15 +110,16 @@ public class ExtractMethodRecommenderInspection extends AbstractBaseJavaLocalIns
               List<LocalQuickFix> fixes = new ArrayList<>();
               fixes.add(new ExtractMethodFix(from, count, output, inputVariables));
               if (inputVariables.size() > 1) {
-                fixes.add(new UpdateInspectionOptionFix(ExtractMethodRecommenderInspection.this, "maxParameters",
-                                                        JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters",
-                                                                                   inputVariables.size()),
-                                                        inputVariables.size() - 1).asQuickFix());
+                fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+                  ExtractMethodRecommenderInspection.this, "maxParameters",
+                  JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.parameters", inputVariables.size()),
+                  inputVariables.size() - 1)));
               }
               if (textRange.getLength() < 10_000) {
-                fixes.add(new UpdateInspectionOptionFix(ExtractMethodRecommenderInspection.this, "minLength",
-                                                        JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
-                                                        textRange.getLength() + 1).asQuickFix());
+                fixes.add(LocalQuickFix.from(new UpdateInspectionOptionFix(
+                  ExtractMethodRecommenderInspection.this, "minLength",
+                  JavaAnalysisBundle.message("inspection.extract.method.dont.suggest.length"),
+                  textRange.getLength() + 1)));
               }
               int firstLineBreak = textRange.substring(block.getText()).indexOf('\n');
               if (firstLineBreak > -1) {

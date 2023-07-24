@@ -48,8 +48,8 @@ public class ForCanBeForeachInspection extends BaseInspection {
     if (indexed) {
       return new LocalQuickFix[]{
         new ForCanBeForeachFix(ignoreUntypedCollections),
-        new UpdateInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
-                                      InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false).asQuickFix(),
+        LocalQuickFix.from(new UpdateInspectionOptionFix(this, "REPORT_INDEXED_LOOP",
+                                                         InspectionGadgetsBundle.message("for.can.be.foreach.fix.no.indexed"), false)),
       };
     }
     return new LocalQuickFix[]{new ForCanBeForeachFix(ignoreUntypedCollections)};
