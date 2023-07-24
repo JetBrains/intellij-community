@@ -10,9 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Calendar;
 
 /**
- * Provides IDE version/help and vendor information.
+ * Provides product information.
  */
 public abstract class ApplicationInfo {
+  @SuppressWarnings("RetrievingService")
   public static ApplicationInfo getInstance() {
     return ApplicationManager.getApplication().getService(ApplicationInfo.class);
   }
@@ -34,10 +35,11 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe String getVersionName();
 
   /**
-   * Returns the first number from 'minor' part of the version. This method is temporarily added because some products specify a composite number (like '1.3')
-   * in 'minor version' attribute instead of using 'micro version' (i.e. set minor='1' micro='3').
+   * Returns the first number from 'minor' part of the version.
+   * This method is temporarily added because some products specify a composite number (like '1.3')
+   * in 'minor version' attribute instead of using 'micro version' (i.e., set minor='1' micro='3').
    *
-   * @see org.jetbrains.intellij.build.ApplicationInfoProperties#minorVersionMainPart
+   * @see org.jetbrains.intellij.build.ApplicationInfoProperties#getMinorVersionMainPart
    */
   public final @NlsSafe String getMinorVersionMainPart() {
     String value = StringUtil.substringBefore(getMinorVersion(), ".");
@@ -53,7 +55,7 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe String getCompanyName();
 
   /**
-   * Use this method to refer to the company in a less formal way, e.g. in UI messages or directory names.
+   * Use this method to refer to the company in a less formal way, e.g., in UI messages or directory names.
    *
    * @return shortened name of the product vendor without 'Inc.' or similar suffixes, e.g. 'JetBrains' for JetBrains products
    * @see #getCompanyName()
@@ -73,7 +75,7 @@ public abstract class ApplicationInfo {
   public abstract @NlsSafe @NotNull String getFullVersion();
 
   /**
-   * "major.minor"; when minor version is composite, only the first part is used.
+   * "major.minor"; when the minor version is composite, only the first part is used.
    */
   public final @NlsSafe String getShortVersion() {
     return getMajorVersion() + '.' + getMinorVersionMainPart();

@@ -32,7 +32,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    */
   public abstract @NotNull String getApplicationSvgIconUrl();
 
-
   public abstract @Nullable String getApplicationCustomIcon();
 
   /**

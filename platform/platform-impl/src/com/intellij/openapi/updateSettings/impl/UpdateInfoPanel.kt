@@ -99,7 +99,7 @@ internal object UpdateInfoPanel {
       val link = ActionLink(IdeBundle.message("updates.configure.updates.label")) {
         ShowSettingsUtil.getInstance().editConfigurable(infoRow, UpdateSettingsConfigurable(false))
       }
-      link.border = JBUI.Borders.empty(0, 4, 0, 0)
+      link.border = JBUI.Borders.emptyLeft(4)
       link.font = smallFont(link.font)
       infoRow.add(link)
     }
