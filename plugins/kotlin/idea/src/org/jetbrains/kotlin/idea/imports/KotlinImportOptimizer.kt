@@ -253,7 +253,7 @@ class KotlinImportOptimizer : ImportOptimizer {
             return OptimizedImportsBuilder(file, data, options, file.languageVersionSettings.apiVersion).buildOptimizedImports()
         }
 
-        fun replaceImports(file: KtFile, imports: List<ImportPath>) {
+        fun replaceImports(file: KtFile, imports: Iterable<ImportPath>) {
             val manager = PsiDocumentManager.getInstance(file.project)
             manager.getDocument(file)?.let { manager.commitDocument(it) }
             val importList = file.importList ?: return
