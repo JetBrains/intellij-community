@@ -200,8 +200,7 @@ public class HintManagerImpl extends HintManager {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
     JComponent externalComponent = getExternalComponent(editor);
-    Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
-    p = adjustPopupLocation(p, size, hint, hintInfo, externalComponent);
+    p = adjustHintPosition(p, updateSize, externalComponent, hint, hintInfo);
 
     if(hint.isShouldBeReopen()){
       hint.hide(true);
@@ -219,27 +218,71 @@ public class HintManagerImpl extends HintManager {
   }
 
   @NotNull
-  private static Point adjustPopupLocation(Point p, Dimension size, LightweightHint hint, HintHint hintInfo, JComponent externalComponent) {
+  private static Point adjustHintPosition(
+    Point p,
+    boolean updateSize,
+    JComponent externalComponent,
+    LightweightHint hint,
+    HintHint hintInfo
+  ) {
+    Dimension size = updateSize ? hint.getComponent().getPreferredSize() : hint.getComponent().getSize();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("START adjusting hint position " + p + " for a hint of size " + size + " (using the " + (updateSize ? "preferred size" : "real size") + ")");
+    }
     if (hint.isRealPopup() || hintInfo.isPopupForced()) {
       final Point point = new Point(p);
       SwingUtilities.convertPointToScreen(point, externalComponent);
+      if (LOG.isDebugEnabled()) {
+        var componentBounds = new Rectangle(externalComponent.getLocationOnScreen(), externalComponent.getSize());
+        LOG.debug("Location after converting to screen coordinates (for the external component with bounds " + componentBounds + "): " + point);
+      }
       final Rectangle editorScreen = ScreenUtil.getScreenRectangle(point.x, point.y);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The screen rectangle for the original location is " + editorScreen);
+      }
 
       p = new Point(p);
       if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
         p.x -= size.width;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location after moving left to account for the balloon position" + p);
+        }
       }
       SwingUtilities.convertPointToScreen(p, externalComponent);
+      if (LOG.isDebugEnabled()) {
+        var componentBounds = new Rectangle(externalComponent.getLocationOnScreen(), externalComponent.getSize());
+        LOG.debug("Location after converting to screen coordinates (for the external component with bounds " + componentBounds + "): " + p);
+      }
       final Rectangle rectangle = new Rectangle(p, size);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Adjusting bounds to fit into the screen: " + rectangle);
+      }
       ScreenUtil.moveToFit(rectangle, editorScreen, null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Adjusted bounds to fit into the screen: " + rectangle);
+      }
       p = rectangle.getLocation();
       SwingUtilities.convertPointFromScreen(p, externalComponent);
+      if (LOG.isDebugEnabled()) {
+        var componentBounds = new Rectangle(externalComponent.getLocationOnScreen(), externalComponent.getSize());
+        LOG.debug("Location after converting from screen coordinates (for the external component with bounds " + componentBounds + "): " +
+                  p);
+      }
       if (hintInfo.getPreferredPosition() == Balloon.Position.atLeft) {
         p.x += size.width;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location after moving right to account for the balloon position" + p);
+        }
       }
     }
     else if (externalComponent.getWidth() < p.x + size.width && !hintInfo.isAwtTooltip()) {
       p.x = Math.max(0, externalComponent.getWidth() - size.width);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location after trying to fit a non-AWT hint into [0, " + externalComponent.getWidth() + "]: " + p);
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END adjusting hint position, the end result is " + p);
     }
     return p;
   }
