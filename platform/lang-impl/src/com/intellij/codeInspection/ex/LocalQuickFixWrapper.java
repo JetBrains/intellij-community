@@ -10,6 +10,10 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCommandQuickFix;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -102,8 +106,14 @@ public class LocalQuickFixWrapper extends QuickFixAction {
       if (fixes != null) {
         final QuickFix fix = getWorkingQuickFix(fixes);
         if (fix != null) {
-          //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
-          fix.applyFixNonInteractively(project, descriptor);
+          if (fix instanceof ModCommandQuickFix modCommandQuickFix) {
+            ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
+            ModCommand command = modCommandQuickFix.perform(project, problemDescriptor);
+            ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(problemDescriptor), command);
+          } else {
+            //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
+            fix.applyFix(project, descriptor);
+          }
           restart = true;
           ignore(ignoredElements, descriptor, true, context);
         }
