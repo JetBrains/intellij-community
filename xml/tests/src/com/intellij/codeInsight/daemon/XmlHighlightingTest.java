@@ -2203,6 +2203,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doHighlighting();
   }
 
+  public void testXhtml() {
+    configureByFiles(null, BASE_PATH + "test.xhtml");
+    doDoTest(true, false);
+  }
+
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
