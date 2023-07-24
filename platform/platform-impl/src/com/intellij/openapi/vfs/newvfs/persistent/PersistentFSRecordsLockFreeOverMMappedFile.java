@@ -562,7 +562,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   @Override
   public void setConnectionStatus(final int connectionStatus) throws IOException {
     setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
-    globalModCount.incrementAndGet();
     dirty.compareAndSet(false, true);
   }
 

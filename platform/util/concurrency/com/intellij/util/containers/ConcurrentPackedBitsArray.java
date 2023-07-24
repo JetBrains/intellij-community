@@ -18,12 +18,14 @@ public interface ConcurrentPackedBitsArray {
   }
 
   /**
-   *  returns {@code bitsPerChunk} bits stored at the offset {@code id}.
-   *  The returned bits are LSB, with the remaining {@code (ConcurrentBitSetImpl.BITS_PER_WORD-bitsPerChunk)} higher bits undefined
+   * @return {@code bitsPerChunk} bits stored at the offset {@code id}.
+   * The returned bits are LSB, with the remaining (higher) bits are 0
    */
   long get(int id);
 
-  // stores chunk atomically, returns previous chunk
+  /**
+   * Stores flags atomically, returns previous flags
+   */
   long set(int id, long flags);
 
   void clear();

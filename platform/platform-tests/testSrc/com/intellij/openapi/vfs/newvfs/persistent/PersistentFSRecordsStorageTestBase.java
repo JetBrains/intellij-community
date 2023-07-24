@@ -537,6 +537,22 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertEqualExceptModCount("Record written should be read back as-is", recordWritten, recordReadBack);
   }
 
+
+  @Test
+  public void globalStorageModCountShouldNotChangeOnForceAndClose() throws IOException {
+    int modCountBefore = storage.getGlobalModCount();
+    storage.force();
+    assertEquals("globalModCount should not change with .force()",
+                 modCountBefore,
+                 storage.getGlobalModCount());
+    storage.close();
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+    assertEquals("globalModCount should not change with .close()",
+                 modCountBefore,
+                 storage.getGlobalModCount());
+  }
+
   @After
   public void tearDown() throws Exception {
     if (storage != null) {
