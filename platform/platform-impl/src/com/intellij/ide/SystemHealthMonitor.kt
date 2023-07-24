@@ -15,6 +15,7 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.notification.impl.NotificationFullContent
 import com.intellij.openapi.application.*
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ModalTaskOwner
@@ -144,7 +145,7 @@ private suspend fun checkRuntime() {
   LOG.info("${CpuArch.CURRENT} appears to be emulated")
   if (SystemInfoRt.isMac && CpuArch.isIntel64()) {
     val downloadAction = NotificationAction.createSimpleExpiring(IdeBundle.message("bundled.jre.m1.arch.message.download")) {
-      BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide")
+      BrowserUtil.browse(ApplicationInfoEx.getInstanceEx().downloadUrl)
     }
     showNotification("bundled.jre.m1.arch.message", suppressable = true, downloadAction, ApplicationNamesInfo.getInstance().fullProductName)
   }

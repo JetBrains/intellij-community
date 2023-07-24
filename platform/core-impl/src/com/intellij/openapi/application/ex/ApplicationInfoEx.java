@@ -60,6 +60,11 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
   @ApiStatus.Experimental
   public abstract boolean isPreview();
 
+  public final String getDownloadUrl() {
+    String productUrl = getProductUrl();
+    return productUrl != null ? productUrl + "download/" : null;
+  }
+
   public abstract @Nullable UpdateUrls getUpdateUrls();
 
   public abstract String getDocumentationUrl();

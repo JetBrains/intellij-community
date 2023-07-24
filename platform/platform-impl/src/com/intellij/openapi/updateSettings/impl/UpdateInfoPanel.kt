@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
@@ -148,5 +149,10 @@ internal object UpdateInfoPanel {
   @JvmStatic
   fun downloadUrl(newBuild: BuildInfo, updatedChannel: UpdateChannel): String =
     IdeUrlTrackingParametersProvider.getInstance().augmentUrl(
-      newBuild.downloadUrl ?: newBuild.blogPost ?: updatedChannel.url ?: "https://www.jetbrains.com")
+      newBuild.downloadUrl ?:
+      newBuild.blogPost ?:
+      updatedChannel.url ?:
+      ApplicationInfoEx.getInstanceEx().downloadUrl ?:
+      ApplicationInfo.getInstance().companyURL ?:
+      "https://www.jetbrains.com")
 }
