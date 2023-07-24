@@ -1480,14 +1480,14 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("abstractFakeOverrideInExpectClass.kt")
+        public void testAbstractFakeOverrideInExpectClass() throws Exception {
+            runTest("../idea/tests/testData/quickfix/override/abstractFakeOverrideInExpectClass.kt");
+        }
+
         @TestMetadata("changeToInvocation.kt")
         public void testChangeToInvocation() throws Exception {
             runTest("../idea/tests/testData/quickfix/override/changeToInvocation.kt");
-        }
-
-        @TestMetadata("dontOfferToImplementMembersForExpectedClass.kt")
-        public void testDontOfferToImplementMembersForExpectedClass() throws Exception {
-            runTest("../idea/tests/testData/quickfix/override/dontOfferToImplementMembersForExpectedClass.kt");
         }
 
         @TestMetadata("implemenAsConstructorParameter.kt")
