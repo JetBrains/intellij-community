@@ -139,7 +139,7 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
     if (content instanceof FileContent) {
       VirtualFile file = ((FileContent)content).getFile();
       String path = OutsidersPsiFileSupport.getOriginalFilePath(file);
-      if (path != null) return VcsUtil.getFilePath(path);
+      if (path != null) return VcsUtil.getFilePath(path, file.isDirectory());
     }
 
     String fileName = content.getUserData(DiffUserDataKeysEx.FILE_NAME);
@@ -147,13 +147,13 @@ public class DiffViewerCreatePatchActionProvider implements AnActionExtensionPro
       VirtualFile highlightFile = ((DocumentContent)content).getHighlightFile();
       fileName = highlightFile != null ? highlightFile.getName() : null;
     }
-    if (fileName != null) return VcsUtil.getFilePath(fileName);
+    if (fileName != null) return VcsUtil.getFilePath(fileName, false);
 
     FileType fileType = content.getContentType();
     String ext = fileType != null ? fileType.getDefaultExtension() : null;
     if (StringUtil.isEmptyOrSpaces(ext)) ext = "tmp";
 
     String path = PathUtil.suggestFileName(title + "." + ext, true, false);
-    return VcsUtil.getFilePath(path);
+    return VcsUtil.getFilePath(path, false);
   }
 }

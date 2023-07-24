@@ -323,7 +323,7 @@ public final class VcsRootProblemNotifier {
   @VisibleForTesting
   @NotNull
   String getPresentableMapping(@NotNull String mapping) {
-    FilePath filePath = VcsUtil.getFilePath(mapping);
+    FilePath filePath = VcsUtil.getFilePath(mapping, true);
     String presentablePath = VcsUtil.getPresentablePath(myProject, filePath, false, false);
     return escapeXmlEntities(presentablePath);
   }

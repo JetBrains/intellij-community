@@ -139,7 +139,7 @@ class GitIndexVirtualFile(private val project: Project,
       val locationHash = StringUtil.unescapeChar(components[0], SEPARATOR)
       val project = ProjectManager.getInstance().openProjects.firstOrNull { it.locationHash == locationHash } ?: return null
       val root = LocalFileSystem.getInstance().findFileByPath(StringUtil.unescapeChar(components[1], SEPARATOR)) ?: return null
-      val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR))
+      val filePath = VcsUtil.getFilePath(StringUtil.unescapeChar(components[2], SEPARATOR), false)
 
       return Triple(project, root, filePath)
     }

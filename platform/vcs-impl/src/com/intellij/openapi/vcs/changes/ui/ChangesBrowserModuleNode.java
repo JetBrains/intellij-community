@@ -83,7 +83,7 @@ public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> impleme
       if (roots.length == 1) {
         return VcsUtil.getFilePath(roots[0]);
       }
-      return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module));
+      return VcsUtil.getFilePath(ModuleUtilCore.getModuleDirPath(module), true);
     });
   }
 }

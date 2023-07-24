@@ -332,7 +332,7 @@ public abstract class VcsVFSListener implements Disposable {
           // so it is not suitable for moving unversioned files: if an unversioned file is moved, it won't be recorded,
           // won't affect doNotDeleteAddedCopiedOrMovedFiles(), and therefore won't save the file from deletion.
           // Thus here goes a special handle for unversioned files overwrite-move.
-          myDeletedFiles.remove(VcsUtil.getFilePath(newPath));
+          myDeletedFiles.remove(VcsUtil.getFilePath(newPath, file.isDirectory()));
         }
       });
     }

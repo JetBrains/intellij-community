@@ -114,7 +114,7 @@ public final class PatchWriter {
       vcsRoot = null;
     }
     else {
-      vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor));
+      vcsRoot = VcsUtil.getVcsRootFor(project, VcsUtil.getFilePath(commonAncestor, true));
     }
     return vcsRoot == null ? ProjectKt.getStateStore(project).getProjectBasePath() : vcsRoot.toNioPath();
   }

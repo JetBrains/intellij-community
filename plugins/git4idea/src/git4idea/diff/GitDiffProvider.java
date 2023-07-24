@@ -68,7 +68,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       return null;
     }
     try {
-      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file.getPath()), "HEAD");
+      return GitHistoryUtils.getCurrentRevision(myProject, VcsUtil.getFilePath(file), "HEAD");
     }
     catch (VcsException e) {
       return null;
@@ -82,7 +82,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       return null;
     }
     try {
-      return GitHistoryUtils.getCurrentRevisionDescription(myProject, VcsUtil.getFilePath(file.getPath()));
+      return GitHistoryUtils.getCurrentRevisionDescription(myProject, VcsUtil.getFilePath(file));
     }
     catch (VcsException e) {
       return null;
@@ -102,7 +102,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       return null;
     }
     try {
-      return GitHistoryUtils.getLastRevision(myProject, VcsUtil.getFilePath(file.getPath()));
+      return GitHistoryUtils.getLastRevision(myProject, VcsUtil.getFilePath(file));
     }
     catch (VcsException e) {
       return null;
@@ -124,7 +124,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
     if (GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file) == null) return null;
 
     VcsRevisionNumber revisionNumber = getCurrentRevision(file);
-    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file.getPath()));
+    FilePath filePath = VcsUtil.getLastCommitPath(myProject, VcsUtil.getFilePath(file));
     return GitContentRevision.createRevision(filePath, revisionNumber, myProject, file.getCharset());
   }
 
@@ -151,7 +151,8 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
+      GitVcs.getInstance(myProject)
+        .showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
     }
 
     try {
@@ -163,7 +164,7 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
         }
       }
       GitContentRevision candidate =
-        (GitContentRevision) GitContentRevision.createRevision(filePath, revisionNumber, myProject,
+        (GitContentRevision)GitContentRevision.createRevision(filePath, revisionNumber, myProject,
                                                               selectedFile.getCharset());
       try {
         candidate.getContent();
@@ -174,7 +175,8 @@ public final class GitDiffProvider implements DiffProvider, DiffMixin {
       }
     }
     catch (VcsException e) {
-      GitVcs.getInstance(myProject).showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
+      GitVcs.getInstance(myProject)
+        .showErrors(Collections.singletonList(e), GitBundle.message("diff.find.error", selectedFile.getPresentableUrl()));
     }
     return null;
   }
