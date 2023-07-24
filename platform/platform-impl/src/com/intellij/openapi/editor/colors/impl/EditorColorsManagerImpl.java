@@ -92,7 +92,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
 
   public static final String COMPONENT_NAME = "EditorColorsManagerImpl";
   public static final String STORAGE_NAME = "colors.scheme.xml";
-  private static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
+  public static final ExtensionPointName<BundledSchemeEP> BUNDLED_EP_NAME = new ExtensionPointName<>("com.intellij.bundledColorScheme");
 
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
@@ -296,6 +296,14 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       }
     }
     return null;
+  }
+  
+  @TestOnly
+  public @Nullable EditorColorsScheme loadBundledScheme(@NotNull String resourcePath, @NotNull PluginDescriptor descriptor) {
+    assert ApplicationManager.getApplication().isUnitTestMode() : "Test-only method";
+    EditorColorsScheme bundledScheme = loadBundledScheme(resourcePath, null, descriptor);
+    initEditableBundledSchemesCopies();
+    return bundledScheme;
   }
 
   @TestOnly
