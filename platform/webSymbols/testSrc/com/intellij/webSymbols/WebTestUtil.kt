@@ -426,14 +426,14 @@ fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarat
   checkGTDUOutcome(GotoDeclarationOrUsageHandler2.GTDUOutcome.GTD, fromSignature)
   val actualSignature = fromSignature ?: editor.currentPositionSignature
   performEditorAction("GotoDeclaration")
-  val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevel
+  val targetEditor = FileEditorManager.getInstance(project).selectedTextEditor?.topLevelEditor
   if (targetEditor == null) throw NullPointerException(actualSignature)
   val targetFile = PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)!!
   if (expectedFileName != null) {
     assertEquals(actualSignature, expectedFileName, PsiDocumentManager.getInstance(project).getPsiFile(targetEditor.document)?.name)
   }
   else {
-    assertEquals(actualSignature, targetEditor, editor.topLevel)
+    assertEquals(actualSignature, targetEditor, editor.topLevelEditor)
   }
   if (!declarationSignature.contains("<caret>") || targetFile.findOffsetBySignature(declarationSignature) != targetEditor.caretModel.offset) {
     assertEquals("For go to from: $actualSignature",
@@ -575,5 +575,5 @@ private val Editor.currentPositionSignature: String
   }
 
 
-private val Editor.topLevel
+private val Editor.topLevelEditor
   get() = if (this is EditorWindow) delegate else this
