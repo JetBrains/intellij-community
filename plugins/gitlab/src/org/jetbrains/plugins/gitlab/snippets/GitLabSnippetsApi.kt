@@ -9,11 +9,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.*
-import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobActionInputType
+import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetDTO
 import org.jetbrains.plugins.gitlab.project.GitLabProjectPath
 import java.net.http.HttpResponse
@@ -57,22 +56,14 @@ internal suspend fun GitLabApi.GraphQL.createSnippet(
   title: String,
   description: String?,
   visibilityLevel: GitLabVisibilityLevel,
-  contents: List<GitLabSnippetFileContents>,
-  fileNameSelection: (VirtualFile) -> String,
+  snippetBlobActions: List<GitLabSnippetBlobAction>
 ): HttpResponse<out GitLabGraphQLMutationResultDTO<GitLabSnippetDTO>?> {
   val parameters = mapOf(
     "title" to title,
     "description" to description,
     "visibilityLevel" to visibilityLevel,
     "projectPath" to project?.projectPath?.fullPath(),
-    "blobActions" to contents.map { glContents ->
-      GitLabSnippetBlobActionInputType(
-        GitLabSnippetBlobAction.create,
-        glContents.capturedContents,
-        glContents.file?.let(fileNameSelection) ?: "",
-        null
-      )
-    }
+    "blobActions" to snippetBlobActions
   )
   val request = gitLabQuery(serverPath, GitLabGQLQuery.CREATE_SNIPPET, parameters)
   return withErrorStats(serverPath, GitLabGQLQuery.CREATE_SNIPPET) {

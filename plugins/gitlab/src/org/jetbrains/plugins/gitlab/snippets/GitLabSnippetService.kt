@@ -9,9 +9,11 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
@@ -19,8 +21,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
+import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
+import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
 import java.awt.datatransfer.StringSelection
 
 /**
@@ -30,6 +35,9 @@ import java.awt.datatransfer.StringSelection
 class GitLabSnippetService(private val project: Project, private val serviceScope: CoroutineScope) {
   companion object {
     const val GL_SNIPPET_FILES_LIMIT = 10
+
+    const val GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS = "gitlab.snippet.create.action.success"
+    const val GL_NOTIFICATION_CREATE_SNIPPET_ERROR = "gitlab.snippet.create.action.error"
   }
 
   /**
@@ -42,8 +50,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * and performing the GitLab API request to create the final snippet.
    */
   fun performCreateSnippetAction(e: AnActionEvent) {
-    serviceScope.launch(Dispatchers.Default) {
-      val cs = this
+    serviceScope.launch {
+      val cs = serviceScope
 
       val editor = e.getData(CommonDataKeys.EDITOR)
       val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
@@ -64,33 +72,56 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
         return@launch
       }
 
-      // Process result by creating the snippet, copying url, etc.
-      val data = vm.data
-      val api = vm.getApi() ?: return@launch       // TODO: Display error
-      val server = vm.getServer() ?: return@launch // TODO: Display error
+      withBackgroundProgress(project, message("snippet.create.action.progress"), true) {
+        try {
+          // Process result by creating the snippet, copying url, etc.
+          val data = vm.data
+          val api = vm.getApi() ?: throw IllegalStateException(message("snippet.create.action.error.no-api"))
+          val server = vm.getServer() ?: throw IllegalStateException(message("snippet.create.action.error.no-server"))
 
-      val contents = vm.contents.await()
+          val contents = vm.contents.await()
+          val fileNameExtractor = getFileNameExtractor(files, data.pathHandlingMode)
 
-      val fileNameExtractor = getFileNameExtractor(files, data.pathHandlingMode)
+          val snippetBlobActions = contents.map { glContents ->
+            GitLabSnippetBlobAction(
+              GitLabSnippetBlobActionEnum.create,
+              glContents.capturedContents,
+              glContents.file?.let(fileNameExtractor) ?: "",
+              null
+            )
+          }
 
-      val result = api.graphQL.createSnippet(
-        server,
-        data.onProject,
-        data.title,
-        data.description,
-        if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
-        contents,
-        fileNameExtractor
-      ).body() ?: return@launch                   // TODO: Display error
+          val httpResult = api.graphQL.createSnippet(
+            server,
+            data.onProject,
+            data.title,
+            data.description,
+            if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
+            snippetBlobActions
+          )
+          if (httpResult.statusCode() != 200) {
+            throw IllegalStateException(message("snippet.create.action.error.http-status", httpResult.statusCode()))
+          }
+          val result = httpResult.body() ?: throw IllegalStateException(message("snippet.create.action.error.http-deserialization"))
 
-      val snippet = result.value ?: return@launch // TODO: Display error
-      val url = snippet.webUrl
-
-      if (data.isCopyUrl) {
-        CopyPasteManager.getInstance().setContents(StringSelection(url))
-      }
-      if (data.isOpenInBrowser) {
-        BrowserUtil.browse(url)
+          val snippet = result.value ?: throw IllegalStateException(message("snippet.create.action.error.no-snippet"))
+          val url = snippet.webUrl
+          if (data.isCopyUrl) {
+            CopyPasteManager.getInstance().setContents(StringSelection(url))
+          }
+          if (data.isOpenInBrowser) {
+            BrowserUtil.browse(url)
+          }
+          else {
+            VcsNotifier.getInstance(project)
+              .notifyInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS, message("snippet.create.action.success.title"),
+                          message("snippet.create.action.success.description", url))
+          }
+        }
+        catch (e: Exception) {
+          VcsNotifier.getInstance(project)
+            .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR, message("snippet.create.action.error.title"), e.localizedMessage, true)
+        }
       }
     }
   }
@@ -167,9 +198,9 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Collects all non-binary files under the given files or directories, including those files
    * or directories. Files are collected and returned as a list, which is guaranteed to contain
-   * at most [limit] number of elements.
+   * at most [GL_SNIPPET_FILES_LIMIT] number of elements.
    *
-   * @return The list of collected files with at most [limit] elements.
+   * @return The list of collected files with at most [GL_SNIPPET_FILES_LIMIT] elements.
    */
   private fun collectNonBinaryFiles(files: List<VirtualFile>): List<VirtualFile> {
     val collection = mutableSetOf<VirtualFile>()
@@ -184,8 +215,8 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Collects all non-binary files under this file/directory, including this file if this [VirtualFile]
    * is indeed a non-binary file. Files are collected in [collection], which is guaranteed to contain
-   * exactly [limit]+1 number of elements when `true` is returned, or less than or equal to [limit]
-   * number of elements when `false` is returned.
+   * exactly [GL_SNIPPET_FILES_LIMIT]+1 number of elements when `true` is returned, or less than or equal
+   * to [GL_SNIPPET_FILES_LIMIT] number of elements when `false` is returned.
    *
    * @return `true` if the limit is reached, `false`, if not.
    */
