@@ -148,7 +148,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
       if (model.isWholeWordsOnly != word.get()) word.set(model.isWholeWordsOnly)
     }
 
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe<SETabSwitcherListener>(
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe<SETabSwitcherListener>(
       SE_TAB_TOPIC, object : SETabSwitcherListener {
       override fun tabSwitched(event: SETabSwitchedEvent) {
         case.set(false)
