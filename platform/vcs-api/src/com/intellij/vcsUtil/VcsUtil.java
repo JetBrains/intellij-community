@@ -25,7 +25,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider;
 import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -74,11 +77,6 @@ public final class VcsUtil {
     }
 
     return (int)Math.min(result, Integer.MAX_VALUE);
-  }
-
-  public static void markFileAsDirty(final Project project, @NonNls String path) {
-    final FilePath filePath = VcsContextFactory.getInstance().createFilePathOn(new File(path));
-    VcsDirtyScopeManager.getInstance(project).fileDirty(filePath);
   }
 
   /**
