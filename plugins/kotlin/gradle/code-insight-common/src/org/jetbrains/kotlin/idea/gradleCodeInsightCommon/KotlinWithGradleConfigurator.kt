@@ -3,11 +3,6 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
-import com.intellij.diff.DiffContentFactory
-import com.intellij.diff.DiffDialogHints
-import com.intellij.diff.DiffManager
-import com.intellij.diff.chains.SimpleDiffRequestChain
-import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.actions.OpenFileAction
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -28,6 +23,7 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -39,6 +35,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_PLUGIN_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GROUP_ID
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
@@ -182,26 +179,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return AutoConfigurationSettings(baseModule, maxKotlinVersion)
     }
 
-    private fun Project.showDiffPanel(changedFiles: ChangedConfiguratorFiles) {
-        val diffRequests = changedFiles.getChangedFilesWithContent().mapNotNull { (f, originalContent) ->
-            val virtualFile = f.virtualFile ?: return@mapNotNull null
-            val originalDiffContent = DiffContentFactory.getInstance().create(this, originalContent, f.fileType)
-            val newDiffContent = DiffContentFactory.getInstance().create(this, virtualFile)
-
-            SimpleDiffRequest(
-                KotlinIdeaGradleBundle.message("command.name.configure.kotlin"),
-                originalDiffContent,
-                newDiffContent,
-                KotlinIdeaGradleBundle.message("configure.kotlin.original.content"),
-                KotlinIdeaGradleBundle.message("configure.kotlin.new.content")
-            )
-        }
-
-        val requestChain = SimpleDiffRequestChain(diffRequests)
-
-        DiffManager.getInstance().showDiff(this, requestChain, DiffDialogHints.DEFAULT)
-    }
-
     override fun runAutoConfig(settings: AutoConfigurationSettings) {
         val module = settings.module
         val project = module.project
@@ -218,10 +195,10 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         )
         ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
 
-        showKotlinAutoconfiguredNotification(project, module.name, result.changedFiles)
+        showKotlinAutoconfiguredNotification(project, module.name, result.changedFiles.calculateChanges())
     }
 
-    private fun showKotlinAutoconfiguredNotification(project: Project, moduleName: String, changedFiles: ChangedConfiguratorFiles) {
+    private fun showKotlinAutoconfiguredNotification(project: Project, moduleName: String, changes: List<Change>) {
         val notificationText = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.notification", moduleName)
         val notification = NotificationGroupManager.getInstance()
             .getNotificationGroup("Configure Kotlin")
@@ -230,14 +207,15 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 content = notificationText,
                 type = NotificationType.INFORMATION,
             )
-        notification.addAction(viewAppliedChangesAction(changedFiles))
+        notification.addAction(viewAppliedChangesAction(changes))
         notification.notify(project)
     }
 
-    private fun viewAppliedChangesAction(changedFiles: ChangedConfiguratorFiles) = NotificationAction.create(
+    private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("view.code.differences.action")
     ) { e, _ ->
-        e.project?.showDiffPanel(changedFiles)
+        val project = e.project ?: return@create
+        KotlinConfiguratorChangesDialog(project, changes)
     }
 
     private class ConfigurationResult(

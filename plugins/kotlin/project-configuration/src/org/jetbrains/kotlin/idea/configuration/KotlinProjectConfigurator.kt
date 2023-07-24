@@ -8,7 +8,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
@@ -38,33 +37,6 @@ class AutoConfigurationSettings(
     val module: Module,
     val kotlinVersion: IdeKotlinVersion
 )
-
-class ChangedConfiguratorFiles {
-    private val originalFileContents: MutableMap<PsiFile, String> = mutableMapOf()
-
-    /**
-     * Stores the contents of the [file] so it can be compared later and checked if it changed.
-     * If the file was already stored, it is not stored again.
-     */
-    fun storeOriginalFileContent(file: PsiFile) {
-        if (!originalFileContents.contains(file)) {
-            originalFileContents[file] = file.text
-        }
-    }
-
-    fun getChangedFilesWithContent(): Map<PsiFile, String> {
-        return originalFileContents.filter { (f, originalContent) ->
-            f.text != originalContent
-        }
-    }
-
-    /**
-     * Returns the files stored via [storeOriginalFileContent] whose file contents have changed.
-     */
-    fun getChangedFiles(): List<PsiFile> {
-        return getChangedFilesWithContent().map { it.key }
-    }
-}
 
 interface KotlinProjectConfigurator {
 
