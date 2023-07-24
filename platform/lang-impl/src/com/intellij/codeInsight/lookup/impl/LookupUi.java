@@ -297,15 +297,22 @@ final class LookupUi {
       LOG.debug("Editor component screen rectangle is: " + screenRectangle);
     }
 
+    int yLocationAboveCaret = location.y - lineHeight - dim.height;
     if (!isPositionedAboveCaret()) {
-      int shiftLow = screenRectangle.y + screenRectangle.height - (location.y + dim.height);
-      myPositionedAbove = shiftLow < 0 && shiftLow < location.y - dim.height && location.y >= dim.height;
-      if (LOG.isDebugEnabled() && myPositionedAbove) {
-        LOG.debug("Positioning above the line because the popup won't fit below, but will fit above");
+      int yScreenBottom = screenRectangle.y + screenRectangle.height;
+      int yPopupBottom = location.y + dim.height;
+      if (yPopupBottom > yScreenBottom && yLocationAboveCaret >= screenRectangle.y) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Positioning above the line because the popup won't fit below, but will fit above");
+        }
+        myPositionedAbove = true;
+      }
+      else {
+        myPositionedAbove = false; // this assignment is necessary in case myPositionedAbove was to begin with
       }
     }
     if (isPositionedAboveCaret()) {
-      location.y -= dim.height + lineHeight;
+      location.y = yLocationAboveCaret;
       if (LOG.isDebugEnabled()) {
         LOG.debug("Location after shifting upwards by popup height plus line height to show above the line: " + location);
       }
