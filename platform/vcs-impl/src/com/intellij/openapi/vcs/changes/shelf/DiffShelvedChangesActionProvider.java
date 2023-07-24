@@ -176,7 +176,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                                                @NotNull String base,
                                                                @NotNull ShelvedBinaryFile shelvedChange) {
     final File file = new File(base, shelvedChange.AFTER_PATH == null ? shelvedChange.BEFORE_PATH : shelvedChange.AFTER_PATH);
-    final FilePath filePath = VcsUtil.getFilePath(file);
+    final FilePath filePath = VcsUtil.getFilePath(file, false);
     return new BinaryShelveDiffRequestProducer(project, shelvedChange, filePath);
   }
 
@@ -187,7 +187,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                                              boolean withLocal) {
     final String beforePath = shelvedChange.getBeforePath();
     final String afterPath = shelvedChange.getAfterPath();
-    final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath));
+    final FilePath filePath = VcsUtil.getFilePath(new File(base, afterPath), false);
 
     try {
       if (FileStatus.ADDED.equals(shelvedChange.getFileStatus())) {

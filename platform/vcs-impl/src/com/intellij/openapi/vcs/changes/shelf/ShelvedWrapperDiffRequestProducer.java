@@ -168,7 +168,7 @@ public class ShelvedWrapperDiffRequestProducer implements DiffRequestProducer, C
     }
 
     byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
-    FilePath filePath = VcsUtil.getFilePath(binaryFile.SHELVED_PATH);
+    FilePath filePath = VcsUtil.getFilePath(binaryFile.SHELVED_PATH, false);
     DiffContent shelfContent = factory.createFromBytes(myProject, binaryContent, filePath);
     return new SimpleDiffRequest(title, factory.createEmpty(), shelfContent, null, null);
   }

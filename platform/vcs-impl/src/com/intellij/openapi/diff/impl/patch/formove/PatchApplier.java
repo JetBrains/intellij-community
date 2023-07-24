@@ -240,7 +240,7 @@ public final class PatchApplier {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, PatchApplier::getFailedPatches);
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());
     List<FilePath> filePaths =
-      ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName())));
+      ContainerUtil.map(allFailed, filePatch -> VcsUtil.getFilePath(chooseNotNull(filePatch.getAfterName(), filePatch.getBeforeName()), false));
 
     AtomicBoolean doRollback = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {

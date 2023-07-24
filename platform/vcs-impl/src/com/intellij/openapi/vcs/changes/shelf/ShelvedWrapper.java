@@ -30,7 +30,9 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
   @Nullable private final ShelvedBinaryFile myBinaryFile;
   @NotNull private final ShelvedChangeList myChangeList;
 
-  public ShelvedWrapper(@Nullable ShelvedChange shelvedChange, @Nullable ShelvedBinaryFile binaryFile, @NotNull ShelvedChangeList changeList) {
+  public ShelvedWrapper(@Nullable ShelvedChange shelvedChange,
+                        @Nullable ShelvedBinaryFile binaryFile,
+                        @NotNull ShelvedChangeList changeList) {
     myShelvedChange = shelvedChange;
     myBinaryFile = binaryFile;
     myChangeList = changeList;
@@ -84,7 +86,7 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
     }
     String beforePath = getBeforePath();
     if (beforePath == null) return null;
-    return VcsUtil.getFilePath(beforePath);
+    return VcsUtil.getFilePath(beforePath, false);
   }
 
   @NlsSafe
@@ -113,7 +115,7 @@ public class ShelvedWrapper extends ChangeViewDiffRequestProcessor.Wrapper imple
   @Override
   public @NotNull FilePath getFilePath() {
     Change change = myShelvedChange != null ? myShelvedChange.getChange() : null;
-    return change != null ? ChangesUtil.getFilePath(change) : VcsUtil.getFilePath(getPath());
+    return change != null ? ChangesUtil.getFilePath(change) : VcsUtil.getFilePath(getPath(), false);
   }
 
   @Override
