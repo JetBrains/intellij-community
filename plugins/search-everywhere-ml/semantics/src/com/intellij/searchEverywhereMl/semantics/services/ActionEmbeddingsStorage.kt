@@ -39,7 +39,7 @@ class ActionEmbeddingsStorage {
 
   fun prepareForSearch() {
     ApplicationManager.getApplication().executeOnPooledThread {
-      LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
+      // LocalArtifactsManager.getInstance().downloadArtifactsIfNecessary()
       index.loadFromDisk()
       generateEmbeddingsIfNecessary()
     }
