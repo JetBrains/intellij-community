@@ -204,7 +204,6 @@
         "nodes/console.svg",
         "debugger/console.svg"
       ],
-      "sql.svg": "icons/sql.svg",
       "text.svg": [
         "fileTypes/custom.svg",
         "fileTypes/text.svg"

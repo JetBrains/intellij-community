@@ -226,7 +226,6 @@ public final class ExpUiIcons {
     /** 16x16 */ public static final @NotNull Icon Scratches = load("expui/fileTypes/scratches.svg", -1406379294, 2);
     /** 16x16 */ public static final @NotNull Icon Shell = load("expui/fileTypes/shell.svg", -1124749060, 2);
     /** 16x16 */ public static final @NotNull Icon SourceMap = load("expui/fileTypes/sourceMap.svg", -798309148, 2);
-    /** 16x16 */ public static final @NotNull Icon Sql = load("expui/fileTypes/sql.svg", -1496861857, 2);
     /** 16x16 */ public static final @NotNull Icon Text = load("expui/fileTypes/text.svg", 1946633559, 2);
     /** 16x16 */ public static final @NotNull Icon UiForm = load("expui/fileTypes/uiForm.svg", -397412144, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("expui/fileTypes/unknown.svg", -2043297803, 2);
