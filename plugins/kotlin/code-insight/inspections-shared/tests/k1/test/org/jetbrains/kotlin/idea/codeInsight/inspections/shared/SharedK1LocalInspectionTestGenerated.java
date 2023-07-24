@@ -877,6 +877,31 @@ public abstract class SharedK1LocalInspectionTestGenerated extends AbstractShare
             runTest("../testData/inspectionsLocal/removeEmptyClassBody/lastEnumEntry3.kt");
         }
 
+        @TestMetadata("localClass.kt")
+        public void testLocalClass() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass.kt");
+        }
+
+        @TestMetadata("localClass2.kt")
+        public void testLocalClass2() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass2.kt");
+        }
+
+        @TestMetadata("localClass3.kt")
+        public void testLocalClass3() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass3.kt");
+        }
+
+        @TestMetadata("localClass4.kt")
+        public void testLocalClass4() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass4.kt");
+        }
+
+        @TestMetadata("localClass5.kt")
+        public void testLocalClass5() throws Exception {
+            runTest("../testData/inspectionsLocal/removeEmptyClassBody/localClass5.kt");
+        }
+
         @TestMetadata("nestedAnonymous.kt")
         public void testNestedAnonymous() throws Exception {
             runTest("../testData/inspectionsLocal/removeEmptyClassBody/nestedAnonymous.kt");
