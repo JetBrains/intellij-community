@@ -470,8 +470,18 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     System.getProperties().forEach(BiConsumer { key, value ->
-      if ((key as String).startsWith("pass.")) {
+      key as String
+
+      if (key.startsWith("pass.")) {
         systemProperties[key.substring("pass.".length)] = value as String
+      }
+
+      /**
+       * Make test inherit Maven dependency resolver settings
+       * See [org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder]
+       */
+      if (key.startsWith("org.jetbrains.jps.incremental.dependencies.resolution.")) {
+        systemProperties.putIfAbsent(key, value as String)
       }
     })
 
