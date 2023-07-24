@@ -19,7 +19,7 @@ class ServerSemanticActionsProvider(val model: GotoActionModel) : SemanticAction
   private val URL_BASE = Registry.stringValue("search.everywhere.ml.semantic.actions.server.host")
 
   override fun search(pattern: String): List<FoundItemDescriptor<GotoActionModel.MatchedValue>> {
-    if (!SemanticSearchSettings.getInstance().enabledInActionsTab) return emptyList()
+    if (!SemanticSearchSettings.getInstance().enabledInActionsTab || pattern.isBlank()) return emptyList()
 
     val requestJson: String = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(mapOf(
       "pattern" to pattern,

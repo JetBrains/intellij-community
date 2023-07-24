@@ -58,8 +58,6 @@ class SemanticActionSearchEverywhereContributor(defaultContributor: ActionSearch
   override fun fetchWeightedElements(pattern: String,
                                      progressIndicator: ProgressIndicator,
                                      consumer: Processor<in FoundItemDescriptor<MatchedValue>>) {
-    if (pattern.isBlank()) return
-
     val knownItems = mutableSetOf<FoundItemDescriptor<MatchedValue>>()
 
     val semanticSearchIndicatorWrapper = SensitiveProgressWrapper(progressIndicator)
