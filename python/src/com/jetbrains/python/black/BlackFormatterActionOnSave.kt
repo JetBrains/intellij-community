@@ -100,9 +100,10 @@ class BlackFormatterActionOnSave : ActionOnSave() {
   private fun applyChanges(project: Project, descriptor: Descriptor, response: BlackFormattingResponse) {
     when (response) {
       is BlackFormattingResponse.Success -> {
-        WriteCommandAction.writeCommandAction(project)
-          .withName(PyBundle.message("black.formatting.with.black"))
-          .run<RuntimeException> { descriptor.document.setText(response.formattedText) }
+        if (response.formattedText != ReadAction.compute<String, Exception> { descriptor.document.text })
+          WriteCommandAction.writeCommandAction(project)
+            .withName(PyBundle.message("black.formatting.with.black"))
+            .run<Exception> { descriptor.document.setText(response.formattedText) }
       }
       is BlackFormattingResponse.Failure -> {
         reportFailure(response.title, response.getPopupMessage(), project)
