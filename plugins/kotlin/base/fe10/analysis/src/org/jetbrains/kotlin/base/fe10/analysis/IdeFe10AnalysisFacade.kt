@@ -51,13 +51,20 @@ internal class IdeFe10AnalysisFacade(private val project: Project): Fe10Analysis
     }
 
     override fun analyze(elements: List<KtElement>, mode: AnalysisMode): BindingContext {
+        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(elements)
+
+        if (mode == AnalysisMode.ALL_COMPILER_CHECKS) {
+            return resolutionFacade.analyzeWithAllCompilerChecks(elements).bindingContext
+        }
+
+        @Suppress("KotlinConstantConditions")
         val bodyResolveMode = when (mode) {
             AnalysisMode.FULL -> BodyResolveMode.FULL
             AnalysisMode.PARTIAL_WITH_DIAGNOSTICS -> BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS
             AnalysisMode.PARTIAL -> BodyResolveMode.PARTIAL
+            AnalysisMode.ALL_COMPILER_CHECKS -> error("Must have been handled above")
         }
 
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(elements)
         return resolutionFacade.analyze(elements, bodyResolveMode)
     }
 
