@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -376,7 +377,17 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
 
   @Override
   public int allocateRecord() {
-    return allocatedRecordsCount.incrementAndGet();
+    int recordId = allocatedRecordsCount.incrementAndGet();
+    try {
+      //Issue a dummy write (0 is default value of unallocated file regions) to ensure storage file
+      // is extended to fit new record. We calculate allocated records via file size on load, hence
+      // file size must extend to include new record, otherwise it will be lost
+      setIntField(recordId, RECORD_SIZE_IN_BYTES - Integer.BYTES, 0);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException("Can't ensure room for recordId=" + recordId, e);
+    }
+    return recordId;
   }
 
   // 'one field at a time' operations

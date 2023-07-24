@@ -20,6 +20,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
+import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -230,7 +231,8 @@ public final class PersistentFSLoader {
         LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");
         return recoverCachesFromVfsLog(vfsLog);
       }
-    } finally {
+    }
+    finally {
       vfsLog.dispose();
     }
     return false;
@@ -244,7 +246,8 @@ public final class PersistentFSLoader {
           RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext, true)
         );
       });
-    } catch (Throwable e) {
+    }
+    catch (Throwable e) {
       LOG.error("VFS Caches recovery attempt has failed", e);
     }
     if (!recoveredCaches.get()) return false;
@@ -514,7 +517,8 @@ public final class PersistentFSLoader {
         addProblem(NAME_STORAGE_INCOMPLETE,
                    "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
         return false;
-      } else {
+      }
+      else {
         int reCheckNameId = namesStorage.tryEnumerate(name);
         if (reCheckNameId != nameId) {
           addProblem(NAME_STORAGE_INCOMPLETE,
@@ -574,20 +578,29 @@ public final class PersistentFSLoader {
     if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
       LOG.info("VFS uses new (streamlined) attributes storage");
       //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
-      final SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy
-        allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
+      final SpaceAllocationStrategy allocationStrategy = new SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy(128, 64, 30);
       final StreamlinedBlobStorage blobStorage;
       if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
         blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
-          new PagedFileStorageLockFree(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT,
-                                       PageCacheUtils.DEFAULT_PAGE_SIZE, true),
+          new PagedFileStorageWithRWLockedPageContent(
+            attributesFile,
+            PERSISTENT_FS_STORAGE_CONTEXT,
+            PageCacheUtils.DEFAULT_PAGE_SIZE,
+            /*nativeByteOrder: */  true,
+            PageContentLockingStrategy.LOCK_PER_PAGE
+          ),
           allocationStrategy
         );
       }
       else {
         blobStorage = new LargeSizeStreamlinedBlobStorage(
-          new PagedFileStorage(attributesFile, PERSISTENT_FS_STORAGE_CONTEXT, PageCacheUtils.DEFAULT_PAGE_SIZE, true,
-                               true),
+          new PagedFileStorage(
+            attributesFile,
+            PERSISTENT_FS_STORAGE_CONTEXT,
+            PageCacheUtils.DEFAULT_PAGE_SIZE,
+            /*valuesAreAligned: */ true,
+            /*nativeByteOrder: */  true
+          ),
           allocationStrategy
         );
       }

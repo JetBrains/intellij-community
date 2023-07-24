@@ -187,7 +187,7 @@ public class PersistentFSStoragesBenchmarks {
       final int pageSize = 1 << 20;
       storage = new PersistentFSRecordsOverLockFreePagedStorage(
         new PagedFileStorageWithRWLockedPageContent(
-          file,
+          fileState.file,
           CONTEXT,
           pageSize,
           true,

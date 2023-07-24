@@ -14,7 +14,8 @@ import java.io.IOException;
  * int params/return values here are kind of 'id'. I.e. append(value) returns valueId, something
  * that could be used to access value later on -- read(valueId) it back, checkBytesAreTheSame(valueId, value),
  * enumerate all values with processAll(). But all apt parameters are named 'addr' or 'offset',
- * which is
+ * which implies it is physical offset in some storage -- which is inconsistent, especially because
+ * there are implementations there valueId is an id itself (see {@link InlinedKeyStorage})
  */
 public interface AppendableObjectStorage<Data> extends Forceable, Closeable {
   Data read(int valueId, boolean checkAccess) throws IOException;
