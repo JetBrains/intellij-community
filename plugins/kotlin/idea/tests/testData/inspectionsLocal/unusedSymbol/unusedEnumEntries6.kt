@@ -10,3 +10,4 @@ enum class SomeEnum {
 fun main() {
     SomeEnum.entries
 }
+// IGNORE_FIR

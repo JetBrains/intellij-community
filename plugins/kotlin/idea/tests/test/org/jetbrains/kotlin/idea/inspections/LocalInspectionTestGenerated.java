@@ -16789,6 +16789,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
         }
 
+        @TestMetadata("classByPrimaryConstructor.kt")
+        public void testClassByPrimaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");
+        }
+
+        @TestMetadata("companionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/companionObject.kt");
+        }
+
         @TestMetadata("companionViaImport.kt")
         public void testCompanionViaImport() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/companionViaImport.kt");
@@ -16899,6 +16909,31 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");
         }
 
+        @TestMetadata("overrideProperty.kt")
+        public void testOverrideProperty() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameter.kt")
+        public void testPrimaryConstructorParameter() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/primaryConstructorParameter.kt");
+        }
+
+        @TestMetadata("primaryConstructorParameterDataClass.kt")
+        public void testPrimaryConstructorParameterDataClass() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/primaryConstructorParameterDataClass.kt");
+        }
+
+        @TestMetadata("privateFunction.kt")
+        public void testPrivateFunction() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/privateFunction.kt");
+        }
+
+        @TestMetadata("privateOperator.kt")
+        public void testPrivateOperator() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/privateOperator.kt");
+        }
+
         @TestMetadata("privateProperty.kt")
         public void testPrivateProperty() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/privateProperty.kt");
@@ -16977,6 +17012,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unusedEnumEntry.kt")
         public void testUnusedEnumEntry() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumEntry.kt");
+        }
+
+        @TestMetadata("unusedEnumSecondaryConstructor.kt")
+        public void testUnusedEnumSecondaryConstructor() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/unusedEnumSecondaryConstructor.kt");
         }
 
         @TestMetadata("unusedEnumValues.kt")

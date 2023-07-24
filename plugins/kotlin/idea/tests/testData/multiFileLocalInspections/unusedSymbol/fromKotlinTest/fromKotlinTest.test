@@ -1,4 +1,3 @@
-// IGNORE_FIR
 {
     "inspectionClass": "org.jetbrains.kotlin.idea.inspections.UnusedSymbolInspection",
     "k2InspectionClass": "org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection",

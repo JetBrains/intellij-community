@@ -50,5 +50,7 @@
     <orderEntry type="module" module-name="kotlin.base.scripting" />
     <orderEntry type="module" module-name="kotlin.searching.base" />
     <orderEntry type="module" module-name="kotlin.searching.k2" />
+    <orderEntry type="module" module-name="kotlin.base.highlighting" />
+    <orderEntry type="module" module-name="kotlin.highlighting" />
   </component>
 </module>

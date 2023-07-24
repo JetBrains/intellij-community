@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import org.junit.Assert
 import java.io.File
 import java.nio.file.Files
@@ -260,6 +261,12 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
     }
 
     protected open fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
+        IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10, "after") {
+            doTestForInternal(mainFile, inspection, fileText)
+        }
+    }
+
+    protected fun doTestForInternal(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         val mainFilePath = mainFile.name
         val expectedProblemString = InTextDirectivesUtils.findStringWithPrefixes(
             fileText, "// $expectedProblemDirectiveName: "

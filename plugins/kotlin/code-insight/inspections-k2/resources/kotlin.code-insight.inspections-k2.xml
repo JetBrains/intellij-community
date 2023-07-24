@@ -2,6 +2,7 @@
   <dependencies>
     <module name="kotlin.code-insight.intentions-k2"/>
     <module name="kotlin.searching.k2"/>
+    <module name="kotlin.highlighting"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
     <localInspection
@@ -256,9 +257,7 @@
     <!-- TODO: We currently have a performance issue caused by reference search. See https://kotlin.jetbrains.space/p/kotlin/reviews/710.
                We have an idea of indexing reference counts. Enable this inspection after implement it. -->
     <localInspection implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.inspections.UnusedSymbolInspection"
-                     shortName="disabledUnusedSymbolInspection"
-                     enabledByDefault="false"
-                     level="NON_SWITCHABLE_WARNING"
+                     enabledByDefault="true"
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      runForWholeFile="true"

@@ -10,11 +10,13 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
+import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
 
 internal class TypeHighlighter(
   project: Project,
+  private val kotlinRefsHolder: KotlinRefsHolder
 ) : AfterResolveHighlighter(project) {
 
     context(KtAnalysisSession)
@@ -35,11 +37,15 @@ internal class TypeHighlighter(
             return emptyList()
         }
         if (expression.isConstructorCallReference()) {
+            kotlinRefsHolder.registerLocalRef((expression.mainReference.resolveToSymbol() as? KtConstructorSymbol)?.psi, expression)
             // Do not highlight constructor call as class reference
             return emptyList()
         }
 
         val symbol = expression.mainReference.resolveToSymbol() as? KtClassifierSymbol ?: return emptyList()
+
+        kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
+
         if (isAnnotationCall(expression, symbol)) {
             // higlighted by AnnotationEntryHiglightingVisitor
             return emptyList()

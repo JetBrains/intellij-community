@@ -7,7 +7,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassFactoryRegistrar
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
-import com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -24,7 +23,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 /**
  * This highlighting pass executes highlighters located in "highlighters/" package as a separate [TextEditorHighlightingPass].
- * These are not executed inside the [GeneralHighlightingPass] so the function/type/variable reference highlighting can be done
+ * These are not executed inside the [com.intellij.codeInsight.daemon.impl.GeneralHighlightingPass] so the function/type/variable reference highlighting can be done
  * separately from the compiler diagnostics. The compiler diagnostics are collected in the [KotlinDiagnosticHighlightVisitor].
  */
 class KotlinSemanticHighlightingPass(
@@ -36,7 +35,8 @@ class KotlinSemanticHighlightingPass(
         if (isDispatchThread()) {
             throw ProcessCanceledException()
         }
-        val highlighters = AfterResolveHighlighter.createHighlighters(ktFile.project)
+        val kotlinRefsHolder = KotlinRefsHolder()
+        val highlighters = AfterResolveHighlighter.createHighlighters(ktFile.project, kotlinRefsHolder)
         val infos = mutableListOf<HighlightInfo>()
         ktFile.descendantsOfType<KtElement>().forEach { element ->
             analyze(element) {
@@ -46,6 +46,10 @@ class KotlinSemanticHighlightingPass(
                 }
             }
         }
+
+        KotlinUnusedHighlightingVisitor(ktFile, kotlinRefsHolder)
+            .collectHighlights(progress, infos)
+
         BackgroundUpdateHighlightersUtil.setHighlightersToEditor(
           myProject, ktFile, myDocument, /* startOffset = */ 0, ktFile.textLength, infos, id
         )

@@ -34,7 +34,7 @@ abstract class AbstractFe10BindingLocalInspectionTest : AbstractLocalInspectionT
 
     override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FE10_BINDING_BY_FIR, "after") {
-            super.doTestFor(mainFile, inspection, fileText)
+            doTestForInternal(mainFile, inspection, fileText)
         }
     }
 }

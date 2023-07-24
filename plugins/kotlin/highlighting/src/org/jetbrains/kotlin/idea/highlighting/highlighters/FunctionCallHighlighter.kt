@@ -15,13 +15,15 @@ import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
+import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 
 internal class FunctionCallHighlighter(
-  project: Project
+  project: Project,
+  private val kotlinRefsHolder: KotlinRefsHolder
 ) : AfterResolveHighlighter(project) {
 
     context(KtAnalysisSession)
@@ -53,6 +55,7 @@ internal class FunctionCallHighlighter(
         val callee = expression.calleeExpression ?: return emptyList()
         val call = expression.resolveCall()?.singleCallOrNull<KtCall>() ?: return emptyList()
         if (callee is KtLambdaExpression || callee is KtCallExpression /* KT-16159 */) return emptyList()
+        kotlinRefsHolder.registerLocalRef((call as? KtSimpleFunctionCall)?.symbol?.psi, expression)
         val highlightInfoType = getHighlightInfoTypeForCallFromExtension(callee, call)
             ?: getDefaultHighlightInfoTypeForCall(call)
             ?: return emptyList()

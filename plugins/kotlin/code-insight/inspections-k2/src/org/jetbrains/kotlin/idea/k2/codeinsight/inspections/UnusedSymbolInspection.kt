@@ -1,17 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
-import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil
+import org.jetbrains.kotlin.idea.highlighting.SafeDeleteFix
 import com.intellij.codeInspection.LocalQuickFix
-import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
 import com.intellij.codeInspection.ex.EntryPointsManager
 import com.intellij.codeInspection.ex.EntryPointsManagerBase
-import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.project.Project
+import com.intellij.codeInspection.ex.UnfairLocalInspectionTool
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
@@ -21,9 +19,7 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.MethodReferencesSearch
 import com.intellij.psi.search.searches.ReferencesSearch
-import com.intellij.refactoring.safeDelete.SafeDeleteHandler
 import com.intellij.util.Processor
-import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
@@ -44,6 +40,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.isEnumValuesSoftDeprecateEnabled
+import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
@@ -51,11 +48,9 @@ import org.jetbrains.kotlin.idea.base.projectStructure.scope.KotlinSourceFilterS
 import org.jetbrains.kotlin.idea.base.psi.isConstructorDeclaredProperty
 import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.base.psi.mustHaveNonEmptyPrimaryConstructor
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.searching.usages.KotlinFindUsagesHandlerFactory
 import org.jetbrains.kotlin.idea.base.searching.usages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.base.util.projectScope
-import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.inspections.KotlinSingleElementInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.*
 import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
@@ -74,15 +69,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
 /**
- * TODO: We currently have a performance issue caused by reference search. The main bottleneck is `hasReferences` function based on
- *       profiling. See https://kotlin.jetbrains.space/p/kotlin/reviews/710. We have an idea of indexing reference counts.
- *       Enable this inspection after implement it.
+ * Current inspection does nothing
  */
-internal class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>(KtNamedDeclaration::class) {
-
-    override fun getShortName(): String {
-        return "disabledUnusedSymbolInspection"
-    }
+internal class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>(KtNamedDeclaration::class), UnfairLocalInspectionTool {
 
     // TODO: Having parity between Java and Kotlin might be a good idea once we replace the global Kotlin inspection with a UAST-based one.
     private val javaInspection = UnusedDeclarationInspection()
@@ -724,35 +713,10 @@ internal class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDec
     }
 
     override fun visitTargetElement(element: KtNamedDeclaration, holder: ProblemsHolder, isOnTheFly: Boolean) {
-        val message = element.describe()?.let { KotlinCodeInsightBundle.message("inspection.message.never.used", it) } ?: return
+        if (isOnTheFly) return
+        val message = element.describe()?.let { KotlinBaseHighlightingBundle.message("inspection.message.never.used", it) } ?: return
         if (!isApplicableByPsi(element)) return
         val psiToReportProblem = analyze(element) { getPsiToReportProblem(element) } ?: return
         holder.registerProblem(psiToReportProblem, message, *createQuickFixes(element).toTypedArray())
-    }
-}
-
-private class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {
-    @Nls
-    private val name: String =
-        if (declaration is KtConstructor<*>) KotlinBundle.message("safe.delete.constructor")
-        else QuickFixBundle.message("safe.delete.text", declaration.name)
-
-    override fun getName() = name
-
-    override fun getFamilyName() = QuickFixBundle.message("safe.delete.family")
-
-    override fun startInWriteAction(): Boolean = false
-
-    override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
-        val element = descriptor.psiElement.getStrictParentOfType<KtDeclaration>() ?: return
-        if (element is KtParameter && element.parent is KtParameterList && element.parent?.parent is KtFunction) {
-            // TODO: Implement K2 version of `RemoveUnusedFunctionParameterFix` and use it here.
-            val parameterList = element.parent as KtParameterList
-            WriteCommandAction.runWriteCommandAction(project, name, null, {
-                parameterList.removeParameter(element)
-            }, element.containingFile)
-        } else {
-            SafeDeleteHandler.invoke(project, arrayOf(element), false)
-        }
     }
 }

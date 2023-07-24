@@ -31,7 +31,7 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
 
     override fun doTestFor(mainFile: File, inspection: LocalInspectionTool, fileText: String) {
         IgnoreTests.runTestIfNotDisabledByFileDirective(mainFile.toPath(), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
-            super.doTestFor(mainFile, inspection, fileText)
+            doTestForInternal(mainFile, inspection, fileText)
         }
     }
 }
