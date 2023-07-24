@@ -197,7 +197,12 @@ public final class VcsUtil {
     }
   }
 
+  /**
+   * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
+   * Avoid using the method, if {@code isDirectory} is known from context or not important.
+   */
   @NotNull
+  @Deprecated
   public static FilePath getFilePath(@NotNull @NonNls String path) {
     return getFilePath(new File(path));
   }
@@ -207,7 +212,12 @@ public final class VcsUtil {
     return VcsContextFactory.getInstance().createFilePathOn(file);
   }
 
+  /**
+   * @deprecated This method will detect {@link FilePath#isDirectory()} using NIO.
+   * Avoid using the method, if {@code isDirectory} is known from context or not important.
+   */
   @NotNull
+  @Deprecated
   public static FilePath getFilePath(@NotNull File file) {
     return VcsContextFactory.getInstance().createFilePathOn(file);
   }
