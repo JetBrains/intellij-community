@@ -29,6 +29,7 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
@@ -169,6 +170,17 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
       Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
+      if (!VfsLog.isVfsTrackingEnabled()) {
+        // forcefully erase VfsLog storages if the feature is disabled so that when it will be enabled again we won't consider old data as a source for recovery
+        try {
+          if (VfsLogImpl.clearStorage(new PersistentFSPaths(Path.of(FSRecords.getCachesDir())).getVfsLogStorage())) {
+            LOG.info("VfsLog data was cleared, because VFS operations logging was turned off");
+          }
+        }
+        catch (Throwable e) {
+          LOG.error("failed to clear VfsLog storage", e);
+        }
+      }
       vfsPeer = FSRecords.connect();
       activity.end();
     }

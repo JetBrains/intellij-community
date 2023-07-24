@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionIntercepto
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
@@ -180,13 +179,13 @@ public final class FSRecordsImpl {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (60 -> 61) because VfsLog is now a part of VFS structure
-    final int mainVFSFormatVersion = 61;
+    //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
+    final int mainVFSFormatVersion = 60;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
-           nextMask(VfsLog.isVfsTrackingEnabled() ? VfsLogImpl.VERSION % 7 + 1 : 0, 3,
+           nextMask(false, // feel free to re-use
            nextMask(INLINE_ATTRIBUTES,
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
            nextMask(false, // feel free to re-use

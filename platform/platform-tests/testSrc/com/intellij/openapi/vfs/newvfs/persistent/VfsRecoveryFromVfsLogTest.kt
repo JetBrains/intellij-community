@@ -65,7 +65,6 @@ object VfsRecoveryFromVfsLogTest {
     }
   }
 
-  // remember to run with -Didea.vfs.log-vfs-operations.enabled=true
   @JvmStatic
   fun main(args: Array<String>) {
     require(args.size in 1..2) { "Arguments: <path to caches folder> [<position to force compaction to>]" }
