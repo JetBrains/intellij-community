@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.VfsOperation.*
 import com.intellij.util.io.DataEnumerator
 import java.io.InputStream
 import java.io.OutputStream
+import kotlin.reflect.KClass
+import kotlin.reflect.full.companionObjectInstance
 
 enum class VfsOperationTag(val operationSerializer: Serializer<*>) {
   NULL(nullSerializer),
@@ -98,5 +100,21 @@ value class VfsOperationTagsMask(val mask: Long) {
 
     fun List<VfsOperationTagsMask>.union(): VfsOperationTagsMask =
       VfsOperationTagsMask(map { it.mask }.foldRight(EMPTY.mask, Long::or))
+
+    // if operation's tag is in this mask, then it's implementing PayloadContainingOperation
+    val PayloadContainingOperations: VfsOperationTagsMask = run {
+      fun KClass<*>.collectAllFinalSubclasses(): Sequence<KClass<*>> = sequence {
+        nestedClasses.forEach {
+          if (it.isFinal) yield(it)
+          else yieldAll(it.collectAllFinalSubclasses())
+        }
+      }
+      val payloadContainingSerializers = VfsOperation::class.collectAllFinalSubclasses().mapNotNull {
+        if (it.java.interfaces.contains(PayloadContainingOperation::class.java))
+          it.companionObjectInstance!! as Serializer<*>
+        else null
+      }.toSet()
+      VfsOperationTagsMask(*VfsOperationTag.VALUES.filter { it.operationSerializer in payloadContainingSerializers }.toTypedArray())
+    }
   }
 }

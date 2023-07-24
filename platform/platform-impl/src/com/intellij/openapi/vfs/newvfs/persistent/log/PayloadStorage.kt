@@ -6,6 +6,9 @@ import kotlinx.collections.immutable.PersistentSet
 import java.io.OutputStream
 
 interface PayloadStorage: PayloadStorageIO {
+  /**
+   * Actual amount of space consumed for data that is available through reading (bytes)
+   */
   fun size(): Long
 
   fun flush()

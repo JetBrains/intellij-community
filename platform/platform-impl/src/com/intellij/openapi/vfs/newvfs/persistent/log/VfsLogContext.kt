@@ -102,7 +102,10 @@ interface VfsLogCompactionContext : VfsLogQueryContext, AutoCloseable {
   fun clearOperationLogStorageUpTo(position: Long)
   fun clearPayloadStorageUpTo(position: Long)
 
-  val targetOperationLogSize: Long
+  val targetLogSize: Long
+
+  fun getPayloadStorageAdvancePosition(): Long
+  fun getPayloadStorageStartOffset(): Long
 
   override fun getBaseSnapshot(
     getNameByNameId: (Int) -> State.DefinedState<String>,

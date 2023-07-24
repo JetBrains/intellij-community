@@ -58,7 +58,7 @@ object VfsRecoveryFromVfsLogTest {
   fun VfsLogImpl.forceCompactionUpTo(targetPosition: Long) {
     acquireCompactionContext().use { context ->
       with(getContextImpl().compactionController) {
-        val positionToCompactTo = context.findPositionForCompactionNearTo(targetPosition)
+        val positionToCompactTo = context.findPositionForCompaction(targetPosition)
         println("forcing compaction to $positionToCompactTo (target=$targetPosition)")
         context.forceCompactionUpTo(positionToCompactTo)
       }

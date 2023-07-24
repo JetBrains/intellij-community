@@ -83,13 +83,13 @@ private fun calcStats(log: VfsLogImpl): Stats {
                   //else {
                   //  attrCount[attributeId] = attrCount.getOrDefault(attributeId, 0) + 1
                   //}
-                  val data = payloadReader(op.attrDataPayloadRef)
+                  val data = payloadReader(op.dataRef)
                   data.mapCases({ stats.notAvailablePayloads.incrementAndGet() }) {
                     stats.payloadSizeHist.add(it.size)
                   }
                 }
                 is VfsOperation.ContentsOperation.WriteBytes -> {
-                  val data = payloadReader(op.dataPayloadRef)
+                  val data = payloadReader(op.dataRef)
                   data.mapCases({ stats.notAvailablePayloads.incrementAndGet() }) {
                     stats.payloadSizeHist.add(it.size)
                   }

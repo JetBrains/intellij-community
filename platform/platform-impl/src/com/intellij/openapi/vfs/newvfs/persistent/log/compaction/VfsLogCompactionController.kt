@@ -4,11 +4,15 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.compaction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.vfs.newvfs.persistent.log.*
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.PartialVFileEventException
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.VFileEventBasedIterator.ReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.skipNext
+import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationReadResult
+import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource
 import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.CompactedVfsModel.CompactedVfsState
+import com.intellij.openapi.vfs.newvfs.persistent.log.compaction.CompactedVfsModel.CompactionPosition
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.PersistentVar
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.State
-import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsChronicle
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.io.SimpleStringPersistentEnumerator
@@ -65,7 +69,8 @@ class VfsLogCompactionController(
     if (operationMode == OperationMode.CompactData) {
       compactionModel = CompactedVfsModel(compactionModelDir)
       LOG.info("excess data will be compacted")
-    } else {
+    }
+    else {
       LOG.info("current mode is $operationMode, excess data will be lost")
     }
     if (!readOnly) {
@@ -91,25 +96,33 @@ class VfsLogCompactionController(
     compactionState
     ?: throw AssertionError("compaction state was expected to be initialized already") // are we really inside a VfsLogContext?
 
-  private fun VfsLogQueryContext.getCompactedVfsState(): CompactedVfsState? = synchronized(this) {
+  private fun VfsLogQueryContext.getOrLoadCompactedVfsState(): CompactedVfsState? = synchronized(this) {
     compactionState?.let { return it }
     compactionModel?.let {
-      compactionState = it.getCurrentState(0L)
+      compactionState = it.loadOrInitState { CompactionPosition(0L, 0L) }
       return compactionState
     }
     return null
   }
 
+  fun VfsLogQueryContext.getCompactionPosition(): CompactionPosition? = getOrLoadCompactedVfsState()?.position
+
   fun VfsLogQueryContext.getCompactedSnapshot(
     getNameByNameId: (Int) -> State.DefinedState<String>,
     getAttributeEnumerator: () -> SimpleStringPersistentEnumerator
-  ): CompactedVfsSnapshot? = getCompactedVfsState()?.let {
-    if (begin().getPosition() > it.operationLogPosition) return null // out of sync and some data is lost
+  ): CompactedVfsSnapshot? = getOrLoadCompactedVfsState()?.let {
+    check(begin().getPosition() == it.position.operationLogPosition) {
+      "compacted vfs model and operations log are out of sync: " +
+      "compaction state=${it.position}, operations log start position=${begin().getPosition()}"
+    }
     CompactedVfsSnapshot(this, it, getNameByNameId, getAttributeEnumerator)
   }
 
   private fun Long.toMiB(): String = String.format("%.2f MiB", this.toDouble() / 1024 / 1024)
-  private fun VfsLogCompactionContext.isStorageTooLarge(): Boolean = end().getPosition() - begin().getPosition() > targetOperationLogSize
+  private fun VfsLogCompactionContext.calculateOperationsLogSize(): Long = end().getPosition() - begin().getPosition()
+  private fun VfsLogCompactionContext.calculatePayloadStorageSize(): Long = getPayloadStorageAdvancePosition() - getPayloadStorageStartOffset()
+  private fun VfsLogCompactionContext.calculateTotalStorageSize(): Long = calculateOperationsLogSize() + calculatePayloadStorageSize()
+  private fun VfsLogCompactionContext.isStorageTooLarge(): Boolean = calculateTotalStorageSize() > targetLogSize
 
   private fun VfsLogCompactionContext.runCompaction() = synchronized(this) {
     try {
@@ -119,11 +132,19 @@ class VfsLogCompactionController(
       while (isStorageTooLarge()) {
         if (cancellationWasRequested()) throw ProcessCanceledException(RuntimeException("compaction was cancelled by request"))
 
-        val initialPosition = begin().getPosition()
         val positionToCompactTo = findPositionToCompactTo()
-        val newStoragesPosition = calculateNewStoragesPositions(positionToCompactTo)
-        LOG.info("operations log size: ${(end().getPosition() - initialPosition).toMiB()}, target size: ${targetOperationLogSize.toMiB()}, " +
-                 "moving from position $initialPosition to $positionToCompactTo")
+        val initialPosition = getOrLoadCompactedVfsState()!!.position
+        if (positionToCompactTo == null) {
+          LOG.warn("Couldn't find new position for compaction: logBegin=${begin().getPosition()}, logEnd = ${end().getPosition()}, currentState=${initialPosition}")
+          break
+        }
+        val logSizeAfterCompaction = calculateTotalStorageSize() +
+                                     positionToCompactTo.operationLogPosition - initialPosition.operationLogPosition +
+                                     positionToCompactTo.payloadStoragePosition - initialPosition.payloadStoragePosition
+        LOG.info("Compacting: current log total size: ${calculateTotalStorageSize().toMiB()} " +
+                 "(operations ${calculateOperationsLogSize().toMiB()} + auxiliary data ${calculatePayloadStorageSize().toMiB()}), " +
+                 "target size: ${targetLogSize.toMiB()}, total log size after compaction: ${logSizeAfterCompaction.toMiB()}, " +
+                 "current operation log offset=$initialPosition, new offsets=$positionToCompactTo")
         if (cancellationWasRequested()) throw ProcessCanceledException(RuntimeException("compaction was cancelled by request"))
 
         when (operationMode) {
@@ -131,18 +152,17 @@ class VfsLogCompactionController(
             // no op
           }
           OperationMode.CompactData -> {
-            val currentState = getCompactedVfsState() ?: throw IllegalStateException("compacted vfs state is not available")
-            val newState = compactionModel!!.compactUpTo(this, currentState, newStoragesPosition.operationLogPosition)
+            val currentState = getOrLoadCompactedVfsState() ?: throw IllegalStateException("compacted vfs state is not available")
+            val newState = compactionModel!!.compactUpTo(this, currentState, positionToCompactTo)
             compactionState = newState
           }
         }
 
-        clearOperationLogStorageUpTo(newStoragesPosition.operationLogPosition)
-        newStoragesPosition.payloadStoragePosition?.let { clearPayloadStorageUpTo(it) }
+        applyNewStartOffsetsToLogStorages(positionToCompactTo)
       }
     }
     catch (pce: ProcessCanceledException) {
-      LOG.info("compaction was cancelled")
+      LOG.info("compaction was cancelled", pce)
       throw pce
     }
     catch (e: Throwable) {
@@ -166,100 +186,132 @@ class VfsLogCompactionController(
       makeCompactionJob(), compactionDelayMs, compactionIntervalMs, TimeUnit.MILLISECONDS
     )
 
+  private fun VfsLogCompactionContext.applyNewStartOffsetsToLogStorages(positionToCompactTo: CompactionPosition) {
+    clearOperationLogStorageUpTo(positionToCompactTo.operationLogPosition)
+    clearPayloadStorageUpTo(positionToCompactTo.payloadStoragePosition)
+  }
+
   @TestOnly
-  fun VfsLogCompactionContext.forceCompactionUpTo(positionToCompactTo: Long) {
-    val currentState = getCompactedVfsState() ?: throw IllegalStateException("compacted vfs state is not available")
+  fun VfsLogCompactionContext.forceCompactionUpTo(positionToCompactTo: CompactionPosition) {
+    val currentState = getOrLoadCompactedVfsState() ?: throw IllegalStateException("compacted vfs state is not available")
     val newState = compactionModel!!.compactUpTo(this, currentState, positionToCompactTo)
     compactionState = newState
-    clearOperationLogStorageUpTo(positionToCompactTo)
+    applyNewStartOffsetsToLogStorages(positionToCompactTo)
   }
 
-  private data class CompactionPosition(
-    val operationLogPosition: Long,
-    val payloadStoragePosition: Long?
-  )
-
-  private fun VfsLogCompactionContext.calculateNewStoragesPositions(positionToCompactTo: Long): CompactionPosition {
-    val iterator = constrainedIterator(positionToCompactTo, begin().getPosition(), positionToCompactTo)
-    VfsChronicle.traverseOperationsLog(iterator, OperationLogStorage.TraverseDirection.REWIND, VfsOperationTagsMask.ALL) {
-      val ref = it.payloadStorageRef
-      if (ref != null) {
-        return CompactionPosition(positionToCompactTo, ref.offset)
-      }
-    }
-    return CompactionPosition(positionToCompactTo, null)
-  }
-
-  private val VfsOperation<*>.payloadStorageRef: PayloadRef?
-    get() = when (this) {
-      is VfsOperation.AttributesOperation.WriteAttribute -> attrDataPayloadRef
-      is VfsOperation.ContentsOperation.AppendStream -> dataPayloadRef
-      is VfsOperation.ContentsOperation.ReplaceBytes -> dataPayloadRef
-      is VfsOperation.ContentsOperation.WriteBytes -> dataPayloadRef
-      is VfsOperation.ContentsOperation.WriteStream -> dataPayloadRef
-      is VfsOperation.ContentsOperation.WriteStream2 -> dataPayloadRef
-      else -> null
-    }.takeIf { it?.source == PayloadRef.PayloadSource.PayloadStorage }
-
-  @TestOnly
-  fun VfsLogCompactionContext.findPositionForCompactionNearTo(targetPosition: Long): Long {
-    val logBeginPosition = begin().getPosition()
-    val logEndPosition = end().getPosition()
-    val initialPosition = logBeginPosition.coerceAtLeast(getCompactedVfsState()?.operationLogPosition ?: 0L)
-    val iterator = IteratorUtils.VFileEventBasedIterator(constrainedIterator(initialPosition, logBeginPosition, logEndPosition))
-
-    while (iterator.hasNext()) {
-      when (val item = iterator.next()) {
-        is ReadResult.Invalid -> throw item.cause
-        is ReadResult.SingleOperation -> {
-          val position = item.iterator().getPosition()
-          if (position >= targetPosition) return position
+  /**
+   * Can be false-positive, but chances should be very low ([maxOperationsToCheck] operations must _all_ finish later than some following one),
+   * and we can afford reading here (+ reading is fast enough).
+   * @param estimate return first seen payloadRef offset from PayloadStorage
+   */
+  private fun VfsLogCompactionContext.getPayloadStorageStartOffsetFor(
+    operationsLogStartOffset: Long,
+    maxOperationsToCheck: Int = 500_000,
+    estimate: Boolean = false
+  ): Long? {
+    val iterator = constrainedIterator(operationsLogStartOffset, begin().getPosition(), end().getPosition())
+    var resultPayloadStartOffset: Long? = null
+    var opsChecked = 0
+    while (++opsChecked <= maxOperationsToCheck && iterator.hasNext()) {
+      when (val read = iterator.nextFiltered(VfsOperationTagsMask.PayloadContainingOperations)) {
+        is OperationReadResult.Invalid -> throw read.cause
+        is OperationReadResult.Incomplete -> { /* skip */
         }
-        is ReadResult.VFileEventRange -> {
-          val beginPosition = item.begin().getPosition()
-          if (beginPosition >= targetPosition) return beginPosition
+        is OperationReadResult.Complete -> {
+          val payloadRef = (read.operation as VfsOperation.PayloadContainingOperation).dataRef
+          if (payloadRef.source == PayloadSource.PayloadStorage &&
+              (resultPayloadStartOffset == null || payloadRef.offset < resultPayloadStartOffset)) {
+            if (estimate) return payloadRef.offset
+            resultPayloadStartOffset = payloadRef.offset
+          }
         }
       }
     }
-    throw IllegalStateException("Couldn't find new position for compaction: " +
-                                "logBegin=$logBeginPosition, logEnd = $logEndPosition, targetPosition=$targetPosition")
+    return resultPayloadStartOffset
   }
 
-  private fun VfsLogCompactionContext.findPositionToCompactTo(): Long {
+  /**
+   * @param checkSkipStep will run testCandidate only on every [checkSkipStep] candidate found
+   */
+  fun VfsLogCompactionContext.findNextSuitableCompactionPosition(
+    initialPosition: CompactionPosition,
+    checkSkipStep: Int = 100,
+    testCandidate: (CompactionPosition) -> Boolean
+  ): CompactionPosition? {
+    require(checkSkipStep > 0)
     val logBeginPosition = begin().getPosition()
     val logEndPosition = end().getPosition()
-    val initialPosition = logBeginPosition.coerceAtLeast(getCompactedVfsState()?.operationLogPosition ?: 0L)
-    val iterator = IteratorUtils.VFileEventBasedIterator(constrainedIterator(initialPosition, logBeginPosition, logEndPosition))
-    var positionToCompactTo: Long? = null
+    var iterator = IteratorUtils.VFileEventBasedIterator(
+      constrainedIterator(initialPosition.operationLogPosition, logBeginPosition, logEndPosition)
+    )
 
-    fun testCandidate(position: Long): Long? {
-      if (position - logBeginPosition > MAX_COMPACTION_CHUNK_SIZE) {
-        return position
-      }
-      if (logEndPosition - position < (targetOperationLogSize - MAX_COMPACTION_CHUNK_SIZE).coerceAtLeast(512 * 1024L)) {
-        return position
+    fun makeCandidateIfSuitable(operationLogPosition: Long): CompactionPosition? {
+      val payloadStoragePosition = getPayloadStorageStartOffsetFor(operationLogPosition, maxOperationsToCheck = checkSkipStep, estimate = true)
+                                   ?: initialPosition.payloadStoragePosition
+      val newCompactionCandidate = CompactionPosition(operationLogPosition, payloadStoragePosition)
+      if (testCandidate(newCompactionCandidate)) {
+        val precisePayloadStoragePosition = getPayloadStorageStartOffsetFor(operationLogPosition)
+                                            ?: initialPosition.payloadStoragePosition
+        val preciseCandidate = CompactionPosition(operationLogPosition, precisePayloadStoragePosition)
+        if (testCandidate(preciseCandidate))
+          return preciseCandidate
       }
       return null
     }
 
-    while (iterator.hasNext() && positionToCompactTo == null) {
+    var operationsTraversed: Long = 0
+    while (iterator.hasNext()) {
+      operationsTraversed++
       when (val item = iterator.next()) {
-        is ReadResult.Invalid -> throw item.cause
+        is ReadResult.Invalid -> {
+          if (item.cause is PartialVFileEventException) {
+            // skip, see com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsLogTracker
+            // TODO log?
+            val newIter = item.cause.iterator()
+            if (!newIter.hasNext()) return null
+            newIter.skipNext()
+            iterator = IteratorUtils.VFileEventBasedIterator(
+              constrainedIterator(newIter.getPosition(), logBeginPosition, logEndPosition)
+            )
+            continue
+          }
+          throw item.cause
+        }
         is ReadResult.SingleOperation -> {
-          val position = item.iterator().getPosition()
-          positionToCompactTo = testCandidate(position)
+          val operationLogPosition = item.iterator().getPosition()
+          if (operationsTraversed % checkSkipStep == 0L) {
+            makeCandidateIfSuitable(operationLogPosition)?.let { return it }
+          }
         }
         is ReadResult.VFileEventRange -> {
           val beginPosition = item.begin().getPosition()
-          positionToCompactTo = testCandidate(beginPosition)
+          if (operationsTraversed % checkSkipStep == 0L) {
+            makeCandidateIfSuitable(beginPosition)?.let { return it }
+          }
         }
       }
     }
-    if (positionToCompactTo == null) {
-      throw IllegalStateException("Couldn't find new position for compaction: " +
-                                  "logBegin=$logBeginPosition, logEnd = $logEndPosition, targetSize=$targetOperationLogSize")
+    return null
+  }
+
+  @TestOnly
+  fun VfsLogCompactionContext.findPositionForCompaction(targetLogPositionAtLeast: Long): CompactionPosition {
+    return findNextSuitableCompactionPosition(getOrLoadCompactedVfsState()!!.position, 1) {
+      it.operationLogPosition >= targetLogPositionAtLeast
+    } ?: throw IllegalStateException("Couldn't find new position for compaction: " +
+                                     "logBegin=${begin().getPosition()}, logEnd = ${end().getPosition()}, " +
+                                     "targetPosition=$targetLogPositionAtLeast, currentState=${getOrLoadCompactedVfsState()!!.position}")
+  }
+
+  private fun VfsLogCompactionContext.findPositionToCompactTo(): CompactionPosition? {
+    val payloadStartOffset = getPayloadStorageStartOffset()
+    val operationStorageStartOffset = begin().getPosition()
+    return findNextSuitableCompactionPosition(getOrLoadCompactedVfsState()!!.position) {
+      val dataDropSize = it.operationLogPosition - operationStorageStartOffset + it.payloadStoragePosition - payloadStartOffset
+      val logSizeAfterDrop = calculateTotalStorageSize() - dataDropSize
+      val compactionTargetSize = (targetLogSize - COMPACTION_CHUNK_SIZE).coerceAtLeast(MIN_LOG_SIZE)
+      dataDropSize >= COMPACTION_CHUNK_SIZE || logSizeAfterDrop < compactionTargetSize
     }
-    return positionToCompactTo
   }
 
   override fun close() {
@@ -284,9 +336,10 @@ class VfsLogCompactionController(
 
   companion object {
     private val LOG = Logger.getInstance(VfsLogCompactionController::class.java)
-    private val MAX_COMPACTION_CHUNK_SIZE: Long = SystemProperties.getLongProperty(
+    private val COMPACTION_CHUNK_SIZE: Long = SystemProperties.getLongProperty(
       "idea.vfs.log-vfs-operations.compaction-chunk-size",
       64L * 1024 * 1024
     )
+    private val MIN_LOG_SIZE: Long = COMPACTION_CHUNK_SIZE / 4 // 16 MiB default
   }
 }

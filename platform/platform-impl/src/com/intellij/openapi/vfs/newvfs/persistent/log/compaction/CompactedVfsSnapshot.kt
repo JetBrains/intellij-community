@@ -24,7 +24,7 @@ class CompactedVfsSnapshot(
   private val attributeValueEnumerator: () -> SimpleStringPersistentEnumerator,
 ) : ExtendedVfsSnapshot {
   override val point: () -> OperationLogStorage.Iterator = object : OperationLogStorage.Iterator {
-    override fun getPosition(): Long = compactedState.operationLogPosition
+    override fun getPosition(): Long = compactedState.position.operationLogPosition
     override fun copy(): OperationLogStorage.Iterator = this
 
     private fun notSupported(): Nothing = throw UnsupportedOperationException("this iterator can't be moved")

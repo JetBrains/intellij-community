@@ -32,15 +32,15 @@ import kotlin.time.Duration.Companion.milliseconds
  * @param readOnly if true, won't modify storages and register [connectionInterceptors] thus VfsLog won't track [PersistentFS] changes
  *
  * Warning:
- *  VfsLog tries it best not to impact performance of the VFS too much, e.g. it does not use any kind of locking while collecting
- *  information about modification operations. This comes at a cost. It is possible for VFS to have concurrent writes at same location,
+ *  VfsLog tries its best not to impact performance of the VFS too much, e.g. it does not use any kind of locking while collecting
+ *  information about modification operations. This comes at a cost. It is possible for VFS to have concurrent writes at the same location,
  *  so it is possible that those writes occur in different order than their operation descriptors will end up in the log. This means
  *  that a VFS state, restored by means of this log, may differ from what it was actually like. However, most of such concurrent writes
  *  are probably benign.
  *  It seems there is no good way to ensure ordering here without introducing locks and rewriting the whole VFS to use alternative
  *  data structures (prove me wrong).
  *  What is guaranteed:
- *      * "happens-before" of operations in VFS implies "happens-before" of corresponding descriptors in log
+ *      * "happens-before" of operations in VFS implies "happens-before" of corresponding descriptors in log.
  *  What is not guaranteed:
  *      * global operation ordering is not guaranteed, i.e. concurrently happening operations can have different
  *        order in the log than how they were actually executed (not to mention the probable lack of atomicity);
@@ -52,7 +52,7 @@ import kotlin.time.Duration.Companion.milliseconds
 class VfsLogImpl(
   private val storagePath: Path,
   private val readOnly: Boolean = false,
-  // TODO telemetry toggle
+  // TODO telemetry and logging toggle
 ) : VfsLogEx {
   private val versionHandler = PersistentVar.integer(storagePath / "version")
   var version by versionHandler
@@ -119,15 +119,17 @@ class VfsLogImpl(
       compactionController.close()
 
       operationLogStorage.closeWriteQueue()
-      // Warning: there is a window for a race condition here: memory for operation's appending can be allocated before write queue was closed,
-      // and its thread might be preempted and sleep for quite long time, before it continues its execution and finally finishes the entry
-      // appending. But in ideal world there are no writes that happen concurrently with disposal, so such events, if they tend to happen,
+      // Warning: there is a tiny window for a race condition here: a thread may pass the "write queue is not closed" check and be preempted,
+      // thus appending an entry after it's awakened and when write queue is already closed and when we've already awaited all pending writes.
+      // But in an ideal world there are no writes that happen concurrently with disposal, so such events, if they tend to happen,
       // should be noticeable even with this race (and fixed?).
       // What this race can break: the modification will be applied to VFS, but won't be written in log (meaning that after restart we won't be
       // able to find it in log), or we won't save it at flush. We'll probably notice it with the following checks, but in case we won't,
       // we'll say that VfsLog was correctly disposed (false-positive CLOSED_PROPERLY).
       // We don't want to pay for synchronization regardless.
-      awaitPendingWrites(timeout = Duration.INFINITE) // we _must_ write down every pending operation, otherwise VfsLog and VFS will be out of sync.
+      awaitPendingWrites(
+        timeout = Duration.INFINITE // we _must_ write down every pending operation, otherwise VfsLog and VFS will be out of sync.
+      )
 
       var lostAnything = false
       if (operationLogStorage.size() != operationLogStorage.emergingSize()) {
@@ -256,6 +258,10 @@ class VfsLogImpl(
   }
 
   private fun makeQueryContext(cancellationWasRequested: Boolean): VfsLogQueryContext = object : VfsLogQueryContext {
+    init {
+      ensureLogAndCompactionAreSynced()
+    }
+
     private val isClosed = AtomicBoolean(false)
 
     override val payloadReader: PayloadReader = context.payloadReader
@@ -291,6 +297,26 @@ class VfsLogImpl(
     }
   }
 
+  private fun VfsLogQueryContext.ensureLogAndCompactionAreSynced() {
+    // it can theoretically happen that compaction will update its state, and will not manage to update start offsets
+    // for log storages before cancellation/interrupt/whatever
+    with(context.compactionController) {
+      val compactedPosition = getCompactionPosition() ?: return
+      check(context.operationLogStorage.startOffset() <= compactedPosition.operationLogPosition)
+      check(context.payloadStorage.startOffset() <= compactedPosition.payloadStoragePosition)
+      if (context.operationLogStorage.startOffset() != compactedPosition.operationLogPosition) {
+        LOG.warn("Operation log storage was out of sync with compaction. " +
+                 "Updating offsets ${context.operationLogStorage.startOffset()} -> ${compactedPosition.operationLogPosition}")
+        context.operationLogStorage.dropOperationsUpTo(compactedPosition.operationLogPosition)
+      }
+      if (context.payloadStorage.startOffset() != compactedPosition.payloadStoragePosition) {
+        LOG.warn("Payload storage was out of sync with compaction. " +
+                 "Updating offsets ${context.payloadStorage.startOffset()} -> ${compactedPosition.payloadStoragePosition}")
+        context.payloadStorage.dropPayloadsUpTo(compactedPosition.payloadStoragePosition)
+      }
+    }
+  }
+
   override fun isCompactionRunning(): Boolean = context.isCompactionRunning
 
   override fun acquireCompactionContext(): VfsLogCompactionContext {
@@ -307,10 +333,16 @@ class VfsLogImpl(
     init {
       check(!context.isCompactionRunning)
       context.isCompactionRunning = true
+
+      ensureLogAndCompactionAreSynced()
     }
 
     override fun constrainedIterator(position: Long, allowedRangeBegin: Long, allowedRangeEnd: Long): OperationLogStorage.Iterator =
-      context.operationLogStorage.constrainedIterator(position, allowedRangeBegin, allowedRangeEnd)
+      context.operationLogStorage.constrainedIterator(position, allowedRangeBegin, allowedRangeEnd).also {
+        require(position in allowedRangeBegin..allowedRangeEnd) {
+          "provided position (=$position) is outside the allowed range (=$allowedRangeBegin..$allowedRangeEnd)"
+        }
+      }
 
     override val payloadReader: PayloadReader
       get() = context.payloadReader
@@ -331,7 +363,11 @@ class VfsLogImpl(
       context.payloadStorage.dropPayloadsUpTo(position)
     }
 
-    override val targetOperationLogSize: Long = OPERATION_LOG_MAX_SIZE
+    override val targetLogSize: Long = LOG_MAX_SIZE
+
+    override fun getPayloadStorageAdvancePosition(): Long = context.payloadStorage.advancePosition()
+
+    override fun getPayloadStorageStartOffset(): Long = context.payloadStorage.startOffset()
 
     override val stringEnumerator: DataEnumerator<String> get() = context.stringEnumerator
 
@@ -362,7 +398,8 @@ class VfsLogImpl(
             versionHandler.close()
             try {
               if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
-            } catch (e: IOException) {
+            }
+            catch (e: IOException) {
               LOG.error("failed to clear VfsLog storage", e)
             }
             versionHandler.reopen()
@@ -376,7 +413,7 @@ class VfsLogImpl(
   companion object {
     private val LOG = Logger.getInstance(VfsLogImpl::class.java)
 
-    const val VERSION = 3
+    const val VERSION = 4
 
     private val WORKER_THREADS_COUNT = SystemProperties.getIntProperty(
       "idea.vfs.log-vfs-operations.workers",
@@ -396,9 +433,9 @@ class VfsLogImpl(
       -1
     )
     private val DEFAULT_COMPACTION_MODE = VfsLogCompactionController.OperationMode.CompactData
-    private val OPERATION_LOG_MAX_SIZE: Long = SystemProperties.getLongProperty(
+    private val LOG_MAX_SIZE: Long = SystemProperties.getLongProperty(
       "idea.vfs.log-vfs-operations.max-log-size",
-      750L * 1024 * 1024 // 750 MiB, does not include payload storage size
+      750L * 1024 * 1024 // 750 MiB, includes payload storage size
     )
     private val COMPACTION_DELAY_MS: Long = SystemProperties.getLongProperty(
       "idea.vfs.log-vfs-operations.compaction-delay-ms",

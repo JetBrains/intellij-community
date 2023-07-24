@@ -68,9 +68,23 @@ class CompactedVfsModel(
     attributesStorage.close()
   }
 
-  private data class ReadAttribute(val fileId: Int, val attributes: List<Pair<EnumeratedFileAttribute, ByteArray>>)
-  inner class CompactedVfsState internal constructor(
+  /**
+   * @param operationLogPosition position, up to which compacted model is calculated
+   * @param payloadStoragePosition used as a hint that every payload up to that position can be dropped from the PayloadStorageImpl
+   *          (every operation starting from [operationLogPosition] has its payloadRef pointing to at least [payloadStoragePosition]).
+   */
+  data class CompactionPosition(
     val operationLogPosition: Long,
+    val payloadStoragePosition: Long
+  )
+
+  private data class CachedReadAttribute(val fileId: Int, val attributes: List<Pair<EnumeratedFileAttribute, ByteArray>>)
+
+  /**
+   * @property contentsState stores deflated content
+   */
+  inner class CompactedVfsState internal constructor(
+    val position: CompactionPosition,
     internal val filesState: AutoSizeAdjustingBlockEntryArrayStorage<FileModel>.State,
     internal val contentsState: AutoSizeAdjustingBlockEntryArrayStorage<ByteArray>.State,
     internal val attributesState: AutoSizeAdjustingBlockEntryArrayStorage<List<Pair<EnumeratedFileAttribute, ByteArray>>>.State
@@ -89,7 +103,7 @@ class CompactedVfsModel(
     }
 
     @Volatile
-    private var lastReadAttributes: ReadAttribute? = null
+    private var lastReadAttributes: CachedReadAttribute? = null
 
     val payloadReader: PayloadReader = { ref ->
       when (ref.source) {
@@ -103,7 +117,7 @@ class CompactedVfsModel(
               if (it.fileId == fileId) it.attributes
               else null
             } ?: attributesState.getEntry(fileId).also { newAttrs ->
-              lastReadAttributes = ReadAttribute(fileId, newAttrs)
+              lastReadAttributes = CachedReadAttribute(fileId, newAttrs)
             }
             attributes[attrIndex].second.let(State::Ready)
           }
@@ -129,29 +143,30 @@ class CompactedVfsModel(
 
   private val stateExternalizer = object : EntryArrayStorage.EntryExternalizer<CompactedVfsState> {
     override fun getEntrySize(entry: CompactedVfsState): Long =
-      8 + 4 + 4 + 4 +
+      8 + 8 + 4 + 4 + 4 +
       filesStorage.stateExternalizer.getEntrySize(entry.filesState) +
       contentsStorage.stateExternalizer.getEntrySize(entry.contentsState) +
       attributesStorage.stateExternalizer.getEntrySize(entry.attributesState)
 
     override fun RandomAccessReadBuffer.getEntrySize(): Long {
       val subStateSizes = ByteArray(4 + 4 + 4)
-      read(8, subStateSizes)
+      read(8 + 8, subStateSizes)
       val (filesStateSize, contentsStateSize, attributesStateSize) = ByteBuffer.wrap(subStateSizes).run {
         Triple(getInt(), getInt(), getInt())
       }
-      return 8L + 4 + 4 + 4 + filesStateSize + contentsStateSize + attributesStateSize
+      return 8L + 8 + 4 + 4 + 4 + filesStateSize + contentsStateSize + attributesStateSize
     }
 
     override fun RandomAccessReadBuffer.deserialize(): CompactedVfsState {
-      val headerArr = ByteArray(8 + 4 + 4 + 4)
+      val headerArr = ByteArray(8 + 8 + 4 + 4 + 4)
       read(0, headerArr)
       val buf = ByteBuffer.wrap(headerArr)
       val operationLogPosition = buf.getLong()
+      val payloadStoragePosition = buf.getLong()
       val filesStateSize = buf.getInt()
       val contentsStateSize = buf.getInt()
       // val attributesStateSize = buf.getInt() // not used
-      offsetView(8 + 4 + 4 + 4).run {
+      offsetView(8 + 8 + 4 + 4 + 4).run {
         val filesState = with(filesStorage.stateExternalizer) {
           deserialize()
         }
@@ -163,24 +178,25 @@ class CompactedVfsModel(
             val attributesState = with(attributesStorage.stateExternalizer) {
               deserialize()
             }
-            return CompactedVfsState(operationLogPosition, filesState, contentsState, attributesState)
+            return CompactedVfsState(CompactionPosition(operationLogPosition, payloadStoragePosition), filesState, contentsState, attributesState)
           }
         }
       }
     }
 
     override fun RandomAccessWriteBuffer.serialize(entry: CompactedVfsState) {
-      val headerArr = ByteArray(8 + 4 + 4 + 4)
+      val headerArr = ByteArray(8 + 8 + 4 + 4 + 4)
       val filesStateSize = filesStorage.stateExternalizer.getEntrySize(entry.filesState).toInt()
       val contentsStateSize = contentsStorage.stateExternalizer.getEntrySize(entry.contentsState).toInt()
       val attributesStateSize = attributesStorage.stateExternalizer.getEntrySize(entry.attributesState).toInt()
       ByteBuffer.wrap(headerArr)
-        .putLong(entry.operationLogPosition)
+        .putLong(entry.position.operationLogPosition)
+        .putLong(entry.position.payloadStoragePosition)
         .putInt(filesStateSize)
         .putInt(contentsStateSize)
         .putInt(attributesStateSize)
       write(0, headerArr)
-      offsetView(8 + 4 + 4 + 4).run {
+      offsetView(8 + 8 + 4 + 4 + 4).run {
         with(filesStorage.stateExternalizer) {
           serialize(entry.filesState)
         }
@@ -198,9 +214,9 @@ class CompactedVfsModel(
     }
   }
 
-  fun getCurrentState(stateInitOperationLogPosition: Long): CompactedVfsState {
+  fun loadOrInitState(initialCompactionPosition: () -> CompactionPosition): CompactedVfsState {
     if (!stateFile.exists()) {
-      return CompactedVfsState(stateInitOperationLogPosition, filesStorage.emptyState(), contentsStorage.emptyState(),
+      return CompactedVfsState(initialCompactionPosition(), filesStorage.emptyState(), contentsStorage.emptyState(),
                                attributesStorage.emptyState())
     }
     ResilientFileChannel(stateFile, READ).use {
@@ -220,17 +236,22 @@ class CompactedVfsModel(
     updateFile.moveTo(stateFile, overwrite = true)
   }
 
-  fun compactUpTo(context: VfsLogCompactionContext, currentState: CompactedVfsState, position: Long): CompactedVfsState {
-    require(position >= currentState.operationLogPosition) {
-      "provided position $position is before already compacted position ${currentState.operationLogPosition}"
+  fun compactUpTo(context: VfsLogCompactionContext, currentState: CompactedVfsState, position: CompactionPosition): CompactedVfsState {
+    require(position.operationLogPosition >= currentState.position.operationLogPosition) {
+      "provided position is before already compacted position: provided $position vs current ${currentState.position}"
     }
-    require(position <= context.end().getPosition()) {
-      "provided position $position is after currently available operations range ${context.end().getPosition()}"
+    require(position.operationLogPosition <= context.end().getPosition()) {
+      "provided position ${position} is after currently available operations range ${context.end().getPosition()}"
     }
-    check(context.begin().getPosition() <= currentState.operationLogPosition) {
-      "can't compact from position ${currentState.operationLogPosition}: log start position is greater (=${context.begin().getPosition()})"
+    check(context.begin().getPosition() <= currentState.position.operationLogPosition) {
+      "can't compact from position ${currentState.position.operationLogPosition}: " +
+      "log start position is greater (=${context.begin().getPosition()})"
     }
-    if (position == currentState.operationLogPosition) return currentState
+    require(position.payloadStoragePosition >= currentState.position.payloadStoragePosition) {
+      "provided payload storage position is less than current compacted payload storage position: " +
+      "provided $position vs current ${currentState.position}"
+    }
+    if (position == currentState.position) return currentState
 
     val checkCancelled = {
       if (context.cancellationWasRequested()) {
@@ -247,7 +268,7 @@ class CompactedVfsModel(
     var newContentsSize: Int = currentState.contentsState.size
 
     val iterator = context.constrainedIterator(
-      currentState.operationLogPosition, currentState.operationLogPosition, position
+      currentState.position.operationLogPosition, currentState.position.operationLogPosition, position.operationLogPosition
     )
     VfsChronicle.traverseOperationsLog(iterator, TraverseDirection.PLAY, VfsOperationTagsMask.ALL) { op ->
       checkCancelled()
@@ -315,7 +336,7 @@ class CompactedVfsModel(
         }
       }
     }
-    check(iterator.getPosition() == position) {
+    check(iterator.getPosition() == position.operationLogPosition) {
       "compaction didn't manage to navigate to the provided position"
     }
 
@@ -356,7 +377,13 @@ class CompactedVfsModel(
           val result: MutableMap<EnumeratedFileAttribute, ByteArray> =
             if (upd.clear || currentState.attributesState.size <= fileId) mutableMapOf()
             else currentState.attributesState.getEntry(fileId).toMap(mutableMapOf())
-          val loadedAttrs = upd.entries.mapValues { context.payloadReader(it.value).get() }.mapKeys { it.key }
+          val loadedAttrs = upd.entries.mapValues {
+            check(it.value.source != PayloadSource.PayloadStorage || currentState.position.payloadStoragePosition <= it.value.offset) {
+              "compaction failed: attribute update refers to a payload that was already compacted before: " +
+              "current ${currentState.position}, attribute data ref ${it.value}"
+            }
+            context.payloadReader(it.value).get()
+          }
           for ((attr, data) in loadedAttrs) {
             if (attr in result.keys) {
               result.remove(attr)

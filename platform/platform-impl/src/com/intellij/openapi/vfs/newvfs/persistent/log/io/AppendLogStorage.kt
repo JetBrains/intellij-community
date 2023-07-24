@@ -129,7 +129,7 @@ class AppendLogStorage(
           chunkFile.deleteExisting()
         }
         catch (e: IOException) {
-          LOG.error("failed to clear chunk ${chunkFile.toAbsolutePath()}", e)
+          LOG.warn("failed to clear chunk ${chunkFile.toAbsolutePath()}", e)
         }
       }
     }

@@ -170,12 +170,12 @@ object VfsModificationContract {
       is ContentsOperation.AcquireNewRecord -> modifyContent(
         ContentOperation.Set { ByteArray(0).let(State::Ready) }
       )
-      is ContentsOperation.WriteBytes -> modifyContent(setContent(dataPayloadRef))
-      is ContentsOperation.WriteStream -> modifyContent(setContent(dataPayloadRef))
-      is ContentsOperation.WriteStream2 -> modifyContent(setContent(dataPayloadRef))
+      is ContentsOperation.WriteBytes -> modifyContent(setContent(dataRef))
+      is ContentsOperation.WriteStream -> modifyContent(setContent(dataRef))
+      is ContentsOperation.WriteStream2 -> modifyContent(setContent(dataRef))
       is ContentsOperation.ReplaceBytes -> {
         modifyContent(ContentOperation.Modify { before, payloadReader ->
-          payloadReader(dataPayloadRef).fmap { data ->
+          payloadReader(dataRef).fmap { data ->
             if (offset < 0 || offset + data.size > before.size) { // from AbstractStorage.replaceBytes
               throw VfsRecoveryException(
                 "replaceBytes: replace is out of bounds: " +
@@ -189,7 +189,7 @@ object VfsModificationContract {
       }
       is ContentsOperation.AppendStream -> {
         modifyContent(ContentOperation.Modify { before, payloadReader ->
-          payloadReader(dataPayloadRef).fmap { before + it }
+          payloadReader(dataRef).fmap { before + it }
         })
       }
       else -> throw AssertionError("operation $this does not modify content")
@@ -224,7 +224,7 @@ object VfsModificationContract {
     when (this) {
       is RecordsOperation.AllocateRecord -> overwriteAttributeData(AttributeOverwriteData(null, null))
       is AttributesOperation.DeleteAttributes -> overwriteAttributeData(AttributeOverwriteData(null, null))
-      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(enumeratedAttribute, attrDataPayloadRef))
+      is AttributesOperation.WriteAttribute -> overwriteAttributeData(AttributeOverwriteData(enumeratedAttribute, dataRef))
       else -> throw AssertionError("operation $this does not modify attribute's data")
     }
   }
