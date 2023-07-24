@@ -287,7 +287,7 @@ public class RegistryValue {
     Disposer.register(parentDisposable, () -> setValue(prev));
   }
 
-  boolean isChangedSinceAppStart() {
+  public boolean isChangedSinceAppStart() {
     return myChangedSinceStart;
   }
 
