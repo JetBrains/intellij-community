@@ -2,15 +2,8 @@
 //file:noinspection GrPackage
 
 static def disableSources(PluginContainer plugins) {
-  def plugin = plugins.findPlugin(IdeaPlugin)
-  if (plugin != null) {
-    overridePluginSourcesPolicy(plugin)
-  } else {
-    plugins.whenPluginAdded { p ->
-      if (p instanceof IdeaPlugin) {
-        overridePluginSourcesPolicy(p)
-      }
-    }
+  plugins.withType(IdeaPlugin).all {
+    overridePluginSourcesPolicy(it)
   }
 }
 
