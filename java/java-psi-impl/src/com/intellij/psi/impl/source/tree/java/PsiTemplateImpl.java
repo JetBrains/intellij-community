@@ -30,7 +30,7 @@ public final class PsiTemplateImpl extends ExpressionPsiElement implements PsiTe
   @Override
   public @NotNull List<@NotNull PsiFragment> getFragments() {
     final List<PsiFragment> result = new ArrayList<>();
-    PsiElement @NotNull [] children = getChildren();
+    final PsiElement @NotNull [] children = getChildren();
     for (int i = 0, length = children.length; i < length; i += 2) {
       result.add((PsiFragment)children[i]);
     }
@@ -40,16 +40,11 @@ public final class PsiTemplateImpl extends ExpressionPsiElement implements PsiTe
   @Override
   public @NotNull List<@NotNull PsiExpression> getEmbeddedExpressions() {
     final List<PsiExpression> result = new ArrayList<>();
-    PsiElement @NotNull [] children = getChildren();
+    final PsiElement @NotNull [] children = getChildren();
     for (int i = 1, length = children.length; i < length; i += 2) {
       result.add((PsiExpression)children[i]);
     }
     return result;
-  }
-
-  @Override
-  public PsiType getType() {
-    return PsiType.getTypeByName("java.lang.StringTemplate", getProject(), getResolveScope());
   }
 
   @Override

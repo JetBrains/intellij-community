@@ -6,11 +6,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Represents a template (i.e. the argument to a template expression) which contains one or more embedded expressions.
+ * Represents a template (i.e. the argument of a template expression) which contains one or more embedded expressions.
  *
  * @author Bas Leijdekkers
  */
-public interface PsiTemplate extends PsiExpression {
+public interface PsiTemplate extends PsiElement {
 
   /**
    * @return the fragments of this template.
