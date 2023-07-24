@@ -4,11 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.list
 import com.intellij.collaboration.async.combineAndCollect
 import com.intellij.collaboration.async.launchNow
 import com.intellij.collaboration.async.nestedDisposable
+import com.intellij.collaboration.ui.CollaborationToolsUIUtil.wrapWithProgressStripe
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.list.ReviewListUtil.wrapWithLazyVerticalScroll
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
@@ -18,10 +18,8 @@ import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.intellij.vcs.log.ui.frame.ProgressStripe
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.GHPRListViewModel
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
@@ -62,17 +60,8 @@ internal class GHPRListPanelFactory(private val project: Project, private val li
 
     val listLoaderPanel = wrapWithLazyVerticalScroll(cs, list, listVm::requestMore)
     val listWrapper = Wrapper()
-    val progressStripe = ProgressStripe(
-      listWrapper,
-      cs.nestedDisposable(),
-      ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
-    )
+    val progressStripe = wrapWithProgressStripe(cs, listVm.loading, listWrapper)
     ScrollableContentBorder.setup(listLoaderPanel, Side.TOP, progressStripe)
-    cs.launchNow {
-      listVm.loading.collect {
-        if (it) progressStripe.startLoading() else progressStripe.stopLoading()
-      }
-    }
 
     GHPRListPanelController(project, cs, listVm, list.emptyText, listLoaderPanel, listWrapper)
 
