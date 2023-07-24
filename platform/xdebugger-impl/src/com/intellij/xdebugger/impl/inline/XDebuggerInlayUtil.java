@@ -2,6 +2,7 @@
 package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -63,7 +64,7 @@ public final class XDebuggerInlayUtil {
             }
           }
           DebuggerUIUtil.repaintCurrentEditor(project); // to update inline debugger data
-        }, project.getDisposed());
+        }, ModalityState.nonModal(), project.getDisposed());
       }
     });
     EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
@@ -80,7 +81,7 @@ public final class XDebuggerInlayUtil {
     if (valueNode.getValuePresentation() != null) {
       ApplicationManager.getApplication().invokeLater(() -> {
         createInlayInt(session, new InlineDebugRenderer(valueNode, position, session));
-      }, session.getProject().getDisposed());
+      }, ModalityState.nonModal(), session.getProject().getDisposed());
       return true;
     }
     return false;
@@ -130,7 +131,7 @@ public final class XDebuggerInlayUtil {
   }
 
   public void clearInlays() {
-    ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), myProject.getDisposed());
+    ApplicationManager.getApplication().invokeLater(() -> clearInlaysInt(myProject), ModalityState.nonModal(), myProject.getDisposed());
   }
 
   private static List<Inlay> clearInlaysInEditor(@NotNull Editor editor) {
