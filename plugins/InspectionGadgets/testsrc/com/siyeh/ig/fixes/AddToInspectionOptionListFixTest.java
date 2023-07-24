@@ -24,6 +24,12 @@ public class AddToInspectionOptionListFixTest extends LightQuickFixParameterized
   }
 
   @Override
+  protected void tearDown() throws Exception {
+    super.tearDown();
+    InspectionProfileImpl.INIT_INSPECTIONS = false;
+  }
+
+  @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{
       new SizeReplaceableByIsEmptyInspection(),
