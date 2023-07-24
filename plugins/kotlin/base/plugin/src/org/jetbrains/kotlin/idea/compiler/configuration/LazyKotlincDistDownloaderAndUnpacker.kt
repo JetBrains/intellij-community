@@ -69,7 +69,7 @@ private class LazyDistDirLayoutProducer(version: String, private val unpackedDis
     private val kotlinVersion = IdeKotlinVersion.parse(version).getOrThrow()
 
     override fun produceOutput(input: List<File>, computationContext: Unit): List<File> { // inputs are jarsInMavenRepo
-        unpackedDistDestination.deleteRecursively()
+        check(unpackedDistDestination.deleteRecursively()) { "Can't delete $unpackedDistDestination" }
         val lib = unpackedDistDestination.resolve("lib")
         check(lib.mkdirs()) { "Can't create $lib directory" }
         for (jarInMavenRepo in input) {
