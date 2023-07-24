@@ -138,9 +138,9 @@ class VfsLogCompactionController(
           LOG.warn("Couldn't find new position for compaction: logBegin=${begin().getPosition()}, logEnd = ${end().getPosition()}, currentState=${initialPosition}")
           break
         }
-        val logSizeAfterCompaction = calculateTotalStorageSize() +
-                                     positionToCompactTo.operationLogPosition - initialPosition.operationLogPosition +
-                                     positionToCompactTo.payloadStoragePosition - initialPosition.payloadStoragePosition
+        val logSizeAfterCompaction = calculateTotalStorageSize()
+                                     + initialPosition.operationLogPosition - positionToCompactTo.operationLogPosition
+                                     + initialPosition.payloadStoragePosition - positionToCompactTo.payloadStoragePosition
         LOG.info("Compacting: current log total size: ${calculateTotalStorageSize().toMiB()} " +
                  "(operations ${calculateOperationsLogSize().toMiB()} + auxiliary data ${calculatePayloadStorageSize().toMiB()}), " +
                  "target size: ${targetLogSize.toMiB()}, total log size after compaction: ${logSizeAfterCompaction.toMiB()}, " +
