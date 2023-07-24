@@ -141,7 +141,7 @@ abstract class VcsChangesMerger : VcsStatusMerger<Change>() {
 
   protected abstract fun createChange(type: Change.Type, beforePath: FilePath?, afterPath: FilePath?): Change
 
-  fun merge(path: FilePath, changesToParents: List<Change>): Change {
+  fun mergedChange(path: FilePath, changesToParents: List<Change>): MergedChange {
     return MergedChange.SimpleMergedChange(merge(path.path, changesToParents), changesToParents)
   }
 

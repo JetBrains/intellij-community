@@ -78,7 +78,7 @@ public final class FileHistoryUtil {
     if (parentChanges.size() <= 1) {
       return getFirstItem(parentChanges);
     }
-    return new MyVcsChangesMerger(commitHash, parentHashes, diffHandler).merge(path, parentChanges);
+    return new MyVcsChangesMerger(commitHash, parentHashes, diffHandler).mergedChange(path, parentChanges);
   }
 
   private static @Nullable ContentRevision createContentRevision(@NotNull Hash commitHash, int commitIndex, @NotNull VcsLogDataPack visiblePack,
