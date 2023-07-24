@@ -28,12 +28,14 @@ interface VfsLogBaseContext {
 interface VfsLogOperationTrackingContext : VfsLogBaseContext {
   val payloadWriter: PayloadWriter
 
-  fun <R: Any> trackOperation(
-    tag: VfsOperationTag,
-    performOperation: OperationTracker.() -> R
-  ): R
+  fun trackOperation(tag: VfsOperationTag): OperationTracker
 
   companion object {
+    inline fun <R: Any> VfsLogOperationTrackingContext.trackOperation(
+      tag: VfsOperationTag,
+      performOperation: OperationTracker.() -> R
+    ): R = trackOperation(tag).performOperation()
+
     fun <R: Any> VfsLogOperationTrackingContext.trackPlainOperation(
       tag: VfsOperationTag,
       composeOperation: (OperationResult<R>) -> VfsOperation<R>,

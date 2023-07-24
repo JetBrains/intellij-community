@@ -3,7 +3,9 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 
-interface VFileEventApplicationListener {
-  fun beforeApply(event: VFileEvent) {}
-  fun afterApply(event: VFileEvent, throwable: Throwable?) {}
+fun interface ApplicationVFileEventsTracker {
+  fun interface VFileEventTracker {
+    fun completeEventTracking()
+  }
+  fun trackEvent(event: VFileEvent): VFileEventTracker
 }

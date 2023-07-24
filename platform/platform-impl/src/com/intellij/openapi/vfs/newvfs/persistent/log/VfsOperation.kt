@@ -799,29 +799,27 @@ sealed class VfsOperation<T : Any>(val tag: VfsOperationTag, val result: Operati
       }
     }
 
-    class EventEnd(val eventTag: VfsOperationTag, result: OperationResult<Unit>)
-      : VFileEventOperation<Unit>(VfsOperationTag.VFILE_EVENT_END, result) {
+    class EventEnd(val eventTag: VfsOperationTag)
+      : VFileEventOperation<Unit>(VfsOperationTag.VFILE_EVENT_END, fromValue(Unit)) {
       internal companion object : Serializer<EventEnd> {
-        override val valueSizeBytes: Int = 1 + OperationResult.SIZE_BYTES
+        override val valueSizeBytes: Int = 1
         override fun InputStream.deserialize(enumerator: DataEnumerator<String>): EventEnd =
           DataInputStream(this).run {
             val tag = readByte()
-            val result = readResult<Unit>(enumerator)
             return EventEnd(VfsOperationTag.VALUES[tag.toInt()].also {
-              if (!it.isVFileEventOperation) {
+              if (!it.isVFileEventStartOperation) {
                 throw IllegalStateException("unexpected EventEnd tag: $it")
               }
-            }, result)
+            })
           }
 
         override fun OutputStream.serialize(operation: EventEnd, enumerator: DataEnumerator<String>): Unit = DataOutputStream(this).run {
           writeByte(operation.eventTag.ordinal)
-          writeResult(operation.result, enumerator)
         }
       }
 
       override fun toString(): String {
-        return "EventEnd(eventTag=$eventTag, result=$result)"
+        return "EventEnd(eventTag=$eventTag)"
       }
     }
   }

@@ -81,23 +81,39 @@ class OperationLogStorageImpl(
     }
   }
 
+  private fun enqueueWriteJob(job: () -> Unit) {
+    val submitted = writeQueue.trySend(job)
+    if (submitted.isSuccess) {
+      telemetry.jobsOffloadedToWorkers.incrementAndGet()
+    }
+    else {
+      telemetry.jobsPerformedOnMainThread.incrementAndGet()
+      performWriteJob(job)
+    }
+  }
+
   private inner class TrackContext(val tag: VfsOperationTag, val appendLogEntry: AppendContext): OperationTracker {
-    override fun completeTracking(composeOperation: () -> VfsOperation<*>) {
-      val job = { writeJobImpl(tag, composeOperation, appendLogEntry) }
-      val submitted = writeQueue.trySend(job)
-      if (submitted.isSuccess) {
-        telemetry.jobsOffloadedToWorkers.incrementAndGet()
+
+    override fun completeTrackingWithCallback(trackingCompletedCallback: () -> Unit, composeOperation: () -> VfsOperation<*>) {
+      enqueueWriteJob {
+        try {
+          writeJobImpl(tag, composeOperation, appendLogEntry)
+        } finally {
+          trackingCompletedCallback()
+        }
       }
-      else {
-        telemetry.jobsPerformedOnMainThread.incrementAndGet()
-        performWriteJob(job)
+    }
+
+    override fun completeTracking(composeOperation: () -> VfsOperation<*>) {
+      enqueueWriteJob {
+        writeJobImpl(tag, composeOperation, appendLogEntry)
       }
     }
   }
 
-  override fun <R : Any> trackOperation(tag: VfsOperationTag, performOperation: OperationTracker.() -> R): R {
+  override fun trackOperation(tag: VfsOperationTag): OperationTracker {
     val appendEntry = appendLogStorage.appendEntry(bytesForOperationDescriptor(tag).toLong())
-    return TrackContext(tag, appendEntry).performOperation()
+    return TrackContext(tag, appendEntry)
   }
 
   private fun writeJobImpl(

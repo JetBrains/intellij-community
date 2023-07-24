@@ -39,7 +39,7 @@ interface VfsLog {
 @ApiStatus.Internal
 interface VfsLogEx: VfsLog {
   val connectionInterceptors: List<ConnectionInterceptor>
-  val vFileEventApplicationListener: VFileEventApplicationListener
+  val applicationVFileEventsTracker: ApplicationVFileEventsTracker
 
   fun getOperationWriteContext(): VfsLogOperationTrackingContext
 

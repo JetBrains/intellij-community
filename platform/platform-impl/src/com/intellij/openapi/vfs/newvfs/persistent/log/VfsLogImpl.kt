@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent.log
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor
+import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTracker.VFileEventTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage.OperationTracker
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadRef.PayloadSource.Companion.isInline
 import com.intellij.openapi.vfs.newvfs.persistent.log.PayloadStorageIO.Companion.fillData
@@ -219,11 +220,11 @@ class VfsLogImpl(
     )
   }
 
-  override val vFileEventApplicationListener: VFileEventApplicationListener = if (readOnly) {
-    object : VFileEventApplicationListener {} // no op
+  override val applicationVFileEventsTracker: ApplicationVFileEventsTracker = if (readOnly) {
+    ApplicationVFileEventsTracker { VFileEventTracker { /* no op */ } }
   }
   else {
-    VFileEventApplicationLogListener(getOperationWriteContext())
+    ApplicationVFileEventsLogTracker(getOperationWriteContext())
   }
 
   override fun getOperationWriteContext(): VfsLogOperationTrackingContext =
@@ -231,9 +232,8 @@ class VfsLogImpl(
       override val stringEnumerator: DataEnumerator<String> get() = context.stringEnumerator
       override val payloadWriter: PayloadWriter get() = context.payloadWriter
 
-      override fun <R : Any> trackOperation(tag: VfsOperationTag,
-                                            performOperation: OperationTracker.() -> R): R {
-        return context.operationLogStorage.trackOperation(tag, performOperation)
+      override fun trackOperation(tag: VfsOperationTag): OperationTracker {
+        return context.operationLogStorage.trackOperation(tag)
       }
     }.also {
       if (readOnly) {

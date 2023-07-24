@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.*;
+import com.intellij.openapi.vfs.newvfs.persistent.log.ApplicationVFileEventsTracker.VFileEventTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
@@ -863,36 +864,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           requestor, file, file.getModificationStamp(), modStamp, file.getTimeStamp(), -1, oldLength, count, false);
         List<VFileEvent> events = List.of(event);
         fireBeforeEvents(getPublisher(), events);
-        VfsLogEx vfsLog = getVfsLogEx();
-        if (vfsLog != null) vfsLog.getVFileEventApplicationListener().beforeApply(event);
-        IOException exception = null;
-
+        final VFileEventTracker eventTracker;
+        if (getVfsLogEx() == null) eventTracker = null;
+        else eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
         NewVirtualFileSystem fs = getFileSystem(file);
         // `FSRecords.ContentOutputStream` already buffered, no need to wrap in `BufferedStream`
         try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
           persistenceStream.write(buf, 0, count);
         }
-        catch (IOException e) {
-          exception = e;
-          throw e;
-        }
         finally {
           try (OutputStream ioFileStream = fs.getOutputStream(file, requestor, modStamp, timeStamp)) {
             ioFileStream.write(buf, 0, count);
           }
-          catch (IOException e) {
-            exception = Suppressions.addSuppressed(exception, e);
-            throw exception;
-          }
           finally {
             closed = true;
-
-            FileAttributes attributes = fs.getAttributes(file);
-            // due to FS rounding, the timestamp of the file can significantly differ from the current time
-            long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
-            long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
-            executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-            if (vfsLog != null) vfsLog.getVFileEventApplicationListener().afterApply(event, exception);
+            try {
+              FileAttributes attributes = fs.getAttributes(file);
+              // due to FS rounding, the timestamp of the file can significantly differ from the current time
+              long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+              long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+              executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
+            } finally {
+              if (eventTracker != null) eventTracker.completeEventTracking();
+            }
             fireAfterEvents(getPublisher(), events);
           }
         }
@@ -1875,9 +1869,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Applying " + event);
     }
-    VfsLogEx vfsLog = getVfsLogEx();
-    if (vfsLog != null) vfsLog.getVFileEventApplicationListener().beforeApply(event);
-    Throwable exception = null;
+    final VFileEventTracker eventTracker;
+    if (getVfsLogEx() == null) eventTracker = null;
+    else eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
     try {
       if (event instanceof VFileCreateEvent) {
         VFileCreateEvent ce = (VFileCreateEvent)event;
@@ -1924,15 +1918,13 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       }
     }
     catch (ProcessCanceledException e) {
-      exception = e;
       throw e;
     }
     catch (Exception e) {
-      exception = e;
       LOG.error(e);
     }
     finally {
-      if (vfsLog != null) vfsLog.getVFileEventApplicationListener().afterApply(event, exception);
+      if (eventTracker != null) eventTracker.completeEventTracking();
     }
   }
 
