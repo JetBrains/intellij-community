@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.jsonUtils.getNullableString
 import org.jetbrains.kotlin.idea.jsonUtils.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
+import org.jetbrains.kotlin.idea.test.ProjectDescriptorWithStdlibSources
 import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
@@ -25,6 +26,8 @@ abstract class AbstractK2MoveTest : AbstractMultifileRefactoringTest() {
      * Use this flag locally to find out which tests might be enabled.
      */
     private val onlyRunEnabledTests: Boolean = true
+
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
 
     override fun isFirPlugin(): Boolean = true
 
