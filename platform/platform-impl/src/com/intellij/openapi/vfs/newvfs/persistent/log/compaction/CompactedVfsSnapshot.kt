@@ -53,10 +53,10 @@ class CompactedVfsSnapshot(
   }
 
   override fun getContentRestorationSequence(contentRecordId: Int): DefinedState<ContentRestorationSequence> {
-    if (contentRecordId < compactedState.contentsState.size) {
+    if (contentRecordId < compactedState.contentsSize) {
       val seq = VfsChronicle.ContentRestorationSequenceBuilder()
       seq.setInitial(VfsModificationContract.ContentOperation.Set {
-        compactedState.contentsState.getEntry(contentRecordId).let(State::Ready)
+        compactedState.inflateContent(contentRecordId).let(State::Ready)
       })
       return seq.let(State::Ready)
     }

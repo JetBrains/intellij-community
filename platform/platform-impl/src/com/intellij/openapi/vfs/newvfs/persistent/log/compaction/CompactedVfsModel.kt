@@ -21,11 +21,14 @@ import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificatio
 import com.intellij.openapi.vfs.newvfs.persistent.log.timemachine.VfsModificationContract.isRelevantAndModifies
 import com.intellij.openapi.vfs.newvfs.persistent.log.util.ULongPacker
 import com.intellij.util.io.ResilientFileChannel
+import com.intellij.util.io.UnsyncByteArrayOutputStream
 import kotlinx.collections.immutable.PersistentSet
 import kotlinx.collections.immutable.persistentSetOf
 import java.nio.ByteBuffer
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption.*
+import java.util.zip.DeflaterOutputStream
+import java.util.zip.InflaterOutputStream
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.moveTo
@@ -49,6 +52,7 @@ class CompactedVfsModel(
     filesDir, FILES_PER_BLOCK * FileModel.HEADER_SIZE_BYTES, FILES_PER_BLOCK,
     entryExternalizer = FileModelExternalizer, maxOpenedBlocks = 4,
   )
+  /** contents are deflated */
   private val contentsStorage = AutoSizeAdjustingBlockEntryArrayStorage<ByteArray>(
     contentsDir, CONTENTS_BLOCK_SIZE, CONTENTS_PER_BLOCK,
     entryExternalizer = ByteArrayExternalizer, maxOpenedBlocks = 4
@@ -73,6 +77,16 @@ class CompactedVfsModel(
   ) {
     val payloadSourceDeclaration: PersistentSet<PayloadSource> =
       persistentSetOf(PayloadSource.CompactedVfsAttributes)
+
+    val contentsSize: Int get() = contentsState.size
+
+    fun inflateContent(contentRecordId: Int): ByteArray = contentsState.getEntry(contentRecordId).let { deflatedContent ->
+      val result = UnsyncByteArrayOutputStream()
+      InflaterOutputStream(result).use {
+        it.write(deflatedContent)
+      }
+      result.toByteArray()
+    }
 
     @Volatile
     private var lastReadAttributes: ReadAttribute? = null
@@ -355,6 +369,13 @@ class CompactedVfsModel(
       ).also {
         attributeUpdates.clear()
       }
+    fun ByteArray.deflate(): ByteArray {
+      val result = UnsyncByteArrayOutputStream()
+      DeflaterOutputStream(result).use {
+        it.write(this)
+      }
+      return result.toByteArray()
+    }
     val newContentsState =
       contentsStorage.performUpdate(
         currentState.contentsState,
@@ -364,10 +385,12 @@ class CompactedVfsModel(
           val seqBuilder = contentUpdates[contentId]!!
           if (!seqBuilder.isFormed) {
             seqBuilder.setInitial(
-              VfsModificationContract.ContentOperation.Set { _ -> currentState.contentsState.getEntry(contentId).let(State::Ready) }
+              VfsModificationContract.ContentOperation.Set { _ ->
+                currentState.inflateContent(contentId).let(State::Ready)
+              }
             )
           }
-          seqBuilder.restoreContent(context.payloadReader).get()
+          seqBuilder.restoreContent(context.payloadReader).get().deflate()
         },
         checkCancelled
       ).also {
