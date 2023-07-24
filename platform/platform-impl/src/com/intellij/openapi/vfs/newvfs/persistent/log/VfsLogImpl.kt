@@ -14,7 +14,6 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.io.DataEnumerator
 import com.intellij.util.io.SimpleStringPersistentEnumerator
 import com.intellij.util.io.delete
-import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
@@ -23,8 +22,7 @@ import java.nio.file.Path
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
-import kotlin.io.path.div
-import kotlin.io.path.forEachDirectoryEntry
+import kotlin.io.path.*
 import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
@@ -55,9 +53,11 @@ class VfsLogImpl(
   private val readOnly: Boolean = false,
   // TODO telemetry toggle
 ) : VfsLogEx {
-  var version by PersistentVar.integer(storagePath / "version")
+  private val versionHandler = PersistentVar.integer(storagePath / "version")
+  var version by versionHandler
     private set
-  private var properlyClosedMarker by PersistentVar.integer(storagePath / "closeMarker")
+  private val properlyClosedMarkerHandler = PersistentVar.integer(storagePath / "closeMarker")
+  private var properlyClosedMarker by properlyClosedMarkerHandler
   val wasProperlyClosedLastSession: Boolean
 
   init {
@@ -144,10 +144,12 @@ class VfsLogImpl(
       }
       operationLogStorage.dispose()
       payloadStorage.dispose()
-      LOG.info("VfsLog dispose completed in ${System.currentTimeMillis() - startTime} ms")
       if (!readOnly && !lostAnything) {
         properlyClosedMarker = CLOSED_PROPERLY
       }
+      versionHandler.close()
+      properlyClosedMarkerHandler.close()
+      LOG.info("VfsLog dispose completed in ${System.currentTimeMillis() - startTime} ms")
     }
 
     val payloadReader: PayloadReader = reader@{ payloadRef ->
@@ -356,8 +358,14 @@ class VfsLogImpl(
         }
         if (!readOnly) {
           if (it != null) {
-            LOG.info("Upgrading storage, old data will be lost")
-            clearStorage(storagePath)
+            LOG.info("Upgrading storage")
+            versionHandler.close()
+            try {
+              if (clearStorage(storagePath)) LOG.info("VfsLog storage was cleared")
+            } catch (e: IOException) {
+              LOG.error("failed to clear VfsLog storage", e)
+            }
+            versionHandler.reopen()
           }
           version = VERSION
         }
@@ -408,17 +416,12 @@ class VfsLogImpl(
 
     @JvmStatic
     @Throws(IOException::class)
-    fun clearStorage(storagePath: Path) {
-      if (storagePath.isDirectory()) {
-        var deletedAnything = false
-        storagePath.forEachDirectoryEntry { child ->
-          if (child != storagePath / "version") {
-            child.delete(true)
-            deletedAnything = true
-          }
-        }
-        if (deletedAnything) LOG.info("VfsLog storage was cleared")
+    fun clearStorage(storagePath: Path): Boolean {
+      if (storagePath.exists()) {
+        storagePath.delete(true)
+        return true
       }
+      return false
     }
   }
 }

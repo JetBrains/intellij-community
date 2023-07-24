@@ -16,34 +16,33 @@ import kotlin.reflect.KProperty
  * Caches a value for fast reading. There should not be two or more instances on the same path.
  */
 abstract class PersistentVar<T>(
-  path: Path,
-  readValue: DataInput.() -> T?,
+  private val path: Path,
+  private val readValue: DataInput.() -> T?,
   private val writeValue: DataOutput.(value: T) -> Unit
-) {
-  init {
+): AutoCloseable {
+  private fun initFile(): FileChannelInterruptsRetryer {
     path.parent?.let { Files.createDirectories(it) }
     try {
       Files.createFile(path)
     }
     catch (ignore: FileAlreadyExistsException) {
     }
+    return FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
   }
 
-  // TODO: there should be a close method
-  private val fileChannelRetryer = FileChannelInterruptsRetryer(path, EnumSet.of(READ, WRITE, CREATE))
   @Volatile
-  protected var cachedValue: T? =
-    fileChannelRetryer.retryIfInterrupted {
-      DataInputStream(Channels.newInputStream(it.position(0))).readValue()
-    }
+  private var fileChannelRetryer = initFile()
 
-  @Throws(IOException::class)
-  operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = synchronized(this) {
-    return cachedValue
+  private fun readValue(): T? = fileChannelRetryer.retryIfInterrupted {
+    DataInputStream(Channels.newInputStream(it.position(0))).readValue()
   }
 
-  @Throws(IOException::class)
-  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?): Unit = synchronized(this) {
+  @Volatile
+  protected var cachedValue: T? = readValue()
+
+  fun getValue() = cachedValue
+
+  fun setValue(value: T?): Unit = synchronized(this) {
     fileChannelRetryer.retryIfInterrupted {
       if (value == null) {
         it.truncate(0)
@@ -54,6 +53,22 @@ abstract class PersistentVar<T>(
       it.force(false)
       cachedValue = value
     }
+  }
+
+  operator fun getValue(thisRef: Any?, property: KProperty<*>): T? = getValue()
+
+  @Throws(IOException::class)
+  operator fun setValue(thisRef: Any?, property: KProperty<*>, value: T?): Unit = setValue(value)
+
+  override fun close() = synchronized(this) {
+    cachedValue = null
+    fileChannelRetryer.close()
+  }
+
+  fun reopen() = synchronized(this) {
+    fileChannelRetryer.close()
+    fileChannelRetryer = initFile()
+    cachedValue = readValue()
   }
 
   companion object {

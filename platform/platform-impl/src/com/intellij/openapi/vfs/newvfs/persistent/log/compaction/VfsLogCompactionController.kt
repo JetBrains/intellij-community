@@ -32,7 +32,8 @@ class VfsLogCompactionController(
   modeOverride: Boolean,
 ) : AutoCloseable {
   private val compactionModelDir get() = storagePath / "model"
-  private var persistedOperationMode by PersistentVar.integer(storagePath / "operationMode")
+  private val persistedOperationModeHandler = PersistentVar.integer(storagePath / "operationMode")
+  private var persistedOperationMode by persistedOperationModeHandler
   val operationMode: OperationMode get() = OperationMode.VALUES[persistedOperationMode ?: defaultOperationMode.ordinal]
 
   @Volatile
@@ -45,7 +46,7 @@ class VfsLogCompactionController(
   private var compactionState: CompactedVfsState? = null
 
   private fun closeModel() {
-    scheduledCompaction?.cancel(false)
+    scheduledCompaction?.cancel(true)
     scheduledCompaction = null
     compactionState = null
     compactionModel?.close()
@@ -263,6 +264,7 @@ class VfsLogCompactionController(
 
   override fun close() {
     closeModel()
+    persistedOperationModeHandler.close()
   }
 
   enum class OperationMode {

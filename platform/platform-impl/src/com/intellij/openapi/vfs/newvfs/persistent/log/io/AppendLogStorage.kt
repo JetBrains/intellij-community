@@ -31,8 +31,10 @@ class AppendLogStorage(
   private val chunkSize: Int
 ) : RandomAccessReadBuffer, Flushable, Closeable {
   private val chunksDir = storagePath / "chunks"
-  private var persistentSize by PersistentVar.long(storagePath / "size")
-  private var persistentStartOffset by PersistentVar.long(storagePath / "startOffset")
+  private val persistentSizeHandler: PersistentVar<Long> = PersistentVar.long(storagePath / "size")
+  private var persistentSize by persistentSizeHandler
+  private val persistentStartOffsetHandler: PersistentVar<Long> = PersistentVar.long(storagePath / "startOffset")
+  private var persistentStartOffset by persistentStartOffsetHandler
   private val storageIO: ChunkedMemoryMappedIO
   private val positionTracker: AdvancingPositionTracker
   @Volatile
@@ -152,6 +154,8 @@ class AppendLogStorage(
 
   override fun close() {
     storageIO.close()
+    persistentSizeHandler.close()
+    persistentStartOffsetHandler.close()
   }
 
   private fun chunkName(id: Int): String = id.toString(CHUNK_ENCODING_RADIX) + ".dat"

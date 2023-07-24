@@ -628,8 +628,9 @@ object VfsRecoveryUtils {
     }
     else {
       try {
-        var size by PersistentVar.long(operationsSizePath)
-        size = point.getPosition()
+        PersistentVar.long(operationsSizePath).use {
+          it.setValue(point.getPosition())
+        }
       }
       catch (e: Throwable) {
         throw VfsRecoveryException("failed to truncate new vfslog", e)
