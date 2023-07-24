@@ -1,4 +1,3 @@
 PyFile:shell1.py
   PyEmptyExpression
-    PsiElement(Py:PLING)('!')
-    PsiElement(Py:IDENTIFIER)('pwd')
+    PsiElement(Py:SHELL_COMMAND)('!pwd')

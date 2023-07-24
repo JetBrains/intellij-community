@@ -28,11 +28,12 @@ public class PyConsoleParser extends PyParser {
   private static final ImmutableSet<IElementType> IPYTHON_START_SYMBOLS = new ImmutableSet.Builder<IElementType>().add(
     PyConsoleTokenTypes.PLING,
     PyConsoleTokenTypes.QUESTION_MARK,
+    PyConsoleTokenTypes.SHELL_COMMAND,
     PyTokenTypes.COMMA,
     PyTokenTypes.DIV,
     PyTokenTypes.PERC,
     PyTokenTypes.SEMICOLON
-    ).build();
+  ).build();
 
   private final PythonConsoleData myPythonConsoleData;
 
@@ -41,14 +42,13 @@ public class PyConsoleParser extends PyParser {
     myLanguageLevel = languageLevel;
   }
 
-  public static boolean startsWithIPythonSpecialSymbol(SyntaxTreeBuilder builder) {
-    IElementType tokenType = builder.getTokenType();
-    return IPYTHON_START_SYMBOLS.contains(tokenType);
-  }
-
   @Override
   protected ParsingContext createParsingContext(SyntaxTreeBuilder builder, LanguageLevel languageLevel) {
-    boolean iPythonStartSymbol = myPythonConsoleData.isIPythonEnabled() && startsWithIPythonSpecialSymbol(builder);
+    boolean iPythonStartSymbol = myPythonConsoleData.isIPythonEnabled() && isIPythonSpecialSymbol(builder.getTokenType());
     return new PyConsoleParsingContext(builder, languageLevel, myPythonConsoleData, iPythonStartSymbol);
+  }
+
+  public static boolean isIPythonSpecialSymbol(IElementType tokenType) {
+    return IPYTHON_START_SYMBOLS.contains(tokenType);
   }
 }

@@ -601,6 +601,9 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   //DS-2583
   public void testSpaceShellCommandsJupyter() { doTest(false, "formatter/jupyter/", ".ipynb"); }
 
+  //DS-4478
+  public void testSpaceShellCommandsPathJupyter() { doTest(false, "formatter/jupyter/", ".ipynb"); }
+
   /**
    * This test merely checks that call to {@link com.intellij.psi.codeStyle.CodeStyleManager#reformat(com.intellij.psi.PsiElement)}
    * is possible for Python sources.

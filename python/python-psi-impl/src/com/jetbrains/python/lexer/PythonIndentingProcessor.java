@@ -113,7 +113,7 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
   }
 
   @NotNull
-  private String getBaseTokenText() {
+  protected String getBaseTokenText() {
     return getBufferSequence().subSequence(getBaseTokenStart(), getBaseTokenEnd()).toString();
   }
 

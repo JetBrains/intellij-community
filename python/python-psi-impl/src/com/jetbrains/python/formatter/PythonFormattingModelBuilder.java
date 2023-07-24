@@ -133,8 +133,6 @@ public class PythonFormattingModelBuilder implements FormattingModelBuilder, Cus
       .aroundInside(STAR_OPERATORS, STAR_PATTERNS).none()
       .between(EXCEPT_KEYWORD, MULT).none()
       .between(PERC, TokenSet.create(PERC, IDENTIFIER, EXPRESSION_STATEMENT)).none()
-      .between(DIV, IDENTIFIER).spaces(0)
-      .between(IDENTIFIER, DIV).spaces(0)
       .around(MULTIPLICATIVE_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS)
       .around(EXP).spaceIf(pySettings.SPACE_AROUND_POWER_OPERATOR)
       .around(SHIFT_OPERATIONS).spaceIf(commonSettings.SPACE_AROUND_SHIFT_OPERATORS)
