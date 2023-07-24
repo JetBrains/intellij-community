@@ -315,9 +315,10 @@ public final class PatchApplier {
     ApplyPatchStatus result = myFailedPatches.isEmpty() ? ApplyPatchStatus.SUCCESS : ApplyPatchStatus.FAILURE;
 
     List<PatchAndFile> textPatches = myVerifier.getTextPatches();
+    List<PatchAndFile> binaryPatches = myVerifier.getBinaryPatches();
     try {
       markInternalOperation(textPatches, true);
-      return ApplyPatchStatus.and(result, actualApply(textPatches, myVerifier.getBinaryPatches(), myCommitContext));
+      return ApplyPatchStatus.and(result, actualApply(ContainerUtil.concat(textPatches, binaryPatches), myCommitContext));
     }
     finally {
       markInternalOperation(textPatches, false);
@@ -362,16 +363,11 @@ public final class PatchApplier {
     vcsDirtyScopeManager.filesDirty(indirectlyAffected, null);
   }
 
-  private @NotNull ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> textPatches,
-                                                @NotNull List<PatchAndFile> binaryPatches,
+  private @NotNull ApplyPatchStatus actualApply(@NotNull List<PatchAndFile> patches,
                                                 @Nullable CommitContext commitContext) {
     ApplyPatchContext context = new ApplyPatchContext(myBaseDirectory, 0, true, true);
     try {
-      ApplyPatchStatus textStatus = applyList(textPatches, context, commitContext);
-      if (textStatus == ApplyPatchStatus.ABORT) return textStatus;
-
-      ApplyPatchStatus binaryStatus = applyList(binaryPatches, context, commitContext);
-      return ApplyPatchStatus.and(textStatus, binaryStatus);
+      return applyList(patches, context, commitContext);
     }
     catch (IOException e) {
       showError(myProject, e.getMessage());
