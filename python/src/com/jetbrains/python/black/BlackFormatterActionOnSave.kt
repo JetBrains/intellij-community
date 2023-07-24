@@ -70,6 +70,8 @@ class BlackFormatterActionOnSave : ActionOnSave() {
         object : Task.Backgroundable(project, PyBundle.message("black.formatting.with.black"), true) {
           override fun run(indicator: ProgressIndicator) {
             var processedFiles = 0L
+            indicator.text = PyBundle.message("black.formatting.with.black")
+            indicator.isIndeterminate = false
 
             descriptors.forEach { descriptor ->
               processedFiles++
@@ -77,7 +79,9 @@ class BlackFormatterActionOnSave : ActionOnSave() {
               indicator.text = PyBundle.message("black.processing.file.name", descriptor.virtualFile.name)
               val request = BlackFormattingRequest.File(descriptor.document.text, descriptor.virtualFile)
               val response = executor.getBlackFormattingResponse(request, BlackFormatterExecutor.BLACK_DEFAULT_TIMEOUT)
-              applyChanges(project, descriptor, response)
+              if (!indicator.isCanceled) {
+                applyChanges(project, descriptor, response)
+              }
             }
           }
         }
