@@ -36,7 +36,7 @@ object VfsRecoveryFromVfsLogTest {
       baseVfs.dispose()
       recoveredVfs.dispose()
     }.use {
-      val diff = VfsDiffGenerator.buildDiff(baseVfs, recoveredVfs)
+      val diff = VfsDiffBuilder.buildDiff(baseVfs, recoveredVfs)
       println(diff)
       check(diff.elements.isEmpty())
       check(diff.filesVisited > 10)

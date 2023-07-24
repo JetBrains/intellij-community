@@ -3,8 +3,10 @@ package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.util.concurrency.AppExecutorUtil
 import java.nio.file.Path
+import java.util.*
+import kotlin.collections.ArrayDeque
 
-object VfsDiffGenerator {
+object VfsDiffBuilder {
   class FileFlags(val flags: Int) {
     enum class FileStatus(val bit: Int) {
       CHILDREN_CACHED(PersistentFS.Flags.CHILDREN_CACHED),
@@ -37,26 +39,36 @@ object VfsDiffGenerator {
   }
 
   sealed interface DiffElement {
-    data class RootsDiff(val rootsRemoved: List<Int>, val rootsAdded: List<Int>): DiffElement
-    data class FileStatusChanged(val fileId: Int, val removed: List<FileFlags.FileStatus>, val added: List<FileFlags.FileStatus>): DiffElement
-    data class ChildrenDiff(val fileId: Int, val childrenRemoved: List<Int>, val childrenAdded: List<Int>): DiffElement
-    data class PropertyDiff(val fileId: Int, val description: String): DiffElement
-    data class ContentDiff(val fileId: Int, val before: String?, val after: String?): DiffElement {
+    data class RootsDiff(val rootsRemoved: List<Int>, val rootsAdded: List<Int>) : DiffElement
+    data class FileStatusChanged(val fileId: Int,
+                                 val removed: List<FileFlags.FileStatus>,
+                                 val added: List<FileFlags.FileStatus>) : DiffElement
+
+    data class ChildrenDiff(val fileId: Int, val childrenRemoved: List<Int>, val childrenAdded: List<Int>) : DiffElement
+    data class PropertyDiff(val fileId: Int, val description: String) : DiffElement
+    data class ContentDiff(val fileId: Int, val before: String?, val after: String?) : DiffElement {
       override fun toString(): String {
         return "ContentDiff(fileId=$fileId, before=\n$before\n\n, after=\n$after\n)"
       }
     }
+
+    class AttributeDiff(val fileId: Int, val attributeName: String, val dataBefore: ByteArray?, val dataAfter: ByteArray?) : DiffElement {
+      override fun toString(): String {
+        return "AttributeDiff(fileId=$fileId, attributeName='$attributeName', dataBefore=${dataBefore?.contentToString()}, dataAfter=${dataAfter?.contentToString()})"
+      }
+    }
   }
 
-  data class DiffResult(val filesVisited: Int, val elements: List<DiffElement>) {
+  data class DiffResult(val filesVisited: Int, val attributesChecked: Int, val elements: List<DiffElement>) {
     override fun toString(): String {
-      return "visited $filesVisited files\n" +
-        if (elements.isEmpty()) {
-          "no diff"
-        } else {
-          "diff:\n" +
-          elements.joinToString("\n")
-        }
+      return "visited $filesVisited files and checked $attributesChecked attributes\n" +
+             if (elements.isEmpty()) {
+               "no diff"
+             }
+             else {
+               "diff:\n" +
+               elements.joinToString("\n")
+             }
     }
   }
 
@@ -70,12 +82,14 @@ object VfsDiffGenerator {
       diff.add(DiffElement.RootsDiff(rootsBase - rootsTarget.toSet(), rootsTarget - rootsBase.toSet()))
     }
 
+    val visitedIds = BitSet()
     val queue = ArrayDeque<Int>()
     queue.addAll(rootsBase.toSet().intersect(rootsTarget.toSet()))
 
-    while (queue.isNotEmpty() && diff.size < 10_000) {
+    while (queue.isNotEmpty() && diff.size < maxDiffElements) {
       val id = queue.removeFirst()
       idsVisited++
+      visitedIds.set(id)
 
       val baseFlags = baseVfs.getFlags(id).let(::FileFlags)
       val targetFlags = targetVfs.getFlags(id).let(::FileFlags)
@@ -128,16 +142,65 @@ object VfsDiffGenerator {
         diff.add(DiffElement.PropertyDiff(id, "length $baseLength -> $targetLength"))
       }
 
-      // TODO attributes?
-
       queue.addAll(baseChildren.toSet().intersect(targetChildren.toSet()))
     }
-    return DiffResult(idsVisited, diff)
+
+    var attributesChecked = 0
+    val baseAttrsStorage = baseVfs.connection().attributes as AttributesStorageOverBlobStorage
+    val targetAttrsStorage = targetVfs.connection().attributes as AttributesStorageOverBlobStorage
+    baseAttrsStorage.forEachAttribute<Exception> { _, fileId, attributeId, baseData, _ ->
+      if (diff.size >= maxDiffElements) return@forEachAttribute
+      check(baseData != null)
+      if (visitedIds[fileId]) {
+        attributesChecked++
+        val attributeName = baseVfs.connection().enumeratedAttributes.valueOf(attributeId)!!
+        val targetAttrRecordId = targetVfs.getAttributeRecordId(fileId)
+        if (targetAttrRecordId == 0) {
+          diff.add(DiffElement.AttributeDiff(fileId, attributeName, baseData, null))
+        }
+        else {
+          val targetAttrId = targetVfs.connection().enumeratedAttributes.enumerate(attributeName)
+          if (!targetAttrsStorage.hasAttribute(targetAttrRecordId, fileId, targetAttrId)) {
+            diff.add(DiffElement.AttributeDiff(fileId, attributeName, baseData, null))
+          }
+          else {
+            val targetAttrData = targetAttrsStorage.readAttributeValue(targetAttrRecordId, fileId, targetAttrId)
+            if (targetAttrData == null || !baseData.contentEquals(targetAttrData)) {
+              diff.add(DiffElement.AttributeDiff(fileId, attributeName, baseData, targetAttrData))
+            }
+          }
+        }
+      }
+    }
+    targetAttrsStorage.forEachAttribute<Exception> { _, fileId, attributeId, targetData, _ ->
+      if (diff.size >= maxDiffElements) return@forEachAttribute
+      check(targetData != null)
+      if (visitedIds[fileId]) {
+        val attributeName = targetVfs.connection().enumeratedAttributes.valueOf(attributeId)!!
+        val baseAttrRecordId = baseVfs.getAttributeRecordId(fileId)
+        if (baseAttrRecordId == 0) {
+          attributesChecked++
+          diff.add(DiffElement.AttributeDiff(fileId, attributeName, null, targetData))
+        }
+        else {
+          val baseAttrId = baseVfs.connection().enumeratedAttributes.enumerate(attributeName)
+          if (!baseAttrsStorage.hasAttribute(baseAttrRecordId, fileId, baseAttrId)) {
+            attributesChecked++
+            diff.add(DiffElement.AttributeDiff(fileId, attributeName, null, targetData))
+          }
+          else {
+            // already checked this in the baseAttrsStorage traversal
+          }
+        }
+      }
+    }
+
+    return DiffResult(idsVisited, attributesChecked, diff)
   }
 
   @JvmStatic
   fun main(args: Array<String>) {
-    require(args.size == 2) { "Usage: <GenerateVFSDiff> <path to base caches folder> <path to target caches folder>" }
+    require(args.size == 2) { "Arguments: <path to base caches folder> <path to target caches folder>" }
     val baseCachesDir = Path.of(args[0])
     val targetCachesDir = Path.of(args[1])
 

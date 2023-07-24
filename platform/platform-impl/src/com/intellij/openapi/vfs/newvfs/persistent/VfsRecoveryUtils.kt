@@ -376,7 +376,7 @@ object VfsRecoveryUtils {
   ) {
     val newVfsLogOperationWriteContext = newVfsLog.getOperationWriteContext()
     // TODO estimate memory consumption more precisely and find out what fits into ~1GB(?)
-    val initChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.records-init-chunk-size", 750_000)
+    val initChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.records-init-chunk-size", 500_000)
     for (chunkStart in superRootId..maxFileId step initChunkSize) {
       val chunkEnd = (chunkStart + initChunkSize).coerceAtMost(maxFileId) + 1 // excluded
       val chunkRange = chunkStart until chunkEnd
@@ -434,11 +434,11 @@ object VfsRecoveryUtils {
             if (enumeratedAttrId == childrenAttributeEnumerated) continue
             val attr = queryContext.deenumerateAttribute(enumeratedAttrId) ?: throw IllegalStateException(
               "cannot deenumerate attribute using vfslog enumerator (enumeratedAttribute=$enumeratedAttrId)")
-            val attrData = payloadReader(dataRef)
-            if (attrData !is Ready) continue // skip if NotAvailable
-            val attrContent = attrData.value
-                                .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
             try {
+              val attrData = payloadReader(dataRef)
+              if (attrData !is Ready) continue // skip if NotAvailable
+              val attrContent = attrData.value
+                                  .cutOutAttributeVersionPrefix(attr) ?: continue // TODO this doesn't look like it should be here
               newFsRecords.writeAttribute(file.fileId, attr).use {
                 it.write(attrContent)
               }
@@ -466,6 +466,8 @@ object VfsRecoveryUtils {
     }
   }
 
+  private class PartialSnapshot(val snapshot: ExtendedVfsSnapshot, val fileIdRange: IntRange)
+
   private fun RecoveryContext.setupChildrenAttr(childrenCacheMap: Map<Int, List<Int>>,
                                                 superRootChildrenByAttr: List<SuperRootChild>,
                                                 maxFileId: Int) {
@@ -478,7 +480,41 @@ object VfsRecoveryUtils {
           .filter { it in superRootChildrenByAttrIds }
       }
 
-    val snapshot = getSnapshot(SnapshotFillerPresets.attributesFiller)
+    val childrenAttributeReader = object {
+      private val attrReadChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.children-deduplication-chunk-size", 100_000)
+
+      @Volatile
+      private var partialSnapshotCache: PartialSnapshot? = null
+
+      private fun getAttributeSnapshotFor(fileId: Int): ExtendedVfsSnapshot {
+        partialSnapshotCache?.let {
+          if (fileId in it.fileIdRange) return it.snapshot
+        }
+        val block = fileId / attrReadChunkSize
+        val range = (block * attrReadChunkSize)..((block + 1) * attrReadChunkSize)
+        val snapshot = getSnapshot(SnapshotFillerPresets.attributesFiller.constrain {
+          getFileId() in range
+        })
+        partialSnapshotCache = PartialSnapshot(snapshot, range)
+        return snapshot
+      }
+
+      fun getChildrenByAttribute(fileId: Int): List<Int>? {
+        val snapshot = getAttributeSnapshotFor(fileId)
+        return snapshot.getFileById(fileId).readAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR).getOrNull()?.use { input ->
+          val count = DataInputOutputUtil.readINT(input)
+          var prevId = fileId
+          val childrenByAttr = mutableListOf<Int>()
+          repeat(count) { _ ->
+            val id = DataInputOutputUtil.readINT(input) + prevId
+            prevId = id
+            childrenByAttr.add(id)
+          }
+          childrenByAttr
+        }
+      }
+    }
+
     val superRootValidChildren = superRootChildren.filter { fileStates.getState(it) == RecoveryState.INITIALIZED }
     // root children attr is a special case
     newFsRecords.writeAttribute(superRootId, PersistentFSTreeAccessor.CHILDREN_ATTR).use { output ->
@@ -487,15 +523,16 @@ object VfsRecoveryUtils {
         .sortedBy { it.fileId }.map { it.fileId to it.nameId }.unzip()
       PersistentFSTreeAccessor.saveNameIdSequenceWithDeltas(names.toIntArray(), ids.toIntArray(), output)
     }
-    val recoveryQueueIds = ArrayDeque<Int>()
+    val recoveryQueueIds = PriorityQueue<Int>()
     recoveryQueueIds.addAll(superRootValidChildren)
     fileStates.setState(superRootId, RecoveryState.CONNECTED)
     superRootValidChildren.forEach {
       fileStates.setState(it, RecoveryState.CONNECTED)
     }
     var duplicateChildrenLogged = 0
+    val duplicateChildrenToLog = 10
     while (recoveryQueueIds.isNotEmpty()) {
-      val fileId = recoveryQueueIds.pop()
+      val fileId = recoveryQueueIds.remove()
       val validChildren: List<Int> = childrenOf(fileId)
         .filter { fileStates.getState(it) == RecoveryState.INITIALIZED }
         .let { children -> // filter out same nameId children
@@ -506,26 +543,16 @@ object VfsRecoveryUtils {
               if (childrenIds.size == 1) childrenIds[0]
               else {
                 check(childrenIds.size > 1)
-                val childrenByAttr: List<Int>? =
-                  snapshot.getFileById(fileId).readAttribute(PersistentFSTreeAccessor.CHILDREN_ATTR).getOrNull()?.use { input ->
-                    val count = DataInputOutputUtil.readINT(input)
-                    var prevId = 0
-                    val childrenByAttr = mutableListOf<Int>()
-                    repeat(count) { _ ->
-                      val id = DataInputOutputUtil.readINT(input) + prevId
-                      prevId = id
-                      childrenByAttr.add(id)
-                    }
-                    childrenByAttr
-                  }
+                val childrenByAttr: List<Int>? = childrenAttributeReader.getChildrenByAttribute(fileId)
                 if (childrenByAttr == null) null
                 else {
                   val intersection = childrenIds.intersect(childrenByAttr.toSet())
                   duplicateChildrenLogged++
-                  if (duplicateChildrenLogged <= 10) {
+                  if (duplicateChildrenLogged <= duplicateChildrenToLog) {
                     LOG.warn("duplicate children: fileId=$fileId, nameId=$nameId, children=$childrenIds, " +
                              "childrenByAttr=$childrenByAttr, intersection=${intersection.toList()}")
-                  } else if (duplicateChildrenLogged == 11) {
+                  }
+                  else if (duplicateChildrenLogged == duplicateChildrenToLog + 1) {
                     LOG.warn("there are more duplicate children")
                   }
                   if (intersection.size == 1) intersection.first()
