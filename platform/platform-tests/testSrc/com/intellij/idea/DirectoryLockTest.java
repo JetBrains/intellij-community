@@ -52,7 +52,7 @@ public abstract sealed class DirectoryLockTest {
     protected Path getTestDir() throws IOException {
       var testDir = tempDir.getRootPath();
       if (testDir.toString().length() < 100) {
-        var padding = "length_padding_" + "x".repeat(100 - testDir.toString().length());
+        var padding = "_path_length_padding_" + "x".repeat(100 - testDir.toString().length());
         testDir = Files.createDirectories(testDir.resolve(padding));
       }
       return testDir;
@@ -62,7 +62,7 @@ public abstract sealed class DirectoryLockTest {
   public static final class FallbackModeTest extends DirectoryLockTest {
     @Override
     protected Path getTestDir() {
-      var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName().toString() : tempDir.getRootPath().toString();
+      var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName() : tempDir.getRootPath().toString();
       return memoryFs.getFs().getPath(path);
     }
   }

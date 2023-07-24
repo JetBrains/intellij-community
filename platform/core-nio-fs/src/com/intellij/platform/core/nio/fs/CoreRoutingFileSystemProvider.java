@@ -84,7 +84,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
    * Initializes the passed {@link CoreRoutingFileSystemProvider} using the current context class loader.
    * @param provider The {@link CoreRoutingFileSystemProvider}, which may have been loaded by a different class loader.
    * @param initializeMountedFSProvider Specifies whether to eagerly initialize the mounted FS provider under lock as well,
-   *                              e.g. in order to ensure the same class loader is used.
+   *   e.g., in order to ensure the same class loader is used.
    * @see CoreRoutingFileSystemProvider#INITIALIZATION_KEY
    * @see CoreRoutingFileSystemProvider#INITIALIZATION_MOUNTED_FS_PROVIDER_KEY
    */
@@ -95,7 +95,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
                                 String filesystemClassName,
                                 @Nullable Class<? extends CoreRoutingFileSystemDelegate> routingFilesystemDelegateClass,
                                 boolean initializeMountedFSProvider) throws IOException {
-    // now we can use our provider. Initializing in such hacky way because of different classloader
+    // Now we can use our provider. Initializing in such a hacky way because of different classloaders.
     Map<String,Object> map = new HashMap<>();
     map.put(INITIALIZATION_KEY, true);
     map.put(INITIALIZATION_MOUNTED_FS_PROVIDER_KEY, initializeMountedFSProvider);
@@ -104,6 +104,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     map.put(MOUNTED_FS_PREFIX, mountedFSPrefix);
     map.put(FILESYSTEM_CLASS_NAME, filesystemClassName);
     map.put(ROUTING_FILESYSTEM_DELEGATE_CLASS, routingFilesystemDelegateClass);
+    //noinspection resource
     provider.newFileSystem(URI.create("file:///"), map);
   }
 
@@ -126,7 +127,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   @Override
   public DirectoryStream<Path> newDirectoryStream(Path dir, DirectoryStream.Filter<? super Path> filter) throws IOException {
     DirectoryStream.Filter<? super Path> wrappedFilter = filter != null ? path -> filter.accept(path(path)) : null;
-    DirectoryStream<Path> stream = getProvider(dir).newDirectoryStream(unwrap(dir), wrappedFilter);
+    @SuppressWarnings("resource") DirectoryStream<Path> stream = getProvider(dir).newDirectoryStream(unwrap(dir), wrappedFilter);
     return stream == null ? null : new DirectoryStream<Path>() {
       @Override
       public void close() throws IOException {
