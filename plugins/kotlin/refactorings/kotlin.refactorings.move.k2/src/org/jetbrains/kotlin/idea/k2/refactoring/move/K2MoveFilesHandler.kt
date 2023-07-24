@@ -34,7 +34,7 @@ class K2MoveFilesHandler : MoveFileHandler() {
     override fun prepareMovedFile(file: PsiFile, moveDestination: PsiDirectory, oldToNewMap: MutableMap<PsiElement, PsiElement>) {
         require(file is KtFile) { "Can only prepare Kotlin files" }
         file.updatePackageDirective(moveDestination)
-        val declarations = file.declarations
+        val declarations = file.allDeclarations
         declarations.forEach { oldToNewMap[it] = it }
     }
 

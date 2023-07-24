@@ -37,17 +37,16 @@ sealed interface K2MoveSource<T : KtElement> {
     context(Panel)
     fun buildPanel(onError: (String?, JComponent) -> Unit)
 
-
     class FileSource(files: Set<KtFile>) : K2MoveSource<KtFile> {
         override var elements: Set<KtFile> = files
             private set
 
         override fun findReferenceUsages(): List<UsageInfo> {
-            return elements.flatMap { ElementSource(it).findReferenceUsages() }
+            return elements.flatMap { allElementSource(it).findReferenceUsages() }
         }
 
         override fun findNonCodeUsages(searchInCommentsAndStrings: Boolean, searchForText: Boolean, pkgName: FqName): List<UsageInfo> {
-            return elements.flatMap { file -> ElementSource(file).findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName) }
+            return elements.flatMap { file -> allElementSource(file).findNonCodeUsages(searchInCommentsAndStrings, searchForText, pkgName) }
         }
 
         context(Panel)
@@ -117,7 +116,7 @@ sealed interface K2MoveSource<T : KtElement> {
 
             fun getAllDeclarations(sourceFiles: Collection<KtFile>): List<KtNamedDeclaration> = sourceFiles
                 .flatMap<KtFile, KtDeclaration> { file -> if (file.isScript()) file.script!!.declarations else file.declarations }
-                .filterIsInstance(KtNamedDeclaration::class.java)
+                .filterIsInstance<KtNamedDeclaration>()
 
             fun memberInfos(
                 elementsToMove: Set<KtNamedDeclaration>,
@@ -149,8 +148,8 @@ sealed interface K2MoveSource<T : KtElement> {
     companion object {
         fun FileSource(file: KtFile): FileSource = FileSource(setOf(file))
 
-        fun ElementSource(file: KtFile): ElementSource {
-            return ElementSource(file.declarations.filterIsInstance<KtNamedDeclaration>().toSet())
+        fun allElementSource(file: KtFile): ElementSource {
+            return ElementSource(file.allDeclarations.filterIsInstance<KtNamedDeclaration>().toSet())
         }
     }
 }
