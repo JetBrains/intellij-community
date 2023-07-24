@@ -18,8 +18,6 @@ If completion suggest only one token - this option is useless (see checkLine ↑
  *  - TAB_NINE  - <a href="https://github.com/codota/tabnine-intellij">https://github.com/codota/tabnine-intellij</a>
  *  - INTELLIJ  - <a href="https://jetbrains.team/p/ccrm/code/fl-inference">https://jetbrains.team/p/ccrm/code/fl-inference</a>
  * @param topN Take only N top suggestions, applying after filtering by source
- * @param isBenchmark Call completion once for each token.
- * @param randomSeed Random seed for evaluation. Currently used to select token prefix in benchmark mode.
  * @param suggestionsProvider Name of provider of suggestions (use DEFAULT for IDE completion)
  */
 data class CompletionGolfStrategy(
@@ -31,7 +29,8 @@ data class CompletionGolfStrategy(
   val source: SuggestionSource? = null,
   var topN: Int = -1,
 
-  val suggestionsProvider: String = DEFAULT_PROVIDER) : EvaluationStrategy {
+  val suggestionsProvider: String = DEFAULT_PROVIDER,
+  val pathToZipModel: String? = null) : EvaluationStrategy {
   override val filters: Map<String, EvaluationFilter> = emptyMap()
 
   fun isDefaultProvider(): Boolean = suggestionsProvider == DEFAULT_PROVIDER

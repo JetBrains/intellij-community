@@ -44,5 +44,5 @@ class LineCompletionFeature : EvaluableFeatureBase<CompletionGolfStrategy>("line
   }
 
   override fun getEvaluationSteps(language: Language, strategy: CompletionGolfStrategy): List<EvaluationStep> =
-    listOf(SetupFullLineStep())
+    listOf(SetupFullLineStep(pathToZipModel = strategy.pathToZipModel))
 }
