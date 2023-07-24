@@ -31,12 +31,15 @@ internal class NewUiOnboardingService(private val project: Project, private val 
     cs.launch(Dispatchers.EDT) { executor.start() }
   }
 
-  private fun getSteps(): List<NewUiOnboardingStep> {
+  private fun getSteps(): List<Pair<String, NewUiOnboardingStep>> {
     val stepIds = getStepOrder()
     val stepExtensions = NewUiOnboardingStep.EP_NAME.extensions
     return stepIds.mapNotNull { id ->
       val step = stepExtensions.find { it.key == id }?.instance
-      step?.takeIf { it.isAvailable() }
+      if (step?.isAvailable() == true) {
+        id to step
+      }
+      else null
     }
   }
 

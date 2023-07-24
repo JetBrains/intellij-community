@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import javax.swing.JComponent
 
 internal class NewUiOnboardingExecutor(private val project: Project,
-                                       private val steps: List<NewUiOnboardingStep>,
+                                       private val steps: List<Pair<String, NewUiOnboardingStep>>,
                                        private val cs: CoroutineScope,
                                        parentDisposable: Disposable) {
   private val disposable = Disposer.newDisposable()
@@ -30,7 +30,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
     if (ind >= steps.size) {
       return
     }
-    val step = steps[ind]
+    val (stepId, step) = steps[ind]
     val stepDisposable = Disposer.newCheckedDisposable()
     Disposer.register(disposable, stepDisposable)
     val gotItData = step.performStep(project, stepDisposable)
