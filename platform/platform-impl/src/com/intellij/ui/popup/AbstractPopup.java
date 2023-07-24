@@ -590,9 +590,15 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private static void fitXToComponentScreen(@NotNull Point screenPoint, @NotNull Component comp) {
     var componentScreen = ScreenUtil.getScreenRectangle(comp);
     if (screenPoint.x < componentScreen.x) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Moving the popup X coordinate from " + screenPoint.x + " to " + componentScreen.x + " to fit into the component screen " + componentScreen);
+      }
       screenPoint.x = componentScreen.x;
     }
     if (screenPoint.x > componentScreen.x + componentScreen.width) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Moving the popup X coordinate from " + screenPoint.x + " to " + (componentScreen.x + componentScreen.width) + " to fit into the component screen " + componentScreen);
+      }
       screenPoint.x = componentScreen.x + componentScreen.width;
     }
   }
@@ -984,38 +990,73 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("START calculating bounds for a popup at (" + aScreenX + "," + aScreenY + "," + (considerForcedXY ? "forced" : "not forced") + ") for " + owner);
+    }
     Dimension sizeToSet = getStoredSize();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The stored size for key " + myDimensionServiceKey + " is " + sizeToSet);
+    }
     if (myForcedSize != null) {
       sizeToSet = myForcedSize;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Forced the size to " + sizeToSet);
+      }
     }
 
     Rectangle screen = ScreenUtil.getScreenRectangle(aScreenX, aScreenY);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("The screen rectangle for (" + aScreenX + "," + aScreenY + ") is " + screen);
+    }
     if (myLocateWithinScreen) {
       Dimension preferredSize = myContent.getPreferredSize();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The preferred size is " + preferredSize);
+      }
       Object o = myContent.getClientProperty(FIRST_TIME_SIZE);
       if (sizeToSet == null && o instanceof Dimension) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The size from the FIRST_TIME_SIZE property is " + o);
+        }
         int w = ((Dimension)o).width;
         int h = ((Dimension)o).height;
         if (w > 0) preferredSize.width = w;
         if (h > 0) preferredSize.height = h;
         sizeToSet = preferredSize;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("The size is set to " + sizeToSet);
+        }
       }
       Dimension size = sizeToSet != null ? sizeToSet : preferredSize;
       if (size.width > screen.width) {
         size.width = screen.width;
         sizeToSet = size;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resized to fit the screen width: " + sizeToSet);
+        }
       }
       if (size.height > screen.height) {
         size.height = screen.height;
         sizeToSet = size;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Resized to fit the screen height: " + sizeToSet);
+        }
       }
     }
 
     if (sizeToSet != null) {
-      JBInsets.addTo(sizeToSet, myContent.getInsets());
+      Insets insets = myContent.getInsets();
+      JBInsets.addTo(sizeToSet, insets);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Added insets (" + insets + "), the size is now: " + sizeToSet);
+      }
 
-      sizeToSet.width = Math.max(sizeToSet.width, myContent.getMinimumSize().width);
-      sizeToSet.height = Math.max(sizeToSet.height, myContent.getMinimumSize().height);
+      Dimension minimumSize = myContent.getMinimumSize();
+      sizeToSet.width = Math.max(sizeToSet.width, minimumSize.width);
+      sizeToSet.height = Math.max(sizeToSet.height, minimumSize.height);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Coerced to the minimum size (" + minimumSize + "): " + sizeToSet);
+      }
 
       myContent.setSize(sizeToSet);
       myContent.setPreferredSize(sizeToSet);
@@ -1025,6 +1066,9 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     boolean adjustXY = true;
     if (myUseDimServiceForXYLocation) {
       Point storedLocation = getStoredLocation();
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("The stored location for key " + myDimensionServiceKey + " is " + storedLocation);
+      }
       if (storedLocation != null) {
         xy = storedLocation;
         adjustXY = false;
@@ -1036,16 +1080,28 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       if (insets != null) {
         xy.x -= insets.left;
         xy.y -= insets.top;
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Location after adjusting by insets (" + insets + ") is " + xy);
+        }
       }
     }
 
     if (considerForcedXY && myForcedLocation != null) {
       xy = myForcedLocation;
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Location forced to " + myForcedLocation);
+      }
     }
 
     fixLocateByContent(xy, false);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Location after fixing by content is " + xy);
+    }
 
     Rectangle targetBounds = new Rectangle(xy, myContent.getPreferredSize());
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Target bounds " + targetBounds);
+    }
     if (targetBounds.width > screen.width || targetBounds.height > screen.height) {
       StringBuilder sb = new StringBuilder("popup preferred size is bigger than screen: ");
       sb.append(targetBounds.width).append("x").append(targetBounds.height);
@@ -1055,10 +1111,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     Rectangle original = new Rectangle(targetBounds);
     if (myLocateWithinScreen) {
       ScreenUtil.moveToFit(targetBounds, screen, null);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after moving to fit the screen: " + targetBounds);
+      }
     }
     else {
       //even when LocateWithinScreen option is disabled, popup should not be shown in invisible area
       fitToVisibleArea(targetBounds);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Target bounds after moving to fit the visible area: " + targetBounds);
+      }
+    }
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END calculating popup bounds, the result is " + targetBounds);
     }
 
 
@@ -1095,11 +1160,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
     PopupComponentFactory factory = PopupComponentFactory.getCurrentInstance();
     myPopup = factory.createPopupComponent(myPopupType, popupOwner, myContent, targetBounds.x, targetBounds.y, this);
     if (LOG.isDebugEnabled()) {
+      LOG.debug("START adjusting popup bounds after creation");
       LOG.debug("  actual preferred size: " + myContent.getPreferredSize());
     }
     if (targetBounds.width != myContent.getWidth() || targetBounds.height != myContent.getHeight()) {
       // JDK uses cached heavyweight popup that is not initialized properly
-      LOG.debug("the expected size is not equal to the actual size");
+      LOG.debug("the expected size (" + targetBounds.getSize() + ") is not equal to the actual size (" + myContent.getSize() + ")");
       Window popup = myPopup.getWindow();
       if (popup != null) {
         popup.setSize(targetBounds.width, targetBounds.height);
@@ -1108,7 +1174,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
         }
       }
       else {
-        LOG.debug("cannot fix size for non-heavy-weight popup");
+        LOG.debug("cannot fix size for non-heavy-weight popup because its window is null");
       }
     }
 
@@ -1191,17 +1257,29 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       window.setType(Window.Type.NORMAL);
     }
     myWindow = window;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Setting minimum size to " + myMinSize);
+    }
     setMinimumSize(myMinSize);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Minimum size set to " + window.getMinimumSize());
+    }
 
     TouchbarSupport.showPopupItems(this, myContent);
 
     myModalityStateWhenShown = ModalityState.current();
     myPopup.show();
     Rectangle bounds = window.getBounds();
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("END adjusting popup bounds after creation, the result is: " + bounds + ", starting final post-show adjustments");
+    }
 
     PopupLocationTracker.register(this);
 
     if (bounds.width > screen.width || bounds.height > screen.height) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("Bounds won't fit into the screen, adjusting");
+      }
       ScreenUtil.fitToScreen(bounds);
       window.setBounds(bounds);
     }
