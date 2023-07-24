@@ -66,8 +66,6 @@ public abstract class ApplicationInfo {
 
   public abstract String getJetBrainsTvUrl();
 
-  public abstract String getKeyConversionUrl();
-
   public abstract boolean hasHelp();
 
   public abstract boolean hasContextHelp();
