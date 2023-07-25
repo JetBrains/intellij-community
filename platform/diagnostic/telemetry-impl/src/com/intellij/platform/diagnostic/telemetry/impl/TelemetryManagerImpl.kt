@@ -7,7 +7,6 @@ import com.intellij.diagnostic.rootTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.*
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
@@ -26,13 +25,26 @@ import kotlin.coroutines.CoroutineContext
  */
 @ApiStatus.Experimental
 internal class TelemetryManagerImpl : TelemetryManager {
-  private var sdk: OpenTelemetry = OpenTelemetry.noop()
+  private val sdk: OpenTelemetry
 
   private val otlpService by lazy {
     ApplicationManager.getApplication().service<OtlpService>()
   }
 
   override var verboseMode: Boolean = false
+
+  private val configurator = OpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
+                                                       otelSdkBuilder = OpenTelemetrySdk.builder(),
+                                                       appInfo = ApplicationInfoImpl.getShadowInstance(),
+                                                       enableMetricsByDefault = true)
+
+  init {
+    verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
+    sdk = configurator
+      .getConfiguredSdkBuilder()
+      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
+      .buildAndRegisterGlobal()
+  }
 
   override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
     configurator.aggregatedSpansProcessor.addSpansExporters(exporters)
@@ -42,22 +54,7 @@ internal class TelemetryManagerImpl : TelemetryManager {
     configurator.aggregatedMetricsExporter.addMetricsExporters(exporters)
   }
 
-  private val configurator = OpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
-                                                       otelSdkBuilder = OpenTelemetrySdk.builder(),
-                                                       appInfo = ApplicationInfoImpl.getShadowInstance(),
-                                                       enableMetricsByDefault = true)
-
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())
-
-  override fun init() {
-    logger<TelemetryManagerImpl>().info("Initializing telemetry tracer ${this::class.java.name}")
-
-    verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    sdk = configurator
-      .getConfiguredSdkBuilder()
-      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
-      .buildAndRegisterGlobal()
-  }
 
   override fun getTracer(scope: Scope): IJTracer {
     val name = scope.toString()

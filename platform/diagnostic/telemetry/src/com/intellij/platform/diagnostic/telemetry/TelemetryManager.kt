@@ -3,6 +3,7 @@ package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
+import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -33,8 +34,6 @@ interface TelemetryManager {
 
   var verboseMode: Boolean
 
-  fun init()
-
   /**
    * Method creates a tracer with the scope name.
    * Separate tracers define different scopes, and as a result, separate main nodes in the result data.
@@ -61,12 +60,11 @@ private val instance = SynchronizedClearableLazy {
   }
   catch (e: Throwable) {
     log.info("Something unexpected happened during loading TelemetryTracer", e)
-    log.info("Falling back to loading default implementation of TelemetryTracer ${TelemetryDefaultManager::class.java.name}")
-    TelemetryDefaultManager()
+    log.info("Falling back to loading noop implementation of TelemetryTracer")
+    NoopTelemetryManager()
   }
 
   log.info("Loaded telemetry tracer service ${instance::class.java.name}")
-  instance.init()
   instance
 }
 
@@ -82,4 +80,21 @@ private fun <T> getImplementationService(serviceClass: Class<T>): T {
   }
 
   return implementations.single()
+}
+
+@Internal
+class NoopTelemetryManager : TelemetryManager {
+  override var verboseMode: Boolean = false
+
+  override fun getTracer(scope: Scope): IJTracer = IJNoopTracer
+
+  override fun getSimpleTracer(scope: Scope) = NoopIntelliJTracer
+
+  override fun getMeter(scope: Scope): Meter = OpenTelemetry.noop().getMeter(scope.toString())
+
+  override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
+  }
+
+  override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+  }
 }
