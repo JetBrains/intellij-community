@@ -12,9 +12,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.io.IOUtil;
@@ -31,7 +31,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspectionTool {
-  private static final TokenSet LITERALS = TokenSet.create(JavaTokenType.CHARACTER_LITERAL, JavaTokenType.STRING_LITERAL);
 
   @NotNull
   @Override
@@ -53,10 +52,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       @Override
       public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
         super.visitLiteralExpression(expression);
-        if (!(expression instanceof PsiLiteralExpressionImpl)) return;
-        if (!LITERALS.contains(((PsiLiteralExpressionImpl)expression).getLiteralElementType())) {
-          return;
-        }
+        if (!PsiUtil.isJavaToken(expression.getFirstChild(), ElementType.TEXT_LITERALS)) return;
         handle(expression);
       }
 
