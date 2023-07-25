@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
@@ -22,6 +21,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -46,7 +47,20 @@ final class PersistentFSConnector {
     new ContentStoragesRecoverer()
   );
 
-  private static final Lock connectDisconnectLock = new ReentrantLock();
+  //@formatter:off
+  private static Lock noLock() {
+    return new Lock() {
+      @Override public void lock() { }
+      @Override public void lockInterruptibly() throws InterruptedException { }
+      @Override public boolean tryLock() { return true; }
+      @Override public boolean tryLock(long time, @NotNull TimeUnit unit) throws InterruptedException { return true; }
+      @Override public void unlock() { }
+      @NotNull @Override public Condition newCondition() { throw new UnsupportedOperationException(); }
+    };
+  }
+  //@formatter:on
+
+  private static final Lock connectDisconnectLock = !VfsLog.isVfsTrackingEnabled() ? new ReentrantLock() : noLock();
 
 
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
@@ -175,24 +189,20 @@ final class PersistentFSConnector {
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
     PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, useContentHashes, enableVfsLog, pool);
     try {
-      if (VfsLog.isVfsTrackingEnabled()) {
+      if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
         vfsLoader.replaceStoragesIfMarkerPresent();
       }
       vfsLoader.failIfCorruptionMarkerPresent();
 
-      vfsLoader.initializeStorages();
-
-      if (VfsLog.isVfsTrackingEnabled() &&
-          vfsLoader.vfsLog() != null &&
-          !((VfsLogImpl)vfsLoader.vfsLog()).getWasProperlyClosedLastSession()
-      ) {
-        LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");
-        if (!vfsLoader.recoverCachesFromVfsLog()) {
+      if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
+        if (vfsLoader.recoverCachesFromVfsLogIfAppWasNotClosedProperly()) {
           LOG.info("Recovered caches from VfsLog");
         } else {
           LOG.info("Failed to recover caches from VfsLog");
         }
       }
+
+      vfsLoader.initializeStorages();
 
       vfsLoader.ensureStoragesVersionsAreConsistent(currentImplVersion);
 

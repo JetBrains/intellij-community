@@ -104,8 +104,7 @@ class VfsLogImpl(
 
     val compactionCancellationRequests: AtomicInteger = AtomicInteger(0)
 
-    @Volatile
-    var isDisposing: Boolean = false
+    val isDisposing: AtomicBoolean = AtomicBoolean(false)
 
     fun flush() {
       payloadStorage.flush()
@@ -113,9 +112,11 @@ class VfsLogImpl(
     }
 
     fun dispose() {
+      if (!isDisposing.compareAndSet(false, true)) {
+        LOG.warn("VfsLog dispose is already completed/in progress")
+      }
       val startTime = System.currentTimeMillis()
-      assert(!isDisposing)
-      isDisposing = true
+
       compactionController.close()
 
       operationLogStorage.closeWriteQueue()
@@ -352,7 +353,7 @@ class VfsLogImpl(
     override fun end(): OperationLogStorage.Iterator = context.operationLogStorage.end()
 
     override fun cancellationWasRequested(): Boolean {
-      return context.compactionCancellationRequests.get() != 0 || context.isDisposing
+      return context.compactionCancellationRequests.get() != 0 || context.isDisposing.get()
     }
 
     override fun clearOperationLogStorageUpTo(position: Long) {

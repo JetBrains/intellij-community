@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -35,6 +36,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordAccessor.hasDeletedFlag;
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSInitException.ErrorCategory.*;
@@ -221,23 +223,34 @@ public final class PersistentFSLoader {
     );
   }
 
-  public boolean recoverCachesFromVfsLog() throws IOException {
-    if (vfsLog == null) throw new AssertionError("called with vfsLog == null");
+  public boolean recoverCachesFromVfsLogIfAppWasNotClosedProperly() throws IOException {
+    VfsLogImpl vfsLog = new VfsLogImpl(vfsLogDir, true);
+    try {
+      if (!vfsLog.getWasProperlyClosedLastSession()) {
+        LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");
+        return recoverCachesFromVfsLog(vfsLog);
+      }
+    } finally {
+      vfsLog.dispose();
+    }
+    return false;
+  }
 
-    boolean recoveredCaches = false;
+  private boolean recoverCachesFromVfsLog(@NotNull VfsLogImpl vfsLog) throws IOException {
+    AtomicBoolean recoveredCaches = new AtomicBoolean(false);
     try (var queryContext = vfsLog.query()) {
-      // TODO make a progress reporting to UI (we probably can't just call runModal* things right from here);
-      recoveredCaches = RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext, null);
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        recoveredCaches.set(
+          RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext)
+        );
+      });
     } catch (Throwable e) {
       LOG.error("VFS Caches recovery attempt has failed", e);
     }
-    if (!recoveredCaches) return false;
-
-    closeEverything();
+    if (!recoveredCaches.get()) return false;
     if (!replaceStoragesIfMarkerPresent()) {
       throw new AssertionError("storages replacement didn't happen right after recovery");
     }
-    initializeStorages();
     return true;
   }
 

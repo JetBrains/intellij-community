@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.RecoveryPoint
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.thinOut
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.util.io.delete
 import kotlinx.coroutines.*
@@ -74,6 +75,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     coroutineScope.launch {
       val recoveryPoints = getRecoveryPoints(queryContext)
       if (recoveryPoints == null || recoveryPoints.none()) return@launch
+      (vfsLog as VfsLogEx).flush() // write pending data to disk, because vfslog storage will be copied inside recovery util
       withContext(Dispatchers.EDT) {
         val dialog = SuggestAutomaticVfsRecoveryDialog(ApplicationManagerEx.getApplicationEx().isRestartCapable) { enableSuggestion ->
           Registry.get("idea.vfs.log-vfs-operations.suggest-automatic-recovery").setValue(enableSuggestion)
@@ -133,8 +135,6 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
       prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter())
     }
-    LOG.info("creating a storages replacement marker...")
-    VfsRecoveryUtils.createStoragesReplacementMarker(cachesDir, recoveredCachesDir)
     LOG.info("restarting...")
     app.restart(true)
   }
@@ -164,10 +164,14 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     private val cachesDir = FSRecords.getCachesDir().toNioPath()
     private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
 
-    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext, progressReporter: RawProgressReporter?): Boolean {
-      val recoveryPoint = getRecoveryPoints(queryContext)?.firstOrNull() ?: return false
-      prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter)
-      return true
+    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext): Boolean {
+      // FIXME this modal should be at the call site, but it's java code that is not friendly to coroutines
+      return runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
+                                          TaskCancellation.nonCancellable()) {
+        val recoveryPoint = getRecoveryPoints(queryContext)?.firstOrNull() ?: return@runWithModalProgressBlocking false
+        prepareRecoveredCaches(queryContext, recoveryPoint.point, rawProgressReporter)
+        true
+      }
     }
 
     private fun prepareRecoveredCaches(queryContext: VfsLogQueryContext,
@@ -180,6 +184,8 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       val result = VfsRecoveryUtils.recoverFromPoint(point, queryContext, cachesDir, recoveredCachesDir,
                                                      progressReporter = progressReporter)
       LOG.info(result.toString())
+      LOG.info("creating a storages replacement marker...")
+      VfsRecoveryUtils.createStoragesReplacementMarker(cachesDir, recoveredCachesDir)
     }
 
     private fun getRecoveryPoints(queryContext: VfsLogQueryContext): Sequence<RecoveryPoint>? {

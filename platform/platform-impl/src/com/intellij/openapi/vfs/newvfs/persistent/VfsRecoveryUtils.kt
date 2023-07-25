@@ -639,11 +639,6 @@ object VfsRecoveryUtils {
                          newStorageDir: Path,
                          point: OperationLogStorage.Iterator) {
     require(oldStorageDir != newStorageDir) { "oldStorageDir == newStorageDir" }
-    try {
-      (PersistentFS.getInstance().vfsLog as? VfsLogEx)?.flush()
-    }
-    catch (ignored: Throwable) {
-    }
     // if there are pending writes it is okay, because we overwrite the size property anyway
     val oldPaths = PersistentFSPaths(oldStorageDir)
     val newPaths = PersistentFSPaths(newStorageDir)
