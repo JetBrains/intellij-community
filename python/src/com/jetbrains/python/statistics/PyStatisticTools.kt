@@ -22,6 +22,7 @@ import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
 import com.jetbrains.python.statistics.InterpreterTarget.*
 import com.jetbrains.python.statistics.InterpreterType.*
+import com.jetbrains.python.target.PyTargetAwareAdditionalData
 
 val Project.modules get() = ModuleManager.getInstance(this).modules
 val Project.sdks get() = modules.mapNotNull(Module::getSdk)
@@ -70,6 +71,13 @@ enum class InterpreterTarget(val value: String) {
   REMOTE_VAGRANT("Remote_Vagrant"),
   REMOTE_WEB_DEPLOYMENT("Remote_Web_Deployment"),
   REMOTE_UNKNOWN("Remote_Unknown"),
+
+  TARGET_SSH_WEB_DEVELOPMENT("ssh/web-deployment"),
+  TARGET_SSH_SFTP("ssh/sftp"),
+  TARGET_DOCKER("docker"),
+  TARGET_DOCKER_COMPOSE("docker-compose"),
+  TARGET_VAGRANT("vagrant"),
+  TARGET_WSL("wsl"),
 }
 
 val EXECUTION_TYPE = EventFields.String("executionType", listOf(
@@ -101,7 +109,14 @@ val INTERPRETER_TYPE = EventFields.String("interpreterType", listOf(PIPENV.value
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
 val Sdk.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
-val Sdk.executionType get(): InterpreterTarget = (sdkAdditionalData as? PyRemoteSdkAdditionalDataBase)?.executionType ?: LOCAL
+val Sdk.executionType: InterpreterTarget
+  get() =
+    when (val additionalData = sdkAdditionalData) {
+      is PyTargetAwareAdditionalData -> additionalData.executionType
+      is PyRemoteSdkAdditionalDataBase -> additionalData.executionType
+      else -> LOCAL
+    }
+
 val Sdk.interpreterType: InterpreterType
   get() = when {
     // The order of checks is important here since e.g. a pipenv is a virtualenv
@@ -111,6 +126,20 @@ val Sdk.interpreterType: InterpreterType
     PythonSdkUtil.isVirtualEnv(this) -> VIRTUALENV
     else -> REGULAR
   }
+
+private val PyTargetAwareAdditionalData.executionType: InterpreterTarget
+  get() =
+    targetEnvironmentConfiguration?.typeId?.let { typeId ->
+      when (typeId) {
+        TARGET_SSH_WEB_DEVELOPMENT.value -> REMOTE_WEB_DEPLOYMENT
+        TARGET_SSH_SFTP.value -> REMOTE_SSH_CREDENTIALS
+        TARGET_DOCKER.value -> REMOTE_DOCKER
+        TARGET_DOCKER_COMPOSE.value -> REMOTE_DOCKER_COMPOSE
+        TARGET_VAGRANT.value -> REMOTE_VAGRANT
+        TARGET_WSL.value -> REMOTE_WSL
+        else -> REMOTE_UNKNOWN
+      }
+    } ?: REMOTE_UNKNOWN
 
 private val PyRemoteSdkAdditionalDataBase.executionType: InterpreterTarget
   get() = remoteConnectionType.let { type ->
