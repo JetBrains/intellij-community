@@ -6,7 +6,7 @@ Connected to the target VM
 multiLineLambda.kt:8
 Highlight whole line
 multiLineLambda.kt:11
-Highlight lambda range: { println(it) }
+Highlight lambda range: '{ println(it) }'
 multiLineLambda.kt:16
 Highlight whole line
 Disconnected from the target VM
