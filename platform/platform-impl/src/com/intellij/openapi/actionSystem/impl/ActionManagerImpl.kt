@@ -1017,11 +1017,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         return
       }
 
-      // diagnostics for IDEA-283781
-      if (actionId == "CommentByLineComment") {
-        LOG.info("Unregistering line comment action", Throwable())
-      }
-
       idToAction = idToAction.remove(actionId)
 
       actionToId.remove(actionToRemove)
