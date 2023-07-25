@@ -612,25 +612,41 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       throw RuntimeException("No tests were found in ${root} with ${pattern}")
     }
 
+    val files = testClasspath.map { Path.of(it) }
+    val loader = UrlClassLoader.build().files(files).get()
+
+    @Suppress("UNCHECKED_CAST")
+    val testAnnotation4 = loader.loadClass("org.junit.Test") as Class<Annotation>
+
+    @Suppress("UNCHECKED_CAST")
+    val testAnnotation5 = loader.loadClass("org.junit.jupiter.api.Test") as Class<Annotation>
+
+    @Suppress("UNCHECKED_CAST")
+    val testFactoryAnnotation5 = loader.loadClass("org.junit.jupiter.api.TestFactory") as Class<Annotation>
+
     var noTestsInAllClasses = true
     for (testClass in testClasses) {
       val qName = FileUtilRt.getNameWithoutExtension(testClass).replace('/', '.')
-      val files = testClasspath.map { Path.of(it) }
       try {
         var noTests = true
-        val loader = UrlClassLoader.build().files(files).get()
         val aClass = loader.loadClass(qName)
-        @Suppress("UNCHECKED_CAST")
-        val testAnnotation = loader.loadClass("org.junit.Test") as Class<Annotation>
-        for (m in aClass.declaredMethods) {
-          if (Modifier.isPublic(m.modifiers) && m.isAnnotationPresent(testAnnotation)) {
-            val exitCode = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath, qName, m.name)
-            noTests = noTests && exitCode == NO_TESTS_ERROR
-          }
+
+        val jUnit4And5TestMethods = getAnnotatedTestMethods(aClass, testAnnotation4, testAnnotation5, testFactoryAnnotation5)
+
+        // Run JUnit 4 and 5 test methods separately if any
+        for (method in jUnit4And5TestMethods) {
+          val exitCode = runJUnit5Engine(
+            systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
+            qName, method)
+          noTests = noTests && exitCode == NO_TESTS_ERROR
         }
+        // Fallback to running whole class (JUnit 3)
         if (noTests) {
-          val exitCode3 = runJUnit5Engine(systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath, qName, null)
-          noTests = exitCode3 == NO_TESTS_ERROR
+          val exitCode = runJUnit5Engine(
+            systemProperties, jvmArgs, envVariables, bootstrapClasspath, null, testClasspath,
+            qName, null,
+          )
+          noTests = exitCode == NO_TESTS_ERROR
         }
         noTestsInAllClasses = noTestsInAllClasses && noTests
       }
@@ -640,8 +656,17 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
 
     if (noTestsInAllClasses) {
-      throw RuntimeException("No tests were found in ${mainModule}")
+      throw RuntimeException("No tests were found in ${mainModule} with ${pattern}")
     }
+  }
+
+  private fun getAnnotatedTestMethods(aClass: Class<*>, vararg annotations: Class<Annotation>): List<String> {
+    return aClass.methods
+      .asSequence()
+      .filter { m -> Modifier.isPublic(m.modifiers) }
+      .filter { m -> annotations.any { a -> m.isAnnotationPresent(a) } }
+      .map { m -> m.name }
+      .toList()
   }
 
   private fun runJUnit5Engine(mainModule: String,
@@ -701,7 +726,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         else 0
 
         if (exitCode5 == NO_TESTS_ERROR && exitCode3 == NO_TESTS_ERROR &&
-            // only check on first (full) attempt
+            // only check on the first (full) attempt
             attempt == 1 &&
             // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
             numberOfBuckets < 2) {
