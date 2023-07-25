@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.util.RunOnceUtil;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.Module;
@@ -12,7 +11,6 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -22,7 +20,6 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.Objects;
 
 public final class ProjectViewToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
@@ -32,13 +29,7 @@ public final class ProjectViewToolWindowFactory implements ToolWindowFactory, Du
 
   @Override
   public @NotNull Icon getIcon() {
-    String path = ApplicationInfoEx.getInstanceEx().getToolWindowIconUrl();
-    if (path.equals("/toolwindows/toolWindowProject.svg") || path.equals("toolwindows/toolWindowProject.svg")) {
-      return AllIcons.Toolwindows.ToolWindowProject;
-    }
-    else {
-      return Objects.requireNonNull(IconLoader.findIcon(path, ProjectViewToolWindowFactory.class.getClassLoader()));
-    }
+    return AllIcons.Toolwindows.ToolWindowProject;
   }
 
   @Override

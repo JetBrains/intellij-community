@@ -56,12 +56,10 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private String mySplashImageUrl;
   private String myEapSplashImageUrl;
-  private String mySmallIconUrl = "/icon_small.png";
   private String mySvgIconUrl;
   private String mySvgEapIconUrl;
   private String mySmallSvgIconUrl;
   private String mySmallSvgEapIconUrl;
-  private String myToolWindowIconUrl = "/toolwindows/toolWindowProject.svg";
   private String myWelcomeScreenLogoUrl;
   private String myCustomAppIcon;
 
@@ -153,11 +151,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         break;
 
         case "icon": {
-          mySmallIconUrl = child.getAttributeValue("size16", mySmallIconUrl);
-          String toolWindowIcon = getAttributeValue(child, "size12");
-          if (toolWindowIcon != null) {
-            myToolWindowIconUrl = toolWindowIcon;
-          }
           mySvgIconUrl = child.getAttributeValue("svg");
           mySmallSvgIconUrl = child.getAttributeValue("svg-small");
           myCustomAppIcon = child.getAttributeValue("custom");
@@ -459,11 +452,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public @NotNull String getSmallIconUrl() {
-    return mySmallIconUrl;
-  }
-
-  @Override
   public @NotNull String getApplicationSvgIconUrl() {
     return isEAP() && mySvgEapIconUrl != null ? mySvgEapIconUrl : mySvgIconUrl;
   }
@@ -480,11 +468,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   public @NotNull String getSmallApplicationSvgIconUrl(boolean isEap) {
     return isEap && mySmallSvgEapIconUrl != null ? mySmallSvgEapIconUrl : mySmallSvgIconUrl;
-  }
-
-  @Override
-  public String getToolWindowIconUrl() {
-    return myToolWindowIconUrl;
   }
 
   @Override

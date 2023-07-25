@@ -20,11 +20,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSplashImageUrl();
 
-  /** @deprecated please use {@link #getSmallApplicationSvgIconUrl()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public abstract @NotNull String getSmallIconUrl();
-
   /**
    * Returns a path to an SVG icon of the product.
    * The path is a relative path inside the product's JAR files.
@@ -39,8 +34,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * containing a variant of {@link #getApplicationSvgIconUrl() the product icon} which is suitable for 16x16 images.
    */
   public abstract @NotNull String getSmallApplicationSvgIconUrl();
-
-  public abstract String getToolWindowIconUrl();
 
   /** @deprecated please use {@link #getApplicationSvgIconUrl()} instead. */
   @Deprecated
