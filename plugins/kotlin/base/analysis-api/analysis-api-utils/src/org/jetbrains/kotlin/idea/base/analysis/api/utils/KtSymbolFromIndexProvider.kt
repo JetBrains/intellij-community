@@ -18,7 +18,6 @@ import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
-import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
 import org.jetbrains.kotlin.idea.stubindex.*
 import org.jetbrains.kotlin.name.Name
@@ -297,7 +296,7 @@ private val KotlinBuiltins = setOf("kotlin/ArrayIntrinsicsKt", "kotlin/internal/
 fun KtCallableDeclaration.isKotlinBuiltins(): Boolean {
     val file = containingKtFile
     val virtualFile = file.virtualFile
-    if (virtualFile.extension == KotlinBuiltInFileType.defaultExtension) return true
+    if (virtualFile.extension == "kotlin_metadata") return true
     if (this !is KtNamedFunction) return false
     return file.packageFqName.asString().replace(".", "/") + "/" + virtualFile.nameWithoutExtension in KotlinBuiltins
 }
