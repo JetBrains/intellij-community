@@ -130,7 +130,7 @@ public final class MavenExternalParameters {
         MavenProjectBundle.message("dialog.message.configuration.file.not.exists.in.maven.home", confFile.getAbsolutePath()));
     }
 
-    if (project != null && parameters.isResolveToWorkspace()) {
+    if (parameters.isResolveToWorkspace()) {
       try {
         String resolverJar = getArtifactResolverJar(mavenVersion);
         confFile = patchConfFile(confFile, resolverJar);

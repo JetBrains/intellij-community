@@ -107,7 +107,7 @@ final class UpdateSettingsEntryPointActionProvider implements ActionProvider {
           }
         }
         catch (IOException e) {
-          PluginManagerCore.INSTANCE.getLogger().error(e);
+          PluginManagerCore.getLogger().error(e);
         }
         newUpdatedPlugins(downloaders);
         myCustomRepositoryPlugins = null;

@@ -145,7 +145,7 @@ public final class PluginManager {
   @Deprecated
   @ApiStatus.Internal
   public static @NotNull Logger getLogger() {
-    return PluginManagerCore.INSTANCE.getLogger();
+    return PluginManagerCore.getLogger();
   }
 
   public @Nullable IdeaPluginDescriptor findEnabledPlugin(@NotNull PluginId id) {

@@ -30,7 +30,7 @@ public final class StartupAbortedException extends RuntimeException {
   public static void processException(@NotNull Throwable t) {
     if (LoadingState.COMPONENTS_LOADED.isOccurred() && !(t instanceof StartupAbortedException)) {
       if (!(t instanceof ControlFlowException)) {
-        PluginManagerCore.INSTANCE.getLogger().error(t);
+        PluginManagerCore.getLogger().error(t);
       }
       return;
     }
@@ -54,7 +54,7 @@ public final class StartupAbortedException extends RuntimeException {
 
     if ((log != null || Logger.isInitialized()) && !(t instanceof ProcessCanceledException)) {
       try {
-        (log == null ? PluginManagerCore.INSTANCE.getLogger() : log).error(t);
+        (log == null ? PluginManagerCore.getLogger() : log).error(t);
       }
       catch (Throwable ignore) {
       }

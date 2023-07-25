@@ -95,7 +95,7 @@ public class ListEditForm {
               if (newElement == null) {
                 setDefaultElement();
                 return;
-              };
+              }
               final int index = tableModel.indexOf(newElement, 0);
               if (index < 0) {
                 tableModel.addRow(newElement);
