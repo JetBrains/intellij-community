@@ -4,21 +4,11 @@ package com.intellij.platform.workspace.storage
 import com.intellij.platform.workspace.storage.impl.EntityStorageSnapshotImpl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
 import org.jetbrains.annotations.NonNls
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 
 /**
  * A prototype of a storage system for the project model which stores data in typed entities. Entities are represented by interfaces
  * implementing WorkspaceEntity interface.
  */
-
-/**
- * Add this annotation to the field to mark this fields as a key field for replaceBySource operation.
- * Entities will be compared based on these fields.
- */
-@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
-annotation class EqualsBy
-
 interface EntityStorage {
   fun <E : WorkspaceEntity> entities(entityClass: Class<E>): Sequence<E>
   fun <E : WorkspaceEntity> entitiesAmount(entityClass: Class<E>): Int

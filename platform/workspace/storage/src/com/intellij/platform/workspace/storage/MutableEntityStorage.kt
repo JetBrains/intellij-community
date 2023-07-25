@@ -83,3 +83,10 @@ sealed class EntityChange<T : WorkspaceEntity> {
   }
   data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
+
+/**
+ * Marks a property as a key field for [replaceBySource][MutableEntityStorage.replaceBySource] operation.
+ * Entities will be compared based on properties with this annotation.
+ */
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.TYPE)
+annotation class EqualsBy
