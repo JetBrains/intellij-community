@@ -3,10 +3,11 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSInitializationResult;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
-import com.intellij.openapi.vfs.newvfs.persistent.recovery.ContentStoragesRecoverer;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -166,22 +167,32 @@ final class PersistentFSConnector {
     Path basePath = cachesDir.toAbsolutePath();
     Files.createDirectories(basePath);
 
+    //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
+    //MAYBE RC: looks like it all could be much easier with coroutines
+    ExecutorService pool = PARALLELIZE_VFS_INITIALIZATION ? AppExecutorUtil.getAppExecutorService()
+                                                          : ConcurrencyUtil.newSameThreadExecutorService();
+
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, useContentHashes, enableVfsLog);
+    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, useContentHashes, enableVfsLog, pool);
     try {
       if (VfsLog.isVfsTrackingEnabled()) {
         vfsLoader.replaceStoragesIfMarkerPresent();
       }
-
-      // TODO from vfslog recoverer
-
       vfsLoader.failIfCorruptionMarkerPresent();
 
-      //MAYBE RC: use Dispatchers.IO-kind pool, with many threads (appExecutor has 1 core thread, so needs time to inflate)
-      //MAYBE RC: looks like it all could be much easier with coroutines
-      ExecutorService pool = PARALLELIZE_VFS_INITIALIZATION ? AppExecutorUtil.getAppExecutorService()
-                                                            : ConcurrencyUtil.newSameThreadExecutorService();
-      vfsLoader.initializeStorages(pool);
+      vfsLoader.initializeStorages();
+
+      if (VfsLog.isVfsTrackingEnabled() &&
+          vfsLoader.vfsLog() != null &&
+          !((VfsLogImpl)vfsLoader.vfsLog()).getWasProperlyClosedLastSession()
+      ) {
+        LOG.warn("VFS was not properly closed last session. Recovering from VfsLog...");
+        if (!vfsLoader.recoverCachesFromVfsLog()) {
+          LOG.info("Recovered caches from VfsLog");
+        } else {
+          LOG.info("Failed to recover caches from VfsLog");
+        }
+      }
 
       vfsLoader.ensureStoragesVersionsAreConsistent(currentImplVersion);
 
@@ -196,13 +207,14 @@ final class PersistentFSConnector {
         vfsLoader.recordsStorage().cleanRecord(rootRecordId);
       }
       else {
-
         vfsLoader.selfCheck();
 
         if (!vfsLoader.problemsDuringLoad().isEmpty()) {
           for (VFSRecoverer recoverer : recoverers) {
             recoverer.tryRecover(vfsLoader);
           }
+          // TODO perhaps add recovery attempt from vfsLog here, but it's complicated, because another self check is probably needed.
+          //  On the other hand, probably every relevant problem should be already covered by wasProperlyClosedLastSession check above
 
           //Were all problems recovered? -> fail if not
           List<VFSInitException> problemsNotRecovered = vfsLoader.problemsDuringLoad();
@@ -228,7 +240,8 @@ final class PersistentFSConnector {
     catch (Throwable e) { // IOException, IllegalArgumentException, AssertionError
       LOG.warn("Filesystem storage is corrupted or does not exist. [Re]Building. Reason: " + e.getMessage());
       try {
-        vfsLoader.closeAndDeleteEverything();
+        vfsLoader.closeEverything();
+        vfsLoader.deleteEverything();
       }
       catch (IOException cleanEx) {
         e.addSuppressed(cleanEx);

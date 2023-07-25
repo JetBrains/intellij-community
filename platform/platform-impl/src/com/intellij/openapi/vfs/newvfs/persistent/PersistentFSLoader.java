@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
@@ -9,11 +10,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStrea
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.ConnectionInterceptor;
-import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -58,6 +58,7 @@ public final class PersistentFSLoader {
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);
 
   private final PersistentFSPaths vfsPaths;
+  private final ExecutorService executorService;
 
   public final boolean useContentHashes;
   public final boolean enableVfsLog;
@@ -104,7 +105,8 @@ public final class PersistentFSLoader {
 
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
                      boolean useContentHashes,
-                     boolean enableVfsLog) {
+                     boolean enableVfsLog,
+                     ExecutorService pool) {
     recordsFile = persistentFSPaths.storagePath("records");
     namesFile = persistentFSPaths.storagePath("names");
     attributesFile = persistentFSPaths.storagePath("attributes");
@@ -117,6 +119,7 @@ public final class PersistentFSLoader {
     storagesReplacementMarkerFile = persistentFSPaths.getStoragesReplacementMarkerFile();
 
     vfsPaths = persistentFSPaths;
+    this.executorService = pool;
 
     this.useContentHashes = useContentHashes;
     this.enableVfsLog = enableVfsLog;
@@ -135,7 +138,7 @@ public final class PersistentFSLoader {
     }
   }
 
-  public void initializeStorages(@NotNull ExecutorService pool) throws Exception {
+  public void initializeStorages() throws IOException {
     if (enableVfsLog) {
       vfsLog = new VfsLogImpl(vfsLogDir, false);
     }
@@ -143,22 +146,22 @@ public final class PersistentFSLoader {
       vfsLog = null;
     }
 
-    Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = pool.submit(
+    Future<ScannableDataEnumeratorEx<String>> namesStorageFuture = executorService.submit(
       () -> createFileNamesEnumerator(namesFile)
     );
-    Future<AbstractAttributesStorage> attributesStorageFuture = pool.submit(
+    Future<AbstractAttributesStorage> attributesStorageFuture = executorService.submit(
       () -> createAttributesStorage(attributesFile)
     );
-    Future<RefCountingContentStorage> contentsStorageFuture = pool.submit(
+    Future<RefCountingContentStorage> contentsStorageFuture = executorService.submit(
       () -> createContentStorage(contentsFile, useContentHashes)
     );
-    Future<PersistentFSRecordsStorage> recordsStorageFuture = pool.submit(
+    Future<PersistentFSRecordsStorage> recordsStorageFuture = executorService.submit(
       () -> createRecordsStorage(recordsFile)
     );
 
     //Initiate async scanning of the recordsStorage to fill both invertedNameIndex and reusableFileIds,
     //  and create lazy-accessors for both.
-    collectDeletedFileRecordsTask = pool.submit(() -> {
+    collectDeletedFileRecordsTask = executorService.submit(() -> {
       IntList reusableFileIds = new IntArrayList(1024);
       //fill up reusable (=deleted) records:
       PersistentFSRecordsStorage storage = recordsStorageFuture.get();
@@ -184,7 +187,7 @@ public final class PersistentFSLoader {
 
     Future<ContentHashEnumerator> contentHashesEnumeratorFuture;
     if (useContentHashes) {
-      contentHashesEnumeratorFuture = pool.submit(() -> createContentHashStorage(contentsHashesFile));
+      contentHashesEnumeratorFuture = executorService.submit(() -> createContentHashStorage(contentsHashesFile));
     }
     else {
       contentHashesEnumeratorFuture = CompletableFuture.completedFuture(null);
@@ -218,6 +221,25 @@ public final class PersistentFSLoader {
     );
   }
 
+  public boolean recoverCachesFromVfsLog() throws IOException {
+    if (vfsLog == null) throw new AssertionError("called with vfsLog == null");
+
+    boolean recoveredCaches = false;
+    try (var queryContext = vfsLog.query()) {
+      // TODO make a progress reporting to UI (we probably can't just call runModal* things right from here);
+      recoveredCaches = RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext, null);
+    } catch (Throwable e) {
+      LOG.error("VFS Caches recovery attempt has failed", e);
+    }
+    if (!recoveredCaches) return false;
+
+    closeEverything();
+    if (!replaceStoragesIfMarkerPresent()) {
+      throw new AssertionError("storages replacement didn't happen right after recovery");
+    }
+    initializeStorages();
+    return true;
+  }
 
   public void ensureStoragesVersionsAreConsistent(int currentImplVersion) throws IOException {
     LOG.info("VFS: impl (expected) version=" + currentImplVersion +
@@ -259,7 +281,7 @@ public final class PersistentFSLoader {
     }
   }
 
-  public void closeAndDeleteEverything() throws IOException {
+  public void closeEverything() throws IOException {
     // Must wait for scanRecords task to finish, since the task uses mapped file, and we can't remove
     //  the mapped file (on Win) while there are usages.
     try {
@@ -270,7 +292,9 @@ public final class PersistentFSLoader {
     }
 
     PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentHashesEnumerator, contentsStorage, vfsLog);
+  }
 
+  public void deleteEverything() throws IOException {
     boolean deleted = FileUtil.delete(corruptionMarkerFile.toFile());
     if (!deleted) {
       LOG.info("Can't delete " + corruptionMarkerFile);
@@ -678,6 +702,10 @@ public final class PersistentFSLoader {
 
   public ContentHashEnumerator contentHashesEnumerator() {
     return contentHashesEnumerator;
+  }
+
+  public VfsLogEx vfsLog() {
+    return vfsLog;
   }
 
   public SimpleStringPersistentEnumerator attributesEnumerator() {

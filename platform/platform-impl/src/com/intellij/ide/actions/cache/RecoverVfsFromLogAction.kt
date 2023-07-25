@@ -26,7 +26,7 @@ class RecoverVfsFromLogAction : RecoveryAction {
     try {
       log.query().use {
         with(service<RecoverVfsFromLogService>()) {
-          val recoveryPoint = it.askToChooseRecoveryPoint(recoveryScope.project, true)
+          val recoveryPoint = askToChooseRecoveryPoint(it, recoveryScope.project, true)
           if (recoveryPoint == null) {
             return emptyList()
           }

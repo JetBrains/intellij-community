@@ -25,18 +25,17 @@ import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.thinOut
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
+import com.intellij.util.io.delete
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.io.path.ExperimentalPathApi
-import kotlin.io.path.deleteRecursively
 import kotlin.io.path.div
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
+@ApiStatus.Experimental
 @Service
 class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
-  private val cachesDir = FSRecords.getCachesDir().toNioPath()
-  private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
   private val isRecoveryRunning = AtomicBoolean(false)
   private val shouldSuggestAutomaticRecovery = AtomicBoolean(
     Registry.get("idea.vfs.log-vfs-operations.suggest-automatic-recovery").asBoolean()
@@ -73,7 +72,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     val queryContext = vfsLog.query()
 
     coroutineScope.launch {
-      val recoveryPoints = queryContext.getRecoveryPoints()
+      val recoveryPoints = getRecoveryPoints(queryContext)
       if (recoveryPoints == null || recoveryPoints.none()) return@launch
       withContext(Dispatchers.EDT) {
         val dialog = SuggestAutomaticVfsRecoveryDialog(ApplicationManagerEx.getApplicationEx().isRestartCapable) { enableSuggestion ->
@@ -85,7 +84,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
           CANCEL_EXIT_CODE -> {}
           OK_EXIT_CODE -> queryContext.transferLock().launchRecoverAndRestart(null, recoveryPoints.first())
           SuggestAutomaticVfsRecoveryDialog.CHOOSE_RECOVERY_POINT_CODE -> {
-            val recoveryPoint = queryContext.askToChooseRecoveryPoint(null, true)
+            val recoveryPoint = askToChooseRecoveryPoint(queryContext, null, true)
             if (recoveryPoint != null) queryContext.transferLock().launchRecoverAndRestart(null, recoveryPoint)
           }
           else -> throw IllegalArgumentException("unknown dialog exit code: ${dialog.exitCode}")
@@ -97,14 +96,6 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     }
   }
 
-  private fun VfsLogQueryContext.getRecoveryPoints(): Sequence<RecoveryPoint>? {
-    val mostRecentPoint = VfsRecoveryUtils.findClosestPrecedingPointWithNoIncompleteOperationsBeforeIt(::end)
-    val recoveryPoints = mostRecentPoint?.let {
-      VfsRecoveryUtils.generateRecoveryPointsPriorTo(it.constCopier()).thinOut()
-    }
-    return recoveryPoints
-  }
-
   private fun askToChooseRecoveryPoint(project: Project?, recoveryPoints: Sequence<RecoveryPoint>): RecoveryPoint? = invokeAndWaitIfNeeded {
     val app = ApplicationManagerEx.getApplicationEx()
     val dialog = RecoverVfsFromOperationsLogDialog(project, app.isRestartCapable, recoveryPoints)
@@ -112,9 +103,10 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     return@invokeAndWaitIfNeeded if (!dialog.isOK) null else dialog.selectedRecoveryPoint
   }
 
-  fun VfsLogQueryContext.askToChooseRecoveryPoint(project: Project?,
-                                                  notifyIfNoPointsAvailable: Boolean): RecoveryPoint? {
-    val recoveryPoints = getRecoveryPoints()
+  fun askToChooseRecoveryPoint(queryContext: VfsLogQueryContext,
+                               project: Project?,
+                               notifyIfNoPointsAvailable: Boolean): RecoveryPoint? {
+    val recoveryPoints = getRecoveryPoints(queryContext)
     if (recoveryPoints == null || recoveryPoints.none()) {
       if (notifyIfNoPointsAvailable) {
         NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
@@ -131,14 +123,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     return askToChooseRecoveryPoint(project, recoveryPoints)
   }
 
-  @OptIn(ExperimentalPathApi::class)
-  private fun VfsLogQueryContext.prepareRecoveredCaches(point: OperationLogStorage.Iterator, progressReporter: RawProgressReporter) {
-    recoveredCachesDir.deleteRecursively()
-    val result = VfsRecoveryUtils.recoverFromPoint(point, this, cachesDir, recoveredCachesDir, progressReporter = progressReporter)
-    LOG.info(result.toString())
-  }
-
-  private suspend fun VfsLogQueryContext.recoverAndRestart(project: Project?, recoveryPoint: RecoveryPoint) {
+  private suspend fun recoverAndRestart(queryContext: VfsLogQueryContext, project: Project?, recoveryPoint: RecoveryPoint) {
     val app = ApplicationManagerEx.getApplicationEx()
     withModalProgress(
       if (project != null) ModalTaskOwner.project(project) else ModalTaskOwner.guess(),
@@ -146,7 +131,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       TaskCancellation.nonCancellable()
     ) {
       LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
-      prepareRecoveredCaches(recoveryPoint.point, progressReporter!!.rawReporter())
+      prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter())
     }
     LOG.info("creating a storages replacement marker...")
     VfsRecoveryUtils.createStoragesReplacementMarker(cachesDir, recoveredCachesDir)
@@ -163,7 +148,7 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       return null
     }
     val job = coroutineScope.launch {
-      recoverAndRestart(project, recoveryPoint)
+      recoverAndRestart(this@launchRecoverAndRestart, project, recoveryPoint)
     }
     job.invokeOnCompletion {
       close()
@@ -175,5 +160,34 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
 
   internal companion object {
     val LOG = Logger.getInstance(RecoverVfsFromLogService::class.java)
+
+    private val cachesDir = FSRecords.getCachesDir().toNioPath()
+    private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
+
+    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext, progressReporter: RawProgressReporter?): Boolean {
+      val recoveryPoint = getRecoveryPoints(queryContext)?.firstOrNull() ?: return false
+      prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter)
+      return true
+    }
+
+    private fun prepareRecoveredCaches(queryContext: VfsLogQueryContext,
+                                       point: OperationLogStorage.Iterator,
+                                       progressReporter: RawProgressReporter?) {
+      if (recoveredCachesDir.exists()) {
+        LOG.info("old recovered caches directory exists and will be deleted")
+        recoveredCachesDir.delete(true)
+      }
+      val result = VfsRecoveryUtils.recoverFromPoint(point, queryContext, cachesDir, recoveredCachesDir,
+                                                     progressReporter = progressReporter)
+      LOG.info(result.toString())
+    }
+
+    private fun getRecoveryPoints(queryContext: VfsLogQueryContext): Sequence<RecoveryPoint>? {
+      val mostRecentPoint = VfsRecoveryUtils.findClosestPrecedingPointWithNoIncompleteOperationsBeforeIt(queryContext::end)
+      val recoveryPoints = mostRecentPoint?.let {
+        VfsRecoveryUtils.generateRecoveryPointsPriorTo(it.constCopier()).thinOut()
+      }
+      return recoveryPoints
+    }
   }
 }
