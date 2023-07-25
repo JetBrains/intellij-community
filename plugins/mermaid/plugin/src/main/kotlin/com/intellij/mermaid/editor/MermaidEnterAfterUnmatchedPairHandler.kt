@@ -37,6 +37,7 @@ internal class MermaidEnterAfterUnmatchedPairHandler : EnterHandlerDelegateAdapt
 
     position.moveBeforeOptionalMix(
       MermaidTokens.ID,
+      MermaidTokens.Sequence.CONTROL_ID,
       MermaidTokens.LEFT_OF,
       MermaidTokens.RIGHT_OF,
       MermaidTokens.WHITE_SPACE
