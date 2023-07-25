@@ -1086,7 +1086,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     CharSequence context =
       index < myLexStarts.length ? myText.subSequence(Math.max(0, myLexStarts[index] - 1000), myLexStarts[index]) : "<none>";
     String language = myFile != null ? myFile.getLanguage() + ", " : "";
-    LOG.error(UNBALANCED_MESSAGE + "\nlanguage: " + language + "\ncontext: '" + context + "'");
+    LOG.error(UNBALANCED_MESSAGE + "\nlanguage: " + language + "\ncontext: '" + context + "'" +
+              "\nmarker id: " + (marker == null ? "n/a" : marker.markerId));
   }
 
   private void balanceWhiteSpaces() {
