@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider {
+public final class SettingsEntryPointAction extends DumbAwareAction implements RightAlignedToolbarAction, TooltipDescriptionProvider, Toggleable {
   private static final BadgeIconSupplier GEAR_ICON = new BadgeIconSupplier(AllIcons.General.GearPlain);
   private static final Icon NEW_UI_ICON =
     IconManager.getInstance().withIconBadge(AllIcons.General.GearPlain, JBUI.CurrentTheme.IconBadge.NEW_UI);
@@ -59,6 +59,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     resetActionIcon();
 
     ListPopup popup = createMainPopup(e.getDataContext(), e.getInputEvent().getComponent());
+    PopupUtil.addToggledStateListener(popup, e.getPresentation());
     PopupUtil.showForActionButtonEvent(popup, e);
   }
 
