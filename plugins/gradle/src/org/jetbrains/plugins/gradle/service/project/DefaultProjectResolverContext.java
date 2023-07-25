@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.util.containers.CollectionFactory;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.tooling.CancellationTokenSource;
 import org.gradle.tooling.GradleConnector;
@@ -23,6 +24,7 @@ import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -42,6 +44,8 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable private String myBuildSrcGroup;
   @Nullable private BuildEnvironment myBuildEnvironment;
   @Nullable private final GradlePartialResolverPolicy myPolicy;
+
+  @NotNull private Map<String, String> myArtifactsMap = CollectionFactory.createFilePathMap();
 
   public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
                                        @NotNull final String projectPath,
@@ -235,5 +239,11 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @ApiStatus.Experimental
   public GradlePartialResolverPolicy getPolicy() {
     return myPolicy;
+  }
+
+  @Override
+  @NotNull
+  public Map<String, String> getArtifactsMap() {
+    return myArtifactsMap;
   }
 }

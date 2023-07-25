@@ -43,10 +43,10 @@ fun createKotlinMppPopulateModuleDependenciesContext(
     resolverCtx: ProjectResolverContext
 ): KotlinMppPopulateModuleDependenciesContext? {
     val mppModel = resolverCtx.getMppModel(gradleModule) ?: return null
-    mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject)
+    mppModel.dependencyMap.values.modifyDependenciesOnMppModules(ideProject, resolverCtx)
 
     val sourceSetMap = ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS) ?: return null
-    val artifactsMap = ideProject.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS) ?: return null
+    val artifactsMap = resolverCtx.artifactsMap
     val dependenciesPreprocessor = KotlinNativeLibrariesDependencySubstitutor(mppModel, gradleModule, resolverCtx)
         .plus(DistinctIdKotlinDependenciesPreprocessor)
 

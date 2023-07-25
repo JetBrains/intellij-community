@@ -87,8 +87,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   public static final Key<Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>>> MODULES_OUTPUTS =
     Key.create("moduleOutputsMap");
   public static final Key<MultiMap<ExternalSystemSourceType, String /* output path*/>> GRADLE_OUTPUTS = Key.create("gradleOutputs");
-  public static final Key<Map<String/* artifact path */, String /* module id*/>> CONFIGURATION_ARTIFACTS =
-    Key.create("gradleArtifactsMap");
 
   private static final Key<File> GRADLE_HOME_DIR = Key.create("gradleHomeDir");
 
@@ -397,8 +395,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
       CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
-    final Map<String/* artifact path */, String /* module id*/> artifactsMap = CollectionFactory.createFilePathMap();
-    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
+
+    final Map<String/* artifact path */, String /* module id*/> artifactsMap = resolverCtx.getArtifactsMap();
 
     // import modules data
     for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
@@ -502,7 +500,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, null);
     projectDataNode.putUserData(MODULES_OUTPUTS, null);
-    projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, null);
 
     // ensure unique library names
     Collection<DataNode<LibraryData>> libraries = getChildren(projectDataNode, ProjectKeys.LIBRARY);
@@ -642,7 +639,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectDataNode.getUserData(MODULES_OUTPUTS);
     assert moduleOutputsMap != null;
 
-    final Map<String, String> artifactsMap = projectDataNode.getUserData(CONFIGURATION_ARTIFACTS);
+    final Map<String, String> artifactsMap = context.getArtifactsMap();
     assert artifactsMap != null;
 
     final Collection<DataNode<LibraryDependencyData>> libraryDependencies =

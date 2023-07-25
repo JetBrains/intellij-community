@@ -71,7 +71,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.CONFIGURATION_ARTIFACTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver.MODULES_OUTPUTS;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
@@ -606,7 +605,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (resolverCtx.isResolveModulePerSourceSet()) {
       final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
-      final Map<String, String> artifactsMap = ideProject.getUserData(CONFIGURATION_ARTIFACTS);
+      final Map<String, String> artifactsMap = resolverCtx.getArtifactsMap();
       assert sourceSetMap != null;
       assert artifactsMap != null;
       assert externalProject != null;

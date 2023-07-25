@@ -49,7 +49,7 @@ private class KotlinProjectArtifactDependencyResolverImpl : KotlinProjectArtifac
             .toSet()
 
         val sourceSetMap = context.projectDataNode.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS).orEmpty()
-        val artifactsMap = context.projectDataNode.getUserData(GradleProjectResolver.CONFIGURATION_ARTIFACTS).orEmpty()
+        val artifactsMap = context.resolverCtx.artifactsMap
         val modulesOutputsMap = context.projectDataNode.getUserData(GradleProjectResolver.MODULES_OUTPUTS).orEmpty()
 
         return dependency.artifactsClasspath.flatMap { artifactFile ->
