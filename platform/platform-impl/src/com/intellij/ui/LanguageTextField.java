@@ -89,11 +89,10 @@ public class LanguageTextField extends EditorTextField {
 
   public static Document createDocument(String value, @Nullable Language language, @Nullable Project project,
                                         @NotNull SimpleDocumentCreator documentCreator) {
-    if (language != null) {
+    final FileType fileType = language != null ? language.getAssociatedFileType() : null;
+    if (fileType != null) {
       final Project notNullProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
       final PsiFileFactory factory = PsiFileFactory.getInstance(notNullProject);
-      final FileType fileType = language.getAssociatedFileType();
-      assert fileType != null;
 
       final long stamp = LocalTimeCounter.currentTime();
       final PsiFile psiFile = factory.createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, "", stamp, true, false);
