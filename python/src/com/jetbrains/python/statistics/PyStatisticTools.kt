@@ -127,6 +127,10 @@ val Sdk.interpreterType: InterpreterType
     else -> REGULAR
   }
 
+/**
+ * Mapping from new targets to an old ones is need to keep compatibility with the current fus schema.
+ * We are going to clean up these code together with housekeeping tasks about getting rid of old remotes.
+ */
 private val PyTargetAwareAdditionalData.executionType: InterpreterTarget
   get() =
     targetEnvironmentConfiguration?.typeId?.let { typeId ->
