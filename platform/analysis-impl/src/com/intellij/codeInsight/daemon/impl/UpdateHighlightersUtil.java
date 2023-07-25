@@ -78,7 +78,7 @@ public final class UpdateHighlightersUtil {
   static final class HighlightInfoPostFilters {
     private final static ExtensionPointName<HighlightInfoPostFilter> EP_NAME = new ExtensionPointName<>("com.intellij.highlightInfoPostFilter");
     static boolean accept(@NotNull Project project, @NotNull HighlightInfo info) {
-      for (HighlightInfoPostFilter filter : EP_NAME.getExtensions(project)) {
+      for (HighlightInfoPostFilter filter : EP_NAME.getExtensionList(project)) {
         if (!filter.accept(info))
           return false;
       }

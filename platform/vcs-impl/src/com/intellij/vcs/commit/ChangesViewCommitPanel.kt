@@ -65,7 +65,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
 
     addToolbar(isToolbarHorizontal)
 
-    for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
+    for (support in EditChangelistSupport.EP_NAME.getExtensionList(project)) {
       support.installSearch(commitMessage.editorField, commitMessage.editorField)
     }
 

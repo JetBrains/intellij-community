@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.lightEdit.LightEdit;
@@ -32,7 +32,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
+public final class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   private static final Key<Boolean> ENABLE_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_ENABLE_IN_TESTS");
   private static final Key<Boolean> HONOUR_RECENT_FILES_IN_TESTS = Key.create("NON_PROJECT_FILE_ACCESS_HONOUR_RECENT_FILES_IN_TESTS");
 
@@ -125,9 +125,13 @@ public class NonProjectFileWritingAccessProvider extends WritingAccessProvider {
   }
 
   private static boolean isProjectFile(@NotNull VirtualFile file, @NotNull Project project) {
-    for (NonProjectFileWritingAccessExtension each : NonProjectFileWritingAccessExtension.EP_NAME.getExtensions(project)) {
-      if(each.isWritable(file)) return true;
-      if(each.isNotWritable(file)) return false;
+    for (NonProjectFileWritingAccessExtension each : NonProjectFileWritingAccessExtension.EP_NAME.getExtensionList(project)) {
+      if (each.isWritable(file)) {
+        return true;
+      }
+      if (each.isNotWritable(file)) {
+        return false;
+      }
     }
 
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);

@@ -167,7 +167,7 @@ private fun getBuildMode(args: WarmupProjectArgs) : BuildMode? {
 }
 
 private suspend fun waitForCachesSupports(project: Project) {
-  val projectIndexesWarmupSupports = ProjectIndexesWarmupSupport.EP_NAME.getExtensions(project)
+  val projectIndexesWarmupSupports = ProjectIndexesWarmupSupport.EP_NAME.getExtensionList(project)
   WarmupLogger.logInfo("Waiting for all ProjectIndexesWarmupSupport[${projectIndexesWarmupSupports.size}]...")
   val futures = projectIndexesWarmupSupports.mapNotNull { support ->
     try {
@@ -199,7 +199,7 @@ private fun setEnvironmentConfiguration(commandArgs : WarmupProjectArgs) {
 private suspend fun waitForBuilders(project: Project, rebuild: BuildMode, builders: Set<String>?) {
   fun isBuilderEnabled(id: String): Boolean = if (builders.isNullOrEmpty()) true else builders.contains(id)
 
-  val projectBuildWarmupSupports = ProjectBuildWarmupSupport.EP_NAME.getExtensions(project).filter { builder ->
+  val projectBuildWarmupSupports = ProjectBuildWarmupSupport.EP_NAME.getExtensionList(project).filter { builder ->
     isBuilderEnabled(builder.getBuilderId())
   }
   WarmupLogger.logInfo("Starting additional project builders[${projectBuildWarmupSupports.size}] (rebuild=$rebuild)...")

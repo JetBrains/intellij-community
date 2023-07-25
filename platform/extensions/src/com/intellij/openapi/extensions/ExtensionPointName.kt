@@ -67,7 +67,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
     return area?.getExtensionPointIfRegistered<T>(name)?.extensionList ?: emptyList()
   }
 
-  @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"))
+  @Deprecated("Use {@code getExtensionList().stream()}", ReplaceWith("getExtensionList().stream()"), DeprecationLevel.ERROR)
   fun extensions(): Stream<T> {
     return getPointImpl(null).extensions()
   }
@@ -84,7 +84,7 @@ class ExtensionPointName<T : Any>(name: @NonNls String) : BaseExtensionPointName
    */
   fun getExtensions(areaInstance: AreaInstance?): Array<T> = getPointImpl(areaInstance).extensions
 
-  @Deprecated("Use app-level app extension point.")
+  @Deprecated("Use app-level app extension point.", level = DeprecationLevel.ERROR)
   fun extensions(areaInstance: AreaInstance?): Stream<T> {
     return getPointImpl(areaInstance).extensionList.stream()
   }

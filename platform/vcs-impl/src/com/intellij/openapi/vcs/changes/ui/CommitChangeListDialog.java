@@ -394,7 +394,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myCommitMessageArea.setChangesSupplier(new ChangeListChangesSupplier(getChangeList()));
     myCommitMessageArea.requestFocusInMessage();
 
-    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensions(myProject)) {
+    for (EditChangelistSupport support : EditChangelistSupport.EP_NAME.getExtensionList(myProject)) {
       support.installSearch(myCommitMessageArea.getEditorField(), myCommitMessageArea.getEditorField());
     }
 

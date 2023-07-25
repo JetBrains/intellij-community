@@ -264,7 +264,7 @@ class VcsProjectLog(private val project: Project, private val coroutineScope: Co
     }
 
     private fun hasLogExtensions(descriptor: IdeaPluginDescriptor): Boolean {
-      for (logProvider in VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project)) {
+      for (logProvider in VcsLogProvider.LOG_PROVIDER_EP.getExtensionList(project)) {
         if (logProvider.javaClass.classLoader === descriptor.pluginClassLoader) {
           return true
         }

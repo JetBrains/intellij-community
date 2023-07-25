@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider
@@ -51,7 +51,7 @@ abstract class NewEditChangelistPanel(protected val project: Project) : Wrapper(
 
   open fun init(initial: LocalChangeList?) {
     makeActiveCheckBox.isSelected = VcsConfiguration.getInstance(project).MAKE_NEW_CHANGELIST_ACTIVE
-    for (support in EditChangelistSupport.EP_NAME.getExtensions(project)) {
+    for (support in EditChangelistSupport.EP_NAME.getExtensionList(project)) {
       support.installSearch(nameTextField, descriptionTextArea)
       ContainerUtil.addIfNotNull(consumers, support.addControls(additionalControlsPanel, initial))
     }

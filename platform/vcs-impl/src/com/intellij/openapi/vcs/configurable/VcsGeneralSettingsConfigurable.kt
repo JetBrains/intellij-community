@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable
 
 import com.intellij.application.options.editor.checkBox
@@ -47,7 +47,7 @@ class VcsGeneralSettingsConfigurable(val project: Project) : BoundCompositeSearc
 ), Configurable.WithEpDependencies {
 
   override fun createConfigurables(): List<UnnamedConfigurable> =
-    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
+    GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME.getExtensionList(project).mapNotNull { it.createConfigurable() }
 
   override fun getDependencies() = listOf(VcsEP.EP_NAME, GeneralVcsSettingsProviderEP.VCS_SETTINGS_EP_NAME)
 

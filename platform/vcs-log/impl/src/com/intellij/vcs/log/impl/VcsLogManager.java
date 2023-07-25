@@ -209,7 +209,7 @@ public class VcsLogManager implements Disposable {
     if (roots.isEmpty()) return Collections.emptyMap();
 
     Map<VirtualFile, VcsLogProvider> logProviders = new HashMap<>();
-    VcsLogProvider[] allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensions(project);
+    List<VcsLogProvider> allLogProviders = VcsLogProvider.LOG_PROVIDER_EP.getExtensionList(project);
     for (VcsRoot root : roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
