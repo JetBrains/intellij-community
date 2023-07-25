@@ -1132,8 +1132,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
   }
 
-  private void sendStatisticsAndClose() {
-    if (isShowing()) {
+  @VisibleForTesting
+  public void sendStatisticsAndClose() {
+    if (isShowing() || ApplicationManager.getApplication().isUnitTestMode()) {
       if (myMlService != null) {
         myMlService.onSearchFinished(
           myProject, () -> myListModel.getFoundElementsInfo()
