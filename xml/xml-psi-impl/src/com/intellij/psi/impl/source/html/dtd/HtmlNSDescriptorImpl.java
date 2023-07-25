@@ -100,7 +100,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
 
     for (XmlElementDescriptor element : elements) {
       decls.put(
-        element.getName(),
+        myCaseSensitive ? element.getName() : StringUtil.toLowerCase(element.getName()),
         createHtmlElementDescriptor(element)
       );
     }
