@@ -385,6 +385,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitJavaFile(@NotNull PsiJavaFile file) {
     super.visitJavaFile(file);
+    if (!HighlightingFeature.UNNAMED_CLASSES.isAvailable(file)) return;
     PsiClass[] classes = file.getClasses();
     if (classes.length != 1) return;
     PsiClass aClass = classes[0];
