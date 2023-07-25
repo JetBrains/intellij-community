@@ -6,7 +6,7 @@ import com.intellij.platform.diagnostic.telemetry.helpers.SharedMetrics;
 
 import java.util.concurrent.Semaphore;
 
-public class JpsMetrics extends SharedMetrics {
+public final class JpsMetrics extends SharedMetrics {
   private static final Semaphore lock = new Semaphore(1);
   private static JpsMetrics instance = null;
 

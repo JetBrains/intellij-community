@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.fasterxml.aalto.`in`.ReaderConfig
+import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.lang.UrlClassLoader
@@ -37,6 +38,7 @@ object ClassPathUtil {
   fun getUtilClasses(): Array<Class<*>> {
     val classLoader = ClassPathUtil::class.java.classLoader
     return arrayOf(
+      LoadingState::class.java,  // module 'intellij.platform.diagnostic'
       PathManager::class.java,  // module 'intellij.platform.util'
       Strings::class.java,  // module 'intellij.platform.util.base'
       classLoader.loadClass("com.intellij.util.xml.dom.XmlDomReader"),  // module 'intellij.platform.util.xmlDom'

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 
 // use only JDK classes here (avoid StringUtil and so on)
+@ApiStatus.Internal
 public final class ActivityImpl implements Activity {
   public Scope scope;
   public String[] attributes;

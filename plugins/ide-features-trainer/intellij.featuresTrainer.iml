@@ -53,5 +53,6 @@
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" />
     <orderEntry type="module" module-name="intellij.platform.tips" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
   </component>
 </module>

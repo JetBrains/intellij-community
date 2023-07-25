@@ -28,5 +28,6 @@
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="opentelemetry-extension-kotlin" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" exported="" />
   </component>
 </module>

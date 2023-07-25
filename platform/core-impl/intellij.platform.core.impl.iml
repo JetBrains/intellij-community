@@ -36,5 +36,6 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.diagnostic" />
   </component>
 </module>
