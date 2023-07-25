@@ -71,8 +71,13 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   @JvmField
   val skipClasses: MutableList<String?> = mutableListOf(
     "java.lang.Boolean", "boolean", "kotlin.Boolean", "java.lang.Class", "kotlin.reflect.KClass"
-
   )
+
+  @JvmField
+  var showUnknownString: Boolean = true
+
+  @JvmField
+  var showUnsafeString: Boolean = true
 
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
@@ -144,7 +149,13 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
       OptPane.checkbox("warnIfComplex",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex"))
-        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment"))
+        .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment")),
+
+      OptPane.checkbox("showUnknownString",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unknown.string")),
+
+      OptPane.checkbox("showUnsafeString",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unsafe.string")),
     )
   }
 
@@ -189,7 +200,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                               targetValue = TaintValue.TAINTED))
     }
     return UastHintedVisitorAdapter.create(holder.file.language,
-                                           SourceToSinkFlowVisitor(holder, factory, warnIfComplex),
+                                           SourceToSinkFlowVisitor(holder, factory, warnIfComplex, showUnknownString, showUnsafeString),
                                            arrayOf(UCallExpression::class.java,
                                                    UReturnExpression::class.java,
                                                    UBinaryExpression::class.java,
@@ -205,7 +216,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   private class SourceToSinkFlowVisitor(
     private val holder: ProblemsHolder,
     private val factory: TaintValueFactory,
-    private val warnIfComplex: Boolean
+    private val warnIfComplex: Boolean,
+    private val showUnknownString: Boolean,
+    private val showUnsafeString: Boolean
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
@@ -271,6 +284,8 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       }
       taintValue = taintValue.join(contextValue)
       if (taintValue === TaintValue.UNTAINTED) return
+      if (taintValue == TaintValue.UNKNOWN && !showUnknownString) return
+      if (taintValue == TaintValue.TAINTED && !showUnsafeString) return
       val errorMessage = JvmAnalysisBundle.message(taintValue.getErrorMessage(annotationContext))
       var fixes: Array<LocalQuickFix> = arrayOf()
       val sourcePsi = expression.sourcePsi
