@@ -3,8 +3,6 @@ package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricExporter
-import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
 import com.intellij.util.ConcurrencyUtil
 import io.opentelemetry.api.common.Attributes
@@ -27,14 +25,15 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 open class OpenTelemetryConfigurator(@JvmField protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
                                      @JvmField protected val sdkBuilder: OpenTelemetrySdkBuilder,
-                                     @JvmField protected val serviceName: String = "",
-                                     @JvmField protected val serviceVersion: String = "",
-                                     @JvmField protected val serviceNamespace: String = "",
+                                     serviceName: String = "",
+                                     serviceVersion: String = "",
+                                     serviceNamespace: String = "",
                                      customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
+                                     private val spanExporters: (resource: Resource) -> List<AsyncSpanExporter>,
                                      enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
-  private val resource: Resource = Resource.create(
+  protected val resource: Resource = Resource.create(
     Attributes.builder()
       .put(ResourceAttributes.SERVICE_NAME, serviceName)
       .put(ResourceAttributes.SERVICE_VERSION, serviceVersion)
@@ -103,10 +102,8 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
     return result
   }
 
-  open fun createSpanExporters(): List<AsyncSpanExporter> = emptyList()
-
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
-    registerSpanExporters(spanExporters = createSpanExporters())
+    registerSpanExporters(spanExporters = spanExporters(resource))
     if (isMetricsEnabled()) {
       registerMetricsExporter(createMetricsExporters())
     }
