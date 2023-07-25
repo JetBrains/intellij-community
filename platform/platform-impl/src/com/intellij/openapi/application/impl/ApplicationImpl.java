@@ -39,18 +39,14 @@ import com.intellij.psi.util.ReadActionCache;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.concurrency.Propagation;
-import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.*;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
-import io.opentelemetry.api.metrics.BatchCallback;
-import io.opentelemetry.api.metrics.Meter;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
 import kotlin.coroutines.EmptyCoroutineContext;
+import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
 import org.jetbrains.annotations.*;
@@ -63,8 +59,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static com.intellij.ide.ShutdownKt.cancelAndJoinBlocking;
 import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
@@ -105,14 +101,20 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   private final @Nullable Disposable myLastDisposable;  // the last to be disposed
 
   // defer reading isUnitTest flag until it's initialized
-  private static class Holder {
+  private static final class Holder {
     private static final int ourDumpThreadsOnLongWriteActionWaiting =
       ApplicationManager.getApplication().isUnitTestMode() ? 0 : Integer.getInteger("dump.threads.on.long.write.action.waiting", 0);
   }
 
   private static final String WAS_EVER_SHOWN = "was.ever.shown";
 
-  private final OTelReadWriteActionsMonitor otelMonitor = new OTelReadWriteActionsMonitor(TelemetryManager.getInstance().getMeter(PlatformScopesKt.EDT));
+  @SuppressWarnings("Convert2Lambda")
+  private final Supplier<OTelReadWriteActionsMonitor> otelMonitor = new SynchronizedClearableLazy<>(new Function0<>() {
+    @Override
+    public OTelReadWriteActionsMonitor invoke() {
+      return new OTelReadWriteActionsMonitor(TelemetryManager.getInstance().getMeter(PlatformScopesKt.EDT));
+    }
+  });
 
   @TestOnly
   public ApplicationImpl(boolean isHeadless, @NotNull RwLockHolder lockHolder) {
@@ -382,7 +384,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       Disposer.dispose(myLastDisposable);
     }
 
-    otelMonitor.close();
+    otelMonitor.get().close();
   }
 
   @Override
@@ -429,7 +431,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     //
     // On the other hand, synchronous execution of background tasks on EDT happens for headless tasks,
     // and it should still pump the EDT without entering the modality state (IDEA-241785).
-    // In tests and is headless mode, there are is modal progress dialog, so IDEA-307428 should not be possible in tests.
+    // In tests and headless mode, there are is modal progress dialog, so IDEA-307428 should not be possible in tests.
     //
     // Instead, IDEA-307428 is fixed by ensuring the new modality state for non-headless synchronous EDT tasks
     // (see `CoreProgressManager.runProcessWithProgressSynchronously(Task)`),
@@ -663,7 +665,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
         return true;
       });
 
-
       //noinspection SpellCheckingInspection
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         //noinspection SpellCheckingInspection
@@ -894,7 +895,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
-      otelMonitor.readActionExecuted();
+      otelMonitor.get().readActionExecuted();
     }
   }
 
@@ -909,7 +910,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
-      otelMonitor.readActionExecuted();
+      otelMonitor.get().readActionExecuted();
     }
   }
 
@@ -924,7 +925,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
-      otelMonitor.readActionExecuted();
+      otelMonitor.get().readActionExecuted();
     }
   }
 
@@ -1019,12 +1020,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    boolean wilock = acquireWriteIntentLock(computation.getClass().getName());
+    boolean writeIntentLock = acquireWriteIntentLock(computation.getClass().getName());
     try {
       return computation.compute();
     }
     finally {
-      if (wilock) {
+      if (writeIntentLock) {
         releaseWriteIntentLock();
       }
     }
@@ -1100,7 +1101,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (status != null) {
         myLock.endRead(status);
       }
-      otelMonitor.readActionExecuted();
+      otelMonitor.get().readActionExecuted();
     }
     return true;
   }
@@ -1197,7 +1198,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
       if (myWriteActionsStack.isEmpty()) {
         fireAfterWriteActionFinished(clazz);
       }
-      otelMonitor.writeActionExecuted();
+      otelMonitor.get().writeActionExecuted();
     }
   }
 
@@ -1262,6 +1263,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   /**
    * @deprecated use {@link #runReadAction(Runnable)} instead
    */
+  @SuppressWarnings("DeprecatedIsStillUsed")
   @Deprecated
   private final class ReadAccessToken extends AccessToken {
     private final ReadMostlyRWLock.Reader myReader;
@@ -1274,7 +1276,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     public void finish() {
       myReadActionCacheImpl.clear();
       myLock.endRead(myReader);
-      otelMonitor.readActionExecuted();
+      otelMonitor.get().readActionExecuted();
     }
   }
 
@@ -1453,7 +1455,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   }
 
   private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
-    // This method is used to allow easily find stack traces which violate disabled ImplicitRead
+    // This method is used to allow easily finding stack traces which violate disabled ImplicitRead
     boolean oldVal = myLock.isImplicitReadAllowed();
     try {
       myLock.setAllowImplicitRead(false);
@@ -1461,46 +1463,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     }
     finally {
       myLock.setAllowImplicitRead(oldVal);
-    }
-  }
-
-  /** Count read & write actions executed, and report to OpenTelemetry Metrics */
-  private static class OTelReadWriteActionsMonitor implements AutoCloseable{
-    private final @NotNull BatchCallback batchCallback;
-
-    private final AtomicInteger readActionsExecuted = new AtomicInteger();
-
-    private final AtomicInteger writeActionsExecuted = new AtomicInteger();
-
-    private OTelReadWriteActionsMonitor(@NotNull Meter meter) {
-      var raExecutionsCounter = meter.counterBuilder("ReadAction.executionsCount")
-        .setDescription("Total read actions executed")
-        .buildObserver();
-      var waExecutionsCounter = meter.counterBuilder("WriteAction.executionsCount")
-        .setDescription("Total write actions executed")
-        .buildObserver();
-
-      this.batchCallback = meter.batchCallback(
-        () -> {
-          raExecutionsCounter.record(readActionsExecuted.get());
-          waExecutionsCounter.record(writeActionsExecuted.get());
-        },
-        raExecutionsCounter,
-        waExecutionsCounter
-      );
-    }
-
-    public void readActionExecuted(){
-      readActionsExecuted.incrementAndGet();
-    }
-
-    public void writeActionExecuted(){
-      writeActionsExecuted.incrementAndGet();
-    }
-
-    @Override
-    public void close() {
-      batchCallback.close();
     }
   }
 }

@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.util.http.ContentType
-import com.intellij.platform.util.http.post
+import com.intellij.platform.util.http.httpPost
 import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler
 import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.CancellationException
@@ -24,7 +24,7 @@ class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
 
     try {
       val item = TraceRequestMarshaler.create(spans)
-      post(traceUrl, contentLength = item.binarySerializedSize.toLong(), contentType = ContentType.XProtobuf) {
+      httpPost(traceUrl, contentLength = item.binarySerializedSize.toLong(), contentType = ContentType.XProtobuf) {
         item.writeBinaryTo(this)
       }
     }
@@ -38,7 +38,7 @@ class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
 
   suspend fun exportBackendData(receivedBytes: ByteArray) {
     runCatching {
-      post(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
+      httpPost(url = traceUrl, contentType = ContentType.XProtobuf, body = receivedBytes)
     }.getOrLogException(thisLogger())
   }
 }

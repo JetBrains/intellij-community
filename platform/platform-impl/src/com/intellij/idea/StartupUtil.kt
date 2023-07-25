@@ -28,6 +28,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
@@ -226,15 +227,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     PluginManagerCore.scheduleDescriptorLoading(coroutineScope = asyncScope, zipFilePoolDeferred = zipFilePoolDeferred)
   }
 
-  // async - handle error separately
-  val telemetryInitJob = launch {
-    lockSystemDirsJob.join()
-    appInfoDeferred.join()
-    subtask("opentelemetry configuration") {
-      TelemetryManager.getInstance()
-    }
-  }
-
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
   if (isInternal) {
     launch(CoroutineName("assert on missed keys enabling")) {
@@ -274,7 +266,18 @@ fun CoroutineScope.startApplication(args: List<String>,
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   val appLoaded = launch {
-    loadApp(app = appDeferred.await(),
+    val app = appDeferred.await()
+
+    // async - handle error separately
+    val telemetryInitJob = launch {
+      lockSystemDirsJob.join()
+      appInfoDeferred.join()
+      subtask("opentelemetry configuration") {
+        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
+      }
+    }
+
+    loadApp(app = app,
             pluginSetDeferred = pluginSetDeferred,
             euaDocumentDeferred = euaDocumentDeferred,
             asyncScope = asyncScope,

@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.util.http.ContentType
-import com.intellij.platform.util.http.post
+import com.intellij.platform.util.http.httpPost
 import com.intellij.util.io.Ksuid
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToByteArray
@@ -64,7 +64,7 @@ suspend fun writeInProtobufFormat(startTimeUnixNanoDiff: Long, activities: List<
                              spans = spans,
                              instrumentationScope = InstrumentationScope(name = "com.intellij.platform.diagnostic.startUp",
                                                                          version = appInfo.build.asStringWithoutProductCode()))
-  post(url = endpoint, contentType = ContentType.XProtobuf, body = ProtoBuf.encodeToByteArray(data))
+  httpPost(url = endpoint, contentType = ContentType.XProtobuf, body = ProtoBuf.encodeToByteArray(data))
 }
 
 internal fun createTraceData(resource: Resource, spans: List<Span>, instrumentationScope: InstrumentationScope): TracesData {

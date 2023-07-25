@@ -4,12 +4,14 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.diagnostic.ActivityImpl
 import com.intellij.diagnostic.DefaultTraceReporter
 import com.intellij.diagnostic.rootTask
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.util.childScope
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -20,7 +22,6 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import kotlin.coroutines.CoroutineContext
@@ -30,7 +31,8 @@ import kotlin.coroutines.CoroutineContext
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
  */
 @ApiStatus.Experimental
-internal class TelemetryManagerImpl : TelemetryManager {
+@ApiStatus.Internal
+class TelemetryManagerImpl(app: Application) : TelemetryManager {
   private val sdk: OpenTelemetry
 
   private val otlpService by lazy {
@@ -47,7 +49,8 @@ internal class TelemetryManagerImpl : TelemetryManager {
 
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    val configurator = createOpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
+    @Suppress("DEPRECATION")
+    val configurator = createOpenTelemetryConfigurator(mainScope = app.coroutineScope.childScope(),
                                                        otelSdkBuilder = OpenTelemetrySdk.builder(),
                                                        appInfo = ApplicationInfoImpl.getShadowInstance())
 

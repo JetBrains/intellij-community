@@ -101,7 +101,7 @@ class BatchSpanProcessor(
       SPAN_PROCESSOR_DROPPED_LABEL,
       false)
 
-    processingJob = coroutineScope.launch(Dispatchers.IO) {
+    processingJob = coroutineScope.launch {
       processQueue()
     }
   }

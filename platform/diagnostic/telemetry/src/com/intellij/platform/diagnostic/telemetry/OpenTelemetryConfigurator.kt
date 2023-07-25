@@ -20,7 +20,6 @@ import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
-import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
 open class OpenTelemetryConfigurator(@JvmField protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
@@ -31,7 +30,6 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
                                      customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
                                      enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
-  private val shutdownCompletionTimeout: Long = 10
   val resource: Resource = Resource.create(
     Attributes.builder()
       .put(ResourceAttributes.SERVICE_NAME, serviceName)
@@ -64,9 +62,6 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
       .build()
 
     sdkBuilder.setTracerProvider(tracerProvider)
-    ShutDownTracker.getInstance().registerShutdownTask {
-      tracerProvider.shutdown().join(shutdownCompletionTimeout, TimeUnit.SECONDS)
-    }
   }
 
   private fun registerMetricsExporter(metricsExporters: List<MetricsExporterEntry>) {

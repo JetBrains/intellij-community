@@ -36,7 +36,7 @@ private class ContentTypeImpl(@JvmField val contentType: io.ktor.http.ContentTyp
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-suspend fun post(url: String, contentLength: Long, contentType: ContentType, body: suspend OutputStream.() -> Unit) {
+suspend fun httpPost(url: String, contentLength: Long, contentType: ContentType, body: suspend OutputStream.() -> Unit) {
   httpClient.post(url) {
     setBody(OutputStreamContent(contentType = (contentType as ContentTypeImpl).contentType,
                                 contentLength = contentLength,
@@ -46,7 +46,7 @@ suspend fun post(url: String, contentLength: Long, contentType: ContentType, bod
 
 @ApiStatus.Internal
 @ApiStatus.Experimental
-suspend fun post(url: String, contentType: ContentType, body: ByteArray) {
+suspend fun httpPost(url: String, contentType: ContentType, body: ByteArray) {
   httpClient.post(url) {
     setBody(ByteArrayContent(body, contentType = (contentType as ContentTypeImpl).contentType))
   }

@@ -30,6 +30,11 @@ interface TelemetryManager {
     fun getSimpleTracer(scope: Scope): IntelliJTracer = instance.value.getSimpleTracer(scope)
 
     fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
+
+    fun setTelemetryManager(value: TelemetryManager) {
+      require(!instance.isInitialized())
+      instance.value = value
+    }
   }
 
   var verboseMode: Boolean

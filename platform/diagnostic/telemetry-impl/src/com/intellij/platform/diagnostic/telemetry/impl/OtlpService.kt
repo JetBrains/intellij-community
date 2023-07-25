@@ -8,7 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.util.http.ContentType
-import com.intellij.platform.util.http.post
+import com.intellij.platform.util.http.httpPost
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.selects.onTimeout
@@ -151,7 +151,7 @@ internal class OtlpService(private val coroutineScope: CoroutineScope) {
         ),
       ),
     )
-    post(url = endpoint, contentType = ContentType.XProtobuf, body = ProtoBuf.encodeToByteArray(data))
+    httpPost(url = endpoint, contentType = ContentType.XProtobuf, body = ProtoBuf.encodeToByteArray(data))
   }
 
   fun add(activity: ActivityImpl) {
