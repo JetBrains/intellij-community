@@ -68,9 +68,7 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
     if (action instanceof QuickFixWrapper wrapper) {
       return wrapper.myFix;
     }
-    ModCommandAction modCommand;
-    modCommand = action instanceof ModCommandAction mc ? mc : ((IntentionAction)action).asModCommandAction();
-    if (modCommand instanceof ModCommandQuickFixAction qfAction) {
+    if (action.asModCommandAction() instanceof ModCommandQuickFixAction qfAction) {
       return qfAction.myFix;
     }
     return null;
