@@ -3,7 +3,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ProjectWindowCustomizerService;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolbarComboWidget;
@@ -15,6 +14,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -354,24 +354,26 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
     return !widget.getPressListeners().isEmpty() && widget.isExpandable();
   }
 
-  private static abstract class MyMouseTracker extends MouseAdapter {
+  private static abstract class MyMouseTracker extends MouseAdapter implements PropertyChangeListener {
     protected ToolbarComboWidget comp;
 
     public void installTo(ToolbarComboWidget c) {
       comp = c;
       c.addMouseListener(this);
       c.addMouseMotionListener(this);
+      c.addPropertyChangeListener(this);
     }
 
     public void uninstall() {
       comp.removeMouseListener(this);
       comp.removeMouseMotionListener(this);
+      comp.removePropertyChangeListener(this);
       comp = null;
     }
   }
 
   private class HoverAreaTracker extends MyMouseTracker {
-
+    private boolean mouseInside = false;
     private Rectangle hoverRect;
 
     private Rectangle getHoverRect() {
@@ -380,12 +382,16 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
 
     @Override
     public void mouseEntered(MouseEvent e) {
+      mouseInside = true;
       calcHoverRect(e.getPoint());
     }
 
     @Override
     public void mouseExited(MouseEvent e) {
-      updateHoverRect(null);
+      mouseInside = false;
+      if (!comp.isPopupShowing()) {
+        updateHoverRect(null);
+      }
     }
 
     @Override
@@ -393,7 +399,19 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
       calcHoverRect(e.getPoint());
     }
 
-    private void calcHoverRect(Point mousePosition) {
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+      if ("isPopupShowing".equals(evt.getPropertyName())) {
+        if (Objects.equals(evt.getNewValue(), true)) {
+          calcHoverRect(null);
+        }
+        else if (!mouseInside) {
+          updateHoverRect(null);
+        }
+      }
+    }
+
+    private void calcHoverRect(@Nullable Point mousePosition) {
       Rectangle compBounds = comp.getVisibleRect();
       if (!isSeparatorShown(comp)) {
         updateHoverRect(compBounds);
@@ -406,7 +424,7 @@ public class ToolbarComboWidgetUI extends ComponentUI implements PropertyChangeL
                                       (compBounds.width - separatorPosition - SEPARATOR_WIDTH - getSeparatorGap()),
                                       compBounds.height);
 
-      updateHoverRect(mousePosition.x <= separatorPosition ? left : right);
+      updateHoverRect(mousePosition == null || mousePosition.x <= separatorPosition ? left : right);
     }
 
     private void updateHoverRect(Rectangle newRect) {
