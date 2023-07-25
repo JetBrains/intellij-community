@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.resolve.source.KotlinSourceElement
 import org.jetbrains.kotlin.storage.LockBasedStorageManager
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.utils.Printer
+import java.util.concurrent.Callable
 
 class CodeFragmentCodegenException(val reason: Exception) : Exception()
 
@@ -61,7 +62,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         codeFragment: KtCodeFragment, filesToCompile: List<KtFile>,
         compilingStrategy: CodeFragmentCompilingStrategy, bindingContext: BindingContext, moduleDescriptor: ModuleDescriptor
     ): CompilationResult {
-        val result = ReadAction.nonBlocking<Result<CompilationResult>> {
+        val result = compilingStrategy.stats.startAndMeasureCompilationUnderReadAction {
             try {
                 Result.success(doCompile(codeFragment, filesToCompile, compilingStrategy, bindingContext, moduleDescriptor))
             } catch (ex: ProcessCanceledException) {
@@ -69,7 +70,7 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
             } catch (ex: Exception) {
                 Result.failure(ex)
             }
-        }.executeSynchronously()
+        }
         return result.getOrThrow()
     }
 
@@ -125,7 +126,6 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext) {
         try {
             KotlinCodegenFacade.compileCorrectFiles(generationState)
             return fragmentCompilerBackend.extractResult(methodDescriptor, parameterInfo, generationState).also {
-                compilingStrategy.onSuccess()
                 generationState.destroy()
             }
         } catch (e: ProcessCanceledException) {
@@ -338,3 +338,29 @@ private class EvaluatorModuleDescriptor(
 
 internal val OutputFile.internalClassName: String
     get() = relativePath.removeSuffix(".class").replace('/', '.')
+
+class CodeFragmentCompilationStats {
+    var analysisTimeMs: Long = -1L
+        private set
+    var compilationTimeMs: Long = -1L
+        private set
+    var interruptions: Int = 0
+        private set
+
+    fun <R> startAndMeasureAnalysisUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { analysisTimeMs = it }
+    fun <R> startAndMeasureCompilationUnderReadAction(block: () -> R): R = startAndMeasureUnderReadAction(block) { compilationTimeMs = it }
+
+    private fun <R> startAndMeasureUnderReadAction(block: () -> R, timeUpdater: (Long) -> Unit): R {
+        val startMs = System.currentTimeMillis()
+        val result = ReadAction.nonBlocking(Callable {
+            try {
+                block()
+            } catch (e: ProcessCanceledException) {
+                interruptions++
+                throw e
+            }
+        }).executeSynchronously()
+        timeUpdater(System.currentTimeMillis() - startMs)
+        return result
+    }
+}

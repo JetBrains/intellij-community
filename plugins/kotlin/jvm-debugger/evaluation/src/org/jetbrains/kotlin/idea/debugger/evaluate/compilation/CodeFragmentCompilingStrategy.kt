@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.resolve.BindingContext
 
 abstract class CodeFragmentCompilingStrategy(val codeFragment: KtCodeFragment) {
 
+    val stats: CodeFragmentCompilationStats = CodeFragmentCompilationStats()
+
     abstract val compilerBackend: FragmentCompilerCodegen
 
     abstract fun getFilesToCompile(resolutionFacade: ResolutionFacade, bindingContext: BindingContext): List<KtFile>
@@ -43,7 +45,8 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
-            StatisticsEvaluationResult.SUCCESS
+            StatisticsEvaluationResult.SUCCESS,
+            stats
         )
     }
 
@@ -51,7 +54,8 @@ class OldCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragm
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.OLD,
-            StatisticsEvaluationResult.FAILURE
+            StatisticsEvaluationResult.FAILURE,
+            stats,
         )
         throw e
     }
@@ -106,7 +110,8 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
-            StatisticsEvaluationResult.SUCCESS
+            StatisticsEvaluationResult.SUCCESS,
+            stats
         )
     }
 
@@ -114,7 +119,8 @@ class IRCodeFragmentCompilingStrategy(codeFragment: KtCodeFragment) : CodeFragme
         KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
             codeFragment.project,
             StatisticsEvaluator.IR,
-            StatisticsEvaluationResult.FAILURE
+            StatisticsEvaluationResult.FAILURE,
+            stats
         )
         if (isFallbackDisabled()) {
             throw e

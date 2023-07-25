@@ -3,27 +3,40 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
 
 class KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
     companion object {
-        private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 1)
+        private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 2)
 
         // fields
         private val evaluatorField = EventFields.Enum<StatisticsEvaluator>("evaluator")
         private val evaluationResultField = EventFields.Enum<StatisticsEvaluationResult>("evaluation_result")
+        private val analysisTimeMsField = EventFields.Long("analysis_time_ms")
+        private val compilationTimeMsField = EventFields.Long("compilation_time_ms")
+        private val interruptionsField = EventFields.Int("total_interruptions")
 
         // events
-        private val evaluationResultEvent = GROUP.registerEvent("evaluation.result", evaluatorField, evaluationResultField)
+        private val evaluationResultEvent = GROUP.registerVarargEvent("evaluation.result", evaluatorField, evaluationResultField,
+                                                                      analysisTimeMsField, compilationTimeMsField, interruptionsField)
         private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
 
         @JvmStatic
-        fun logEvaluationResult(project: Project?, evaluator: StatisticsEvaluator, evaluationResult: StatisticsEvaluationResult) {
-            evaluationResultEvent.log(project, evaluator, evaluationResult)
+        fun logEvaluationResult(project: Project?, evaluator: StatisticsEvaluator, evaluationResult: StatisticsEvaluationResult,
+                                stats: CodeFragmentCompilationStats) {
+            evaluationResultEvent.log(project,
+                                      EventPair(evaluatorField, evaluator),
+                                      EventPair(evaluationResultField, evaluationResult),
+                                      EventPair(analysisTimeMsField, stats.analysisTimeMs),
+                                      EventPair(compilationTimeMsField, stats.compilationTimeMs),
+                                      EventPair(interruptionsField, stats.interruptions)
+            )
         }
 
         @JvmStatic
