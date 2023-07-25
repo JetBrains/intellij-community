@@ -429,7 +429,12 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       panel.setSelectionColor(rowSelectionBackground);
     }
     else {
-      panel.setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+      if (column == CURRENT_ASTERISK_COL) {
+        panel.setBorder(JBUI.Borders.empty(MARGIN, MARGIN, MARGIN, 0));
+      }
+      else {
+        panel.setBorder(JBUI.Borders.empty(MARGIN, 0));
+      }
       panel.setBackground(rowSelectionBackground == null ? rowBackground : rowSelectionBackground);
     }
   }
