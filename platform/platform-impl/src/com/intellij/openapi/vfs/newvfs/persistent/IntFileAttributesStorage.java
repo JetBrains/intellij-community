@@ -11,6 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -38,7 +39,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls and dragons, so beware
  */
 @ApiStatus.Internal
-public class IntFileAttributesStorage implements AutoCloseable {
+public class IntFileAttributesStorage implements Closeable {
 
   //MAYBE:
   //    1) Versioning: better have 2 versions: INTERNAL_VERSION (i.e. header format version, managed by the class
@@ -237,7 +238,6 @@ public class IntFileAttributesStorage implements AutoCloseable {
     }
   }
 
-  @VisibleForTesting
   void writeAttribute(int fileId,
                       int attributeValue) throws IOException {
     int offsetInFile = toOffsetInFile(fileId);
@@ -249,7 +249,6 @@ public class IntFileAttributesStorage implements AutoCloseable {
     INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
 
-  @VisibleForTesting
   int readAttribute(int fileId) throws IOException {
     int offsetInFile = toOffsetInFile(fileId);
     int offsetInPage = storage.toOffsetInPage(offsetInFile);

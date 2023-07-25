@@ -21,7 +21,12 @@ public final class SpecializedFileAttributes {
   //         Write test for such consistency
 
 
-  public static LongFileAttribute specializeAsLong(@NotNull FileAttribute attribute) {
+  public static IntFileAttribute specializeAsInt(@NotNull FileAttribute attribute) {
+    return specializeAsInt(FSRecords.getInstance(), attribute);
+  }
+
+  public static LongFileAttribute specializeAsLong(@NotNull FSRecordsImpl vfs,
+                                                   @NotNull FileAttribute attribute) {
     if (!attribute.isFixedSize()) {
       throw new IllegalArgumentException(attribute + " must be fixedSize");
     }
@@ -30,107 +35,188 @@ public final class SpecializedFileAttributes {
       public long read(@NotNull VirtualFile vFile,
                        long defaultValue) throws IOException {
         int fileId = extractFileId(vFile);
-        Long value = FSRecords.readAttributeRawWithLock(fileId, attribute, buffer -> {
-          if (attribute.isVersioned()) {
-            int version = buffer.getInt();
-            if (version != attribute.getVersion()) {
-              return null;
-            }
-          }
-          return buffer.getLong();
-        });
+        return read(fileId, defaultValue);
+      }
+
+      @Override
+      public void write(@NotNull VirtualFile vFile,
+                        long value) throws IOException {
+        int fileId = extractFileId(vFile);
+        write(fileId, value);
+      }
+
+      @Override
+      public long read(int fileId,
+                       long defaultValue) throws IOException {
+        Long value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getLong);
         return value == null ? defaultValue : value.longValue();
       }
 
       @Override
-      public void write(@NotNull VirtualFile vFile, long value) throws IOException {
-        int fileId = extractFileId(vFile);
-        FSRecords.writeAttributeRaw(fileId, attribute, buffer -> {
-          if (attribute.isVersioned()) {
-            buffer.putInt(attribute.getVersion());
-          }
-          return buffer.putLong(value);
-        });
+      public void write(int fileId,
+                        long value) throws IOException {
+        try (var stream = vfs.writeAttribute(fileId, attribute)) {
+          stream.writeLong(value);
+        }
+        //vfs.writeAttributeRaw(fileId, attribute, buffer -> {
+        //  return buffer.putLong(value);
+        //});
       }
     };
   }
 
-
-  public static IntFileAttribute specializeAsInt(@NotNull FileAttribute attribute) {
+  public static IntFileAttribute specializeAsInt(@NotNull FSRecordsImpl vfs,
+                                                 @NotNull FileAttribute attribute) {
     return new IntFileAttribute() {
       @Override
       public int read(@NotNull VirtualFile vFile,
                       int defaultValue) throws IOException {
         int fileId = extractFileId(vFile);
-        Integer value = FSRecords.readAttributeRawWithLock(fileId, attribute, buffer -> {
-          if (attribute.isVersioned()) {
-            int version = buffer.getInt();
-            if (version != attribute.getVersion()) {
-              return null;
-            }
-          }
-          return buffer.getInt();
-        });
+        return read(fileId, defaultValue);
+      }
+
+      @Override
+      public int read(int fileId, int defaultValue) {
+        Integer value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getInt);
         return value == null ? defaultValue : value.intValue();
       }
 
       @Override
-      public void write(@NotNull VirtualFile vFile, int value) throws IOException {
+      public void write(@NotNull VirtualFile vFile,
+                        int value) throws IOException {
         int fileId = extractFileId(vFile);
-        FSRecords.writeAttributeRaw(fileId, attribute, buffer -> {
-          if (attribute.isVersioned()) {
-            buffer.putInt(attribute.getVersion());
-          }
-          return buffer.putInt(value);
-        });
+        write(fileId, value);
+      }
+
+      @Override
+      public void write(int fileId,
+                        int value) throws IOException {
+        try (var stream = vfs.writeAttribute(fileId, attribute)) {
+          stream.writeInt(value);
+        }
+        //vfs.writeAttributeRaw(fileId, attribute, buffer -> {
+        //  if (attribute.isVersioned()) {
+        //    buffer.putInt(attribute.getVersion());
+        //  }
+        //  return buffer.putInt(value);
+        //});
       }
     };
   }
 
-  public static ByteFileAttribute specializeAsByte(@NotNull FileAttribute attribute) {
+  public static ByteFileAttribute specializeAsByte(@NotNull FSRecordsImpl vfs,
+                                                   @NotNull FileAttribute attribute) {
     return new ByteFileAttribute() {
       @Override
       public byte read(@NotNull VirtualFile vFile,
                        byte defaultValue) throws IOException {
         int fileId = extractFileId(vFile);
-        Byte value = FSRecords.readAttributeRawWithLock(fileId, attribute, buffer -> {
-          if (attribute.isVersioned()) {
-            int version = buffer.getInt();
-            if (version != attribute.getVersion()) {
-              return null;
-            }
-          }
-          return buffer.get();
-        });
+        return read(fileId, defaultValue);
+      }
+
+      @Override
+      public byte read(int fileId,
+                       byte defaultValue) {
+        Byte value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::get);
         return value == null ? defaultValue : value.byteValue();
       }
 
       @Override
-      public void write(@NotNull VirtualFile vFile, byte value) throws IOException {
+      public void write(@NotNull VirtualFile vFile,
+                        byte value) throws IOException {
         int fileId = extractFileId(vFile);
-        FSRecords.writeAttributeRaw(fileId, attribute, buffer -> {
-          if (attribute.isVersioned()) {
-            buffer.putInt(attribute.getVersion());
-          }
-          return buffer.put(value);
-        });
+        write(fileId, value);
+      }
+
+      @Override
+      public void write(int fileId,
+                        byte value) throws IOException {
+        try (var stream = vfs.writeAttribute(fileId, attribute)) {
+          stream.write(value);
+        }
+        //vfs.writeAttributeRaw(fileId, attribute, buffer -> {
+        //  return buffer.put(value);
+        //});
       }
     };
   }
 
 
+  public static IntFileAttribute specializeAsFastInt(@NotNull FileAttribute attribute) throws IOException {
+    return specializeAsFastInt(FSRecords.getInstance(), attribute);
+  }
+
+  public static IntFileAttribute specializeAsFastInt(@NotNull FSRecordsImpl vfs,
+                                                     @NotNull FileAttribute attribute) throws IOException {
+    String attributeId = attribute.getId();
+
+    //FIXME RC: who is responsible for closing the storage?
+
+    IntFileAttributesStorage attributesStorage = IntFileAttributesStorage.openAndEnsureMatchVFS(vfs, attributeId);
+
+    if (attribute.isVersioned()) {
+      if (attributesStorage.getVersion() != attribute.getVersion()) {
+        attributesStorage.clear();
+        attributesStorage.setVFSCreationTag(vfs.getCreationTimestamp());
+        attributesStorage.setVersion(attribute.getVersion());
+      }
+    }
+
+    return new IntFileAttribute() {
+      @Override
+      public int read(@NotNull VirtualFile vFile,
+                      int defaultValue) throws IOException {
+        if (defaultValue != 0) {
+          throw new UnsupportedOperationException(
+            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+        }
+        return attributesStorage.readAttribute(vFile);
+      }
+
+      @Override
+      public int read(int fileId,
+                      int defaultValue) throws IOException {
+        if (defaultValue != 0) {
+          throw new UnsupportedOperationException(
+            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+        }
+        return attributesStorage.readAttribute(fileId);
+      }
+
+      @Override
+      public void write(@NotNull VirtualFile vFile, int value) throws IOException {
+        attributesStorage.writeAttribute(vFile, value);
+      }
+
+      @Override
+      public void write(int fileId, int value) throws IOException {
+        attributesStorage.writeAttribute(fileId, value);
+      }
+    };
+  }
+
   public interface LongFileAttribute {
     long read(@NotNull VirtualFile vFile,
               long defaultValue) throws IOException;
 
-    void write(@NotNull VirtualFile vFile, long value) throws IOException;
+    void write(@NotNull VirtualFile vFile,
+               long value) throws IOException;
+
+    long read(int fileId,
+              long defaultValue) throws IOException;
+
+    void write(int fileId,
+               long value) throws IOException;
   }
 
   public interface IntFileAttribute {
-    int read(@NotNull VirtualFile vFile,
-             int defaultValue) throws IOException;
+    int read(@NotNull VirtualFile vFile, int defaultValue) throws IOException;
+
+    int read(int fileId, int defaultValue) throws IOException;
 
     void write(@NotNull VirtualFile vFile, int value) throws IOException;
+
+    void write(int fileId, int value) throws IOException;
   }
 
   public interface ByteFileAttribute {
@@ -138,6 +224,12 @@ public final class SpecializedFileAttributes {
               byte defaultValue) throws IOException;
 
     void write(@NotNull VirtualFile vFile, byte value) throws IOException;
+
+    byte read(int fileId,
+              byte defaultValue) throws IOException;
+
+    void write(int fileId,
+               byte value) throws IOException;
   }
 
   private static int extractFileId(@NotNull VirtualFile vFile) {

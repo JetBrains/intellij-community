@@ -97,7 +97,7 @@ public final class PersistentFSAttributeAccessor {
       //TODO RC: drill hole for storage.writeAttributeRaw(connection, fileId, attribute, writer)
       //return storage.writeAttribute(connection, fileId, attribute, buffer -> {
       //  if (attribute.isVersioned()) {
-      //    final int actualVersion = DataInputOutputUtil.writeINT(buffer);
+      //    DataInputOutputUtil.writeINT(buffer);
       //  }
       //  return writer.write(buffer);
       //});

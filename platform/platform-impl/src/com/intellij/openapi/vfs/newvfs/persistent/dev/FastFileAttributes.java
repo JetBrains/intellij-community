@@ -5,9 +5,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,7 +75,7 @@ public final class FastFileAttributes {
   }
 
 
-  public static class IntFileAttribute implements AutoCloseable {
+  public static class IntFileAttribute implements SpecializedFileAttributes.IntFileAttribute, Closeable {
     public static final int ROW_SIZE = Integer.BYTES;
     public static final int FIELD_OFFSET = 0;
 
@@ -81,13 +83,29 @@ public final class FastFileAttributes {
 
     public IntFileAttribute(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
 
-    public int read(@NotNull VirtualFile vFile) throws IOException {
+    @Override
+    public int read(@NotNull VirtualFile vFile, int defaultValue) throws IOException {
+      if (defaultValue != 0) {
+        throw new UnsupportedOperationException(
+          "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+      }
       return storageHelper.readIntField(vFile, FIELD_OFFSET);
     }
 
+    @Override
     public void write(@NotNull VirtualFile vFile,
                       int value) throws IOException {
       storageHelper.writeIntField(vFile, FIELD_OFFSET, value);
+    }
+
+    @Override
+    public int read(int fileId, int defaultValue) throws IOException {
+      return storageHelper.readIntField(fileId,FIELD_OFFSET);
+    }
+
+    @Override
+    public void write(int fileId, int value) throws IOException {
+      storageHelper.writeIntField(fileId, FIELD_OFFSET, value);
     }
 
     public void update(@NotNull VirtualFile vFile,
@@ -105,7 +123,7 @@ public final class FastFileAttributes {
     }
   }
 
-  public static class Int3FileAttribute implements AutoCloseable {
+  public static class Int3FileAttribute implements Closeable {
     public static final int FIELDS = 3;
     public static final int ROW_SIZE = FIELDS * Integer.BYTES;
 

@@ -1044,9 +1044,9 @@ public final class FSRecordsImpl {
   }
 
   @ApiStatus.Internal
-  <R> @Nullable R readAttributeRawWithLock(int fileId,
-                                           @NotNull FileAttribute attribute,
-                                           ByteBufferReader<R> reader) {
+  <R> @Nullable R readAttributeRaw(int fileId,
+                                   @NotNull FileAttribute attribute,
+                                   ByteBufferReader<R> reader) {
     //RC: attributeAccessor acquires lock anyway, no need for additional lock here
     try {
       return attributeAccessor.readAttributeRaw(fileId, attribute, reader);

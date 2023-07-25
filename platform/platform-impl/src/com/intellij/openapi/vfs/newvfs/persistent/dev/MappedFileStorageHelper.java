@@ -54,7 +54,7 @@ public class MappedFileStorageHelper implements AutoCloseable {
 
     public static final int VFS_CREATION_TIMESTAMP_OFFSET = RESERVED_OFFSET + Integer.BYTES;
 
-    public static final int FIRST_FREE_FIELD = VFS_CREATION_TIMESTAMP_OFFSET+Long.BYTES;
+    public static final int FIRST_FREE_FIELD = VFS_CREATION_TIMESTAMP_OFFSET + Long.BYTES;
 
     //reserve [8 x int64] just for the case
     public static final int HEADER_SIZE = 8 * Long.BYTES;
@@ -195,13 +195,8 @@ public class MappedFileStorageHelper implements AutoCloseable {
     return "MappedFileStorageHelper[" + storage.storagePath() + "]";
   }
 
-
-
-  /* ============== implementation: ====================================================================== */
-
-  @VisibleForTesting
-  int readIntField(int fileId,
-                   int fieldOffsetInRow) throws IOException {
+  public int readIntField(int fileId,
+                          int fieldOffsetInRow) throws IOException {
     int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
@@ -211,10 +206,9 @@ public class MappedFileStorageHelper implements AutoCloseable {
     return (int)INT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
   }
 
-  @VisibleForTesting
-  void writeIntField(int fileId,
-                     int fieldOffsetInRow,
-                     int attributeValue) throws IOException {
+  public void writeIntField(int fileId,
+                            int fieldOffsetInRow,
+                            int attributeValue) throws IOException {
     int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
@@ -223,6 +217,8 @@ public class MappedFileStorageHelper implements AutoCloseable {
 
     INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
+
+  /* ============== implementation: ====================================================================== */
 
   @VisibleForTesting
   int updateIntField(int fileId,

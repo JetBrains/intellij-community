@@ -396,7 +396,7 @@ public final class FSRecords {
   public static <R> @Nullable R readAttributeRawWithLock(int fileId,
                                                          @NotNull FileAttribute attribute,
                                                          ByteBufferReader<R> reader) {
-    return implOrFail().readAttributeRawWithLock(fileId, attribute, reader);
+    return implOrFail().readAttributeRaw(fileId, attribute, reader);
   }
 
   @ApiStatus.Internal
