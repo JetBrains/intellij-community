@@ -23,7 +23,6 @@ interface KotlinCommonRefactoringSettings {
     var MOVE_SEARCH_IN_COMMENTS: Boolean
     var MOVE_SEARCH_FOR_TEXT: Boolean
     var MOVE_SEARCH_REFERENCES: Boolean
-    var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
     var MOVE_MPP_DECLARATIONS: Boolean
     var INTRODUCE_DECLARE_WITH_VAR: Boolean
     var INTRODUCE_SPECIFY_TYPE_EXPLICITLY: Boolean

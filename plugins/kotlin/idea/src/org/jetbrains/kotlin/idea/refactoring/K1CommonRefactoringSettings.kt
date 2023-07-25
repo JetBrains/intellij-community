@@ -39,9 +39,6 @@ internal class K1CommonRefactoringSettings : KotlinCommonRefactoringSettingsBase
     override var MOVE_SEARCH_REFERENCES: Boolean
             by delegateTo { it::MOVE_SEARCH_REFERENCES }
 
-    override var MOVE_DELETE_EMPTY_SOURCE_FILES: Boolean
-            by delegateTo { it::MOVE_DELETE_EMPTY_SOURCE_FILES }
-
     override var MOVE_MPP_DECLARATIONS: Boolean
             by delegateTo { it::MOVE_MPP_DECLARATIONS }
 

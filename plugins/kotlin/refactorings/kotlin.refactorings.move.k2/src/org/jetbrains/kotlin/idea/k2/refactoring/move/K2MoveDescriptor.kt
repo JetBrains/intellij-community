@@ -32,11 +32,6 @@ sealed class K2MoveDescriptor {
         SEARCH_REFERENCES(
             KotlinBundle.message("checkbox.text.search.references"),
             KotlinCommonRefactoringSettings.getInstance()::MOVE_SEARCH_REFERENCES
-        ),
-
-        MOVE_DELETE_EMPTY_SOURCE_FILES(
-            KotlinBundle.message("checkbox.text.delete.empty.source.files"),
-            KotlinCommonRefactoringSettings.getInstance()::MOVE_DELETE_EMPTY_SOURCE_FILES
         );
 
         context(Panel)
@@ -92,11 +87,9 @@ sealed class K2MoveDescriptor {
 
         val searchReferences: Boolean get() = KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
 
-        val deleteEmptySourceFiles: Boolean get() = KotlinCommonRefactoringSettings.getInstance().MOVE_DELETE_EMPTY_SOURCE_FILES
-
         override val settings: Array<Array<Setting>> = arrayOf(
             arrayOf(Setting.SEARCH_FOR_TEXT, Setting.SEARCH_IN_COMMENTS),
-            arrayOf(Setting.SEARCH_REFERENCES, Setting.MOVE_DELETE_EMPTY_SOURCE_FILES)
+            arrayOf(Setting.SEARCH_REFERENCES)
         )
     }
 }

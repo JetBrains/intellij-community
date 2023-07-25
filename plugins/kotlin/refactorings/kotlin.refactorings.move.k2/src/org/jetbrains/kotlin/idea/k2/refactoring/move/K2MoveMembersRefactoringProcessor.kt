@@ -35,6 +35,8 @@ class K2MoveMembersRefactoringProcessor(
     override fun performRefactoring(usages: Array<out UsageInfo>) = allowAnalysisOnEdt {
         val targetFile = descriptor.target.file
 
+        val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
+
         val oldToNewMap = descriptor.source.elements.associateWith {
             declaration -> targetFile.add(declaration)
         }.toMutableMap<PsiElement, PsiElement>()
@@ -42,11 +44,8 @@ class K2MoveMembersRefactoringProcessor(
         RenameUtil.renameNonCodeUsages(myProject, nonCodeUsages)
         descriptor.source.elements.forEach(PsiElement::deleteSingle)
 
-        if (descriptor.deleteEmptySourceFiles) {
-            val sourceFiles = descriptor.source.elements.map { it.containingKtFile }.distinct()
-            for (sourceFile in sourceFiles) {
-                if (sourceFile.declarations.isEmpty()) sourceFile.delete()
-            }
+        for (sourceFile in sourceFiles) {
+            if (sourceFile.declarations.isEmpty()) sourceFile.delete()
         }
     }
 }
