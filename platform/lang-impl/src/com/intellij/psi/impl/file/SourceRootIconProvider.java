@@ -88,7 +88,7 @@ public final class SourceRootIconProvider {
     }
   }
 
-  public static class FileLayerProvider implements IconLayerProvider, DumbAware {
+  static final class FileLayerProvider implements IconLayerProvider, DumbAware {
     @Override
     public @Nullable Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {
       if (element instanceof PsiFile) {

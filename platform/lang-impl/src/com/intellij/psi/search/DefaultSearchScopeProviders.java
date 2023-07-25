@@ -22,7 +22,7 @@ import java.util.List;
 public final class DefaultSearchScopeProviders {
   private DefaultSearchScopeProviders() {}
 
-  public static class CustomNamed implements SearchScopeProvider {
+  public static final class CustomNamed implements SearchScopeProvider {
     @Override
     public String getDisplayName() {
       return LangBundle.message("default.search.scope.custom.named.display.name");

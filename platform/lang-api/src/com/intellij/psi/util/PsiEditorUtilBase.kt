@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -14,23 +15,22 @@ import com.intellij.psi.PsiElement
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeoutException
 
-object PsiEditorUtilBase : PsiEditorUtil {
-  private val LOG = logger<PsiEditorUtilBase>()
+private val LOG: Logger
+  get() = logger<PsiEditorUtilBase>()
 
+open class PsiEditorUtilBase : PsiEditorUtil {
   /**
    * Tries to find editor for the given element.
    *
    *
-   * There are at least two approaches to achieve the target. Current method is intended to encapsulate both of them:
+   * There are at least two approaches to achieve the target.
+   * The current method is intended to encapsulate both of them:
    *
    *  * target editor works with a real file that remains at file system;
    *  * target editor works with a virtual file;
    *
-   *
-   *
    * Please don't use this method for finding an editor for quick fix.
    * @see com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement
-   *
    *
    * @param element   target element
    * @return          editor that works with a given element if the one is found; `null` otherwise
@@ -66,7 +66,7 @@ object PsiEditorUtilBase : PsiEditorUtil {
       }
       if (editor != null) {
         val cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(psiFile)
-        // Ensure that target editor is found by checking its document against the one from given PSI element.
+        // Ensure that target editor is found by checking its document against the one from given a PSI element.
         if (cachedDocument === editor.document) {
           return editor
         }

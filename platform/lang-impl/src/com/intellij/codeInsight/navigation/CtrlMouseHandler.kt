@@ -295,7 +295,7 @@ class CtrlMouseHandler2(
 
   private fun showHint(editor: EditorEx, hostOffset: Int, result: CtrlMouseResult): LightweightHint? {
     val skipHint = EditorMouseHoverPopupManager.getInstance().isHintShown ||
-                   DocumentationManager.instance(project).isPopupVisible ||
+                   DocumentationManager.getInstance(project).isPopupVisible ||
                    ApplicationManager.getApplication().isUnitTestMode
     if (skipHint) {
       return null
@@ -326,7 +326,7 @@ class CtrlMouseHandler2(
         return
       }
       cs.launch(Dispatchers.EDT + ModalityState.current().asContextElement(), start = CoroutineStart.UNDISPATCHED) {
-        val ok = DocumentationManager.instance(project).activateInlineLinkS(
+        val ok = DocumentationManager.getInstance(project).activateInlineLinkS(
           targetPointer::dereference, description, editor, editorPoint(e, editor)
         )
         if (ok) {
@@ -416,7 +416,7 @@ private fun wrapInScrollPaneIfNeeded(component: JComponent, editor: Editor): JCo
   if (preferredSize.width <= maxWidth && preferredSize.height <= maxHeight) {
     return component
   }
-  // We expect documentation providers to exercise good judgement in limiting the displayed information,
+  // We expect documentation providers to exercise good judgment in limiting the displayed information,
   // but in any case, we don't want the hint to cover the whole screen, so we also implement certain limiting here.
   return ScrollPaneFactory.createScrollPane(component, true).also {
     it.preferredSize = Dimension(

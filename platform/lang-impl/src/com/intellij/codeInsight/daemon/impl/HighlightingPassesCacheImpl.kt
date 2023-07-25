@@ -25,18 +25,24 @@ import java.util.concurrent.Callable
 
 private val LOG = logger<HighlightingPassesCache>()
 
-class HighlightingPassesCacheImpl(val project: Project, private val scope: CoroutineScope) : HighlightingPassesCache {
+private class HighlightingPassesCacheImpl(val project: Project, private val scope: CoroutineScope) : HighlightingPassesCache {
   private val experiment = HighlightingPreloadExperiment()
 
   override fun schedule(files: List<VirtualFile>, sourceOnly: Boolean) {
-    if (!Registry.`is`("highlighting.passes.cache")) return
+    if (!Registry.`is`("highlighting.passes.cache")) {
+      return
+    }
 
     val registryKeyExperiment = Registry.`is`("highlighting.passes.cache.experiment")
     val linesLimit = Registry.intValue("highlighting.passes.cache.file.size.limit")
     val cacheSize = Registry.intValue("highlighting.passes.cache.size")
 
-    if (!registryKeyExperiment && !experiment.isExperimentEnabled) return
-    if (registryKeyExperiment) LOG.debug("Highlighting Passes Cache is enabled in Registry.")
+    if (!registryKeyExperiment && !experiment.isExperimentEnabled) {
+      return
+    }
+    if (registryKeyExperiment) {
+      LOG.debug("Highlighting Passes Cache is enabled in Registry.")
+    }
 
     if (files.isEmpty()) return
 
@@ -56,16 +62,14 @@ class HighlightingPassesCacheImpl(val project: Project, private val scope: Corou
         }, ProgressIndicatorBase())
     }
   }
+}
 
-  companion object {
-    fun filterSourceFiles(project: Project, files: List<VirtualFile>): List<VirtualFile> {
-      return ReadAction.nonBlocking(Callable {
-        runBlockingCancellable {
-          files.filter {
-            readAction { ProjectFileIndex.getInstance(project).isInSourceContent(it) }
-          }
-        }
-      }).submit(AppExecutorUtil.getAppExecutorService()).get()
+private fun filterSourceFiles(project: Project, files: List<VirtualFile>): List<VirtualFile> {
+  return ReadAction.nonBlocking(Callable {
+    runBlockingCancellable {
+      files.filter {
+        readAction { ProjectFileIndex.getInstance(project).isInSourceContent(it) }
+      }
     }
-  }
+  }).submit(AppExecutorUtil.getAppExecutorService()).get()
 }

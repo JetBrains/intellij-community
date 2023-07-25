@@ -20,9 +20,10 @@ open class CodeVisionInitializer(project: Project) {
 
   internal class CodeVisionInitializerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
+      val visionInitializer = getInstance(project)
       withContext(Dispatchers.EDT) {
         blockingContext {
-          getInstance(project).host.initialize()
+          visionInitializer.host.initialize()
         }
       }
     }

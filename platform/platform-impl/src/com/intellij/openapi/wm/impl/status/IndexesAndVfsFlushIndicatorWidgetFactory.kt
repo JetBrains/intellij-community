@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import javax.swing.Icon
 
-class IndexesAndVfsFlushIndicatorWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
+private class IndexesAndVfsFlushIndicatorWidgetFactory : StatusBarWidgetFactory, WidgetPresentationFactory {
   override fun getId(): String = "IndexesAndVfsFlushIndicator"
 
   override fun getDisplayName(): String = UIBundle.message("status.bar.vfs.and.index.flushing.state.widget.name")

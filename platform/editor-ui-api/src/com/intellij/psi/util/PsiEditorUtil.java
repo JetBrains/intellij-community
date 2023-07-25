@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiEditorUtil {
-
   static PsiEditorUtil getInstance() {
     return ApplicationManager.getApplication().getService(PsiEditorUtil.class);
   }

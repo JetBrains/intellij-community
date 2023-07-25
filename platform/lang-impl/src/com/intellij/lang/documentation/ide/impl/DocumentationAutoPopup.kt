@@ -17,7 +17,7 @@ internal class DocumentationAutoPopup : ProjectActivity {
 private class DocumentationAutoPopupListener : LookupManagerListener {
   override fun activeLookupChanged(oldLookup: Lookup?, newLookup: Lookup?) {
     if (newLookup is LookupEx) {
-      DocumentationManager.instance(newLookup.project).autoShowDocumentationOnItemChange(newLookup)
+      DocumentationManager.getInstance(newLookup.project).autoShowDocumentationOnItemChange(newLookup)
     }
   }
 }

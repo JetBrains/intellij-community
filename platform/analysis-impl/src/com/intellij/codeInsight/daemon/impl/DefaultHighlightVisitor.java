@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.AnnotatorStatisticsCollector;
@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
 
 final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
   private static final Logger LOG = Logger.getInstance(DefaultHighlightVisitor.class);
@@ -113,8 +112,7 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
 
   @SuppressWarnings("CloneDoesntCallSuperClone")
   @Override
-  @NotNull
-  public HighlightVisitor clone() {
+  public @NotNull HighlightVisitor clone() {
     return new DefaultHighlightVisitor(myProject, myHighlightErrorElements, myRunAnnotators, myBatchMode);
   }
 
@@ -161,8 +159,28 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     return info;
   }
 
-  @NotNull
-  private static HighlightInfo.Builder createInfoWithoutFixes(@NotNull PsiErrorElement element) {
+  private @NotNull List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
+    List<Annotator> result = new ArrayList<>(templates.size());
+    for (Annotator template : templates) {
+      Annotator annotator;
+      try {
+        annotator = ReflectionUtil.newInstance(template.getClass());
+      }
+      catch (Exception e) {
+        LOG.error(PluginException.createByClass(e, template.getClass()));
+        continue;
+      }
+      result.add(annotator);
+      myAnnotatorStatisticsCollector.reportNewAnnotatorCreated(annotator);
+    }
+    return result;
+  }
+
+  private @NotNull List<Annotator> createAnnotators(@NotNull Language language) {
+    return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
+  }
+
+  private static @NotNull HighlightInfo.Builder createInfoWithoutFixes(@NotNull PsiErrorElement element) {
     TextRange range = element.getTextRange();
     String errorDescription = element.getErrorDescription();
     if (!range.isEmpty()) {
@@ -193,28 +211,5 @@ final class DefaultHighlightVisitor implements HighlightVisitor, DumbAware {
     builder.descriptionAndTooltip(errorDescription);
     builder.endOfLine();
     return builder;
-  }
-
-  @NotNull
-  private List<Annotator> cloneTemplates(@NotNull Collection<? extends Annotator> templates) {
-    List<Annotator> result = new ArrayList<>(templates.size());
-    for (Annotator template : templates) {
-      Annotator annotator;
-      try {
-        annotator = ReflectionUtil.newInstance(template.getClass());
-      }
-      catch (Exception e) {
-        LOG.error(PluginException.createByClass(e, template.getClass()));
-        continue;
-      }
-      result.add(annotator);
-      myAnnotatorStatisticsCollector.reportNewAnnotatorCreated(annotator);
-    }
-    return result;
-  }
-
-  @NotNull
-  private List<Annotator> createAnnotators(@NotNull Language language) {
-    return cloneTemplates(LanguageAnnotators.INSTANCE.allForLanguageOrAny(language));
   }
 }

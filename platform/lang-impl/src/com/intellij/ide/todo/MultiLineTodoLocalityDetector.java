@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
@@ -10,10 +10,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MultiLineTodoLocalityDetector implements ChangeLocalityDetector {
-  @Nullable
+final class MultiLineTodoLocalityDetector implements ChangeLocalityDetector {
   @Override
-  public PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement) {
+  public @Nullable PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement) {
     if (!TodoConfiguration.getInstance().isMultiLine()) return null;
     if (changedElement instanceof PsiWhiteSpace) {
       PsiElement prevLeaf = PsiTreeUtil.prevLeaf(changedElement);

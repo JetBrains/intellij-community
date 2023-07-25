@@ -11,7 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 
-internal class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
+private class FloatingCodeToolbarEditorCustomizer: TextEditorCustomizer {
   override fun customize(textEditor: TextEditor) {
     val editor = textEditor.editor
     val project = editor.project ?: return

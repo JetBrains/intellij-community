@@ -45,11 +45,8 @@ import java.lang.ref.WeakReference
 @ApiStatus.Internal
 @Service
 class DocumentationManager(private val project: Project, private val cs: CoroutineScope) : Disposable {
-
   companion object {
-
-    @JvmStatic
-    fun instance(project: Project): DocumentationManager = project.service()
+    fun getInstance(project: Project): DocumentationManager = project.service()
 
     var skipPopup: Boolean by propComponentProperty(name = "documentation.skip.popup", defaultValue = false)
   }
@@ -71,7 +68,7 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
     if (currentPopup != null) {
       // focused popup would eat the shortcut itself
       // => at this point there is an unfocused documentation popup near lookup or search component
-      DocumentationPopupFocusService.instance(project).focusExistingPopup(currentPopup)
+      DocumentationPopupFocusService.getInstance(project).focusExistingPopup(currentPopup)
       return
     }
 
@@ -274,4 +271,4 @@ class DocumentationManager(private val project: Project, private val cs: Corouti
   }
 }
 
-fun isDocumentationPopupVisible(project: Project): Boolean = DocumentationManager.instance(project).isPopupVisible
+fun isDocumentationPopupVisible(project: Project): Boolean = DocumentationManager.getInstance(project).isPopupVisible
