@@ -127,7 +127,7 @@ public abstract class NullableNotNullManager {
     if (result != null) {
       return result;
     }
-    return findNullityDefaultInHierarchy(owner);
+    return findContainerAnnotation(owner);
   }
 
   /**
@@ -166,7 +166,7 @@ public abstract class NullableNotNullManager {
           NullabilityAnnotationInfo plain = findPlainAnnotation(parameter, false, false, getAllNullabilityAnnotationsWithNickNames());
           // Plain not null annotation is not inherited
           if (plain != null) return null;
-          NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(parameter);
+          NullabilityAnnotationInfo defaultInfo = findContainerAnnotation(parameter);
           if (defaultInfo != null) {
             return defaultInfo.getNullability() == Nullability.NOT_NULL ? defaultInfo.withInheritedFrom(parameter) : null;
           }
@@ -182,7 +182,7 @@ public abstract class NullableNotNullManager {
   }
 
   private @Nullable NullabilityAnnotationInfo findNullityDefaultFiltered(@NotNull PsiModifierListOwner owner) {
-    NullabilityAnnotationInfo defaultInfo = findNullityDefaultInHierarchy(owner);
+    NullabilityAnnotationInfo defaultInfo = findContainerAnnotation(owner);
     if (defaultInfo != null && (defaultInfo.getNullability() == Nullability.NULLABLE || !hasHardcodedContracts(owner))) {
       return defaultInfo;
     }
@@ -294,7 +294,15 @@ public abstract class NullableNotNullManager {
     return findNullabilityDefault(context, PsiAnnotation.TargetType.TYPE_USE);
   }
 
-  @Nullable NullabilityAnnotationInfo findNullityDefaultInHierarchy(@NotNull PsiModifierListOwner owner) {
+  /**
+   * Looks for applicable container annotation, ignoring explicit, inferred, external, or inherited annotations.
+   * Usually, should not be used directly, as {@link #findEffectiveNullabilityInfo(PsiModifierListOwner)} will
+   * return container annotation if it's applicable.
+   * 
+   * @param owner member to find annotation for
+   * @return container annotation applicable to the owner location
+   */
+  public @Nullable NullabilityAnnotationInfo findContainerAnnotation(@NotNull PsiModifierListOwner owner) {
     return findNullabilityDefault(owner, AnnotationTargetUtil.getTargetsForLocation(owner.getModifierList()));
   }
 

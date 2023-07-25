@@ -248,6 +248,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     myFixture.enableInspections(myInspection);
     myFixture.checkHighlighting(true, false, true);
   }
+  
+  public void testDefaultOverridesExplicit() {
+    DataFlowInspectionTest.addJavaxNullabilityAnnotations(myFixture);
+    DataFlowInspectionTest.addJavaxDefaultNullabilityAnnotations(myFixture);
+    doTest();
+  }
 
   public void testBeanValidationNotNull() {
     myFixture.addClass("package javax.annotation.constraints; public @interface NotNull{}");
