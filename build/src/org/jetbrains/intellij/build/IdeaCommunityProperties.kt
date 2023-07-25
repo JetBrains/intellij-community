@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.persistentListOf
@@ -101,7 +101,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
 
   protected open inner class CommunityWindowsDistributionCustomizer : WindowsDistributionCustomizer() {
     init {
-      icoPath = "${communityHomeDir}/platform/icons/src/idea_CE.ico"
+      icoPath = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE.ico"
       icoPathForEAP = "${communityHomeDir}/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
       installerImagesPath = "${communityHomeDir}/build/conf/ideaCE/win/images"
       fileAssociations = listOf("java", "gradle", "groovy", "kt", "kts", "pom")
