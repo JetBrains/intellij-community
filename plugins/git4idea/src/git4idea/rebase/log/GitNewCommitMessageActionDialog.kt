@@ -12,6 +12,8 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
 import git4idea.rebase.log.GitCommitEditingActionBase.Companion.findContainingBranches
@@ -86,7 +88,13 @@ internal class GitNewCommitMessageActionDialog<T : GitCommitEditingActionBase.Mu
   override fun getDimensionServiceKey() = "Git.Rebase.Log.Action.NewCommitMessage.Dialog"
 
   private fun createCommitEditor(): CommitMessage {
-    val editor = CommitMessage(commitEditingData.project, false, false, true)
+    val editor = object : CommitMessage(commitEditingData.project, false, false, true) {
+      override fun getData(dataId: String): Any? {
+        if (VcsLogDataKeys.VCS_LOG_COMMIT_SELECTION.`is`(dataId)) return commitEditingData.selection
+        if (VcsLogInternalDataKeys.LOG_DATA.`is`(dataId)) return commitEditingData.logData
+        return super.getData(dataId)
+      }
+    }
     editor.text = originMessage
     editor.editorField.setCaretPosition(0)
     editor.editorField.addSettingsProvider { editorEx ->
