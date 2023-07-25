@@ -40,6 +40,31 @@ data class CompletionGolfStrategy(
   companion object {
     const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
+
+  class Builder constructor(val mode: CompletionGolfMode) {
+    var checkLine: Boolean = true
+    var invokeOnEachChar: Boolean = false
+
+    var checkToken: Boolean = true
+    var source: SuggestionSource? = null
+    var topN: Int = -1
+
+    var suggestionsProvider: String = DEFAULT_PROVIDER
+    var pathToZipModel: String? = null
+    var completionType: CompletionType = CompletionType.ML
+
+    fun build(): CompletionGolfStrategy = CompletionGolfStrategy(
+      mode = mode,
+      checkLine = checkLine,
+      invokeOnEachChar = invokeOnEachChar,
+      checkToken = checkToken,
+      source = source,
+      topN = topN,
+      suggestionsProvider = suggestionsProvider,
+      pathToZipModel = pathToZipModel,
+      completionType = completionType
+    )
+  }
 }
 
 
