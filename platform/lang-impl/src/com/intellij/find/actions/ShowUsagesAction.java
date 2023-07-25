@@ -681,7 +681,7 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   private static @NotNull AnActionEvent fakeEvent(@NotNull ToggleAction action) {
     return new AnActionEvent(
       null, DataContext.EMPTY_CONTEXT, "",
-      action.getTemplatePresentation(), ActionManager.getInstance(), 0
+      action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0
     );
   }
 
