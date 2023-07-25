@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.Suppressions;
 import com.intellij.util.User32Ex;
+import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +28,10 @@ import java.nio.channels.ClosedChannelException;
 import java.nio.channels.ServerSocketChannel;
 import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileAlreadyExistsException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -100,7 +104,9 @@ final class DirectoryLock {
 
   private static boolean areUdsSupported(Path file) {
     var fs = file.getFileSystem();
-    if (fs.getClass().getModule() != Object.class.getModule()) {
+    if (fs.getClass().getModule() != Object.class.getModule() &&
+        System.getProperty("java.vm.vendor", "").contains("JetBrains") &&
+        JavaVersion.current().compareTo(JavaVersion.compose(17, 0, 6, 894, false)) >= 0) {
       try {
         fs.provider().getClass().getMethod("getSunPathForSocketFile", Path.class);
       }
