@@ -80,14 +80,14 @@ internal class IdleVcsLogIndexer(private val project: Project,
     if (isRunning.compareAndSet(false, true)) {
 
       startIndexJob = launch("Start VCS log indexing on IDE idle", idleDelayValue.asInteger().minutes) {
-        if (index.isIndexingPaused()) {
+        if (!index.isIndexingScheduled()) {
           VcsLogUsageTriggerCollector.idleIndexerTriggered(project)
           index.toggleIndexing()
         }
       }
 
       stopIndexJob = launch("Stop VCS log indexing on IDE active", 100.milliseconds) {
-        if (!index.isIndexingPaused()) {
+        if (index.isIndexingScheduled()) {
           index.toggleIndexing()
         }
       }

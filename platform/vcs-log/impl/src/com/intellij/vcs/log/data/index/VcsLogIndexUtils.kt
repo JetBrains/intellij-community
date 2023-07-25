@@ -20,18 +20,16 @@ fun VcsLogModifiableIndex.needIndexing(): Boolean {
 }
 
 /**
- * Check if VCS log indexing was paused in any of [VcsLogModifiableIndex.getIndexingRoots].
+ * Check if VCS log indexing was paused in all of [VcsLogModifiableIndex.getIndexingRoots].
  */
 fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
-  val scheduledForIndexing = indexingRoots.filter { isScheduledForIndexing(it) }
-
-  return scheduledForIndexing.isEmpty()
+  return indexingRoots.all { isIndexingPausedFor(it) }
 }
 
 /**
  * Check if VCS Log indexing was scheduled in any of the [VcsLogModifiableIndex.getIndexingRoots].
  */
-private fun VcsLogModifiableIndex.isIndexingScheduled(): Boolean {
+fun VcsLogModifiableIndex.isIndexingScheduled(): Boolean {
   return indexingRoots.any { isScheduledForIndexing(it) }
 }
 

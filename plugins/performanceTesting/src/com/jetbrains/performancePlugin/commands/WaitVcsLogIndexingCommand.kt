@@ -1,11 +1,10 @@
 package com.jetbrains.performancePlugin.commands
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
-import com.intellij.vcs.log.data.index.isIndexingPaused
+import com.intellij.vcs.log.data.index.isIndexingScheduled
 import com.intellij.vcs.log.data.index.needIndexing
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
 import com.jetbrains.performancePlugin.utils.TimeArgumentParserUtil
@@ -34,8 +33,8 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
     val dataManager = logManager.dataManager
     val vcsIndex = dataManager.index as VcsLogModifiableIndex
 
-    LOG.info("Need indexing = ${vcsIndex.needIndexing()}, is indexing paused = " + vcsIndex.isIndexingPaused())
-    if (vcsIndex.needIndexing() || !vcsIndex.isIndexingPaused()) {
+    LOG.info("Need indexing = ${vcsIndex.needIndexing()}, is indexing paused = " + !vcsIndex.isIndexingScheduled())
+    if (vcsIndex.needIndexing() || vcsIndex.isIndexingScheduled()) {
       val isIndexingCompleted = CompletableDeferred<Boolean>()
       vcsIndex.addListener { _ ->
         LOG.info("$NAME command was completed due to indexing was finished after listener invocation")
@@ -72,7 +71,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
                                      isIndexingCompleted: CompletableDeferred<Boolean>): ScheduledFuture<*> {
     return executor.scheduleWithFixedDelay(
       {
-        if (vscIndex.isIndexingPaused()) {
+        if (!vscIndex.isIndexingScheduled()) {
           isIndexingCompleted.complete(true)
           LOG.info("$NAME command was completed due to indexing process was paused")
           return@scheduleWithFixedDelay
