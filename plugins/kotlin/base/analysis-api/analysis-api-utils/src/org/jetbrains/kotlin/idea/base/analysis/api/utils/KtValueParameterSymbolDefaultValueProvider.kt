@@ -21,7 +21,7 @@ private object KtValueParameterSymbolDefaultValueProvider {
             yieldAll(parameterSymbol.getAllOverriddenSymbols().filterIsInstance<KtValueParameterSymbol>())
         }.firstNotNullOfOrNull { parameter ->
             val ktParameter = parameter.psi as? KtParameter ?: return@firstNotNullOfOrNull null
-            ktParameter.defaultValue
+            (ktParameter.navigationElement as? KtParameter ?: ktParameter).defaultValue
         }
     }
 
