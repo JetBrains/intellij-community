@@ -258,6 +258,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractFirWithLibBasicCompletionTest> {
             model("basic/withLib", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
         }
+
+        testClass<AbstractFirWithMppStdlibCompletionTest> {
+            model("basic/stdlibWithCommon", isRecursive = false, pattern = KT_WITHOUT_FIR_PREFIX)
+        }
     }
 
     testGroup("fir", testDataPath = "../code-insight/testData") {
