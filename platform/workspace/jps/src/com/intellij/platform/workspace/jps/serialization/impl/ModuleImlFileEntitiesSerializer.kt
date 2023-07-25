@@ -161,7 +161,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     if (roots == null) return moduleEntity
-    return if (moduleEntity.isEmpty) {
+    return if (moduleEntity.isEmpty()) {
       ModuleEntity(moduleEntity.name, emptyList(), OrphanageWorkerEntitySource) {
         this.contentRoots = roots
       } as ModuleEntity.Builder
@@ -1102,6 +1102,8 @@ fun ContentRootEntity.getSourceRootsComparator(): Comparator<SourceRootEntity> {
   return compareBy<SourceRootEntity> { order[it.url] ?: order.size }.thenBy { it.url.url }
 }
 
-private val ModuleEntity.isEmpty: Boolean
-  get() = this.contentRoots.isEmpty() && this.javaSettings == null && this.facets.isEmpty() && this.dependencies.filterNot { it is ModuleDependencyItem.ModuleSourceDependency }.isEmpty()
+
+private fun ModuleEntity.isEmpty(): Boolean {
+  return this.contentRoots.isEmpty() && this.javaSettings == null && this.facets.isEmpty() && this.dependencies.filterNot { it is ModuleDependencyItem.ModuleSourceDependency }.isEmpty()
+}
 
