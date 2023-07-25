@@ -337,11 +337,12 @@ public final class ToolsImpl implements Tools {
   }
 
   @NotNull
-  public HighlightDisplayLevel getLevel(PsiElement element) {
+  public HighlightDisplayLevel getLevel(@Nullable PsiElement element) {
     return getState(element).getLevel();
   }
 
-  public ScopeToolState getState(PsiElement element) {
+  @NotNull
+  public ScopeToolState getState(@Nullable PsiElement element) {
     if (myTools == null || element == null) return myDefaultState;
     return ReadAction.compute(() -> {
       if (!element.isValid()) return myDefaultState;
@@ -487,7 +488,7 @@ public final class ToolsImpl implements Tools {
   }
 
   @Nullable
-  public TextAttributesKey getEditorAttributesKey(NamedScope scope, Project project) {
+  TextAttributesKey getEditorAttributesKey(@Nullable NamedScope scope, @Nullable Project project) {
     if (myTools != null && scope != null) {
       for (ScopeToolState state : myTools) {
         if (Objects.equals(state.getScope(project), scope)) {

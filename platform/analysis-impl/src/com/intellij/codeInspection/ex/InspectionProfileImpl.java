@@ -70,12 +70,12 @@ public class InspectionProfileImpl extends NewInspectionProfile {
 
   private final Object myLock = new Object();
   private BaseInspectionProfileManager myProfileManager;
-  private volatile boolean myInitialized = false;
-  private boolean myProjectLevel = false;
+  private volatile boolean myInitialized;
+  private boolean myProjectLevel;
   private volatile String myToolShortName;
   private List<String> myScopeOrder = new ArrayList<>();
   private @NlsContexts.DetailedDescription String myDescription;
-  private @Nullable SchemeState mySchemeState = null;
+  private @Nullable SchemeState mySchemeState;
   private Disposable myDisposable;
   private SchemeDataHolder<? super InspectionProfileImpl> myDataHolder;
 
@@ -901,16 +901,16 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     return result;
   }
 
-  public boolean isToolEnabled(@NotNull HighlightDisplayKey key, NamedScope namedScope, Project project) {
+  public boolean isToolEnabled(@NotNull HighlightDisplayKey key, @Nullable NamedScope namedScope, @NotNull Project project) {
     return getTools(key.toString(), project).isEnabled(namedScope,project);
   }
 
-  public void removeScope(@NotNull String toolShortName, @NotNull String scopeName, Project project) {
+  public void removeScope(@NotNull String toolShortName, @NotNull String scopeName, @NotNull Project project) {
     getTools(toolShortName, project).removeScope(scopeName);
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void removeScopes(@NotNull List<String> shortNames, @NotNull String scopeName, Project project) {
+  public void removeScopes(@NotNull List<String> shortNames, @NotNull String scopeName, @NotNull Project project) {
     for (String shortName : shortNames) {
       removeScope(shortName, scopeName, project);
     }
@@ -950,37 +950,37 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   }
 
   @Transient
-  public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
+  public @NotNull HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, @Nullable NamedScope scope, @NotNull Project project) {
     ToolsImpl tools = getToolsOrNull(key.toString(), project);
     return tools != null ? tools.getLevel(scope, project) : HighlightDisplayLevel.WARNING;
   }
 
   @Transient
-  public @Nullable TextAttributesKey getEditorAttributesKey(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {
+  public @Nullable TextAttributesKey getEditorAttributesKey(@NotNull HighlightDisplayKey key, @Nullable NamedScope scope, @NotNull Project project) {
     ToolsImpl tools = getToolsOrNull(key.toString(), project);
     return tools != null ? tools.getEditorAttributesKey(scope, project) : null;
   }
 
   public ScopeToolState addScope(@NotNull InspectionToolWrapper<?,?> toolWrapper,
-                                 NamedScope scope,
+                                 @NotNull NamedScope scope,
                                  @NotNull HighlightDisplayLevel level,
                                  boolean enabled,
-                                 Project project) {
+                                 @Nullable Project project) {
     return getTools(toolWrapper.getShortName(), project).prependTool(scope, toolWrapper, enabled, level);
   }
 
-  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
+  public void setErrorLevel(@NotNull HighlightDisplayKey key, @NotNull HighlightDisplayLevel level, @Nullable String scopeName, @NotNull Project project) {
     getTools(key.toString(), project).setLevel(level, scopeName, project);
     mySchemeState = SchemeState.POSSIBLY_CHANGED;
   }
 
-  public void setErrorLevel(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, String scopeName, Project project) {
+  public void setErrorLevel(@NotNull List<? extends HighlightDisplayKey> keys, @NotNull HighlightDisplayLevel level, @Nullable String scopeName, @NotNull Project project) {
     for (HighlightDisplayKey key : keys) {
       setErrorLevel(key, level, scopeName, project);
     }
   }
 
-  public void setEditorAttributesKey(@NotNull List<? extends HighlightDisplayKey> keys, @Nullable TextAttributesKey attributesKey, String scopeName, Project project) {
+  public void setEditorAttributesKey(@NotNull List<? extends HighlightDisplayKey> keys, @Nullable TextAttributesKey attributesKey, @Nullable String scopeName, @NotNull Project project) {
     for (HighlightDisplayKey key : keys) {
       setEditorAttributesKey(key.toString(), attributesKey == null ? null : attributesKey.getExternalName(), scopeName, project);
     }
@@ -992,23 +992,24 @@ public class InspectionProfileImpl extends NewInspectionProfile {
       () -> "Can't find tools for \"" + name + "\" in the profile \"" + getName() + "\"");
   }
 
-  public @Nullable ToolsImpl getToolsOrNull(@NotNull String name, @SuppressWarnings("unused") @Nullable Project project) {
+  public @Nullable ToolsImpl getToolsOrNull(@NotNull String name, @Nullable Project project) {
     initInspectionTools();
     return myTools.get(name);
   }
 
+  @NotNull
   public Collection<ToolsImpl> getTools() {
     initInspectionTools();
     return myTools.values();
   }
 
-  public void enableAllTools(Project project) {
+  public void enableAllTools(@NotNull Project project) {
     for (InspectionToolWrapper<?,?> entry : getInspectionTools(null)) {
       enableTool(entry.getShortName(), project);
     }
   }
 
-  public void disableAllTools(Project project) {
+  public void disableAllTools(@NotNull Project project) {
     for (InspectionToolWrapper<?,?> entry : getInspectionTools(null)) {
       setToolEnabled(entry.getShortName(), false, project);
     }

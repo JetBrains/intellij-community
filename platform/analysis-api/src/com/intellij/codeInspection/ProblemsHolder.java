@@ -86,11 +86,8 @@ public class ProblemsHolder {
 
     String template = AnalysisBundle.message("inspection.redirect.template",
                                              description, path, original.getTextRange().getStartOffset(), vFile.getName());
-
-
-    InspectionManager manager = InspectionManager.getInstance(original.getProject());
     ProblemDescriptor newProblem =
-      manager.createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
+      getManager().createProblemDescriptor(target, template, (LocalQuickFix)null, problem.getHighlightType(), isOnTheFly());
     registerProblem(newProblem);
   }
 
