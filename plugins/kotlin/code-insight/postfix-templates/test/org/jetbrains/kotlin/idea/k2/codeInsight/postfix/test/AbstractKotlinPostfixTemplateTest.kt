@@ -6,6 +6,7 @@ import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginKind
 import org.jetbrains.kotlin.idea.base.test.KotlinJvmLightProjectDescriptor
 import org.jetbrains.kotlin.idea.base.test.NewLightKotlinCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.nio.file.Paths
 import kotlin.io.path.name
 
@@ -23,9 +24,11 @@ abstract class AbstractKotlinPostfixTemplateTest : NewLightKotlinCodeInsightFixt
     }
 
     protected fun performTest() {
-        myFixture.configureByDefaultFile()
-        myFixture.type(".$templateName\t")
-        myFixture.checkContentByExpectedPath(".after")
+        IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), IgnoreTests.DIRECTIVES.IGNORE_FIR, "after") {
+            myFixture.configureByDefaultFile()
+            myFixture.type(".$templateName\t")
+            myFixture.checkContentByExpectedPath(".after")
+        }
     }
 
     private val templateName: String

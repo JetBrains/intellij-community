@@ -3,9 +3,11 @@ package org.jetbrains.kotlin.idea.codeInsight.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.StringBasedPostfixTemplate
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
@@ -69,14 +71,17 @@ internal class KotlinWhenPostfixTemplate : StringBasedPostfixTemplate {
         }
 
         allowAnalysisOnEdt {
-            analyze(element) {
-                val type = element.getKtType()
-                if (type is KtNonErrorClassType) {
-                    val klass = type.classSymbol
-                    if (klass is KtNamedClassOrObjectSymbol) {
-                        return when (klass.classKind) {
-                            KtClassKind.ENUM_CLASS -> collectEnumBranches(klass)
-                            else -> collectSealedClassInheritors(klass)
+            @OptIn(KtAllowAnalysisFromWriteAction::class)
+            allowAnalysisFromWriteAction {
+                analyze(element) {
+                    val type = element.getKtType()
+                    if (type is KtNonErrorClassType) {
+                        val klass = type.classSymbol
+                        if (klass is KtNamedClassOrObjectSymbol) {
+                            return when (klass.classKind) {
+                                KtClassKind.ENUM_CLASS -> collectEnumBranches(klass)
+                                else -> collectSealedClassInheritors(klass)
+                            }
                         }
                     }
                 }
