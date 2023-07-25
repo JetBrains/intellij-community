@@ -7,6 +7,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.ui.popup.JBPopup
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import java.awt.event.InputEvent
 import javax.swing.JComponent
 
@@ -20,7 +22,17 @@ abstract class ExpandableComboAction : AnAction(), CustomComponentAction {
       override fun createPopup(e: InputEvent?): JBPopup? {
         val dataContext = DataManager.getInstance().getDataContext(this)
         val anActionEvent = AnActionEvent.createFromInputEvent(e, place, presentation, dataContext)
-        return createPopup(anActionEvent)
+        val popup = createPopup(anActionEvent) ?: return null
+        popup.addListener(object : JBPopupListener {
+          override fun beforeShown(event: LightweightWindowEvent) {
+            isPopupShowing = true
+          }
+
+          override fun onClosed(event: LightweightWindowEvent) {
+            isPopupShowing = false
+          }
+        })
+        return popup
       }
     }
   }

@@ -26,6 +26,7 @@ abstract class ToolbarComboWidget: JComponent() {
   var transparentHoverBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var highlightBackground: Color? by Delegates.observable(null, this::fireUpdateEvents)
   var isExpandable: Boolean by Delegates.observable(true, this::fireUpdateEvents)
+  var isPopupShowing: Boolean by Delegates.observable(false, this::fireUpdateEvents)
 
   init {
     // set UI for component
