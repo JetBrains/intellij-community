@@ -1,5 +1,7 @@
 package com.jetbrains.performancePlugin.commands;
 
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
+import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
@@ -36,6 +38,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.ThreadPoolExecutor;
+
+import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 /**
  * Command simulate calling search everywhere action with a given text and specified tab.
@@ -81,8 +85,13 @@ public class SearchEverywhereCommand extends AbstractCommand {
     TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere", globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
-          Component focusedComponent = IdeFocusManager.findInstance().getFocusOwner();
-          DataContext dataContext = DataManager.getInstance().getDataContext(focusedComponent);
+          TypingTarget target = findTarget(context);
+          if(!(target instanceof EditorComponentImpl)){
+            actionCallback.reject("Editor is not opened, SE requires editor to get current project");
+            return;
+          }
+          Component editorComponent = (EditorComponentImpl) target;
+          DataContext dataContext = DataManager.getInstance().getDataContext(editorComponent);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
           if(actionEvent.getProject() == null) {
