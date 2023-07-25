@@ -33,6 +33,11 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
         runTest("testData/highlighting/conditionalReturnInLambda.kt");
     }
 
+    @TestMetadata("inlineOnlyFunctions.kt")
+    public void testInlineOnlyFunctions() throws Exception {
+        runTest("testData/highlighting/inlineOnlyFunctions.kt");
+    }
+
     @TestMetadata("lambdasOnSameLine.kt")
     public void testLambdasOnSameLine() throws Exception {
         runTest("testData/highlighting/lambdasOnSameLine.kt");
@@ -46,5 +51,10 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
     @TestMetadata("oneLineLambda.kt")
     public void testOneLineLambda() throws Exception {
         runTest("testData/highlighting/oneLineLambda.kt");
+    }
+
+    @TestMetadata("samInterface.kt")
+    public void testSamInterface() throws Exception {
+        runTest("testData/highlighting/samInterface.kt");
     }
 }

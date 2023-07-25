@@ -176,26 +176,6 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             return KotlinReentrantSourcePosition(sourcePosition)
         }
 
-		// Here we are trying to detect whether we should highlight the entire line of a source position or not.
-		// Consider the example:
-		//    1.also { // Stop on a breakpoint here and perform a step over
-		//        println(it)
-		//    }.also { // You will get to this line
-		//        println(it)
-		//    }
-		// In this example the entire line with `also` should be highlighted.
-		// Another example:
-		//    1.also {
-		//        println(it) // Stop on a breakpoint here and perform a step over
-		//    }.also { // You will get to this line
-		//        println(it)
-		//    }
-		// Now we should highlight the line before the curly brace, since we are still inside the `also` inline lambda.
-		val lines = sourcePosition.elementAt?.parent.safeAs<KtFunctionLiteral>()?.getLineRange() ?: return sourcePosition
-		if (!location.hasVisibleInlineLambdasOnLines(lines)) {
-			return KotlinSourcePositionWithEntireLineHighlighted(sourcePosition)
-		}
-
         return sourcePosition
     }
 
