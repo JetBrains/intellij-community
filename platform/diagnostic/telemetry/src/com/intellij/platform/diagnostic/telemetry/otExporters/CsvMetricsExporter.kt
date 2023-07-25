@@ -1,123 +1,110 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.diagnostic.telemetry.otExporters;
+package com.intellij.platform.diagnostic.telemetry.otExporters
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils;
-import com.intellij.platform.diagnostic.telemetry.RollingFileSupplier;
-import io.opentelemetry.sdk.common.CompletableResultCode;
-import io.opentelemetry.sdk.metrics.InstrumentType;
-import io.opentelemetry.sdk.metrics.data.AggregationTemporality;
-import io.opentelemetry.sdk.metrics.data.MetricData;
-import io.opentelemetry.sdk.metrics.export.MetricExporter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.VisibleForTesting;
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
+import com.intellij.platform.diagnostic.telemetry.RollingFileSupplier
+import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter.Companion.HTML_PLOTTER_NAME
+import io.opentelemetry.sdk.common.CompletableResultCode
+import io.opentelemetry.sdk.metrics.InstrumentType
+import io.opentelemetry.sdk.metrics.data.AggregationTemporality
+import io.opentelemetry.sdk.metrics.data.MetricData
+import io.opentelemetry.sdk.metrics.export.MetricExporter
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static java.nio.file.StandardOpenOption.*;
+private val LOG: Logger
+  get() = logger<CsvMetricsExporter>()
 
 /**
- * Export {@linkplain MetricData} into a file in a simple CSV format:
+ * Export [MetricData] into a file in a simple CSV format:
  * name, epochStartNanos, epochEndNanos, value
- * <br/>
- * <br/>
+ * <br></br>
+ * <br></br>
  * This is expected to be temporary solution for metrics export -- until full-fledged (json?) exporter will be implemented.
  * That is why implementation is quite limited: only simplest metrics types are supported (e.g. no support for histograms),
  * no support for attributes, and IO/file format itself is not the most effective one. But until now it seems like this limited
  * implementation could be enough at least for a while.
- * <p>
- * <br/>
- * <p>
+ *
+ * <br></br>
+ *
  * TODO not all metrics types are supported now, see .toCSVLine()
  * TODO no support for attributes now, see .toCSVLine()
  */
 @ApiStatus.Internal
-public final class CsvMetricsExporter implements MetricExporter {
-  private static final Logger LOG = Logger.getInstance(CsvMetricsExporter.class);
+class CsvMetricsExporter internal constructor(private val writeToFileSupplier: RollingFileSupplier) : MetricExporter {
+  companion object {
+    @VisibleForTesting
+    const val HTML_PLOTTER_NAME: String = "open-telemetry-metrics-plotter.html"
+  }
 
-  @VisibleForTesting
-  public static final String HTML_PLOTTER_NAME = "open-telemetry-metrics-plotter.html";
-
-
-  private final @NotNull RollingFileSupplier writeToFileSupplier;
-
-  public CsvMetricsExporter(final @NotNull RollingFileSupplier writeToFileSupplier) throws IOException {
-    this.writeToFileSupplier = writeToFileSupplier;
-    final Path writeToFile = writeToFileSupplier.get();
-
+  init {
+    val writeToFile = writeToFileSupplier.get()
     if (!Files.exists(writeToFile)) {
-      final Path parentDir = writeToFile.getParent();
+      val parentDir = writeToFile.parent
       if (!Files.isDirectory(parentDir)) {
         //RC: createDirectories() _does_ throw FileAlreadyExistsException if path is a _symlink_ to a directory, not a directory
         // itself (JDK-8130464). Check !isDirectory() above should work around that case.
-        Files.createDirectories(parentDir);
+        Files.createDirectories(parentDir)
       }
     }
-    if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0) {
-      Files.write(writeToFile, OpenTelemetryUtils.csvHeadersLines(), CREATE, WRITE);
+    if (!Files.exists(writeToFile) || Files.size(writeToFile) == 0L) {
+      Files.write(writeToFile, csvHeadersLines(), StandardOpenOption.CREATE, StandardOpenOption.WRITE)
     }
-
-    copyHtmlPlotterToOutputDir(writeToFile.getParent());
+    copyHtmlPlotterToOutputDir(writeToFile.parent)
   }
 
-  /** Copy html file with plotting scripts into targetDir */
-  private static void copyHtmlPlotterToOutputDir(final @NotNull Path targetDir) throws IOException {
-    final Path targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME);
-    final URL plotterHtmlUrl = CsvMetricsExporter.class.getResource(HTML_PLOTTER_NAME);
-    if (plotterHtmlUrl == null) {
-      LOG.warn(HTML_PLOTTER_NAME + " is not found in classpath");
-    }
-    else {
-      try (InputStream stream = plotterHtmlUrl.openStream()) {
-        final byte[] bytes = stream.readAllBytes();
-        Files.write(targetToCopyTo, bytes);
-      }
-    }
+  override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
+    return AggregationTemporality.DELTA
   }
 
-  @Override
-  public AggregationTemporality getAggregationTemporality(final @NotNull InstrumentType instrumentType) {
-    return AggregationTemporality.DELTA;
-  }
-
-  @Override
-  public CompletableResultCode export(final Collection<MetricData> metrics) {
+  override fun export(metrics: Collection<MetricData>): CompletableResultCode {
     if (metrics.isEmpty()) {
-      return CompletableResultCode.ofSuccess();
+      return CompletableResultCode.ofSuccess()
     }
-
-    final CompletableResultCode result = new CompletableResultCode();
-    final Path writeToFile = writeToFileSupplier.get();
-    final List<String> lines = metrics.stream()
-      .flatMap(OpenTelemetryUtils::toCsvStream)
-      .collect(Collectors.toList());
-
+    val result = CompletableResultCode()
+    val writeToFile = writeToFileSupplier.get()
+    val lines = metrics.asSequence()
+      .flatMap { toCsvStream(it) }
+      .toList()
     try {
-      Files.write(writeToFile, lines, CREATE, APPEND);
-      result.succeed();
+      Files.write(writeToFile, lines, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
+      result.succeed()
     }
-    catch (IOException e) {
-      LOG.warn("Can't write metrics into " + writeToFile.toAbsolutePath(), e);
-      result.fail();
+    catch (e: IOException) {
+      LOG.warn("Can't write metrics into " + writeToFile.toAbsolutePath(), e)
+      result.fail()
     }
-    return result;
+    return result
   }
 
-  @Override
-  public CompletableResultCode flush() {
-    return CompletableResultCode.ofSuccess();
+  override fun flush(): CompletableResultCode {
+    return CompletableResultCode.ofSuccess()
   }
 
-  @Override
-  public CompletableResultCode shutdown() {
-    return CompletableResultCode.ofSuccess();
+  override fun shutdown(): CompletableResultCode {
+    return CompletableResultCode.ofSuccess()
+  }
+}
+
+/** Copy html file with plotting scripts into targetDir  */
+@Throws(IOException::class)
+private fun copyHtmlPlotterToOutputDir(targetDir: Path) {
+  val targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME)
+  val plotterHtmlUrl = CsvMetricsExporter::class.java.getResource(HTML_PLOTTER_NAME)
+  if (plotterHtmlUrl == null) {
+    LOG.warn("$HTML_PLOTTER_NAME is not found in classpath")
+  }
+  else {
+    plotterHtmlUrl.openStream().use { stream ->
+      val bytes = stream.readAllBytes()
+      Files.write(targetToCopyTo, bytes)
+    }
   }
 }
