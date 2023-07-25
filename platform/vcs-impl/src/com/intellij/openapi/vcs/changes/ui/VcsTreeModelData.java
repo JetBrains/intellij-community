@@ -350,21 +350,21 @@ public abstract class VcsTreeModelData {
 
 
   @Nullable
-  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId,
-                               @Nullable Object higherPriorityProviderData) {
+  public static Object getDataOrSuper(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId,
+                                      @Nullable Object superProviderData) {
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       VcsTreeModelData treeSelection = selected(tree);
       VcsTreeModelData exactSelection = exactlySelected(tree);
-      DataProvider slowDataProvider = slowId -> getSlowData(project, treeSelection, exactSelection, slowId);
-      return higherPriorityProviderData != null
-             ? CompositeDataProvider.compose((DataProvider)higherPriorityProviderData, slowDataProvider)
-             : slowDataProvider;
+      return CompositeDataProvider.compose(slowId -> getSlowData(project, treeSelection, exactSelection, slowId),
+                                           (DataProvider)superProviderData);
     }
 
-    if (higherPriorityProviderData != null) {
-      return higherPriorityProviderData;
+    Object data = getFastData(project, tree, dataId);
+    if (data != null) {
+      return data;
     }
-    return getFastData(project, tree, dataId);
+
+    return superProviderData;
   }
 
   @Nullable

@@ -263,7 +263,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     if (DATA_KEY.is(dataId)) {
       return this;
     }
-    return VcsTreeModelData.getData(myProject, myViewer, dataId, myViewer.getData(dataId));
+    return VcsTreeModelData.getDataOrSuper(myProject, myViewer, dataId, myViewer.getData(dataId));
   }
 
 
