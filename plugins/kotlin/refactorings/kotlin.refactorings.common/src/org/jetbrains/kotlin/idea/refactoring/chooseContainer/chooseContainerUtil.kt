@@ -21,6 +21,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -200,6 +201,7 @@ private fun popupPresentationProvider() = object : PsiTargetPresentationRenderer
     private fun PsiElement.renderText(): String = when (this) {
         is SeparateFileWrapper -> KotlinBundle.message("refactoring.extract.to.separate.file.text")
         is PsiPackageBase -> qualifiedName
+        is PsiFile -> name
         else -> {
             val text = text ?: "<invalid text>"
             StringUtil.shortenTextWithEllipsis(text.collapseSpaces(), 53, 0)
