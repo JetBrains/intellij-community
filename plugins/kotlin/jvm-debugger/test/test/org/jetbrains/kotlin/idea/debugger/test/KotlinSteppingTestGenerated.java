@@ -41,6 +41,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
             runTest("testData/stepping/stepIntoAndSmartStepInto/extFun.kt");
         }
 
+        @TestMetadata("internalMethod.kt")
+        public void testInternalMethod() throws Exception {
+            runTest("testData/stepping/stepIntoAndSmartStepInto/internalMethod.kt");
+        }
+
         @TestMetadata("javaFun.kt")
         public void testJavaFun() throws Exception {
             runTest("testData/stepping/stepIntoAndSmartStepInto/javaFun.kt");
@@ -127,6 +132,11 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         @TestMetadata("extFun.kt")
         public void testExtFun() throws Exception {
             runTest("testData/stepping/stepIntoAndSmartStepInto/extFun.kt");
+        }
+
+        @TestMetadata("internalMethod.kt")
+        public void testInternalMethod() throws Exception {
+            runTest("testData/stepping/stepIntoAndSmartStepInto/internalMethod.kt");
         }
 
         @TestMetadata("javaFun.kt")
