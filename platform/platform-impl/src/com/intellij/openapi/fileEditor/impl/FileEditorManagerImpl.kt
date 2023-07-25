@@ -434,13 +434,14 @@ open class FileEditorManagerImpl(
         null
       }
       else {
-        file to composites.map { composite -> composite to newProviders.map { it to readAction { it.createEditor(project, file) } } }
+        file to composites.map { composite -> composite to newProviders }
       }
     }
     for ((file, toOpen) in fileToNewProviders) {
       withContext(Dispatchers.EDT) {
-        for ((composite, providerAndEditors) in toOpen) {
-          for ((provider, editor) in providerAndEditors) {
+        for ((composite, providers) in toOpen) {
+          for (provider in providers) {
+            val editor = provider.createEditor(project, file)
             composite.addEditor(editor = editor, provider = provider)
           }
         }
