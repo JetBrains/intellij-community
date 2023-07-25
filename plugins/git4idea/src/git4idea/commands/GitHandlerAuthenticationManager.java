@@ -106,6 +106,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
         String lowerCaseLine = StringUtil.toLowerCase(line);
         if (lowerCaseLine.contains("authentication failed") ||
             lowerCaseLine.contains("403 forbidden") ||
+            lowerCaseLine.contains("but was used to access one of realms") ||
             lowerCaseLine.contains("error: 400") ||
             (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found")) ||
             (lowerCaseLine.contains("fatal: unable to access") && lowerCaseLine.contains("the requested url returned error: 403")) ||
