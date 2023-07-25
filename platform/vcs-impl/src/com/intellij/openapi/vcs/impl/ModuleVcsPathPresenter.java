@@ -76,7 +76,7 @@ public class ModuleVcsPathPresenter extends VcsPathPresenter {
         if (fromContentRoot == null) return null;
 
         String relativePath = VfsUtilCore.getRelativePath(fromParent, fromContentRoot, File.separatorChar);
-        assert relativePath != null;
+        if (relativePath == null) return null;
 
         if (!relativePath.isEmpty()) {
           relativePath += File.separatorChar;
