@@ -311,7 +311,7 @@ public class DefaultActionGroup extends ActionGroup {
     else {
       for (int i = 0; i < myPairs.size(); i++) {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
-        if (pair.first.equals(newAction)) {
+        if (pair.first.equals(oldAction)) {
           myPairs.set(i, Pair.create(newAction, pair.second));
           incrementModificationStamp();
           return true;
