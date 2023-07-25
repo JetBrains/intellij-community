@@ -383,6 +383,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitJavaFile(@NotNull PsiJavaFile file) {
+    super.visitJavaFile(file);
+    PsiClass[] classes = file.getClasses();
+    if (classes.length != 1) return;
+    PsiClass aClass = classes[0];
+    if (aClass instanceof PsiUnnamedClass unnamedClass) {
+      PsiMethod[] methods = unnamedClass.getMethods();
+      boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()));
+      if (!hasMainMethod) {
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(file).fileLevelAnnotation().description(JavaErrorBundle.message("error.unnamed.class.contains.no.main.method")).create());
+      }
+    }
+  }
+
+  @Override
   public void visitArrayInitializerExpression(@NotNull PsiArrayInitializerExpression expression) {
     super.visitArrayInitializerExpression(expression);
     if (!myHolder.hasErrorResults()) add(HighlightUtil.checkArrayInitializerApplicable(expression));
