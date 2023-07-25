@@ -14,6 +14,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
+import com.intellij.xdebugger.XDebuggerUtil
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl
 import kotlinx.coroutines.CoroutineScope
@@ -86,7 +87,7 @@ internal class ExecutionPositionNavigator(
   private fun navigateTo(openFileDescriptor: OpenFileDescriptor, navigationMode: ExecutionPositionNavigationMode) {
     when (navigationMode) {
       ExecutionPositionNavigationMode.OPEN -> {
-        openedEditor = XDebuggerUtilImpl.createEditor(openFileDescriptor)
+        openedEditor = XDebuggerUtil.getInstance().openTextEditor(openFileDescriptor)
       }
       ExecutionPositionNavigationMode.SCROLL -> {
         val fileEditorManager = FileEditorManager.getInstance(openFileDescriptor.project)

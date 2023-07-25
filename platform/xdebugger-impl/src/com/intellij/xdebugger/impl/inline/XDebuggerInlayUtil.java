@@ -90,7 +90,7 @@ public final class XDebuggerInlayUtil {
   private static void createInlayInt(@NotNull XDebugSession session, InlineDebugRenderer renderer) {
     EDT.assertIsEdt();
     XSourcePosition position = renderer.getPosition();
-    FileEditor editor = FileEditorManager.getInstance(session.getProject()).getSelectedEditor(position.getFile());
+    FileEditor editor = XDebuggerUtil.getInstance().getSelectedEditor(session.getProject(), position.getFile());
     if (editor instanceof TextEditor) {
       Editor e = ((TextEditor)editor).getEditor();
       int line = position.getLine();

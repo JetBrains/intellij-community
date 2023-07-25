@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -164,7 +165,7 @@ public class ExecutionPointHighlighter {
         }
       }
       else {
-        myEditor = XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
+        myEditor = XDebuggerUtil.getInstance().openTextEditor(myOpenFileDescriptor);
       }
     }
     if (myEditor != null) {

@@ -7,6 +7,9 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -24,9 +27,17 @@ import java.util.Comparator;
 import java.util.List;
 
 public abstract class XDebuggerUtil {
+
   public static XDebuggerUtil getInstance() {
     return ApplicationManager.getApplication().getService(XDebuggerUtil.class);
   }
+
+  @Nullable
+  public FileEditor getSelectedEditor(Project project, VirtualFile file) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(file);
+  }
+
+  public abstract Editor openTextEditor(@NotNull OpenFileDescriptor descriptor);
 
   public abstract XLineBreakpointType<?>[] getLineBreakpointTypes();
 
