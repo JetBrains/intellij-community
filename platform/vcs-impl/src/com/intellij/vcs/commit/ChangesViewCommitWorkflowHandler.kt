@@ -169,7 +169,9 @@ internal class ChangesViewCommitWorkflowHandler(
     if (isToggleMode()) {
       resetCommitChecksResult()
       ui.commitProgressUi.clearCommitCheckFailures()
-      LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+      if (!isOnCommit) {
+        LineStatusTrackerManager.getInstanceImpl(project).resetExcludedFromCommitMarkers()
+      }
     }
   }
 
