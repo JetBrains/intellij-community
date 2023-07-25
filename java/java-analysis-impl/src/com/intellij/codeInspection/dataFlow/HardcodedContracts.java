@@ -21,7 +21,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
-import static com.intellij.codeInspection.dataFlow.MethodContract.*;
+import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
+import static com.intellij.codeInspection.dataFlow.MethodContract.trivialContract;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
 import static com.intellij.psi.CommonClassNames.*;
@@ -139,7 +140,7 @@ public final class HardcodedContracts {
     // thus ARRAY_RANGE_CONTRACTS are applicable to them
     .register(staticCall(JAVA_UTIL_ARRAYS, "binarySearch", "fill", "parallelPrefix", "parallelSort", "sort", "spliterator", "stream"),
               (call, cnt) -> cnt >= 3 ? ARRAY_RANGE_CONTRACTS : null)
-    .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
+    .register(staticCall("org.mockito.ArgumentMatchers", "argThat", "assertArg").parameterCount(1),
               ContractProvider.of(StandardMethodContract.fromText("_->_")))
     .register(anyOf(
       instanceCall(JAVA_UTIL_QUEUE, "peek", "poll").parameterCount(0),
