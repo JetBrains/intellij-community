@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 class WslTargetWizardModel(override val project: Project,
                            override val subject: WslTargetEnvironmentConfiguration,
                            runtimeType: LanguageRuntimeType<*>?,
-                           var distribution: WSLDistribution?) : AbstractTargetWizardModel() {
+                           var distribution: WSLDistribution?) : TargetWizardModel() {
   internal var isCustomToolConfiguration: Boolean = false
 
   override var languageConfigForIntrospection: LanguageRuntimeConfiguration? = runtimeType?.createDefaultConfig()
