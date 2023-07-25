@@ -10,6 +10,8 @@ import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionWithEntireLineHighlighted
+import org.jetbrains.kotlin.idea.debugger.base.util.getRangeOfLine
+import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 
 class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
@@ -29,9 +31,20 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
         }
 
         // Highlight only lambda body in case of lambda breakpoint.
-        val lambda = element.parentOfType<KtFunctionLiteral>()
-        if (lambda != null && lambda.isOneLiner()) {
-            return lambda.textRange
+        val lambda = element.parentOfType<KtFunctionLiteral>() ?: return null
+        val lambdaRange = lambda.textRange
+
+        if (lambda.isOneLiner()) return lambdaRange
+
+        val lambdaLineRange = lambda.getLineRange() ?: return null
+        val lineRange = sourcePosition.file.getRangeOfLine(sourcePosition.line, skipWhitespace = false) ?: return null
+        // Highlight only part of the line after {
+        if (sourcePosition.line == lambdaLineRange.first) {
+            return lineRange.intersection(lambdaRange)?.grown(1)
+        }
+        // Highlight only part of the line before }
+        if (sourcePosition.line == lambdaLineRange.last) {
+            return lineRange.intersection(lambdaRange)
         }
 
         return null

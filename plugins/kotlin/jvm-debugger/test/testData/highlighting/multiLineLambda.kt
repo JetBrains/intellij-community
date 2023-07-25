@@ -1,4 +1,4 @@
-package oneLineLambda
+package multiLineLambda
 
 // RESUME: 20
 fun main() {
@@ -14,4 +14,9 @@ fun main() {
     //Breakpoint!, lambdaOrdinal = 1
     .maxOf {
          it }
+
+  setOf(1)
+    //Breakpoint!, lambdaOrdinal = 2
+    .map { it } .maxOf { it
+       }
 }
