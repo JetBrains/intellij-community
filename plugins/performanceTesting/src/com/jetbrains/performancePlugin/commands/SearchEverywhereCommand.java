@@ -81,7 +81,15 @@ public class SearchEverywhereCommand extends AbstractCommand {
       default -> throw new RuntimeException("Tab is not set");
     }
 
-    Semaphore typingSemaphore = new Semaphore(0);
+    int numberOfPermits;
+    if(insertText.isEmpty() && myOptions.typingText.isEmpty()){
+      numberOfPermits = 1; //we don't wait for any text insertion
+    } else if(!insertText.isEmpty() && !myOptions.typingText.isEmpty()){
+      numberOfPermits = -1; //we wait till both operations are finished
+    } else {
+      numberOfPermits = 0; //we wait till one operation is finished
+    }
+    Semaphore typingSemaphore = new Semaphore(numberOfPermits);
     TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere", globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
