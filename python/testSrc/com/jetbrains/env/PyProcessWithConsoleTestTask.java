@@ -194,11 +194,9 @@ public abstract class PyProcessWithConsoleTestTask<T extends ProcessWithConsoleR
       LOG.warn("Time out waiting for test finish");
       handler.destroyProcess(); // To prevent process leak
       handler.waitFor();
-      Thread.sleep(1000); // Give time to listening threads to process process death
       throw new AssertionError(String.format("Timeout waiting for process to finish. Current output is %s", stdAll));
     }
 
-    Thread.sleep(1000); // Give time to listening threads to finish
     final Integer code = handler.getExitCode();
     assert code != null : "Process finished, but no exit code exists";
 
