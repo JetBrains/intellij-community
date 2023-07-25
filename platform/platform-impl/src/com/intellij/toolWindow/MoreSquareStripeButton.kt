@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -87,7 +88,7 @@ private fun scaleIcon(): Icon {
 }
 
 @ApiStatus.Internal
-class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar) : DumbAwareAction() {
+class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar) : DumbAwareAction(), Toggleable {
   val isOnTheLeft: Boolean = toolWindowToolbar is ToolWindowLeftToolbar
 
   private val minPopupWidth: Int
@@ -102,6 +103,7 @@ class ShowMoreToolWindowsAction(private val toolWindowToolbar: ToolWindowToolbar
     val actions = ToolWindowsGroup.getToolWindowActions(e.project ?: return null, true)
     val popup = JBPopupFactory.getInstance().createActionGroupPopup(null, DefaultActionGroup(actions), e.dataContext, null, true)
     popup.setMinimumSize(Dimension(minPopupWidth, -1))
+    PopupUtil.addToggledStateListener(popup, e.presentation)
     return popup
   }
 
