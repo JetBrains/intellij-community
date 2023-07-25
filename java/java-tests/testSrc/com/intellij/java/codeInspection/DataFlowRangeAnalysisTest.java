@@ -131,4 +131,9 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
                              }""");
     doTest();
   }
+  
+  public void testJmhParamRange() {
+    myFixture.addClass("package org.openjdk.jmh.annotations;public @interface Param {String[] value();}");
+    doTest();
+  }
 }
