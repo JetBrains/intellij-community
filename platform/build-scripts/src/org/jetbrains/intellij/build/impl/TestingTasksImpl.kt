@@ -76,13 +76,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       .toList()
   }
 
-  override fun runTests(additionalJvmOptions: List<String>, defaultMainModule: String?, rootExcludeCondition: ((Path) -> Boolean)?) {
+  override fun runTests(additionalJvmOptions: List<String>,
+                        additionalSystemProperties: Map<String, String>,
+                        defaultMainModule: String?,
+                        rootExcludeCondition: ((Path) -> Boolean)?) {
     if (options.isTestDiscoveryEnabled && options.isPerformanceTestsOnly) {
       context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
       return
     }
 
-    val mainModule = options.mainModule ?: defaultMainModule!!
+    val mainModule = options.mainModule ?: defaultMainModule
     checkOptions(mainModule)
 
     val runConfigurations = loadTestRunConfigurations()
@@ -99,7 +102,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         compilationTasks.buildProjectArtifacts(runConfigurations.flatMapTo(LinkedHashSet()) { it.requiredArtifacts })
       }
       else {
-        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOf(mainModule, "intellij.platform.buildScripts"))
+        compilationTasks.compileModules(listOf("intellij.tools.testsBootstrap"), listOfNotNull(mainModule, "intellij.platform.buildScripts"))
       }
     }
     catch (e: Exception) {
@@ -111,17 +114,21 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
     val remoteDebugJvmOptions = System.getProperty("teamcity.remote-debug.jvm.options")
     if (remoteDebugJvmOptions != null) {
-      debugTests(remoteDebugJvmOptions, additionalJvmOptions, mainModule, context)
+      debugTests(remoteDebugJvmOptions, additionalJvmOptions, checkNotNull(mainModule) {
+        "Main module is not specified"
+      }, context)
     }
     else {
-      val additionalSystemProperties = LinkedHashMap<String, String>()
+      val systemProperties = LinkedHashMap<String, String>(additionalSystemProperties)
       val effectiveAdditionalJvmOptions = additionalJvmOptions.toMutableList()
-      loadTestDiscovery(effectiveAdditionalJvmOptions, additionalSystemProperties)
+      loadTestDiscovery(effectiveAdditionalJvmOptions, systemProperties)
       if (runConfigurations == null) {
-        runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, mainModule, rootExcludeCondition, additionalSystemProperties, context)
+        runTestsFromGroupsAndPatterns(effectiveAdditionalJvmOptions, checkNotNull(mainModule) {
+          "Main module is not specified"
+        }, rootExcludeCondition, systemProperties, context)
       }
       else {
-        runTestsFromRunConfigurations(effectiveAdditionalJvmOptions, runConfigurations, additionalSystemProperties, context)
+        runTestsFromRunConfigurations(effectiveAdditionalJvmOptions, runConfigurations, systemProperties, context)
       }
       if (options.isTestDiscoveryEnabled) {
         publishTestDiscovery(context.messages, testDiscoveryTraceFilePath)
@@ -155,34 +162,41 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
   private fun runTestsFromRunConfigurations(additionalJvmOptions: List<String>,
                                             runConfigurations: List<JUnitRunConfigurationProperties>,
-                                            additionalSystemProperties: Map<String, String>,
+                                            systemProperties: MutableMap<String, String>,
                                             context: CompilationContext) {
     for (configuration in runConfigurations) {
       spanBuilder("run '${configuration.name}' run configuration").useWithScope {
-        runTestsFromRunConfiguration(configuration, additionalJvmOptions, additionalSystemProperties, context)
+        runTestsFromRunConfiguration(configuration, additionalJvmOptions, systemProperties, context)
       }
     }
   }
 
   private fun runTestsFromRunConfiguration(runConfigurationProperties: JUnitRunConfigurationProperties,
                                            additionalJvmOptions: List<String>,
-                                           additionalSystemProperties: Map<String, String>,
+                                           systemProperties: Map<String, String>,
                                            context: CompilationContext) {
     context.messages.progress("Running '${runConfigurationProperties.name}' run configuration")
-    runTestsProcess(mainModule = runConfigurationProperties.moduleName,
-                    testGroups = null,
-                    testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
-                    jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
-                    systemProperties = additionalSystemProperties,
-                    envVariables = runConfigurationProperties.envVariables,
-                    remoteDebugging = false,
-                    context = context)
+    try {
+      runTestsProcess(mainModule = runConfigurationProperties.moduleName,
+                      testGroups = null,
+                      testPatterns = runConfigurationProperties.testClassPatterns.joinToString(separator = ";"),
+                      jvmArgs = removeStandardJvmOptions(runConfigurationProperties.vmParameters) + additionalJvmOptions,
+                      systemProperties = systemProperties,
+                      envVariables = runConfigurationProperties.envVariables,
+                      remoteDebugging = false,
+                      context = context)
+    }
+    catch (e: NoTestsFound) {
+      throw RuntimeException("No tests were found in the configuration '${runConfigurationProperties.name}'").apply {
+        addSuppressed(e)
+      }
+    }
   }
 
   private fun runTestsFromGroupsAndPatterns(additionalJvmOptions: List<String>,
-                                            defaultMainModule: String?,
+                                            mainModule: String,
                                             rootExcludeCondition: ((Path) -> Boolean)?,
-                                            additionalSystemProperties: MutableMap<String, String>,
+                                            systemProperties: MutableMap<String, String>,
                                             context: CompilationContext) {
     if (rootExcludeCondition != null) {
       val excludedRoots = ArrayList<String>()
@@ -200,19 +214,35 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       val excludedRootsFile = context.paths.tempDir.resolve("excluded.classpath")
       Files.createDirectories(excludedRootsFile.parent)
       Files.writeString(excludedRootsFile, excludedRoots.joinToString(separator = "\n"))
-      additionalSystemProperties["exclude.tests.roots.file"] = excludedRootsFile.toString()
+      systemProperties["exclude.tests.roots.file"] = excludedRootsFile.toString()
     }
 
-    runTestsProcess(mainModule = options.mainModule ?: defaultMainModule!!,
-                    testGroups = options.testGroups,
-                    testPatterns = options.testPatterns,
-                    jvmArgs = additionalJvmOptions,
-                    systemProperties = additionalSystemProperties,
-                    remoteDebugging = false,
-                    context = context)
+    try {
+      runTestsProcess(mainModule = mainModule,
+                      testGroups = options.testGroups,
+                      testPatterns = options.testPatterns,
+                      jvmArgs = additionalJvmOptions,
+                      systemProperties = systemProperties,
+                      remoteDebugging = false,
+                      context = context)
+    }
+    catch (e: NoTestsFound) {
+      val msg = buildString {
+        append("No tests were found in '$mainModule' classpath ")
+        if (options.testPatterns != null) {
+          append("with test patterns '${options.testPatterns}'")
+        }
+        else {
+          append("for test groups '${options.testGroups}'")
+        }
+      }
+      throw RuntimeException(msg).apply {
+        addSuppressed(e)
+      }
+    }
   }
 
-  private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, additionalSystemProperties: LinkedHashMap<String, String>) {
+  private fun loadTestDiscovery(additionalJvmOptions: MutableList<String>, systemProperties: MutableMap<String, String>) {
     if (!options.isTestDiscoveryEnabled) {
       return
     }
@@ -233,14 +263,14 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     excludeRoots += context.paths.buildOutputDir.toString()
     excludeRoots += context.paths.projectHome.resolve("out").toString()
 
-    additionalSystemProperties["test.discovery.listener"] = "com.intellij.TestDiscoveryBasicListener"
-    additionalSystemProperties["test.discovery.data.listener"] = "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener"
-    additionalSystemProperties["org.jetbrains.instrumentation.trace.file"] = testDiscoveryTraceFilePath
+    systemProperties["test.discovery.listener"] = "com.intellij.TestDiscoveryBasicListener"
+    systemProperties["test.discovery.data.listener"] = "com.intellij.rt.coverage.data.SingleTrFileDiscoveryProtocolDataListener"
+    systemProperties["org.jetbrains.instrumentation.trace.file"] = testDiscoveryTraceFilePath
 
-    options.testDiscoveryIncludePatterns?.let { additionalSystemProperties["test.discovery.include.class.patterns"] = it }
-    options.testDiscoveryExcludePatterns?.let { additionalSystemProperties["test.discovery.exclude.class.patterns"] = it }
+    options.testDiscoveryIncludePatterns?.let { systemProperties["test.discovery.include.class.patterns"] = it }
+    options.testDiscoveryExcludePatterns?.let { systemProperties["test.discovery.exclude.class.patterns"] = it }
 
-    additionalSystemProperties["test.discovery.excluded.roots"] = excludeRoots.joinToString(separator = ";")
+    systemProperties["test.discovery.excluded.roots"] = excludeRoots.joinToString(separator = ";")
   }
 
   private val testDiscoveryTraceFilePath: String
@@ -248,7 +278,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
 
   private fun debugTests(remoteDebugJvmOptions: String,
                          additionalJvmOptions: List<String>,
-                         defaultMainModule: String?,
+                         mainModule: String,
                          context: CompilationContext) {
     val testConfigurationType = System.getProperty("teamcity.remote-debug.type")
     if (testConfigurationType != "junit") {
@@ -275,7 +305,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     if (options.testConfigurations != null) {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
-    runTestsProcess(mainModule = options.mainModule ?: defaultMainModule!!,
+    runTestsProcess(mainModule = mainModule,
                     testGroups = null,
                     testPatterns = junitClass,
                     jvmArgs = removeStandardJvmOptions(StringUtilRt.splitHonorQuotes(remoteDebugJvmOptions, ' ')) + additionalJvmOptions,
@@ -331,15 +361,16 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     Files.createDirectories(classpathFile.parent)
     // this is required to collect tests both on class and module paths
     Files.writeString(classpathFile, testRoots.mapNotNull(toStringConverter).joinToString(separator = "\n"))
-    val allSystemProperties = LinkedHashMap<String, String>(systemProperties)
-    allSystemProperties.putIfAbsent("classpath.file", classpathFile.toString())
-    testPatterns?.let { allSystemProperties.putIfAbsent("intellij.build.test.patterns", it) }
-    testGroups?.let { allSystemProperties.putIfAbsent("intellij.build.test.groups", it) }
-    allSystemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
-    allSystemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
-    allSystemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
+    @Suppress("NAME_SHADOWING") 
+    val systemProperties = systemProperties.toMutableMap()
+    systemProperties.putIfAbsent("classpath.file", classpathFile.toString())
+    testPatterns?.let { systemProperties.putIfAbsent("intellij.build.test.patterns", it) }
+    testGroups?.let { systemProperties.putIfAbsent("intellij.build.test.groups", it) }
+    systemProperties.putIfAbsent("intellij.build.test.sorter", System.getProperty("intellij.build.test.sorter"))
+    systemProperties.putIfAbsent(TestingTasks.BOOTSTRAP_TESTCASES_PROPERTY, "com.intellij.AllTests")
+    systemProperties.putIfAbsent(TestingOptions.PERFORMANCE_TESTS_ONLY_FLAG, options.isPerformanceTestsOnly.toString())
     val allJvmArgs = ArrayList(jvmArgs)
-    prepareEnvForTestRun(allJvmArgs, allSystemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
+    prepareEnvForTestRun(allJvmArgs, systemProperties, bootstrapClasspath.toMutableList(), remoteDebugging)
     val messages = context.messages
     if (isRunningInBatchMode) {
       messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
@@ -347,9 +378,9 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     else {
       messages.info("Starting tests from groups '${testGroups}' from classpath of module '${mainModule}'")
     }
-    val numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]?.toIntOrNull() ?: 1
+    val numberOfBuckets = systemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]?.toIntOrNull() ?: 1
     if (numberOfBuckets > 1) {
-      messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
+      messages.info("Tests from bucket ${systemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of ${numberOfBuckets} will be executed")
     }
     messages.block("Test classpath and runtime info") {
       runBlocking(Dispatchers.IO) {
@@ -358,7 +389,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
         runProcess(args = listOf(runtime, "-version"), inheritOut = true)
       }
       messages.info("Runtime options: ${allJvmArgs}")
-      messages.info("System properties: ${allSystemProperties}")
+      messages.info("System properties: ${systemProperties}")
       messages.info("Bootstrap classpath: ${bootstrapClasspath}")
       messages.info("Tests classpath: ${testClasspath}")
       modulePath?.let { mp ->
@@ -370,7 +401,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
     runJUnit5Engine(mainModule = mainModule,
-                    systemProperties = allSystemProperties,
+                    systemProperties = systemProperties,
                     jvmArgs = allJvmArgs,
                     envVariables = envVariables,
                     bootstrapClasspath = bootstrapClasspath,
@@ -383,7 +414,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
   private suspend fun getRuntimeExecutablePath(): Path {
     val runtimeDir: Path
     if (options.customRuntimePath != null) {
-      runtimeDir = Path.of(options.customRuntimePath)
+      runtimeDir = Path.of(checkNotNull(options.customRuntimePath))
       check(Files.isDirectory(runtimeDir)) {
         "Custom Jre path from system property '${TestingOptions.TEST_JRE_PROPERTY}' is missing: ${runtimeDir}"
       }
@@ -674,7 +705,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
             attempt == 1 &&
             // a bucket might be empty for run configurations with too few tests due to imperfect tests balancing
             numberOfBuckets < 2) {
-          throw RuntimeException("No tests were found in the configuration")
+          throw NoTestsFound()
         }
 
         if (attempt == options.attemptCount) break
@@ -701,6 +732,8 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
       }
     }
   }
+
+  private class NoTestsFound: Exception()
 
   private fun runJUnit5Engine(systemProperties: Map<String, String?>,
                               jvmArgs: List<String>,

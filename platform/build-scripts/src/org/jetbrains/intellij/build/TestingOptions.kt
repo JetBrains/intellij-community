@@ -23,27 +23,27 @@ open class TestingOptions {
   /**
    * Semicolon-separated names of test groups tests from which should be executed, by default all tests will be executed.
    *
-   *  Test groups are defined in testGroups.properties files and there is an implicit 'ALL_EXCLUDE_DEFINED' group for tests which aren't
-   * included into any group and 'ALL' group for all tests. By default 'ALL_EXCLUDE_DEFINED' group is used.
+   *  Test groups are defined in testGroups.properties files and there is an implicit [ALL_EXCLUDE_DEFINED_GROUP] group for tests which aren't
+   * included into any group and 'ALL' group for all tests. By default, [ALL_EXCLUDE_DEFINED_GROUP] group is used.
    */
-  var testGroups = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true) ?: OLD_TEST_GROUP
+  var testGroups: String = System.getProperty("intellij.build.test.groups").nullize(nullizeSpaces = true) ?: OLD_TEST_GROUP
 
   /**
    * Semicolon-separated patterns for test class names which need to be executed. Wildcard '*' is supported. If this option is specified,
-   * [.testGroups] will be ignored.
+   * [testGroups] will be ignored.
    */
-  var testPatterns = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true) ?: OLD_TEST_PATTERNS
+  var testPatterns: String? = System.getProperty("intellij.build.test.patterns").nullize(nullizeSpaces = true) ?: OLD_TEST_PATTERNS
 
   /**
    * Semicolon-separated names of JUnit run configurations in the project which need to be executed. If this option is specified,
-   * [.testGroups], [.testPatterns] and [.mainModule] will be ignored.
+   * [testGroups], [testPatterns] and [mainModule] will be ignored.
    */
   var testConfigurations = System.getProperty("intellij.build.test.configurations").nullize(nullizeSpaces = true)
 
   /**
    * Specifies components from which product will be used to run tests, by default IDEA Ultimate will be used.
    */
-  var platformPrefix = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
+  var platformPrefix: String? = System.getProperty("intellij.build.test.platform.prefix", OLD_PLATFORM_PREFIX)
 
   /**
    * Enables debug for testing process
@@ -53,7 +53,7 @@ open class TestingOptions {
   /**
    * Specifies address on which the testing process will listen for connections, by default a localhost will be used.
    */
-  var debugHost = System.getProperty("intellij.build.test.debug.host", "localhost")
+  var debugHost: String = System.getProperty("intellij.build.test.debug.host", "localhost")
 
   /**
    * Specifies port on which the testing process will listen for connections, by default a random port will be used.
@@ -68,24 +68,24 @@ open class TestingOptions {
   /**
    * Custom JVM memory options (e.g. -Xmx) for the testing process.
    */
-  var jvmMemoryOptions = System.getProperty("intellij.build.test.jvm.memory.options", OLD_JVM_MEMORY_OPTIONS)
+  var jvmMemoryOptions: String? = System.getProperty("intellij.build.test.jvm.memory.options", OLD_JVM_MEMORY_OPTIONS)
 
   /**
    * Specifies a module which classpath will be used to search the test classes.
    */
-  var mainModule = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
+  var mainModule: String? = System.getProperty("intellij.build.test.main.module").nullize(nullizeSpaces = true) ?: OLD_MAIN_MODULE
 
   /**
-   * Specifies a custom test suite, com.intellij.tests.BootstrapTests is using by default.
+   * Specifies a custom test suite, [BOOTSTRAP_SUITE_DEFAULT] is using by default.
    */
-  var bootstrapSuite = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
+  var bootstrapSuite: String = System.getProperty("intellij.build.test.bootstrap.suite", BOOTSTRAP_SUITE_DEFAULT)
 
   /**
    * Specifies path to runtime which will be used to run tests.
    * By default `runtimeBuild` from [org.jetbrains.intellij.build.dependencies.DependenciesProperties] will be used.
    * If it is missing then tests will run under the same runtime which is used to run the build scripts.
    */
-  var customRuntimePath = System.getProperty(TEST_JRE_PROPERTY)
+  var customRuntimePath: String? = System.getProperty(TEST_JRE_PROPERTY)
 
   /**
    * Enables capturing traces with IntelliJ test discovery agent.
@@ -93,7 +93,7 @@ open class TestingOptions {
    * and allows to rerun only corresponding tests for desired method or class in your project.
    *
    *
-   * For the further information please see [](https://github.com/jetbrains/intellij-coverage)IntelliJ Coverage repository.
+   * For the further information please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
    */
   var isTestDiscoveryEnabled = SystemProperties.getBooleanProperty("intellij.build.test.discovery.enabled", false)
 
@@ -123,7 +123,7 @@ open class TestingOptions {
   var isEnableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
-   * Pattern to match tests in [.mainModule] or default main module tests compilation outputs.
+   * Pattern to match tests in [mainModule] or default main module tests compilation outputs.
    * Tests from each matched class will be executed in a forked Runtime.
    *
    * E.g. "com/intellij/util/ui/standalone/ **Test.class"
@@ -138,11 +138,6 @@ open class TestingOptions {
    * the compilation cache for some reason.
    */
   var isCancelBuildOnTestPreparationFailure = SystemProperties.getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
-
-  /**
-   * Terminate execution immediately if any test fails. Both build script and test JVMs are terminated.
-   */
-  var isFailFast = SystemProperties.getBooleanProperty("intellij.build.test.failFast", false)
 
   /**
    * Number of attempts to run tests. Starting from the 2nd attempt only failed tests are re-run.
