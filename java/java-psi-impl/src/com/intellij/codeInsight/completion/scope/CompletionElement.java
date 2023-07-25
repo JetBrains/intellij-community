@@ -112,9 +112,10 @@ public final class CompletionElement{
       return false;
     }
 
-    PsiType prevType = TypeConversionUtil.erasure(another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType()));
+    PsiType prevType = another.getSubstitutor().substitute(((PsiMethod)anotherElement).getReturnType());
     PsiType candidateType = mySubstitutor.substitute(((PsiMethod)myElement).getReturnType());
-    return prevType != null && candidateType != null && !prevType.equals(candidateType) && prevType.isAssignableFrom(candidateType);
+    return prevType != null && candidateType != null && !prevType.equals(candidateType) && 
+           TypeConversionUtil.erasure(prevType).isAssignableFrom(candidateType);
   }
 
 }

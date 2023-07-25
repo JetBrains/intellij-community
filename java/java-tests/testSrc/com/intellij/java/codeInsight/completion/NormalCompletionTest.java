@@ -30,6 +30,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection;
 import one.util.streamex.IntStreamEx;
+import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -2926,5 +2928,36 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
 
     lookupElements = myFixture.complete(CompletionType.BASIC, 2);
     assertTrue(ContainerUtil.exists(lookupElements, t -> t.getLookupString().equals("size")));
+  }
+
+  @NeedsIndex.Full
+  public void testResolveToSubclassMethod() {
+    myFixture.configureByText("Test.java", """
+      import java.util.List;
+
+      public final class Complete {
+      	public static void main(String[] args) {
+      		SubClass instance;
+              instance.<caret>
+      	}
+
+      	static class SuperClass<T> {
+      		public List<T> list(Object param) {return null;}
+      	}
+
+      	static class SubClass extends SuperClass<String> {
+      		@Override
+      		public List<String> list(Object paramName) {
+      			return super.list(paramName);
+      		}
+      	}
+
+      }""");
+    LookupElement[] elements = myFixture.completeBasic();
+    assertNotNull(elements);
+    LookupElement listElement = StreamEx.of(elements).collect(MoreCollectors.onlyOne(e -> e.getLookupString().equals("list"))).orElseThrow();
+    LookupElementPresentation presentation = new LookupElementPresentation();
+    listElement.renderElement(presentation);
+    assertEquals("(Object paramName)", presentation.getTailText());
   }
 }
