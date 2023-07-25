@@ -5,12 +5,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.messages.Topic
 import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.util.messages.Topic
 import java.util.*
 
 /**
- * For the asynchronous handling of changes form workspace model collect them from [com.intellij.workspaceModel.ide.WorkspaceModel.changesEventFlow]
+ * Register an implementation of this interface as a handler for [WorkspaceModelTopics.CHANGED] to synchronously process changes in the 
+ * workspace model.
+ * 
+ * For the asynchronous handling of changes from the workspace model collect them via [WorkspaceModel.changesEventFlow]
  */
 interface WorkspaceModelChangeListener : EventListener {
   /**
@@ -30,7 +33,7 @@ interface WorkspaceModelChangeListener : EventListener {
 /**
  * Topics to subscribe to Workspace changes.
  *
- * For the asynchronous approach please consider to collect changes from [com.intellij.workspaceModel.ide.WorkspaceModel.changesEventFlow]
+ * For the asynchronous approach please consider to collect changes from [WorkspaceModel.changesEventFlow]
  */
 @Service(Service.Level.PROJECT)
 class WorkspaceModelTopics : Disposable {

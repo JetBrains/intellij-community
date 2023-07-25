@@ -3,13 +3,35 @@ package com.intellij.platform.backend.workspace
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.EntityStorageSnapshot
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.VersionedEntityStorage
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 /**
- * Provides access to the storage which holds workspace model entities.
+ * Provides access to [the storage](psi_element://com.intellij.platform.workspace.storage) with entities describing the workspace model
+ * inside the IDE process.
+ * 
+ * Use [currentSnapshot] to read the current state of the model. 
+ * There are several ways to modify the model:
+ * * [updateProjectModel] updates the model synchronously under write-lock; it should be used for small modifications;
+ * * [replaceProjectModel] updates the model synchronously using a given replacement, which may be prepared in advance on a background 
+ * thread; it should be used for major modifications to minimize time spent under write-lock;
+ * * [update] schedules asynchronous update of the model; currently the actual update is performed with a write-lock in a blocking manner,
+ * however, this will change in the future; this function is experimental for now, it can be used from suspending Kotlin functions.
+ * 
+ * In order to subscribe to changes in the workspace model, use [changesEventFlow] to process changes in an asynchronous manner. If you need
+ * to process them synchronously, you may subscribe to [WorkspaceModelTopics.CHANGED] topic.
+ * 
+ * Instance of this interface can be obtained via [workspaceModel] extension property.
+ * 
+ * To provide interoperability with code which use the old project model API ([ModuleManager][com.intellij.openapi.module.ModuleManager],
+ * [ModuleRootManager][com.intellij.openapi.roots.ModuleRootManager], [Library][com.intellij.openapi.roots.libraries.Library], etc.),
+ * types of workspace entities corresponding to the old concepts are defined in [com.intellij.platform.workspace.jps.entities](psi_element://com.intellij.platform.workspace.jps.entities)
+ * package. Implementations of old interfaces (so-called 'legacy bridges') use entities of these types to store data.
  */
 interface WorkspaceModel {
   /**
@@ -17,7 +39,11 @@ interface WorkspaceModel {
    * The returned value won't be affected by future changes in [WorkspaceModel], so it can be safely used without any locks from any thread.
    */
   val currentSnapshot: EntityStorageSnapshot
-  
+
+  /**
+   * Returns instance holding reference to the current snapshot of the storage and caches associated with it. If you just need to read
+   * the current state of the storage, use [currentSnapshot] property which is a shorthand for `entityStorage.current`.
+   */
   val entityStorage: VersionedEntityStorage
 
   /**
@@ -71,7 +97,7 @@ interface WorkspaceModel {
    * Replace current project model with the new version from storage snapshot.
    *
    * This operation required write lock.
-   * The snapshot replacement is performed using positive lock. If the project model was updated since [getCurrentBuilder], snapshot
+   * The snapshot replacement is performed using positive lock. If the project model was updated since [getBuilderSnapshot], snapshot
    *   won't be applied and this method will return false. In this case client should get a newer version of snapshot builder, apply changes
    *   and try to call [replaceProjectModel].
    *   Keep in mind that you may not need to start the full builder update process (e.g. gradle sync) and the newer version of the builder
@@ -106,7 +132,7 @@ interface WorkspaceModel {
 }
 
 /**
- * Extension property for syntax sugar
+ * A shorter variant of [WorkspaceModel.getInstance].
  */
 val Project.workspaceModel: WorkspaceModel
   get() = WorkspaceModel.getInstance(this)
