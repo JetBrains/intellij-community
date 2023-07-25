@@ -3,6 +3,7 @@ package com.intellij.cce.evaluable.golf
 
 import com.intellij.cce.core.SuggestionSource
 import com.intellij.cce.evaluable.EvaluationStrategy
+import com.intellij.cce.evaluable.completion.CompletionType
 import com.intellij.cce.filter.EvaluationFilter
 
 
@@ -22,21 +23,22 @@ If completion suggest only one token - this option is useless (see checkLine ↑
  */
 data class CompletionGolfStrategy(
   val mode: CompletionGolfMode,
-  val checkLine: Boolean = true,
-  val invokeOnEachChar: Boolean = false,
+  val checkLine: Boolean,
+  val invokeOnEachChar: Boolean,
 
-  val checkToken: Boolean = true,
-  val source: SuggestionSource? = null,
-  var topN: Int = -1,
+  val checkToken: Boolean,
+  val source: SuggestionSource?,
+  var topN: Int,
 
-  val suggestionsProvider: String = DEFAULT_PROVIDER,
-  val pathToZipModel: String? = null) : EvaluationStrategy {
+  val suggestionsProvider: String,
+  val pathToZipModel: String?,
+  val completionType: CompletionType) : EvaluationStrategy {
   override val filters: Map<String, EvaluationFilter> = emptyMap()
 
   fun isDefaultProvider(): Boolean = suggestionsProvider == DEFAULT_PROVIDER
 
   companion object {
-    private const val DEFAULT_PROVIDER: String = "DEFAULT"
+    const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
 }
 

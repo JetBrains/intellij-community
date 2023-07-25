@@ -7,6 +7,7 @@ import com.intellij.cce.core.SuggestionKind
 import com.intellij.cce.evaluable.EvaluableFeatureBase
 import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluation.EvaluationStep
+import com.intellij.cce.evaluation.step.SetupCompletionStep
 import com.intellij.cce.evaluation.step.SetupFullLineStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.Metric
@@ -45,5 +46,12 @@ class LineCompletionGolfFeature : EvaluableFeatureBase<CompletionGolfStrategy>("
   }
 
   override fun getEvaluationSteps(language: Language, strategy: CompletionGolfStrategy): List<EvaluationStep> =
-    listOf(SetupFullLineStep(strategy.pathToZipModel))
+    listOf(
+      SetupCompletionStep(
+        language = language.name,
+        completionType = strategy.completionType,
+        pathToZipModel = strategy.pathToZipModel
+      ),
+      SetupFullLineStep()
+    )
 }

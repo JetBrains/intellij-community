@@ -3,13 +3,9 @@ package com.intellij.cce.evaluation.step
 
 import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
-import com.intellij.completion.ml.ranker.local.LocalZipModelProvider
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
-import java.util.zip.ZipFile
-import kotlin.system.exitProcess
 
-class SetupFullLineStep(var pathToZipModel: String?  = null) : UndoableEvaluationStep {
+class SetupFullLineStep() : UndoableEvaluationStep {
   private var initLoggingEnabledValue: Boolean = false
   private var initLogPathValue: String? = null
   private var initLatency: Int? = null
@@ -24,13 +20,6 @@ class SetupFullLineStep(var pathToZipModel: String?  = null) : UndoableEvaluatio
     val latencyRegistry = Registry.get(LATENCY_REGISTRY)
     initLatency = latencyRegistry.asInteger()
     latencyRegistry.setValue(MAX_LATENCY)
-    if (pathToZipModel != null) {
-      if (!checkModelLoad()) {
-        System.err.println("Evaluation failed: failed to load ranking model, check pathToModelZip config field")
-        exitProcess(1)
-      }
-      Registry.get(MODEL_ZIP_PATH_REGISTRY).setValue(pathToZipModel)
-    }
     return workspace
   }
 
@@ -56,25 +45,10 @@ class SetupFullLineStep(var pathToZipModel: String?  = null) : UndoableEvaluatio
     }
   }
 
-  private fun checkModelLoad(): Boolean {
-    try {
-      ZipFile(pathToZipModel!!).use { file ->
-        val loader = LocalZipModelProvider.findModelProvider(file) ?: return false
-        loader.loadModel(file)
-        return true
-      }
-    }
-    catch (t: Throwable) {
-      LOG.error(t)
-      return false
-    }
-  }
   companion object {
     private const val LOGGING_ENABLED_PROPERTY = "flcc_search_logging_enabled"
     private const val LOG_PATH_PROPERTY = "flcc_search_log_path"
     private const val LATENCY_REGISTRY = "full.line.server.host.max.latency"
     private const val MAX_LATENCY = 20000
-    private const val MODEL_ZIP_PATH_REGISTRY = "completion.ml.path.to.zip.model"
-    protected val LOG = Logger.getInstance(BackgroundEvaluationStep::class.java)
   }
 }
