@@ -47,16 +47,20 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
     if (intentions != null) {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
-        info.intentionsToShow.add(descriptor);
         IntentionAction action = descriptor.getAction();
-        if (action instanceof EmptyIntentionAction) {
-          continue;
+        if (ShowIntentionActionsHandler.availableFor(psiFile, editor, action)) {
+          info.intentionsToShow.add(descriptor);
+          if (action instanceof EmptyIntentionAction) {
+            continue;
+          }
+          String text = action.getText();
+          createActionLabel(text, () -> {
+            PsiDocumentManager.getInstance(project).commitAllDocuments();
+            if (ShowIntentionActionsHandler.availableFor(psiFile, editor, action)) {
+              ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
+            }
+          });
         }
-        String text = action.getText();
-        createActionLabel(text, () -> {
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-          ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, text);
-        });
       }
     }
 
