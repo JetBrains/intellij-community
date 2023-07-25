@@ -25,6 +25,34 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 PsiTreeUtil.getParentOfType(
                     target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
                 )?.takeUnless { it is KtFunction }
+            is KtIfExpression, is KtWhenExpression, is KtBlockExpression -> null
+            is KtExpression -> {
+                var node: PsiElement? = parent
+                var functionLiteral: KtFunctionLiteral? = null
+                val expressions = hashSetOf<KtExpression>()
+                while (node != null) {
+                    val nextParent = node.parent
+                    when(node) {
+                        is PsiFile, is KtNamedFunction, is KtClassOrObject -> break
+                        is KtFunctionLiteral -> {
+                            functionLiteral = node
+                            break
+                        }
+                        is KtExpression -> expressions += node
+                        else -> {
+                            if ((nextParent is KtIfExpression || nextParent is KtWhenExpression || nextParent is KtBlockExpression) &&
+                                !KtPsiUtil.isStatementContainer(node)) {
+                                break
+                            }
+                        }
+                    }
+                    node = nextParent
+                }
+                functionLiteral?.let {
+                    val lastStatement = it.bodyExpression?.statements?.lastOrNull()
+                    parent.takeIf { lastStatement in expressions }
+                }
+            }
             else -> null
         } as? KtExpression ?: return null
         return OnExitUsagesHandler(editor, file, returnOrThrow)

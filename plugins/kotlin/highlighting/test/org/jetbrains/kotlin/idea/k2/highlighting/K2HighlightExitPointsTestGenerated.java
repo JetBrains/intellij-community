@@ -53,6 +53,21 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
         runTest("../idea/tests/testData/exitPoints/inLambda2.kt");
     }
 
+    @TestMetadata("inLambdaLastStatement1.kt")
+    public void testInLambdaLastStatement1() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement1.kt");
+    }
+
+    @TestMetadata("inLambdaLastStatement2.kt")
+    public void testInLambdaLastStatement2() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement2.kt");
+    }
+
+    @TestMetadata("inLambdaLastStatement3.kt")
+    public void testInLambdaLastStatement3() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement3.kt");
+    }
+
     @TestMetadata("inline1.kt")
     public void testInline1() throws Exception {
         runTest("../idea/tests/testData/exitPoints/inline1.kt");

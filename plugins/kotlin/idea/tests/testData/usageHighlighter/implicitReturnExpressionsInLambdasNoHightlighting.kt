@@ -4,12 +4,12 @@ fun some(a: Int, b: Int) {
         val j = 13
         if (a > 50) {
             if (b > 100) {
-                101 + j
+                <info descr="null">101 + j</info>
             } else {
-                ~102 * j
+                <info descr="null">~102 * j</info>
             }
         } else {
-            return@run false
+            <info descr="null">return@run false</info>
         }
     }
 }
