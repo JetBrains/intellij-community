@@ -4,7 +4,7 @@ fun some(a: Int, b: Int) {
         val j = 13
         if (a > 50) {
             if (b > 100) {
-                i + j
+                <info descr="null">i + j</info>
             } else {
                 return@some
             }
