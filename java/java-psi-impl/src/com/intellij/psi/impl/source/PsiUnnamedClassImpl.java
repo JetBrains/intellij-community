@@ -12,6 +12,8 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -262,6 +264,10 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
     return Arrays.asList(getStubOrPsiChildren(JavaStubElementTypes.CLASS, PsiClass.ARRAY_FACTORY));
   }
 
+  @Override
+  public @NotNull SearchScope getUseScope() {
+    return new LocalSearchScope(getContainingFile());
+  }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
