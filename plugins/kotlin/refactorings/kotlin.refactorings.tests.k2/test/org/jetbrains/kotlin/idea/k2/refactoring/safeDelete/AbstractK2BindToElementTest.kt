@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 abstract class AbstractK2BindToElementTest : KotlinMultiFileLightCodeInsightFixtureTestCase() {
     override fun isFirPlugin() = true
 
+    override fun getProjectDescriptor() = ProjectDescriptorWithStdlibSources.getInstanceWithStdlibSources()
+
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) = allowAnalysisOnEdt {
         val mainFile = files.first()
