@@ -8,6 +8,7 @@ import com.intellij.execution.target.TargetProgressIndicator;
 import com.intellij.execution.target.local.LocalTargetEnvironment;
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -386,6 +387,7 @@ public class GradleExecutionHelper {
     }
     settings.withArgument("-Didea.active=true");
     settings.withArgument("-Didea.version=" + getIdeaVersion());
+    settings.withArgument("-Didea.vendor.name=" + ApplicationInfo.getInstance().getShortCompanyName());
   }
 
   private static void setupProgressListeners(
