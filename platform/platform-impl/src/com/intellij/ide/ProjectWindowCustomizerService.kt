@@ -42,11 +42,23 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
       revalidate()
     })
 
-    // Save into the project workspace whatever was generated on Welcome screen if project workspace doesn't have info
-    ProjectWindowCustomizerService.projectPath(project)?.let {
-      val migrated = WorkspaceProjectColorStorage(project).getDataIfEmptyFrom(RecentProjectColorStorage(it))
-      if (!migrated) {
+    // Perform initial setup of storages for the project
+    ProjectWindowCustomizerService.projectPath(project)?.let { path ->
+      val workspaceStorage = WorkspaceProjectColorStorage(project)
+      val recentProjectsStorage = RecentProjectColorStorage(path)
+
+      if (workspaceStorage.isEmpty) {
+        // Clean caches
         ProjectWindowCustomizerService.getInstance().clearToolbarColorsAndInMemoryCache(project)
+
+        if (recentProjectsStorage.isEmpty) {
+          // If recent projects storage is empty, generate the associated index and save it into workspace
+          ProjectWindowCustomizerService.getInstance().getCurrentProjectColorIndex(project)
+        }
+        else {
+          // Otherwise, get colors from recent projects storage
+          workspaceStorage.getDataFrom(recentProjectsStorage)
+        }
       }
     }
   }
@@ -375,6 +387,8 @@ private interface ProjectColorStorage {
   var customColor: String?
   var associatedIndex: Int?
   val projectPath: String?
+
+  val isEmpty: Boolean get() = (customColor?.isNotEmpty() != true) && (associatedIndex?.let { it >= 0 } != true)
 }
 
 private class WorkspaceProjectColorStorage(val project: Project): ProjectColorStorage {
@@ -397,17 +411,11 @@ private class WorkspaceProjectColorStorage(val project: Project): ProjectColorSt
   override val projectPath: String? get() = ProjectWindowCustomizerService.projectPath(project)
   private val manager: ProjectColorInfoManager get() = ProjectColorInfoManager.getInstance(project)
 
-  val isEmpty: Boolean get() = (customColor?.isNotEmpty() != true) && (associatedIndex?.let { it >= 0 } != true)
-
-  fun getDataIfEmptyFrom(storage: ProjectColorStorage): Boolean {
-    if (!isEmpty) return false
-
+  fun getDataFrom(storage: ProjectColorStorage) {
     isMigrating = true
     customColor = storage.customColor
     associatedIndex = storage.associatedIndex
     isMigrating = false
-
-    return true
   }
 }
 
