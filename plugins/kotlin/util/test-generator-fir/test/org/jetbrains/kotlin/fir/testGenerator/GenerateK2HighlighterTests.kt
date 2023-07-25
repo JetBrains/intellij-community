@@ -5,7 +5,6 @@ import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2BundledCompilerPlugin
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightExitPointsTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoWithExtensionTest
-import org.jetbrains.kotlin.idea.k2.highlighting.AbstractK2HighlightingMetaInfoWithExtensionTest
 import org.jetbrains.kotlin.idea.k2.highlighting.AbstractOutsiderHighlightingTest
 import org.jetbrains.kotlin.testGenerator.model.*
 
