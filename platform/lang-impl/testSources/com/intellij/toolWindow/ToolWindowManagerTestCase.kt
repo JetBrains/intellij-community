@@ -3,6 +3,8 @@
 
 package com.intellij.toolWindow
 
+import com.intellij.ide.ui.LafManager
+import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.ToolWindow
@@ -11,9 +13,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEve
 import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl
-import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.testFramework.SkipInHeadlessEnvironment
-import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.*
 import kotlinx.coroutines.*
 
 @SkipInHeadlessEnvironment
@@ -25,6 +25,10 @@ abstract class ToolWindowManagerTestCase : LightPlatformTestCase() {
 
   public override fun setUp() {
     super.setUp()
+
+    runInEdtAndWait {
+      LafManager.getInstance() // Maybe we need this in a superclass, but for now only tool window manager tests break if it's not available.
+    }
 
     runBlocking {
       val project = project
