@@ -5,7 +5,7 @@ import com.intellij.cce.evaluation.UndoableEvaluationStep
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.util.registry.Registry
 
-class SetupFullLineStep() : UndoableEvaluationStep {
+class SetupFullLineStep : UndoableEvaluationStep {
   private var initLoggingEnabledValue: Boolean = false
   private var initLogPathValue: String? = null
   private var initLatency: Int? = null
