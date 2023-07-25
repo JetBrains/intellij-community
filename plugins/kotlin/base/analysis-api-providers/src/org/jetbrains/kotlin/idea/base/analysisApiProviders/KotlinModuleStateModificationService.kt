@@ -107,7 +107,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
                     is VFileContentChangeEvent -> event.file
                     else -> return@mapNotNull null
                 }
-                if (file.extension != "jar") return@mapNotNull null  //react only on jars
+                if (!file.extension.equals("jar", ignoreCase = true)) return@mapNotNull null  //react only on jars
                 val jarRoot = StandardFileSystems.jar().findFileByPath(file.path + URLUtil.JAR_SEPARATOR) ?: return@mapNotNull null
                 (index.getOrderEntriesForFile(jarRoot).firstOrNull { it is LibraryOrderEntry } as? LibraryOrderEntry)?.library
             }.distinct().forEach { moduleStateModificationService.invalidateLibraryModule(it) }
