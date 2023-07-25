@@ -6,6 +6,7 @@ import com.intellij.html.webSymbols.elements.WebSymbolElementDescriptor
 import com.intellij.model.Pointer
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.XmlElementFactory
@@ -14,7 +15,6 @@ import com.intellij.psi.impl.source.html.dtd.HtmlNSDescriptorImpl
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.xml.XmlAttribute
-import com.intellij.psi.xml.XmlElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.asSafely
@@ -42,13 +42,7 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                         context: WebSymbolsContext,
                         allowResolve: Boolean): List<WebSymbolsScope> =
     ((element as? XmlAttribute)?.parent ?: element as? XmlTag)?.let {
-      listOf(
-        HtmlElementSymbolsScope(it.project),
-        HtmlElementAttributesAndEventsScope(it)
-      )
-    }
-    ?: (element as? XmlElement)?.let {
-      listOf(HtmlElementSymbolsScope(it.project))
+      listOf(StandardHtmlSymbolsScope(it))
     }
     ?: emptyList()
 
@@ -78,23 +72,46 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
     @JvmStatic
     fun getStandardHtmlAttributeDescriptor(tag: XmlTag, attrName: String): XmlAttributeDescriptor? =
       getHtmlElementDescriptor(tag)
-        ?.getDefaultAttributeDescriptor(attrName, tag)
+        ?.getDefaultAttributeDescriptor(attrName.adjustCase(tag), tag)
         ?.takeIf { !it.getName(tag).contains(':') }
 
     private fun getHtmlElementDescriptor(tag: XmlTag): HtmlElementDescriptorImpl? =
       when (val tagDescriptor = tag.descriptor) {
         is HtmlElementDescriptorImpl -> tagDescriptor
         is WebSymbolElementDescriptor, is AnyXmlElementDescriptor -> {
-          tag.getNSDescriptor(tag.namespace, false)
-            .asSafely<HtmlNSDescriptorImpl>()
-            ?.let { nsDescriptor ->
-              nsDescriptor.getElementDescriptorByName(tag.localName)
-              ?: nsDescriptor.getElementDescriptorByName("div")
-              ?: nsDescriptor.getElementDescriptorByName("span")
-            } as? HtmlElementDescriptorImpl
+          getStandardHtmlElementDescriptor(tag)
         }
         else -> null
       }
+
+    private fun getStandardHtmlElementDescriptor(tag: XmlTag, name: String = tag.localName): HtmlElementDescriptorImpl? {
+      val parentTag = tag.parentTag
+      return if (parentTag != null) {
+        parentTag.getNSDescriptor(tag.namespace, false)
+          .asSafely<HtmlNSDescriptorImpl>()
+          ?.let { nsDescriptor ->
+            sequenceOf(parentTag.localName.adjustCase(tag), "div", "span")
+              .firstNotNullOfOrNull { nsDescriptor.getElementDescriptorByName(it) }
+          }
+          ?.asSafely<HtmlElementDescriptorImpl>()
+          ?.let { descriptor ->
+            sequenceOf(name.adjustCase(tag), "div", "span")
+              .firstNotNullOfOrNull { descriptor.getElementDescriptor(it, parentTag) }
+          }
+          ?.asSafely<HtmlElementDescriptorImpl>()
+      }
+      else {
+        getHtmlNSDescriptor(tag.project)
+          ?.let { nsDescriptor ->
+            sequenceOf(name.adjustCase(tag), "div", "span")
+              .firstNotNullOfOrNull { nsDescriptor.getElementDescriptorByName(it) }
+          }
+          ?.asSafely<HtmlElementDescriptorImpl>()
+      }
+    }
+
+    private fun String.adjustCase(tag: XmlTag) =
+      if (tag.isCaseSensitive) this else StringUtil.toLowerCase(this)
 
     fun Sequence<WebSymbolCodeCompletionItem>.filterOutStandardHtmlSymbols(): Sequence<WebSymbolCodeCompletionItem> =
       filter {
@@ -115,7 +132,10 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
 
   class HtmlSymbolsCodeCompletionItemCustomizer : WebSymbolCodeCompletionItemCustomizer {
     override fun customize(item: WebSymbolCodeCompletionItem,
-                           framework: FrameworkId?, namespace: SymbolNamespace, kind: SymbolKind, location: PsiElement): WebSymbolCodeCompletionItem =
+                           framework: FrameworkId?,
+                           namespace: SymbolNamespace,
+                           kind: SymbolKind,
+                           location: PsiElement): WebSymbolCodeCompletionItem =
       item.let {
         if (namespace == WebSymbol.NAMESPACE_HTML)
           when (kind) {
@@ -127,41 +147,21 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
       }
   }
 
-  private class HtmlElementSymbolsScope(project: Project)
-    : WebSymbolsScopeWithCache<Project, Unit>(null, project, project, Unit) {
-
-    override fun provides(namespace: SymbolNamespace, kind: SymbolKind): Boolean =
-      namespace == WebSymbol.NAMESPACE_HTML && kind == WebSymbol.KIND_HTML_ELEMENTS
-
-    override fun getModificationCount(): Long = 0
-
-    override fun createPointer(): Pointer<HtmlElementSymbolsScope> =
-      Pointer.hardPointer(this)
-
-    override fun initialize(consumer: (WebSymbol) -> Unit, cacheDependencies: MutableSet<Any>) {
-      val descriptor = getHtmlNSDescriptor(project) ?: return
-      descriptor.getAllElementsDescriptors(null).forEach {
-        consumer(HtmlElementDescriptorBasedSymbol(it, null))
-      }
-      descriptor.descriptorFile?.let { cacheDependencies.add(it) }
-    }
-  }
-
-  private class HtmlElementAttributesAndEventsScope(private val tag: XmlTag) : WebSymbolsScope {
+  private class StandardHtmlSymbolsScope(private val tag: XmlTag) : WebSymbolsScope {
 
     override fun equals(other: Any?): Boolean =
-      other is HtmlElementAttributesAndEventsScope
+      other is StandardHtmlSymbolsScope
       && other.tag == tag
 
     override fun hashCode(): Int = tag.hashCode()
 
     override fun getModificationCount(): Long = 0
 
-    override fun createPointer(): Pointer<HtmlElementAttributesAndEventsScope> {
+    override fun createPointer(): Pointer<StandardHtmlSymbolsScope> {
       val tag = SmartPointerManager.createPointer(this.tag)
       return Pointer {
         tag.dereference()?.let {
-          HtmlElementAttributesAndEventsScope(it)
+          StandardHtmlSymbolsScope(it)
         }
       }
     }
@@ -172,8 +172,22 @@ class WebSymbolsHtmlQueryConfigurator : WebSymbolsQueryConfigurator {
                             params: WebSymbolsNameMatchQueryParams,
                             scope: Stack<WebSymbolsScope>): List<WebSymbolsScope> =
       if (params.queryExecutor.allowResolve) {
-        if (namespace == null || namespace == WebSymbol.NAMESPACE_HTML) {
+        if (namespace == WebSymbol.NAMESPACE_HTML) {
           when (kind) {
+            WebSymbol.KIND_HTML_ELEMENTS ->
+              if (name.isNullOrEmpty()) {
+                (getStandardHtmlElementDescriptor(tag)?.getElementsDescriptors(tag)
+                 ?: getHtmlNSDescriptor(tag.project)?.getAllElementsDescriptors(null)
+                 ?: emptyArray())
+                  .map { HtmlElementDescriptorBasedSymbol(it, tag) }
+                  .toList()
+              }
+              else {
+                getStandardHtmlElementDescriptor(tag, name)
+                  ?.let { HtmlElementDescriptorBasedSymbol(it, tag) }
+                  ?.match(name, scope, params)
+                ?: emptyList()
+              }
             WebSymbol.KIND_HTML_ATTRIBUTES ->
               if (name.isNullOrEmpty()) {
                 getStandardHtmlAttributeDescriptors(tag)

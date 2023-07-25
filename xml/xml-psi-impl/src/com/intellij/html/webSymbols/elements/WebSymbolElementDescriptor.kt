@@ -93,7 +93,6 @@ open class WebSymbolElementDescriptor private constructor(private val tag: XmlTa
     getStandardHtmlElementDescriptor()
       ?.getElementDescriptor(childTag, contextTag)
       ?.let { if (it !is AnyXmlElementDescriptor) wrapInDelegating(it) else it }
-    ?: XmlDescriptorUtil.getElementDescriptor(childTag, contextTag)
 
   override fun getAttributesDescriptors(context: XmlTag?): Array<XmlAttributeDescriptor> =
     getStandardHtmlElementDescriptor()
