@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl
 
 import com.intellij.ide.CommandLineInspectionProjectConfigurator
@@ -59,7 +59,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     !ApplicationManager.getApplication().isUnitTestMode
 
   override fun configureEnvironment(context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {
-    Registry.get("unknown.sdk.auto").setValue(false) // forbid UnknownSdkTracker post startup activity as we run it here
+    System.setProperty("unknown.sdk.auto", false.toString())
   }
 
   override fun configureProject(project: Project, context: CommandLineInspectionProjectConfigurator.ConfiguratorContext) {

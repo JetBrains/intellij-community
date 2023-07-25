@@ -7,6 +7,7 @@ import com.intellij.ide.environment.EnvironmentService
 import com.intellij.ide.impl.ProjectOpenKeyProvider
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.ide.warmup.WarmupStatus
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
@@ -239,10 +240,10 @@ class GradleWarmupConfigurator : WarmupConfigurator {
 }
 
 internal fun prepareGradleConfiguratorEnvironment(logger : CommandLineInspectionProgressReporter?)  {
-  Registry.get(DISABLE_GRADLE_AUTO_IMPORT).setValue(true)
-  Registry.get(DISABLE_GRADLE_JDK_FIX).setValue(true)
-  Registry.get(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY).setValue(true)
-  Registry.get(DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES).setValue(true)
+  System.setProperty(DISABLE_GRADLE_AUTO_IMPORT, true.toString())
+  System.setProperty(DISABLE_GRADLE_JDK_FIX, true.toString())
+  System.setProperty(DISABLE_ANDROID_GRADLE_PROJECT_STARTUP_ACTIVITY, true.toString())
+  System.setProperty(DISABLE_UPDATE_ANDROID_SDK_LOCAL_PROPERTIES, true.toString())
   val progressManager = ExternalSystemProgressNotificationManager.getInstance()
   if (logger != null) {
     progressManager.addNotificationListener(GradleWarmupConfigurator.LoggingNotificationListener(logger))
