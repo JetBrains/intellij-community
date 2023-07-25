@@ -104,9 +104,11 @@ final class DirectoryLock {
 
   private static boolean areUdsSupported(Path file) {
     var fs = file.getFileSystem();
-    if (fs.getClass().getModule() != Object.class.getModule() &&
-        System.getProperty("java.vm.vendor", "").contains("JetBrains") &&
-        JavaVersion.current().compareTo(JavaVersion.compose(17, 0, 6, 894, false)) >= 0) {
+    if (fs.getClass().getModule() != Object.class.getModule()) {
+      if (System.getProperty("java.vm.vendor", "").contains("JetBrains") &&
+          JavaVersion.current().compareTo(JavaVersion.compose(17, 0, 6, 894, false)) >= 0) {
+        return false;
+      }
       try {
         fs.provider().getClass().getMethod("getSunPathForSocketFile", Path.class);
       }
