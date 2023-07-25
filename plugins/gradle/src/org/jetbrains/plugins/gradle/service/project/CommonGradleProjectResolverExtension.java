@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.issue.BuildIssue;
+import com.intellij.gradle.toolingExtension.impl.modelProvider.GradleExternalProjectModelProvider;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -763,9 +764,13 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   @Override
   public @NotNull Set<Class<?>> getExtraBuildModelClasses() {
     return ContainerUtil.newLinkedHashSet(
-      ExternalProject.class,
       IdeaProject.class
     );
+  }
+
+  @Override
+  public @NotNull List<ProjectImportModelProvider> getModelProviders() {
+    return ContainerUtil.prepend(super.getModelProviders(), new GradleExternalProjectModelProvider());
   }
 
   @Override

@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.tooling.serialization.ModelConverter;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
+import java.util.stream.Collectors;
 
 /**
  * Part of {@link ProjectImportAction} which fully executes on Gradle side.
@@ -146,10 +147,22 @@ public class GradleModelFetchAction {
 
   private void addModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
     try {
-      for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
-        addProjectModels(controller, gradleProject);
+      List<Map.Entry<GradleModelFetchPhase, List<ProjectImportModelProvider>>> phasedModelProviders =
+        myModelProviders.stream()
+          .collect(Collectors.groupingBy(it -> it.getPhase())).entrySet().stream()
+          .sorted(Map.Entry.comparingByKey())
+          .collect(Collectors.toList());
+      for (Map.Entry<GradleModelFetchPhase, List<ProjectImportModelProvider>> entry : phasedModelProviders) {
+        List<ProjectImportModelProvider> modelProviders = entry.getValue();
+        for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+          for (ProjectImportModelProvider modelProvider : modelProviders) {
+            addProjectModels(controller, gradleProject, modelProvider);
+          }
+        }
+        for (ProjectImportModelProvider modelProvider : modelProviders) {
+          addBuildModels(controller, gradleBuild, modelProvider);
+        }
       }
-      addBuildModels(controller, gradleBuild);
     }
     catch (Exception e) {
       // do not fail project import in a preview mode
@@ -159,50 +172,56 @@ public class GradleModelFetchAction {
     }
   }
 
-  private void addProjectModels(@NotNull BuildController controller, @NotNull BasicGradleProject gradleProject) {
-    for (ProjectImportModelProvider extension : myModelProviders) {
-      Set<String> obtainedModels = new HashSet<>();
-      long startTime = System.currentTimeMillis();
-      extension.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
-        @Override
-        public void consume(@NotNull Object object, @NotNull Class<?> clazz) {
-          obtainedModels.add(clazz.getName());
-          addProjectModel(gradleProject, object, clazz);
-        }
-      });
-      myAllModels.logPerformance(
-        "Ran extension " + extension.getName() +
-        " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
-        " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-        System.currentTimeMillis() - startTime
-      );
-    }
+  private void addProjectModels(
+    @NotNull BuildController controller,
+    @NotNull BasicGradleProject gradleProject,
+    @NotNull ProjectImportModelProvider modelProvider
+  ) {
+    Set<String> obtainedModels = new HashSet<>();
+    long startTime = System.currentTimeMillis();
+    modelProvider.populateProjectModels(controller, gradleProject, new ProjectImportModelProvider.ProjectModelConsumer() {
+      @Override
+      public void consume(@NotNull Object object, @NotNull Class<?> clazz) {
+        obtainedModels.add(clazz.getName());
+        addProjectModel(gradleProject, object, clazz);
+      }
+    });
+    myAllModels.logPerformance(
+      "Ran extension " + modelProvider.getName() +
+      " during " + modelProvider.getPhase() +
+      " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
+      " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
+      System.currentTimeMillis() - startTime
+    );
   }
 
-  private void addBuildModels(@NotNull BuildController controller, @NotNull GradleBuild gradleBuild) {
-    for (ProjectImportModelProvider extension : myModelProviders) {
-      Set<String> obtainedModels = new HashSet<>();
-      long startTime = System.currentTimeMillis();
-      extension.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
-        @Override
-        public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
-          obtainedModels.add(clazz.getName());
-          addProjectModel(projectModel, object, clazz);
-        }
+  private void addBuildModels(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild gradleBuild,
+    @NotNull ProjectImportModelProvider modelProvider
+  ) {
+    Set<String> obtainedModels = new HashSet<>();
+    long startTime = System.currentTimeMillis();
+    modelProvider.populateBuildModels(controller, gradleBuild, new ProjectImportModelProvider.BuildModelConsumer() {
+      @Override
+      public void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
+        obtainedModels.add(clazz.getName());
+        addProjectModel(projectModel, object, clazz);
+      }
 
-        @Override
-        public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
-          obtainedModels.add(clazz.getName());
-          addBuildModel(buildModel, object, clazz);
-        }
-      });
-      myAllModels.logPerformance(
-        "Ran extension " + extension.getName() +
-        " for build " + gradleBuild.getBuildIdentifier().getRootDir().getPath() +
-        " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-        System.currentTimeMillis() - startTime
-      );
-    }
+      @Override
+      public void consume(@NotNull BuildModel buildModel, @NotNull Object object, @NotNull Class<?> clazz) {
+        obtainedModels.add(clazz.getName());
+        addBuildModel(buildModel, object, clazz);
+      }
+    });
+    myAllModels.logPerformance(
+      "Ran extension " + modelProvider.getName() +
+      " during " + modelProvider.getPhase() +
+      " for build " + gradleBuild.getBuildIdentifier().getRootDir().getPath() +
+      " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
+      System.currentTimeMillis() - startTime
+    );
   }
 
   private void addProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz) {
