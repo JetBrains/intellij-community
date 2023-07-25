@@ -29,11 +29,10 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
                                      serviceVersion: String = "",
                                      serviceNamespace: String = "",
                                      customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
-                                     private val spanExporters: (resource: Resource) -> List<AsyncSpanExporter>,
                                      enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
-  protected val resource: Resource = Resource.create(
+  val resource: Resource = Resource.create(
     Attributes.builder()
       .put(ResourceAttributes.SERVICE_NAME, serviceName)
       .put(ResourceAttributes.SERVICE_VERSION, serviceVersion)
@@ -53,7 +52,7 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
 
   private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
-  private fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>) {
+  fun registerSpanExporters(spanExporters: List<AsyncSpanExporter>) {
     if (spanExporters.isEmpty()) {
       return
     }
@@ -103,7 +102,6 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
   }
 
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
-    registerSpanExporters(spanExporters = spanExporters(resource))
     if (isMetricsEnabled()) {
       registerMetricsExporter(createMetricsExporters())
     }

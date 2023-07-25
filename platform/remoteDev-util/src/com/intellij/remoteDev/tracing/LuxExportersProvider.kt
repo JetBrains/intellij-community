@@ -35,7 +35,7 @@ class LuxExportersProvider : OTelExportersProvider {
     return emptyList()
   }
 
-  override fun getReadsInterval(): Duration {
+  override fun getReadInterval(): Duration {
     return Duration.ofSeconds(1)
   }
 

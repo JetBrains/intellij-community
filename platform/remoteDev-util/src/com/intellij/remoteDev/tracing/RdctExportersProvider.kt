@@ -44,7 +44,7 @@ private class RdctExportersProvider : OTelExportersProvider {
     return System.getProperty(OpenTelemetryUtils.RDCT_CONN_METRICS_DIAGNOSTIC_FLAG) != null
   }
 
-  override fun getReadsInterval(): Duration {
+  override fun getReadInterval(): Duration {
     return Duration.ofSeconds(1)
   }
 }

@@ -16,6 +16,7 @@ import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
+import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -41,6 +42,9 @@ internal class TelemetryManagerImpl : TelemetryManager {
   private val aggregatedMetricExporter: AggregatedMetricExporter
   private val aggregatedSpanProcessor: AggregatedSpanProcessor
 
+  @Volatile
+  private var hasExporters: Boolean
+
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
     val configurator = createOpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
@@ -50,12 +54,18 @@ internal class TelemetryManagerImpl : TelemetryManager {
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
     aggregatedSpanProcessor = configurator.aggregatedSpanProcessor
 
+    val spanExporters = createSpanExporters(configurator.resource)
+    hasExporters = !spanExporters.isEmpty()
+    configurator.registerSpanExporters(spanExporters = spanExporters)
     sdk = configurator.getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .buildAndRegisterGlobal()
   }
 
   override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
+    if (!hasExporters && !exporters.isEmpty()) {
+      hasExporters = true
+    }
     aggregatedSpanProcessor.addSpansExporters(exporters)
   }
 
@@ -71,7 +81,7 @@ internal class TelemetryManagerImpl : TelemetryManager {
   }
 
   override fun getSimpleTracer(scope: Scope): IntelliJTracer {
-    return IntelliJTracerImpl(scope, otlpService)
+    return if (hasExporters) IntelliJTracerImpl(scope, otlpService) else NoopIntelliJTracer
   }
 }
 
@@ -85,6 +95,26 @@ private class IntelliJTracerImpl(private val scope: Scope, private val otlpServi
       }
     }) + CoroutineName(name)
   }
+}
+
+@Suppress("SuspiciousCollectionReassignment")
+private fun createSpanExporters(resource: Resource): List<AsyncSpanExporter> {
+  var spanExporters = emptyList<AsyncSpanExporter>()
+  System.getProperty(
+    "idea.diagnostic.opentelemetry.file")?.let { traceFile ->
+    @Suppress("SuspiciousCollectionReassignment")
+    spanExporters += JaegerJsonSpanExporter(
+      file = Path.of(traceFile),
+      serviceName = resource.getAttribute(ResourceAttributes.SERVICE_NAME)!!,
+      serviceVersion = resource.getAttribute(ResourceAttributes.SERVICE_VERSION),
+      serviceNamespace = resource.getAttribute(ResourceAttributes.SERVICE_NAMESPACE),
+    )
+  }
+
+  getOtlpEndPoint()?.let {
+    spanExporters += OtlpSpanExporter(it)
+  }
+  return spanExporters
 }
 
 private fun createOpenTelemetryConfigurator(mainScope: CoroutineScope,
@@ -102,25 +132,6 @@ private fun createOpenTelemetryConfigurator(mainScope: CoroutineScope,
       if (getOtlpEndPoint() != null) {
         it.put(ResourceAttributes.PROCESS_OWNER, System.getProperty("user.name") ?: "unknown")
       }
-    },
-    spanExporters = { resource ->
-      var spanExporters = emptyList<AsyncSpanExporter>()
-      System.getProperty(
-        "idea.diagnostic.opentelemetry.file")?.let { traceFile ->
-        @Suppress("SuspiciousCollectionReassignment")
-        spanExporters += JaegerJsonSpanExporter(
-          file = Path.of(traceFile),
-          serviceName = resource.getAttribute(ResourceAttributes.SERVICE_NAME)!!,
-          serviceVersion = resource.getAttribute(ResourceAttributes.SERVICE_VERSION),
-          serviceNamespace = resource.getAttribute(ResourceAttributes.SERVICE_NAMESPACE),
-        )
-      }
-
-      getOtlpEndPoint()?.let {
-        @Suppress("SuspiciousCollectionReassignment")
-        spanExporters += OtlpSpanExporter(it)
-      }
-      spanExporters
     },
   )
 }

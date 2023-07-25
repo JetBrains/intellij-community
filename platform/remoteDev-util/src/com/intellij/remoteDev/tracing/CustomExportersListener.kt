@@ -2,15 +2,18 @@
 package com.intellij.remoteDev.tracing
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
 import kotlinx.coroutines.CoroutineScope
 
+private val EP: ExtensionPointName<OTelExportersProvider> = ExtensionPointName("com.intellij.oTelExportersProvider")
+
 private class CustomExportersListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
-    val providers = OTelExportersProvider.EP.extensionList
+    val providers = EP.extensionList
     if (providers.isEmpty()) {
       return
     }
@@ -24,7 +27,7 @@ private class CustomExportersListener : ApplicationInitializedListener {
       }
       if (provider.areMetricsAvailable()) {
         val metrics = provider.getMetricsExporters()
-        val duration = provider.getReadsInterval()
+        val duration = provider.getReadInterval()
         metricsExporters.add(MetricsExporterEntry(metrics, duration))
       }
     }
