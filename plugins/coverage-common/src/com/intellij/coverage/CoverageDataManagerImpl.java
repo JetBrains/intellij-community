@@ -461,7 +461,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   private void renewInformationInEditors() {
     final FileEditorManager fileEditorManager = FileEditorManager.getInstance(myProject);
-    final VirtualFile[] openFiles = fileEditorManager.getOpenFiles();
+    final List<VirtualFile> openFiles = fileEditorManager.getOpenFilesWithRemotes();
     for (VirtualFile openFile : openFiles) {
       final FileEditor[] allEditors = fileEditorManager.getAllEditors(openFile);
       applyInformationToEditor(allEditors, openFile);
