@@ -340,35 +340,30 @@ impl RemoteDevLaunchConfiguration {
             }
         }
 
-        match env::var("REMOTE_DEV_SERVER_JCEF_ENABLED") {
-            Ok(remote_dev_server_jcef_enabled) => {
-                match remote_dev_server_jcef_enabled.as_str() {
-                    "1" | "true" => {
-                        // todo: platform depended function which setup jcef
-                        let _ = self.setup_jcef();
+        let remote_dev_server_jcef_enabled = env::var("REMOTE_DEV_SERVER_JCEF_ENABLED").unwrap_or_default();
 
-                        remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
-                        remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
-                        remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
-                    }
-                    "0" | "false" => {
-                        if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
-                            if !trace_var.is_empty() {
-                                info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
-                            }
-                        }
+        match remote_dev_server_jcef_enabled.to_lowercase().as_str() {
+            "1" | "true" => {
+                // todo: platform depended function which setup jcef
+                let _ = self.setup_jcef();
 
-                        // Disable JCEF support for now since it does not work in headless environment now
-                        // Also see IDEA-241709
-                        remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
-                    }
-                    _ => {
-                        bail!("Unsupported value for 'REMOTE_DEV_SERVER_JCEF_ENABLED' variable: '{remote_dev_server_jcef_enabled:?}'")
+                remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
+                remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
+                remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
+            }
+            "0" | "false" | "" => {
+                if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
+                    if !trace_var.is_empty() {
+                        info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
                     }
                 }
+
+                // Disable JCEF support for now since it does not work in headless environment now
+                // Also see IDEA-241709
+                remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
             }
-            Err(_) => {
-                info!("JCEF support is disabled. Set 'REMOTE_DEV_SERVER_JCEF_ENABLED=true' to enable");
+            _ => {
+                bail!("Unsupported value for 'REMOTE_DEV_SERVER_JCEF_ENABLED' variable: '{remote_dev_server_jcef_enabled:?}'")
             }
         }
 
