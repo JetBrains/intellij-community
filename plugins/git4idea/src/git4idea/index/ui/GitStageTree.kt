@@ -7,10 +7,7 @@ import com.intellij.ide.dnd.DnDEvent
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ListSelection
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
@@ -124,8 +121,9 @@ abstract class GitStageTree(project: Project,
       VcsDataKeys.FILE_PATHS.`is`(dataId) -> selectedStatusNodes().map { it.filePath }
       PlatformDataKeys.DELETE_ELEMENT_PROVIDER.`is`(dataId) -> if (!selectedStatusNodes().isEmpty) VirtualFileDeleteProvider() else null
       PlatformCoreDataKeys.BGT_DATA_PROVIDER.`is`(dataId) -> {
+        val superProvider = super.getData(dataId) as DataProvider?
         val selectedNodes = selectedStatusNodes()
-        return DataProvider { slowId -> getSlowData(selectedNodes, slowId) }
+        return CompositeDataProvider.compose({ slowId -> getSlowData(selectedNodes, slowId) }, superProvider)
       }
       else -> super.getData(dataId)
     }

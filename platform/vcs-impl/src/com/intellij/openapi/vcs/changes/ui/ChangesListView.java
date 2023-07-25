@@ -191,9 +191,10 @@ public abstract class ChangesListView extends ChangesTree implements DataProvide
       return HELP_ID;
     }
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      DataProvider superProvider = (DataProvider)super.getData(dataId);
       VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
       VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
-      return (DataProvider)slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId);
+      return CompositeDataProvider.compose(slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId), superProvider);
     }
     return super.getData(dataId);
   }
