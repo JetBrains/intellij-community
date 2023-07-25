@@ -266,7 +266,7 @@ class ProjectWindowCustomizerService : Disposable {
     }
   }
 
-  fun isAvailable(): Boolean = !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled() &&
+  fun isAvailable(): Boolean = !ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader() &&
                                (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar"))
 
   fun isActive(): Boolean = wasGradientPainted && ourSettingsValue && isAvailable()
