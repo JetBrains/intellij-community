@@ -296,8 +296,9 @@ public final class BackgroundUpdateHighlightersUtil {
       info.updateQuickFixFields(document, range2markerCache, finalInfoRange);
     };
 
-    RangeHighlighterEx highlighter = infosToRemove == null ? null : infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
-    if (highlighter == null) {
+    RangeHighlighterEx salvagedFromBin = infosToRemove == null ? null : infosToRemove.pickupHighlighterFromGarbageBin(infoStartOffset, infoEndOffset, layer);
+    RangeHighlighterEx highlighter;
+    if (salvagedFromBin == null) {
       highlighter = markup.addRangeHighlighterAndChangeAttributes(null, infoStartOffset, infoEndOffset, layer,
                                                                   HighlighterTargetArea.EXACT_RANGE, false, changeAttributes);
       if (HighlightInfoType.VISIBLE_IF_FOLDED.contains(info.type)) {
@@ -305,6 +306,7 @@ public final class BackgroundUpdateHighlightersUtil {
       }
     }
     else {
+      highlighter = salvagedFromBin;
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
@@ -314,11 +316,14 @@ public final class BackgroundUpdateHighlightersUtil {
       if (!attributesSet) {
         highlighter.setTextAttributes(infoAttributes);
         TextAttributes afterSet = highlighter.getTextAttributes(colorsScheme);
-        LOG.error("Expected to set " + infoAttributes + " but actual attributes are: "+actualAttributes+
+        LOG.error("Expected to set " + infoAttributes + " but actual attributes are: " + actualAttributes +
                   "; colorsScheme: '" + (colorsScheme == null ? "[global]" : colorsScheme.getName()) + "'" +
-                  "; highlighter:" + highlighter +" ("+highlighter.getClass()+")" +
-                  "; markup: "+markup+" ("+markup.getClass()+")"+
-                  "; attributes after the second .setAttributes(): "+afterSet);
+                  "; highlighter:" + highlighter + " (" + highlighter.getClass() + ")" +
+                  "; was reused from the bin: " + (salvagedFromBin != null) +
+                  "; is being recycled: " + HighlightersRecycler.isBeingRecycled(highlighter)+
+                  "; markup: " + markup + " (" + markup.getClass() + ")" +
+                  "; attributes after the second .setAttributes(): " + afterSet +
+                  " (set " + (infoAttributes.equals(afterSet) ? "successfully" : "not successfully") + ")");
       }
     }
   }

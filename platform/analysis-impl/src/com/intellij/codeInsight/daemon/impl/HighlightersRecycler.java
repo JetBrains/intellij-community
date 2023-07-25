@@ -54,4 +54,7 @@ final class HighlightersRecycler {
       ((UserDataHolderEx)highlighter).replace(BEING_RECYCLED_KEY, Boolean.TRUE, null);
     }
   }
+  static boolean isBeingRecycled(RangeHighlighter highlighter) {
+    return highlighter.getUserData(BEING_RECYCLED_KEY) != null;
+  }
 }
