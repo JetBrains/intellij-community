@@ -29,11 +29,18 @@ fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
 }
 
 /**
- * Resume Log indexing if paused or pause indexing if indexing is in progress.
+ * Check if VCS Log indexing was scheduled in any of the [VcsLogModifiableIndex.getIndexingRoots].
+ */
+private fun VcsLogModifiableIndex.isIndexingScheduled(): Boolean {
+  return indexingRoots.any { isScheduledForIndexing(it) }
+}
+
+/**
+ * Pause VCS Log indexing if it is scheduled for any of the [VcsLogModifiableIndex.getIndexingRoots], try to resume it otherwise.
  */
 @RequiresEdt
 internal fun VcsLogModifiableIndex.toggleIndexing() {
-  if (indexingRoots.any { isScheduledForIndexing(it) }) {
+  if (isIndexingScheduled()) {
     indexingRoots.filter { !isIndexingPausedFor(it) }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
   }
   else {
