@@ -257,7 +257,11 @@ public interface Application extends ComponentManager {
    * Saves all open documents, settings of all open projects, and application settings.
    *
    * @see #saveSettings()
+   * @deprecated Use {@link com.intellij.ide.SaveAndSyncHandler#scheduleSave)}
    */
+  @Deprecated
+  @ApiStatus.Internal
+  @RequiresEdt
   void saveAll();
 
   /**
