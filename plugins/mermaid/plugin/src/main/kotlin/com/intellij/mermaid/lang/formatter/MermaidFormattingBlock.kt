@@ -4,12 +4,18 @@ import com.intellij.formatting.*
 import com.intellij.lang.ASTNode
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.MINDMAP_STATEMENTS
 import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
+import com.intellij.mermaid.lang.psi.children
+import com.intellij.mermaid.lang.psi.hasType
+import com.intellij.mermaid.lang.psi.siblings
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.formatter.common.AbstractBlock
 import com.intellij.psi.formatter.common.SettingsAwareBlock
+import com.intellij.psi.util.prevLeaf
 
 internal open class MermaidFormattingBlock(
   node: ASTNode,
@@ -30,8 +36,17 @@ internal open class MermaidFormattingBlock(
       return Indent.getContinuationIndent()
     }
 
-    if (node.elementType in STATEMENTS && node.treeParent.elementType in DIAGRAM_BODIES_AND_BLOCKS) {
+    if (node.hasType(STATEMENTS) && node.treeParent.hasType(DIAGRAM_BODIES_AND_BLOCKS)) {
       return Indent.getNormalIndent()
+    }
+
+    if (node.hasType(MermaidElements.SIMPLE_NOTE_CONTENT)) {
+      return Indent.getNormalIndent()
+    }
+
+    if (node.hasType(MINDMAP_STATEMENTS)) {
+      val prev = node.psi.prevLeaf() as? PsiWhiteSpace ?: return Indent.getNoneIndent()
+      return Indent.getSpaceIndent(prev.textLength)
     }
 
     return Indent.getNoneIndent()
@@ -40,16 +55,10 @@ internal open class MermaidFormattingBlock(
   override fun buildChildren(): List<Block> {
     val children = node.children()
 
-    if (children.filter { it.elementType == MermaidElements.MINDMAP_HEADER }
-        .any() || node.elementType == MermaidElements.MINDMAP_BODY
-    ) {
-      return children.map { MermaidFormattingBlock(it, settings, spacing) }.toList()
-    }
-
     var alignment: Alignment? = null
     return children.filterFromWhitespaces().map {
       alignment = when {
-        it.elementType == MermaidElements.COMPLEX_TASK_NAME -> Alignment.createAlignment(true, Alignment.Anchor.RIGHT)
+        it.hasType(MermaidElements.COMPLEX_TASK_NAME) -> Alignment.createAlignment(true, Alignment.Anchor.RIGHT)
         it.isColonBeforeTaskData() -> Alignment.createChildAlignment(alignment)
         else -> null
       }
@@ -59,40 +68,13 @@ internal open class MermaidFormattingBlock(
   }
 
   private fun Sequence<ASTNode>.filterFromWhitespaces() = filter {
-    it.elementType !in MermaidTokenTypeSets.WHITE_SPACES
+    it.hasType(MermaidTokenTypeSets.WHITE_SPACES).not()
   }
 
   private fun ASTNode.isColonBeforeTaskData(): Boolean {
-    return elementType == MermaidTokens.COLON &&
+    return hasType(MermaidTokens.COLON) &&
       siblings(forward = true, withSelf = false)
         .filterFromWhitespaces()
         .firstOrNull()?.elementType == MermaidElements.SECTION_TASK_DATA
-  }
-}
-
-internal fun ASTNode.traverse(withSelf: Boolean, next: (ASTNode) -> ASTNode?): Sequence<ASTNode> {
-  return sequence {
-    if (withSelf) {
-      yield(this@traverse)
-    }
-    var current = next(this@traverse)
-    while (current != null) {
-      yield(current)
-      current = next(current)
-    }
-  }
-}
-
-internal fun ASTNode.siblings(forward: Boolean, withSelf: Boolean): Sequence<ASTNode> {
-  return when {
-    forward -> traverse(withSelf) { it.treeNext }
-    else -> traverse(withSelf) { it.treePrev }
-  }
-}
-
-internal fun ASTNode.children(): Sequence<ASTNode> {
-  return sequence {
-    val first = this@children.firstChildNode ?: return@sequence
-    yieldAll(first.siblings(forward = true, withSelf = true))
   }
 }

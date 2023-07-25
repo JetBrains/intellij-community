@@ -5,6 +5,5 @@ FILE
   PsiElement(EOL)('\n')
   PsiWhiteSpace('  ')
   MermaidGitGraphBodyImpl(GIT_GRAPH_BODY)
-    MermaidGitGraphStatementImpl(GIT_GRAPH_STATEMENT)
-      MermaidCommitStatementImpl(COMMIT_STATEMENT)
-        PsiElement(GitGraph.COMMIT)('commit')
+    MermaidCommitStatementImpl(COMMIT_STATEMENT)
+      PsiElement(GitGraph.COMMIT)('commit')

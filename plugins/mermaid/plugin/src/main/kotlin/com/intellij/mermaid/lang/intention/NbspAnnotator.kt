@@ -6,7 +6,7 @@ import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.mermaid.lang.highlighting.MermaidTextAttributes
 import com.intellij.mermaid.lang.psi.MermaidNamedPsiElement
-import com.intellij.mermaid.lang.psi.MermaidStateDiagramStatement
+import com.intellij.mermaid.lang.psi.MermaidStateId
 import com.intellij.mermaid.lang.psi.MermaidVertex
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -21,7 +21,7 @@ class NbspAnnotator : Annotator {
   override fun annotate(element: PsiElement, holder: AnnotationHolder) {
     if (element is MermaidNamedPsiElement) {
       val parent = element.parent ?: return
-      if (parent is MermaidVertex || parent is MermaidStateDiagramStatement) {
+      if (parent is MermaidVertex || parent is MermaidStateId) {
         val matches = nbspRegex.findAll(element.text)
         val ranges = matches
           .map {

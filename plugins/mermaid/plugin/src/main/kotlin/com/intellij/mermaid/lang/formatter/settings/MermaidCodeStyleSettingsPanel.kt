@@ -10,7 +10,7 @@ internal class MermaidCodeStyleSettingsPanel(
 ): TabbedLanguageCodeStylePanel(MermaidLanguage, currentSettings, settings) {
   override fun initTabs(settings: CodeStyleSettings) {
     addIndentOptionsTab(settings)
-//    addBlankLinesTab(settings)
+    addBlankLinesTab(settings)
     addSpacesTab(settings)
   }
 }

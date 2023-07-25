@@ -9,15 +9,15 @@ import com.intellij.psi.util.parentOfType
 
 class MermaidElementFactory {
   companion object {
-    fun createClassDiagramStatement(project: Project, name: String): MermaidClassDiagramStatement? {
+    fun createClassDiagramStatement(project: Project, name: String): MermaidClassStatement? {
       val text = """
         classDiagram
           class $name
       """.trimIndent()
       val file = createFile(project, text)
 
-      val element = file.findElementAt("classDiagram\n  ".length)?.parent?.parent
-      return (element as? MermaidClassStatement)?.parentOfType()
+      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
+      return elements.filterIsInstance<MermaidClassStatement>().firstOrNull()
     }
 
     fun createGenericElement(project: Project, name: String): MermaidGeneric? {
@@ -30,26 +30,26 @@ class MermaidElementFactory {
       return file.findElementAt(text.length - 1)!!.parentOfType()
     }
 
-    fun createBranchStatement(project: Project, name: String): MermaidGitGraphStatement? {
+    fun createBranchStatement(project: Project, name: String): MermaidBranchStatement? {
       val text = """
         gitGraph
           branch $name
       """.trimIndent()
       val file = createFile(project, text)
 
-      val element = file.findElementAt("gitGraph\n  ".length)?.parent?.parent
-      return element as? MermaidGitGraphStatement
+      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
+      return elements.filterIsInstance<MermaidBranchStatement>().firstOrNull()
     }
 
-    fun createCommitStatement(project: Project, name: String): MermaidGitGraphStatement? {
+    fun createCommitStatement(project: Project, name: String): MermaidCommitStatement? {
       val text = """
         gitGraph
           commit id: "$name"
       """.trimIndent()
       val file = createFile(project, text)
 
-      val element = file.findElementAt("gitGraph\n  ".length)?.parent?.parent
-      return element as? MermaidGitGraphStatement
+      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
+      return elements.filterIsInstance<MermaidCommitStatement>().firstOrNull()
     }
 
     fun createSpaceElement(project: Project, length: Int): PsiElement {

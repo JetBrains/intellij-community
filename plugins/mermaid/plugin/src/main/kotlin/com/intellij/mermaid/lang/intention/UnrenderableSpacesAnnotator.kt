@@ -69,8 +69,9 @@ class UnrenderableSpacesAnnotator : Annotator {
       val spaceElement = MermaidElementFactory.createSpaceElement(project, element.textLength)
       val newId = MermaidElementFactory.createIdElement(project, *arrayOf(prevLeaf, spaceElement, nextLeaf)) ?: return
 
-      element.replace(newId)
+      element.delete()
       prevLeaf.delete()
+      nextLeaf.parent.addBefore(newId, nextLeaf)
       nextLeaf.delete()
     }
   }
@@ -91,8 +92,9 @@ class UnrenderableSpacesAnnotator : Annotator {
       val nextLeaf = element.nextLeaf() ?: return
       val newId = MermaidElementFactory.createIdElement(project, *arrayOf(prevLeaf, nextLeaf)) ?: return
 
-      element.replace(newId)
+      element.delete()
       prevLeaf.delete()
+      nextLeaf.parent.addBefore(newId, nextLeaf)
       nextLeaf.delete()
     }
   }

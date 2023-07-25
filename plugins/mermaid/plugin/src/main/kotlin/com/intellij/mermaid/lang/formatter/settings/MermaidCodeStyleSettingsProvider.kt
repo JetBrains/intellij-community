@@ -19,12 +19,55 @@ internal class MermaidCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvi
   override fun customizeSettings(consumer: CodeStyleSettingsCustomizable, settingsType: SettingsType) {
     when (settingsType) {
       SettingsType.BLANK_LINES_SETTINGS -> {
-//        consumer.showCustomOption(
-//          MermaidCustomCodeStyleSettings::class.java,
-//          MermaidCustomCodeStyleSettings::.name,
-//          MermaidBundle.message("mermaid.style.settings."),
-//          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
-//        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::MIN_LINES_AROUND_STRUCTURED_STATEMENTS.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.around.structured.statements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
+        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::MIN_LINES_BETWEEN_STRUCTURED_STATEMENTS.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.between.structured.statements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
+        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::MIN_LINES_BETWEEN_OTHER_STETEMENTS.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.between.other.statements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
+        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::MIN_LINES_WITHIN_STRUCTURES.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.within.structures"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
+        )
+
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::KEEP_LINES_AROUND_STRUCTURED_STATEMENTS.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.around.structured.statements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
+        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::KEEP_LINES_BETWEEN_STRUCTURED_STATEMENTS.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.between.structured.statements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
+        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::KEEP_LINES_BETWEEN_OTHER_STETEMENTS.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.between.other.statements"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
+        )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::KEEP_LINES_WITHIN_STRUCTURES.name,
+          MermaidBundle.message("mermaid.style.settings.blank.lines.within.structures"),
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
+        )
       }
 
       SettingsType.SPACING_SETTINGS -> {
@@ -182,7 +225,7 @@ internal class MermaidCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvi
   override fun getCodeSample(settingsType: SettingsType): String {
     val sampleName = when (settingsType) {
       SettingsType.INDENT_SETTINGS -> "indent_settings.mermaid"
-      SettingsType.BLANK_LINES_SETTINGS -> "default.mermaid"
+      SettingsType.BLANK_LINES_SETTINGS -> "blank_lines_settings.mermaid"
       SettingsType.SPACING_SETTINGS -> "spacing_settings.mermaid"
       else -> "default.mermaid"
     }

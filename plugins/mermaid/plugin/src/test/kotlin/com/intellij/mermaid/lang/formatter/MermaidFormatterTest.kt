@@ -3,6 +3,7 @@ package com.intellij.mermaid.lang.formatter
 import com.intellij.application.options.CodeStyle
 import com.intellij.mermaid.lang.MermaidBaseTestCase
 import com.intellij.mermaid.lang.MermaidLanguage
+import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -43,6 +44,10 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
           INDENT_SIZE = 2
           TAB_SIZE = 2
           CONTINUATION_INDENT_SIZE = 4
+        }
+        getCustomSettings(MermaidCustomCodeStyleSettings::class.java).apply {
+          KEEP_LINES_BETWEEN_OTHER_STETEMENTS = 1
+          KEEP_LINES_WITHIN_STRUCTURES = 1
         }
       }
       doReformatTest(before, after)

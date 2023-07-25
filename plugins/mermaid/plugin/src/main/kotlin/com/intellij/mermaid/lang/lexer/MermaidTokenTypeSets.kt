@@ -8,36 +8,133 @@ object MermaidTokenTypeSets {
   val WHITE_SPACES = TokenSet.create(MermaidTokens.WHITE_SPACE, MermaidTokens.EOL, TokenType.WHITE_SPACE)
   val WHITE_SPACES_WITHOUT_EOL = TokenSet.create(MermaidTokens.WHITE_SPACE, TokenType.WHITE_SPACE)
 
+  //region STATEMENTS
   val STATEMENTS = TokenSet.create(
-    MermaidTokens.EOL,
+    //region GENERAL
     MermaidElements.DIRECTION_STATEMENT,
-    MermaidElements.PIE_STATEMENT,
-    MermaidElements.JOURNEY_STATEMENT,
-    MermaidElements.JOURNEY_SECTION_INNER_STATEMENT,
-    MermaidElements.FLOWCHART_STATEMENT,
-    MermaidElements.SEQUENCE_STATEMENT,
+    MermaidElements.DIRECTIVE,
+    MermaidElements.ACC_STATEMENT,
+    MermaidElements.TITLE_STATEMENT,
+    //endregion
+    //region PIE
+    MermaidElements.PIE_DATA_STATEMENT,
+    //endregion
+    //region JOURNEY
+    MermaidElements.JOURNEY_DATA_STATEMENT,
+    MermaidElements.JOURNEY_SECTION_STATEMENT,
+    //endregion
+    //region FLOWCHART
+    MermaidElements.VERTEX_STATEMENT,
+    MermaidElements.SUBGRAPH_STATEMENT,
+    MermaidElements.STYLE_STATEMENT,
+    MermaidElements.LINK_STYLE_STATEMENT,
+    MermaidElements.CLASS_DEF_STATEMENT,
+    MermaidElements.FLOWCHART_CLASS_STATEMENT,
+    MermaidElements.FLOWCHART_CLICK_STATEMENT,
+    //endregion
+    //region SEQUENCE
     MermaidElements.ACTOR_STATEMENT,
-    MermaidElements.CLASS_DIAGRAM_STATEMENT,
-    MermaidElements.CLASS_MEMBER_STATEMENT,
+    MermaidElements.SIGNAL_STATEMENT,
+    MermaidElements.AUTONUMBER_STATEMENT,
+    MermaidElements.ACTIVATE_STATEMENT,
+    MermaidElements.DEACTIVATE_STATEMENT,
+    MermaidElements.NOTE_STATEMENT,
+    MermaidElements.LINKS_STATEMENT,
+    MermaidElements.LINK_STATEMENT,
+    MermaidElements.LOOP_STATEMENT,
+    MermaidElements.RECT_STATEMENT,
+    MermaidElements.OPT_STATEMENT,
+    MermaidElements.BREAK_STATEMENT,
+    MermaidElements.BOX_STATEMENT,
+    MermaidElements.ALT_STATEMENT,
+    MermaidElements.PAR_STATEMENT,
+    MermaidElements.PAR_OVER_STATEMENT,
+    MermaidElements.CRITICAL_STATEMENT,
+    //endregion
+    //region CLASS
     MermaidElements.CLASS_STATEMENT,
-    MermaidElements.STATE_DIAGRAM_STATEMENT,
+    MermaidElements.RELATION_STATEMENT,
+    MermaidElements.NAMESPACE_STATEMENT,
+    MermaidElements.MEMBER_STATEMENT,
+    MermaidElements.ANNOTATION_STATEMENT,
+    MermaidElements.CLASS_DIAGRAM_NOTE_STATEMENT,
+    MermaidElements.CLASS_DIAGRAM_CLICK_STATEMENT,
+    MermaidElements.ATTRIBUTE,
+    MermaidElements.ANNOTATION,
+    //endregion
+    //region STATE
+    MermaidElements.STATE_DECLARATION,
+    MermaidElements.COMPOSITE_STATE_DECLARATION,
+    MermaidElements.STATE_RELATION_STATEMENT,
+    MermaidElements.STATE_ID,
+    MermaidElements.STATE_NOTE,
+    MermaidElements.STATE_CLASS_DEF_STATEMENT,
+    MermaidElements.CSS_CLASS_STATEMENT,
     MermaidElements.DIVIDER_STATEMENT,
-    MermaidElements.SIMPLE_NOTE_CONTENT,
-    MermaidElements.ER_STATEMENT,
+    //endregion
+    //region ER
+    MermaidElements.ER_RELATION_STATEMENT,
+    MermaidElements.ENTITY_DECLARATION,
+    MermaidElements.ER_IDENTIFIER,
     MermaidElements.ER_ATTRIBUTE,
-    MermaidElements.GANTT_STATEMENT,
-    MermaidElements.GANTT_SECTION_INNER_STATEMENT,
-    MermaidElements.REQUIREMENT_STATEMENT,
-    MermaidElements.REQUIREMENT_BLOCK_STATEMENT,
-    MermaidElements.ELEMENT_BLOCK_STATEMENT,
-    MermaidElements.GIT_GRAPH_STATEMENT,
-    MermaidElements.C_4_STATEMENT,
-    MermaidElements.MINDMAP_STATEMENT,
-    MermaidElements.TIMELINE_STATEMENT,
-    MermaidElements.TIMELINE_SECTION_INNER_STATEMENT,
-    MermaidElements.QUADRANT_STATEMENT
+    //endregion
+    //region GANTT
+    MermaidElements.GANTT_DATE_FORMAT_STATEMENT,
+    MermaidElements.GANTT_EXCLUDES_STATEMENT,
+    MermaidElements.GANTT_INCLUDES_STATEMENT,
+    MermaidElements.GANTT_AXIS_FORMAT_STATEMENT,
+    MermaidElements.GANTT_TODAY_MARKER_STATEMENT,
+    MermaidElements.GANTT_TICK_INTERVAL_STATEMENT,
+    MermaidElements.GANTT_SECTION_STATEMENT,
+    MermaidElements.GANTT_DATA_STATEMENT,
+    MermaidElements.GANTT_CLICK_STATEMENT,
+    //endregion
+    //region REQUIREMENT
+    MermaidElements.REQUIREMENT_DEF,
+    MermaidElements.ELEMENT_DEF,
+    MermaidElements.RELATIONSHIP_DEF,
+    MermaidElements.REQUIREMENT_ID_ATTRIBUTE,
+    MermaidElements.REQUIREMENT_TEXT_ATTRIBUTE,
+    MermaidElements.REQUIREMENT_RISK_ATTRIBUTE,
+    MermaidElements.REQUIREMENT_VERIFY_METHOD_ATTRIBUTE,
+    MermaidElements.ELEMENT_TYPE_ATTRIBUTE,
+    MermaidElements.ELEMENT_DOC_REF_ATTRIBUTE,
+    //endregion
+    //region GIT
+    MermaidElements.COMMIT_STATEMENT,
+    MermaidElements.MERGE_STATEMENT,
+    MermaidElements.CHERRY_PICK_STATEMENT,
+    MermaidElements.BRANCH_STATEMENT,
+    MermaidElements.CHECKOUT_STATEMENT,
+    //endregion
+    //region C4
+    MermaidElements.C_4_COMPONENT_STATEMENT,
+    MermaidElements.BOUNDARY_STATEMENT,
+    //endregion
+    //region MINDMAP
+//    MermaidElements.MINDMAP_NODE_STATEMENT,
+//    MermaidElements.ICON_STATEMENT,
+//    MermaidElements.MINDMAP_CLASS_STATEMENT,
+    //endregion
+    //region TIMELINE
+    MermaidElements.TIMELINE_DATA_STATEMENT,
+    MermaidElements.TIMELINE_SECTION_STATEMENT,
+    //endregion
+    //region QUADRANT
+    MermaidElements.POINT_STATEMENT,
+    MermaidElements.AXIS_DETAILS_STATEMENT,
+    MermaidElements.QUADRANT_DETAILS_STATEMENT,
+    //endregion
+  )
+  //endregion
+
+  val MINDMAP_STATEMENTS = TokenSet.create(
+    MermaidElements.MINDMAP_NODE_STATEMENT,
+    MermaidElements.ICON_STATEMENT,
+    MermaidElements.MINDMAP_CLASS_STATEMENT,
   )
 
+  //region DIAGRAM_BODIES_AND_BLOCKS
   val DIAGRAM_BODIES_AND_BLOCKS = TokenSet.create(
     MermaidElements.PIE_BODY,
     MermaidElements.JOURNEY_BODY,
@@ -51,7 +148,6 @@ object MermaidTokenTypeSets {
     MermaidElements.NAMESPACE_BLOCK,
     MermaidElements.STATE_BODY,
     MermaidElements.STATE_BLOCK,
-    MermaidElements.COMPLEX_NOTE_CONTENT,
     MermaidElements.ER_BODY,
     MermaidElements.ER_ENTITY_BLOCK,
     MermaidElements.GANTT_BODY,
@@ -66,7 +162,40 @@ object MermaidTokenTypeSets {
     MermaidElements.TIMELINE_SECTION_BLOCK,
     MermaidElements.QUADRANT_BODY
   )
+  //endregion
 
+  //region STRUCTURED_STATEMENTS
+  val STRUCTURED_STATEMENTS = TokenSet.create(
+    MermaidElements.JOURNEY_SECTION_STATEMENT,
+    MermaidElements.SUBGRAPH_STATEMENT,
+    //region SEQUENCE
+    MermaidElements.LOOP_STATEMENT,
+    MermaidElements.RECT_STATEMENT,
+    MermaidElements.OPT_STATEMENT,
+    MermaidElements.BREAK_STATEMENT,
+    MermaidElements.BOX_STATEMENT,
+    MermaidElements.ALT_STATEMENT,
+    MermaidElements.PAR_STATEMENT,
+    MermaidElements.PAR_OVER_STATEMENT,
+    MermaidElements.CRITICAL_STATEMENT,
+    //endregion
+    //region CLASS
+    MermaidElements.CLASS_STATEMENT,
+    MermaidElements.NAMESPACE_STATEMENT,
+    //endregion
+    MermaidElements.COMPOSITE_STATE_DECLARATION,
+    MermaidElements.ENTITY_DECLARATION,
+    MermaidElements.GANTT_SECTION_STATEMENT,
+    //region REQUIREMENT
+    MermaidElements.REQUIREMENT_DEF,
+    MermaidElements.ELEMENT_DEF,
+    //endregion
+    MermaidElements.BOUNDARY_STATEMENT,
+    MermaidElements.TIMELINE_SECTION_STATEMENT,
+  )
+  //endregion
+
+  //region EXPAND_INDENT_AFTER
   val EXPAND_INDENT_AFTER = TokenSet.create(
     MermaidTokens.OPEN_CURLY,
     MermaidTokens.Pie.PIE,
@@ -101,4 +230,5 @@ object MermaidTokenTypeSets {
     MermaidTokens.Timeline.TIMELINE,
     MermaidTokens.Quadrant.QUADRANT_CHART
   )
+  //endregion
 }

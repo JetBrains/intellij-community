@@ -4,6 +4,10 @@ import ai.grazie.utils.applyIf
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.MINDMAP_STATEMENTS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STATEMENTS
+import com.intellij.mermaid.lang.lexer.MermaidTokenTypeSets.STRUCTURED_STATEMENTS
 import com.intellij.mermaid.lang.lexer.MermaidTokens
 import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
@@ -129,6 +133,19 @@ internal object MermaidSpacingBuilder {
     )
   //endregion
 
+  //region OPEN CURLY STRUCTURES
+  private val OPEN_CURLY_STRUCTURES =
+    TokenSet.create(
+      MermaidElements.CLASS_BLOCK,
+      MermaidElements.NAMESPACE_BLOCK,
+      MermaidElements.STATE_BLOCK,
+      MermaidElements.ER_ENTITY_BLOCK,
+      MermaidElements.REQUIREMENT_BLOCK,
+      MermaidElements.ELEMENT_BLOCK,
+      MermaidElements.BOUNDARY_BLOCK,
+    )
+  //endregion
+
   fun get(settings: CodeStyleSettings): SpacingBuilder {
     val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
     val indentOptions = settings.getLanguageIndentOptions(MermaidLanguage)
@@ -139,6 +156,7 @@ internal object MermaidSpacingBuilder {
         addForceOneSpaceBetweenWordsRule()
       }
       .addIndentRules(indentOptions)
+      .addBlankLinesRules(mermaid)
   }
 
   private fun SpacingBuilder.addCustomizableRules(mermaid: MermaidCustomCodeStyleSettings): SpacingBuilder {
@@ -169,6 +187,9 @@ internal object MermaidSpacingBuilder {
 
       .after(MermaidTokens.OPEN_ROUND).spaceIf(mermaid.WITHIN_ROUND)
       .before(MermaidTokens.CLOSE_ROUND).spaceIf(mermaid.WITHIN_ROUND)
+
+      .afterInside(MermaidTokens.OPEN_CURLY, OPEN_CURLY_STRUCTURES).spaceIfAndBlankLinesRange(mermaid.WITHIN_CURLY, mermaid.KEEP_LINES_WITHIN_STRUCTURES, mermaid.MIN_LINES_WITHIN_STRUCTURES)
+      .beforeInside(MermaidTokens.CLOSE_CURLY, OPEN_CURLY_STRUCTURES).spaceIfAndBlankLinesRange(mermaid.WITHIN_CURLY, mermaid.KEEP_LINES_WITHIN_STRUCTURES, mermaid.MIN_LINES_WITHIN_STRUCTURES)
 
       .after(MermaidTokens.OPEN_CURLY).spaceIf(mermaid.WITHIN_CURLY)
       .before(MermaidTokens.CLOSE_CURLY).spaceIf(mermaid.WITHIN_CURLY)
@@ -252,14 +273,12 @@ internal object MermaidSpacingBuilder {
       .around(SEQUENCE_KEYWORDS_SPACE_AROUND).spaces(1)
       // Class diagram
       .between(MermaidElements.GENERIC, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
-      .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.ATTRIBUTE_WORD)
-      .spaces(1)
+      .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
       .between(MermaidTokens.CLOSE_ROUND, MermaidTokens.ATTRIBUTE_WORD).spaces(1)
+      .between(MermaidElements.ANNOTATION, MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
 
-      .between(MermaidTokens.ClassDiagram.NOTE_FOR, MermaidElements.CLASS_DIAGRAM_IDENTIFIER)
-      .spaces(1)
-      .between(MermaidElements.CLASS_DIAGRAM_IDENTIFIER, MermaidElements.CLASS_DIAGRAM_NOTE_TEXT)
-      .spaces(1)
+      .between(MermaidTokens.ClassDiagram.NOTE_FOR, MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
+      .between(MermaidElements.CLASS_DIAGRAM_IDENTIFIER, MermaidElements.CLASS_DIAGRAM_NOTE_TEXT).spaces(1)
       .after(MermaidElements.CLASS_DIAGRAM_IDENTIFIER).spaces(1)
       // State diagram
       .after(MermaidTokens.StateDiagram.STATE).spaces(1)
@@ -269,8 +288,7 @@ internal object MermaidSpacingBuilder {
       // Entity Relationship
       .around(MermaidElements.ATTR_KEYS).spaces(1)
       .before(MermaidElements.ATTR_NAME).spaces(1)
-      .between(MermaidElements.ATTR_NAME, MermaidTokens.EntityRelationship.ATTR_KEY)
-      .spaces(1)
+      .between(MermaidElements.ATTR_NAME, MermaidTokens.EntityRelationship.ATTR_KEY).spaces(1)
       .between(MermaidElements.ATTR_NAME, MermaidElements.STRING).spaces(1)
       .after(MermaidElements.ER_IDENTIFIER).spaces(1)
       // User Journey
@@ -292,33 +310,53 @@ internal object MermaidSpacingBuilder {
       .after(MermaidTokens.GitGraph.COMMIT).spaces(1)
       .around(GIT_GRAPH_ATTRIBUTES).spaces(1)
       // Mindmap
-      .between(MermaidTokens.Mindmap.NODE_DESCR, MermaidTokens.Mindmap.NODE_DESCR)
-      .spaces(1)
-      .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID)
-      .spaces(1)
+      .between(MermaidTokens.Mindmap.NODE_DESCR, MermaidTokens.Mindmap.NODE_DESCR).spaces(1)
+      .betweenInside(MermaidTokens.ID, MermaidTokens.ID, MermaidElements.MINDMAP_NODE_ID).spaces(1)
       // Quadrant
       .after(MermaidTokens.Quadrant.X_AXIS).spaces(1)
       .after(MermaidTokens.Quadrant.Y_AXIS).spaces(1)
-      .between(MermaidTokens.Quadrant.QUADRANT_TEXT, MermaidTokens.Quadrant.QUADRANT_TEXT)
-      .spaces(1)
+      .between(MermaidTokens.Quadrant.QUADRANT_TEXT, MermaidTokens.Quadrant.QUADRANT_TEXT).spaces(1)
       // Gantt
-      .between(MermaidTokens.Gantt.DATE_FORMAT, MermaidTokens.Gantt.GANTT_VALUE)
-      .spaces(1)
-      .between(MermaidTokens.Gantt.TODAY_MARKER, MermaidTokens.Gantt.GANTT_VALUE)
-      .spaces(1)
-      .between(MermaidTokens.Gantt.TICK_INTERVAL, MermaidTokens.Gantt.GANTT_VALUE)
-      .spaces(1)
-      .between(MermaidTokens.Gantt.INCLUDES, MermaidTokens.Gantt.GANTT_VALUE)
-      .spaces(1)
-      .between(MermaidTokens.Gantt.EXCLUDES, MermaidTokens.Gantt.GANTT_VALUE)
-      .spaces(1)
-      .between(MermaidTokens.Gantt.AXIS_FORMAT, MermaidTokens.Gantt.GANTT_VALUE)
-      .spaces(1)
+      .between(MermaidTokens.Gantt.DATE_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.TODAY_MARKER, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.TICK_INTERVAL, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.INCLUDES, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.EXCLUDES, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      .between(MermaidTokens.Gantt.AXIS_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
   }
 
   private fun SpacingBuilder.addIndentRules(indentOptions: CommonCodeStyleSettings.IndentOptions): SpacingBuilder {
     return between(MermaidElements.SEQUENCE_BODY, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.SUBGRAPH_BLOCK, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
       .between(MermaidElements.COMPLEX_NOTE_CONTENT, MermaidTokens.END).spaces(indentOptions.INDENT_SIZE)
+  }
+
+  private fun SpacingBuilder.addBlankLinesRules(mermaid: MermaidCustomCodeStyleSettings): SpacingBuilder {
+    return between(STRUCTURED_STATEMENTS, STRUCTURED_STATEMENTS)
+      .blankLinesRange(mermaid.KEEP_LINES_BETWEEN_STRUCTURED_STATEMENTS, mermaid.MIN_LINES_BETWEEN_STRUCTURED_STATEMENTS)
+
+      .around(STRUCTURED_STATEMENTS)
+      .blankLinesRange(mermaid.KEEP_LINES_AROUND_STRUCTURED_STATEMENTS, mermaid.MIN_LINES_AROUND_STRUCTURED_STATEMENTS)
+
+      .between(MINDMAP_STATEMENTS, MINDMAP_STATEMENTS)
+      .blankLinesRange(mermaid.KEEP_LINES_BETWEEN_OTHER_STETEMENTS, mermaid.MIN_LINES_BETWEEN_OTHER_STETEMENTS)
+
+      .between(STATEMENTS, STATEMENTS)
+      .blankLinesRange(mermaid.KEEP_LINES_BETWEEN_OTHER_STETEMENTS, mermaid.MIN_LINES_BETWEEN_OTHER_STETEMENTS)
+
+      .around(STATEMENTS)
+      .blankLinesRange(mermaid.KEEP_LINES_BETWEEN_OTHER_STETEMENTS, mermaid.MIN_LINES_BETWEEN_OTHER_STETEMENTS)
+
+      .before(DIAGRAM_BODIES_AND_BLOCKS)
+      .blankLinesRange(mermaid.KEEP_LINES_WITHIN_STRUCTURES, mermaid.MIN_LINES_WITHIN_STRUCTURES)
+  }
+
+  private fun SpacingBuilder.RuleBuilder.blankLinesRange(from: Int, to: Int): SpacingBuilder {
+    return spacing(0, 0, to + 1, false, from)
+  }
+
+  private fun SpacingBuilder.RuleBuilder.spaceIfAndBlankLinesRange(option: Boolean, from: Int, to: Int): SpacingBuilder {
+    val spaces = if (option) 1 else 0
+    return spacing(spaces, spaces, to + 1, false, from)
   }
 }

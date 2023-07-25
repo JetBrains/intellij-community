@@ -496,9 +496,7 @@ class MermaidCompletionContributor : CompletionContributor() {
         return psiElement.containingFile.children()
           .find { it.elementType in MermaidTokenTypeSets.DIAGRAM_BODIES_AND_BLOCKS }
           .let {
-            val lastLine = it?.lastChild
-            val lastElement = lastLine?.lastChild
-            documentLinePattern.accepts(lastElement)
+            documentLinePattern.accepts(it?.lastChild)
           }
       }
     })

@@ -75,5 +75,29 @@ class MermaidCustomCodeStyleSettings(settings: CodeStyleSettings) :
   var BEETWEEN_LINE_TYPE_AND_RELATION_TYPE: Boolean = false
   //endregion
 
+  //region BLANK LINES
+  @JvmField
+  var MIN_LINES_AROUND_STRUCTURED_STATEMENTS: Int = 0
 
+  @JvmField
+  var KEEP_LINES_AROUND_STRUCTURED_STATEMENTS: Int = 1
+
+  @JvmField
+  var MIN_LINES_BETWEEN_STRUCTURED_STATEMENTS: Int = 0
+
+  @JvmField
+  var KEEP_LINES_BETWEEN_STRUCTURED_STATEMENTS: Int = 1
+
+  @JvmField
+  var MIN_LINES_BETWEEN_OTHER_STETEMENTS: Int = 0
+
+  @JvmField
+  var KEEP_LINES_BETWEEN_OTHER_STETEMENTS: Int = 0
+
+  @JvmField
+  var MIN_LINES_WITHIN_STRUCTURES: Int = 0
+
+  @JvmField
+  var KEEP_LINES_WITHIN_STRUCTURES: Int = 0
+  //endregion
 }

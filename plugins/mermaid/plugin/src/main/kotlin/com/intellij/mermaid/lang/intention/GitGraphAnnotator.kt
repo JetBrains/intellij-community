@@ -69,8 +69,6 @@ class GitGraphAnnotator : Annotator {
 
     val matchingIds = parent
       .siblings(forward = false, withSelf = false)
-      .filterIsInstance<MermaidGitGraphStatement>()
-      .map { it.firstChild }
       .filterIsInstance<MermaidBranchStatement>()
       .map { it.identifier() }
       .filter { identifier.textMatches(it) }
@@ -93,8 +91,6 @@ class GitGraphAnnotator : Annotator {
 
     val matchingIds = parent
       .siblings(forward = false, withSelf = false)
-      .filterIsInstance<MermaidGitGraphStatement>()
-      .map { it.firstChild }
       .filterIsInstance<MermaidCommitStatement>()
       .mapNotNull { it.commitIdAttribute?.commitIdValue }
       .filter { identifier.textMatches(it) }
@@ -115,10 +111,7 @@ class GitGraphAnnotator : Annotator {
 
     val parent = element.parentOfType<MermaidGitGraphBody>() ?: return
 
-    val siblings = parent
-      .children()
-      .filterIsInstance<MermaidGitGraphStatement>()
-      .map { it.firstChild }
+    val siblings = parent.children()
 
     val mergeStatementIdentifiers = siblings
       .filterIsInstance<MermaidMergeStatement>()
@@ -145,10 +138,7 @@ class GitGraphAnnotator : Annotator {
 
     val parent = element.parentOfType<MermaidGitGraphBody>() ?: return
 
-    val siblings = parent
-      .children()
-      .filterIsInstance<MermaidGitGraphStatement>()
-      .map { it.firstChild }
+    val siblings = parent.children()
 
     val matchingMergeStatementIdentifiers = siblings
       .filterIsInstance<MermaidMergeStatement>()
@@ -189,10 +179,7 @@ class GitGraphAnnotator : Annotator {
 
     val parent = element.parentOfType<MermaidGitGraphBody>() ?: return
 
-    val siblings = parent
-      .children()
-      .filterIsInstance<MermaidGitGraphStatement>()
-      .map { it.firstChild }
+    val siblings = parent.children()
 
     val matchingIds = siblings
       .filterIsInstance<MermaidBranchStatement>()
