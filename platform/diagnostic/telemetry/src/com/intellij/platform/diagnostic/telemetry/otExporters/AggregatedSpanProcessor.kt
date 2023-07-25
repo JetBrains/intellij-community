@@ -13,7 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration.Companion.seconds
 
 @Internal
-class AggregatedSpansProcessor(private val mainScope: CoroutineScope) : SpanProcessor {
+class AggregatedSpanProcessor(private val mainScope: CoroutineScope) : SpanProcessor {
   private var batchSpanProcessor: BatchSpanProcessor? = null
 
   fun addSpansExporters(exporters: List<AsyncSpanExporter>) {

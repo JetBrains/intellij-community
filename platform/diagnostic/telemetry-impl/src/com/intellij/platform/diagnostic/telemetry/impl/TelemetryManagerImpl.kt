@@ -8,6 +8,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.platform.diagnostic.telemetry.*
+import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricExporter
+import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpanProcessor
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
@@ -33,13 +35,19 @@ internal class TelemetryManagerImpl : TelemetryManager {
 
   override var verboseMode: Boolean = false
 
-  private val configurator = OpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
-                                                       otelSdkBuilder = OpenTelemetrySdk.builder(),
-                                                       appInfo = ApplicationInfoImpl.getShadowInstance(),
-                                                       enableMetricsByDefault = true)
+  private val aggregatedMetricExporter: AggregatedMetricExporter
+  private val aggregatedSpanProcessor: AggregatedSpanProcessor
 
   init {
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
+    val configurator = OpenTelemetryIntelliJConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
+                                                         otelSdkBuilder = OpenTelemetrySdk.builder(),
+                                                         appInfo = ApplicationInfoImpl.getShadowInstance(),
+                                                         enableMetricsByDefault = true)
+
+    aggregatedMetricExporter = configurator.aggregatedMetricExporter
+    aggregatedSpanProcessor = configurator.aggregatedSpanProcessor
+
     sdk = configurator
       .getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
@@ -47,11 +55,11 @@ internal class TelemetryManagerImpl : TelemetryManager {
   }
 
   override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
-    configurator.aggregatedSpansProcessor.addSpansExporters(exporters)
+    aggregatedSpanProcessor.addSpansExporters(exporters)
   }
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
-    configurator.aggregatedMetricsExporter.addMetricsExporters(exporters)
+    aggregatedMetricExporter.addMetricsExporters(exporters)
   }
 
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())

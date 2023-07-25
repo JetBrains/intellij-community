@@ -13,10 +13,10 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CopyOnWriteArrayList
 
 private val LOG: Logger
-  get() = logger<AggregatedMetricsExporter>()
+  get() = logger<AggregatedMetricExporter>()
 
 @Internal
-class AggregatedMetricsExporter : MetricExporter {
+class AggregatedMetricExporter : MetricExporter {
   private val metricsExporters = CopyOnWriteArrayList<MetricsExporterEntry>()
 
   fun addMetricsExporters(metrics: List<MetricsExporterEntry>) {

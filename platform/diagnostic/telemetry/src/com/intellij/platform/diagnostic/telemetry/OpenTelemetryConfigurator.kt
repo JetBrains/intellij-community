@@ -3,8 +3,8 @@ package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricsExporter
-import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpansProcessor
+import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedMetricExporter
+import com.intellij.platform.diagnostic.telemetry.otExporters.AggregatedSpanProcessor
 import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
 import com.intellij.util.ConcurrencyUtil
 import io.opentelemetry.api.common.Attributes
@@ -25,13 +25,13 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 @ApiStatus.Internal
-open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-                                            @JvmField protected val otelSdkBuilder: OpenTelemetrySdkBuilder,
-                                            @JvmField protected val serviceName: String = "",
-                                            @JvmField protected val serviceVersion: String = "",
-                                            @JvmField protected val serviceNamespace: String = "",
-                                            customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
-                                            enableMetricsByDefault: Boolean) {
+open class OpenTelemetryConfigurator(@JvmField protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
+                                     @JvmField protected val sdkBuilder: OpenTelemetrySdkBuilder,
+                                     @JvmField protected val serviceName: String = "",
+                                     @JvmField protected val serviceVersion: String = "",
+                                     @JvmField protected val serviceNamespace: String = "",
+                                     customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
+                                     enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   private val shutdownCompletionTimeout: Long = 10
   private val resource: Resource = Resource.create(
@@ -49,8 +49,8 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
       .build()
   )
 
-  val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
-  val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
+  val aggregatedMetricExporter: AggregatedMetricExporter = AggregatedMetricExporter()
+  val aggregatedSpanProcessor: AggregatedSpanProcessor = AggregatedSpanProcessor(mainScope)
 
   private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
@@ -61,11 +61,11 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
 
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(BatchSpanProcessor(coroutineScope = mainScope, spanExporters = spanExporters))
-      .addSpanProcessor(aggregatedSpansProcessor)
+      .addSpanProcessor(aggregatedSpanProcessor)
       .setResource(resource)
       .build()
 
-    otelSdkBuilder.setTracerProvider(tracerProvider)
+    sdkBuilder.setTracerProvider(tracerProvider)
     ShutDownTracker.getInstance().registerShutdownTask {
       tracerProvider.shutdown().join(shutdownCompletionTimeout, TimeUnit.SECONDS)
     }
@@ -82,7 +82,7 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
       }
     }
     val meterProvider = registeredMetricsReaders.setResource(resource).build()
-    otelSdkBuilder.setMeterProvider(meterProvider)
+    sdkBuilder.setMeterProvider(meterProvider)
     ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
   }
 
@@ -99,7 +99,7 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
       duration = Duration.ofMinutes(1))
     )
 
-    result.add(MetricsExporterEntry(listOf(aggregatedMetricsExporter), Duration.ofMinutes(1)))
+    result.add(MetricsExporterEntry(listOf(aggregatedMetricExporter), Duration.ofMinutes(1)))
     return result
   }
 
@@ -110,6 +110,6 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
     if (isMetricsEnabled()) {
       registerMetricsExporter(createMetricsExporters())
     }
-    return otelSdkBuilder
+    return sdkBuilder
   }
 }

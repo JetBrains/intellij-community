@@ -4,24 +4,24 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryDefaultConfigurator
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import java.nio.file.Path
 
-internal class OpenTelemetryConfigurator(
+internal class OpenTelemetryIntelliJConfigurator(
   mainScope: CoroutineScope,
   otelSdkBuilder: OpenTelemetrySdkBuilder,
   appInfo: ApplicationInfo,
   enableMetricsByDefault: Boolean
-) : OpenTelemetryDefaultConfigurator(mainScope = mainScope,
-                                     otelSdkBuilder = otelSdkBuilder,
-                                     serviceName = ApplicationNamesInfo.getInstance().fullProductName,
-                                     serviceVersion = appInfo.build.asStringWithoutProductCode(),
-                                     serviceNamespace = appInfo.build.productCode,
-                                     enableMetricsByDefault = enableMetricsByDefault,
-                                     customResourceBuilder = {
+) : OpenTelemetryConfigurator(mainScope = mainScope,
+                              sdkBuilder = otelSdkBuilder,
+                              serviceName = ApplicationNamesInfo.getInstance().fullProductName,
+                              serviceVersion = appInfo.build.asStringWithoutProductCode(),
+                              serviceNamespace = appInfo.build.productCode,
+                              enableMetricsByDefault = enableMetricsByDefault,
+                              customResourceBuilder = {
                                        // don't write username to file - it maybe private information
                                        if (getOtlpEndPoint() != null) {
                                          it.put(ResourceAttributes.PROCESS_OWNER, System.getProperty("user.name") ?: "unknown")
