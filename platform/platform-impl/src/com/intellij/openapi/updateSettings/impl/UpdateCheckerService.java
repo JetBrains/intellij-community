@@ -108,7 +108,7 @@ final class UpdateCheckerService {
     if (appInfo.isMajorEAP() && current != ChannelStatus.EAP && customization.forceEapUpdateChannelForEapBuilds()) {
       settings.setSelectedChannelStatus(ChannelStatus.EAP);
       LOG.info("channel forced to 'eap'");
-      if (!ConfigImportHelper.isFirstSession() && !ApplicationManagerEx.isInIntegrationTest()) {
+      if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
         UpdateChecker.getNotificationGroup()
