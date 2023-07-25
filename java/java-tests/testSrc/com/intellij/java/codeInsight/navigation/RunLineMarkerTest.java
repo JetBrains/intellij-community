@@ -27,8 +27,10 @@ import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestActionEvent;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testIntegration.TestRunLineMarkerProvider;
@@ -326,6 +328,53 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     action.update(event);
     assertTrue(event.getPresentation().getText().startsWith(message));
     ContainerUtil.addIfNotNull(myTempSettings, RunManager.getInstance(getProject()).getSelectedConfiguration());
+  }
+
+  public void testUnnamedAllowsNonStatic() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      void main<caret>() {
+      }
+      """);
+      List<GutterMark> marks = myFixture.findGuttersAtCaret();
+      assertEquals(1, marks.size());
+    });
+  }
+
+  public void testStaticWithParameterHasHigherPriority() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      static void main<caret>() {}
+      static void main(String[] args) {}
+      """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(1, marks.size());
+      assertEmpty(myFixture.findGuttersAtCaret());
+    });
+  }
+
+  public void testStaticWithNoParametersHasHigherPriorityThanInstance() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      static void main<caret>() {}
+      void main(String[] args) {}
+      """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(1, marks.size());
+      assertEmpty(myFixture.findGuttersAtCaret());
+    });
+  }
+
+  public void testInstanceWithParameterHasHigherPriority() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_21_PREVIEW, () -> {
+      myFixture.configureByText("MainTest.java", """
+      void main<caret>() {}
+      void main(String[] args) {}
+      """);
+      List<GutterMark> marks = myFixture.findAllGutters();
+      assertEquals(1, marks.size());
+      assertEmpty(myFixture.findGuttersAtCaret());
+    });
   }
 
   public void testActionNameFromPreferredProducer() {
