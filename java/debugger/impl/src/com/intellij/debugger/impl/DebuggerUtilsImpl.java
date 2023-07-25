@@ -464,11 +464,8 @@ public class DebuggerUtilsImpl extends DebuggerUtilsEx {
       try {
         action.accept(o);
       }
-      catch (VMDisconnectedException | ProcessCanceledException e) {
-        throw e;
-      }
       catch (Throwable e) {
-        LOG.error(e);
+        logError(e);
       }
     }
   }
