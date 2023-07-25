@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers.trackers
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
+import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertNotEquals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFile
@@ -107,7 +108,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
         doBlockAddTest(
             declaration = function,
             assertionAfterTransformation = { before, after ->
-                assertSame(before, after)
+                assertEquals(before, after)
             }
         )
     }
@@ -119,7 +120,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
             actionUnderWriteAction = { property.add(buildPsi { createExpression("4") }) },
             assertion = { before, after ->
                 assertNotNull(property.initializer)
-                assertNotSame(before, after)
+                assertNotEquals(before, after)
             }
         )
     }
@@ -131,7 +132,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
             actionUnderWriteAction = { property.initializer!!.delete() },
             assertion = { before, after ->
                 assertNull(property.initializer)
-                assertNotSame(before, after)
+                assertNotEquals(before, after)
             }
         )
     }
@@ -143,7 +144,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
             actionUnderWriteAction = { property.add(buildPsi { createPropertyDelegate(buildPsi { createExpression("l") }) }) },
             assertion = { before, after ->
                 assertNotNull(property.delegate)
-                assertNotSame(before, after)
+                assertNotEquals(before, after)
             }
         )
     }
@@ -155,7 +156,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
             actionUnderWriteAction = { property.delegate!!.delete() },
             assertion = { before, after ->
                 assertNull(property.delegate)
-                assertNotSame(before, after)
+                assertNotEquals(before, after)
             }
         )
     }
@@ -184,7 +185,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
                 docManager.commitDocument(document)
             },
             assertion = { before, after ->
-                assertNotSame(before, after)
+                assertNotEquals(before, after)
             }
         )
     }
@@ -193,7 +194,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
 
     private fun doBodyRemoveTest(
         declaration: KtDeclarationWithBody,
-        assertionAfterTransformation: (before: Long, after: Long) -> Unit = { before, after -> assertNotSame(before, after) },
+        assertionAfterTransformation: (before: Long, after: Long) -> Unit = { before, after -> assertNotEquals(before, after) },
     ) {
         doTest(
             actionUnderWriteAction = { declaration.bodyExpression!!.delete() },
@@ -203,7 +204,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
 
     private fun doBlockAddTest(
         declaration: KtDeclarationWithBody,
-        assertionAfterTransformation: (before: Long, after: Long) -> Unit = { before, after -> assertNotSame(before, after) },
+        assertionAfterTransformation: (before: Long, after: Long) -> Unit = { before, after -> assertNotEquals(before, after) },
     ) {
         doTest(
             actionUnderWriteAction = { declaration.add(buildPsi { createBlock("") }) },
@@ -216,7 +217,7 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
 
     private fun doBodyExpressionAddTest(
         declaration: KtDeclarationWithBody,
-        assertionAfterTransformation: (before: Long, after: Long) -> Unit = { before, after -> assertNotSame(before, after) },
+        assertionAfterTransformation: (before: Long, after: Long) -> Unit = { before, after -> assertNotEquals(before, after) },
     ) {
         doTest(
             actionUnderWriteAction = { declaration.add(buildPsi { createExpression("4") }) },
