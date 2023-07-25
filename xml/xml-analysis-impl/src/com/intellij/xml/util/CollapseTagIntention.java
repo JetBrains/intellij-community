@@ -44,7 +44,10 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    XmlTag tag = getTag(editor, file);
+    return isAvailable(getTag(editor, file));
+  }
+
+  public static boolean isAvailable(XmlTag tag) {
     return tag != null && !tag.isEmpty() &&
            tag.getValue().getChildren().length == tag.getValue().getTextElements().length && tag.getValue().getTrimmedText().isEmpty() &&
            CheckTagEmptyBodyInspection.isCollapsibleTag(tag);
