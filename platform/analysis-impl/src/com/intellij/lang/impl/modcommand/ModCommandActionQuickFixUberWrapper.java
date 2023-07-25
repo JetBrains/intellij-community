@@ -25,14 +25,11 @@ import java.util.List;
 public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntentionActionOnPsiElement 
   implements Iconable, PriorityAction, IntentionActionWithFixAllOption {
   private final @NotNull ModCommandAction myAction;
+  private @Nullable ModCommandAction.Presentation myPresentation;
 
   public ModCommandActionQuickFixUberWrapper(@NotNull ModCommandAction action, @NotNull PsiElement element) {
     super(element);
     myAction = action;
-  }
-
-  @NotNull ModCommandAction action() {
-    return myAction;
   }
 
   @Override
@@ -51,6 +48,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
 
   @Nullable
   private ModCommandAction.Presentation getPresentation() {
+    if (myPresentation != null) return myPresentation;
     PsiElement element = getStartElement();
     if (element == null) return null;
     ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(null, element.getContainingFile())
@@ -65,7 +63,8 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
-    return myAction.getPresentation(context) != null;
+    myPresentation = myAction.getPresentation(context);
+    return myPresentation != null;
   }
 
   @Override
