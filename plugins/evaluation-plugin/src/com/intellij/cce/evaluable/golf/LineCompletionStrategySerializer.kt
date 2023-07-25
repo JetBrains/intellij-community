@@ -24,7 +24,7 @@ class LineCompletionStrategySerializer : StrategySerializer<CompletionGolfStrate
     val invokeOnEachChar: Boolean = if (map.containsKey("invokeOnEachChar")) {
       map.get("invokeOnEachChar") as Boolean
     } else {
-      true
+      false
     }
     val checkToken: Boolean = if (map.containsKey("checkToken")) {
       map.get("checkToken") as Boolean
