@@ -47,7 +47,7 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
   }
   private val progressPanel = ChangesViewCommitProgressPanel(this, commitMessage.editorField)
 
-  private var isHideToolWindowOnDeactivate = false
+  private var isHideToolWindowOnCommit = false
 
   var isToolbarHorizontal: Boolean by observable(false) { _, oldValue, newValue ->
     if (oldValue != newValue) {
@@ -134,8 +134,11 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
     return true
   }
 
-  override fun deactivate(isRestoreState: Boolean) {
-    if (isRestoreState) restoreToolWindowState()
+  override fun deactivate(isOnCommit: Boolean) {
+    if (isOnCommit && isHideToolWindowOnCommit) {
+      getVcsToolWindow()?.hide(null)
+    }
+
     clearToolWindowState()
     changesView.isShowCheckboxes = false
     isVisible = false
@@ -146,18 +149,12 @@ class ChangesViewCommitPanel(project: Project, private val changesViewHost: Chan
 
   private fun saveToolWindowState() {
     if (!isActive) {
-      isHideToolWindowOnDeactivate = getVcsToolWindow()?.isVisible != true
-    }
-  }
-
-  private fun restoreToolWindowState() {
-    if (isHideToolWindowOnDeactivate) {
-      getVcsToolWindow()?.hide(null)
+      isHideToolWindowOnCommit = getVcsToolWindow()?.isVisible != true
     }
   }
 
   private fun clearToolWindowState() {
-    isHideToolWindowOnDeactivate = false
+    isHideToolWindowOnCommit = false
   }
 
   private fun getVcsToolWindow(): ToolWindow? = getToolWindowFor(project, LOCAL_CHANGES)

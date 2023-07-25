@@ -6,7 +6,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 
 interface ChangesViewCommitWorkflowUi : NonModalCommitWorkflowUi {
   val isActive: Boolean
-  fun deactivate(isRestoreState: Boolean)
+  fun deactivate(isOnCommit: Boolean)
 
   fun endExecution()
 
