@@ -61,20 +61,22 @@ data class NamedFixtureLink(val fixture: PyTestFixture, val importElement: PyImp
 private fun PyTestFixture.getContainingFile(): PsiFile? = function?.containingFile
 
 /**
- * Check if fixture is in the "conftest.py" file in the given directory
+ * Check if a fixture is in the "conftest.py" file in the given directory
  */
 private fun PyTestFixture.isInConftestInDir(directory: PsiDirectory): Boolean {
   getContainingFile()?.let { return it.containingDirectory == directory && it.name == CONFTEST_PY } ?: return false
 }
 
 /**
- * Searching the right fixture in
+ * Searching for the right fixture in
  * 1. [func] containing class and parent classes
  * 2. [func] containing file
- * 3. import statements
+ * 3. Import statements in fixture file
  * 4. "conftest.py" files in parent directories
+ * 5. Import statements in "conftest.py" file
+ * 6. Reserved fixtures in "_pytest" dir
  *
- * [fixtureCandidates] All pytest fixtures in project that could be used by [func].forWhat
+ * [fixtureCandidates] All pytest fixtures in a project that could be used by [func].forWhat
  * [func] PyFunction using [pyFixtureElement]
  * [pyFixtureElement] Fixture provided as PyNamedParameter or PyStringLiteralExpression
  * [projectPath] Project directory path
@@ -116,31 +118,19 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
 
   // search in import
   if (currentFile is PyFile) {
-    val importedFixture = currentFile.findExportedName(elementName) as? PyImportElement
-    val resolveImportElements = importedFixture?.multiResolve()?.map { it.element }
-    if (importedFixture != null) {
-      // if fixture is imported as `from module import some_fixture as sf`
-      resolveImportElements?.filterIsInstance<PyFunction>()?.firstOrNull()?.let { fixture ->
-        return NamedFixtureLink(PyTestFixture(func, fixture, fixture.name ?: ""), importedFixture)
-      }
-
-      resolveImportElements?.let { list ->
-        fixtureCandidates.find { fixture -> list.contains(fixture.function) }?.let {
-          return NamedFixtureLink(it, importedFixture)
-        }
-      }
-    }
+    getFixtureFromImports(currentFile, elementName, func, fixtureCandidates)?.let { return it }
   }
 
   // search in "conftest.py" in parents directories
   if (!fixtureCandidates.isEmpty()) {
     var currentDirectory = currentFile.containingDirectory
     while (currentDirectory != null && currentDirectory.virtualFile.path != projectPath) {
-      fixtureCandidates.find { it.isInConftestInDir(currentDirectory) }?.let { return NamedFixtureLink(it, null) }
+      searchInConftest(fixtureCandidates, currentDirectory, elementName, func)?.let { return it }
+
       currentDirectory.parentDirectory?.let { currentDirectory = it }
     }
     currentDirectory?.let {
-      fixtureCandidates.find { it.isInConftestInDir(currentDirectory) }?.let { return NamedFixtureLink(it, null) }
+      searchInConftest(fixtureCandidates, currentDirectory, elementName, func)?.let { return it }
     }
   }
 
@@ -154,6 +144,39 @@ private fun findRightFixture(fixtureCandidates: List<PyTestFixture>,
   // search reserved fixture class in "_pytest" dir
   if (elementName in reservedFixtureClassSet) {
       return NamedFixtureLink(PyTestFixture(null, null, elementName), null)
+  }
+  return null
+}
+
+/**
+ * Search fixture or imported fixture in 'constest.py' file
+ */
+private fun searchInConftest(fixtureCandidates: List<PyTestFixture>, currentDirectory: PsiDirectory, elementName: String, func: PyFunction?): NamedFixtureLink? {
+  fixtureCandidates.find { it.isInConftestInDir(currentDirectory) }?.let { return NamedFixtureLink(it, null) }
+  // search in imports in "conftest.py" file
+  (currentDirectory.findFile(CONFTEST_PY) as? PyFile)?.let { pyFile ->
+    getFixtureFromImports(pyFile, elementName, func, fixtureCandidates)?.let { return it }
+  }
+  return null
+}
+
+/**
+ * Return fixture from import element
+ */
+private fun getFixtureFromImports(targetFile: PyFile, elementName: String, func: PyFunction?, fixtureCandidates: List<PyTestFixture>): NamedFixtureLink? {
+  val importedFixture = targetFile.findExportedName(elementName) as? PyImportElement
+  val resolveImportElements = importedFixture?.multiResolve()?.map { it.element }
+  if (importedFixture != null) {
+    // if fixture is imported as `from module import some_fixture as sf`
+    resolveImportElements?.filterIsInstance<PyFunction>()?.firstOrNull()?.let { fixture ->
+      return NamedFixtureLink(PyTestFixture(func, fixture, fixture.name ?: ""), importedFixture)
+    }
+
+    resolveImportElements?.let { list ->
+      fixtureCandidates.find { fixture -> list.contains(fixture.function) }?.let {
+        return NamedFixtureLink(it, importedFixture)
+      }
+    }
   }
   return null
 }

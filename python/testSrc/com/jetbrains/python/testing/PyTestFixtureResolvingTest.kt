@@ -52,6 +52,12 @@ class PyTestFixtureResolvingTest : PyTestCase() {
     const val TEST_USE_FIXTURES_DECORATED_CLASS = "/test_decorator_for_class.py"
     const val TEST_USE_FIXTURES_DECORATED_TEST = "/test_decorator_for_test.py"
     const val TEST_USE_FIXTURES_EXPRESSION = "/test_expression.py"
+
+    const val IMPORTED_FIXTURE_IN_CONFTEST_DIR_NAME = "testImportedFixturesInConftest"
+    const val IMPORTED_FIXTURE_IN_CONFTEST_DIR = "/$IMPORTED_FIXTURE_IN_CONFTEST_DIR_NAME"
+    const val TEST_IMPORTED_FIXTURE_IN_CONFTEST = "/test_imported_fixtures_in_conftest.py"
+    const val IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES_DIR_NAME = "fixtures"
+    const val IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES = "foo_fixtures.py"
   }
 
   override fun getTestDataPath() = super.getTestDataPath() + TESTS_SUBDIR
@@ -212,5 +218,9 @@ class PyTestFixtureResolvingTest : PyTestCase() {
 
   fun testUseFixturesExpression() {
     assertCorrectFile(USE_FIXTURES_TEST_DIR, TEST_USE_FIXTURES_EXPRESSION, CONFTEST_PY, USE_FIXTURES_TEST_DIR_NAME)
+  }
+
+  fun testImportedFixtureInConftest() {
+    assertCorrectFile(IMPORTED_FIXTURE_IN_CONFTEST_DIR, TEST_IMPORTED_FIXTURE_IN_CONFTEST, IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES, IMPORTED_FIXTURE_IN_CONFTEST_FOO_FIXTURES_DIR_NAME)
   }
 }
