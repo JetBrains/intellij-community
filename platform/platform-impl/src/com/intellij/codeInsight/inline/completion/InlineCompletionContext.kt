@@ -4,6 +4,7 @@ package com.intellij.codeInsight.inline.completion
 import com.intellij.codeInsight.inline.completion.InlineState.Companion.resetInlineCompletionState
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionKeyListener
 import com.intellij.codeInsight.inline.completion.render.InlineCompletion
+import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -70,6 +71,7 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
     isSelecting.set(false)
     InlineCompletionHandler.unmute()
     editor.removeInlineCompletionContext()
+    LookupManager.getActiveLookup(editor)?.hideLookup(false)
     Disposer.dispose(this)
   }
 
