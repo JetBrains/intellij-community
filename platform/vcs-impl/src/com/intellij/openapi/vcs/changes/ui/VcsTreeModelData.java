@@ -5,6 +5,7 @@ import com.intellij.ide.FileSelectInContext;
 import com.intellij.ide.SelectInContext;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.CompositeDataProvider;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
@@ -349,7 +350,25 @@ public abstract class VcsTreeModelData {
 
 
   @Nullable
-  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
+  public static Object getData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId,
+                               @Nullable Object higherPriorityProviderData) {
+    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
+      VcsTreeModelData treeSelection = selected(tree);
+      VcsTreeModelData exactSelection = exactlySelected(tree);
+      DataProvider slowDataProvider = slowId -> getSlowData(project, treeSelection, exactSelection, slowId);
+      return higherPriorityProviderData != null
+             ? CompositeDataProvider.compose((DataProvider)higherPriorityProviderData, slowDataProvider)
+             : slowDataProvider;
+    }
+
+    if (higherPriorityProviderData != null) {
+      return higherPriorityProviderData;
+    }
+    return getFastData(project, tree, dataId);
+  }
+
+  @Nullable
+  private static Object getFastData(@Nullable Project project, @NotNull JTree tree, @NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return project;
     }
@@ -367,11 +386,6 @@ public abstract class VcsTreeModelData {
     }
     else if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
       return mapToChange(exactlySelected(tree)).toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      VcsTreeModelData treeSelection = selected(tree);
-      VcsTreeModelData exactSelection = exactlySelected(tree);
-      return (DataProvider)slowId -> getSlowData(project, treeSelection, exactSelection, slowId);
     }
     return null;
   }
