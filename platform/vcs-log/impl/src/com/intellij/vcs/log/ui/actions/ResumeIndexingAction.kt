@@ -30,19 +30,19 @@ class ResumeIndexingAction : DumbAwareAction() {
       return
     }
 
-    val scheduledForIndexing = rootsForIndexing.filter { data.index.isScheduledForIndexing(it) }
-    val bigRepositories = rootsForIndexing.filter { it.isBig() }
-    e.presentation.isEnabledAndVisible = (bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty())
+    val rootsScheduledForIndexing = rootsForIndexing.filter { data.index.isScheduledForIndexing(it) }
+    val rootsWithPausedIndexing = rootsForIndexing.filter { isIndexingPausedFor(it) }
+    e.presentation.isEnabledAndVisible = (rootsWithPausedIndexing.isNotEmpty() || rootsScheduledForIndexing.isNotEmpty())
 
     val vcsDisplayName = VcsLogUtil.getVcsDisplayName(project, rootsForIndexing.map { data.getLogProvider(it) })
-    if (scheduledForIndexing.isNotEmpty()) {
+    if (rootsScheduledForIndexing.isNotEmpty()) {
       e.presentation.text = VcsLogBundle.message("action.title.pause.indexing", vcsDisplayName)
-      e.presentation.description = VcsLogBundle.message("action.description.is.scheduled", getText(scheduledForIndexing))
+      e.presentation.description = VcsLogBundle.message("action.description.is.scheduled", getText(rootsScheduledForIndexing))
       e.presentation.icon = AllIcons.Process.ProgressPauseSmall
     }
     else {
       e.presentation.text = VcsLogBundle.message("action.title.resume.indexing", vcsDisplayName)
-      e.presentation.description = VcsLogBundle.message("action.description.was.paused", getText(bigRepositories))
+      e.presentation.description = VcsLogBundle.message("action.description.was.paused", getText(rootsWithPausedIndexing))
       e.presentation.icon = AllIcons.Process.ProgressResumeSmall
     }
   }

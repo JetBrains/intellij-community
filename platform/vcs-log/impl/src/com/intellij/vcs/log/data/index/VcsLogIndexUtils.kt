@@ -12,10 +12,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 fun VcsLogModifiableIndex.needIndexing(): Boolean {
   val rootsForIndexing = indexingRoots
   if (rootsForIndexing.isEmpty()) return false
-  val scheduledForIndexing = rootsForIndexing.filter { isScheduledForIndexing(it) }
-  val bigRepositories = rootsForIndexing.filter { it.isBig() }
 
-  return bigRepositories.isNotEmpty() || scheduledForIndexing.isNotEmpty()
+  val rootsScheduledForIndexing = rootsForIndexing.filter { isScheduledForIndexing(it) }
+  val rootsWithPausedIndexing = rootsForIndexing.filter { isIndexingPausedFor(it) }
+
+  return rootsWithPausedIndexing.isNotEmpty() || rootsScheduledForIndexing.isNotEmpty()
 }
 
 /**
@@ -33,16 +34,16 @@ fun VcsLogModifiableIndex.isIndexingPaused(): Boolean {
 @RequiresEdt
 internal fun VcsLogModifiableIndex.toggleIndexing() {
   if (indexingRoots.any { isScheduledForIndexing(it) }) {
-    indexingRoots.filter { !it.isBig() }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
+    indexingRoots.filter { !isIndexingPausedFor(it) }.forEach { VcsLogBigRepositoriesList.getInstance().addRepository(it) }
   }
   else {
     var resumed = false
-    for (root in indexingRoots.filter { it.isBig() }) {
+    for (root in indexingRoots.filter { isIndexingPausedFor(it) }) {
       resumed = resumed or VcsLogBigRepositoriesList.getInstance().removeRepository(root)
     }
     if (resumed) scheduleIndex(false)
   }
 }
 
-internal fun VirtualFile.isBig(): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(this)
+internal fun isIndexingPausedFor(root: VirtualFile): Boolean = VcsLogBigRepositoriesList.getInstance().isBig(root)
 internal fun VcsLogIndex.isScheduledForIndexing(root: VirtualFile): Boolean = isIndexingEnabled(root) && !isIndexed(root)
