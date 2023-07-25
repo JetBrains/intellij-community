@@ -23,7 +23,9 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.KotlinType
 
 class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
 
@@ -129,9 +131,6 @@ private fun KtQualifiedExpression.findCallChain(): CallChain? {
     if (calls.isEmpty()) return null
 
     val lastCall = calls.last()
-    val receiverType = lastCall.receiverType(context)
-    if (receiverType?.isIterable() != true) return null
-
     val firstCall = calls.first()
     val qualified = firstCall.getQualifiedExpressionForSelector() ?: firstCall.getQualifiedExpressionForReceiver() ?: return null
     return CallChain(qualified, lastCall, calls.size)
@@ -157,12 +156,17 @@ private fun KtQualifiedExpression.collectCallExpression(context: BindingContext)
     val transformationCalls = calls
         .asSequence()
         .dropWhile { !it.isTransformationOrTermination(context) }
+        .dropWhile { !it.receiverType(context).isIterable() && !it.returnType(context).isIterable() }
         .takeWhile { it.isTransformationOrTermination(context) && !it.hasReturn() }
         .toList()
-        .dropLastWhile { it.isLazyTermination(context) }
+        .dropLastWhile { it.isLazyTermination(context) || (it.isTermination(context) && !it.returnType(context).isIterable()) }
     if (transformationCalls.size < 2) return emptyList()
 
     return transformationCalls
+}
+
+private fun KtCallExpression.returnType(context: BindingContext): KotlinType? {
+    return getResolvedCall(context)?.resultingDescriptor?.returnType
 }
 
 private fun KtCallExpression.hasReturn(): Boolean = valueArguments.any { arg ->

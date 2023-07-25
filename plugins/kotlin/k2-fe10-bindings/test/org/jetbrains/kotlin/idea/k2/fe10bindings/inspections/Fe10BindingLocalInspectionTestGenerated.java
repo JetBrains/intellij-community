@@ -783,6 +783,26 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/flatten2.kt");
             }
 
+            @TestMetadata("groupBy.kt")
+            public void testGroupBy() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy.kt");
+            }
+
+            @TestMetadata("groupBy2.kt")
+            public void testGroupBy2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy2.kt");
+            }
+
+            @TestMetadata("groupBy3.kt")
+            public void testGroupBy3() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy3.kt");
+            }
+
+            @TestMetadata("groupBy4.kt")
+            public void testGroupBy4() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/groupBy4.kt");
+            }
+
             @TestMetadata("implicitReceiver.kt")
             public void testImplicitReceiver() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/implicitReceiver.kt");
