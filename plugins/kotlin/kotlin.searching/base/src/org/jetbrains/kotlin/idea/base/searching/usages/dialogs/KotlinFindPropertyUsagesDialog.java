@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.base.searching.usages.dialogs;
 
-import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesDialog;
 import com.intellij.ide.util.PropertiesComponent;
@@ -18,10 +17,12 @@ import org.jetbrains.kotlin.idea.base.searching.usages.KotlinPropertyFindUsagesO
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
-import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 
 import javax.swing.*;
 import java.awt.*;
+
+import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isAbstract;
+import static org.jetbrains.kotlin.idea.base.searching.usages.dialogs.Utils.isOpen;
 
 public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinPropertyFindUsagesOptions> {
     public KotlinFindPropertyUsagesDialog(
@@ -116,22 +117,9 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                                                            getFindUsagesOptions().isSearchInOverridingMethods, optionsPanel, true);
         }
 
-        boolean isContainingClassInterface = KtPsiUtilKt.getContainingClassOrObject(property) instanceof KtClass ktClass && ktClass.isInterface();
-
-        boolean isAbstract = property.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
-                             isContainingClassInterface &&
-                             property instanceof KtProperty ktProperty &&
-                             !ktProperty.hasInitializer() && !ktProperty.hasDelegate() && ktProperty.getAccessors().isEmpty();
-
-        boolean isOpen = property.hasModifier(KtTokens.OPEN_KEYWORD) ||
-                         property.hasModifier(KtTokens.OVERRIDE_KEYWORD) &&
-                         !property.hasModifier(KtTokens.FINAL_KEYWORD)
-                         && (isContainingClassInterface ||
-                             KtPsiUtilKt.getContainingClassOrObject(property) instanceof KtClass ktClass && ktClass.hasModifier(KtTokens.OPEN_KEYWORD));
-
-        if (isOpen || isAbstract) {
+        if (isOpen(property)) {
             overrideUsages = addCheckboxToPanel(
-                    isAbstract
+                    isAbstract(property)
                     ? KotlinBundle.message("find.declaration.implementing.properties.checkbox")
                     : KotlinBundle.message("find.declaration.overriding.properties.checkbox"),
                     getFindUsagesOptions().getSearchOverrides(),
