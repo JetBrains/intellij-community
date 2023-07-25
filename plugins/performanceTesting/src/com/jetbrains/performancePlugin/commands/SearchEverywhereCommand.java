@@ -86,16 +86,18 @@ public class SearchEverywhereCommand extends AbstractCommand {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
           TypingTarget target = findTarget(context);
+          Component component;
           if(!(target instanceof EditorComponentImpl)){
-            actionCallback.reject("Editor is not opened, SE requires editor to get current project");
-            return;
+            LOG.info("Editor is not opened, focus owner will be used.");
+            component = IdeFocusManager.getInstance(project).getFocusOwner();
+          } else{
+            component =  (EditorComponentImpl) target;
           }
-          Component editorComponent = (EditorComponentImpl) target;
-          DataContext dataContext = DataManager.getInstance().getDataContext(editorComponent);
+          DataContext dataContext = DataManager.getInstance().getDataContext(component);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
           AnActionEvent actionEvent = AnActionEvent.createFromDataContext(ActionPlaces.EDITOR_POPUP, null, dataContext);
-          if(actionEvent.getProject() == null) {
-            actionCallback.reject("Project is null");
+          if(actionEvent.getProject() == null && !(tab.equals("action") || tab.equals("all"))) {
+            actionCallback.reject("Project is null, SE requires project to show any tab except actions.");
           }
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
             SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
@@ -135,8 +137,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
-  private static void insertText(Project project, String insertText, Semaphore typingSemaphore)
-    throws InterruptedException {
+  private static void insertText(Project project, String insertText, Semaphore typingSemaphore) {
     SearchEverywhereUI ui = SearchEverywhereManager.getInstance(project).getCurrentlyShownUI();
     Span insertSpan = PerformanceTestSpan.TRACER.spanBuilder("searchEverywhere_items_loaded").startSpan();
     //noinspection TestOnlyProblems
