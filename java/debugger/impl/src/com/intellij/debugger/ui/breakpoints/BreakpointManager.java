@@ -516,7 +516,7 @@ public class BreakpointManager {
         breakpoint = ((JavaBreakpointType)xBreakpoint.getType()).createJavaBreakpoint(project, xBreakpoint);
       }
       catch (Throwable e) {
-        LOG.error(e);
+        DebuggerUtilsImpl.logError(e);
         return null;
       }
       xBreakpoint.putUserData(Breakpoint.DATA_KEY, breakpoint);
