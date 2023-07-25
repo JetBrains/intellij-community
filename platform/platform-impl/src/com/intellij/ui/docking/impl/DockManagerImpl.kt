@@ -442,6 +442,9 @@ class DockManagerImpl(@JvmField internal val project: Project, private val corou
     containerToWindow.put(container, window)
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       containerToWindow.remove(container)
+      if (container is Disposable) {
+        Disposer.dispose(container)
+      }
     }
     return window
   }
