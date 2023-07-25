@@ -27,7 +27,7 @@ public final class CompositeDataProvider implements DataProvider {
     return new CompositeDataProvider(new ArrayList<>(ContainerUtil.concat(p1, p2)));
   }
 
-  public static @NotNull DataProvider compose(@NotNull Iterable<? extends @Nullable DataProvider> providers) {
+  public static @Nullable DataProvider compose(@NotNull Iterable<? extends @Nullable DataProvider> providers) {
     List<DataProvider> list = null;
     for (DataProvider provider : providers) {
       if (provider == null) continue;
@@ -39,7 +39,7 @@ public final class CompositeDataProvider implements DataProvider {
         list.add(provider);
       }
     }
-    return list == null ? dataId -> null :
+    return list == null ? null :
            list.size() == 1 ? list.get(0) :
            new CompositeDataProvider(new ArrayList<>(list));
   }

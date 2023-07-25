@@ -133,7 +133,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
       List<DataProvider> providers = JBIterable.from(myDataProviders).filterMap(
         o -> PlatformCoreDataKeys.BGT_DATA_PROVIDER.getData(o)).toList();
-      return providers.isEmpty() ? null : CompositeDataProvider.compose(providers);
+      return CompositeDataProvider.compose(providers);
     }
 
     for (DataProvider dataProvider : myDataProviders) {
