@@ -16,6 +16,10 @@ class UnnamedClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     })
   }
 
+  fun testNoMainMethod() {
+    doTest()
+  }
+
   private fun doTest() {
     myFixture.configureByFile(getTestName(false) + ".java")
     myFixture.checkHighlighting()

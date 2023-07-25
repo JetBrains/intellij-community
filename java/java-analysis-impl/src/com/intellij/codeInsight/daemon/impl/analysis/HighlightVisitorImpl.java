@@ -393,7 +393,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       PsiMethod[] methods = unnamedClass.getMethods();
       boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()));
       if (!hasMainMethod) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(file).fileLevelAnnotation().description(JavaErrorBundle.message("error.unnamed.class.contains.no.main.method")).create());
+        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                       .range(file)
+                       .fileLevelAnnotation()
+                       .registerFix(QuickFixFactory.getInstance().createAddMainMethodFix(unnamedClass), null, null, null, null)
+                       .description(JavaErrorBundle.message("error.unnamed.class.contains.no.main.method")).create());
       }
     }
   }
