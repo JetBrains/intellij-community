@@ -29,7 +29,9 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (!Registry.`is`("ide.check.windows.defender.rules")) return
+    if (!Registry.`is`("ide.check.windows.defender.rules")) {
+      return
+    }
 
     val checker = WindowsDefenderChecker.getInstance()
     if (checker.isStatusCheckIgnored(project)) {

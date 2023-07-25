@@ -13,8 +13,7 @@ import kotlin.time.Duration.Companion.nanoseconds
  * <p/>
  * 'Initialization conditions' are: VFS version, init attempts, and cause for VFS rebuild, if any
  */
-class VFSInitializationConditionsToFusReporter : ProjectActivity {
-
+private class VFSInitializationConditionsToFusReporter : ProjectActivity {
   override suspend fun execute(project: Project) {
     val vfs = FSRecords.getInstance()
 

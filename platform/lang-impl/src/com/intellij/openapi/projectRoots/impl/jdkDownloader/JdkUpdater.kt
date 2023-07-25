@@ -13,7 +13,6 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -37,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong
  * additional [Sdk] instances to check for a possible
  * JDK update
  */
-private val EP_NAME = ExtensionPointName.create<JdkUpdateCheckContributor>("com.intellij.jdkUpdateCheckContributor")
+private val EP_NAME = ExtensionPointName<JdkUpdateCheckContributor>("com.intellij.jdkUpdateCheckContributor")
 
 interface JdkUpdateCheckContributor {
   /**
@@ -53,12 +52,11 @@ private fun isEnabled(project: Project) = !project.isDefault &&
                                           !ApplicationManager.getApplication().isUnitTestMode &&
                                           !ApplicationManager.getApplication().isHeadlessEnvironment
 
-internal class JdkUpdaterStartup : ProjectActivity {
-  override suspend fun execute(project: Project) : Unit = blockingContext {
-    if (!isEnabled(project)) {
-      return@blockingContext
+private class JdkUpdaterStartup : ProjectActivity {
+  override suspend fun execute(project: Project) {
+    if (isEnabled(project)) {
+      project.service<JdkUpdatesCollector>().updateNotifications()
     }
-    project.service<JdkUpdatesCollector>().updateNotifications()
   }
 }
 
@@ -67,10 +65,8 @@ private val LOG = logger<JdkUpdatesCollector>()
 @Service // project
 private class JdkUpdatesCollectorQueue : UnknownSdkCollectorQueue(7_000)
 
-@Service
-internal class JdkUpdatesCollector(
-  private val project: Project
-) : Disposable {
+@Service(Service.Level.PROJECT)
+internal class JdkUpdatesCollector(private val project: Project) : Disposable {
   override fun dispose(): Unit = Unit
 
   init {
@@ -121,7 +117,9 @@ internal class JdkUpdatesCollector(
   }
 
   fun updateNotifications() {
-    if (!isEnabled()) return
+    if (!isEnabled()) {
+      return
+    }
 
     project.service<JdkUpdatesCollectorQueue>().queue(object: UnknownSdkTrackerTask {
       override fun createCollector(): UnknownSdkCollector? {
@@ -194,7 +192,7 @@ internal class JdkUpdatesCollector(
       noUpdatesFor -= jdk
     }
 
-    //handle the case, when a JDK is no longer requires an update
+    //handle the case, when a JDK is no longer requiring an update
     for (jdk in noUpdatesFor) {
       notifications.hideNotification(jdk)
     }

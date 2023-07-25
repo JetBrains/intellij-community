@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.opentelemetry
 
-import com.intellij.platform.diagnostic.telemetry.JVM
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.platform.diagnostic.telemetry.JVM
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import io.opentelemetry.api.metrics.BatchCallback
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit.NANOSECONDS
@@ -16,10 +16,9 @@ import java.util.concurrent.TimeUnit.NANOSECONDS
  * Reports basic JVM stats into OTel.Metrics.
  * Currently reported: heap & direct memory usage. Feel free to add more.
  */
-class JVMStatsToOTelReporter : ProjectActivity {
-
+private class JVMStatsToOTelReporter : ProjectActivity {
   override suspend fun execute(project: Project) {
-    service<ReportingService>()
+    serviceAsync<ReportingService>()
   }
 
   @Service(Service.Level.APP)
