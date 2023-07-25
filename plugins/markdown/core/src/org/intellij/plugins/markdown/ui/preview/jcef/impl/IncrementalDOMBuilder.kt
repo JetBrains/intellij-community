@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.ui.preview.jcef.impl
 
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.ProgressManager
 import org.intellij.plugins.markdown.ui.preview.html.PreviewEncodingUtil
 import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 import org.jetbrains.annotations.ApiStatus
@@ -129,6 +130,7 @@ class IncrementalDOMBuilder(
   }
 
   private fun traverse(node: Node) {
+    ProgressManager.checkCanceled()
     when (node) {
       is TextNode -> textElement { node.wholeText }
       is DataNode -> textElement { node.wholeData }
