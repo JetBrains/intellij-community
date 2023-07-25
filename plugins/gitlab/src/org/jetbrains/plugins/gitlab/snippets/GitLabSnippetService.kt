@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.ide.BrowserUtil
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
@@ -21,6 +19,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.data.GitLabSnippetBlobActionEnum
 import org.jetbrains.plugins.gitlab.api.data.GitLabVisibilityLevel
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
@@ -43,86 +42,82 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Gets the name of a snippet entry directly from the file name.
    */
-  private val pathFromName: (VirtualFile) -> String = { file -> file.name }
+  private val pathFromName: suspend (VirtualFile) -> String = { file -> file.name }
 
   /**
    * Performs the ['Create Snippet' action][GitLabCreateSnippetAction] by showing the 'Create Snippet' dialog
    * and performing the GitLab API request to create the final snippet.
    */
-  fun performCreateSnippetAction(e: AnActionEvent) {
+  fun performCreateSnippetAction(editor: Editor?, selectedFile: VirtualFile?, selectedFiles: List<VirtualFile>?) {
     serviceScope.launch {
-      val cs = serviceScope
+      val cs = this
 
-      val editor = e.getData(CommonDataKeys.EDITOR)
-      val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-      val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
-
-      val files = collectNonBinaryFiles(listOfNotNull(editor?.virtualFile).ifEmpty { null }
+      val files = collectNonBinaryFiles(editor?.virtualFile?.let(::listOf)
                                         ?: selectedFiles
                                         ?: listOfNotNull(selectedFile))
-      val vm = createVM(cs, e, files)
-
-      // Await result of dialog
-      if (!cs.async(Dispatchers.Main) {
-          val dialog = GitLabCreateSnippetComponentFactory
-            .create(cs, project, vm)
-
-          dialog.showAndGet()
-        }.await()) {
-        return@launch
-      }
+      val vm = showDialog(cs, editor, files) ?: return@launch
 
       withBackgroundProgress(project, message("snippet.create.action.progress"), true) {
         try {
-          // Process result by creating the snippet, copying url, etc.
-          val data = vm.data
-          val api = vm.getApi() ?: throw IllegalStateException(message("snippet.create.action.error.no-api"))
-          val server = vm.getServer() ?: throw IllegalStateException(message("snippet.create.action.error.no-server"))
-
-          val contents = vm.contents.await()
-          val fileNameExtractor = getFileNameExtractor(files, data.pathHandlingMode)
-
-          val snippetBlobActions = contents.map { glContents ->
-            GitLabSnippetBlobAction(
-              GitLabSnippetBlobActionEnum.create,
-              glContents.capturedContents,
-              glContents.file?.let(fileNameExtractor) ?: "",
-              null
-            )
-          }
-
-          val httpResult = api.graphQL.createSnippet(
-            server,
-            data.onProject,
-            data.title,
-            data.description,
-            if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
-            snippetBlobActions
-          )
-          if (httpResult.statusCode() != 200) {
-            throw IllegalStateException(message("snippet.create.action.error.http-status", httpResult.statusCode()))
-          }
-          val result = httpResult.body() ?: throw IllegalStateException(message("snippet.create.action.error.http-deserialization"))
-
-          val snippet = result.value ?: throw IllegalStateException(message("snippet.create.action.error.no-snippet"))
-          val url = snippet.webUrl
-          if (data.isCopyUrl) {
-            CopyPasteManager.getInstance().setContents(StringSelection(url))
-          }
-          if (data.isOpenInBrowser) {
-            BrowserUtil.browse(url)
-          }
-          else {
-            VcsNotifier.getInstance(project)
-              .notifyInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS, message("snippet.create.action.success.title"),
-                          message("snippet.create.action.success.description", url))
-          }
+          createSnippet(vm, files)
         }
         catch (e: Exception) {
           VcsNotifier.getInstance(project)
-            .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR, message("snippet.create.action.error.title"), e.localizedMessage, true)
+            .notifyError(GL_NOTIFICATION_CREATE_SNIPPET_ERROR,
+                         message("snippet.create.action.error.title"),
+                         e.localizedMessage)
         }
       }
+    }
+  }
+
+  /**
+   * Creates the snippet on the GitLab server through the GQL API of GitLab.
+   *
+   * @param vm Provides the inputs the user gave for submitting a new snippet.
+   * @param files The files the user selected, or the file that is in editor.
+   */
+  private suspend fun createSnippet(vm: GitLabCreateSnippetViewModel,
+                                    files: List<VirtualFile>) {
+    // Process result by creating the snippet, copying url, etc.
+    val data = vm.data
+    val api = vm.getApi() ?: throw IllegalStateException(message("snippet.create.action.error.no-api"))
+    val server = vm.getServer() ?: throw IllegalStateException(message("snippet.create.action.error.no-server"))
+
+    val contents = vm.contents.await()
+    val fileNameExtractor = getFileNameExtractor(files, data.pathHandlingMode)
+
+    val snippetBlobActions = contents.map { glContents ->
+      GitLabSnippetBlobAction(
+        GitLabSnippetBlobActionEnum.create,
+        glContents.capturedContents,
+        glContents.file?.let { fileNameExtractor(it) } ?: "",
+        null
+      )
+    }
+
+    val httpResult = api.graphQL.createSnippet(
+      server,
+      data.onProject,
+      data.title,
+      data.description,
+      if (data.isPrivate) GitLabVisibilityLevel.private else GitLabVisibilityLevel.public,
+      snippetBlobActions
+    )
+    val result = httpResult.body() ?: throw IllegalStateException(message("snippet.create.action.error.http-deserialization"))
+
+    val snippet = result.value ?: throw IllegalStateException(message("snippet.create.action.error.no-snippet"))
+    val url = snippet.webUrl
+    if (data.isCopyUrl) {
+      CopyPasteManager.getInstance().setContents(StringSelection(url))
+    }
+    if (data.isOpenInBrowser) {
+      BrowserUtil.browse(url)
+    }
+    else {
+      VcsNotifier.getInstance(project)
+        .notifyInfo(GL_NOTIFICATION_CREATE_SNIPPET_SUCCESS, message("snippet.create.action.success.title"),
+                    message("snippet.create.action.success.description", url))
     }
   }
 
@@ -132,7 +127,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    * the default name selector is then returned, which is to just take the file name as snippet file name.
    */
   private fun getFileNameExtractor(files: List<VirtualFile>,
-                                   pathHandlingMode: PathHandlingMode): (VirtualFile) -> String =
+                                   pathHandlingMode: PathHandlingMode): suspend (VirtualFile) -> String =
     if (files.isEmpty()) {
       pathFromName
     }
@@ -148,40 +143,60 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Checks whether the user should be able to see and click the 'Create Snippet' button.
    */
-  fun canOpenDialog(e: AnActionEvent): Boolean {
+  fun canOpenDialog(editor: Editor?, selectedFile: VirtualFile?, selectedFiles: List<VirtualFile>?): Boolean {
     if (project.isDefault || service<GitLabAccountManager>().accountsState.value.isEmpty()) {
       return false
     }
-
-    val editor = e.getData(CommonDataKeys.EDITOR)
-    val file = e.getData(CommonDataKeys.VIRTUAL_FILE)
-    val files = collectNonBinaryFiles(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
-                                      ?: listOfNotNull(file))
 
     if (editor != null) {
       return editor.document.textLength != 0
     }
 
+    val files = collectNonBinaryFiles(selectedFiles
+                                      ?: listOfNotNull(selectedFile))
+
     return files.size in 1..GL_SNIPPET_FILES_LIMIT
+  }
+
+  /**
+   * Shows the 'Create Snippet' dialog and returns a view-model representing the final state of the user inputs.
+   */
+  private suspend fun showDialog(cs: CoroutineScope, editor: Editor?, files: List<VirtualFile>): GitLabCreateSnippetViewModel? {
+    val vm = createVM(cs, editor, files)
+
+    val dialogIsOk = cs.async(Dispatchers.Main) {
+      val dialog = GitLabCreateSnippetComponentFactory
+        .create(cs, project, vm)
+
+      dialog.showAndGet()
+    }
+
+    // Await result of dialog
+    if (!dialogIsOk.await()) {
+      return null
+    }
+
+    return vm
   }
 
   /**
    * Creates the view-model object for representing the creation of a snippet.
    */
-  private fun createVM(cs: CoroutineScope, e: AnActionEvent, files: List<VirtualFile>): GitLabCreateSnippetViewModel {
-    val contents = cs.async(Dispatchers.IO) { collectContents(e) }
-
+  private suspend fun createVM(cs: CoroutineScope, editor: Editor?, files: List<VirtualFile>): GitLabCreateSnippetViewModel {
     val availablePathHandlingModes = PathHandlingMode.values().filter {
       val extractor = getFileNameExtractor(files, it)
-      files.map(extractor).toSet().size == files.size // Check that there are no duplicates when mapped
+      files.map { extractor(it) }.toSet().size == files.size // Check that there are no duplicates when mapped
     }
 
     return GitLabCreateSnippetViewModel(
       cs,
       project,
-      contents,
+      service<GitLabAccountManager>(),
+      service<GitLabApiManager>(),
+      editor,
+      files,
       availablePathHandlingModes.toSet(),
-      CreateSnippetViewModelData(
+      GitLabCreateSnippetViewModelData(
         "",
         "",
 
@@ -241,10 +256,10 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Gets the name of a snippet entry from the relative path from the content root of a file.
    */
-  private fun pathFromContentRoot(): (VirtualFile) -> String {
+  private fun pathFromContentRoot(): suspend (VirtualFile) -> String {
     val pfi = project.service<ProjectFileIndex>()
     return { file ->
-      ReadAction.computeCancellable<VirtualFile?, Nothing> { pfi.getContentRootForFile(file) }
+      readAction { pfi.getContentRootForFile(file) }
         ?.let { root -> VfsUtilCore.getRelativePath(file, root) } ?: file.name
     }
   }
@@ -252,7 +267,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
   /**
    * Gets the name of a snippet entry from the relative path from the project root.
    */
-  private fun pathFromProjectRoot(): (VirtualFile) -> String {
+  private fun pathFromProjectRoot(): suspend (VirtualFile) -> String {
     val projectRoot = project.guessProjectDir() ?: return { file -> file.name }
     return { file ->
       VfsUtilCore.getRelativePath(file, projectRoot) ?: file.name
@@ -264,7 +279,7 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
    *
    * @param files The collection of files from which snippet content is gathered. May never be empty.
    */
-  private fun pathFromNearestCommonAncestor(files: Collection<VirtualFile>): (VirtualFile) -> String {
+  private fun pathFromNearestCommonAncestor(files: Collection<VirtualFile>): suspend (VirtualFile) -> String {
     var closestRoot = files.first().parent
     for (file in files.drop(1)) {
       closestRoot = VfsUtilCore.getCommonAncestor(closestRoot, file)
@@ -272,67 +287,5 @@ class GitLabSnippetService(private val project: Project, private val serviceScop
     return { file ->
       VfsUtilCore.getRelativePath(file, closestRoot) ?: file.name
     }
-  }
-
-  /**
-   * Collects the contents that are supposed to be part of the snippet from the given action event.
-   *
-   * @return All file contents that are selected and not empty.
-   */
-  private fun collectContents(e: AnActionEvent): List<GitLabSnippetFileContents> {
-    val editor = e.getData(CommonDataKeys.EDITOR)                     // If editor in focus
-    val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)  // If multiple files are selected
-    val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)         // If in editor or on file (or on tab in file)
-
-    return ReadAction.computeCancellable<List<GitLabSnippetFileContents>, Nothing> {
-      collectContents(editor, selectedFiles, selectedFile)
-        ?.filter { it.capturedContents.isNotEmpty() }
-      ?: listOf()
-    }
-  }
-
-  /**
-   * Collects the contents from [Editor], or list of [files][VirtualFile], or [file][VirtualFile] in that order.
-   * The first content holder that is not `null` will be used.
-   */
-  private fun collectContents(editor: Editor?,
-                              files: Array<VirtualFile>?,
-                              file: VirtualFile?): List<GitLabSnippetFileContents>? =
-    if (editor != null) {
-      editor.collectContents()?.let(::listOf)
-    }
-    else {
-      collectNonBinaryFiles(files?.toList() ?: listOfNotNull(file)).map { f ->
-        f.collectContents() ?: GitLabSnippetFileContents(f, "")
-      }
-    }
-
-  /**
-   * Collects the selected contents of a file in the [Editor] as [GitLabSnippetFileContents].
-   * If no selection is active in the [Editor], the user right-clicked in the file, so the user is assumed
-   * to want to make a snippet of the entire file, so file contents are used.
-   *
-   * @return `null` if no contents could be collected because there is no active selection or a read
-   * could not be completed, [GitLabSnippetFileContents] representing the selection or file otherwise.
-   */
-  private fun Editor.collectContents(): GitLabSnippetFileContents? {
-    val content = selectionModel.getSelectedText(true)?.ifEmpty { null }
-                  ?: document.text.ifEmpty { null }
-                  ?: return null
-
-    return GitLabSnippetFileContents(virtualFile, content)
-  }
-
-  /**
-   * Collects the full contents of a [file][VirtualFile] as [GitLabSnippetFileContents].
-   *
-   * @return `null` if no contents could be collected because the file is empty or a read could not
-   * be completed, [GitLabSnippetFileContents] representing the entire file contents otherwise.
-   */
-  private fun VirtualFile.collectContents(): GitLabSnippetFileContents? {
-    val content = String(contentsToByteArray(), charset)
-      .ifEmpty { return null }
-
-    return GitLabSnippetFileContents(this, content)
   }
 }

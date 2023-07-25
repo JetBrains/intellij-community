@@ -35,7 +35,7 @@ internal object GitLabStatistics {
   //endregion
 
   //region Counters
-  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 6)
+  private val COUNTERS_GROUP = EventLogGroup("vcs.gitlab.counters", version = 7)
 
   /**
    * Server returned 5** error

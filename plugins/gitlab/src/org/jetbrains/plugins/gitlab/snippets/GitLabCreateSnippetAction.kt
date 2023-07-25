@@ -13,16 +13,25 @@ class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create
                                                   messagePointer("snippet.create.action.description"),
                                                   GitlabIcons.GitLabLogo) {
   override fun actionPerformed(e: AnActionEvent) {
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return
-    project.service<GitLabSnippetService>().performCreateSnippetAction(e)
+    val project = e.getRequiredData(CommonDataKeys.PROJECT)
+
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+
+    project.service<GitLabSnippetService>().performCreateSnippetAction(editor, selectedFile, selectedFiles)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
-    val canOpen = e.getData(CommonDataKeys.PROJECT)
-                    ?.service<GitLabSnippetService>()
-                    ?.canOpenDialog(e) ?: false
+    val project = e.getData(CommonDataKeys.PROJECT) ?: return
+
+    val editor = e.getData(CommonDataKeys.EDITOR)
+    val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+    val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
+
+    val canOpen = project.service<GitLabSnippetService>().canOpenDialog(editor, selectedFile, selectedFiles) ?: false
 
     e.presentation.isEnabledAndVisible = canOpen
   }

@@ -37,7 +37,7 @@ object GitLabGQLDataDeSerializer : JsonDataSerializer, GraphQLDataDeserializer {
     val responseType = mapper.typeFactory
       .constructParametricType(GraphQLResponseDTO::class.java, JsonNode::class.java, GraphQLErrorDTO::class.java)
     val gqlResponse: GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO> = responseSupplier(responseType)
-    return traverseGQLResponse(gqlResponse, pathFromData, clazz)
+    return mapGQLResponse(gqlResponse, pathFromData, clazz)
   }
 
   private fun <T> mapGQLResponse(result: GraphQLResponseDTO<out JsonNode, GraphQLErrorDTO>,

@@ -9,8 +9,8 @@ import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.panel
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.util.GitLabBundle.message
@@ -51,7 +51,7 @@ internal object GitLabCreateSnippetComponentFactory {
 
     fun setAccount(glAccount: GitLabAccount?) {
       if (glAccount != null) {
-        cs.async {
+        cs.launch {
           createSnippetVm.setAccount(glAccount)
         }
       }
@@ -66,7 +66,7 @@ internal object GitLabCreateSnippetComponentFactory {
           .widthGroup("right")
           .bindItem(data::onProject)
 
-        cs.async {
+        cs.launch {
           createSnippetVm.glRepositories.collectLatest { glProjects ->
             selectProject.component.removeAllItems()
             selectProject.component.addItem(null)
@@ -127,7 +127,7 @@ internal object GitLabCreateSnippetComponentFactory {
         selectAccount.component.addItemListener {
           setAccount(selectAccount.component.selectedItem as GitLabAccount?)
         }
-        cs.async {
+        cs.launch {
           createSnippetVm.glAccounts.collectLatest { accounts ->
             // Re-fill the list of accounts
             selectAccount.component.removeAllItems()

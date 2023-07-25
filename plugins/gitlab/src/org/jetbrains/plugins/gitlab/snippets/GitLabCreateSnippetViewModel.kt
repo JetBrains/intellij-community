@@ -2,14 +2,12 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.collaboration.async.mapMemoized
-import com.intellij.openapi.components.service
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -34,15 +32,18 @@ class GitLabSnippetFileContents(
  * View model for creating GitLab snippets.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
-class GitLabCreateSnippetViewModel(
+internal class GitLabCreateSnippetViewModel(
   private val cs: CoroutineScope,
   val project: Project,
-  val contents: Deferred<List<GitLabSnippetFileContents>>,
+  glAccountManager: GitLabAccountManager,
+  private val glApiManager: GitLabApiManager,
+  editor: Editor?,
+  files: List<VirtualFile>?,
   val availablePathModes: Set<PathHandlingMode>,
-  val data: CreateSnippetViewModelData,
+  val data: GitLabCreateSnippetViewModelData,
 ) {
   /** Flow of GitLab accounts taken from [GitLabAccountManager]. */
-  val glAccounts: StateFlow<Set<GitLabAccount>> = service<GitLabAccountManager>().accountsState
+  val glAccounts: StateFlow<Set<GitLabAccount>> = glAccountManager.accountsState
     .stateIn(cs, SharingStarted.Eagerly, emptySet())
 
   private val _glAccount: MutableStateFlow<GitLabAccount?> = MutableStateFlow(glAccounts.value.firstOrNull())
@@ -53,10 +54,22 @@ class GitLabCreateSnippetViewModel(
    */
   val glAccount: StateFlow<GitLabAccount?> = _glAccount.asStateFlow()
 
+  /**
+   * Deferred list of contents of the selected text in editor or the selected files.
+   */
+  val contents: Deferred<List<GitLabSnippetFileContents>> = cs.async {
+    readAction {
+      collectContents(editor, files) ?: listOf()
+    }
+  }
+
+  /**
+   * Flow of the current account and credentials for that account. Credentials can be null for an account.
+   */
   private val glAccountAndCredentials: SharedFlow<Pair<GitLabAccount, String?>?> = glAccount
     .flatMapLatest { accountOrNull ->
       val account = accountOrNull ?: return@flatMapLatest flowOf(null)
-      service<GitLabAccountManager>().getCredentialsState(cs, account)
+      glAccountManager.getCredentialsState(cs, account)
         .map { Pair(account, it) }
     }
     .shareIn(cs, SharingStarted.Lazily, 1)
@@ -66,33 +79,86 @@ class GitLabCreateSnippetViewModel(
     .mapMemoized { credentials ->
       val (account, tokenOrNull) = credentials ?: return@mapMemoized flowOf(listOf())
       val token = tokenOrNull ?: return@mapMemoized flowOf(listOf())
-      service<GitLabApiManager>().getClient(token).graphQL
+      glApiManager.getClient(token).graphQL
         .getSnippetAllowedProjects(account.server)
         .shareIn(cs.childScope(Dispatchers.IO), SharingStarted.Lazily, 1)
     }
     .flatMapLatest { it }
     .shareIn(cs, SharingStarted.Eagerly, 1)
 
+  /**
+   * Sets the account currently selected.
+   */
   suspend fun setAccount(account: GitLabAccount) {
     _glAccount.emit(account)
   }
 
+  /**
+   * Gets the API from the currently selected logged in account.
+   */
   fun getApi(): GitLabApi? {
     val (_, tokenOrNull) = glAccountAndCredentials.replayCache.firstOrNull() ?: return null
     val token = tokenOrNull ?: return null
-    return service<GitLabApiManager>().getClient(token)
+    return glApiManager.getClient(token)
   }
 
+  /**
+   * Gets the server belonging to the currently selected logged in account.
+   */
   fun getServer(): GitLabServerPath? {
     val (account, _) = glAccountAndCredentials.replayCache.firstOrNull() ?: return null
     return account.server
+  }
+
+  /**
+   * Collects the contents from [Editor], or list of [files][VirtualFile], or [file][VirtualFile] in that order.
+   * The first content holder that is not `null` will be used.
+   */
+  private fun collectContents(editor: Editor?,
+                              files: List<VirtualFile>?): List<GitLabSnippetFileContents>? =
+    if (editor != null) {
+      editor.collectContents()?.let(::listOf)
+    }
+    else {
+      files?.map { f ->
+        f.collectContents() ?: GitLabSnippetFileContents(f, "")
+      } ?: listOf()
+    }
+
+  /**
+   * Collects the selected contents of a file in the [Editor] as [GitLabSnippetFileContents].
+   * If no selection is active in the [Editor], the user right-clicked in the file, so the user is assumed
+   * to want to make a snippet of the entire file, so file contents are used.
+   *
+   * @return `null` if no contents could be collected because there is no active selection or a read
+   * could not be completed, [GitLabSnippetFileContents] representing the selection or file otherwise.
+   */
+  private fun Editor.collectContents(): GitLabSnippetFileContents? {
+    val content = selectionModel.getSelectedText(true)?.ifEmpty { null }
+                  ?: document.text.ifEmpty { null }
+                  ?: return null
+
+    return GitLabSnippetFileContents(virtualFile, content)
+  }
+
+  /**
+   * Collects the full contents of a [file][VirtualFile] as [GitLabSnippetFileContents].
+   *
+   * @return `null` if no contents could be collected because the file is empty or a read could not
+   * be completed, [GitLabSnippetFileContents] representing the entire file contents otherwise.
+   */
+  private fun VirtualFile.collectContents(): GitLabSnippetFileContents? {
+    val content = String(contentsToByteArray(), charset)
+      .ifEmpty { return null }
+
+    return GitLabSnippetFileContents(this, content)
   }
 }
 
 /**
  * Data that can be stored and changed representing the inputs from the create-snippet dialog.
  */
-class CreateSnippetViewModelData(
+internal class GitLabCreateSnippetViewModelData(
   var title: @Nls String,
   var description: @Nls String,
 

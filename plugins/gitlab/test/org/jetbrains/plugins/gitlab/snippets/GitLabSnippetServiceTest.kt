@@ -21,6 +21,8 @@ import java.nio.file.Path
 import kotlin.io.path.absolutePathString
 
 class GitLabSnippetServiceTest : BasePlatformTestCase() {
+  private val service by lazy { project.service<GitLabSnippetService>() }
+
   override fun getTestDataPath(): String {
     val path = getGitLabTestDataPath("community/plugins/gitlab/testResources")?.absolutePathString()
     requireNotNull(path)
@@ -45,15 +47,11 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
   fun `test - canOpenDialog checks for nested files`() {
     val lfs = LocalFileSystem.getInstance()
+    val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files"))
 
     setAccountManager(setOf(createMockAccount()))
 
-    val e = mock<AnActionEvent>()
-    whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
-    whenever(e.getData(eq(CommonDataKeys.VIRTUAL_FILE))).thenReturn(
-      lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files")))
-
-    assertTrue(project.service<GitLabSnippetService>().canOpenDialog(e))
+    assertTrue(service.canOpenDialog(null, vf, null))
   }
 
   fun `test - canOpenDialog is false for empty files`() {
@@ -74,7 +72,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
     whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
     whenever(e.getData(eq(CommonDataKeys.EDITOR))).thenReturn(editor)
 
-    assertFalse(project.service<GitLabSnippetService>().canOpenDialog(e))
+    assertFalse(service.canOpenDialog(editor, null, null))
   }
 
   fun `test - canOpenDialog prefers editor over selected files`() {
@@ -92,12 +90,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
     whenever(editor.virtualFile).thenReturn(emptyFile)
     whenever(editor.document).thenReturn(document)
 
-    val e = mock<AnActionEvent>()
-    whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
-    whenever(e.getData(eq(CommonDataKeys.EDITOR))).thenReturn(editor)
-    whenever(e.getData(eq(CommonDataKeys.VIRTUAL_FILE))).thenReturn(nonEmptyFile)
-
-    assertFalse(project.service<GitLabSnippetService>().canOpenDialog(e))
+    assertFalse(service.canOpenDialog(editor, nonEmptyFile, null))
   }
 
   fun `test - canOpenDialog is true for directory with empty file`() {
@@ -105,12 +98,9 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
     setAccountManager(setOf(createMockAccount()))
 
-    val e = mock<AnActionEvent>()
-    whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
-    whenever(e.getData(eq(CommonDataKeys.VIRTUAL_FILE))).thenReturn(
-      lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file")))
+    val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file"))
 
-    assertTrue(project.service<GitLabSnippetService>().canOpenDialog(e))
+    assertTrue(service.canOpenDialog(null, vf, null))
   }
 
   fun `test - canOpenDialog is false when there are no accounts`() {
@@ -118,11 +108,8 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
     setAccountManager(setOf())
 
-    val e = mock<AnActionEvent>()
-    whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
-    whenever(e.getData(eq(CommonDataKeys.VIRTUAL_FILE))).thenReturn(
-      lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt")))
+    val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt"))
 
-    assertFalse(project.service<GitLabSnippetService>().canOpenDialog(e))
+    assertFalse(service.canOpenDialog(null, vf, null))
   }
 }
