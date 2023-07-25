@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryDefaultConfigurator
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.IDEA_DIAGNOSTIC_OTLP
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
@@ -24,7 +23,7 @@ internal class OpenTelemetryConfigurator(
                                      enableMetricsByDefault = enableMetricsByDefault,
                                      customResourceBuilder = {
                                        // don't write username to file - it maybe private information
-                                       if (getOtlpEndpoint() != null) {
+                                       if (getOtlpEndPoint() != null) {
                                          it.put(ResourceAttributes.PROCESS_OWNER, System.getProperty("user.name") ?: "unknown")
                                        }
                                      }) {
@@ -38,11 +37,9 @@ internal class OpenTelemetryConfigurator(
                                                serviceNamespace = serviceNamespace))
     }
 
-    getOtlpEndpoint()?.let { traceEndpoint ->
-      spanExporters += OtlpSpanExporter(traceEndpoint)
+    getOtlpEndPoint()?.let {
+      spanExporters += OtlpSpanExporter(it)
     }
     return spanExporters
   }
 }
-
-private fun getOtlpEndpoint(): String? = System.getProperty(IDEA_DIAGNOSTIC_OTLP)

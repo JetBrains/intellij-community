@@ -9,17 +9,22 @@ import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 
 internal class TelemetryDefaultManager : TelemetryManager {
-  private var sdk: OpenTelemetry = OpenTelemetry.noop()
+  private var sdk = OpenTelemetry.noop()
 
   override var verboseMode: Boolean = false
-  override var oTelConfigurator: OpenTelemetryDefaultConfigurator =
-    OpenTelemetryDefaultConfigurator(otelSdkBuilder = OpenTelemetrySdk.builder(), enableMetricsByDefault = true)
+
+  override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
+  }
+
+  override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+  }
 
   override fun init() {
     logger<TelemetryDefaultManager>().info("Initializing telemetry tracer ${this::class.qualifiedName}")
 
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    sdk = oTelConfigurator
+    val configurator = OpenTelemetryDefaultConfigurator(otelSdkBuilder = OpenTelemetrySdk.builder(), enableMetricsByDefault = true)
+    sdk = configurator
       .getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance())).buildAndRegisterGlobal()
   }
@@ -28,6 +33,8 @@ internal class TelemetryDefaultManager : TelemetryManager {
     val name = scope.toString()
     return wrapTracer(name, sdk.getTracer(name), scope.verbose, verboseMode)
   }
+
+  override fun getSimpleTracer(scope: Scope) = NoopIntelliJTracer
 
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())
 }

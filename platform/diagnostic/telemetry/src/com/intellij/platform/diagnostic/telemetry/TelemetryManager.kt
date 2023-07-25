@@ -7,6 +7,11 @@ import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
+import kotlin.coroutines.CoroutineContext
+
+interface IntelliJTracer {
+  fun createSpan(name: String): CoroutineContext
+}
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -21,12 +26,12 @@ interface TelemetryManager {
 
     fun getTracer(scope: Scope): IJTracer = instance.value.getTracer(scope)
 
+    fun getSimpleTracer(scope: Scope): IntelliJTracer = instance.value.getSimpleTracer(scope)
+
     fun getMeter(scope: Scope): Meter = instance.value.getMeter(scope)
   }
 
   var verboseMode: Boolean
-
-  var oTelConfigurator: OpenTelemetryDefaultConfigurator
 
   fun init()
 
@@ -37,15 +42,13 @@ interface TelemetryManager {
    */
   fun getTracer(scope: Scope): IJTracer
 
+  fun getSimpleTracer(scope: Scope): IntelliJTracer
+
   fun getMeter(scope: Scope): Meter
 
-  fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
-    oTelConfigurator.aggregatedSpansProcessor.addSpansExporters(exporters)
-  }
+  fun addSpansExporters(exporters: List<AsyncSpanExporter>)
 
-  fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
-    oTelConfigurator.aggregatedMetricsExporter.addMetricsExporters(exporters)
-  }
+  fun addMetricsExporters(exporters: List<MetricsExporterEntry>)
 }
 
 private val instance = SynchronizedClearableLazy {

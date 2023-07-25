@@ -9,8 +9,6 @@ public interface Activity {
 
   void end();
 
-  void end(long end);
-
   void setDescription(@NonNls @NotNull String description);
 
   /**

@@ -15,9 +15,7 @@ import kotlinx.coroutines.CancellationException
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class OtlpSpanExporter(endpoint: String) : AsyncSpanExporter {
-  private val traceUrl = "${(if (endpoint == "true") "http://127.0.0.1:4318/" else endpoint).removeSuffix("/")}/v1/traces"
-
+class OtlpSpanExporter(private val traceUrl: String) : AsyncSpanExporter {
   override suspend fun export(spans: Collection<SpanData>) {
     // checking whether the spans are exported from rem dev backend
     if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null) {

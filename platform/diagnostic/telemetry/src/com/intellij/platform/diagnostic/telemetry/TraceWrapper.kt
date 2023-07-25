@@ -6,6 +6,8 @@ import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
 import io.opentelemetry.api.trace.TracerProvider
 import org.jetbrains.annotations.ApiStatus.Internal
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 @Internal
 fun wrapTracer(scopeName: String, tracer: Tracer, verbose: Boolean, verboseMode: Boolean): IJTracer {
@@ -39,6 +41,11 @@ object IJNoopTracer : IJTracer {
   override fun spanBuilder(spanName: String): SpanBuilder = noopTrace.spanBuilder(spanName)
 
   override fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder = spanBuilder(spanName)
+}
+
+@Internal
+object NoopIntelliJTracer : IntelliJTracer {
+  override fun createSpan(name: String): CoroutineContext = EmptyCoroutineContext
 }
 
 

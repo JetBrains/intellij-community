@@ -9,12 +9,14 @@ import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CopyOnWriteArrayList
 
 private val LOG: Logger
   get() = logger<AggregatedMetricsExporter>()
 
-internal class AggregatedMetricsExporter : MetricExporter {
+@Internal
+class AggregatedMetricsExporter : MetricExporter {
   private val metricsExporters = CopyOnWriteArrayList<MetricsExporterEntry>()
 
   fun addMetricsExporters(metrics: List<MetricsExporterEntry>) {

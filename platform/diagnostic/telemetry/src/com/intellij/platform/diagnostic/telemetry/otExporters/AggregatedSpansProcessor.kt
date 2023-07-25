@@ -9,9 +9,11 @@ import io.opentelemetry.sdk.trace.ReadWriteSpan
 import io.opentelemetry.sdk.trace.ReadableSpan
 import io.opentelemetry.sdk.trace.SpanProcessor
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration.Companion.seconds
 
-internal class AggregatedSpansProcessor(private val mainScope: CoroutineScope) : SpanProcessor {
+@Internal
+class AggregatedSpansProcessor(private val mainScope: CoroutineScope) : SpanProcessor {
   private var batchSpanProcessor: BatchSpanProcessor? = null
 
   fun addSpansExporters(exporters: List<AsyncSpanExporter>) {

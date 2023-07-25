@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
+import com.intellij.platform.diagnostic.telemetry.Scope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,6 +10,9 @@ import java.util.concurrent.TimeUnit;
 
 // use only JDK classes here (avoid StringUtil and so on)
 public final class ActivityImpl implements Activity {
+  public Scope scope;
+  public String[] attributes;
+
   private final String name;
   private String description;
 
@@ -93,20 +98,15 @@ public final class ActivityImpl implements Activity {
     return end;
   }
 
-  void setEnd(long end) {
-    assert this.end == 0;
+  @ApiStatus.Internal
+  public void setEnd(long end) {
+    assert this.end == 0 : "not started or already ended";
     this.end = end;
   }
 
   @Override
   public void end() {
-    end(StartUpMeasurer.getCurrentTime());
-  }
-
-  @Override
-  public void end(long time) {
-    assert end == 0 : "not started or already ended";
-    end = time;
+    end = System.nanoTime();
     StartUpMeasurer.addActivity(this);
   }
 
@@ -117,11 +117,8 @@ public final class ActivityImpl implements Activity {
 
   @Override
   public @NotNull ActivityImpl endAndStart(@NotNull String name) {
-    return endAndStart(StartUpMeasurer.getCurrentTime(), name);
-  }
-
-  @NotNull ActivityImpl endAndStart(long time, @NotNull String name) {
-    end(time);
+    end = System.nanoTime();
+    StartUpMeasurer.addActivity(this);
     return new ActivityImpl(name, /* start = */end, parent, /* pluginId = */ pluginId, category);
   }
 

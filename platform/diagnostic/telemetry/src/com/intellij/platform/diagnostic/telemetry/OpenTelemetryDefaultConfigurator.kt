@@ -49,8 +49,8 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
       .build()
   )
 
-  internal val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
-  internal val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
+  val aggregatedMetricsExporter: AggregatedMetricsExporter = AggregatedMetricsExporter()
+  val aggregatedSpansProcessor: AggregatedSpansProcessor = AggregatedSpansProcessor(mainScope)
 
   private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
@@ -86,7 +86,7 @@ open class OpenTelemetryDefaultConfigurator(@JvmField protected val mainScope: C
     ShutDownTracker.getInstance().registerShutdownTask(meterProvider::shutdown)
   }
 
-  open fun createMetricsExporters(): List<MetricsExporterEntry> {
+  private fun createMetricsExporters(): List<MetricsExporterEntry> {
     metricsReportingPath ?: return emptyList()
 
     val result = mutableListOf<MetricsExporterEntry>()

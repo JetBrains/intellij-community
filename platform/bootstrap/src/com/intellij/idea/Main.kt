@@ -39,8 +39,10 @@ private const val MARKETPLACE_BOOTSTRAP_JAR = "marketplace-bootstrap.jar"
 
 fun main(rawArgs: Array<String>) {
   val startupTimings = ArrayList<Any>(12)
-  val startTimeUnixMillis = System.currentTimeMillis()
-  addBootstrapTiming("startup begin", startupTimings)
+  val startTimeNano = System.nanoTime()
+  val startTimeUnixNano = System.currentTimeMillis() * 1000000
+  startupTimings.add("startup begin")
+  startupTimings.add(startTimeNano)
 
   val args = preprocessArgs(rawArgs)
   AppMode.setFlags(args)
@@ -52,7 +54,7 @@ fun main(rawArgs: Array<String>) {
       val busyThread = Thread.currentThread()
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
-        StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixMillis)
+        StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
         subtask("startApplication") {
           // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
           val appStarterDeferred = async(CoroutineName("main class loading")) {

@@ -1336,6 +1336,21 @@ abstract class ComponentManagerImpl(
     return intersectionScope.namedChildScope(pluginClass.name)
   }
 
+  // to run post-start-up activities - to not create scope for each class and do not keep it alive
+  fun pluginCoroutineScope(pluginClassloader: ClassLoader): CoroutineScope {
+    val intersectionScope = if (pluginClassloader is PluginAwareClassLoader) {
+      val pluginScope = pluginClassloader.pluginCoroutineScope
+      val parentScope = parent?.intersectionCoroutineScope(pluginScope) // for consistency
+                        ?: pluginScope
+      intersectionCoroutineScope(parentScope)
+    }
+    else {
+      // non-unloadable
+      getCoroutineScope()
+    }
+    return intersectionScope
+  }
+
   private fun intersectionCoroutineScope(pluginScope: CoroutineScope): CoroutineScope {
     var scopes = pluginScopes.get()
     scopes.get(pluginScope)?.let {

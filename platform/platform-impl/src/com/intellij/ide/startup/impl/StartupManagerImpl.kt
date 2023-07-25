@@ -33,7 +33,6 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.ModalityUiUtil
@@ -41,7 +40,6 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.context.Context
-import io.opentelemetry.extension.kotlin.asContextElement
 import kotlinx.coroutines.*
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
@@ -58,6 +56,7 @@ import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<StartupManagerImpl>()
 private val tracer by lazy { TelemetryManager.getTracer(Scope("startupManager")) }
+private val tracer2 by lazy { TelemetryManager.getSimpleTracer(Scope("startupManager")) }
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.
@@ -185,7 +184,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private suspend fun runInitProjectActivities() {
     runActivities(initProjectStartupActivities)
     val app = ApplicationManager.getApplication()
-    val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>("com.intellij.initProjectActivity")
+    val extensionPoint = (app.extensionArea as ExtensionsAreaImpl).getExtensionPoint<InitProjectActivity>(
+      "com.intellij.initProjectActivity")
     // do not create an extension if not allow-listed
     for (adapter in extensionPoint.sortedAdapters) {
       coroutineContext.ensureActive()
@@ -246,7 +246,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         if (activity is ProjectActivity) {
           if (async) {
-            launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId, traceContext = traceContext)
+            launchActivity(activity = activity, project = project, pluginId = pluginDescriptor.pluginId)
           }
           else {
             activity.execute(project)
@@ -436,8 +436,7 @@ private fun scheduleBackgroundPostStartupActivities(project: Project, coroutineS
         override fun extensionAdded(extension: Any, pluginDescriptor: PluginDescriptor) {
           launchBackgroundPostStartupActivity(activity = extension,
                                               pluginId = pluginDescriptor.pluginId,
-                                              project = project,
-                                              traceContext = Context.current())
+                                              project = project)
         }
       }, project)
       BACKGROUND_POST_STARTUP_ACTIVITY.filterableLazySequence()
@@ -447,23 +446,21 @@ private fun scheduleBackgroundPostStartupActivities(project: Project, coroutineS
       return@launch
     }
 
-    val traceContext = Context.current()
     for (extension in activities) {
       launchBackgroundPostStartupActivity(activity = extension.instance ?: continue,
                                           pluginId = extension.pluginDescriptor.pluginId,
-                                          project = project,
-                                          traceContext = traceContext)
+                                          project = project)
     }
   }
 }
 
-private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginId,  project: Project, traceContext: Context) {
+private fun launchBackgroundPostStartupActivity(activity: Any, pluginId: PluginId, project: Project) {
   if (project is LightEditCompatible && activity !is LightEditCompatible) {
     return
   }
 
   if (activity is ProjectActivity) {
-    launchActivity(activity, project, pluginId, traceContext)
+    launchActivity(activity, project, pluginId)
     return
   }
 
@@ -511,19 +508,11 @@ private fun reportUiFreeze(uiFreezeWarned: AtomicBoolean) {
   }
 }
 
-private fun launchActivity(activity: ProjectActivity, project: Project, pluginId: PluginId, traceContext: Context) {
-  val javaClass = activity.javaClass
-  ((project as ComponentManagerImpl).instanceCoroutineScope(javaClass)).launch {
-    val span = tracer.spanBuilder("run activity")
-      .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
-      .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
-      .startSpan()
-    val context = traceContext.with(span)
-    withContext(context.asContextElement()) {
-      span.use {
-        activity.execute(project)
-      }
-    }
+private fun launchActivity(activity: ProjectActivity, project: Project, pluginId: PluginId) {
+  (project as ComponentManagerImpl).pluginCoroutineScope(activity.javaClass.classLoader).launch(
+    tracer2.createSpan(name = "run activity") + SpanAttributes(arrayOf("class", activity.javaClass.name, "plugin", pluginId.idString))
+  ) {
+    activity.execute(project)
   }
 }
 

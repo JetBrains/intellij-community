@@ -4,7 +4,7 @@
     <facet type="kotlin-language" name="Kotlin">
       <configuration version="5" platform="JVM 11" allPlatforms="JVM [11]" useProjectSettings="false">
         <compilerSettings>
-          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi" />
+          <option name="additionalArguments" value="-Xjvm-default=all -opt-in=com.intellij.openapi.util.IntellijInternalApi -opt-in=kotlinx.serialization.ExperimentalSerializationApi" />
         </compilerSettings>
         <compilerArguments>
           <stringArguments>
@@ -12,6 +12,12 @@
             <stringArg name="apiVersion" arg="1.8" />
             <stringArg name="languageVersion" arg="1.8" />
           </stringArguments>
+          <arrayArguments>
+            <arrayArg name="pluginClasspaths">
+              <args>$KOTLIN_BUNDLED$/lib/kotlinx-serialization-compiler-plugin.jar</args>
+            </arrayArg>
+            <arrayArg name="pluginOptions" />
+          </arrayArguments>
         </compilerArguments>
       </configuration>
     </facet>
@@ -36,5 +42,8 @@
     <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.http" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
+    <orderEntry type="library" name="kotlinx-serialization-protobuf" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
   </component>
 </module>

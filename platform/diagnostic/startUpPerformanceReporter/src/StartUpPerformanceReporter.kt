@@ -16,6 +16,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.write
 import com.intellij.util.lang.ClassPath
@@ -119,14 +120,14 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
     }
   }
 
-  System.getProperty("idea.perf.trace.file")?.takeIf(String::isNotEmpty)?.let {
-    val file = Path.of(FileUtil.expandUserHome(it))
-    Files.createDirectories(file.parent)
-    Files.newBufferedWriter(file).use { writer ->
-      writeInJaegerJsonFormat(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), output = writer)
-    }
-  }
-  System.getProperty("idea.diagnostic.opentelemetry.otlp")?.takeIf(String::isNotEmpty)?.let {
+  //System.getProperty("idea.perf.trace.file")?.takeIf(String::isNotEmpty)?.let {
+  //  val file = Path.of(FileUtil.expandUserHome(it))
+  //  Files.createDirectories(file.parent)
+  //  Files.newBufferedWriter(file).use { writer ->
+  //    writeInJaegerJsonFormat(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), output = writer)
+  //  }
+  //}
+  getOtlpEndPoint()?.let {
     sendStartupTraceUsingOtlp(activities.get(ActivityCategory.DEFAULT.jsonName) ?: emptyList(), endpoint = it)
   }
 

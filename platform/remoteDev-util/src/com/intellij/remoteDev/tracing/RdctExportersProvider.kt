@@ -8,13 +8,13 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.MessageBusSpanExporter
+import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.io.File
 import java.time.Duration
 
-private val LOG = logger<RdctExportersProvider>()
-class RdctExportersProvider : OTelExportersProvider {
+private class RdctExportersProvider : OTelExportersProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
     return listOf(MessageBusSpanExporter())
   }
@@ -24,7 +24,7 @@ class RdctExportersProvider : OTelExportersProvider {
       CsvGzippedMetricsExporter.generatePathForConnectionMetrics().toFile()
     }
     catch (e: UnsupportedOperationException) {
-      LOG.warn("Failed to create a file for metrics")
+      logger<RdctExportersProvider>().warn("Failed to create a file for metrics")
       null
     }
     fileToWrite?.let {
@@ -37,8 +37,7 @@ class RdctExportersProvider : OTelExportersProvider {
   }
 
   override fun isTracingAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null &&
-           System.getProperty(OpenTelemetryUtils.IDEA_DIAGNOSTIC_OTLP) != null
+    return System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && getOtlpEndPoint() != null
   }
 
   override fun areMetricsAvailable(): Boolean {

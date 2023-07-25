@@ -1,7 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
+import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.DefaultTraceReporter
+import com.intellij.diagnostic.rootTask
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.*
 import io.opentelemetry.api.OpenTelemetry
@@ -9,9 +14,11 @@ import io.opentelemetry.api.metrics.Meter
 import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
 import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
+import kotlin.coroutines.CoroutineContext
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -21,12 +28,24 @@ import org.jetbrains.annotations.ApiStatus
 internal class TelemetryManagerImpl : TelemetryManager {
   private var sdk: OpenTelemetry = OpenTelemetry.noop()
 
+  private val otlpService by lazy {
+    ApplicationManager.getApplication().service<OtlpService>()
+  }
+
   override var verboseMode: Boolean = false
 
-  override var oTelConfigurator: OpenTelemetryDefaultConfigurator = OpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
-                                                                                              otelSdkBuilder = OpenTelemetrySdk.builder(),
-                                                                                              appInfo = ApplicationInfoImpl.getShadowInstance(),
-                                                                                              enableMetricsByDefault = true)
+  override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
+    configurator.aggregatedSpansProcessor.addSpansExporters(exporters)
+  }
+
+  override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
+    configurator.aggregatedMetricsExporter.addMetricsExporters(exporters)
+  }
+
+  private val configurator = OpenTelemetryConfigurator(mainScope = CoroutineScope(Dispatchers.Default),
+                                                       otelSdkBuilder = OpenTelemetrySdk.builder(),
+                                                       appInfo = ApplicationInfoImpl.getShadowInstance(),
+                                                       enableMetricsByDefault = true)
 
   override fun getMeter(scope: Scope): Meter = sdk.getMeter(scope.toString())
 
@@ -34,7 +53,7 @@ internal class TelemetryManagerImpl : TelemetryManager {
     logger<TelemetryManagerImpl>().info("Initializing telemetry tracer ${this::class.java.name}")
 
     verboseMode = System.getProperty("idea.diagnostic.opentelemetry.verbose")?.toBooleanStrictOrNull() == true
-    sdk = oTelConfigurator
+    sdk = configurator
       .getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .buildAndRegisterGlobal()
@@ -43,5 +62,22 @@ internal class TelemetryManagerImpl : TelemetryManager {
   override fun getTracer(scope: Scope): IJTracer {
     val name = scope.toString()
     return wrapTracer(scopeName = name, tracer = sdk.getTracer(name), verbose = scope.verbose, verboseMode = verboseMode)
+  }
+
+  override fun getSimpleTracer(scope: Scope): IntelliJTracer {
+    return IntelliJTracerImpl(scope, otlpService)
+  }
+}
+
+private class IntelliJTracerImpl(private val scope: Scope,
+                                 private val otlpService: OtlpService) : IntelliJTracer {
+  override fun createSpan(name: String): CoroutineContext {
+    return rootTask(traceReporter = object : DefaultTraceReporter(reportScheduleTimeForRoot = true) {
+      override fun setEndAndAdd(activity: ActivityImpl, end: Long) {
+        activity.setEnd(end)
+        activity.scope = scope
+        otlpService.add(activity)
+      }
+    }) + CoroutineName(name)
   }
 }

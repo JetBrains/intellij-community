@@ -40,17 +40,16 @@ public final class StartUpMeasurer {
   }
 
   private static long startTime = System.nanoTime();
+  private static long startTimeUnixNanoDiff = (System.currentTimeMillis() * 1_000_000) - startTime;
 
   @ApiStatus.Internal
   public static long getStartTime() {
     return startTime;
   }
 
-  private static long startTimeUnixMillis = System.currentTimeMillis();
-
   @ApiStatus.Internal
-  public static long getStartTimeUnixMillis() {
-    return startTimeUnixMillis;
+  public static long getStartTimeUnixNanoDiff() {
+    return startTimeUnixNanoDiff;
   }
 
   private static final ConcurrentLinkedQueue<ActivityImpl> items = new ConcurrentLinkedQueue<>();
@@ -214,14 +213,14 @@ public final class StartUpMeasurer {
     }
   }
 
-  static void addActivity(@NotNull ActivityImpl activity) {
+  public static void addActivity(@NotNull ActivityImpl activity) {
     if (isEnabled) {
       items.add(activity);
     }
   }
 
   @ApiStatus.Internal
-  public static void addTimings(List<Object> timings, String parentName, long startTimeUnixMillis) {
+  public static void addTimings(List<Object> timings, String parentName, long startTimeUnixNano) {
     if (!items.isEmpty()) {
       throw new IllegalStateException("addTimings must be not called if some events were already added using API");
     }
@@ -237,7 +236,7 @@ public final class StartUpMeasurer {
       long start = (long)timings.get(i + 1);
       if (start < startTime) {
         startTime = start;
-        StartUpMeasurer.startTimeUnixMillis = startTimeUnixMillis;
+        startTimeUnixNanoDiff = startTimeUnixNano - start;
       }
 
       ActivityImpl activity = new ActivityImpl((String)timings.get(i), start, parent, null);

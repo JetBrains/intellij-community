@@ -4,12 +4,16 @@
 package com.intellij.diagnostic
 
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
+import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
+
+private val defaultTracer = MeasureCoroutineTime(reporter = DefaultTraceReporter(reportScheduleTimeForRoot = true))
 
 /**
  * Put this into coroutine context to enable [CoroutineName]-based time measuring of this coroutine and its children.
@@ -26,7 +30,10 @@ import kotlin.coroutines.coroutineContext
  * }
  * ```
  */
-fun rootTask(): CoroutineContext = MeasureCoroutineTime
+fun rootTask(): CoroutineContext = defaultTracer
+
+@Internal
+fun rootTask(traceReporter: TraceReporter): CoroutineContext = MeasureCoroutineTime(reporter = traceReporter)
 
 /**
  * This function is designed to be used instead of `withContext(CoroutineName("subtask")) { ... }`.
@@ -48,6 +55,29 @@ suspend fun <T> subtask(
   }
 }
 
+@Experimental
+@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
+suspend fun <T> span(context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> T): T {
+  val measurer = coroutineContext[CoroutineTimeMeasurerKey]
+  return if (measurer == null) {
+    withContext(context, action)
+  }
+  else {
+    withContext(context + measurer.copyForChild(), action)
+  }
+}
+
+@Experimental
+class SpanAttributes(@JvmField val attributes: Array<String>) : AbstractCoroutineContextElement(SpanAttributes) {
+  companion object Key : CoroutineContext.Key<SpanAttributes>
+
+  override fun toString(): String = "SpanAttributes($attributes)"
+
+  override fun equals(other: Any?): Boolean = this === other || (other is SpanAttributes && attributes.contentEquals(other.attributes))
+
+  override fun hashCode(): Int = attributes.contentHashCode()
+}
+
 @Internal
 suspend fun getTraceActivity(): Activity? = coroutineContext[CoroutineTimeMeasurerKey]?.getActivity()
 
@@ -55,8 +85,6 @@ private val noActivity: Activity = object : Activity {
   override fun getName(): String = error("must not be invoked")
 
   override fun end(): Unit = error("must not be invoked")
-
-  override fun end(end: Long): Unit = error("must not be invoked")
 
   override fun setDescription(description: String): Unit = error("must not be invoked")
 
@@ -67,7 +95,7 @@ private val noActivity: Activity = object : Activity {
 
 private object CoroutineTimeMeasurerKey : CoroutineContext.Key<CoroutineTimeMeasurer>
 
-private object MeasureCoroutineTime : CopyableThreadContextElement<Unit> {
+private class MeasureCoroutineTime(private val reporter: TraceReporter) : CopyableThreadContextElement<Unit> {
   override val key: CoroutineContext.Key<*>
     get() = CoroutineTimeMeasurerKey
 
@@ -75,14 +103,15 @@ private object MeasureCoroutineTime : CopyableThreadContextElement<Unit> {
 
   override fun restoreThreadContext(context: CoroutineContext, oldState: Unit) = error("must not be invoked")
 
-  override fun copyForChild(): CopyableThreadContextElement<Unit> = CoroutineTimeMeasurer(null)
+  override fun copyForChild(): CopyableThreadContextElement<Unit> = CoroutineTimeMeasurer(parentActivity = null, reporter = reporter)
 
   override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext = error("must not be invoked")
 
-  override fun toString(): String = "MeasureCoroutineTime"
+  override fun toString(): String = "MeasureCoroutineTime(reporter=$reporter)"
 }
 
-private class CoroutineTimeMeasurer(private val parentActivity: Activity?) : CopyableThreadContextElement<Unit> {
+private class CoroutineTimeMeasurer(private val parentActivity: ActivityImpl?,
+                                    private val reporter: TraceReporter) : CopyableThreadContextElement<Unit> {
   companion object {
     private val CURRENT_ACTIVITY: VarHandle
     private val LAST_SUSPENSION_TIME: VarHandle
@@ -139,6 +168,7 @@ private class CoroutineTimeMeasurer(private val parentActivity: Activity?) : Cop
     val activity = reporter.start(coroutineName = coroutineName, scheduleTime = creationTime, parentActivity = parentActivity)
     CURRENT_ACTIVITY.setVolatile(this, activity)
 
+    activity.attributes = context[SpanAttributes]?.attributes
     val job = context.job
     job.invokeOnCompletion {
       val end = System.nanoTime()
@@ -158,10 +188,10 @@ private class CoroutineTimeMeasurer(private val parentActivity: Activity?) : Cop
     }
     // don't format into one line - complicates debugging
     if (activity === noActivity) {
-      return CoroutineTimeMeasurer(null)
+      return CoroutineTimeMeasurer(parentActivity = null, reporter = reporter)
     }
     else {
-      return CoroutineTimeMeasurer(activity as ActivityImpl)
+      return CoroutineTimeMeasurer(parentActivity = activity as ActivityImpl, reporter = reporter)
     }
   }
 
@@ -170,30 +200,29 @@ private class CoroutineTimeMeasurer(private val parentActivity: Activity?) : Cop
   fun getActivity() = CURRENT_ACTIVITY.getVolatile(this) as Activity?
 }
 
-private val reporter: TraceReporter = DefaultTraceReporter()
-
-private class DefaultTraceReporter : TraceReporter {
-  override fun start(coroutineName: String, scheduleTime: Long, parentActivity: Activity?): Activity {
+open class DefaultTraceReporter(private val reportScheduleTimeForRoot: Boolean) : TraceReporter {
+  override fun start(coroutineName: String, scheduleTime: Long, parentActivity: ActivityImpl?): ActivityImpl {
     val start = StartUpMeasurer.getCurrentTime()
 
-    // the main activity cannot be a parent for meta "scheduled" activity since it is outside it (preceding the main activity)
-    ActivityImpl("${coroutineName}: scheduled", scheduleTime, parentActivity as ActivityImpl?).end(start)
+    if (reportScheduleTimeForRoot || parentActivity != null) {
+      // the main activity cannot be a parent for meta "scheduled" activity since it is outside it (preceding the main activity)
+      setEndAndAdd(ActivityImpl("${coroutineName}: scheduled", scheduleTime, parentActivity), start)
+    }
 
     // start main activity right away
     return ActivityImpl(coroutineName, /* start = */start, parentActivity)
   }
 
-  override fun end(activity: Activity, coroutineName: String, end: Long, lastSuspensionTime: Long) {
+  override fun end(activity: ActivityImpl, coroutineName: String, end: Long, lastSuspensionTime: Long) {
     if (lastSuspensionTime != -1L) {
       // after the last suspension, the coroutine was waiting for its children => end main activity
-      ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity as ActivityImpl?).end(end)
+      setEndAndAdd(ActivityImpl("${coroutineName}: completing", lastSuspensionTime, activity), end)
     }
-    activity.end(end)
+    setEndAndAdd(activity, end)
   }
-}
 
-internal interface TraceReporter {
-  fun start(coroutineName: String, scheduleTime: Long, parentActivity: Activity?): Activity
-
-  fun end(activity: Activity, coroutineName: String, end: Long, lastSuspensionTime: Long)
+  open fun setEndAndAdd(activity: ActivityImpl, end: Long) {
+    activity.setEnd(end)
+    StartUpMeasurer.addActivity(activity)
+  }
 }

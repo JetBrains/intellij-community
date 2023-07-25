@@ -230,10 +230,8 @@ class VcsInitialization(private val project: Project, private val coroutineScope
     override suspend fun execute(project: Project) {
       val vcsInitialization = project.serviceAsync<VcsInitialization>()
       coroutineScope {
-        val task = launch(start = CoroutineStart.LAZY) {
-          subtask("VcsInitialization") {
-            vcsInitialization.execute()
-          }
+        val task = launch(context = CoroutineName("VcsInitialization"), start = CoroutineStart.LAZY) {
+          vcsInitialization.execute()
         }
         vcsInitialization.startInitializationJob(task)
       }
