@@ -288,7 +288,7 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   fun isAvailable(): Boolean {
-    return !DistractionFreeModeController.isDistractionFreeModeEnabled() &&
+    return !DistractionFreeModeController.shouldMinimizeCustomHeader() &&
            (PlatformUtils.isRider () || Registry.`is`("ide.colorful.toolbar", true))
   }
 
