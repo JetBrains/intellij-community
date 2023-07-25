@@ -23,6 +23,11 @@ public class BreakpointHighlightingTestGenerated extends AbstractBreakpointHighl
         KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
     }
 
+    @TestMetadata("anonymousFun.kt")
+    public void testAnonymousFun() throws Exception {
+        runTest("testData/highlighting/anonymousFun.kt");
+    }
+
     @TestMetadata("conditionalReturn.kt")
     public void testConditionalReturn() throws Exception {
         runTest("testData/highlighting/conditionalReturn.kt");

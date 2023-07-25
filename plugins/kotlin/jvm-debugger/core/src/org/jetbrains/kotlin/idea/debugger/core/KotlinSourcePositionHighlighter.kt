@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.KotlinSourcePositionWithEntireLineHighlighted
 import org.jetbrains.kotlin.idea.debugger.base.util.getRangeOfLine
 import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 
 class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
@@ -31,7 +32,7 @@ class KotlinSourcePositionHighlighter : SourcePositionHighlighter() {
         }
 
         // Highlight only lambda body in case of lambda breakpoint.
-        val lambda = element.parentOfType<KtFunctionLiteral>() ?: return null
+        val lambda = element.parentOfType<KtFunction>()?.takeIf { it is KtFunctionLiteral || it.name == null } ?: return null
         val lambdaRange = lambda.textRange
 
         if (lambda.isOneLiner()) return lambdaRange
