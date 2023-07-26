@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyzeWithReadAction
+import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.calls.KtCall
 import org.jetbrains.kotlin.analysis.api.calls.calls
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.ImportPath
 
 internal inline fun <R> withResolvedCall(element: KtElement, crossinline block: KtAnalysisSession.(KtCall) -> R): R? {
-    return analyzeWithReadAction(element) {
+    return analyze(element) {
         element.resolveCall()?.calls?.singleOrNull()?.let { block(it) }
     }
 }

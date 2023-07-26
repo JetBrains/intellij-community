@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.searching.usages
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.*
@@ -161,7 +162,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun getReceiverTypeSearcherInfo(psiElement: PsiElement, isDestructionDeclarationSearch: Boolean): ReceiverTypeSearcherInfo? {
         return when (psiElement) {
             is KtCallableDeclaration -> {
-                analyzeWithReadAction(psiElement) {
+                analyze(psiElement) {
                     fun getPsiClassOfKtType(ktType: KtType): PsiClass? {
                         val psi = ktType.asPsiType(psiElement, allowErrorTypes = false, KtTypeMappingMode.DEFAULT, isAnnotationMethod = false)
                         return (psi as? PsiClassReferenceType)?.resolve()
@@ -170,22 +171,24 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                         is KtValueParameterSymbol -> {
                             // TODO: The following code handles only constructors. Handle other cases e.g.,
                             //       look for uses of component functions cf [isDestructionDeclarationSearch]
-                            val psiClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java)?.toLightClass() ?: return@analyzeWithReadAction null
+                            val psiClass = PsiTreeUtil.getParentOfType(psiElement, KtClassOrObject::class.java)?.toLightClass() ?: return@analyze null
 
                             val classPointer = psiClass.createSmartPointer()
                             ReceiverTypeSearcherInfo(psiClass) { declaration ->
-                                analyzeWithReadAction(declaration) {
-                                    fun KtType.containsClassType(clazz: PsiClass?): Boolean {
-                                        if (clazz == null) return false
-                                        return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
-                                            when (arg) {
-                                                is KtStarTypeProjection -> false
-                                                is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
-                                            }
-                                        })
-                                    }
+                                runReadAction {
+                                    analyze(declaration) {
+                                        fun KtType.containsClassType(clazz: PsiClass?): Boolean {
+                                            if (clazz == null) return false
+                                            return this is KtNonErrorClassType && (clazz.unwrapped?.isEquivalentTo(classSymbol.psi) == true || ownTypeArguments.any { arg ->
+                                                when (arg) {
+                                                    is KtStarTypeProjection -> false
+                                                    is KtTypeArgumentWithVariance -> arg.type.containsClassType(clazz)
+                                                }
+                                            })
+                                        }
 
-                                    declaration.getReturnKtType().containsClassType(classPointer.element)
+                                        declaration.getReturnKtType().containsClassType(classPointer.element)
+                                    }
                                 }
                             }
                         }
@@ -288,7 +291,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     override fun isInheritable(ktClass: KtClass): Boolean {
         if (ApplicationManager.getApplication().isDispatchThread) {
             return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                Runnable { isOverridableBySymbol(ktClass) },
+                Runnable { runReadAction { isOverridableBySymbol(ktClass) } },
                 KotlinBundle.message("dialog.title.resolving.inheritable.status"),
                 true,
                 ktClass.project
@@ -297,12 +300,12 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         return isOverridableBySymbol(ktClass)
     }
 
-    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyzeWithReadAction(declaration) {
+    private fun isOverridableBySymbol(declaration: KtDeclaration) = analyze(declaration) {
         var declarationSymbol : KtSymbol? = declaration.getSymbol()
         if (declarationSymbol is KtValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }
-        val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyzeWithReadAction false
+        val symbol = declarationSymbol as? KtSymbolWithModality ?: return@analyze false
         when (symbol.modality) {
             Modality.OPEN, Modality.SEALED, Modality.ABSTRACT -> true
             Modality.FINAL -> false
