@@ -60,14 +60,19 @@ object VfsRecoveryUtils {
     )
   }
 
+  /**
+   * @param cachesBackupSiblingPath path to place caches backup to
+   */
   @JvmOverloads
   @OptIn(ExperimentalPathApi::class)
   fun applyStoragesReplacementIfMarkerExists(
     storagesReplacementMarkerFile: Path,
-    cachesBackupRelativePath: Path? = Path.of("../caches-backup")
+    cachesBackupSiblingPath: Path? = Path.of("caches-backup")
   ): Boolean {
     if (storagesReplacementMarkerFile.notExists()) return false
     val cachesDir = storagesReplacementMarkerFile.parent
+    val backupPath = cachesBackupSiblingPath?.let { cachesDir.resolveSibling(it).normalize() }
+    require(backupPath != cachesDir)
 
     val newCachesDirPath = storagesReplacementMarkerFile.readLines().firstOrNull()
     LOG.info("storages replacement marker detected: new caches content is in $newCachesDirPath")
@@ -88,12 +93,12 @@ object VfsRecoveryUtils {
       return false
     }
 
-    if (cachesBackupRelativePath != null) {
-      if (cachesBackupRelativePath.exists()) {
+    if (backupPath != null) {
+      if (backupPath.exists()) {
         LOG.info("deleting an old backup")
-        cachesBackupRelativePath.deleteRecursively()
+        backupPath.deleteRecursively()
       }
-      cachesDir.moveTo(cachesBackupRelativePath)
+      cachesDir.moveTo(backupPath)
       LOG.info("created a backup successfully")
     }
     if (cachesDir.exists()) {
