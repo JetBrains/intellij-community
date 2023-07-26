@@ -1,9 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.IoTestUtil
 import org.junit.Assume.assumeTrue
 import org.junit.rules.ExternalResource
+import java.io.IOException
+import kotlin.io.path.exists
 
 /**
  * Provides access to installed and active [distributions][WSLDistribution];
@@ -28,7 +31,11 @@ class WslRule(private val assume: Boolean = true) : ExternalResource() {
 
     if (assume || WSLUtil.isSystemCompatible() && WSLDistribution.findWslExe() != null) {
       val candidates = WslDistributionManager.getInstance().installedDistributions
-      vms = candidates.filter { it !is WSLDistributionLegacy && IoTestUtil.reanimateWslDistribution(it.id) }
+      vms = candidates.filter {
+        it !is WSLDistributionLegacy
+        && IoTestUtil.reanimateWslDistribution(it.id)
+        && fileSystemWorks(it)
+      }
       if (assume) {
         assumeTrue("No alive WSL WMs among ${candidates.map(WSLDistribution::getId)}", vms.isNotEmpty())
       }
@@ -37,4 +44,19 @@ class WslRule(private val assume: Boolean = true) : ExternalResource() {
       vms = emptyList()
     }
   }
+
+  private fun fileSystemWorks(distro: WSLDistribution): Boolean {
+    try {
+      return java.nio.file.Path.of(distro.getWindowsPath("/")).exists().also {
+        if (!it) {
+          thisLogger().warn("Root of $distro doesn't exist")
+        }
+      }
+    }
+    catch (e: IOException) {
+      thisLogger().warn(e)
+      return false
+    }
+  }
+
 }
