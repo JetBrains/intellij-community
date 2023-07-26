@@ -55,6 +55,9 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
    */
   @NotNull
   public final ConsoleViewImpl getConsole() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      myConsole.flushDeferredText();
+    });
     return myConsole;
   }
 
@@ -89,7 +92,7 @@ public abstract class ProcessWithConsoleRunner implements Disposable {
    */
   @NotNull
   public String getAllConsoleText() {
-    return myConsole.getEditor().getDocument().getText();
+    return getConsole().getEditor().getDocument().getText();
   }
 
   /**
