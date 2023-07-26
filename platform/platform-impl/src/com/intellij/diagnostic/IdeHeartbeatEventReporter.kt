@@ -96,7 +96,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 
 internal class UILatencyLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("performance", 67)
+    private val GROUP = EventLogGroup("performance", 68)
 
     internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
     internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -126,6 +126,9 @@ internal class UILatencyLogger : CounterUsagesCollector() {
                                                                         EventFields.ActionPlace,
                                                                         COLD_START,
                                                                         EventFields.Language)
+
+    @JvmField
+    val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
   }
 
   override fun getGroup(): EventLogGroup = GROUP

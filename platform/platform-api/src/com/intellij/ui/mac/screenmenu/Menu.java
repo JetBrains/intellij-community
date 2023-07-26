@@ -37,7 +37,7 @@ public class Menu extends MenuItem {
   private Runnable myOnOpen;
   private Runnable myOnClose; // we assume that can run it only on EDT (to change swing components)
   private Component myComponent;
-
+  private long myOpenTimeMs = 0; // used to collect statistic
   private volatile boolean myIsOpened = false;
 
   long[] myCachedPeers;
@@ -58,6 +58,7 @@ public class Menu extends MenuItem {
   public boolean isOpened() {
     return myIsOpened;
   }
+  public long getOpenTimeMs() { return myOpenTimeMs; }
 
   private Menu() { }
 
@@ -245,6 +246,7 @@ public class Menu extends MenuItem {
       return;
     }
 
+    myOpenTimeMs = System.currentTimeMillis();
     if (USE_STUB) {
       // NOTE: must add stub item when the menu opens (otherwise AppKit considers it as empty, and we can't fill it later)
       MenuItem stub = new MenuItem();

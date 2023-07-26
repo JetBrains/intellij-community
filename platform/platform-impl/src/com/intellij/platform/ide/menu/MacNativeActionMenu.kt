@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.menu
 
+import com.intellij.diagnostic.UILatencyLogger
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -45,6 +46,9 @@ internal fun createMacNativeActionMenu(context: DataContext?,
     }
     catch (e: Throwable) {
       logger<Menu>().error(e)
+    }
+    finally {
+      UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - menuPeer.getOpenTimeMs());
     }
   }
   menuPeer.listenPresentationChanges(presentation)

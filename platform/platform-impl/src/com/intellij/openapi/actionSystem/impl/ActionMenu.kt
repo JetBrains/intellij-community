@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl
 
+import com.intellij.diagnostic.UILatencyLogger
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdeEventQueue.Companion.getInstance
@@ -319,6 +320,7 @@ class ActionMenu constructor(private val context: DataContext?,
     }
 
     private fun menuSelected() {
+      val startMs = System.currentTimeMillis()
       val helper = UsabilityHelper(this@ActionMenu)
       if (disposable == null) {
         disposable = Disposer.newDisposable()
@@ -331,6 +333,9 @@ class ActionMenu constructor(private val context: DataContext?,
       }
       if (SystemInfo.isMacSystemMenu && ActionPlaces.MAIN_MENU == place) {
         fillMenu()
+        // NOTE: FUS for OSX system menu is implemented in MacNativeActionMenu
+      } else {
+        UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - startMs)
       }
     }
   }
