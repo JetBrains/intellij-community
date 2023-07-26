@@ -65,11 +65,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 
   asyncScope.launch {
-    pathMacroJob.join()
-
     launch {
       app.serviceAsync<RegistryManager>()
     }
+
+    pathMacroJob.join()
 
     if (app.isHeadlessEnvironment) {
       return@launch

@@ -17,7 +17,12 @@ import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-@State(name = "Registry", storages = [Storage("ide.general.xml")], useLoadedStateAsExisting = false, category = SettingsCategory.SYSTEM)
+@State(
+  name = "Registry",
+  storages = [Storage("ide.general.xml", usePathMacroManager = false)],
+  useLoadedStateAsExisting = false,
+  category = SettingsCategory.SYSTEM,
+)
 @ApiStatus.Internal
 internal class RegistryManagerImpl : PersistentStateComponent<Element>, RegistryManager, Disposable {
   init {
