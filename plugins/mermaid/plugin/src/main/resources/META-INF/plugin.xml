@@ -144,6 +144,10 @@
     <lang.elementManipulator forClass="com.intellij.mermaid.lang.psi.MermaidFrontmatterContent"
                              implementationClass="com.intellij.mermaid.lang.psi.FrontmatterContentManipulator"/>
 
+    <notificationGroup id="Mermaid"
+                       displayType="BALLOON"
+                       key="notification.group.mermaid"/>
+
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>

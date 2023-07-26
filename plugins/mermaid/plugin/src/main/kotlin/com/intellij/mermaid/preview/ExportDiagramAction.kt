@@ -1,8 +1,9 @@
 package com.intellij.mermaid.preview
 
 import com.intellij.mermaid.MermaidBundle
+import com.intellij.mermaid.MermaidBundle.message
+import com.intellij.mermaid.MermaidNotifications
 import com.intellij.mermaid.lang.isMermaidFile
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -25,11 +26,20 @@ internal class ExportDiagramAction: AnAction(MermaidBundle.message("action.Merma
     runBackgroundableTask(title = "Performing conversion", event.project, cancellable = true) {
       runBlockingCancellable {
         val diagramSource = file.readText()
-        val content = performConversion(diagramSource)
-        val directory = file.parent
-        val result = directory.toNioPath().writeChild("${file.nameWithoutExtension}.svg", content)
-        val file = VfsUtil.findFile(result, true)
-        VfsUtil.markDirtyAndRefresh(false, false, true, file)
+        if (diagramSource.isEmpty()) {
+          MermaidNotifications.showWarning(
+            event.project,
+            id = "mermaid.empty.file.to.export",
+            title = message("mermaid.notification.empty.file.to.export.title"),
+            message = message("mermaid.notification.empty.file.to.export.message")
+          )
+        } else {
+          val content = performConversion(diagramSource)
+          val directory = file.parent
+          val result = directory.toNioPath().writeChild("${file.nameWithoutExtension}.svg", content)
+          val file = VfsUtil.findFile(result, true)
+          VfsUtil.markDirtyAndRefresh(false, false, true, file)
+        }
       }
     }
   }
