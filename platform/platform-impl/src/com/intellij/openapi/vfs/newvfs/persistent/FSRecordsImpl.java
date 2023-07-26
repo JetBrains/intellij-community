@@ -640,13 +640,17 @@ public final class FSRecordsImpl {
       updateLock.lock(maxId);
       try {
         try {
-          ListResult children = list(fromParentId);
+          ListResult childrenToMove = list(fromParentId);
           if (LOG.isDebugEnabled()) {
-            LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + children);
+            LOG.debug("Move children from " + fromParentId + " to " + toParentId + "; children = " + childrenToMove);
+          }
+
+          for (ChildInfo childToMove : childrenToMove.children) {
+            setParent(childToMove.getId(), toParentId);
           }
 
           connection.markRecordAsModified(toParentId);
-          treeAccessor.doSaveChildren(toParentId, children);
+          treeAccessor.doSaveChildren(toParentId, childrenToMove);
 
           connection.markRecordAsModified(fromParentId);
           treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));

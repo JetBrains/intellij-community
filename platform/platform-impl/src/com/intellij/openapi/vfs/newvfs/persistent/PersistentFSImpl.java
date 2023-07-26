@@ -2032,9 +2032,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       throw new AssertionError("Move(" + fromParentId + " -> " + toParentId + "): can't move root to become non-root");
     }
 
-    for (ChildInfo childToMove : vfsPeer.list(fromParentId).children) {
-      vfsPeer.setParent(childToMove.getId(), toParentId);
-    }
     vfsPeer.moveChildren(fromParentId, toParentId);
   }
 
