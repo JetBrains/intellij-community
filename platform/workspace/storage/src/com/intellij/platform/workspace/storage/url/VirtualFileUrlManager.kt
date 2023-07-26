@@ -17,6 +17,9 @@ interface VirtualFileUrlManager {
 
   /**
    * Returns an existing or creates a new instance of [VirtualFileUrl] instance for the given URL in the Virtual File System format.
+   * This function may be used only to obtain an instance which will be stored in a property of a workspace model entity.
+   * It must not be used for other purposes (e.g., to convert between different URL formats or to find [VirtualFile][com.intellij.openapi.vfs.VirtualFile],
+   * because all created URLs are stored in the shared data structures until the project is closed.
    */
   fun fromUrl(url: String): VirtualFileUrl
 
