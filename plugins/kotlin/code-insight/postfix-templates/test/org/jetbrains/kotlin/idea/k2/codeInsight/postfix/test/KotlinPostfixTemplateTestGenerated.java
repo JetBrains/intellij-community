@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.k2.codeInsight.postfix.test;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.codeInsight.postfix.test.AbstractKotlinPostfixTemplateTest;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
