@@ -41,26 +41,6 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
     project.messageBus.connect().subscribe(LafManagerListener.TOPIC, LafManagerListener {
       revalidate()
     })
-
-    // Perform initial setup of storages for the project
-    ProjectWindowCustomizerService.projectPath(project)?.let { path ->
-      val workspaceStorage = WorkspaceProjectColorStorage(project)
-      val recentProjectsStorage = RecentProjectColorStorage(path)
-
-      if (workspaceStorage.isEmpty) {
-        // Clean caches
-        ProjectWindowCustomizerService.getInstance().clearToolbarColorsAndInMemoryCache(project)
-
-        if (recentProjectsStorage.isEmpty) {
-          // If recent projects storage is empty, generate the associated index and save it into workspace
-          ProjectWindowCustomizerService.getInstance().getCurrentProjectColorIndex(project)
-        }
-        else {
-          // Otherwise, get colors from recent projects storage
-          workspaceStorage.getDataFrom(recentProjectsStorage)
-        }
-      }
-    }
   }
 
   private fun revalidate() {
@@ -238,6 +218,26 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   @Internal
+  internal fun setupWorkspaceStorage(project: Project) {
+    clearToolbarColorsAndInMemoryCache(project)
+
+    val workspaceStorage = WorkspaceProjectColorStorage(project)
+    if (!workspaceStorage.isEmpty) return
+
+    // Perform initial setup of storages for the project
+    val path = projectPath(project) ?: return
+    val recentProjectsStorage = RecentProjectColorStorage(path)
+
+    if (recentProjectsStorage.isEmpty) {
+      // If recent projects storage is empty, generate the associated index and save it into workspace
+      getOrGenerateAssociatedColorIndex(workspaceStorage)
+    }
+    else {
+      workspaceStorage.getDataFrom(recentProjectsStorage)
+    }
+  }
+
+  @Internal
   fun clearToolbarColorsAndInMemoryCache(project: Project) {
     clearToolbarColorsAndInMemoryCache(storageFor(project))
   }
@@ -375,7 +375,9 @@ class ProjectWindowCustomizerService : Disposable {
 
 private class ProjectWindowCustomizerListener : ProjectActivity, UISettingsListener {
   override suspend fun execute(project: Project) {
-    ProjectWindowCustomizerService.getInstance().enableIfNeeded()
+    val service = ProjectWindowCustomizerService.getInstance()
+    service.enableIfNeeded()
+    service.setupWorkspaceStorage(project)
   }
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
