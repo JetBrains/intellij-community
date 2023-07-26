@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSemicolon
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.quickFix.DeletePsiElementOfInterestFix
 import org.jetbrains.kotlin.lexer.KtTokens
 
-class RedundantSemicolonInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+internal class RedundantSemicolonInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return object : PsiElementVisitor() {
             override fun visitElement(element: PsiElement) {

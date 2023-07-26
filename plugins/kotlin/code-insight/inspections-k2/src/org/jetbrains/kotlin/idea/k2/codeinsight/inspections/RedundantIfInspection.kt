@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.RedundantIfInspectionBas
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 
-class RedundantIfInspection : RedundantIfInspectionBase() {
+internal class RedundantIfInspection : RedundantIfInspectionBase() {
     override fun isBooleanExpression(expression: KtExpression): Boolean = analyze(expression) {
         expression.getKtType()?.isBoolean == true
     }

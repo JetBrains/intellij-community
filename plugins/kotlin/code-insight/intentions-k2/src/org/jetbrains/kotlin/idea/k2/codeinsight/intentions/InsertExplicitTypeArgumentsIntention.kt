@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtTypeArgumentList
 import org.jetbrains.kotlin.types.Variance
 
-class InsertExplicitTypeArgumentsIntention :
+internal class InsertExplicitTypeArgumentsIntention :
     AbstractKotlinApplicableIntentionWithContext<KtCallExpression, String>(KtCallExpression::class) {
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtCallExpression> = applicabilityTarget { it.calleeExpression }

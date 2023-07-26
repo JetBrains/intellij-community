@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
-class DataClassPrivateConstructorInspection : AbstractKotlinInspection() {
+internal class DataClassPrivateConstructorInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return primaryConstructorVisitor { constructor ->
             if (constructor.containingClass()?.isData() == true && constructor.isPrivate()) {

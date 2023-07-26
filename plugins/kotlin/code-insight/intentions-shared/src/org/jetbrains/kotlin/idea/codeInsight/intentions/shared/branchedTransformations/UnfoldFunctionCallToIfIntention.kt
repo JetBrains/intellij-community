@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class UnfoldFunctionCallToIfIntention : AbstractKotlinApplicableIntention<KtCallExpression>(KtCallExpression::class) {
+internal class UnfoldFunctionCallToIfIntention : AbstractKotlinApplicableIntention<KtCallExpression>(KtCallExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.function.call.with.if")
 
     override fun getActionName(element: KtCallExpression): String = familyName

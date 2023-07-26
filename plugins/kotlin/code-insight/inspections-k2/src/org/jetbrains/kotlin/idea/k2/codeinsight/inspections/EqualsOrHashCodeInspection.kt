@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import org.jetbrains.kotlin.util.OperatorNameConventions.EQUALS
 import org.jetbrains.kotlin.util.OperatorNameConventions.HASH_CODE
 
-class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
+internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     private class Equals(function: String, body: String) : GenerateFunctionFix(function, body) {
         override fun getName() = KotlinBundle.message("equals.text")

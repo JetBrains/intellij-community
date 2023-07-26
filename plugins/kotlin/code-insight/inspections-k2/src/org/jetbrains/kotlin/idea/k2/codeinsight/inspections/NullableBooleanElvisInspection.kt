@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.*
  *   - `!(nb ?: false)` => `nb != true`
  * See plugins/kotlin/code-insight/descriptions/resources-en/inspectionDescriptions/NullableBooleanElvis.html for details.
  */
-class NullableBooleanElvisInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>(KtBinaryExpression::class) {
+internal class NullableBooleanElvisInspection : AbstractKotlinApplicableInspection<KtBinaryExpression>(KtBinaryExpression::class) {
     override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
     override fun getActionFamilyName(): String = KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
 

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableIntention<KtForExpression>(KtForExpression::class) {
+internal class ConvertToForEachFunctionCallIntention : AbstractKotlinApplicableIntention<KtForExpression>(KtForExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.with.a.foreach.function.call", "forEach")
 
     override fun getActionName(element: KtForExpression): String {

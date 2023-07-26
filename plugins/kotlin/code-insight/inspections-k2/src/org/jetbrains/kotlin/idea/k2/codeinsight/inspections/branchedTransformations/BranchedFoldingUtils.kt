@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 
-object BranchedFoldingUtils {
+internal object BranchedFoldingUtils {
     private val KtIfExpression.branches: List<KtExpression?> get() = ifBranchesOrThis()
 
     private fun KtExpression.ifBranchesOrThis(): List<KtExpression?> {

@@ -18,8 +18,8 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getNextSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtClassBody>(KtClassBody::class.java),
-                                       CleanupLocalInspectionTool {
+internal class RemoveEmptyClassBodyInspection : AbstractApplicabilityBasedInspection<KtClassBody>(KtClassBody::class.java),
+                                                CleanupLocalInspectionTool {
     override fun inspectionText(element: KtClassBody): String {
         return KotlinBundle.message("redundant.empty.class.body")
     }

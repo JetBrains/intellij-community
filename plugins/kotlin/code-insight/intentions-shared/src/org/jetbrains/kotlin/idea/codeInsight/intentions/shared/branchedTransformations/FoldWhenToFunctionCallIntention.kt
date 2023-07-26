@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.FoldIfOrWhenToFunctionCallUti
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class FoldWhenToFunctionCallIntention : AbstractKotlinApplicableIntentionWithContext<KtWhenExpression, Context>(KtWhenExpression::class) {
+internal class FoldWhenToFunctionCallIntention : AbstractKotlinApplicableIntentionWithContext<KtWhenExpression, Context>(KtWhenExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("lift.function.call.out.of.when")
 
     override fun getActionName(element: KtWhenExpression, context: Context): String = familyName

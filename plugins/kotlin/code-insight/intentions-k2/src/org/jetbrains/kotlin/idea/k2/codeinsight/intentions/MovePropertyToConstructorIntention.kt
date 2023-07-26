@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyT
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.MovePropertyToConstructorUtils.moveToConstructor
 import org.jetbrains.kotlin.psi.KtProperty
 
-class MovePropertyToConstructorIntention
+internal class MovePropertyToConstructorIntention
     : AbstractKotlinApplicableIntentionWithContext<KtProperty, MovePropertyToConstructorInfo>(KtProperty::class) {
 
     override fun getFamilyName() = KotlinBundle.message("move.to.constructor")

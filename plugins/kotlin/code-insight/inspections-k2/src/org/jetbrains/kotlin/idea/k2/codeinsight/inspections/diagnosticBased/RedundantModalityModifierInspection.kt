@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.psiUtil.modalityModifierType
 
-class RedundantModalityModifierInspection :
+internal class RedundantModalityModifierInspection :
     RedundantModifierInspectionBase<KtFirDiagnostic.RedundantModalityModifier>(KtTokens.MODALITY_MODIFIERS) {
 
     override fun getActionFamilyName(): String = KotlinBundle.message("remove.redundant.modality.modifier")

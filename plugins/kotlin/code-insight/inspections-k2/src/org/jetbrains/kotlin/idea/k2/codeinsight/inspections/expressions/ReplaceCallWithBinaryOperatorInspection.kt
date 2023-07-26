@@ -28,7 +28,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
-class ReplaceCallWithBinaryOperatorInspection :
+internal class ReplaceCallWithBinaryOperatorInspection :
     AbstractKotlinApplicableInspectionWithContext<KtDotQualifiedExpression, ReplaceCallWithBinaryOperatorInspection.Context>(
         KtDotQualifiedExpression::class
     ) {

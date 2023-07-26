@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.lastBlockStatementOrThis
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
 
-class OperatorToFunctionIntention : AbstractKotlinApplicableIntention<KtExpression>(KtExpression::class) {
+internal class OperatorToFunctionIntention : AbstractKotlinApplicableIntention<KtExpression>(KtExpression::class) {
     context(KtAnalysisSession)
     private fun isApplicableUnary(element: KtUnaryExpression): Boolean {
         if (element.baseExpression == null) return false

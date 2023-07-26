@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtPrimaryConstructor
 import org.jetbrains.kotlin.psi.primaryConstructorVisitor
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 
-class RedundantConstructorKeywordInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+internal class RedundantConstructorKeywordInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return primaryConstructorVisitor { constructor ->
             val constructorKeyword = constructor.getConstructorKeyword()

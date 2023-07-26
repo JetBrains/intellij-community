@@ -60,7 +60,7 @@ private const val LINES_LIMIT = 15
  *       else -> 4
  *     }
  */
-class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
+internal class LiftReturnOrAssignmentInspection @JvmOverloads constructor(private val skipLongExpressions: Boolean = true) :
     AbstractKotlinInspection() {
 
     @JvmField

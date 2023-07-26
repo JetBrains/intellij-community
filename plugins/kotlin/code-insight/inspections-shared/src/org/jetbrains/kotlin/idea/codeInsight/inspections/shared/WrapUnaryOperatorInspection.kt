@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.replaceFirstReceiver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
+internal class WrapUnaryOperatorInspection : AbstractKotlinInspection() {
 
     private object Holder {
         val numberTypes: List<IElementType> = listOf(KtNodeTypes.INTEGER_CONSTANT, KtNodeTypes.FLOAT_CONSTANT)

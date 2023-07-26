@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.destructuringDeclarationVisitor
 
-class DestructuringWrongNameInspection : LocalInspectionTool() {
+internal class DestructuringWrongNameInspection : LocalInspectionTool() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return destructuringDeclarationVisitor { declaration -> processDestructuringDeclaration(holder, declaration) }
     }

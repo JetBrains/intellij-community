@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import javax.swing.JComponent
 import kotlin.properties.Delegates
 
-class TrailingCommaInspection(
+internal class TrailingCommaInspection(
     @JvmField
     var addCommaWarning: Boolean = false
 ) : AbstractKotlinInspection() {

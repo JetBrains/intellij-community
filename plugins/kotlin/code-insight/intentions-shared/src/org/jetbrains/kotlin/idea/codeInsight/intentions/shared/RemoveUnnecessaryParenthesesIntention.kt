@@ -3,13 +3,17 @@
 package org.jetbrains.kotlin.idea.codeInsight.intentions.shared
 
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.TextRange
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.codeinsight.utils.appendSemicolonBeforeLambdaContainingElement
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.psi.*
 
+@ApiStatus.Internal
+@IntellijInternalApi
 class RemoveUnnecessaryParenthesesIntention : SelfTargetingRangeIntention<KtParenthesizedExpression>(
     KtParenthesizedExpression::class.java, KotlinBundle.lazyMessage("remove.unnecessary.parentheses")
 ) {

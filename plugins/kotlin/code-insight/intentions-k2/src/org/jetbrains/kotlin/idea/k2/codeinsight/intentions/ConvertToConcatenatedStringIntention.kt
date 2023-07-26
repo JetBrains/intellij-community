@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.ConvertToConcatenatedStringIntentionBase
 import org.jetbrains.kotlin.psi.KtExpression
 
-class ConvertToConcatenatedStringIntention : ConvertToConcatenatedStringIntentionBase() {
+internal class ConvertToConcatenatedStringIntention : ConvertToConcatenatedStringIntentionBase() {
     override fun isExpressionOfStringType(expression: KtExpression): Boolean = analyze(expression) {
         expression.getKtType()?.isString == true
     }

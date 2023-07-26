@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
-class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>(
+internal class SwapBinaryExpressionIntention : SelfTargetingIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,
     KotlinBundle.lazyMessage("flip.binary.expression")
 ), LowPriorityAction {

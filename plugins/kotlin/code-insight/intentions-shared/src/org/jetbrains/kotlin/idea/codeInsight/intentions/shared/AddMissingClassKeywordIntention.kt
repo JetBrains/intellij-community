@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtModifierList
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class AddMissingClassKeywordIntention : SelfTargetingIntention<PsiElement>(
+internal class AddMissingClassKeywordIntention : SelfTargetingIntention<PsiElement>(
     PsiElement::class.java,
     KotlinBundle.lazyMessage("add.missing.class.keyword")
 ) {

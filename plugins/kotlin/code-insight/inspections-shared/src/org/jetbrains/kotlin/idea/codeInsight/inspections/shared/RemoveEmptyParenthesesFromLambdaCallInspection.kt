@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.Applicabilit
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
-class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(KtValueArgumentList::class),
-                                                       CleanupLocalInspectionTool {
+internal class RemoveEmptyParenthesesFromLambdaCallInspection : AbstractKotlinApplicableInspection<KtValueArgumentList>(KtValueArgumentList::class),
+                                                                CleanupLocalInspectionTool {
     override fun getProblemDescription(element: KtValueArgumentList): String =
         KotlinBundle.message("inspection.remove.empty.parentheses.from.lambda.call.display.name")
 

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKot
 import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
 import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
 
-class RedundantGetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
+internal class RedundantGetterInspection : AbstractKotlinInspection(), CleanupLocalInspectionTool {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
         return propertyAccessorVisitor { accessor ->
             val rangeInElement = accessor.namePlaceholder.textRange?.shiftRight(-accessor.startOffset) ?: return@propertyAccessorVisitor
@@ -29,7 +29,7 @@ class RedundantGetterInspection : AbstractKotlinInspection(), CleanupLocalInspec
     }
 }
 
-class RemoveRedundantGetterFix : LocalQuickFix {
+private class RemoveRedundantGetterFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("remove.redundant.getter.fix.text")
 
     override fun getFamilyName() = name

@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
-class RedundantValueArgumentInspection : AbstractKotlinInspection() {
+internal class RedundantValueArgumentInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = valueArgumentVisitor(fun(argument: KtValueArgument) {
         val argumentExpression = argument.getArgumentExpression() ?: return
         val argumentList = argument.getStrictParentOfType<KtValueArgumentList>() ?: return

@@ -78,7 +78,7 @@ import org.jetbrains.kotlin.psi.psiUtil.*
  *       profiling. See https://kotlin.jetbrains.space/p/kotlin/reviews/710. We have an idea of indexing reference counts.
  *       Enable this inspection after implement it.
  */
-class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>(KtNamedDeclaration::class) {
+internal class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>(KtNamedDeclaration::class) {
 
     override fun getShortName(): String {
         return "disabledUnusedSymbolInspection"
@@ -731,7 +731,7 @@ class UnusedSymbolInspection : KotlinSingleElementInspection<KtNamedDeclaration>
     }
 }
 
-class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {
+private class SafeDeleteFix(declaration: KtDeclaration) : LocalQuickFix {
     @Nls
     private val name: String =
         if (declaration is KtConstructor<*>) KotlinBundle.message("safe.delete.constructor")

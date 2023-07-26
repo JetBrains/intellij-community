@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
-class UnfoldFunctionCallToWhenIntention : AbstractKotlinApplicableIntention<KtCallExpression>(KtCallExpression::class) {
+internal class UnfoldFunctionCallToWhenIntention : AbstractKotlinApplicableIntention<KtCallExpression>(KtCallExpression::class) {
     override fun getFamilyName(): String = KotlinBundle.message("replace.function.call.with.when")
 
     override fun getActionName(element: KtCallExpression): String = familyName

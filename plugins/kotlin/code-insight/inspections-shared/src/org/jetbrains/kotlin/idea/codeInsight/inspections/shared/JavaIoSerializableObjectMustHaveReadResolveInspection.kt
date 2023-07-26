@@ -30,7 +30,7 @@ private const val JAVA_IO_SERIALIZATION_READ_RESOLVE = "readResolve"
  * - [org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SharedK1LocalInspectionTestGenerated.JavaIoSerializableObjectMustHaveReadResolve]
  * - [org.jetbrains.kotlin.idea.k2.codeInsight.inspections.shared.SharedK2LocalInspectionTestGenerated.JavaIoSerializableObjectMustHaveReadResolve]
  */
-class JavaIoSerializableObjectMustHaveReadResolveInspection : AbstractKotlinInspection() {
+internal class JavaIoSerializableObjectMustHaveReadResolveInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = MyVisitor(holder)
 
     private class MyVisitor(private val holder: ProblemsHolder) : KtVisitorVoid() {
