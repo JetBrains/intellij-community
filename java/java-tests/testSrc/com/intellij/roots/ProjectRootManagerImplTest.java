@@ -1,12 +1,12 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.roots;
 
 import com.intellij.idea.TestFor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
+import com.intellij.testFramework.CoroutineKt;
 import com.intellij.testFramework.HeavyPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
 import org.jdom.Element;
 
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,9 +25,9 @@ public class ProjectRootManagerImplTest extends HeavyPlatformTestCase {
     ProjectRootManagerImpl impl = ProjectRootManagerImpl.getInstanceImpl(myProject);
     Element oldState = impl.getState();
     impl.loadState(new Element("empty"));
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
     impl.loadState(oldState);
-    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
+    CoroutineKt.executeSomeCoroutineTasksAndDispatchAllInvocationEvents(myProject);
 
     assertThat(count).hasValueGreaterThanOrEqualTo(2);
   }
