@@ -109,8 +109,6 @@
     <applicationService serviceInterface="com.intellij.openapi.keymap.KeymapManager"
                         serviceImplementation="com.intellij.openapi.keymap.impl.KeymapManagerImpl"/>
 
-    <applicationService serviceImplementation="com.intellij.diagnostic.DebugLogManager"/>
-
     <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
                         serviceImplementation="com.intellij.openapi.project.impl.ProjectManagerImpl"
                         testServiceImplementation="com.intellij.project.TestProjectManager"/>

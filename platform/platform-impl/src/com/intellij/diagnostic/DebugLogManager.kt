@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import java.util.logging.Level
@@ -19,7 +20,7 @@ private const val LOG_ALL_CATEGORIES_SYSTEM_PROPERTY = "idea.$LOG_ALL_CATEGORIES
  * which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
  * Applies these custom categories on startup.
  */
-@Suppress("LightServiceMigrationCode")
+@Service
 class DebugLogManager {
   enum class DebugLogLevel { DEBUG, TRACE, ALL }
 
@@ -111,7 +112,6 @@ private fun fromString(text: String?, level: DebugLogManager.DebugLogLevel): Lis
   val categories = if (byCommas.size > byNewlines.size) byCommas else byNewlines
   return categories.mapNotNull { if (it.isBlank()) null else DebugLogManager.Category(it, level) }
 }
-
 
 private fun toString(categories: List<DebugLogManager.Category>, level: DebugLogManager.DebugLogLevel): String? {
   val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()

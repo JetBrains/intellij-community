@@ -40,7 +40,7 @@ class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope)
     return OrderRootsCacheBridge(project, project)
   }
 
-  fun setupTrackedLibrariesAndJdks() {
+  internal fun setupTrackedLibrariesAndJdks() {
     moduleDependencyIndex.setupTrackedLibrariesAndJdks()
   }
 

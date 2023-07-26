@@ -29,7 +29,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import io.opentelemetry.api.metrics.Meter
-import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicLong
@@ -85,10 +84,11 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       }
 
       subtask("tracked libraries setup") {
-        // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
-        val jdkTableDeferred = async { serviceAsync<ProjectJdkTable>() }
-        val projectRootManager = project.serviceAsync<ProjectRootManager>() as ProjectRootManagerBridge
-        jdkTableDeferred.await()
+        val projectRootManager = coroutineScope {
+          // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
+          launch { serviceAsync<ProjectJdkTable>() }
+          project.serviceAsync<ProjectRootManager>() as ProjectRootManagerBridge
+        }
         writeAction {
           projectRootManager.setupTrackedLibrariesAndJdks()
         }
