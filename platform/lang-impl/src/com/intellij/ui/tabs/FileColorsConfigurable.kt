@@ -5,6 +5,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.search.SearchableOptionContributor
+import com.intellij.ide.ui.search.SearchableOptionProcessor
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
@@ -44,14 +46,18 @@ import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.RegionPaintIcon
 import com.intellij.util.ui.RegionPainter
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.PropertyKey
 import java.awt.*
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
 
+private const val ID = "reference.settings.ide.settings.file-colors"
+@PropertyKey(resourceBundle = "messages.IdeBundle") private const val DISPLAY_NAME_KEY = "configurable.file.colors"
+
 internal class FileColorsConfigurable(project: Project) : SearchableConfigurable, NoScroll {
-  override fun getId(): String = "reference.settings.ide.settings.file-colors"
-  override fun getDisplayName(): @Nls String = message("configurable.file.colors")
+  override fun getId(): String = ID
+  override fun getDisplayName(): @Nls String = message(DISPLAY_NAME_KEY)
   override fun getHelpTopic(): String = id
 
   private val enabledFileColors = object : CheckBoxConfigurable() {
@@ -499,5 +505,13 @@ private class ColorListPopupStep(val model: FileColorsTableModel, val scope: Nam
     // invoke later to close popup before showing dialog
     invokeLater { model.addScopeColor(scope, value) }
     return null
+  }
+}
+
+class FileColorsSearchOptionContributor : SearchableOptionContributor() {
+  override fun processOptions(processor: SearchableOptionProcessor) {
+    val displayName = message(DISPLAY_NAME_KEY)
+    processor.addOptions("Folder Colors", null, displayName, ID, displayName, false)
+    processor.addOptions("Directory Colors", null, displayName, ID, displayName, false)
   }
 }

@@ -1061,6 +1061,8 @@
     <projectConfigurable groupId="appearance" groupWeight="112" instance="com.intellij.ui.tabs.FileColorsConfigurable"
                          id="reference.settings.ide.settings.file-colors"
                          key="configurable.file.colors" bundle="messages.IdeBundle"/>
+    <search.optionContributor implementation="com.intellij.ui.tabs.FileColorsSearchOptionContributor"/>
+
 
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.PlaybackDebugger"/>
     <uiDebuggerExtension implementation="com.intellij.ui.debugger.extensions.ActionTracer"/>
