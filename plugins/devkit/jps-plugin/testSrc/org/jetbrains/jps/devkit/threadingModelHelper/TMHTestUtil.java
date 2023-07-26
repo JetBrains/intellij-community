@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -13,17 +13,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+
+import static org.jetbrains.jps.devkit.threadingModelHelper.TMHAssertionGenerator.generators;
 
 public final class TMHTestUtil {
-  private static final String REQUIRES_EDT_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
-  private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
-  private static final String REQUIRES_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresReadLock";
-  private static final String REQUIRES_WRITE_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresWriteLock";
-  private static final String REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME =
-    "com/intellij/util/concurrency/annotations/fake/RequiresReadLockAbsence";
-  private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
-  private static final String APPLICATION_CLASS_NAME = "com/intellij/openapi/application/fake/Application";
 
   public static void printDebugInfo(byte[] classData, byte[] instrumentedClassData) {
     System.out.println(classDataToText(classData));
@@ -90,13 +83,14 @@ public final class TMHTestUtil {
     FailSafeClassReader reader = new FailSafeClassReader(classData);
     int flags = InstrumenterClassWriter.getAsmClassWriterFlags(InstrumenterClassWriter.getClassFileVersion(reader));
     ClassWriter writer = new ClassWriter(reader, flags);
-    boolean instrumented = TMHInstrumenter.instrument(reader, writer, Set.of(
-      new TMHAssertionGenerator.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertNoReadAccess(REQUIRES_READ_LOCK_ABSENCE_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
-    ), true);
+    boolean instrumented = TMHInstrumenter.instrument(
+      reader, writer,
+      generators(
+        "com/intellij/util/concurrency/fake/ThreadingAssertions",
+        "com/intellij/util/concurrency/annotations/fake"
+      ),
+      true
+    );
     return instrumented ? writer.toByteArray() : null;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.compiler.instrumentation.FailSafeMethodVisitor;
@@ -28,13 +28,7 @@ public final class TMHInstrumenter {
   }
 
   public static boolean instrument(ClassReader classReader, ClassVisitor classWriter, boolean generateLineNumbers) {
-    return instrument(classReader, classWriter, Set.of(
-      new TMHAssertionGenerator.AssertEdt(),
-      new TMHAssertionGenerator.AssertBackgroundThread(),
-      new TMHAssertionGenerator.AssertReadAccess(),
-      new TMHAssertionGenerator.AssertWriteAccess(),
-      new TMHAssertionGenerator.AssertNoReadAccess()
-    ), generateLineNumbers);
+    return instrument(classReader, classWriter, TMHAssertionGenerator.generators(), generateLineNumbers);
   }
 
   private static class AnnotatedMethodsCollector extends ClassVisitor {
