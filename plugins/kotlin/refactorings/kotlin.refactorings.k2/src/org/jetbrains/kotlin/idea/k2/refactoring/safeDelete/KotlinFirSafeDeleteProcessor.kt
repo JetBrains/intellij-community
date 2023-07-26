@@ -18,7 +18,7 @@ import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
 import com.intellij.util.containers.map2Array
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtClassOrObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol

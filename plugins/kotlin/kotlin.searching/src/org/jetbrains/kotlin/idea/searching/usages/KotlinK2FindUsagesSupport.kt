@@ -13,7 +13,7 @@ import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.util.Processor
 import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.KtDeclarationRenderer

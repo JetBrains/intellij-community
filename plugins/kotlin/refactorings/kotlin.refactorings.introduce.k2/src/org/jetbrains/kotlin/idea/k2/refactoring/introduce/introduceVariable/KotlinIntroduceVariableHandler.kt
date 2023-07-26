@@ -21,7 +21,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KtRendererAnnotationsFilter

@@ -10,7 +10,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.analyzeInModalWindow
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.analyzeInModalWindow
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
 import org.jetbrains.kotlin.idea.refactoring.renderTrimmed
