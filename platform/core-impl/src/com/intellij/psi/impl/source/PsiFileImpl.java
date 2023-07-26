@@ -605,6 +605,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   /**
    * @return a stub tree, if this file has it, and only if AST isn't loaded
+   * @implNote for non-physical files, this method can still load AST even if it's not yet loaded
    */
   @Override
   public @Nullable StubTree getStubTree() {
@@ -926,6 +927,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     return calcTreeElement();
   }
 
+  /**
+   * @implNote for non-physical files, this method can still load AST even if it's not yet loaded
+   */
   public @Nullable FileASTNode getNodeIfLoaded() {
     return getTreeElement();
   }
