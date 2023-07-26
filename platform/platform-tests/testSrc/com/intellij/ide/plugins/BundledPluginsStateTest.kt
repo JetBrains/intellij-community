@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.core.CoreBundle
@@ -19,13 +19,13 @@ class BundledPluginsStateTest : LightPlatformTestCase() {
       getIdeaDescriptor(it.first, it.second)
     }
 
-    BundledPluginsState.writePluginIdsToFile(pluginIds)
-    assertThat(BundledPluginsState.readPluginIdsFromFile())
+    writePluginIdsToFile(pluginIds)
+    assertThat(readPluginIdsFromFile())
       .hasSameElementsAs(pluginIds.map { it.pluginId to it.category })
   }
 
   fun testSavingState() {
-    assertThat(BundledPluginsState.readPluginIdsFromFile().map(Pair<PluginId, Category>::first))
+    assertThat(readPluginIdsFromFile().map(Pair<PluginId, Category>::first))
       .hasSameElementsAs(BundledPluginsState.loadedPlugins.map(IdeaPluginDescriptor::getPluginId))
 
     val savedBuildNumber = PropertiesComponent.getInstance().savedBuildNumber
