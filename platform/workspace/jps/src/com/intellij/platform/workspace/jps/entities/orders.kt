@@ -2,14 +2,10 @@
 package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.annotations.Child
 
 /**
  * This entity stores order of facets in iml file. This is needed to ensure that facet tags are saved in the same order to avoid
@@ -51,6 +47,10 @@ fun MutableEntityStorage.modifyEntity(entity: FacetsOrderEntity, modification: F
 val ModuleEntity.facetOrder: @Child FacetsOrderEntity?
     by WorkspaceEntity.extension()
 
+/**
+ * Stores order of excluded roots in iml file. 
+ * This is needed to ensure that corresponding tags are saved in the same order to avoid unnecessary modifications of iml file.
+ */
 interface ExcludeUrlOrderEntity : WorkspaceEntity {
   val order: List<VirtualFileUrl>
 

@@ -3,15 +3,14 @@ package com.intellij.platform.workspace.jps.entities
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.workspace.storage.*
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.EntityType
-import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.annotations.Child
 import com.intellij.platform.workspace.storage.impl.containers.toMutableWorkspaceList
 import org.jetbrains.annotations.NonNls
 
+/**
+ * Describes configuration of a [Module][com.intellij.openapi.module.Module]. 
+ * See [package documentation](psi_element://com.intellij.platform.workspace.jps.entities) for more details.
+ */
 interface ModuleEntity : WorkspaceEntityWithSymbolicId {
   val name: @NlsSafe String
 
@@ -77,10 +76,17 @@ var ModuleEntity.Builder.sourceRoots: List<SourceRootEntity>
   by WorkspaceEntity.extension()
 //endregion
 
+/**
+ * Describes additional data stored in [Module][com.intellij.openapi.module.Module] instance.
+ */
 interface ModuleCustomImlDataEntity : WorkspaceEntity {
   val module: ModuleEntity
 
   val rootManagerTagCustomData: @NonNls String?
+
+  /**
+   * Specifies custom [module options][com.intellij.openapi.module.Module.getOptionValue].
+   */
   val customModuleOptions: Map<@NonNls String, @NonNls String>
 
   //region generated code
@@ -116,6 +122,10 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleCustomImlDataEntity,
   ModuleCustomImlDataEntity.Builder::class.java, entity, modification)
 //endregion
 
+/**
+ * Describes [explicit module group][com.intellij.openapi.module.ModuleManager.getModuleGroupPath]. Note that explicit module groups are
+ * deprecated, so this entity should be used for compatibility with old code only.
+ */
 interface ModuleGroupPathEntity : WorkspaceEntity {
   val module: ModuleEntity
 
@@ -150,7 +160,9 @@ fun MutableEntityStorage.modifyEntity(entity: ModuleGroupPathEntity, modificatio
   ModuleGroupPathEntity.Builder::class.java, entity, modification)
 //endregion
 
-
+/**
+ * Describes options for a [Module][com.intellij.openapi.module.Module] imported from some external project system (Maven, Gradle).
+ */
 interface ExternalSystemModuleOptionsEntity : WorkspaceEntity {
   val module: ModuleEntity
 
@@ -197,6 +209,9 @@ fun MutableEntityStorage.modifyEntity(entity: ExternalSystemModuleOptionsEntity,
   ExternalSystemModuleOptionsEntity.Builder::class.java, entity, modification)
 //endregion
 
+/**
+ * Provides reference to [production module][com.intellij.openapi.roots.TestModuleProperties.getProductionModule].
+ */
 interface TestModulePropertiesEntity : WorkspaceEntity {
   val module: ModuleEntity
   val productionModuleId: ModuleId
