@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.GeneralSettings
@@ -6,8 +6,8 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.notification.NotificationAnnouncingMode
 import com.intellij.notification.NotificationGroup
-import com.intellij.notification.impl.NotificationsAnnouncer
 import com.intellij.notification.impl.NotificationsConfigurationImpl
+import com.intellij.notification.impl.isNotificationAnnouncerFeatureAvailable
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
@@ -29,10 +29,10 @@ import javax.swing.ListSelectionModel
 /**
  * @author Konstantin Bulenkov
  */
-class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl>, Disposable {
+internal class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : ConfigurableUi<NotificationsConfigurationImpl>, Disposable {
   private val ui: DialogPanel
-  private val notificationsList = createNotificationsList()
-  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationsList, null, null) {
+  private val notificationList = createNotificationList()
+  private val speedSearch = object : ListSpeedSearch<NotificationSettingsWrapper>(notificationList, null, null) {
     override fun isMatchingElement(element: Any?, pattern: String?): Boolean {
       if (super.isMatchingElement(element, pattern)) {
         return true
@@ -74,7 +74,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
           .bindSelected(settings::SYSTEM_NOTIFICATIONS)
           .component
       }
-      if (NotificationsAnnouncer.isFeatureAvailable) {
+      if (isNotificationAnnouncerFeatureAvailable) {
         row(IdeBundle.message("notifications.configurable.announcing.title")) {
           val options = listOf(NotificationAnnouncingMode.NONE,
                                NotificationAnnouncingMode.MEDIUM,
@@ -88,8 +88,8 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
         }.visibleIf(screenReaderEnabledProperty)
       }
       row {
-        notificationSettings = NotificationSettingsUi(notificationsList.model.getElementAt(0), useBalloonNotifications.selected)
-        scrollCell(notificationsList)
+        notificationSettings = NotificationSettingsUi(notificationList.model.getElementAt(0), useBalloonNotifications.selected)
+        scrollCell(notificationList)
         cell(notificationSettings.ui)
           .align(AlignY.TOP)
       }
@@ -100,14 +100,14 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
       }.topGap(TopGap.SMALL)
         .resizableRow()
     }
-    ScrollingUtil.ensureSelectionExists(notificationsList)
+    ScrollingUtil.ensureSelectionExists(notificationList)
 
     ApplicationManager.getApplication().messageBus.connect(this).subscribe(UISettingsListener.TOPIC, UISettingsListener {
       screenReaderEnabledProperty.set(GeneralSettings.getInstance().isSupportScreenReaders)
     })
   }
 
-  private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
+  private fun createNotificationList(): JBList<NotificationSettingsWrapper> {
     return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings
       .sortedWith(Comparator { nsw1, nsw2 -> NaturalComparator.INSTANCE.compare(nsw1.toString(), nsw2.toString()) })
       .toTypedArray())
@@ -122,10 +122,10 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
 
   override fun reset(settings: NotificationsConfigurationImpl) {
     ui.reset()
-    val selectedIndex = notificationsList.selectedIndex
-    notificationsList.model = createNotificationsList().model
-    notificationsList.selectedIndex = selectedIndex
-    notificationSettings.updateUi(notificationsList.selectedValue)
+    val selectedIndex = notificationList.selectedIndex
+    notificationList.model = createNotificationList().model
+    notificationList.selectedIndex = selectedIndex
+    notificationSettings.updateUi(notificationList.selectedValue)
     myDoNotAskConfigurableUi.reset()
   }
 
@@ -134,8 +134,8 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   }
 
   private fun isNotificationsModified(): Boolean {
-    for (i in 0 until notificationsList.model.size) {
-      if (notificationsList.model.getElementAt(i).hasChanged()) {
+    for (i in 0 until notificationList.model.size) {
+      if (notificationList.model.getElementAt(i).hasChanged()) {
         return true
       }
     }
@@ -150,8 +150,8 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
 
   override fun apply(settings: NotificationsConfigurationImpl) {
     ui.apply()
-    for (i in 0 until notificationsList.model.size) {
-      val settingsWrapper = notificationsList.model.getElementAt(i)
+    for (i in 0 until notificationList.model.size) {
+      val settingsWrapper = notificationList.model.getElementAt(i)
       if (settingsWrapper.hasChanged()) {
         settingsWrapper.apply()
       }

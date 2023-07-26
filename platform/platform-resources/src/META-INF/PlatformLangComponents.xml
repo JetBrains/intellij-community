@@ -209,7 +209,7 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
-    <listener class="com.intellij.notification.impl.NotificationsAnnouncer$MyListener" topic="com.intellij.notification.Notifications"
+    <listener class="com.intellij.notification.impl.NotificationsAnnouncerListener" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
 
     <listener class="com.intellij.internal.performance.LatenciometerListener"
@@ -252,7 +252,7 @@
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
-    <listener class="com.intellij.notification.impl.NotificationsAnnouncer$MyListener" topic="com.intellij.notification.Notifications"
+    <listener class="com.intellij.notification.impl.NotificationsAnnouncerListener" topic="com.intellij.notification.Notifications"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.codeInsight.actions.ReaderModeSettingsListener"
               topic="com.intellij.codeInsight.actions.ReaderModeListener" activeInHeadlessMode="false"/>
