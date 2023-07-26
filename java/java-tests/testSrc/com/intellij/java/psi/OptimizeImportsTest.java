@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -23,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.PathUtil;
 
@@ -65,12 +67,27 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
   public void testIDEADEV10716() { doTest(); }
   public void testUnresolvedImports() { doTest(); }
   public void testUnresolvedImports2() { doTest(); }
-  public void testInterfaceMethodThroughInheritance() { 
+  public void testInterfaceMethodThroughInheritance() {
     myFixture.addClass("package foo; public interface Foo {" +
                        "  static void foo() {}" +
                        "  interface Inner extends Foo {}" +
                        "}");
-    doTest(); 
+    doTest();
+  }
+  public void testStringTemplates() {
+    IdeaTestUtil.setModuleLanguageLevel(getModule(), LanguageLevel.JDK_21_PREVIEW);
+    myFixture.addClass("""
+      package java.lang;
+      public interface StringTemplate {
+        Processor<String, RuntimeException> STR = null;
+        
+        @PreviewFeature(feature=PreviewFeature.Feature.STRING_TEMPLATES)
+        @FunctionalInterface
+        public interface Processor<R, E extends Throwable> {
+          R process(StringTemplate stringTemplate) throws E;
+        }
+      }""");
+    doTest();
   }
   public void testNewImportListIsEmptyAndCommentPreserved() { doTest(); }
   public void testNewImportListIsEmptyAndJavaDocWithInvalidCodePreserved() { doTest(); }
