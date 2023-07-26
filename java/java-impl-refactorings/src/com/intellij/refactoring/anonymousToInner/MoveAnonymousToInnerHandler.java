@@ -47,6 +47,9 @@ public class MoveAnonymousToInnerHandler extends MoveHandlerDelegate {
   @Nullable
   @Override
   public String getActionName(PsiElement @NotNull [] elements) {
-    return JavaRefactoringBundle.message("convert.anonymous.to.inner.action.name");
+    if (elements.length > 0 && elements[0] instanceof PsiAnonymousClass) {
+      return JavaRefactoringBundle.message("convert.anonymous.to.inner.action.name");
+    }
+    return JavaRefactoringBundle.message("convert.local.to.inner.action.name");
   }
 }
