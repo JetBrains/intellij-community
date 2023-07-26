@@ -33,7 +33,6 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.concurrent.CancellationException
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction
 import kotlin.system.exitProcess
@@ -53,7 +52,6 @@ internal suspend fun initApplicationImpl(args: List<String>,
                                          app: ApplicationImpl,
                                          asyncScope: CoroutineScope,
                                          preloadCriticalServicesJob: Job,
-                                         telemetryInitJob: Job,
                                          appInitListeners: Deferred<List<ApplicationInitializedListener>>) {
   val starter = subtask("app initialization") {
     val deferredStarter = subtask("app starter creation") {
@@ -64,18 +62,6 @@ internal suspend fun initApplicationImpl(args: List<String>,
       // doesn't block app start-up
       asyncScope.launch(CoroutineName("post app init tasks")) {
         runPostAppInitTasks()
-      }
-
-      launch(CoroutineName("telemetry waiting")) {
-        try {
-          telemetryInitJob.join()
-        }
-        catch (e: CancellationException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-        }
       }
 
       asyncScope.launch {

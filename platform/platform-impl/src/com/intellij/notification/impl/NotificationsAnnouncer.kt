@@ -30,7 +30,8 @@ object NotificationsAnnouncer {
   private val mode: NotificationAnnouncingMode get() =
     NotificationsConfiguration.getNotificationsConfiguration().notificationAnnouncingMode
 
-  val isFeatureAvailable: Boolean get() = Registry.`is`("ide.accessibility.announcing.notifications.available", false)
+  val isFeatureAvailable: Boolean
+    get() = Registry.`is`("ide.accessibility.announcing.notifications.available", false)
 
   @ApiStatus.Experimental
   @JvmStatic
@@ -41,7 +42,7 @@ object NotificationsAnnouncer {
            && JBR.isAccessibleAnnouncerSupported()
   }
 
-  private val callersCache = mutableListOf<FrameWithAccessible>()
+  private val callerCache = mutableListOf<FrameWithAccessible>()
 
   private fun doNotify(notification: Notification, project: Project?) {
     if (!isEnabled()) return
@@ -70,15 +71,15 @@ object NotificationsAnnouncer {
   private fun findCaller(frame: JFrame): Accessible? {
     (frame.rootPane as? IdeRootPane)?.let { return it }
 
-    var caller = callersCache.firstOrNull { it.isValid && it.frame === frame }?.accessible
+    var caller = callerCache.firstOrNull { it.isValid && it.frame === frame }?.accessible
     if (caller == null){
-      callersCache.removeAll { !it.isValid }
+      callerCache.removeAll { !it.isValid }
       caller = UIUtil.uiTraverser(frame).firstOrNull {
         it is Accessible && it.isVisible && it is JLabel
       }?.let {
         it as Accessible
       }?.also {
-        callersCache.add(FrameWithAccessible(frame, it))
+        callerCache.add(FrameWithAccessible(frame, it))
       }
     }
 

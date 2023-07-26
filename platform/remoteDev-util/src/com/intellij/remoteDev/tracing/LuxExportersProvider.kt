@@ -8,12 +8,14 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.io.File
 import java.time.Duration
 
 private val LOG = logger<LuxExportersProvider>()
-class LuxExportersProvider : OTelExportersProvider {
+
+internal class LuxExportersProvider : OTelExportersProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
     return emptyList()
   }
@@ -26,9 +28,10 @@ class LuxExportersProvider : OTelExportersProvider {
       LOG.warn("Failed to create a file for metrics")
       null
     }
+
     fileToWrite?.let {
       return listOf(
-        FilteredMetricsExporter(CsvGzippedMetricsExporter(fileToWrite)) { metric ->
+        FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
           metric.belongsToScope(Lux)
         })
     }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.diagnostic.telemetry.otExporters.CsvMetricsExporter
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.common.AttributesBuilder
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
@@ -14,7 +15,6 @@ import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.Instant
@@ -22,13 +22,13 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
 
 @ApiStatus.Internal
-open class OpenTelemetryConfigurator(@JvmField protected val mainScope: CoroutineScope = CoroutineScope(Dispatchers.Default),
-                                     @JvmField protected val sdkBuilder: OpenTelemetrySdkBuilder,
-                                     serviceName: String = "",
-                                     serviceVersion: String = "",
-                                     serviceNamespace: String = "",
-                                     customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
-                                     enableMetricsByDefault: Boolean) {
+class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
+                                private val sdkBuilder: OpenTelemetrySdkBuilder,
+                                serviceName: String = "",
+                                serviceVersion: String = "",
+                                serviceNamespace: String = "",
+                                customResourceBuilder: ((AttributesBuilder) -> Unit)? = null,
+                                enableMetricsByDefault: Boolean) {
   private val metricsReportingPath = if (enableMetricsByDefault) OpenTelemetryUtils.metricsReportingPath() else null
   val resource: Resource = Resource.create(
     Attributes.builder()
@@ -86,8 +86,11 @@ open class OpenTelemetryConfigurator(@JvmField protected val mainScope: Coroutin
     result.add(MetricsExporterEntry(
       metrics = listOf(
         FilteredMetricsExporter(
-          CsvMetricsExporter(
-            RollingFileSupplier(metricsReportingPath))) { metric -> metric.belongsToScope(PlatformMetrics) }
+          underlyingExporter = SynchronizedClearableLazy {
+            CsvMetricsExporter(writeToFileSupplier = RollingFileSupplier(metricsReportingPath))
+          },
+          predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
+        ),
       ),
       duration = Duration.ofMinutes(1))
     )

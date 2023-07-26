@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
 @ApiStatus.Internal
@@ -16,6 +17,8 @@ public enum LoadingState {
   COMPONENTS_LOADED("app component loaded"),
   APP_STARTED("app started"),
   PROJECT_OPENED("project opened");
+
+  private static final AtomicReference<LoadingState> currentState = new AtomicReference<>(BOOTSTRAP);
 
   final String displayName;
 
@@ -39,7 +42,7 @@ public enum LoadingState {
       return;
     }
 
-    LoadingState currentState = StartUpMeasurer.currentState.get();
+    LoadingState currentState = LoadingState.currentState.get();
     if (currentState.compareTo(this) >= 0 || isKnownViolator()) {
       return;
     }
@@ -113,6 +116,22 @@ public enum LoadingState {
   }
 
   public boolean isOccurred() {
-    return StartUpMeasurer.currentState.get().compareTo(this) >= 0;
+    return currentState.get().compareTo(this) >= 0;
+  }
+
+  @ApiStatus.Internal
+  public static void setCurrentState(@NotNull LoadingState state) {
+    LoadingState old = currentState.getAndSet(state);
+    if (old.compareTo(state) > 0) {
+      BiConsumer<String, Throwable> errorHandler = LoadingState.errorHandler;
+      if (errorHandler != null) {
+        errorHandler.accept("New state " + state + " cannot precede old " + old, new Throwable());
+      }
+    }
+  }
+
+  @ApiStatus.Internal
+  public static void compareAndSetCurrentState(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
+    currentState.compareAndSet(expectedState, newState);
   }
 }

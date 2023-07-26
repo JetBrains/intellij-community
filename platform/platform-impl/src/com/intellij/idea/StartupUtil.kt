@@ -27,6 +27,7 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.ui.*
@@ -38,6 +39,7 @@ import com.intellij.util.*
 import com.intellij.util.lang.ZipFilePool
 import com.intellij.util.ui.EDT
 import com.jetbrains.JBR
+import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.ide.BuiltInServerManager
@@ -56,6 +58,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
@@ -266,15 +269,24 @@ fun CoroutineScope.startApplication(args: List<String>,
 
   val appRegisteredJob = CompletableDeferred<Unit>()
 
+  launch {
+    Class.forName(TelemetryManagerImpl::class.java.name, true, AppStarter::class.java.classLoader)
+    Class.forName(OpenTelemetryConfigurator::class.java.name, true, AppStarter::class.java.classLoader)
+    Class.forName(OpenTelemetrySdkBuilder::class.java.name, true, AppStarter::class.java.classLoader)
+  }
+
   val appLoaded = launch {
     val app = appDeferred.await()
 
-    // async - handle error separately
-    val telemetryInitJob = launch {
-      lockSystemDirsJob.join()
-      appInfoDeferred.join()
-      subtask("opentelemetry configuration") {
+    val telemetryInitJob = launch(CoroutineName("opentelemetry configuration")) {
+      try {
         TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
       }
     }
 

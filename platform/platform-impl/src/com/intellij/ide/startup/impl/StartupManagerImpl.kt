@@ -159,9 +159,9 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
   suspend fun runPostStartupActivities() {
     // opened on startup
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
+    LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.PROJECT_OPENED)
     // opened from the welcome screen
-    StartUpMeasurer.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
+    LoadingState.compareAndSetCurrentState(LoadingState.APP_STARTED, LoadingState.PROJECT_OPENED)
 
     coroutineContext.ensureActive()
 

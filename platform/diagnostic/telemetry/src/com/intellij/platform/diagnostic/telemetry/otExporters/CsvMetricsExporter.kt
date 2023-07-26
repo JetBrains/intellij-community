@@ -68,6 +68,7 @@ class CsvMetricsExporter internal constructor(private val writeToFileSupplier: R
     if (metrics.isEmpty()) {
       return CompletableResultCode.ofSuccess()
     }
+
     val result = CompletableResultCode()
     val writeToFile = writeToFileSupplier.get()
     val lines = metrics.asSequence()
@@ -84,17 +85,12 @@ class CsvMetricsExporter internal constructor(private val writeToFileSupplier: R
     return result
   }
 
-  override fun flush(): CompletableResultCode {
-    return CompletableResultCode.ofSuccess()
-  }
+  override fun flush(): CompletableResultCode = CompletableResultCode.ofSuccess()
 
-  override fun shutdown(): CompletableResultCode {
-    return CompletableResultCode.ofSuccess()
-  }
+  override fun shutdown(): CompletableResultCode = CompletableResultCode.ofSuccess()
 }
 
 /** Copy html file with plotting scripts into targetDir  */
-@Throws(IOException::class)
 private fun copyHtmlPlotterToOutputDir(targetDir: Path) {
   val targetToCopyTo = targetDir.resolve(HTML_PLOTTER_NAME)
   val plotterHtmlUrl = CsvMetricsExporter::class.java.getResource(HTML_PLOTTER_NAME)

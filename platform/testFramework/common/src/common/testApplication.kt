@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.ide.bootstrap.callAppInitialized
 import com.intellij.ide.bootstrap.getAppInitializedListeners
@@ -173,7 +172,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
       }
     }
 
-    StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
+    LoadingState.setCurrentState(LoadingState.APP_STARTED)
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
   catch (e: InterruptedException) {

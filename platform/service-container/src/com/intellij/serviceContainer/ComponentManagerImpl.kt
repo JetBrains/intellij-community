@@ -315,7 +315,7 @@ abstract class ComponentManagerImpl(
 
     // app - phase must be set before getMessageBus()
     if (parent == null && !LoadingState.COMPONENTS_REGISTERED.isOccurred /* loading plugin on the fly */) {
-      StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
+      LoadingState.setCurrentState(LoadingState.COMPONENTS_REGISTERED)
     }
 
     // ensuring that `messageBus` is created, regardless of the lazy listener map state
@@ -418,7 +418,7 @@ abstract class ComponentManagerImpl(
   @TestOnly
   suspend fun loadAppComponents() {
     createComponentsNonBlocking()
-    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 
   @Suppress("DuplicatedCode")

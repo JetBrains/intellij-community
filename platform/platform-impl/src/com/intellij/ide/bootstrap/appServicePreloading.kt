@@ -135,7 +135,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
         loadComponentInEdtTask()
       }
     }
-    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 
   if (!app.isHeadlessEnvironment && !app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {

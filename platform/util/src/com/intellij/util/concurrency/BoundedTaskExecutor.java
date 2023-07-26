@@ -3,7 +3,6 @@ package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ContextAwareRunnable;
 import com.intellij.concurrency.ThreadContext;
-import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -208,11 +207,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
             // It means that it shall not possess a thread context,
             // but the executed tasks must have a context.
             if (myChangeThreadName) {
-              String name = myName;
-              if (StartUpMeasurer.isEnabled()) {
-                name += "[" + Thread.currentThread().getName() + "]";
-              }
-              ConcurrencyUtil.runUnderThreadName(name, this::executeFirstTaskAndHelpQueue);
+              ConcurrencyUtil.runUnderThreadName(myName, this::executeFirstTaskAndHelpQueue);
             }
             else {
               executeFirstTaskAndHelpQueue();

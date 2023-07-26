@@ -10,6 +10,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.MessageBusSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.io.File
 import java.time.Duration
@@ -29,7 +30,7 @@ private class RdctExportersProvider : OTelExportersProvider {
     }
     fileToWrite?.let {
       return listOf(
-        FilteredMetricsExporter(CsvGzippedMetricsExporter(fileToWrite)) { metric ->
+        FilteredMetricsExporter(SynchronizedClearableLazy { CsvGzippedMetricsExporter(fileToWrite) }) { metric ->
           metric.belongsToScope(RDCT)
         })
     }

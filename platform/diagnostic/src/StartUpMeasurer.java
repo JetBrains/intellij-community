@@ -10,13 +10,9 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public final class StartUpMeasurer {
-  static final AtomicReference<LoadingState> currentState = new AtomicReference<>(LoadingState.BOOTSTRAP);
-
   public static final long MEASURE_THRESHOLD = TimeUnit.MILLISECONDS.toNanos(10);
 
   // `What + noun` is used as a naming scheme to make analyzing easier
@@ -174,23 +170,6 @@ public final class StartUpMeasurer {
     ActivityImpl item = new ActivityImpl(name, start, /* parent = */ null, pluginId, category);
     item.setEnd(end);
     items.add(item);
-  }
-
-  public static void setCurrentState(@NotNull LoadingState state) {
-    LoadingState old = currentState.getAndSet(state);
-    if (old.compareTo(state) > 0) {
-      BiConsumer<String, Throwable> errorHandler = LoadingState.errorHandler;
-      if (errorHandler != null) {
-        errorHandler.accept("New state " + state + " cannot precede old " + old, new Throwable());
-      }
-    }
-    addInstantEvent(state.displayName);
-  }
-
-  public static void compareAndSetCurrentState(@NotNull LoadingState expectedState, @NotNull LoadingState newState) {
-    if (currentState.compareAndSet(expectedState, newState)) {
-      addInstantEvent(newState.displayName);
-    }
   }
 
   @ApiStatus.Internal

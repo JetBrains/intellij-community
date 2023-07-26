@@ -24,7 +24,7 @@ import java.util.function.Function;
  * Plugins can provide their own registry keys using the
  * {@code com.intellij.registryKey} extension point (see {@link RegistryKeyBean} for more details).
  */
-public final class Registry  {
+public final class Registry {
   private static Reference<Map<String, String>> bundledRegistry;
 
   public static final @NonNls String REGISTRY_BUNDLE = "misc.registry";
@@ -89,11 +89,11 @@ public final class Registry  {
     }
   }
 
-  public static int intValue(@NonNls @NotNull String key, int defaultValue, int minValue, int maxValue) {
-    if (defaultValue < minValue || defaultValue > maxValue) {
-      throw new IllegalArgumentException("Wrong values for default:min:max (" + defaultValue + ":" + minValue + ":" + maxValue+")");
-    }
-    return MathUtil.clamp(intValue(key, defaultValue), minValue, maxValue);
+  @TestOnly
+  void reset() {
+    myUserProperties.clear();
+    myValues.clear();
+    isLoaded = false;
   }
 
   public static double doubleValue(@NonNls @NotNull String key) throws MissingResourceException {
@@ -195,7 +195,14 @@ public final class Registry  {
     return state;
   }
 
-  private static @NotNull Map<String, String> fromState(@NotNull Element state){
+  public static int intValue(@NonNls @NotNull String key, int defaultValue, int minValue, int maxValue) {
+    if (defaultValue < minValue || defaultValue > maxValue) {
+      throw new IllegalArgumentException("Wrong values for default:min:max (" + defaultValue + ":" + minValue + ":" + maxValue + ")");
+    }
+    return MathUtil.clamp(intValue(key, defaultValue), minValue, maxValue);
+  }
+
+  private static @NotNull Map<String, String> fromState(@NotNull Element state) {
     Map<String, String> map = new HashMap<>();
     for (Element eachEntry : state.getChildren("entry")) {
       String key = eachEntry.getAttributeValue("key");
@@ -205,28 +212,6 @@ public final class Registry  {
       }
     }
     return map;
-  }
-
-  private static @NotNull Map<String, String> loadStateInternal(@NotNull Registry registry, @Nullable Element state, @Nullable Map<String, String> earlyAccess){
-    Map<String, String> userProperties = registry.myUserProperties;
-    userProperties.clear();
-    if (state != null) {
-      Map<String, String> map = fromState(state);
-      for (Map.Entry<String, String> entry : map.entrySet()) {
-        RegistryValue registryValue = registry.doGet(entry.getKey());
-        if (registryValue.isChangedFromDefault(entry.getValue(), registry)) {
-          userProperties.put(entry.getKey(), entry.getValue());
-          registryValue.resetCache();
-        }
-      }
-    }
-
-    if (earlyAccess != null) {
-      // yes, earlyAccess overrides user properties
-      userProperties.putAll(earlyAccess);
-    }
-    registry.isLoaded = true;
-    return userProperties;
   }
 
   private static @NotNull Map<String, String> updateStateInternal(@NotNull Registry registry, @Nullable Element state) {
@@ -259,10 +244,11 @@ public final class Registry  {
   @ApiStatus.Internal
   public static @NotNull Map<String, String> loadState(@Nullable Element state, @Nullable Map<String, String> earlyAccess) {
     Registry registry = ourInstance;
-    if (!registry.isLoaded) {
-      return loadStateInternal(registry, state, earlyAccess);
-    } else {
+    if (registry.isLoaded) {
       return updateStateInternal(registry, state);
+    }
+    else {
+      return loadStateInternal(registry, state, earlyAccess);
     }
   }
 
@@ -365,10 +351,27 @@ public final class Registry  {
     return valueChangeListener;
   }
 
-  @TestOnly
-  void reset(){
-    myUserProperties.clear();
-    myValues.clear();
-    isLoaded = false;
+  private static @NotNull Map<String, String> loadStateInternal(@NotNull Registry registry,
+                                                                @Nullable Element state,
+                                                                @Nullable Map<String, String> earlyAccess) {
+    Map<String, String> userProperties = registry.myUserProperties;
+    userProperties.clear();
+    if (state != null) {
+      Map<String, String> map = fromState(state);
+      for (Map.Entry<String, String> entry : map.entrySet()) {
+        RegistryValue registryValue = registry.doGet(entry.getKey());
+        if (registryValue.isChangedFromDefault(entry.getValue(), registry)) {
+          userProperties.put(entry.getKey(), entry.getValue());
+          registryValue.resetCache();
+        }
+      }
+    }
+
+    if (earlyAccess != null) {
+      // yes, earlyAccess overrides user properties
+      userProperties.putAll(earlyAccess);
+    }
+    registry.isLoaded = true;
+    return userProperties;
   }
 }

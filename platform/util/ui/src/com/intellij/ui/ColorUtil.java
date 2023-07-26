@@ -10,10 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 import java.util.function.Supplier;
 
-import static com.intellij.util.MathUtil.clamp;
-import static java.lang.Math.round;
-import static java.lang.Math.sqrt;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -266,9 +262,9 @@ public final class ColorUtil {
     int red = blendRgb(bg.getRed(), fg.getRed(), value);
     int green = blendRgb(bg.getGreen(), fg.getGreen(), value);
     int blue = blendRgb(bg.getBlue(), fg.getBlue(), value);
-    return new Color(clamp(red, 0, 255),
-                     clamp(green, 0, 255),
-                     clamp(blue, 0, 255));
+    return new Color(MathUtil.clamp(red, 0, 255),
+                     MathUtil.clamp(green, 0, 255),
+                     MathUtil.clamp(blue, 0, 255));
   }
 
   /**
@@ -278,7 +274,7 @@ public final class ColorUtil {
    * @return interpolation of bg and fg values with given coefficient normalized to 0..255
    */
   private static int blendRgb(int bg, int fg, double value) {
-    return (int)round(sqrt(bg * bg * (1 - value) + fg * fg * value));
+    return (int)Math.round(Math.sqrt(bg * bg * (1 - value) + fg * fg * value));
   }
 
   /**

@@ -4,7 +4,6 @@
 package com.intellij.ui
 
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.scale.TestScaleHelper
 import org.junit.jupiter.api.extension.AfterAllCallback
@@ -14,7 +13,7 @@ import org.junit.rules.ExternalResource
 
 class RestoreScaleExtension : BeforeAllCallback, AfterAllCallback {
   override fun beforeAll(context: ExtensionContext?) {
-    StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
+    LoadingState.setCurrentState(LoadingState.APP_STARTED)
     IconLoader.activate()
     TestScaleHelper.setState()
   }

@@ -40,6 +40,10 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
                                     telemetryInitJob: Job) {
   val initServiceContainerJob = launch {
     initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+
+    subtask("telemetry waiting") {
+      telemetryInitJob.join()
+    }
   }
 
   val euaTaskDeferred: Deferred<(suspend () -> Boolean)?>? = if (AppMode.isHeadless()) {
@@ -93,7 +97,6 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
                         appInitListeners = appInitListeners,
                         app = app,
                         preloadCriticalServicesJob = preloadCriticalServicesJob,
-                        telemetryInitJob = telemetryInitJob,
                         asyncScope = asyncScope)
   }
 }
@@ -111,7 +114,7 @@ private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred
   }
 }
 
-internal suspend fun preInitApp(app: ApplicationImpl,
+private suspend fun preInitApp(app: ApplicationImpl,
                                 asyncScope: CoroutineScope,
                                 log: Logger,
                                 initLafJob: Job,
@@ -198,6 +201,6 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
   subtask("init app store") {
     // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
     app.stateStore.setPath(configPath)
-    StartUpMeasurer.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
+    LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)
   }
 }

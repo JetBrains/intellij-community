@@ -5,7 +5,6 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.subtask
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
@@ -73,7 +72,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
       launch { reportPluginErrors() }
 
-      StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+      LoadingState.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
       lifecyclePublisher.appStarted()
 
       if (!app.isHeadlessEnvironment) {
