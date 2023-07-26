@@ -200,10 +200,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
   }
 
-  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred = logDeferred,
-                                        appInfoDeferred = appInfoDeferred,
-                                        initUiDeferred = initLafJob,
-                                        args = args)
+  loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args, mainScope)
 
   val euaDocumentDeferred = async { loadEuaDocument(appInfoDeferred) }
 
@@ -342,7 +339,8 @@ var customTargetDirectoryToImportConfig: Path? = null
 private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: Deferred<Logger>,
                                                                  appInfoDeferred: Deferred<ApplicationInfoEx>,
                                                                  initUiDeferred: Job,
-                                                                 args: List<String>) {
+                                                                 args: List<String>,
+                                                                 mainScope: CoroutineScope) {
   launch {
     // this must happen after locking system dirs
     val log = logDeferred.await()
@@ -369,7 +367,7 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
       initUiDeferred.join()
       launch(CoroutineName("mac app init")) {
         runCatching {
-          initMacApplication()
+          initMacApplication(mainScope)
         }.getOrLogException(log)
       }
     }

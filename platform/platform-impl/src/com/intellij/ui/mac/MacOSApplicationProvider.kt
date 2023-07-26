@@ -28,6 +28,7 @@ import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.ui.EDT
 import com.sun.jna.Callback
 import io.netty.handler.codec.http.QueryStringDecoder
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.awt.Desktop
@@ -45,7 +46,7 @@ private val ENABLED = AtomicBoolean(true)
 @Suppress("unused")
 private var UPDATE_CALLBACK_REF: Any? = null
 
-internal fun initMacApplication() {
+internal fun initMacApplication(mainScope: CoroutineScope) {
   val desktop = Desktop.getDesktop()
   desktop.setAboutHandler {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
@@ -57,7 +58,8 @@ internal fun initMacApplication() {
   desktop.setPreferencesHandler {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
       val project = getProject(true)!!
-      submit("Settings") {
+      @Suppress("DEPRECATION")
+      submit("Settings", ApplicationManager.getApplication().coroutineScope) {
         ShowSettingsAction.perform(project)
         ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("ShowSettings"), null, null)
       }
@@ -65,7 +67,7 @@ internal fun initMacApplication() {
   }
   desktop.setQuitHandler { _, response ->
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
-      submit("Quit") { ApplicationManager.getApplication().exit() }
+      submit("Quit", mainScope) { ApplicationManager.getApplication().exit() }
       response.cancelQuit()
     }
     else {
@@ -143,7 +145,7 @@ private fun getProject(useDefault: Boolean): Project? {
   return project
 }
 
-private fun submit(name: String, task: Runnable) {
+private fun submit(name: String, scope: CoroutineScope, task: () -> Unit) {
   LOG.debug { "MacMenu: on EDT = ${EDT.isCurrentThreadEdt()}, ENABLED = ${ENABLED.get()}" }
   if (!ENABLED.get()) {
     LOG.debug("MacMenu: disabled")
@@ -156,11 +158,10 @@ private fun submit(name: String, task: Runnable) {
   }
   else {
     ENABLED.set(false)
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+    scope.launch(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
       try {
         LOG.debug("MacMenu: init ", name)
-        task.run()
+        task()
       }
       finally {
         LOG.debug("MacMenu: done ", name)
@@ -177,10 +178,10 @@ private fun installProtocolHandler() {
     val build = ApplicationInfoImpl.getShadowInstance().build
     if (!build.isSnapshot) {
       LOG.warn("""
-No URL bundle (CFBundleURLTypes) is defined in the main bundle.
-To be able to open external links, specify protocols in the app layout section of the build file.
-Example: args.urlSchemes = ["your-protocol"] will handle following links: your-protocol://open?file=file&line=line
-""".trimIndent())
+        No URL bundle (CFBundleURLTypes) is defined in the main bundle.
+        To be able to open external links, specify protocols in the app layout section of the build file.
+        Example: args.urlSchemes = ["your-protocol"] will handle following links: your-protocol://open?file=file&line=line
+        """.trimIndent())
     }
     return
   }
