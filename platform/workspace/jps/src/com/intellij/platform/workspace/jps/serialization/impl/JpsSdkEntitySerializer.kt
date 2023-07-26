@@ -3,6 +3,7 @@ package com.intellij.platform.workspace.jps.serialization.impl
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsFileEntitySource
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
 import com.intellij.platform.workspace.jps.entities.SdkMainEntity
@@ -49,6 +50,7 @@ val ELEMENT_ADDITIONAL = "additional"
 //TODO::
 //[] Additional data loading
 //[] Additional data saving
+//[] The same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
 
 
 class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFileEntitiesSerializer<SdkMainEntity> {
@@ -82,15 +84,10 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFi
       val homePathVfu = virtualFileManager.fromUrl(homePath)
 
       val roots = readRoots(sdkElement.getChildTagStrict(ELEMENT_ROOTS), virtualFileManager)
-      println("")
 
-      // TODO:::
-      val additional: Element = sdkElement.getChild(ELEMENT_ADDITIONAL)
-      //val myAdditionalData = if (additional != null) mySdkType.loadAdditionalData(this, additional) else null
-      //val jdk = ProjectJdkImpl(null, null)
-      //jdk.readExternal(child!!, this)
-      //mySdks.add(jdk)
-      SdkMainEntity(sdkName, sdkType, sdkVersion, homePathVfu, roots, entitySource)
+      // TODO the same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
+      val additionalDataElement = sdkElement.getChild(ELEMENT_ADDITIONAL)
+      SdkMainEntity(sdkName, sdkType, sdkVersion, homePathVfu, roots, JDOMUtil.write(additionalDataElement), entitySource)
     }
 
     return LoadingResult(mapOf(SdkMainEntity::class.java to sdkEntities))
@@ -170,13 +167,9 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFi
     }
     sdkRootElement.addContent(rootsElement)
 
-    // TODO:::
-    //val additional = Element(ELEMENT_ADDITIONAL)
-    //if (myAdditionalData != null) {
-    //  LOG.assertTrue(mySdkType != null)
-    //  mySdkType.saveAdditionalData(myAdditionalData, additional)
-    //}
-    //sdkRootElement.addContent(additional)
+    val additional = Element(ELEMENT_ADDITIONAL)
+    additional.addContent(JDOMUtil.load(sdkEntity.additionalData))
+    sdkRootElement.addContent(additional)
   }
 
   private fun writeRoots(rootType: String, roots: List<SdkRoot>): Element {

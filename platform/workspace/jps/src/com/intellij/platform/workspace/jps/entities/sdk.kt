@@ -17,6 +17,7 @@ interface SdkMainEntity: WorkspaceEntity {
   val version: String
   val homePath: VirtualFileUrl
   val roots: List<SdkRoot>
+  val additionalData: String
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -27,6 +28,7 @@ interface SdkMainEntity: WorkspaceEntity {
     override var version: String
     override var homePath: VirtualFileUrl
     override var roots: MutableList<SdkRoot>
+    override var additionalData: String
   }
 
   companion object : EntityType<SdkMainEntity, Builder>() {
@@ -38,6 +40,7 @@ interface SdkMainEntity: WorkspaceEntity {
                         version: String,
                         homePath: VirtualFileUrl,
                         roots: List<SdkRoot>,
+                        additionalData: String,
                         entitySource: EntitySource,
                         init: (Builder.() -> Unit)? = null): SdkMainEntity {
       val builder = builder()
@@ -46,6 +49,7 @@ interface SdkMainEntity: WorkspaceEntity {
       builder.version = version
       builder.homePath = homePath
       builder.roots = roots.toMutableWorkspaceList()
+      builder.additionalData = additionalData
       builder.entitySource = entitySource
       init?.invoke(builder)
       return builder

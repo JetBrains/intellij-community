@@ -47,6 +47,9 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
   override val roots: List<SdkRoot>
     get() = dataSource.roots
 
+  override val additionalData: String
+    get() = dataSource.additionalData
+
   override val entitySource: EntitySource
     get() = dataSource.entitySource
 
@@ -103,6 +106,9 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       if (!getEntityData().isRootsInitialized()) {
         error("Field SdkMainEntity#roots should be initialized")
       }
+      if (!getEntityData().isAdditionalDataInitialized()) {
+        error("Field SdkMainEntity#additionalData should be initialized")
+      }
     }
 
     override fun connectionIdList(): List<ConnectionId> {
@@ -125,6 +131,7 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       if (this.version != dataSource.version) this.version = dataSource.version
       if (this.homePath != dataSource.homePath) this.homePath = dataSource.homePath
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
+      if (this.additionalData != dataSource.additionalData) this.additionalData = dataSource.additionalData
       updateChildToParentReferences(parents)
     }
 
@@ -194,6 +201,14 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
         rootsUpdater.invoke(value)
       }
 
+    override var additionalData: String
+      get() = getEntityData().additionalData
+      set(value) {
+        checkModificationAllowed()
+        getEntityData(true).additionalData = value
+        changedProperty.add("additionalData")
+      }
+
     override fun getEntityClass(): Class<SdkMainEntity> = SdkMainEntity::class.java
   }
 }
@@ -204,12 +219,14 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
   lateinit var version: String
   lateinit var homePath: VirtualFileUrl
   lateinit var roots: MutableList<SdkRoot>
+  lateinit var additionalData: String
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
   fun isTypeInitialized(): Boolean = ::type.isInitialized
   fun isVersionInitialized(): Boolean = ::version.isInitialized
   fun isHomePathInitialized(): Boolean = ::homePath.isInitialized
   fun isRootsInitialized(): Boolean = ::roots.isInitialized
+  fun isAdditionalDataInitialized(): Boolean = ::additionalData.isInitialized
 
   override fun wrapAsModifiable(diff: MutableEntityStorage): WorkspaceEntity.Builder<SdkMainEntity> {
     val modifiable = SdkMainEntityImpl.Builder(null)
@@ -246,7 +263,7 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SdkMainEntity(name, type, version, homePath, roots, entitySource) {
+    return SdkMainEntity(name, type, version, homePath, roots, additionalData, entitySource) {
     }
   }
 
@@ -267,6 +284,7 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
     if (this.version != other.version) return false
     if (this.homePath != other.homePath) return false
     if (this.roots != other.roots) return false
+    if (this.additionalData != other.additionalData) return false
     return true
   }
 
@@ -281,6 +299,7 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
     if (this.version != other.version) return false
     if (this.homePath != other.homePath) return false
     if (this.roots != other.roots) return false
+    if (this.additionalData != other.additionalData) return false
     return true
   }
 
@@ -291,6 +310,7 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
     result = 31 * result + version.hashCode()
     result = 31 * result + homePath.hashCode()
     result = 31 * result + roots.hashCode()
+    result = 31 * result + additionalData.hashCode()
     return result
   }
 
@@ -301,6 +321,7 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
     result = 31 * result + version.hashCode()
     result = 31 * result + homePath.hashCode()
     result = 31 * result + roots.hashCode()
+    result = 31 * result + additionalData.hashCode()
     return result
   }
 
