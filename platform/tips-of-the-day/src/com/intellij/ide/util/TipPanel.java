@@ -371,15 +371,12 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
   }
 
   private void saveCurrentTipLikenessState() {
-    if (myCurrentTip != null) {
-      String curTipId = myCurrentTip.getId();
-      if (myCurrentLikenessState != TipsFeedback.getInstance().getLikenessState(curTipId)) {
-        myTipIdToLikenessState.put(curTipId, myCurrentLikenessState);
-      }
+    if (myCurrentTip != null && myCurrentLikenessState != getLikenessState(myCurrentTip)) {
+      myTipIdToLikenessState.put(myCurrentTip.getId(), myCurrentLikenessState);
     }
   }
 
-  private Boolean getLikenessState(TipAndTrickBean tip) {
+  private Boolean getLikenessState(@NotNull TipAndTrickBean tip) {
     String tipId = tip.getId();
     if (myTipIdToLikenessState.containsKey(tipId)) {
       return myTipIdToLikenessState.get(tipId);
