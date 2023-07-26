@@ -500,10 +500,10 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertTrue("Storage must be 'dirty' after few header fields were written",
                storage.isDirty());
 
-    final long lengthBeforeClose = storage.length();
-    assertEquals("No records were allocated => (storage size == HEADER_SIZE)",
-                 PersistentFSHeaders.HEADER_SIZE,
-                 lengthBeforeClose
+    final long recordsCountBeforeClose = storage.recordsCount();
+    assertEquals("No records were allocated yet",
+                 0,
+                 recordsCountBeforeClose
     );
 
     //close storage, and reopen from same file again:
@@ -516,7 +516,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
     assertEquals("globalModCount", globalModCount, storageReopened.getGlobalModCount());
     assertEquals("version", version, storageReopened.getVersion());
     assertEquals("connectionStatus", connectionStatus, storageReopened.getConnectionStatus());
-    assertEquals("length", lengthBeforeClose, storageReopened.length());
+    assertEquals("recordsCountBeforeClose", recordsCountBeforeClose, storageReopened.recordsCount());
   }
 
   @Test

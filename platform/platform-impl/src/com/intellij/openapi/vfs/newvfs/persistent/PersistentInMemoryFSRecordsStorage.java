@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
@@ -29,6 +30,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
  * (e.g. by performance)
  */
 @ApiStatus.Internal
+@TestOnly
 public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsStorage {
 
   /* ================ RECORD FIELDS LAYOUT (in ints = 4 bytes) ======================================== */
@@ -297,20 +299,6 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
   @Override
   public int getGlobalModCount() {
     return globalModCount.get();
-  }
-
-  @Override
-  public long length() {
-    final int recordsCount = allocatedRecordsCount.get();
-    final boolean anythingChanged = globalModCount.get() > 0;
-    if (recordsCount == 0 && !anythingChanged) {
-      //Try to mimic other implementations behavior: they return actual file size, which is 0
-      //  before first record allocated -- should be >0, since even no-record storage contains
-      //  header, but other implementations use 0-th record as header...
-      //TODO RC: it is better to have recordsCount() method
-      return 0;
-    }
-    return actualDataLength();
   }
 
   @Override

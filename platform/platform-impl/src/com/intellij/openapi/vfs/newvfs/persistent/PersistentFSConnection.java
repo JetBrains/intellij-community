@@ -477,6 +477,7 @@ public final class PersistentFSConnection {
             doForce();
           }
           catch (IOException e) {
+
             markAsCorruptedAndScheduleRebuild(e);
             ExceptionUtil.rethrow(e);
           }

@@ -659,11 +659,6 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   }
 
 
-  @Override
-  public long length() {
-    return actualDataLength();
-  }
-
   public long actualDataLength() {
     final int recordsCount = allocatedRecordsCount.get() + 1;
     return recordOffsetInFileUnchecked(recordsCount);

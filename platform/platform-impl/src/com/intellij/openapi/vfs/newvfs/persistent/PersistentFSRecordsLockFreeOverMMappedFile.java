@@ -589,11 +589,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
 
-  @Override
-  public long length() {
-    return actualDataLength();
-  }
-
   public long actualDataLength() {
     final int recordsCount = allocatedRecordsCount.get() + 1;
     return recordOffsetInFileUnchecked(recordsCount);
@@ -1040,7 +1035,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
                                                                                                              DEFAULT_MAPPED_CHUNK_SIZE)) {
 
       final int recordsCount = records.recordsCount();
-      System.out.println("length: " + records.length() + " b");
       System.out.println("version: " + records.getVersion());
       System.out.println("timestamp: " + new Date(records.getTimestamp()).toGMTString());
       System.out.println("connectionStatus: " + Integer.toHexString(records.getConnectionStatus()));

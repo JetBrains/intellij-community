@@ -89,7 +89,7 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     final long length = file.length();
 
     final int recordsCount;
-    if (length == 0) {
+    if (length <= RECORD_SIZE) {
       recordsCount = 0;
     }
     else {
@@ -330,13 +330,6 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
     final long absoluteFileOffset = id * (long)RECORD_SIZE + fieldOffset;
     assert absoluteFileOffset >= 0 : "offset(" + id + ", " + fieldOffset + ") = " + absoluteFileOffset + " must be >=0";
     return absoluteFileOffset;
-  }
-
-  @Override
-  public long length() {
-    return read(() -> {
-      return myFile.length();
-    });
   }
 
   @Override
