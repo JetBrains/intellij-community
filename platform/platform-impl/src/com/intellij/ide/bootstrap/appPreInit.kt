@@ -68,6 +68,7 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
                log = logDeferred.await(),
                appRegisteredJob = appRegisteredJob,
                euaTaskDeferred = euaTaskDeferred)
+    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 
   // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks

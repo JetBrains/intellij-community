@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.DebugLogManager
+import com.intellij.diagnostic.PerformanceWatcher
+import com.intellij.diagnostic.PluginException
+import com.intellij.diagnostic.subtask
 import com.intellij.history.LocalHistory
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ScreenReaderStateManager
@@ -135,7 +138,6 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
         loadComponentInEdtTask()
       }
     }
-    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 
   if (!app.isHeadlessEnvironment && !app.isUnitTestMode && System.getProperty("enable.activity.preloading", "true").toBoolean()) {
