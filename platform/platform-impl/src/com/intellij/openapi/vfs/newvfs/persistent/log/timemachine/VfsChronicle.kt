@@ -196,23 +196,6 @@ object VfsChronicle {
     return RecoveredChildrenIds.of(childrenIds.toList(), false)
   }
 
-  // traversing utilities
-
-  interface TraverseContext {
-    fun stop()
-    fun isStopped(): Boolean
-  }
-
-  class TraverseContextImpl : TraverseContext {
-    private var stopFlag = false
-
-    override fun stop() {
-      stopFlag = true
-    }
-
-    override fun isStopped(): Boolean = stopFlag
-  }
-
   // allows T to be nullable
   interface LookupResult<T> {
     val found: Boolean
@@ -261,25 +244,25 @@ object VfsChronicle {
    * [onInvalid] throws the cause -- some unexpected exception happened in [OperationLogStorage], can't do anything about it;
    *
    * [onIncomplete] -- if the operation's tag is contained in [toReadMask], then we're interested in it, but it is Incomplete => information
-   *                    about the operation has been lost, better to stop the traverse; if it's not contained, then there are two cases:
+   *                    about the operation has been lost, better to throw [IllegalStateException]; if it's not contained, then there are two cases:
    *                    1. an operation is actually [OperationReadResult.Complete], but due to [toReadMask] filter it was not read completely,
    *                    2. it is actually [OperationReadResult.Incomplete] -- both cases shouldn't affect our computation anyway
    *                    (this is a subtle place as one may want to stop the traverse at any Incomplete so this needs to be carefully
    *                    revised at the usage site);
    *
-   * [onCompleteExceptional] -- operation's tag is contained in [toReadMask], but the operation has finished with an exception, stop the traverse
+   * [onCompleteExceptional] -- operation's tag is contained in [toReadMask], but the operation has finished with an exception; by default throw [IllegalStateException]
    */
   inline fun traverseOperationsLog(
     iterator: OperationLogStorage.Iterator,
     direction: TraverseDirection,
     toReadMask: VfsOperationTagsMask,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>) -> Unit = { stop() },
-    onComplete: TraverseContext.(operation: VfsOperation<*>) -> Unit
-  ) = TraverseContextImpl().run {
-    while (iterator.movableIn(direction) && !stopIf(iterator) && !isStopped()) {
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>) -> Unit = { throw IllegalStateException("Exceptional operation met: $it (iterPos=${iterator.getPosition()})") },
+    onComplete: (operation: VfsOperation<*>) -> Unit
+  ) {
+    while (iterator.movableIn(direction) && !stopIf(iterator)) {
       when (val read = iterator.moveFiltered(direction, toReadMask)) {
         is OperationReadResult.Invalid -> onInvalid(read.cause)
         is OperationReadResult.Incomplete -> onIncomplete(read.tag)
@@ -300,10 +283,10 @@ object VfsChronicle {
     direction: TraverseDirection,
     toReadMask: VfsOperationTagsMask,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
-    onComplete: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (toReadMask.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
+    onComplete: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit
   ): LookupResult<T> {
     val result = LookupResultImpl<T>()
     traverseOperationsLog(
@@ -320,9 +303,9 @@ object VfsChronicle {
     relevantOperations: VfsOperationTagsMask,
     ifModifies: ConditionalVfsModifier<T>,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (relevantOperations.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
   ): LookupResult<T> =
     traverseOperationsLogForLookup(
       iterator, direction, relevantOperations, stopIf,
@@ -336,9 +319,9 @@ object VfsChronicle {
     fileId: Int,
     propertyRule: VfsModificationContract.PropertyOverwriteRule<T>,
     crossinline stopIf: (OperationLogStorage.Iterator) -> Boolean = { false },
-    onInvalid: TraverseContext.(cause: Throwable) -> Unit = { throw it },
-    onIncomplete: TraverseContext.(tag: VfsOperationTag) -> Unit = { if (propertyRule.relevantOperations.contains(it)) stop() },
-    onCompleteExceptional: TraverseContext.(operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { _, _ -> stop() },
+    onInvalid: (cause: Throwable) -> Unit = { throw it },
+    onIncomplete: (tag: VfsOperationTag) -> Unit = { if (propertyRule.relevantOperations.contains(it)) throw IllegalStateException("Incomplete operation met: $it (iterPos=${iterator.getPosition()})") },
+    onCompleteExceptional: (operation: VfsOperation<*>, detect: (T) -> Unit) -> Unit = { op, _ -> throw IllegalStateException("Exceptional operation met: $op (iterPos=${iterator.getPosition()})") },
   ): LookupResult<T> =
     traverseOperationsLogForVfsModificationLookup(
       iterator, direction,

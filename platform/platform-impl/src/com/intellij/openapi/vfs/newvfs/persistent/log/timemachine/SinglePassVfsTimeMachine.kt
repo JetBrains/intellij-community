@@ -50,6 +50,7 @@ class SinglePassVfsTimeMachine(
         ) { op ->
           filler.fillIn(op, snapshot)
         }
+        check(condition() || !iter.hasPrevious())
       }
     }
   }

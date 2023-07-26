@@ -382,9 +382,10 @@ object VfsRecoveryUtils {
     val newVfsLogOperationWriteContext = newVfsLog.getOperationWriteContext()
     // TODO estimate memory consumption more precisely and find out what fits into ~1GB(?)
     val initChunkSize = SystemProperties.getIntProperty("idea.vfs-recovery.records-init-chunk-size", 500_000)
+    require(initChunkSize > 0)
     for (chunkStart in superRootId..maxFileId step initChunkSize) {
-      val chunkEnd = (chunkStart + initChunkSize).coerceAtMost(maxFileId) + 1 // excluded
-      val chunkRange = chunkStart until chunkEnd
+      val chunkEnd = (chunkStart + initChunkSize - 1).coerceAtMost(maxFileId)
+      val chunkRange = chunkStart..chunkEnd
       // reinit snapshot to free memory
       val snapshot = getSnapshot(
         listOf(SnapshotFillerPresets.RulePropertyRelations.allProperties.buildFiller(), SnapshotFillerPresets.attributesFiller).sum()
@@ -396,6 +397,7 @@ object VfsRecoveryUtils {
 
       for (file in chunkRange.map { snapshot.getFileById(it) }) {
         ensureAllocated(file.fileId)
+        assert(fileStates.getState(file.fileId) == RecoveryState.UNDEFINED)
         if (file.fileId == superRootId) {
           fileStates.setState(file.fileId, RecoveryState.INITIALIZED)
           continue
