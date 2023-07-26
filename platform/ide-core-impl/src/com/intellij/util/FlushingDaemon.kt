@@ -1,28 +1,22 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.util
 
-import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
-
-public final class FlushingDaemon {
-  public static final String NAME = "Flushing Daemon";
+object FlushingDaemon {
+  const val NAME: String = "Flushing Daemon"
 
   @ApiStatus.Internal
-  public static final long FLUSHING_PERIOD_IN_SECONDS = 1;
+  const val FLUSHING_PERIOD_IN_SECONDS: Long = 1
 
-  private FlushingDaemon() {}
-
-  @NotNull
-  public static ScheduledFuture<?> runPeriodically(@NotNull Runnable r) {
-    return AppExecutorUtil
-      .getAppScheduledExecutorService()
-      .scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable(NAME, r),
-                              FLUSHING_PERIOD_IN_SECONDS,
-                              FLUSHING_PERIOD_IN_SECONDS,
-                              TimeUnit.SECONDS);
+  @JvmStatic
+  fun runPeriodically(r: Runnable): ScheduledFuture<*> {
+    return AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(ConcurrencyUtil.underThreadNameRunnable(NAME, r),
+                                                                                   FLUSHING_PERIOD_IN_SECONDS,
+                                                                                   FLUSHING_PERIOD_IN_SECONDS,
+                                                                                   TimeUnit.SECONDS)
   }
 }
