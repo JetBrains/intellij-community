@@ -23,6 +23,11 @@ final class ListResult {
   final List<? extends ChildInfo> children;  // sorted by `#getId`
   private final int myParentId;
 
+  /**
+   * @deprecated get rid of this method, it uses static FSRecords.getModCount,
+   * should access specific FSRecordsImpl instead
+   */
+  @Deprecated
   ListResult(@NotNull List<? extends ChildInfo> children, int parentId) {
     this(FSRecords.getModCount(parentId), children, parentId);
   }

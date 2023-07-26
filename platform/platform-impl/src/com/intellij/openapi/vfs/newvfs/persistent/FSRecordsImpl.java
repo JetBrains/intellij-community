@@ -331,7 +331,8 @@ public final class FSRecordsImpl {
     return disposed;
   }
 
-  private void checkNotDisposed() {
+  @Contract("->fail")
+  void checkNotDisposed() {
     if (disposed) {
       AlreadyDisposedException alreadyDisposed = new AlreadyDisposedException("VFS is already disposed");
       if (disposedStackTrace != null) {
@@ -648,7 +649,7 @@ public final class FSRecordsImpl {
           treeAccessor.doSaveChildren(toParentId, children);
 
           connection.markRecordAsModified(fromParentId);
-          treeAccessor.doSaveChildren(fromParentId, new ListResult(Collections.emptyList(), fromParentId));
+          treeAccessor.doSaveChildren(fromParentId, new ListResult(getModCount(fromParentId), Collections.emptyList(), fromParentId));
         }
         catch (ProcessCanceledException e) {
           // NewVirtualFileSystem.list methods can be interrupted now
