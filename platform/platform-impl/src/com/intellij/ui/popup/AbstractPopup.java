@@ -887,6 +887,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
 
       myPopup.hide(false);
+      myModalityStateWhenShown = null;
 
       if (ApplicationManager.getApplication() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
