@@ -295,7 +295,7 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
       }
     }
     coroutineScope?.launch {
-      ApplicationManager.getApplication().serviceAsync<ActionManager>()
+      serviceAsync<ActionManager>()
       withContext(Dispatchers.EDT) {
         initActionIcons(updateView = reload)
       }
@@ -334,7 +334,12 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
 
   suspend fun getCorrectedActionAsync(id: String): ActionGroup? {
     val name = idToName.get(id) ?: return serviceAsync<ActionManager>().getAction(id) as? ActionGroup
-    return getCorrectedAction(id, name)
+    idToActionGroup.get(id)?.let {
+      return it
+    }
+
+    val actionGroup = serviceAsync<ActionManager>().getAction(id) as? ActionGroup ?: return null
+    return getOrPut(id, actionGroup, name)
   }
 
   fun getCorrectedAction(id: String, name: String): ActionGroup? {
@@ -343,9 +348,20 @@ class CustomActionsSchema(private val coroutineScope: CoroutineScope?) : Persist
     }
 
     val actionGroup = ActionManager.getInstance().getAction(id) as? ActionGroup ?: return null
+    return getOrPut(id, actionGroup, name)
+  }
+
+  private fun getOrPut(id: String, actionGroup: ActionGroup, name: String): ActionGroup {
     // if a plugin is disabled
-    val corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true)
+    val corrected = CustomizationUtil.correctActionGroup(/* group = */ actionGroup,
+                                                         /* schema = */ this,
+                                                         /* defaultGroupName = */ name,
+                                                         /* rootGroupName = */ name,
+                                                         /* force = */ true)
     synchronized(lock) {
+      idToActionGroup.get(id)?.let {
+        return it
+      }
       idToActionGroup = idToActionGroup.put(id, corrected)
     }
     return corrected
