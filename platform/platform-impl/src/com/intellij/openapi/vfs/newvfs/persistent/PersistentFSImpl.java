@@ -170,7 +170,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   @ApiStatus.Internal
   public void disconnect() {
     if (myConnected.compareAndSet(true, false)) {
-      PersistentFsConnectionListener.EP_NAME.getExtensionList().forEach(PersistentFsConnectionListener::beforeConnectionClosed);
+      for (PersistentFsConnectionListener listener : PersistentFsConnectionListener.EP_NAME.getExtensionList()) {
+        listener.beforeConnectionClosed();
+      }
       // TODO make sure we don't have files in memory
       FileNameCache.drop();
       myRoots.clear();
