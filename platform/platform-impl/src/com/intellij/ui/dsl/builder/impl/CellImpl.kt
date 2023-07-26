@@ -287,6 +287,10 @@ internal class CellImpl<T : JComponent>(
     val interactiveComponent = component.interactiveComponent
     dialogPanelConfig.validationsOnApply.list(interactiveComponent)
       .addAll(validations.map { it.forComponentIfNeeded(interactiveComponent) })
+
+    // Fallback in case if no validation requestors is defined
+    guessAndInstallValidationRequestor()
+
     return this
   }
 
