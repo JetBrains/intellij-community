@@ -27,7 +27,8 @@ class BundledPluginsStateTest {
   @Test
   fun categoryLocalized() {
     for (descriptor in BundledPluginsState.loadedPlugins.filter { it.category != null }) {
-      assertThat(CoreBundle.messageOrNull("plugin.category.${descriptor.category?.replace(' ', '.')}")).isEqualTo(descriptor.category)
+      val category = descriptor.category ?: continue
+      assertThat(CoreBundle.messageOrNull("plugin.category.${category.replace(' ', '.')}")).isEqualTo(category)
     }
   }
 }
