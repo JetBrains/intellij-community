@@ -592,7 +592,7 @@ public final class FSRecordsImpl {
     try {
       ListResult toSave;
       // optimization: if the children were never changed after list(), do not check for duplicates again
-      if (result.childrenWereChangedSinceLastList()) {
+      if (result.childrenWereChangedSinceLastList(this)) {
         children = list(parentId);
         toSave = childrenConvertor.apply(children);
       }
@@ -792,7 +792,7 @@ public final class FSRecordsImpl {
   }
 
 
-  int getParent(int fileId) {
+  public int getParent(int fileId) {
     try {
       checkNotDisposed();
       int parentId = connection.getRecords().getParent(fileId);
@@ -840,7 +840,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  @NotNull String getName(int fileId) {
+  public @NotNull String getName(int fileId) {
     return getNameSequence(fileId).toString();
   }
 

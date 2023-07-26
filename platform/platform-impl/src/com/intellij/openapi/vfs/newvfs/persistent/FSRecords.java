@@ -33,7 +33,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * all methods delegate to it.
  * <p>
  * Current policy: avoid use of this class outside of VFS impl code, inside VFS impl code migrate to use
- * the {@link FSRecordsImpl} _instance_ obtained by {@link #connect(List)}/{@link #getInstance()}.
+ * the {@link FSRecordsImpl} _instance_ obtained by {@link #getInstance()}, or {@link #connect(List)}, if
+ * you want new instance -- mostly applicable for tests.
  * <p>
  * This is very low-level API, intended to be used only by VFS implementation code only -- mainly
  * {@link PersistentFSImpl}. Inside VFS implementation all the calls should go through the instance
@@ -153,7 +154,7 @@ public final class FSRecords {
   //========== record allocation/deletion: ====================================
 
 
-  /** Use FSRecords.getInstance().createRecord() instead */
+  /** @deprecated Use FSRecords.getInstance().createRecord() instead */
   @Deprecated(forRemoval = true)
   public static int createRecord() {
     return implOrFail().createRecord();
@@ -220,10 +221,14 @@ public final class FSRecords {
 
   //========== file record fields accessors: ================================
 
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   public static int getParent(int fileId) {
     return implOrFail().getParent(fileId);
   }
 
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   static void setParent(int id,
                         int parentId) {
     implOrFail().setParent(id, parentId);
@@ -249,26 +254,30 @@ public final class FSRecords {
     return implOrFail().isDeleted(fileId);
   }
 
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   static long getLength(int fileId) {
     return implOrFail().getLength(fileId);
   }
 
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   static void setLength(int fileId,
                         long length) {
     implOrFail().setLength(fileId, length);
   }
 
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   static long getTimestamp(int fileId) {
     return implOrFail().getTimestamp(fileId);
   }
 
+  /** @deprecated replace with apt FSRecords.getInstance() instance method */
+  @Deprecated(forRemoval = true)
   static void setTimestamp(int fileId,
                            long value) {
     implOrFail().setTimestamp(fileId, value);
-  }
-
-  static int getModCount(int fileId) {
-    return impl.getModCount(fileId);
   }
 
   //========== file attributes accessors: ===================================

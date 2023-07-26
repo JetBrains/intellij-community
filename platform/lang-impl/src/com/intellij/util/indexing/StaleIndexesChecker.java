@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.*;
@@ -74,10 +75,11 @@ public final class StaleIndexesChecker {
 
   private static String getRecordPath(int record) {
     StringBuilder name = new StringBuilder(FSRecords.getName(record));
-    int parent = FSRecords.getParent(record);
+    FSRecordsImpl vfs = FSRecords.getInstance();
+    int parent = vfs.getParent(record);
     while (parent > 0) {
-      name.insert(0, FSRecords.getName(parent) + "/");
-      parent = FSRecords.getParent(parent);
+      name.insert(0, vfs.getName(parent) + "/");
+      parent = vfs.getParent(parent);
     }
     return name.toString();
   }

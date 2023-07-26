@@ -19,23 +19,21 @@ import java.util.Objects;
 
 // Stores result of various `FSRecords#list*` methods and the current `FSRecords#getModCount` for optimistic locking support.
 final class ListResult {
-  private final int modStamp;
+  private final int parentModStamp;
   final List<? extends ChildInfo> children;  // sorted by `#getId`
-  private final int myParentId;
+  private final int parentId;
 
-  /**
-   * @deprecated get rid of this method, it uses static FSRecords.getModCount,
-   * should access specific FSRecordsImpl instead
-   */
-  @Deprecated
-  ListResult(@NotNull List<? extends ChildInfo> children, int parentId) {
-    this(FSRecords.getModCount(parentId), children, parentId);
+  ListResult(@NotNull FSRecordsImpl vfs,
+             @NotNull List<? extends ChildInfo> children,
+             int parentId) {
+    this(vfs.getModCount(parentId), children, parentId);
   }
 
-  ListResult(int modStamp, @NotNull List<? extends ChildInfo> children, int parentId) {
-    this.modStamp = modStamp;
+  ListResult(int parentModStamp,
+             @NotNull List<? extends ChildInfo> children, int parentId) {
+    this.parentModStamp = parentModStamp;
     this.children = children;
-    myParentId = parentId;
+    this.parentId = parentId;
     Application app = ApplicationManager.getApplication();
     if (app != null && (app.isUnitTestMode() && !ApplicationManagerEx.isInStressTest() || app.isInternal())) {
       assertSortedById(children);
@@ -71,7 +69,7 @@ final class ListResult {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult(modStamp, newChildren, myParentId);
+    return new ListResult(parentModStamp, newChildren, parentId);
   }
 
   @Contract(pure = true)
@@ -91,15 +89,17 @@ final class ListResult {
         newChildren.add(children.get(j));
       }
     }
-    return new ListResult(modStamp, newChildren, myParentId);
+    return new ListResult(parentModStamp, newChildren, parentId);
   }
 
   // Returns entries from this list plus `otherList';
   // in case of a name clash uses ID from the corresponding this list entry and a name from the `otherList` entry
   // (to avoid duplicating ids: preserve old id but supply new name).
   @Contract(pure = true)
-  @NotNull ListResult merge(@NotNull List<? extends ChildInfo> newChildren, boolean isCaseSensitive) {
-    ListResult newList = new ListResult(newChildren, myParentId);  // assume the list is sorted
+  @NotNull ListResult merge(@NotNull FSRecordsImpl vfs,
+                            @NotNull List<? extends ChildInfo> newChildren,
+                            boolean isCaseSensitive) {
+    ListResult newList = new ListResult(vfs, newChildren, parentId);  // assume the list is sorted
     if (children.isEmpty()) return newList;
     List<? extends ChildInfo> oldChildren = children;
     // Both `newChildren` and `oldChildren` are sorted by id, but not `nameId`, so plain O(N) merging is not possible.
@@ -170,7 +170,7 @@ final class ListResult {
       result.sort(ChildInfo.BY_ID);
     }
     List<? extends ChildInfo> newRes = nameToIndex.isEmpty() ? newChildren : result;
-    return new ListResult(modStamp, newRes, myParentId);
+    return new ListResult(parentModStamp, newRes, parentId);
   }
 
   @Contract(pure = true)
@@ -198,11 +198,11 @@ final class ListResult {
     for (int i = index1; i < children.size(); i++) {
       newChildren.add(children.get(i));
     }
-    return new ListResult(modStamp, newChildren, myParentId);
+    return new ListResult(parentModStamp, newChildren, parentId);
   }
 
-  boolean childrenWereChangedSinceLastList() {
-    return modStamp != FSRecords.getModCount(myParentId);
+  boolean childrenWereChangedSinceLastList(@NotNull FSRecordsImpl vfs) {
+    return parentModStamp != vfs.getModCount(parentId);
   }
 
   @Override
@@ -210,16 +210,16 @@ final class ListResult {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     ListResult result = (ListResult)o;
-    return modStamp == result.modStamp && children.equals(result.children);
+    return parentModStamp == result.parentModStamp && children.equals(result.children);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(modStamp, children);
+    return Objects.hash(parentModStamp, children);
   }
 
   @Override
   public String toString() {
-    return "modStamp: " + modStamp + "; children: " + children;
+    return "modStamp: " + parentModStamp + "; children: " + children;
   }
 }

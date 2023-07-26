@@ -320,7 +320,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
         // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
         toAddChildren.sort(ChildInfo.BY_ID);
-        return current.merge(toAddChildren, caseSensitive);
+        return current.merge(vfsPeer, toAddChildren, caseSensitive);
       });
 
       setChildrenCached(dirId);
@@ -1427,7 +1427,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
     childrenAdded.sort(ChildInfo.BY_ID);
     boolean caseSensitive = parent.isCaseSensitive();
-    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(childrenAdded, caseSensitive));
+    vfsPeer.update(parent, parentId, oldChildren -> oldChildren.merge(vfsPeer, childrenAdded, caseSensitive));
     parent.createAndAddChildren(childrenAdded, false, (__, ___) -> {
     });
 
@@ -1461,7 +1461,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           }
 
           added.sort(ChildInfo.BY_ID);
-          vfsPeer.update(directory, directoryId, oldChildren -> oldChildren.merge(added, isCaseSensitive));
+          vfsPeer.update(directory, directoryId, oldChildren -> oldChildren.merge(vfsPeer, added, isCaseSensitive));
           setChildrenCached(directoryId);
           // set "all children loaded" because the first "fileCreated" listener (looking at you, local history)
           // will call getChildren() anyway, beyond a shadow of a doubt
@@ -1602,7 +1602,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return cached;
     }
 
-    ParentFinder finder = new ParentFinder(vfsPeer);
+    ParentFinder finder = new ParentFinder();
     return finder.find(fileId);
   }
 
@@ -1611,7 +1611,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
    * misses: (it happens to be easier to force it to cache _all_ the roots it misses, at once)
    */
-  private void cacheAllMissedRootsFromPersistence(@NotNull FSRecordsImpl fsRecords) {
+  private void cacheAllMissedRootsFromPersistence() {
     //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
     List<String> missedRootUrls = new ArrayList<>();
     vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
@@ -1628,8 +1628,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * moment some roots _could_ be not (yet) cached. So we need to force idToDirCache to cache the root it
    * misses
    */
-  private void cacheSingleMissedRootFromPersistence(@NotNull FSRecordsImpl fsRecords,
-                                                    int rootId) {
+  private void cacheSingleMissedRootFromPersistence(int rootId) {
     //better to collect roots first, to not spend too much time holding root lock inside .forEachRoot()
     List<String> missedRootUrl = new ArrayList<>(1);
     vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
@@ -1680,8 +1679,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    */
   class ParentFinder {
 
-    private final FSRecordsImpl fsRecords;
-
     /**
      * List of parentIds towards the root (or first cached directory).
      * null, if the first parent is already cached
@@ -1689,8 +1686,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     private @Nullable IntList parentIds;
     private VirtualFileSystemEntry foundParent;
 
-    ParentFinder(@NotNull FSRecordsImpl fsRecords) {
-      this.fsRecords = fsRecords;
+    ParentFinder() {
+
     }
 
     private void ascendUntilCachedParent(int fileId) {
@@ -1718,10 +1715,10 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               // because apt FileSystem wasn't registered (yet -- or at all), and this could make
               // everything slow.
               // MAYBE: reset missedRootsLoaded if new FileSystem registered?
-              cacheAllMissedRootsFromPersistence(fsRecords);
+              cacheAllMissedRootsFromPersistence();
             }
             else {// if CACHE_MISSED_ROOTS_ONE_BY_ONE
-              cacheSingleMissedRootFromPersistence(fsRecords, currentId);
+              cacheSingleMissedRootFromPersistence(currentId);
             }
 
             foundParent = myIdToDirCache.getCachedDir(currentId);
@@ -1792,9 +1789,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
 
     private void logVeryDetailedErrorMessageAboutParentNotFound(int currentId, int startingFileId) {
-      String preRootFileName = fsRecords.getName(currentId);
-      int preRootIdFlags = fsRecords.getFlags(currentId);
-      int startingFileFlags = fsRecords.getFlags(startingFileId);
+      String preRootFileName = vfsPeer.getName(currentId);
+      int preRootIdFlags = vfsPeer.getFlags(currentId);
+      int startingFileFlags = vfsPeer.getFlags(startingFileId);
 
       FSRecords.THROTTLED_LOG.info(
         () -> {
@@ -1813,16 +1810,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
           int[] cachedNonRoots = cachedRootsIds.intStream()
             .filter(rootId -> !rootIds.contains(rootId))
             .toArray();
-          int[] fsRootsNonPFSRoots = Arrays.stream(fsRecords.listRoots())
+          int[] fsRootsNonPFSRoots = Arrays.stream(vfsPeer.listRoots())
             .filter(rootId -> !rootIds.contains(rootId))
             .toArray();
-          boolean fsRootsHasCurrentId = Arrays.stream(fsRecords.listRoots())
+          boolean fsRootsHasCurrentId = Arrays.stream(vfsPeer.listRoots())
             .anyMatch(rootId -> rootId == currentId);
 
           StringBuilder sb = new StringBuilder();
-          fsRecords.forEachRoot((rootUrl, rootFileId) -> {
+          vfsPeer.forEachRoot((rootUrl, rootFileId) -> {
             if (myIdToDirCache.getCachedDir(rootFileId) == null) {
-              String rootName = fsRecords.getName(rootFileId);
+              String rootName = vfsPeer.getName(rootFileId);
               sb.append("\t" + rootFileId + ": [name:'" + rootName + "'][url:'" + rootUrl + "']\n");
             }
           });
@@ -1842,7 +1839,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
     public NewVirtualFile find(int fileId) {
       if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
-        int maxId = fsRecords.connection().getRecords().maxAllocatedID();
+        int maxId = vfsPeer.connection().getRecords().maxAllocatedID();
         if (fileId > maxId) {
           // do not corrupt vfs if provided fileId is out of bounds
           throw new IndexOutOfBoundsException("recordId(=" + fileId + ") is outside of allocated IDs range (0, " + maxId + "]");
@@ -1852,7 +1849,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         ascendUntilCachedParent(fileId);
       }
       catch (Exception e) {
-        throw fsRecords.handleError(e);
+        throw vfsPeer.handleError(e);
       }
       return findDescendantByIdPath(fileId);
     }
@@ -2023,16 +2020,22 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     return new ChildInfoImpl(childId, nameId, attributes, children, childData.second);
   }
 
-  public static void moveChildrenRecords(int fromParentId, int toParentId) {
+  /** @deprecated use instance {@link PersistentFSImpl#moveChildren(int, int)} instead */
+  @Deprecated(forRemoval = true)
+  public static void moveChildrenRecords(int fromParentId, int toParentId){
+    ((PersistentFSImpl)getInstance()).moveChildren(fromParentId, toParentId);
+  }
+
+  public void moveChildren(int fromParentId, int toParentId) {
     if (fromParentId == -1) return;
     if (fromParentId == FSRecords.NULL_FILE_ID) {
       throw new AssertionError("Move(" + fromParentId + " -> " + toParentId + "): can't move root to become non-root");
     }
 
-    for (ChildInfo childToMove : FSRecords.list(fromParentId).children) {
-      FSRecords.setParent(childToMove.getId(), toParentId);
+    for (ChildInfo childToMove : vfsPeer.list(fromParentId).children) {
+      vfsPeer.setParent(childToMove.getId(), toParentId);
     }
-    FSRecords.moveChildren(fromParentId, toParentId);
+    vfsPeer.moveChildren(fromParentId, toParentId);
   }
 
   // return File attributes, symlink target
