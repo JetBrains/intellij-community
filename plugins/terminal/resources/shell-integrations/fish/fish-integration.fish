@@ -37,7 +37,8 @@ end
 
 override_jb_variables
 
-set -l thisScriptParentDir (status dirname)
+# (status dirname) is shorter, but it is available since Fish 3.2.0 (released March 1, 2021)
+set -l thisScriptParentDir (dirname (status --current-filename))
 set -l commandBlockSupportScript "$thisScriptParentDir/command-block-support.fish"
 if test -e "$commandBlockSupportScript"
   source "$commandBlockSupportScript"
