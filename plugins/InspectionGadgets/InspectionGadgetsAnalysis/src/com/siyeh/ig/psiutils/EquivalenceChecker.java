@@ -491,6 +491,9 @@ public class EquivalenceChecker {
     }
     pattern1 = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern1);
     pattern2 = JavaPsiPatternUtil.skipParenthesizedPatternDown(pattern2);
+    if (pattern1 instanceof PsiUnnamedPattern && pattern2 instanceof PsiUnnamedPattern) {
+      return EXACT_MATCH;
+    }
     if (pattern1 instanceof PsiTypeTestPattern && pattern2 instanceof PsiTypeTestPattern) {
       return Match.exact(primaryPatternsMatch((PsiTypeTestPattern)pattern1, (PsiTypeTestPattern)pattern2));
     }

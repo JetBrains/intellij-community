@@ -52,6 +52,10 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
     doTest();
   }
   
+  public void testUnnamedPatterns() {
+    doTest();
+  }
+  
   public void testPatternInStreamNotComplex() {
     doTest();
   }

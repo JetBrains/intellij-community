@@ -209,6 +209,9 @@ public final class JavaPsiPatternUtil {
     else if (pattern instanceof PsiTypeTestPattern) {
       return ((PsiTypeTestPattern)pattern).getCheckType();
     }
+    else if (pattern instanceof PsiUnnamedPattern) {
+      return ((PsiUnnamedPattern)pattern).getTypeElement();
+    }
     return null;
   }
 
@@ -229,11 +232,8 @@ public final class JavaPsiPatternUtil {
     else if (pattern instanceof PsiParenthesizedPattern) {
       return findUnconditionalPattern(((PsiParenthesizedPattern)pattern).getPattern());
     }
-    else if (pattern instanceof PsiDeconstructionPattern) {
-      return (PsiDeconstructionPattern)pattern;
-    }
-    else if (pattern instanceof PsiTypeTestPattern) {
-      return (PsiTypeTestPattern)pattern;
+    else if (pattern instanceof PsiDeconstructionPattern || pattern instanceof PsiTypeTestPattern || pattern instanceof PsiUnnamedPattern) {
+      return (PsiPrimaryPattern)pattern;
     }
     return null;
   }
@@ -243,7 +243,7 @@ public final class JavaPsiPatternUtil {
     if (unconditionalPattern instanceof PsiDeconstructionPattern) {
       return forDomination && dominates(getPatternType(unconditionalPattern), type);
     }
-    else if (unconditionalPattern instanceof PsiTypeTestPattern) {
+    else if (unconditionalPattern instanceof PsiTypeTestPattern || unconditionalPattern instanceof PsiUnnamedPattern) {
       return dominates(getPatternType(unconditionalPattern), type);
     }
     return false;
