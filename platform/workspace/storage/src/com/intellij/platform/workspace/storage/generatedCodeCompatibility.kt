@@ -3,8 +3,10 @@
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.impl.loadClassByName
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
+@ApiStatus.Internal
 object CodeGeneratorVersions {
   /** these constants are accessed from WorkspaceImplObsoleteInspection */
   private const val API_VERSION_INTERNAL = 2
@@ -30,6 +32,7 @@ annotation class GeneratedCodeApiVersion(val version: Int)
 annotation class GeneratedCodeImplVersion(val version: Int)
 
 
+@ApiStatus.Internal
 object GeneratedCodeCompatibilityChecker {
   fun checkCode(entity: Class<WorkspaceEntity>) {
     val builderClass: Class<*>

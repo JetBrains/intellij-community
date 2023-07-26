@@ -1,5 +1,9 @@
 package com.intellij.platform.workspace.storage
 
+/**
+ * Base class for companion objects of interfaces extending [WorkspaceEntity]. It is supposed to be used from generated code in entity
+ * implementation only.
+ */
 abstract class EntityType<T : WorkspaceEntity, B : WorkspaceEntity.Builder<T>>(val base: EntityType<*, *>? = null) {
     var open: Boolean = false
     var abstract: Boolean = false

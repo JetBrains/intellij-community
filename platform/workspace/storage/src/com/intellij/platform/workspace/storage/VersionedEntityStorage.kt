@@ -4,13 +4,17 @@ package com.intellij.platform.workspace.storage
 import java.util.*
 
 /**
- * Provides access to instance of [EntityStorage] which can be replaced by newer versions.
+ * Provides access to instance of [EntityStorage] which can be replaced by newer versions. 
+ * Code in plugins usually shouldn't access this interface directly, 
+ * [WorkspaceModel][com.intellij.platform.backend.workspace.WorkspaceModel] should be used instead.
  */
 interface VersionedEntityStorage {
   val version: Long
   val current: EntityStorage
 
-  // Return builder or storage that is base for this entity storage
+  /**
+   * Returns a builder or storage that is the base for this entity storage.
+   */
   val base: EntityStorage
 
   /**
@@ -40,7 +44,8 @@ class CachedValue<R>(val source: (EntityStorage) -> R)
 class CachedValueWithParameter<P, R>(val source: (EntityStorage, P) -> R)
 
 /**
- * Change containing a set of changes.
+ * Change containing a set of changes. Instances of this class are passed to [WorkspaceModelChangeListener][com.intellij.platform.backend.workspace.WorkspaceModelChangeListener]
+ * and [com.intellij.platform.backend.workspace.WorkspaceModel.changesEventFlow] when you subscribe to changes in the IDE process.
  *
  * As this is not a list of change operations, but a list of changes, the order of events is not defined.
  */

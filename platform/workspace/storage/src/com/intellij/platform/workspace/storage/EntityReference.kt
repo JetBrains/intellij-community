@@ -2,15 +2,21 @@
 package com.intellij.platform.workspace.storage
 
 /**
- * Represents a reference to an entity inside of [WorkspaceEntity].
+ * Represents a reference to an entity which can be stored outside [EntityStorage].
  *
- * The reference can be obtained via [WorkspaceEntity.createReference].
+ * The reference can be obtained via [WorkspaceEntity.createReference]. An instance of this class stores an internal ID of the entity,
+ * and doesn't contain reference to the original storage, so it's ok to store them in long-living data structures, this won't create a 
+ * memory leak.
  *
- * The reference will return the same entity for the same storage, but the changes in storages should be tracked if the client want to
- *   use this reference between different storages. For example, if the referred entity was removed from the storage, this reference may
- *   return null, but it can also return a different (newly added) entity.
+ * The reference will resolve to the same entity for the same storage, and will survive [modifications][MutableEntityStorage.modifyEntity],
+ * but if the entity is removed or replaced by a different one by [MutableEntityStorage.replaceBySource], the reference may either 
+ * resolve to `null` or resolve to a completely different entity which reused the same internal ID. So if you need to be sure that the
+ * reference resolves to the original entity, you need to also subscribe to changes in the storage.
  */
 abstract class EntityReference<out E : WorkspaceEntity> {
+  /**
+   * Returns an entity corresponding to this reference in [storage] or `null` if there is no such entity.
+   */
   abstract fun resolve(storage: EntityStorage): E?
 
   /**
