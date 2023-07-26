@@ -39,10 +39,10 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     @OptIn(KtAllowAnalysisFromWriteAction::class)
-    private fun <R : KtElement> KtFile.withOptimizedImports(replacement: () -> R?): PsiElement? {
-        fun KtFile.unusedImports(): Set<KtImportDirective> = allowAnalysisFromWriteAction { analyze(this) {
+    private fun <R : KtElement> KtFile.withOptimizedImports(replacement: () -> R?): PsiElement? = allowAnalysisFromWriteAction {
+        fun KtFile.unusedImports(): Set<KtImportDirective> = analyze(this) {
             analyseImports(this@unusedImports).unusedImports
-        } }
+        }
         val unusedImportsBefore = unusedImports()
         val newElement = replacement() ?: return null
         val unusedImportsAfter = unusedImports()
