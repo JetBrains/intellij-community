@@ -21,11 +21,11 @@ class LineCompletionStrategySerializer : StrategySerializer<CompletionGolfStrate
     map.getIfExists<Boolean>("checkLine")?.let { builder.checkLine = it }
     map.getIfExists<Boolean>("invokeOnEachChar")?.let { builder.invokeOnEachChar = it }
     map.getIfExists<Boolean>("checkToken")?.let { builder.checkToken = it }
-    map.getIfExists<SuggestionSource>("source")?.let { builder.source = it }
-    map.getIfExists<Int>("topN")?.let { builder.topN = it }
+    map.getIfExists<String>("source")?.let { builder.source = SuggestionSource.valueOf(it) }
+    map.getIfExists<Double>("topN")?.let { builder.topN = it.toInt()}
     map.getIfExists<String>("suggestionsProvider")?.let { builder.suggestionsProvider = it }
     map.getIfExists<String>("pathToZipModel")?.let { builder.pathToZipModel = it }
-    map.getIfExists<CompletionType>("completionType")?.let { builder.completionType = it }
+    map.getIfExists<String>("completionType")?.let { builder.completionType = CompletionType.valueOf(it) }
     return builder.build()
   }
 
