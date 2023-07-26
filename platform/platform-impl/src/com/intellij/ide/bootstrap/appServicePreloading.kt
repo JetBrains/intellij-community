@@ -24,7 +24,6 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
-import com.intellij.util.childScope
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
@@ -124,7 +123,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
     app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
                         activityPrefix = "",
                         syncScope = this,
-                        asyncScope = app.coroutineScope.childScope(CoroutineName("app service preloading (async)")))
+                        asyncScope = asyncScope)
   }
 
   launch {

@@ -100,7 +100,7 @@ open class ProjectImpl(parent: ComponentManagerImpl, filePath: Path, projectName
   // used by Rider
   @Internal
   @JvmField
-  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope(CoroutineName("project service preloading (async)"))
+  val asyncPreloadServiceScope: CoroutineScope = coroutineScope.childScope(supervisor = false)
 
   private val earlyDisposable = AtomicReference(Disposer.newDisposable())
 

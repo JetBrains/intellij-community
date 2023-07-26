@@ -993,6 +993,9 @@ abstract class ComponentManagerImpl(
                       syncScope: CoroutineScope,
                       onlyIfAwait: Boolean = false,
                       asyncScope: CoroutineScope) {
+    // we want to group async preloaded services (parent trace), but `CoroutineScope()` requires explicit completion,
+    // so, we collect all services and then use launch
+    val asyncServices = mutableListOf<ServiceDescriptor>()
     for (plugin in modules) {
       for (service in getContainerDescriptor(plugin).services) {
         if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
@@ -1012,7 +1015,6 @@ abstract class ComponentManagerImpl(
           return
         }
 
-        val serviceInterface = getServiceInterface(service, this)
         if (plugin.pluginId != PluginManagerCore.CORE_ID) {
           val impl = getServiceImplementation(service, this)
           if (!servicePreloadingAllowListForNonCorePlugin.contains(impl)) {
@@ -1026,8 +1028,25 @@ abstract class ComponentManagerImpl(
           }
         }
 
-        scope.launch(CoroutineName("$serviceInterface preloading")) {
-          preloadService(service, serviceInterface)
+        if (scope === asyncScope) {
+          asyncServices.add(service)
+        }
+        else {
+          val serviceInterface = getServiceInterface(service, this)
+          scope.launch(CoroutineName("$serviceInterface preloading")) {
+            preloadService(service, serviceInterface)
+          }
+        }
+      }
+    }
+
+    if (asyncServices.isNotEmpty()) {
+      asyncScope.launch(CoroutineName("${activityPrefix}service preloading (async)")) {
+        for (service in asyncServices) {
+          val serviceInterface = getServiceInterface(service, this@ComponentManagerImpl)
+          launch(CoroutineName("$serviceInterface preloading")) {
+            preloadService(service, serviceInterface)
+          }
         }
       }
     }
