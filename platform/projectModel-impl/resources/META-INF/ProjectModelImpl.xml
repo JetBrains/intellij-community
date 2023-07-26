@@ -10,9 +10,6 @@
                     dynamic="true"/>
     <extensionPoint name="projectPathMacroContributor" interface="com.intellij.openapi.components.impl.ProjectWidePathMacroContributor"
                     dynamic="true"/>
-    <extensionPoint name="customEntityProjectModelInfoProvider"
-                    interface="com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider"
-                    dynamic="true"/>
     <extensionPoint name="workspaceModel.facetContributor" interface="com.intellij.workspaceModel.ide.legacyBridge.WorkspaceFacetContributor"
                     dynamic="true"/>
     <extensionPoint name="workspaceModel.fileIndexContributor"
