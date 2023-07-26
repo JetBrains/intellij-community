@@ -208,7 +208,15 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
         val rawJvmTarget = preferences[DebuggerPreferenceKeys.JVM_TARGET]
         val jvmTarget = JvmTarget.fromString(rawJvmTarget) ?: error("Invalid JVM target value: $rawJvmTarget")
 
-        val languageVersion = chooseLanguageVersionForCompilation(compileWithK2)
+        val languageVersion = if (useIrBackend()) {
+            chooseLanguageVersionForCompilation(compileWithK2)
+        } else {
+            check(!compileWithK2) {
+                "Old backend-backed evaluator cannot work with K2"
+            }
+            null
+        }
+
         val enabledLanguageFeatures = preferences[DebuggerPreferenceKeys.ENABLED_LANGUAGE_FEATURE]
             .map { LanguageFeature.fromString(it) ?: error("Not found language feature $it") }
 

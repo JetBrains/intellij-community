@@ -40,6 +40,7 @@ abstract class AbstractKotlinScriptEvaluateExpressionTest : AbstractIrKotlinEval
                 "-script", getScriptKtFile().virtualFilePath,
                 "-classpath", classpath,
                 "-no-stdlib",
+                "-language-version", chooseLanguageVersionForCompilation(compileWithK2).versionString,
             )
         }
     }
