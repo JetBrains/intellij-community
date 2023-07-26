@@ -99,9 +99,11 @@ class ImlReplaceBySourceTest {
     builder.replaceBySource({ true }, replaceWith.toSnapshot())
 
     val changes = builder.collectChanges(before).values.flatten()
-    Assert.assertEquals(5, changes.size)
+    Assert.assertEquals(6, changes.size)
 
-    val moduleChange = changes.filterIsInstance<EntityChange.Replaced<ModuleEntity>>().single()
+    @Suppress("UNCHECKED_CAST")
+    val moduleChange = changes.filterIsInstance<EntityChange.Replaced<*>>()
+      .single { it.newEntity is ModuleEntity } as EntityChange.Replaced<ModuleEntity>
     Assert.assertEquals(3, moduleChange.oldEntity.dependencies.size)
     Assert.assertEquals(2, moduleChange.newEntity.dependencies.size)
 

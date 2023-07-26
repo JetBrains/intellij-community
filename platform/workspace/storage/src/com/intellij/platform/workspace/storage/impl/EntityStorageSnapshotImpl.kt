@@ -415,52 +415,8 @@ internal class MutableEntityStorageImpl(
 
   /**
    * Implementation note: [changeLog] contains the information about modified entities, but don't contain the info
-   *   regarding the entities that are affected by this change.
-   * For example, if we remove the child entity, we should generate two events: remove of child and modification of parent.
-   *
-   * --- Ideal behaviour - that is currently not implemented --------------
-   *
-   * The [EntityChange.Added] and [EntityChange.Removed] events are straightforward and generated in case of added or removed entities.
-   *
-   * The [EntityChange.Replaced] is generated in case if any of the fields of the entity will return a different value in the newer
-   *   version of storage.
-   * This means, that this event is generated for case of "primitive" field change (Int, String, data class, etc.) or in case of
-   *   changes of the references to other entity.
-   * So, for example, if we remove child entity, we'll generate two events: remove event for child and replace event for parent.
-   *
-   * # Examples
-   *
-   * Assuming the following structure of entities: A --> B --> C
-   * Where A is the root entity and B and C are the children.
-   *
-   * - If we modify primitive field of C: [Replace(C)]
-   * - If we remove C: [Replace(B), Remove(C)]
-   * - If we remove reference between B and C: [Replace(B), Replace(C)]
-   * - If we remove B: [Replace(A), Remove(B), Remove(C)]
-   *
-   * Another example:
-   * Before: A --> B  C, After A  C --> B
-   * We have an entity `A` that has a child `B` and we move this child from `A` to `C`
-   *
-   * Produced events: [Replace(A), Replace(B), Replace(C)]
-   *
-   * ----------------------------------------------------------------
-   *
-   * ^^^ The behaviour above is not yet implemented as it breaks some current behaviour of IDE.
-   * For example, adding of facets should not cause roots changed event. But since we add the facet to some module,
-   *   the module itself gets "replace" event and this causes roots changed event.
-   *
-   * The code in this implementation contains commented out code that reverts the ideal behaviour that is described above.
-   *
-   * The initial refactoring of this method was made for IDEA-313747.
-   * It was aimed to fix the case of "adding reference between two existing entities".
-   *   It described the problem that `A.link = B` and `B.link = A` cause two different events while they create the same state change.
-   *
-   * However, during investigation, I've found another case with entities creation:
-   * `new B(link = A)` and `A.link = new B()` also generate different events while modifying storage in the same way.
-   *
-   * The proper fix for the case above is to create two events: modify A and create B. However, at the moment this will cause more
-   *   roots changed events and at least will break some tests.
+   *   regarding the entities that are affected by this change. For example, if we remove the child, we don't add the information that
+   *   the parent was modified.
    */
   override fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>> {
     val start = System.currentTimeMillis()
@@ -471,16 +427,57 @@ internal class MutableEntityStorageImpl(
       val originalImpl = original as AbstractEntityStorage
       val changedEntityIds = HashSet<Long>()
 
+      // Here we collect the ID of entities that were changed and entities that were affected by this change.
+      //  The information about what type of change was performed (added/removed/replaced) is not stored and will be calculated later.
       for ((entityId, change) in this.changeLog.changeLog) {
         when (change) {
-          is ChangeEntry.AddEntity -> changedEntityIds += entityId
-          is ChangeEntry.RemoveEntity -> changedEntityIds += entityId
-          is ChangeEntry.ReplaceEntity -> changedEntityIds += entityId
+          is ChangeEntry.AddEntity -> {
+            changedEntityIds += entityId
+            changedEntityIds += this.refs.getChildrenRefsOfParentBy(entityId.asParent()).values.flatten().map { it.id }
+            changedEntityIds += this.refs.getParentRefsOfChild(entityId.asChild()).values.map { it.id }
+          }
+          is ChangeEntry.RemoveEntity -> {
+            changedEntityIds += entityId
+            changedEntityIds += originalImpl.refs.getChildrenRefsOfParentBy(entityId.asParent()).values.flatten().map { it.id }
+            changedEntityIds += originalImpl.refs.getParentRefsOfChild(entityId.asChild()).values.map { it.id }
+          }
+          is ChangeEntry.ReplaceEntity -> {
+            changedEntityIds += entityId
+            if (change.references != null) {
+              changedEntityIds += (change.references.oldParents - change.references.modifiedParents).values.map { it.id }
+              changedEntityIds += (change.references.modifiedParents - change.references.oldParents).values.mapNotNull { it?.id }
+
+              val updatedChildren = change.references.removedChildren.map { it.second.id } + change.references.newChildren.map { it.second.id }
+              changedEntityIds += updatedChildren
+              updatedChildren.forEach { childId ->
+                val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+                val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+                changedEntityIds += (origParents - newParents)
+                changedEntityIds += (newParents - origParents)
+              }
+            }
+          }
           is ChangeEntry.ChangeEntitySource -> changedEntityIds += entityId
-          is ChangeEntry.ReplaceAndChangeSource -> changedEntityIds += entityId
+          is ChangeEntry.ReplaceAndChangeSource -> {
+            changedEntityIds += entityId
+            if (change.dataChange.references != null) {
+              changedEntityIds += (change.dataChange.references.oldParents - change.dataChange.references.modifiedParents).values.map { it.id }
+              changedEntityIds += (change.dataChange.references.modifiedParents - change.dataChange.references.oldParents).values.mapNotNull { it?.id }
+
+              val updatedChildren = change.dataChange.references.removedChildren.map { it.second.id } + change.dataChange.references.newChildren.map { it.second.id }
+              changedEntityIds += updatedChildren
+              updatedChildren.forEach { childId ->
+                val origParents: Set<EntityId> = originalImpl.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+                val newParents: Set<EntityId> = this.refs.getParentRefsOfChild(childId.asChild()).mapTo(HashSet()) { it.value.id }
+                changedEntityIds += (origParents - newParents)
+                changedEntityIds += (newParents - origParents)
+              }
+            }
+          }
         }
       }
 
+      // Based on differences existence of entities in both storages, we detect if the entity was added, removed, or replaced.
       changedEntityIds.forEach { id ->
         val entityClass = id.clazz.findWorkspaceEntity()
         val oldData = originalImpl.entityDataById(id)?.createEntity(originalImpl)

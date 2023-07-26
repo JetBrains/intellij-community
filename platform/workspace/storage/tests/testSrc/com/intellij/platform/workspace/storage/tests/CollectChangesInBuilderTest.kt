@@ -7,10 +7,15 @@ import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
+import kotlin.test.assertIs
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 @Suppress("UNCHECKED_CAST")
 class CollectChangesInBuilderTest {
@@ -183,21 +188,18 @@ class CollectChangesInBuilderTest {
     val child = builder addEntity XChildEntity("Child", MySource) {
       parentEntity = parent
     }
-    (builder as MutableEntityStorageImpl).changeLog.clear()
     val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
 
-    builder.modifyEntity(parent2) {
+    newBuilder.modifyEntity(parent2.from(newBuilder)) {
       this.children = listOf(child)
     }
 
-    assertEquals(0, builder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
-    assertEquals(1, builder.entities(XParentEntity::class.java).single { it.parentProperty == "Two" }.children.size)
-    assertEquals("Two", builder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
+    assertEquals(0, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
+    assertEquals(1, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "Two" }.children.size)
+    assertEquals("Two", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
 
-    // This should actually generate 2 events. However, current implementation off changes collecting
-    //  has some issues that can't be fixed because the platform relays on them
-    // See doc for [MutableEntityStorage.collectChanges] for more info
-    assertChangelogSize(1)
+    assertChangelogSize(3, newBuilder, snapshot)
   }
 
   @Test
@@ -207,21 +209,130 @@ class CollectChangesInBuilderTest {
     val child = builder addEntity XChildEntity("Child", MySource) {
       parentEntity = parent
     }
-    (builder as MutableEntityStorageImpl).changeLog.clear()
     val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
 
-    builder.modifyEntity(child) {
+    newBuilder.modifyEntity(child.from(newBuilder)) {
       this.parentEntity = parent2
     }
 
-    assertEquals(0, builder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
-    assertEquals(1, builder.entities(XParentEntity::class.java).single { it.parentProperty == "Two" }.children.size)
-    assertEquals("Two", builder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
+    assertEquals(0, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "One" }.children.size)
+    assertEquals(1, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "Two" }.children.size)
+    assertEquals("Two", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
 
-    // This should actually generate 3 events. However, current implementation off changes collecting
-    //  has some issues that can't be fixed because the platform relays on them
-    // See doc for [MutableEntityStorage.collectChanges] for more info
-    assertChangelogSize(1)
+    assertChangelogSize(3, newBuilder, snapshot)
+  }
+
+  @Test
+  fun `create child by modifying parent`() {
+    val parent = builder addEntity XParentEntity("One", MySource)
+    val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
+
+    newBuilder.modifyEntity(parent.from(newBuilder)) {
+      this.children = listOf(XChildEntity("Child", MySource))
+    }
+
+    assertEquals(1, newBuilder.entities(XParentEntity::class.java).single().children.size)
+    assertEquals("One", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
+
+    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    assertIs<EntityChange.Replaced<*>>(changes[XParentEntity::class.java]?.single())
+    assertIs<EntityChange.Added<*>>(changes[XChildEntity::class.java]?.single())
+  }
+
+  @Test
+  fun `create child by adding child with link to parent`() {
+    val parent = builder addEntity XParentEntity("One", MySource)
+    val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
+
+    newBuilder addEntity XChildEntity("Child", MySource) {
+      this.parentEntity = parent.from(newBuilder)
+    }
+
+    assertEquals(1, newBuilder.entities(XParentEntity::class.java).single().children.size)
+    assertEquals("One", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
+
+    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    assertIs<EntityChange.Replaced<*>>(changes[XParentEntity::class.java]?.single())
+    assertIs<EntityChange.Added<*>>(changes[XChildEntity::class.java]?.single())
+  }
+
+  @Test
+  fun `create reference between entities from parent`() {
+    val parent = builder addEntity OptionalOneToOneParentEntity(MySource)
+    val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource)
+    val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
+
+    newBuilder.modifyEntity(parent.from(newBuilder)) {
+      this.child = child.from(newBuilder)
+    }
+
+    assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
+    assertNotNull(newBuilder.entities(OptionalOneToOneChildEntity::class.java).single().parent)
+
+    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
+    assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
+  }
+
+  @Test
+  fun `create reference between entities from child`() {
+    val parent = builder addEntity OptionalOneToOneParentEntity(MySource)
+    val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource)
+    val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
+
+    newBuilder.modifyEntity(child.from(newBuilder)) {
+      this.parent = parent.from(newBuilder)
+    }
+
+    assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
+    assertNotNull(newBuilder.entities(OptionalOneToOneChildEntity::class.java).single().parent)
+
+    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
+    assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
+  }
+
+  @Test
+  fun `remove child`() {
+    val parent = builder addEntity OptionalOneToOneParentEntity(MySource)
+    val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource) {
+      this.parent = parent
+    }
+    val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
+
+    newBuilder.removeEntity(child.from(newBuilder))
+
+    assertNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
+    assertTrue(newBuilder.entities(OptionalOneToOneChildEntity::class.java).toList().isEmpty())
+
+    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
+    assertIs<EntityChange.Removed<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
+  }
+
+  @Test
+  @Ignore("The store copies the child instead of reffering to the existing one. I'm not sure if this is correct behaviour.")
+  fun `create parent to the existing child`() {
+    val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource)
+    val snapshot = builder.toSnapshot()
+    val newBuilder = snapshot.toBuilder()
+
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
+      this.child = child.from(newBuilder)
+    }
+
+    assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
+    assertNotNull(newBuilder.entities(OptionalOneToOneChildEntity::class.java).single().parent)
+
+    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    assertIs<EntityChange.Added<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
+    assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
 
   private fun assertChangelogSize(size: Int,

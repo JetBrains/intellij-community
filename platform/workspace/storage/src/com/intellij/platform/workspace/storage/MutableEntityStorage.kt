@@ -144,6 +144,34 @@ interface MutableEntityStorage : EntityStorage {
    * 
    * This function isn't supported to be used by client code directly. In order to subscribe to changes in entities inside the IDE process,
    * use [WorkspaceModelTopics][com.intellij.platform.backend.workspace.WorkspaceModelTopics].
+   *
+   * # Behavior details
+   *
+   * The [EntityChange.Added] and [EntityChange.Removed] events are straightforward and generated in case of added or removed entities.
+   *
+   * The [EntityChange.Replaced] is generated in case if any of the fields of the entity changes the value in the newer
+   *   version of storage.
+   * This means that this event is generated in two cases: "primitive" field change (Int, String, data class, etc.) or
+   *   changes of the references to other entities. The change of references may happen interectly by modifying the referred entity.
+   *   For example, if we remove child entity, we'll generate two events: remove for child and replace for parent.
+   *                if we add a new child entity, we'll also generate two events: add for child and replace for parent.
+   *
+   * # Examples
+   *
+   * Assuming the following structure of entities: A --> B --> C
+   * Where A is the root entity and B and C are the children.
+   *
+   * - If we modify the primitive field of C: [Replace(C)]
+   * - If we remove C: [Replace(B), Remove(C)]
+   * - If we remove reference between B and C: [Replace(B), Replace(C)]
+   * - If we remove B: [Replace(A), Remove(B), Remove(C)] - C is cascade removed
+   *
+   * Another example:
+   * Before: A --> B  C, After A  C --> B
+   * We have an entity `A` that has a child `B` and we move this child from `A` to `C`
+   *
+   * Produced events: [Replace(A), Replace(B), Replace(C)]
+   *
    */
   @ApiStatus.Internal
   fun collectChanges(original: EntityStorage): Map<Class<*>, List<EntityChange<*>>>
@@ -231,11 +259,8 @@ sealed class EntityChange<T : WorkspaceEntity> {
   }
 
   /**
-   * Describes changes in properties of an entity. 
+   * Describes changes in properties of an entity.
    * Old values of the properties can be obtained via [oldEntity], new values can be obtained via [newEntity].
-   * 
-   * Note that currently changes in references to other entities cause [EntityChange.Replaced] event on for the entity for which 
-   * [MutableEntityStorage.modifyEntity] was called.
    */
   data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }

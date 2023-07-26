@@ -8,12 +8,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.Topic
 import java.util.*
+import com.intellij.platform.workspace.storage.MutableEntityStorage
 
 /**
  * Register an implementation of this interface as a handler for [WorkspaceModelTopics.CHANGED] to synchronously process changes in the 
  * workspace model.
  * 
  * For the asynchronous handling of changes from the workspace model collect them via [WorkspaceModel.changesEventFlow]
+ *
+ * See the documentation of [MutableEntityStorage.collectChanges] for details about changes collecting.
  */
 interface WorkspaceModelChangeListener : EventListener {
   /**
