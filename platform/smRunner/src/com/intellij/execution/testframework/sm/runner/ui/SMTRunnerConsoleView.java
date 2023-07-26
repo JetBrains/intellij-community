@@ -122,8 +122,8 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView implements 
 
   @Override
   public void hideOriginalActions() {
-    if (!ExperimentalUI.isNewUI()) return;
-    myResultsViewer.hideToolbar();
-    myResultsViewer.setBorder(JBUI.Borders.empty());
+    if (ExperimentalUI.isNewUI()) {
+      myResultsViewer.hideToolbar();
+    }
   }
 }
