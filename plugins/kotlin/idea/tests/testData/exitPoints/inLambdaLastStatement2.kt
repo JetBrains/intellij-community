@@ -6,6 +6,7 @@ fun test() {
         if (it == "a") 2<caret> else 0
     }
 }
-//HIGHLIGHTED: 2
 //HIGHLIGHTED: return@foo 1
+//HIGHLIGHTED: foo
+//HIGHLIGHTED: 2
 //HIGHLIGHTED: 0

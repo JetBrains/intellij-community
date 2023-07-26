@@ -7,4 +7,5 @@ fun test() {
     }
 }
 //HIGHLIGHTED: return@foo 1
+//HIGHLIGHTED: foo
 //HIGHLIGHTED: 0

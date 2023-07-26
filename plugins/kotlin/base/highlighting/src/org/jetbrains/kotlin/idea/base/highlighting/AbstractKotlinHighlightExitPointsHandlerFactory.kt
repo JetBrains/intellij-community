@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfTypes
 import com.intellij.util.Consumer
 import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
+import org.jetbrains.kotlin.utils.addIfNotNull
 
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -125,55 +127,95 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     getRelevantDeclaration(target)
                 }
 
+            var targetOccurrenceAdded = false
             if (target is KtReturnExpression || target is KtThrowExpression) {
                 when (relevantFunction) {
-                    is KtNamedFunction -> (relevantFunction.nameIdentifier ?: relevantFunction.funKeyword)?.let { addOccurrence(it) }
+                    is KtNamedFunction -> (relevantFunction.nameIdentifier ?: relevantFunction.funKeyword)?.let {
+                        targetOccurrenceAdded = true
+                        addOccurrence(it)
+                    }
                     is KtFunctionLiteral -> relevantFunction.getStrictParentOfType<KtLambdaArgument>()
                         ?.getStrictParentOfType<KtCallExpression>()
                         ?.calleeExpression
-                        ?.let { addOccurrence(it) }
+                        ?.let {
+                            targetOccurrenceAdded = true
+                            addOccurrence(it)
+                        }
                 }
             }
 
-            val lastLambdaExpression = (relevantFunction as? KtFunctionLiteral)?.bodyExpression?.statements?.lastOrNull()
+            val lastLambdaStatementExpressions =
+                if (relevantFunction is KtFunctionLiteral) {
+                    buildSet {
+                        val set = this
+                        set += relevantFunction
+                        relevantFunction.acceptChildren(object : KtVisitorVoid() {
+                            override fun visitKtElement(element: KtElement) {
+                                ProgressIndicatorProvider.checkCanceled()
+                                element.acceptChildren(this)
+                            }
+
+                            override fun visitExpression(expression: KtExpression) {
+                                when(expression) {
+                                    is KtBinaryExpression -> {
+                                        set.addIfNotNullAndNotBlock(expression.left)
+                                        set.addIfNotNullAndNotBlock(expression.right)
+                                    }
+                                    is KtCallExpression -> {
+                                        set.addIfNotNullAndNotBlock(expression.calleeExpression)
+                                    }
+                                    is KtBlockExpression -> set.addIfNotNullAndNotBlock(expression.statements.lastOrNull())
+                                    is KtIfExpression -> {
+                                        set.addIfNotNullAndNotBlock(expression.then)
+                                        set.addIfNotNullAndNotBlock(expression.`else`)
+                                    }
+                                    is KtWhenExpression ->
+                                        expression.entries.map { it.expression }.forEach {
+                                            set.addIfNotNullAndNotBlock(it)
+                                        }
+                                }
+                                super.visitExpression(expression)
+                            }
+                        })
+                    }
+                } else {
+                    emptySet()
+                }
+
+            if (relevantFunction is KtFunctionLiteral && target !in lastLambdaStatementExpressions) {
+                return
+            }
 
             relevantFunction?.accept(object : KtVisitorVoid() {
-                private var withinLastLambdaExpression: Boolean = false
-
                 override fun visitKtElement(element: KtElement) {
                     ProgressIndicatorProvider.checkCanceled()
                     element.acceptChildren(this)
                 }
 
                 override fun visitExpression(expression: KtExpression) {
-                    var withinLastLambdaExpressionChanged = false
-                    if (!withinLastLambdaExpression && lastLambdaExpression == expression) {
-                        withinLastLambdaExpression = true
-                        withinLastLambdaExpressionChanged = true
-                    }
-                    try {
-                        if (relevantFunction is KtFunctionLiteral) {
-                            if (occurrenceForFunctionLiteralReturnExpression(expression)) {
-                                return
+                    if (relevantFunction is KtFunctionLiteral) {
+                        if (occurrenceForFunctionLiteralReturnExpression(expression, expression in lastLambdaStatementExpressions)) {
+                            if (!targetOccurrenceAdded) {
+                                relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression?.let {
+                                    targetOccurrenceAdded = true
+                                    addOccurrence(it)
+                                }
                             }
-                        }
-
-                        super.visitExpression(expression)
-                    } finally {
-                        if (withinLastLambdaExpressionChanged) {
-                            withinLastLambdaExpression = false
+                            return
                         }
                     }
+
+                    super.visitExpression(expression)
                 }
 
-                private fun occurrenceForFunctionLiteralReturnExpression(expression: KtExpression): Boolean {
+                private fun occurrenceForFunctionLiteralReturnExpression(expression: KtExpression, lastLambdaExpression: Boolean): Boolean {
                     if (!KtPsiUtil.isStatement(expression)) return false
 
                     if (expression is KtIfExpression || expression is KtWhenExpression || expression is KtBlockExpression) {
                         return false
                     }
 
-                    if (!withinLastLambdaExpression) {
+                    if (!lastLambdaExpression) {
                         return false
                     }
 
@@ -199,6 +241,10 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                     visitReturnOrThrow(expression)
                 }
             })
+        }
+
+        private fun MutableSet<Any>.addIfNotNullAndNotBlock(element: PsiElement?) {
+            addIfNotNull(element.takeUnless { it is KtBlockExpression })
         }
 
         override fun highlightReferences() = highlightReferences
