@@ -5,6 +5,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ByteFileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.LongFileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ShortFileAttribute;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -27,24 +28,31 @@ public class SpecializedFileAttributesTest {
 
   private FSRecordsImpl vfs;
 
+  private ByteFileAttribute byteAttributeAccessor;
+  private ByteFileAttribute byteFastAttributeAccessor;
+
+  private ShortFileAttribute shortAttributeAccessor;
+  private ShortFileAttribute shortFastAttributeAccessor;
+
   private IntFileAttribute intAttributeAccessor;
-  private IntFileAttribute intFastAttributeAccessor
-    ;
+  private IntFileAttribute intFastAttributeAccessor;
+
   private LongFileAttribute longAttributeAccessor;
   private LongFileAttribute longFastAttributeAccessor;
 
-  private ByteFileAttribute byteAttributeAccessor;
-  private ByteFileAttribute byteFastAttributeAccessor;
 
   @BeforeEach
   public void setup(@TempDir Path tempDir) throws Exception {
     vfs = FSRecordsImpl.connect(tempDir);
+
+    byteAttributeAccessor = SpecializedFileAttributes.specializeAsByte(vfs, TEST_ATTRIBUTE);
+
+    shortFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastShort(vfs, TEST_ATTRIBUTE);
+
     intAttributeAccessor = SpecializedFileAttributes.specializeAsInt(vfs, TEST_ATTRIBUTE);
     intFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastInt(vfs, TEST_ATTRIBUTE);
 
     longAttributeAccessor = SpecializedFileAttributes.specializeAsLong(vfs, TEST_ATTRIBUTE);
-
-    byteAttributeAccessor = SpecializedFileAttributes.specializeAsByte(vfs, TEST_ATTRIBUTE);
   }
 
   @AfterEach
@@ -55,7 +63,7 @@ public class SpecializedFileAttributesTest {
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true, false})
   public void singleIntValueCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    IntFileAttribute accessor = testFastAccessor?intFastAttributeAccessor:intAttributeAccessor;
+    IntFileAttribute accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
     int fileId = vfs.createRecord();
     int valueToWrite = 1234;
     accessor.write(fileId, valueToWrite);
@@ -67,7 +75,7 @@ public class SpecializedFileAttributesTest {
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true, false})
   public void manyIntValuesCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    IntFileAttribute accessor = testFastAccessor?intFastAttributeAccessor:intAttributeAccessor;
+    IntFileAttribute accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
     int fileId = vfs.createRecord();
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < ENOUGH_VALUES; i++) {
@@ -78,6 +86,35 @@ public class SpecializedFileAttributesTest {
                    "Value written must be read back as is");
     }
   }
+
+
+  @ParameterizedTest(name = "fast: {0}")
+  @ValueSource(booleans = {true})
+  public void singleShortValueCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
+    ShortFileAttribute accessor = testFastAccessor ? shortFastAttributeAccessor : shortAttributeAccessor;
+    int fileId = vfs.createRecord();
+    short valueToWrite = 1234;
+    accessor.write(fileId, valueToWrite);
+    short readBack = accessor.read(fileId, (short)0);
+    assertEquals(valueToWrite, readBack,
+                 "Value written must be read back as is");
+  }
+
+  @ParameterizedTest(name = "fast: {0}")
+  @ValueSource(booleans = {true})
+  public void manyShortValuesCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
+    ShortFileAttribute accessor = testFastAccessor ? shortFastAttributeAccessor : shortAttributeAccessor;
+    int fileId = vfs.createRecord();
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    for (int i = 0; i < ENOUGH_VALUES; i++) {
+      short valueToWrite = (short)rnd.nextInt(Short.MIN_VALUE, Short.MAX_VALUE);
+      accessor.write(fileId, valueToWrite);
+      short readBack = accessor.read(fileId, (short)0);
+      assertEquals(valueToWrite, readBack,
+                   "Value written must be read back as is");
+    }
+  }
+
 
   @Test
   public void singleLongValueCouldBeWrittenAndReadBackAsIs() throws Exception {

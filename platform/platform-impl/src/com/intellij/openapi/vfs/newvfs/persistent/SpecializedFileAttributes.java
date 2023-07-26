@@ -154,13 +154,7 @@ public final class SpecializedFileAttributes {
 
     IntFileAttributesStorage attributesStorage = IntFileAttributesStorage.openAndEnsureMatchVFS(vfs, attributeId);
 
-    if (attribute.isVersioned()) {
-      if (attributesStorage.getVersion() != attribute.getVersion()) {
-        attributesStorage.clear();
-        attributesStorage.setVFSCreationTag(vfs.getCreationTimestamp());
-        attributesStorage.setVersion(attribute.getVersion());
-      }
-    }
+    checkStorageVersion(vfs, attribute, attributesStorage);
 
     return new IntFileAttribute() {
       @Override
@@ -195,6 +189,66 @@ public final class SpecializedFileAttributes {
     };
   }
 
+  public static ShortFileAttribute specializeAsFastShort(@NotNull FSRecordsImpl vfs,
+                                                         @NotNull FileAttribute attribute) throws IOException {
+    String attributeId = attribute.getId();
+
+    //FIXME RC: who is responsible for closing the storage?
+
+    //FIXME RC: use actual ShortFileAttributesStorage
+
+    IntFileAttributesStorage attributesStorage = IntFileAttributesStorage.openAndEnsureMatchVFS(vfs, attributeId);
+
+    checkStorageVersion(vfs, attribute, attributesStorage);
+
+    return new ShortFileAttribute() {
+      @Override
+      public short read(@NotNull VirtualFile vFile,
+                        short defaultValue) throws IOException {
+        if (defaultValue != 0) {
+          throw new UnsupportedOperationException(
+            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+        }
+        return (short)attributesStorage.readAttribute(vFile);
+      }
+
+      @Override
+      public short read(int fileId,
+                        short defaultValue) throws IOException {
+        if (defaultValue != 0) {
+          throw new UnsupportedOperationException(
+            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+        }
+        return (short)attributesStorage.readAttribute(fileId);
+      }
+
+      @Override
+      public void write(@NotNull VirtualFile vFile,
+                        short value) throws IOException {
+        attributesStorage.writeAttribute(vFile, value);
+      }
+
+      @Override
+      public void write(int fileId,
+                        short value) throws IOException {
+        attributesStorage.writeAttribute(fileId, value);
+      }
+    };
+  }
+
+  private static void checkStorageVersion(@NotNull FSRecordsImpl vfs,
+                                          @NotNull FileAttribute attribute,
+                                          @NotNull IntFileAttributesStorage attributesStorage) throws IOException {
+    if (attribute.isVersioned()) {
+      if (attributesStorage.getVersion() != attribute.getVersion()) {
+        attributesStorage.clear();
+        attributesStorage.setVFSCreationTag(vfs.getCreationTimestamp());
+        attributesStorage.setVersion(attribute.getVersion());
+      }
+    }
+  }
+
+  //MAYBE RC: LongFileAttribute_Accessor_?
   public interface LongFileAttribute {
     long read(@NotNull VirtualFile vFile,
               long defaultValue) throws IOException;
@@ -219,6 +273,16 @@ public final class SpecializedFileAttributes {
     void write(int fileId, int value) throws IOException;
   }
 
+  public interface ShortFileAttribute {
+    short read(@NotNull VirtualFile vFile, short defaultValue) throws IOException;
+
+    short read(int fileId, short defaultValue) throws IOException;
+
+    void write(@NotNull VirtualFile vFile, short value) throws IOException;
+
+    void write(int fileId, short value) throws IOException;
+  }
+
   public interface ByteFileAttribute {
     byte read(@NotNull VirtualFile vFile,
               byte defaultValue) throws IOException;
@@ -230,6 +294,15 @@ public final class SpecializedFileAttributes {
 
     void write(int fileId,
                byte value) throws IOException;
+  }
+
+
+  //TODO RC: make 'Fast' accessors implement this interface also, so clients who need
+  //         more control over impl -- could have it
+  public interface FileAttributeExAccessor {
+    void clear() throws IOException;
+
+    void flush() throws IOException;
   }
 
   private static int extractFileId(@NotNull VirtualFile vFile) {
