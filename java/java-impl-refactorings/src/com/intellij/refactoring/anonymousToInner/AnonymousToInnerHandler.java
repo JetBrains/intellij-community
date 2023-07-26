@@ -449,7 +449,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandlerOnPsiEle
 
   private void updateSelfReferences(@NotNull PsiClass aClass, String name) {
     if (aClass instanceof PsiAnonymousClass) return;
-    if (name.equals(aClass.getName())) return;
+    if (name.equals(aClass.getName()) && myTypeParametersToCreate.isEmpty()) return;
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(aClass.getProject());
     int origCount = aClass.getTypeParameters().length;
     for (PsiReference reference : ReferencesSearch.search(aClass, aClass.getUseScope()).findAll()) {

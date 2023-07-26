@@ -69,6 +69,10 @@ public class AnonymousToInnerTest extends LightJavaCodeInsightTestCase {
     doTest("InnerClass", true);
   }
   
+  public void testLocalClassNoRename() {
+    doTest("Hello", true);
+  }
+  
   public void testLocalClassVarargCtor() {
     doTest("InnerClass", true);
   }

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -31,12 +32,14 @@ public class MoveAnonymousOrLocalToInnerFix extends LocalQuickFixAndIntentionAct
 
   @Override
   public @NotNull String getText() {
-    return JavaRefactoringBundle.message("convert.anonymous.to.inner.fix.name");
+    PsiClass psiClass = (PsiClass)getStartElement();
+    return psiClass instanceof PsiAnonymousClass ? JavaRefactoringBundle.message("convert.anonymous.to.inner.fix.name") :
+           JavaRefactoringBundle.message("convert.local.to.inner.fix.name");
   }
 
   @Override
   public @NotNull String getFamilyName() {
-    return getText();
+    return JavaRefactoringBundle.message("convert.anonymous.or.local.to.inner.fix.name");
   }
 
   @Override
