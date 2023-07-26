@@ -1,24 +1,17 @@
 package com.intellij.settingsSync
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.COMPONENT_NAME
 import com.intellij.settingsSync.SettingsSyncSettings.Companion.FILE_SPEC
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
-import java.util.*
-import kotlin.collections.ArrayList
 
-
-@State(name = COMPONENT_NAME, storages = [Storage(FILE_SPEC)])
+@State(name = COMPONENT_NAME, storages = [Storage(FILE_SPEC, usePathMacroManager = false)])
 @ApiStatus.Internal
 class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateComponent<SettingsSyncSettings.State>(State()) {
-
   companion object {
-    fun getInstance(): SettingsSyncSettings = ApplicationManager.getApplication().getService(SettingsSyncSettings::class.java)
-    val LOG = logger<SettingsSyncSettings>()
+    fun getInstance(): SettingsSyncSettings = service<SettingsSyncSettings>()
+
     const val FILE_SPEC = "settingsSync.xml"
     const val COMPONENT_NAME = "SettingsSyncSettings"
   }
@@ -105,10 +98,10 @@ class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateCompo
 
     fun withSubcategoryEnabled(category: SettingsCategory, subcategoryId: String, isEnabled: Boolean): State {
       val newSubcategoriesMap = HashMap(disabledSubcategories)
-      val subcategoriesList = newSubcategoriesMap[category]
+      val subCategoryList = newSubcategoriesMap[category]
       if (isEnabled) {
-        if (subcategoriesList != null) {
-          val newSubcategories = ArrayList(subcategoriesList)
+        if (subCategoryList != null) {
+          val newSubcategories = ArrayList(subCategoryList)
           newSubcategories -= subcategoryId
           if (newSubcategories.isEmpty()) {
             newSubcategoriesMap.remove(category)
@@ -119,11 +112,11 @@ class SettingsSyncSettings : SettingsSyncState, SerializablePersistentStateCompo
         }
       }
       else {
-        val newSubcategories = if (subcategoriesList == null) {
+        val newSubcategories = if (subCategoryList == null) {
           ArrayList()
         }
         else {
-          ArrayList(subcategoriesList)
+          ArrayList(subCategoryList)
         }
         if (!newSubcategories.contains(subcategoryId)) {
           newSubcategories += subcategoryId
