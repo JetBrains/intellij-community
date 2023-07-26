@@ -3,8 +3,8 @@
 
 package com.intellij.ui.scale
 
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.diagnostic.LoadingState
-import com.intellij.diagnostic.subtask
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
@@ -25,9 +25,6 @@ import javax.swing.UIManager
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
-/**
- * @author tav
- */
 object JBUIScale {
   @JvmField
   @Internal
@@ -51,11 +48,12 @@ object JBUIScale {
       thisLogger().error("Must be not computed before that call")
     }
 
-    subtask("system scale factor computation") {
+    val coroutineTracerShim = CoroutineTracerShim.coroutineTracer
+    coroutineTracerShim.span("system scale factor computation") {
       systemScaleFactor.value = computeSystemScaleFactor(uiDefaults)
     }
 
-    subtask("user scale factor computation") {
+    coroutineTracerShim.span("user scale factor computation") {
       userScaleFactor.drop()
       userScaleFactor.value
     }

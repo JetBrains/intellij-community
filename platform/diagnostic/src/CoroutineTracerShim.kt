@@ -4,16 +4,21 @@ package com.intellij.diagnostic
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 // PluginManagerCore in core, where Java 8 is required, so, we cannot move tracer.kt to util
+@Internal
+@Experimental
 interface CoroutineTracerShim {
   companion object {
-    var coroutineTracerShim: CoroutineTracerShim = object : CoroutineTracerShim {
+    var coroutineTracer: CoroutineTracerShim = object : CoroutineTracerShim {
       override suspend fun getTraceActivity() = null
+      override fun rootTrace() = EmptyCoroutineContext
 
-      override suspend fun <T> subTask(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+      override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
         return withContext(context + CoroutineName(name), action)
       }
     }
@@ -21,5 +26,7 @@ interface CoroutineTracerShim {
 
   suspend fun getTraceActivity(): Activity?
 
-  suspend fun <T> subTask(name: String, context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> T): T
+  fun rootTrace(): CoroutineContext
+
+  suspend fun <T> span(name: String, context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> T): T
 }

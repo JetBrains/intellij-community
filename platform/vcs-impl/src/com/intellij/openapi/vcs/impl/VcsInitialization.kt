@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -163,9 +163,9 @@ class VcsInitialization(private val project: Project, private val coroutineScope
   }
 
   private suspend fun runActivities(activities: List<VcsStartupActivity>) {
-    subtask("VcsInitialization.runActivities") {
+    CoroutineTracerShim.coroutineTracer.span("VcsInitialization.runActivities") {
       for (activity in activities) {
-        subtask(activity.javaClass.name) {
+        CoroutineTracerShim.coroutineTracer.span(activity.javaClass.name) {
           LOG.debug { "running activity: $activity" }
           blockingContext {
             runCatching {

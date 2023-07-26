@@ -6,7 +6,7 @@ import com.intellij.conversion.impl.ConversionContextImpl
 import com.intellij.conversion.impl.ConversionRunner
 import com.intellij.conversion.impl.ProjectConversionUtil
 import com.intellij.conversion.impl.ui.ConvertProjectDialog
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.CoroutineTracerShim
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -183,7 +183,7 @@ private suspend fun isConversionNeeded(context: ConversionContextImpl): List<Con
       LOG.debug("conversion will be performed because no information about project files")
     }
     else {
-      val newMap = subtask("conversion: project files collecting") { context.allProjectFiles }
+      val newMap = CoroutineTracerShim.coroutineTracer.span("conversion: project files collecting") { context.allProjectFiles }
       LOG.debug("Checking project files")
       val iterator = Object2LongMaps.fastIterator(newMap)
       while (iterator.hasNext()) {

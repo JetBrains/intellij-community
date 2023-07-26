@@ -186,6 +186,7 @@ internal suspend fun createPlatformLayout(addPlatformCoverage: Boolean,
     "intellij.platform.util.xmlDom",
     "intellij.platform.tracing.rt",
     "intellij.platform.util.base",
+    "intellij.platform.diagnostic",
     "intellij.platform.util",
     "intellij.platform.core",
   ), productLayout = productLayout, layout = layout)

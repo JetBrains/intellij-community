@@ -9,15 +9,18 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.util.http.ContentType
 import com.intellij.platform.util.http.httpPost
-import com.intellij.util.io.Ksuid
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import kotlinx.serialization.protobuf.ProtoIntegerType
 import kotlinx.serialization.protobuf.ProtoPacked
 import kotlinx.serialization.protobuf.ProtoType
+import java.nio.ByteBuffer
 import java.time.Instant
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 import java.time.format.DateTimeFormatter
+import java.util.*
 import java.util.concurrent.ThreadLocalRandom
 
 suspend fun writeInProtobufFormat(startTimeUnixNanoDiff: Long, activities: List<ActivityImpl>, endpoint: String) {
@@ -175,12 +178,24 @@ internal class InstrumentationScope(
 )
 
 // https://github.com/segmentio/ksuid/blob/b65a0ff7071caf0c8770b63babb7ae4a3c31034d/ksuid.go#L19
-private fun generateTraceId(random: java.util.Random): ByteArray {
-  return Ksuid.generateCustom(12, random).array()
+private fun generateTraceId(random: Random): ByteArray {
+  return generateCustom(12, random).array()
 }
 
-internal fun generateSpanId(random: java.util.Random): ByteArray {
+internal fun generateSpanId(random: Random): ByteArray {
   val result = ByteArray(8)
   random.nextBytes(result)
   return result
+}
+
+@Suppress("SameParameterValue")
+private fun generateCustom(payloadLength: Int, random: Random): ByteBuffer {
+  val byteBuffer = ByteBuffer.allocate(4 + payloadLength)
+  val utc = ZonedDateTime.now(ZoneOffset.UTC).toInstant().toEpochMilli() / 1000
+  val timestamp: Int = (utc - 1672531200).toInt()
+  byteBuffer.putInt(timestamp)
+  val bytes = ByteArray(payloadLength)
+  random.nextBytes(bytes)
+  byteBuffer.put(bytes)
+  return byteBuffer
 }

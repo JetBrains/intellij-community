@@ -97,10 +97,11 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     appStarterDeferred: Deferred<AppStarter>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
-  CoroutineTracerShim.coroutineTracerShim = object : CoroutineTracerShim {
+  CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
     override suspend fun getTraceActivity() = com.intellij.diagnostic.getTraceActivity()
+    override fun rootTrace(): CoroutineContext = rootTask()
 
-    override suspend fun <T> subTask(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
+    override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
       return subtask(name = name, context = context, action = action)
     }
   }

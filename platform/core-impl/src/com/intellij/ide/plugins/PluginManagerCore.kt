@@ -809,8 +809,8 @@ object PluginManagerCore {
   }
 
   internal suspend fun initializeAndSetPlugins(context: DescriptorListLoadingContext, loadingResult: PluginLoadingResult): PluginSet {
-    val tracerShim = CoroutineTracerShim.coroutineTracerShim
-    return tracerShim.subTask("plugin initialization") {
+    val tracerShim = CoroutineTracerShim.coroutineTracer
+    return tracerShim.span("plugin initialization") {
       val initResult = initializePlugins(context = context,
                                          loadingResult = loadingResult,
                                          coreLoader = PluginManagerCore::class.java.classLoader,
