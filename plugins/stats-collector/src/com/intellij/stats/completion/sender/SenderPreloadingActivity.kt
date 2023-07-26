@@ -31,6 +31,8 @@ private class SenderPreloadingActivity : ApplicationInitializedListener {
 
   override suspend fun execute(asyncScope: CoroutineScope) {
     asyncScope.launch {
+      // do not check right after the start - avoid getting UsageStatisticsPersistenceComponent too early
+      delay(5.minutes)
       while (isSendAllowed()) {
         delay(5.minutes)
         runCatching {
