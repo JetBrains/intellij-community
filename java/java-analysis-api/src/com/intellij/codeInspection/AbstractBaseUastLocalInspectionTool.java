@@ -13,7 +13,7 @@ import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 public abstract class AbstractBaseUastLocalInspectionTool extends LocalInspectionTool {
 
-  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
+  public static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION =
     Conditions.and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class),
                    Conditions.notInstanceOf(PsiTypeParameter.class));
 
