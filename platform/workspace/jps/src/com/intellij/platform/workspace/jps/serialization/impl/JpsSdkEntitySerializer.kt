@@ -47,11 +47,6 @@ private val ELEMENT_HOMEPATH = "homePath"
 @NonNls
 val ELEMENT_ADDITIONAL = "additional"
 
-//TODO::
-//[] Additional data loading
-//[] Additional data saving
-//[] The same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
-
 
 class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFileEntitiesSerializer<SdkMainEntity> {
   private val LOG = logger<JpsSdkEntitySerializer>()
