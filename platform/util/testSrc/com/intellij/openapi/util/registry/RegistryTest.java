@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.idea.TestFor;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNull;
+import static junit.framework.Assert.*;
 
 public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
+  private static final String INT_KEY_REQUIRE_RESTART = "editor.caret.width";
+
 
   @After
   public void tearDown(){
@@ -180,6 +182,19 @@ public class RegistryTest {
     }}), null);
     assertEquals(firstKeyChangedVal, Registry.get(firstKey).asString());
     assertEquals(secondKeyInitValue, Registry.get(secondKey).asString());
+  }
+
+  @Test
+  public void dontPersistDefaultValue(){
+    int originalValue = Registry.intValue(INT_KEY_REQUIRE_RESTART);
+    Registry.get(INT_KEY_REQUIRE_RESTART).setValue("2222");
+    assertTrue(JDOMUtil.writeElement(Registry.getInstance().getState()).contains(
+      "<entry key=\"%s\" value=\"2222\"".formatted(INT_KEY_REQUIRE_RESTART))
+    );
+    Registry.get(INT_KEY_REQUIRE_RESTART).setValue(String.valueOf(originalValue));
+    assertFalse(JDOMUtil.writeElement(Registry.getInstance().getState()).contains(
+      INT_KEY_REQUIRE_RESTART)
+    );
   }
 
 

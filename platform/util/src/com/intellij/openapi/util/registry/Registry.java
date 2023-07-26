@@ -185,10 +185,13 @@ public final class Registry  {
   public @NotNull Element getState() {
     Element state = new Element("registry");
     for (Map.Entry<String, String> entry : myUserProperties.entrySet()) {
-      Element entryElement = new Element("entry");
-      entryElement.setAttribute("key", entry.getKey());
-      entryElement.setAttribute("value", entry.getValue());
-      state.addContent(entryElement);
+      RegistryValue registryValue = get(entry.getKey());
+      if (registryValue.isChangedFromDefault()) {
+        Element entryElement = new Element("entry");
+        entryElement.setAttribute("key", entry.getKey());
+        entryElement.setAttribute("value", entry.getValue());
+        state.addContent(entryElement);
+      }
     }
     return state;
   }
