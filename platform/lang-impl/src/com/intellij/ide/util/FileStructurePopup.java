@@ -299,7 +299,7 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     IdeFocusManager.getInstance(myProject).requestFocus(myTree, true);
 
-    return rebuildAndSelect(false, myInitialElement, null).onProcessed(path -> UIUtil.invokeLaterIfNeeded(() -> {
+    return rebuildAndSelect(false, myInitialElement, null).onSuccess(path -> UIUtil.invokeLaterIfNeeded(() -> {
       TreeUtil.ensureSelection(myTree);
       myProject.getService(FileStructurePopupLoadingStateUpdater.class).installUpdater(this::installUpdater, myProject, myTreeModel);
       showTime = System.nanoTime();
