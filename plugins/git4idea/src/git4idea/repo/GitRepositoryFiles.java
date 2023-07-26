@@ -14,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.InvalidPathException;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -238,7 +239,13 @@ public final class GitRepositoryFiles {
   public void updateCustomPaths(@NotNull GitConfig.Core core) {
     String hooksPath = core.getHooksPath();
     if (hooksPath != null) {
-      myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
+      try {
+        myCustomHooksDirPath = myRootDir.toNioPath().resolve(hooksPath).toString();
+      }
+      catch (InvalidPathException e) {
+        LOG.warn("Can't resolve custom hooks path: '" + hooksPath + "'");
+        myCustomHooksDirPath = null;
+      }
     }
     else {
       myCustomHooksDirPath = null;
@@ -408,7 +415,7 @@ public final class GitRepositoryFiles {
 
   /**
    * Refresh that part of .git repository files, which is not covered by {@link GitRepository#update()}, e.g. the {@code refs/tags/} dir.
-   *
+   * <p>
    * The call to this method should be probably be done together with a call to update(): thus all information will be updated,
    * but some of it will be updated synchronously, the rest - asynchronously.
    */
