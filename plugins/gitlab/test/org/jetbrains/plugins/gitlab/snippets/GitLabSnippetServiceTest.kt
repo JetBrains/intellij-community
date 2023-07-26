@@ -51,7 +51,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
     setAccountManager(setOf(createMockAccount()))
 
-    assertTrue(service.canOpenDialog(null, vf, null))
+    assertTrue(service.canCreateSnippet(null, vf, null))
   }
 
   fun `test - canOpenDialog is false for empty files`() {
@@ -72,7 +72,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
     whenever(e.getData(eq(CommonDataKeys.PROJECT))).thenReturn(project)
     whenever(e.getData(eq(CommonDataKeys.EDITOR))).thenReturn(editor)
 
-    assertFalse(service.canOpenDialog(editor, null, null))
+    assertFalse(service.canCreateSnippet(editor, null, null))
   }
 
   fun `test - canOpenDialog prefers editor over selected files`() {
@@ -90,7 +90,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
     whenever(editor.virtualFile).thenReturn(emptyFile)
     whenever(editor.document).thenReturn(document)
 
-    assertFalse(service.canOpenDialog(editor, nonEmptyFile, null))
+    assertFalse(service.canCreateSnippet(editor, nonEmptyFile, null))
   }
 
   fun `test - canOpenDialog is true for directory with empty file`() {
@@ -100,7 +100,7 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
     val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/2-empty-file"))
 
-    assertTrue(service.canOpenDialog(null, vf, null))
+    assertTrue(service.canCreateSnippet(null, vf, null))
   }
 
   fun `test - canOpenDialog is false when there are no accounts`() {
@@ -110,6 +110,6 @@ class GitLabSnippetServiceTest : BasePlatformTestCase() {
 
     val vf = lfs.findFileByNioFile(Path.of(testDataPath, "snippets/1-nested-files/example.txt"))
 
-    assertFalse(service.canOpenDialog(null, vf, null))
+    assertFalse(service.canCreateSnippet(null, vf, null))
   }
 }

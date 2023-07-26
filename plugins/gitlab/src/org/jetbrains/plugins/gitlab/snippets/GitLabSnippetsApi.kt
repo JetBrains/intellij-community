@@ -14,7 +14,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectsDTO
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetBlobAction
 import org.jetbrains.plugins.gitlab.api.dto.GitLabSnippetDTO
-import org.jetbrains.plugins.gitlab.project.GitLabProjectPath
+import org.jetbrains.plugins.gitlab.util.GitLabProjectPath
 import java.net.http.HttpResponse
 
 private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<String>)
@@ -26,7 +26,7 @@ private class CreateSnippetResult(snippet: GitLabSnippetDTO?, errors: List<Strin
  * Provides a flow for underlying queries to the GitLab GQL API that lookup the projects
  * the user is a member of and can create snippets on.
  */
-internal suspend fun GitLabApi.GraphQL.getSnippetAllowedProjects(
+internal fun GitLabApi.GraphQL.getSnippetAllowedProjects(
   serverPath: GitLabServerPath
 ): Flow<List<GitLabProjectCoordinates>> =
   ApiPageUtil.createGQLPagesFlow { page ->

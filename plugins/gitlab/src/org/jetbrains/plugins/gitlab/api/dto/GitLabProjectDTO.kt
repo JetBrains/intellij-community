@@ -14,11 +14,14 @@ data class GitLabProjectDTO(
   val fullPath: @NlsSafe String,
   val httpUrlToRepo: @NlsSafe String?,
   val sshUrlToRepo: @NlsSafe String?,
-  val userPermissions: UserPermissions,
+  val userPermissions: ProjectUserPermissions,
 ) {
   val ownerPath: @NlsSafe String = fullPath.split("/").dropLast(1).joinToString("/")
 
-  data class UserPermissions(
+  /**
+   * Corresponds to what GL calls ProjectPermissions. These are the permissions a *user* has while accessing a GL *project*.
+   */
+  data class ProjectUserPermissions(
     val createSnippet: Boolean
   )
 }

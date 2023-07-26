@@ -9,7 +9,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.intellij.collaboration.api.dto.GraphQLErrorDTO
 import com.intellij.collaboration.api.dto.GraphQLResponseDTO
 import com.intellij.collaboration.api.graphql.GraphQLDataDeserializer
-import com.intellij.collaboration.api.graphql.GraphQLErrorException
 import com.intellij.collaboration.api.json.JsonDataSerializer
 import org.jetbrains.plugins.gitlab.api.GitLabRestJsonDataDeSerializer.genericConfig
 import java.io.Reader

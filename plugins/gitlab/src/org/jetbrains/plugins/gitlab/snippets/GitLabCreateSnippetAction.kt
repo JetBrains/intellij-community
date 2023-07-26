@@ -31,7 +31,7 @@ class GitLabCreateSnippetAction : DumbAwareAction(messagePointer("snippet.create
     val selectedFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
     val selectedFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.toList()
 
-    val canOpen = project.service<GitLabSnippetService>().canOpenDialog(editor, selectedFile, selectedFiles) ?: false
+    val canOpen = project.service<GitLabSnippetService>().canCreateSnippet(editor, selectedFile, selectedFiles)
 
     e.presentation.isEnabledAndVisible = canOpen
   }
