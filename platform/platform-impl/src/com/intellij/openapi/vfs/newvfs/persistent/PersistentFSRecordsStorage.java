@@ -94,6 +94,10 @@ public interface PersistentFSRecordsStorage {
 
   int getConnectionStatus() throws IOException;
 
+  int getErrorsAccumulated() throws IOException;
+
+  void setErrorsAccumulated(int errors) throws IOException;
+
   void setVersion(int version) throws IOException;
 
   int getVersion() throws IOException;

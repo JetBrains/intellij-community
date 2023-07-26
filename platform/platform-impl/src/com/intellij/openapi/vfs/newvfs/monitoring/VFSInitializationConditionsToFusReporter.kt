@@ -43,6 +43,7 @@ private class VFSInitializationConditionsToFusReporter : ProjectActivity {
 
       null -> VFSInitKind.UNRECOGNIZED
       UNRECOGNIZED -> VFSInitKind.UNRECOGNIZED
+      HAS_ERRORS_IN_PREVIOUS_SESSION -> VFSInitKind.UNRECOGNIZED
 
       SCHEDULED_REBUILD -> VFSInitKind.SCHEDULED_REBUILD
 

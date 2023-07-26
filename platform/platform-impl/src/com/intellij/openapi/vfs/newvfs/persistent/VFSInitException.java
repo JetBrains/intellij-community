@@ -39,6 +39,7 @@ public final class VFSInitException extends IOException {
 
     /** Application wasn't closed properly, VFS storages are likely fractured */
     NOT_CLOSED_PROPERLY,
+    HAS_ERRORS_IN_PREVIOUS_SESSION,
 
     /** Current VFS implementation (i.e. code) version != VFS on-disk format version */
     IMPL_VERSION_MISMATCH,

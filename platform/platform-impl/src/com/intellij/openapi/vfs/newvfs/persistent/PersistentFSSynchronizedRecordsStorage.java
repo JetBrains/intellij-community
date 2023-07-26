@@ -12,6 +12,8 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.HEADER_ERRORS_ACCUMULATED_OFFSET;
+
 @ApiStatus.Internal
 final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecordsStorage {
   private static final int PARENT_OFFSET = 0;
@@ -149,6 +151,18 @@ final class PersistentFSSynchronizedRecordsStorage implements PersistentFSRecord
   public int getConnectionStatus() throws IOException {
     return read(() -> {
       return myFile.getInt(PersistentFSHeaders.HEADER_CONNECTION_STATUS_OFFSET);
+    });
+  }
+
+  @Override
+  public int getErrorsAccumulated() throws IOException {
+    return read(() -> myFile.getInt(HEADER_ERRORS_ACCUMULATED_OFFSET));
+  }
+
+  @Override
+  public void setErrorsAccumulated(int errors) throws IOException {
+    write(() -> {
+      myFile.putInt(HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
     });
   }
 

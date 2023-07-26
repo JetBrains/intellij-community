@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 
 final class PersistentFSHeaders {
   static final int HEADER_VERSION_OFFSET = 0;
-  //private static final int HEADER_RESERVED_4BYTES_OFFSET = 4; // reserved
+  static final int HEADER_ERRORS_ACCUMULATED_OFFSET = 4;
   static final int HEADER_GLOBAL_MOD_COUNT_OFFSET = 8;
   static final int HEADER_CONNECTION_STATUS_OFFSET = 12;
   static final int HEADER_TIMESTAMP_OFFSET = 16;

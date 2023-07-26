@@ -571,6 +571,18 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   @Override
+  public int getErrorsAccumulated() throws IOException {
+    return getIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET);
+  }
+
+  @Override
+  public void setErrorsAccumulated(int errors) throws IOException {
+    setIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
+    globalModCount.incrementAndGet();
+    dirty.compareAndSet(false, true);
+  }
+
+  @Override
   public void setVersion(final int version) throws IOException {
     setIntHeaderField(HEADER_VERSION_OFFSET, version);
     setLongHeaderField(HEADER_TIMESTAMP_OFFSET, System.currentTimeMillis());

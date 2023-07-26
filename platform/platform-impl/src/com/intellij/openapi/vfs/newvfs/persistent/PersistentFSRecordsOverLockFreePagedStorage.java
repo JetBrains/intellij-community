@@ -634,11 +634,23 @@ public class PersistentFSRecordsOverLockFreePagedStorage implements PersistentFS
   @Override
   public void setConnectionStatus(final int connectionStatus) throws IOException {
     setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, connectionStatus);
+    //intentionally don't increment globalModCount
   }
 
   @Override
   public int getConnectionStatus() throws IOException {
     return getIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET);
+  }
+
+  @Override
+  public int getErrorsAccumulated() throws IOException {
+    return getIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET);
+  }
+
+  @Override
+  public void setErrorsAccumulated(int errors) throws IOException {
+    setIntHeaderField(HEADER_ERRORS_ACCUMULATED_OFFSET, errors);
+    globalModCount.incrementAndGet();
   }
 
   @Override

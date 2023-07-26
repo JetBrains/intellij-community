@@ -403,7 +403,11 @@ public final class PersistentFSLoader {
     // and if we find any such sign -- switch to more vigilant checking:
 
     if (recordsStorage.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
-      addProblem(NOT_CLOSED_PROPERLY, "FS repository wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
+      addProblem(NOT_CLOSED_PROPERLY, "VFS wasn't safely shut down: records.connectionStatus != SAFELY_CLOSED");
+    }
+    int errorsAccumulated = recordsStorage.getErrorsAccumulated();
+    if (errorsAccumulated > 0) {
+      addProblem(HAS_ERRORS_IN_PREVIOUS_SESSION, "VFS accumulated " + errorsAccumulated + " errors in last session");
     }
 
     if (useContentHashes) {
@@ -432,7 +436,7 @@ public final class PersistentFSLoader {
     //Check every file is quite slow, but it is definitely worth checking _some_.
     // A tradeoff: if there were no signs of corruption -- check only fileId=2, 4, 8...
     // -- always < 32 checks, given fileId is int32.
-    if(problemsDuringLoad.isEmpty()) {
+    if (problemsDuringLoad.isEmpty()) {
       for (int fileId = FSRecords.MIN_REGULAR_FILE_ID; fileId <= maxAllocatedID; fileId *= 2) {
         if (!nameStorageHasErrors) {
           if (!nameResolvedSuccessfully(fileId)) {

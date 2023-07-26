@@ -357,14 +357,14 @@ public final class PersistentFSConnection {
   void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
     try {
       int corruptions = corruptionsDetected.incrementAndGet();
+      myRecords.setErrorsAccumulated(corruptions);
       if (corruptions == 1) {
-        scheduleVFSRebuild(cause.getMessage(), cause);
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification(/*insist: */ false);
         }
         doForce();//forces connectionStatus=CORRUPTED to be written on disk
       }
-      else if (corruptions == INSIST_TO_RESTART_AFTER_ERRORS_COUNT) {
+      else if (corruptions % INSIST_TO_RESTART_AFTER_ERRORS_COUNT == INSIST_TO_RESTART_AFTER_ERRORS_COUNT - 1) {
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification(/*insist: */ true);
         }
@@ -408,7 +408,7 @@ public final class PersistentFSConnection {
     }
   }
 
-  public @NotNull VFSRecoveryInfo recoveryInfo(){
+  public @NotNull VFSRecoveryInfo recoveryInfo() {
     return recoveryInfo;
   }
 
