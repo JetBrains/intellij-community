@@ -5,7 +5,6 @@ package com.intellij.platform.diagnostic.telemetry.impl
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
 import java.io.File
 import java.util.zip.GZIPOutputStream
-import kotlin.collections.ArrayList
 
 class LinesStorage(val writeToFile: File) {
 

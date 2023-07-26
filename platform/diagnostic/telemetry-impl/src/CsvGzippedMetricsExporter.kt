@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
-import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.io.FileSetLimiter
+import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
 import com.intellij.util.SystemProperties
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.metrics.InstrumentType

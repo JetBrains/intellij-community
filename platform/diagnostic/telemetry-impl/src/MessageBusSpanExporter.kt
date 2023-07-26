@@ -2,9 +2,9 @@
 package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.diagnostic.LoadingState
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryReceivedListener.Companion.TOPIC
-import com.intellij.openapi.application.ApplicationManager
 import io.opentelemetry.sdk.trace.data.SpanData
 
 class MessageBusSpanExporter : AsyncSpanExporter {
