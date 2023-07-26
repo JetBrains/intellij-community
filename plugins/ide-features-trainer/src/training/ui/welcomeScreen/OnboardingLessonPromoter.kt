@@ -4,9 +4,12 @@ package training.ui.welcomeScreen
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.wm.BannerStartPagePromoter
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -21,6 +24,7 @@ import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.learn.lesson.LessonState
 import training.learn.lesson.LessonStateManager
+import training.ui.showOnboardingFeedbackNotification
 import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
 import javax.swing.Icon
@@ -78,13 +82,15 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
   private fun scheduleOnboardingFeedback() {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return
+    val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
     langSupport.onboardingFeedbackData = null
 
-    // Do not show onboarding feedback notification in 2023.2 release
-    //invokeLater {
-    //  showOnboardingFeedbackNotification(null, onboardingFeedbackData)
-    //  (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
-    //}
+    invokeLater {
+      showOnboardingFeedbackNotification(null, onboardingFeedbackData)
+      invokeLater {
+        (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
+      }
+    }
   }
 
   override val closeAction: ((JPanel) -> Unit) = { promoPanel ->

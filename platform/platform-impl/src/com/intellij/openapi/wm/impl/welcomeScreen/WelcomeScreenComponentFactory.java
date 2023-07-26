@@ -371,7 +371,7 @@ public final class WelcomeScreenComponentFactory {
     toolbar.setTargetComponent(result);
     result.setOpaque(false);
     if (ExperimentalUI.isNewUI()) {
-      result.setBorder(JBUI.Borders.empty(9, 0, 15, 24 - horizontalGap));
+      result.setBorder(JBUI.Borders.empty(0, 0, 15, 24 - horizontalGap));
     }
     else {
       result.setBorder(JBUI.Borders.empty(10, 0, 5, 8));
