@@ -202,7 +202,20 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     protected abstract boolean canDrop(TreePath @NotNull [] sources, @NotNull TreePath target);
 
+    protected PsiElement @Nullable [] getPsiElements(@NotNull DropContext dropContext) {
+      PsiElement[] elements = dropContext.sourceElements;
+      if (elements == null || elements.length == 0) {
+        elements = getDataContextPsiElements();
+      }
+      return elements;
+    }
+
     protected PsiElement @NotNull [] getPsiElements(TreePath @NotNull [] paths) {
+      PsiElement[] psiElements = getNonDataContextPsiElements(paths);
+      return psiElements != null ? psiElements : getDataContextPsiElements();
+    }
+
+    protected PsiElement @Nullable [] getNonDataContextPsiElements(TreePath @NotNull [] paths) {
       List<PsiElement> psiElements = new ArrayList<>(paths.length);
       for (TreePath path : paths) {
         PsiElement psiElement = getPsiElement(path);
@@ -213,6 +226,10 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
       if (!psiElements.isEmpty()) {
         return PsiUtilCore.toPsiElementArray(psiElements);
       }
+      return null;
+    }
+
+    private PsiElement @NotNull [] getDataContextPsiElements() {
       return BaseRefactoringAction.getPsiElementArray(DataManager.getInstance().getDataContext(myTree));
     }
   }
@@ -264,7 +281,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
         node.drop(sources, DataManager.getInstance().getDataContext(myTree));
       }
       else {
-        ReadAction.nonBlocking(() -> getDropContext(getPsiElements(sources), target))
+        ReadAction.nonBlocking(() -> getDropContext(getNonDataContextPsiElements(sources), target))
           .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context, false))
           .submit(AppExecutorUtil.getAppExecutorService());
       }
@@ -277,7 +294,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     private void doDrop(@NotNull DropContext dropContext, boolean externalDrop) {
       @Nullable PsiElement target = dropContext.targetElement();
-      PsiElement @Nullable [] sources = dropContext.sourceElements;
+      PsiElement @Nullable [] sources = getPsiElements(dropContext);
       if (target == null || sources == null) return;
 
       if (!myProject.isInitialized()) {
@@ -332,7 +349,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
           .finishOnUiThread(ModalityState.defaultModalityState(), dropContext -> {
             DropTargetNode node = getLastUserObject(DropTargetNode.class, target);
             if (node != null) {
-              node.dropExternalFiles((PsiFileSystemItem[])dropContext.sourceElements(), DataManager.getInstance().getDataContext(myTree));
+              node.dropExternalFiles((PsiFileSystemItem[])getPsiElements(dropContext), DataManager.getInstance().getDataContext(myTree));
             }
             else {
               doDrop(dropContext, true);
@@ -365,7 +382,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
 
     @Override
     public void doDrop(TreePath @NotNull [] sources, @NotNull TreePath target) {
-      ReadAction.nonBlocking(() -> new DropContext(getPsiElements(sources), getPsiElement(target), null))
+      ReadAction.nonBlocking(() -> new DropContext(getNonDataContextPsiElements(sources), getPsiElement(target), null))
         .finishOnUiThread(ModalityState.defaultModalityState(), context -> doDrop(context))
         .submit(AppExecutorUtil.getAppExecutorService());
     }
@@ -373,7 +390,7 @@ public abstract class ProjectViewDropTarget implements DnDNativeTarget {
     @Override
     public void doDrop(@NotNull DropContext context) {
       final PsiElement targetElement = context.targetElement();
-      final PsiElement @Nullable [] sources = context.sourceElements();
+      final PsiElement @Nullable [] sources = getPsiElements(context);
       if (targetElement == null || sources == null) return;
 
       if (DumbService.isDumb(myProject)) {
