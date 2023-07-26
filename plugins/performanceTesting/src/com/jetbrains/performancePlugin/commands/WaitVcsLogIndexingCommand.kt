@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
+import com.intellij.vcs.log.data.index.isIndexingPaused
 import com.intellij.vcs.log.data.index.isIndexingScheduled
 import com.intellij.vcs.log.data.index.needIndexing
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
@@ -33,7 +34,9 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
     val dataManager = logManager.dataManager
     val vcsIndex = dataManager.index as VcsLogModifiableIndex
 
-    LOG.info("Need indexing = ${vcsIndex.needIndexing()}, is indexing paused = " + !vcsIndex.isIndexingScheduled())
+    LOG.info("Need indexing = ${vcsIndex.needIndexing()}, " +
+             "is indexing scheduled = ${vcsIndex.isIndexingScheduled()}, " +
+             "is indexing paused = ${vcsIndex.isIndexingPaused()}")
     if (vcsIndex.needIndexing() || vcsIndex.isIndexingScheduled()) {
       val isIndexingCompleted = CompletableDeferred<Boolean>()
       vcsIndex.addListener { _ ->
