@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.diagnostic.subtask
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -29,7 +29,8 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
-import com.intellij.workspaceModel.ide.impl.jps.serialization.*
+import com.intellij.workspaceModel.ide.impl.jps.serialization.BaseIdeSerializationContext
+import com.intellij.workspaceModel.ide.impl.jps.serialization.CachingJpsFileContentReader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridgeImpl
@@ -49,29 +50,29 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
   internal class ModuleManagerInitProjectActivity : InitProjectActivity {
     override suspend fun run(project: Project) {
       val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
-      var activity = StartUpMeasurer.startActivity("firing modules_added event")
       val modules = moduleManager.modules().toList()
-      blockingContext {
-        fireModulesAdded(project, modules)
-      }
-
-      activity = activity.endAndStart("deprecated module component moduleAdded calling")
-      @Suppress("removal", "DEPRECATION")
-      val deprecatedComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
-      for (module in modules) {
-        if (!module.isLoaded) {
-          module.moduleAdded(deprecatedComponents)
+      subtask("firing modules_added event") {
+        blockingContext {
+          fireModulesAdded(project, modules)
         }
       }
-      if (!deprecatedComponents.isEmpty()) {
-        writeAction {
-          for (deprecatedComponent in deprecatedComponents) {
-            @Suppress("DEPRECATION", "removal")
-            deprecatedComponent.moduleAdded()
+      subtask("deprecated module component moduleAdded calling") {
+        @Suppress("removal", "DEPRECATION")
+        val deprecatedComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
+        for (module in modules) {
+          if (!module.isLoaded) {
+            module.moduleAdded(deprecatedComponents)
+          }
+        }
+        if (!deprecatedComponents.isEmpty()) {
+          writeAction {
+            for (deprecatedComponent in deprecatedComponents) {
+              @Suppress("DEPRECATION", "removal")
+              deprecatedComponent.moduleAdded()
+            }
           }
         }
       }
-      activity.end()
     }
   }
 
