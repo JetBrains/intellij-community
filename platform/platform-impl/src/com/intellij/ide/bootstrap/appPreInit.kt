@@ -71,24 +71,24 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
     LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 
-  // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
-  if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
-    launch(CoroutineName("coroutine debug probes init")) {
-      enableCoroutineDump()
-      JBR.getJstack()?.includeInfoFrom {
-        """
-    $COROUTINE_DUMP_HEADER
-    ${dumpCoroutines(stripDump = false)}
-    """
-      }
-    }
-  }
-
   launch {
     initServiceContainerJob.join()
 
     val appInitListeners = async(CoroutineName("app init listener preload")) {
       getAppInitializedListeners(app)
+    }
+
+    // only here as the last - it is a heavy-weight (~350ms) activity, let's first schedule more important tasks
+    if (System.getProperty("idea.enable.coroutine.dump", "true").toBoolean()) {
+      launch(CoroutineName("coroutine debug probes init")) {
+        enableCoroutineDump()
+        JBR.getJstack()?.includeInfoFrom {
+          """
+      $COROUTINE_DUMP_HEADER
+      ${dumpCoroutines(stripDump = false)}
+      """
+        }
+      }
     }
 
     initConfigurationStoreJob.join()
@@ -122,6 +122,10 @@ private suspend fun preInitApp(app: ApplicationImpl,
                                 appRegisteredJob: Job,
                                 euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   coroutineScope {
+    launch(CoroutineName("critical services preloading")) {
+      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
+    }
+
     val loadIconMapping = if (app.isHeadlessEnvironment) {
       null
     }
@@ -131,10 +135,6 @@ private suspend fun preInitApp(app: ApplicationImpl,
           app.serviceAsync<IconMapLoader>().preloadIconMapping()
         }.getOrLogException(log)
       }
-    }
-
-    launch(CoroutineName("critical services preloading")) {
-      preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
     }
 
     if (!app.isHeadlessEnvironment) {

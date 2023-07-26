@@ -37,7 +37,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     app.serviceAsync<PathMacros>()
   }
 
-  val managingFsJob = launch {
+  val managingFsJob = asyncScope.launch {
     // loading is started by StartupUtil, here we just "join" it
     subtask("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
 
@@ -50,16 +50,16 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 
   launch {
-    pathMacroJob.join()
-
     // required for indexing tasks (see JavaSourceModuleNameIndex, for example)
     // FileTypeManager by mistake uses PropertiesComponent instead of own state - it should be fixed someday
     app.serviceAsync<PropertiesComponent>()
 
+    pathMacroJob.join()
+
     // FileTypeManager requires appStarter execution
     launch {
       appRegistered.join()
-      postAppRegistered(app, asyncScope, managingFsJob)
+      postAppRegistered(app = app, asyncScope = asyncScope, managingFsJob = managingFsJob)
     }
 
     asyncScope.launch {
@@ -105,11 +105,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
 private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job) {
   asyncScope.launch {
-    managingFsJob.join()
-
     val fileTypeManagerJob = launch(CoroutineName("FileTypeManager preloading")) {
       app.serviceAsync<FileTypeManager>()
     }
+
+    managingFsJob.join()
 
     launch {
       fileTypeManagerJob.join()
