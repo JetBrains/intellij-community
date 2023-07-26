@@ -138,7 +138,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public void executionStarted(TestIdentifier testIdentifier) {
     if (testIdentifier.isTest()) {
       testStarted(testIdentifier);
-      myCurrentTestStart = System.currentTimeMillis();
+      myCurrentTestStart = System.nanoTime();
     }
     else if (!shouldSkipContainer(testIdentifier)) {
       myFinishCount = 0;
@@ -216,7 +216,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   protected long getDuration() {
-    return System.currentTimeMillis() - myCurrentTestStart;
+    return (System.nanoTime() - myCurrentTestStart) / 1_000_000;
   }
 
   private void testStarted(TestIdentifier testIdentifier) {
