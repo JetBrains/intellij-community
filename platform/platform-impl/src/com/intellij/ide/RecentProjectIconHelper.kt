@@ -29,6 +29,7 @@ import java.awt.image.BufferedImage
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
 import java.util.*
 import javax.swing.Icon
 
@@ -130,14 +131,23 @@ internal class RecentProjectIconHelper {
       getCustomIcon(path = it.first, isProjectValid = it.second, iconSize) ?: getGeneratedProjectIcon(path = it.first, isProjectValid = it.second, iconSize)
     }
   }
+
+  fun hasCustomIcon(project: Project): Boolean =
+    ProjectWindowCustomizerService.projectPath(project)?.let { getCustomIconFileInfo(it) } != null
 }
 
-private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boolean, iconSize: Int): Icon? {
+private fun getCustomIconFileInfo(path: @SystemIndependent String): Pair<Path, BasicFileAttributes>? {
   val file = sequenceOf("icon.svg", "icon.png")
                .mapNotNull { RecentProjectIconHelper.getDotIdeaPath(path)?.resolve(it) }
                .firstOrNull { Files.exists(it) } ?: return null
 
   val fileInfo = file.basicAttributesIfExists() ?: return null
+
+  return Pair(file, fileInfo)
+}
+
+private fun getCustomIcon(path: @SystemIndependent String, isProjectValid: Boolean, iconSize: Int): Icon? {
+  val (file, fileInfo) = getCustomIconFileInfo(path) ?: return null
   val timestamp = fileInfo.lastModifiedTime().toMillis()
 
   var iconWrapper = projectIconCache.get(Pair(path, iconSize))

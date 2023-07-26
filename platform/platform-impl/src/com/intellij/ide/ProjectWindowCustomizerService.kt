@@ -21,6 +21,7 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.ui.ColorHexUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
+import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -184,6 +185,22 @@ class ProjectWindowCustomizerService : Disposable {
     val index = colorStorage.associatedIndex ?: return null
     if (index >= 0 && index < gradientColors.size) return index
     return null
+  }
+
+  @Internal
+  fun dropProjectIconCache(project: Project) {
+    project.service<ProjectWindowCustomizerIconCache>().cachedIcon.drop()
+  }
+
+  @Internal
+  fun setIconMainColorAsProjectColor(project: Project): Boolean {
+    if (!RecentProjectsManagerBase.getInstanceEx().hasCustomIcon(project)) return false
+
+    val icon = project.service<ProjectWindowCustomizerIconCache>().cachedIcon.get()
+    val iconMainColor = IconUtil.mainColor(icon)
+    setCustomProjectColor(project, iconMainColor)
+
+    return true
   }
 
   @Internal

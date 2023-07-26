@@ -18,10 +18,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VFileProperty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.WritingAccessProvider
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.IconManager
-import com.intellij.ui.LayeredIcon
-import com.intellij.ui.RowIcon
+import com.intellij.ui.*
 import com.intellij.ui.icons.CachedImageIcon
 import com.intellij.ui.icons.CopyableIcon
 import com.intellij.ui.icons.TextIcon
@@ -38,6 +35,7 @@ import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBImageIcon
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -46,6 +44,7 @@ import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
 import java.awt.image.RGBImageFilter
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import java.util.function.ToIntFunction
 import javax.swing.Icon
@@ -519,6 +518,23 @@ object IconUtil {
   @JvmStatic
   fun darker(source: Icon, tones: Int): Icon = filterIcon(icon = source, filterSupplier = { DarkerFilter(tones) })
 
+  @Internal
+  fun mainColor(source: Icon): Color {
+    val icon = (source as? DeferredIcon)?.evaluate() ?: source
+
+    val iconImage = toBufferedImage(icon)
+    val filter = MainColorFilter()
+
+    for (x in 0 until iconImage.width) {
+      for (y in 0 until iconImage.height) {
+        val color = iconImage.getRGB(x, y)
+        filter.filterRGB(x, y, color)
+      }
+    }
+
+    return filter.mainColor
+  }
+
   @JvmStatic
   fun createImageIcon(img: Image): JBImageIcon {
     return object : JBImageIcon(img) {
@@ -665,6 +681,45 @@ private class DarkerFilter(private val tones: Int) : RGBImageFilter() {
   override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
     val originalColor = Color(rgb, true)
     return ColorUtil.toAlpha(ColorUtil.darker(originalColor, tones), originalColor.alpha).rgb
+  }
+}
+
+private class MainColorFilter : RGBImageFilter() {
+  private val colorsMap = ConcurrentHashMap<Color, Int>()
+
+  @Suppress("UseJBColor")
+  val mainColor: Color get() {
+    var red = 0
+    var green = 0
+    var blue = 0
+    var alpha = 0
+    var count = 0
+
+    colorsMap.forEach {
+      red += it.key.red * it.value
+      green += it.key.green * it.value
+      blue += it.key.blue * it.value
+      alpha += it.key.alpha * it.value
+      count += it.value
+    }
+
+    if (count > 0) {
+      red /= count
+      green /= count
+      blue /= count
+      alpha /= count
+    }
+
+    return Color(red, green, blue, alpha)
+  }
+
+  @Suppress("UseJBColor")
+  override fun filterRGB(x: Int, y: Int, rgb: Int): Int {
+    val originalColor = Color(rgb, true)
+    if (originalColor.alpha > 0) {
+      colorsMap[originalColor] = (colorsMap[originalColor] ?: 0) + 1
+    }
+    return rgb
   }
 }
 

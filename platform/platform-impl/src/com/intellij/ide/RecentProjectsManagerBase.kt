@@ -799,6 +799,9 @@ int32 "extendedState"
       getInstanceEx().updateLastProjectPath()
     }
   }
+
+  @Internal
+  fun hasCustomIcon(project: Project) = projectIconHelper.hasCustomIcon(project)
 }
 
 private fun fireChangeEvent() {
