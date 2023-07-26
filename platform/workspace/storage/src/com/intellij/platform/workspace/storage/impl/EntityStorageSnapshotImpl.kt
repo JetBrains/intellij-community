@@ -7,10 +7,6 @@ import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.diagnostic.telemetry.JPS
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.helpers.addElapsedTimeMs
-import com.intellij.util.ExceptionUtil
-import com.intellij.util.ObjectUtils
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.containers.CollectionFactory
 import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.impl.containers.getDiff
 import com.intellij.platform.workspace.storage.impl.exceptions.AddDiffException
@@ -25,6 +21,10 @@ import com.intellij.platform.workspace.storage.instrumentation.EntityStorageSnap
 import com.intellij.platform.workspace.storage.instrumentation.MutableEntityStorageInstrumentation
 import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlIndex
+import com.intellij.util.ExceptionUtil
+import com.intellij.util.ObjectUtils
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.containers.CollectionFactory
 import io.opentelemetry.api.metrics.Meter
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -634,7 +634,7 @@ internal class MutableEntityStorageImpl(
     return mapping
   }
 
-  override fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex {
+  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex {
     val start = System.currentTimeMillis()
     val virtualFileIndex: MutableVirtualFileUrlIndex = try {
       lockWrite()

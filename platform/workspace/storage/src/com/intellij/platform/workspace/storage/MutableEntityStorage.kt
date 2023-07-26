@@ -89,9 +89,6 @@ interface MutableEntityStorage : EntityStorage {
    */
   fun <T> getMutableExternalMapping(identifier: @NonNls String): MutableExternalEntityMapping<T>
   
-  @ApiStatus.Internal
-  fun getMutableVirtualFileUrlIndex(): MutableVirtualFileUrlIndex
-
   /**
    * Returns a number which is incremented after each change in the storage.
    */
