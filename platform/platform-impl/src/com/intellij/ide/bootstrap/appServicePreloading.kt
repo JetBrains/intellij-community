@@ -38,11 +38,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     subtask("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
 
     // PlatformVirtualFileManager also wants ManagingFS
-    launch { app.serviceAsync<VirtualFileManager>() }
+    launch(CoroutineName("VirtualFileManager preloading")) { app.serviceAsync<VirtualFileManager>() }
 
     // LocalHistory wants ManagingFS.
     // It should be fixed somehow, but for now, to avoid thread contention, preload it in a controlled manner.
-    asyncScope.launch { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
+    asyncScope.launch(CoroutineName("LocalHistory preloading")) { app.getServiceAsyncIfDefined(LocalHistory::class.java) }
   }
 
   launch {

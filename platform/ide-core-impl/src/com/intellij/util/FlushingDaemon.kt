@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
+@Deprecated("Use coroutines and execute task in a corresponding service coroutine scope")
 object FlushingDaemon {
   const val NAME: String = "Flushing Daemon"
 

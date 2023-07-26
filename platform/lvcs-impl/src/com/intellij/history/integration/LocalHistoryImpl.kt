@@ -17,16 +17,17 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
-import com.intellij.util.FlushingDaemon
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.delete
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.lang.Runnable
 import java.nio.file.Path
-import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration.Companion.seconds
 
-class LocalHistoryImpl : LocalHistory(), Disposable {
+class LocalHistoryImpl(private val coroutineScope: CoroutineScope) : LocalHistory(), Disposable {
   companion object {
     private const val DAYS_TO_KEEP = "localHistory.daysToKeep"
 
@@ -51,7 +52,7 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
   var gateway: IdeaGateway? = null
     private set
 
-  private var flusherTask: ScheduledFuture<*>? = null
+  private var flusherTask: Job? = null
   private val initialFlush = AtomicBoolean(true)
 
   private var eventDispatcher: LocalHistoryEventDispatcher? = null
@@ -87,12 +88,21 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
         }
       }
     })
-    flusherTask = FlushingDaemon.runPeriodically(Runnable {
-      if (initialFlush.compareAndSet(true, false)) {
-        changeList!!.purgeObsolete()
+
+    flusherTask = coroutineScope.launch {
+      while (true) {
+        delay(1.seconds)
+
+        val changeList = changeList ?: continue
+        withContext(Dispatchers.IO) {
+          if (initialFlush.compareAndSet(true, false)) {
+            changeList.purgeObsolete()
+          }
+          coroutineContext.ensureActive()
+          changeList.force()
+        }
       }
-      changeList!!.force()
-    })
+    }
     isInitialized.set(true)
   }
 
@@ -120,9 +130,11 @@ class LocalHistoryImpl : LocalHistory(), Disposable {
       return
     }
 
-    flusherTask!!.cancel(false)
-    flusherTask = null
-    changeList!!.close()
+    flusherTask?.let {
+      it.cancel()
+      flusherTask = null
+    }
+    changeList?.close()
     LocalHistoryLog.LOG.debug("Local history storage successfully closed.")
   }
 
