@@ -18,7 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.actionSystem.impl.AutoPopupSupportingListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -95,7 +95,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   private SpeedSearch mySpeedSearchFoundInRootComponent;
   private String myDimensionServiceKey;
   private Computable<Boolean> myCallBack;
-  private ModalityState myModalityStateWhenShown;
+  private Object[] modalEntitiesWhenShown;
   private Project myProject;
   private boolean myCancelOnClickOutside;
   private final List<JBPopupListener> myListeners = new CopyOnWriteArrayList<>();
@@ -887,7 +887,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
 
       myPopup.hide(false);
-      myModalityStateWhenShown = null;
+      modalEntitiesWhenShown = null;
 
       if (ApplicationManager.getApplication() != null) {
         StackingPopupDispatcher.getInstance().onPopupHidden(this);
@@ -916,9 +916,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public boolean canClose() {
     return
-      (myModalityStateWhenShown == null || !ModalityState.current().dominates(myModalityStateWhenShown)) &&
+      !anyModalWindowsOpenedFromPopupShowingNow() &&
       (myCallBack == null || myCallBack.compute().booleanValue()) &&
       !preventImmediateClosingAfterOpening();
+  }
+
+  private boolean anyModalWindowsOpenedFromPopupShowingNow() {
+    var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
+    var i = 0;
+    for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
+      if (modalEntitiesNow[i] != modalEntitiesWhenShown[i]) {
+        break;
+      }
+    }
+    for (; i < modalEntitiesNow.length; ++i) {
+      if (modalEntitiesNow[i] instanceof Window) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private boolean preventImmediateClosingAfterOpening() {
@@ -1268,7 +1284,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
     TouchbarSupport.showPopupItems(this, myContent);
 
-    myModalityStateWhenShown = ModalityState.current();
+    modalEntitiesWhenShown = LaterInvocator.getCurrentModalEntities();
     myPopup.show();
     Rectangle bounds = window.getBounds();
     if (LOG.isDebugEnabled()) {
