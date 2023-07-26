@@ -20,7 +20,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
-    <testTasksProvider implementation="org.jetbrains.kotlin.idea.gradleJava.run.KotlinMPPGradleTestTasksProvider"/>
 
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinMPPSourceSetsFrameworkSupportProvider"/>
     <frameworkSupport implementation="org.jetbrains.kotlin.idea.gradleJava.configuration.GradleKotlinJavaFrameworkSupportProvider"/>
