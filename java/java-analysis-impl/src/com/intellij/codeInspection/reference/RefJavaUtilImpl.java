@@ -194,7 +194,12 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                            return;
                          }
                          PsiElement psiResolved = null;
-                         if (node instanceof UResolvable resolvable) {
+                         if (node instanceof UCallExpression callExpression &&
+                             "invoke".equals(callExpression.getMethodName()) &&
+                             callExpression.getReceiver() instanceof UResolvable resolvable) {
+                           psiResolved = resolvable.resolve();
+                         }
+                         else if (node instanceof UResolvable resolvable) {
                            psiResolved = resolvable.resolve();
                          }
                          else if (node instanceof UBinaryExpression binaryExpression) {
@@ -202,9 +207,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
                          }
                          else if (node instanceof UUnaryExpression unaryExpression) {
                            psiResolved = unaryExpression.resolveOperator();
-                         }
-                         if (psiResolved == null) {
-                           psiResolved = tryParenthesisOverloading(node);
                          }
 
                          psiResolved = returnToPhysical(psiResolved);
@@ -396,16 +398,6 @@ public class RefJavaUtilImpl extends RefJavaUtil {
         }
       }
     }
-  }
-
-  private static PsiElement tryParenthesisOverloading(@NotNull UExpression node) {
-    if (node instanceof UCallExpression callExpression && "invoke".equals(callExpression.getMethodName())) {
-      UExpression receiver = callExpression.getReceiver();
-      if (receiver instanceof UResolvable resolvable) {
-        return resolvable.resolve();
-      }
-    }
-    return null;
   }
 
   private void updateRefMethod(PsiElement psiResolved,

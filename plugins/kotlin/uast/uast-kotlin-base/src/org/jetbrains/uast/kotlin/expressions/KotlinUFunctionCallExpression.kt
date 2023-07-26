@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.PsiTypesUtil
@@ -150,9 +151,10 @@ class KotlinUFunctionCallExpression(
         val variable = when (callableDeclaration) {
             is PsiVariable -> callableDeclaration
             is PsiMethod -> {
+                val isStatic = callableDeclaration.hasModifier(JvmModifier.STATIC)
                 callableDeclaration.containingClass?.let { containingClass ->
                     PropertyUtilBase.getPropertyName(callableDeclaration.name)?.let { propertyName ->
-                        PropertyUtilBase.findPropertyField(containingClass, propertyName, true)
+                        PropertyUtilBase.findPropertyField(containingClass, propertyName, isStatic)
                     }
                 }
             }
