@@ -148,7 +148,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
         return item.directory ? "--" : Formats.formatFileSize(item.size);
       }
     };
-    var dateColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.date"), 20, Comparator.comparing(item -> item.lastUpdated)) {
+    var dateColumn = new MyColumnInfo(UIBundle.message("file.chooser.column.date"), 15, Comparator.comparing(item -> item.lastUpdated)) {
       @Override
       public String valueOf(FsItem item) {
         return DateFormatUtil.formatPrettyDateTime(item.lastUpdated);
@@ -893,7 +893,7 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
 
     @Override
     protected void customizeComponent(JTable table, int row, int column, JLabel label) {
-      label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
+      label.setHorizontalAlignment(SwingConstants.LEFT);
     }
   }
 
@@ -906,8 +906,8 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
     protected void customizeComponent(JTable table, int row, int column, JLabel label) {
       @SuppressWarnings("unchecked") var item = ((TableView<FsItem>)table).getRow(row);
       label.setIcon(column == 0 ? item.icon : null);
-      label.setHorizontalAlignment(column == 0 ? SwingConstants.LEFT : SwingConstants.RIGHT);
-      label.setToolTipText(column == 2 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
+      label.setHorizontalAlignment(SwingConstants.LEFT);
+      label.setToolTipText(column == 1 ? DateFormatUtil.formatDateTime(item.lastUpdated) : null);
       label.setEnabled(item.selectable);
     }
   }
