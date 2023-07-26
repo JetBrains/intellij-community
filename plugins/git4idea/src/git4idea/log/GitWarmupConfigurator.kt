@@ -8,7 +8,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.vcs.log.impl.VcsLogManager
@@ -39,7 +38,9 @@ class GitWarmupConfigurator : WarmupConfigurator {
       return false
     }
     val manager = blockingContextScope {
-      VcsLogManager(project, project.service<VcsLogProjectTabsProperties>(), logProviders, true) { a, b -> }
+      VcsLogManager(project, project.service<VcsLogProjectTabsProperties>(), logProviders, true) { _, throwable ->
+        logger?.reportMessage(1, throwable.stackTraceToString())
+      }
     }
     withContext(Dispatchers.EDT) {
       blockingContextScope {
