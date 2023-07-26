@@ -36,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.Supplier;
 
 /**
@@ -78,6 +79,17 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
                                                @Nullable String defaultTemplateProperty,
                                                boolean openFile,
                                                @NotNull Map<String, String> liveTemplateDefaultValues) {
+    return createFileFromTemplate(name, template, dir, defaultTemplateProperty, openFile, liveTemplateDefaultValues, Collections.emptyMap());
+  }
+
+  @Nullable
+  public static PsiFile createFileFromTemplate(@Nullable String name,
+                                               @NotNull FileTemplate template,
+                                               @NotNull PsiDirectory dir,
+                                               @Nullable String defaultTemplateProperty,
+                                               boolean openFile,
+                                               @NotNull Map<String, String> liveTemplateDefaultValues,
+                                               @NotNull Map<String, String> extraTemplateProperties) {
     if (name != null) {
       CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
       name = mkdirs.newName;
@@ -86,7 +98,10 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
 
     Project project = dir.getProject();
     try {
-      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties(), dir)
+      Properties templateProperties = FileTemplateManager.getInstance(dir.getProject()).getDefaultProperties();
+      templateProperties.putAll(extraTemplateProperties);
+
+      PsiFile psiFile = FileTemplateUtil.createFromTemplate(template, name, templateProperties, dir)
         .getContainingFile();
       SmartPsiElementPointer<PsiFile> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiFile);
 
