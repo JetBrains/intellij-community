@@ -9,10 +9,7 @@ import com.intellij.codeInspection.restriction.AnnotationContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.InspectionGadgetsBundle
@@ -39,6 +36,21 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
   var untaintedParameterMethodName: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterWithPlaceIndex: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterWithPlaceMethodClass: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterWithPlaceMethodName: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterWithPlacePlaceMethod: MutableList<String?> = mutableListOf()
+
+  @JvmField
+  var untaintedParameterWithPlacePlaceClass: MutableList<String?> = mutableListOf()
 
   @JvmField
   var taintedParameterIndex: MutableList<String?> = mutableListOf()
@@ -120,6 +132,26 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       ).comment(
         JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters.comment")),
 
+      OptPane.table(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters"),
+        OptPane.column("untaintedParameterWithPlaceMethodClass",
+                       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
+                       JavaClassValidator()),
+        OptPane.column("untaintedParameterWithPlaceMethodName",
+                       InspectionGadgetsBundle.message("method.name.regex"),
+                       RegexValidator()),
+        OptPane.column("untaintedParameterWithPlaceIndex",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.index.parameter"),
+                       IntValidator),
+        OptPane.column("untaintedParameterWithPlacePlaceClass",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.place.class.column.title"),
+                       JavaClassValidator()),
+        OptPane.column("untaintedParameterWithPlacePlaceMethod",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.place.method.column.title"),
+                       RegexValidator()),
+        ).comment(
+        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.parameters.comment")),
+
       OptPane.checkbox("processOuterMethodAsQualifierAndArguments",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.untainted.process.as.qualifier.arguments.comment")),
@@ -167,7 +199,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       it != null && JavaPsiFacade.getInstance(holder.project).findClass(it, scope) != null
     }
 
-    if (firstAnnotation == null && untaintedParameterIndex.size == 0) {
+    if (firstAnnotation == null && untaintedParameterIndex.size == 0 && untaintedParameterWithPlaceIndex.size == 0) {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
@@ -193,6 +225,12 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                               methodClass = untaintedParameterMethodClass,
                                               methodParameterIndex = untaintedParameterIndex.map { index -> index?.toIntOrNull() },
                                               targetValue = TaintValue.UNTAINTED))
+
+      it.addForContext(TaintValueFactory.fromParameters(methodNames = untaintedParameterWithPlaceMethodName,
+                                                        methodClass = untaintedParameterWithPlaceMethodClass,
+                                                        methodParameterIndex = untaintedParameterWithPlaceIndex.map { index -> index?.toIntOrNull() },
+                                                        targetValue = TaintValue.UNTAINTED).withPlace(untaintedParameterWithPlacePlaceClass,
+                                                                                                      untaintedParameterWithPlacePlaceMethod))
 
       it.add(TaintValueFactory.fromParameters(methodNames = taintedParameterMethodName,
                                               methodClass = taintedParameterMethodClass,
@@ -328,6 +366,68 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   fun setUntaintedMethod(className: String, methodName: String) {
     myUntaintedMethodMatcher.add(className, methodName)
   }
+}
+
+private fun ((PsiElement) -> TaintValue?).withPlace(untaintedParameterWithPlacePlaceClass: MutableList<String?>,
+                                                    untaintedParameterWithPlacePlaceMethod: MutableList<String?>): (CustomContext) -> TaintValue? {
+  val allMatcher = MethodMatcher()
+  for (i in untaintedParameterWithPlacePlaceMethod.indices) {
+    val cl = untaintedParameterWithPlacePlaceClass[i]
+    val name = untaintedParameterWithPlacePlaceMethod[i]
+    if (cl == null || name == null) continue
+    allMatcher.add(cl, name)
+  }
+  return {
+    val taintValue = this.invoke(it.target)
+    if (taintValue == null) {
+      null
+    }
+    else {
+      if (matchPlace(it.place, allMatcher)) {
+        taintValue
+      }
+      else {
+        null
+      }
+    }
+  }
+}
+
+private fun matchPlace(place: PsiElement?, allMatcher: MethodMatcher): Boolean {
+  if (place == null) {
+    return false
+  }
+  val uElement = place.toUElement()
+  var target: UElement? = null
+  if (uElement is UQualifiedReferenceExpression) {
+    target = uElement.receiver
+  }
+  if (uElement is UCallExpression) {
+    target = uElement.receiver
+  }
+  if (target == null) return false
+  return recursiveMatchPlace(target, allMatcher)
+}
+
+private fun recursiveMatchPlace(element: UElement?, allMatcher: MethodMatcher): Boolean {
+  if (element is UQualifiedReferenceExpression) {
+    return recursiveMatchPlace(element.selector, allMatcher)
+  }
+  if (element is UMethod) {
+    return allMatcher.matches(element.javaPsi)
+  }
+  if (element is UCallExpression) {
+    return allMatcher.matches(element.resolve())
+  }
+  if (element is UReferenceExpression) {
+    val resolved = element.resolveToUElement()
+    return recursiveMatchPlace(resolved, allMatcher)
+  }
+  if (element is UVariable) {
+    val uastInitializer = element.uastInitializer
+    return recursiveMatchPlace(uastInitializer, allMatcher)
+  }
+  return false
 }
 
 private fun OptRegularComponent.comment(@NlsContexts.Tooltip @NlsSafe comment: String): OptRegularComponent {
