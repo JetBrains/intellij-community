@@ -270,10 +270,11 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
   private void setupDirectoryView() {
     myList.getTableHeader().setDefaultRenderer(new MyHeaderCellRenderer(myList.getTableHeader().getDefaultRenderer()));
     myList.setDefaultRenderer(Object.class, new MyTableCellRenderer(myList.getDefaultRenderer(Object.class)));
-    myList.putClientProperty("Table.isFileList", Boolean.TRUE);
     myList.resetDefaultFocusTraversalKeys();
     myList.setShowGrid(false);
+    myList.setCellSelectionEnabled(false);
     myList.setColumnSelectionAllowed(false);
+    myList.setRowSelectionAllowed(true);
     myList.setSelectionMode(myDescriptor.isChooseMultiple() ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
     myList.addFocusListener(new FocusAdapter() {
       @Override
