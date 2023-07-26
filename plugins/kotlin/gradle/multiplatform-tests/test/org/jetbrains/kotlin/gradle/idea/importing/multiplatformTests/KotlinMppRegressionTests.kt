@@ -56,4 +56,11 @@ class KotlinMppRegressionTests : AbstractKotlinMppGradleImportingTest() {
             hideLineMarkers = true
         }
     }
+
+    @Test
+    fun testKTIJ7642UseIRSpecificFrontendChecker() {
+        doTest {
+            onlyCheckers(HighlightingChecker)
+        }
+    }
 }
