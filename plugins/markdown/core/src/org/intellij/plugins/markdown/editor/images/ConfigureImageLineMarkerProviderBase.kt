@@ -58,8 +58,8 @@ abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : LineMarker
 
   private fun processFileName(filePath: String): String? {
     try {
-      // Path can be eiter a URL or a system path
-      val uri = URI.create(FileUtil.toSystemIndependentName(filePath)).path
+      // Path can be either a URL or a system path
+      val uri = URI.create(FileUtil.toSystemIndependentName(filePath)).path ?: return null
       return Paths.get(uri).fileName?.toString()
     } catch (exception: IllegalArgumentException) {
       return null
