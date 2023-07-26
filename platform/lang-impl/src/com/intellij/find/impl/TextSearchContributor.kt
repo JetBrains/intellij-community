@@ -97,7 +97,7 @@ class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhere
                                      consumer: Processor<in FoundItemDescriptor<SearchEverywhereItem>>) {
     FindModel.initStringToFind(model, pattern)
 
-    val presentation = FindInProjectUtil.setupProcessPresentation(project, UsageViewPresentation())
+    val presentation = FindInProjectUtil.setupProcessPresentation(UsageViewPresentation())
 
     val scope = GlobalSearchScope.projectScope(project) // TODO use scope from model ?
     val recentItemRef = ThreadLocal<Reference<SearchEverywhereItem>>()

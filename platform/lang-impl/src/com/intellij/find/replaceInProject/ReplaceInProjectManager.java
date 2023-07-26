@@ -155,7 +155,7 @@ public final class ReplaceInProjectManager {
     final FindModel findModelCopy = findModel.clone();
 
     final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModelCopy);
-    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(true, presentation);
     processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
 
     UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);

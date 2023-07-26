@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -36,6 +22,8 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 
 import java.util.*;
+
+import static org.junit.Assert.assertNotEquals;
 
 public class SearchInLibsTest extends JavaPsiTestCase {
   @Override
@@ -96,7 +84,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     Processor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
-    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     assertSize(2, usages);
@@ -114,7 +102,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     Processor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
-    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     assertEquals(3, usages.size());
@@ -126,7 +114,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
     assertNotNull(aClass);
     String classDirPath = aClass.getContainingFile().getContainingDirectory().getVirtualFile().getPath();
     String sourceDirPath = ((PsiFile)aClass.getContainingFile().getNavigationElement()).getContainingDirectory().getVirtualFile().getPath();
-    assertFalse(classDirPath.equals(sourceDirPath));
+    assertNotEquals(classDirPath, sourceDirPath);
     model.setDirectoryName(sourceDirPath);
     model.setCaseSensitive(true);
     model.setCustomScope(false);
@@ -135,7 +123,7 @@ public class SearchInLibsTest extends JavaPsiTestCase {
 
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<>());
     CommonProcessors.CollectProcessor<UsageInfo> consumer = new CommonProcessors.CollectProcessor<>(usages);
-    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(getProject(), false, FindInProjectUtil.setupViewPresentation(false, model));
+    FindUsagesProcessPresentation presentation = FindInProjectUtil.setupProcessPresentation(false, FindInProjectUtil.setupViewPresentation(false, model));
     FindInProjectUtil.findUsages(model, getProject(), consumer, presentation);
 
     UsageInfo info = assertOneElement(usages);

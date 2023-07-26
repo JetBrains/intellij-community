@@ -1181,8 +1181,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI, D
           () -> GlobalSearchScopeUtil.toGlobalSearchScope(FindInProjectUtil.getScopeFromModel(project, myHelper.myPreviousModel), project)
         ).wrapProgress(indicator).executeSynchronously();
 
-        FindUsagesProcessPresentation processPresentation =
-          FindInProjectUtil.setupProcessPresentation(project, myUsageViewPresentation);
+        FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myUsageViewPresentation);
         ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Reference<FindPopupItem>> recentItemRef = new ThreadLocal<>();
 

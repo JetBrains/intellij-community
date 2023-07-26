@@ -73,14 +73,14 @@ val Project.isExternalStorageEnabled: Boolean
       return false
     }
 
-    val manager = this.getService(ExternalStorageConfigurationManager::class.java) ?: return false
+    val manager = ExternalStorageConfigurationManager.getInstance(this) ?: return false
     if (manager.isEnabled) return true
     val testMode = ApplicationManager.getApplication()?.isUnitTestMode ?: false
     return testMode && enableExternalStorageByDefaultInTests
   }
 
 /**
- * By default external storage is enabled in tests. Wrap code which loads the project into this call to always use explicit option value.
+ * By default, external storage is enabled in tests. Wrap code which loads the project into this call to always use explicit option value.
  */
 @TestOnly
 fun doNotEnableExternalStorageByDefaultInTests(action: () -> Unit) {

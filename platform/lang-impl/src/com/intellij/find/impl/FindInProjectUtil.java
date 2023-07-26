@@ -117,7 +117,7 @@ public final class FindInProjectUtil {
             if (editor == null) {
               directoryName = parent.getPresentableUrl();
             }
-            else {
+            else if (project != null) {
               FindInProjectSettings.getInstance(project).addDirectory(parent.getPresentableUrl());
             }
           }
@@ -150,8 +150,7 @@ public final class FindInProjectUtil {
     model.setProjectScope(model.getDirectoryName() == null && model.getModuleName() == null && !model.isCustomScope());
   }
 
-  @Nullable
-  public static VirtualFile getDirectory(@NotNull FindModel findModel) {
+  public static @Nullable VirtualFile getDirectory(@NotNull FindModel findModel) {
     String directoryName = findModel.getDirectoryName();
     if (findModel.isProjectScope() || StringUtil.isEmptyOrSpaces(directoryName)) {
       return null;
@@ -185,34 +184,30 @@ public final class FindInProjectUtil {
   }
 
   /* filter can have form "*.js, !*_min.js", latter means except matched by *_min.js */
-  @NotNull
-  public static Condition<CharSequence> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
+  public static @NotNull Condition<CharSequence> createFileMaskCondition(@Nullable String filter) throws PatternSyntaxException {
     if (StringUtil.isEmpty(filter)) {
       return Conditions.alwaysTrue();
     }
 
-    String pattern = "";
-    String negativePattern = "";
+    StringBuilder pattern = new StringBuilder();
+    StringBuilder negativePattern = new StringBuilder();
     List<String> masks = StringUtil.split(filter, ",");
 
-    for(String mask:masks) {
+    for (String mask : masks) {
       mask = mask.trim();
-      if (StringUtil.startsWith(mask, "!")) {
-        negativePattern += (negativePattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask.substring(1)) + ")";
+      if (mask.startsWith("!")) {
+        negativePattern.append((negativePattern.isEmpty()) ? "" : "|").append("(").append(PatternUtil.convertToRegex(mask.substring(1))).append(")");
       }
       else {
-        pattern += (pattern.isEmpty() ? "" : "|") + "(" + PatternUtil.convertToRegex(mask) + ")";
+        pattern.append((pattern.isEmpty()) ? "" : "|").append("(").append(PatternUtil.convertToRegex(mask)).append(")");
       }
     }
 
-    if (pattern.isEmpty()) pattern = PatternUtil.convertToRegex("*");
-    String finalPattern = pattern;
-    String finalNegativePattern = negativePattern;
+    if (pattern.isEmpty()) pattern.append(PatternUtil.convertToRegex("*"));
 
     return new Condition<>() {
-      final Pattern regExp = Pattern.compile(finalPattern, Pattern.CASE_INSENSITIVE);
-      final Pattern negativeRegExp =
-        StringUtil.isEmpty(finalNegativePattern) ? null : Pattern.compile(finalNegativePattern, Pattern.CASE_INSENSITIVE);
+      final Pattern regExp = Pattern.compile(pattern.toString(), Pattern.CASE_INSENSITIVE);
+      final Pattern negativeRegExp = negativePattern.isEmpty() ? null : Pattern.compile(negativePattern.toString(), Pattern.CASE_INSENSITIVE);
 
       @Override
       public boolean value(CharSequence input) {
@@ -323,8 +318,7 @@ public final class FindInProjectUtil {
     return true;
   }
 
-  @NotNull
-  public static @Nls String getTitleForScope(@NotNull FindModel findModel) {
+  public static @NotNull @Nls String getTitleForScope(@NotNull FindModel findModel) {
     String scopeName;
     if (findModel.isProjectScope()) {
       scopeName = FindBundle.message("find.scope.project.title");
@@ -347,13 +341,11 @@ public final class FindInProjectUtil {
     return result;
   }
 
-  @NotNull
-  public static UsageViewPresentation setupViewPresentation(@NotNull FindModel findModel) {
+  public static @NotNull UsageViewPresentation setupViewPresentation(@NotNull FindModel findModel) {
     return setupViewPresentation(FindSettings.getInstance().isShowResultsInSeparateView(), findModel);
   }
 
-  @NotNull
-  public static UsageViewPresentation setupViewPresentation(boolean toOpenInNewTab, @NotNull FindModel findModel) {
+  public static @NotNull UsageViewPresentation setupViewPresentation(boolean toOpenInNewTab, @NotNull FindModel findModel) {
     UsageViewPresentation presentation = new UsageViewPresentation();
     setupViewPresentation(presentation, toOpenInNewTab, findModel);
     return presentation;
@@ -409,17 +401,28 @@ public final class FindInProjectUtil {
     presentation.setReplaceMode(findModel.isReplaceState());
   }
 
-  @NotNull
-  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project,
-                                                                       @NotNull UsageViewPresentation presentation) {
-    return setupProcessPresentation(project, !FindSettings.getInstance().isSkipResultsWithOneUsage(), presentation);
+  /** @deprecated please use {@link #setupProcessPresentation(UsageViewPresentation)} instead */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  public static @NotNull FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project, @NotNull UsageViewPresentation presentation) {
+    return setupProcessPresentation(presentation);
   }
 
-  @NotNull
-  public static FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project,
-                                                                       boolean showPanelIfOnlyOneUsage,
-                                                                       @NotNull UsageViewPresentation presentation) {
-    FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation(presentation);
+  /** @deprecated please use {@link #setupProcessPresentation(boolean, UsageViewPresentation)} instead */
+  @Deprecated(forRemoval = true)
+  @SuppressWarnings("unused")
+  public static @NotNull FindUsagesProcessPresentation setupProcessPresentation(@NotNull Project project,
+                                                                                boolean showPanelIfOnlyOneUsage,
+                                                                                @NotNull UsageViewPresentation presentation) {
+    return setupProcessPresentation(showPanelIfOnlyOneUsage, presentation);
+  }
+
+  public static @NotNull FindUsagesProcessPresentation setupProcessPresentation(@NotNull UsageViewPresentation presentation) {
+    return setupProcessPresentation(!FindSettings.getInstance().isSkipResultsWithOneUsage(), presentation);
+  }
+
+  public static @NotNull FindUsagesProcessPresentation setupProcessPresentation(boolean showPanelIfOnlyOneUsage, @NotNull UsageViewPresentation presentation) {
+    var processPresentation = new FindUsagesProcessPresentation(presentation);
     processPresentation.setShowNotFoundMessage(true);
     processPresentation.setShowPanelIfOnlyOneUsage(showPanelIfOnlyOneUsage);
     return processPresentation;
@@ -446,15 +449,14 @@ public final class FindInProjectUtil {
     return result != null ? result : Collections.emptyList();
   }
 
-  @NotNull
-  public static String extractStringToFind(@NotNull String regexp, @NotNull Project project) {
+  public static @NotNull String extractStringToFind(@NotNull String regexp, @NotNull Project project) {
     return ReadAction.compute(() -> {
       List<PsiElement> topLevelRegExpChars = getTopLevelRegExpChars("a", project);
       if (topLevelRegExpChars.size() != 1) return " ";
 
       // leave only top level regExpChars
 
-      Class regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
+      Class<?> regExpCharPsiClass = topLevelRegExpChars.get(0).getClass();
       return getTopLevelRegExpChars(regexp, project)
         .stream()
         .map(psi -> {
@@ -468,8 +470,7 @@ public final class FindInProjectUtil {
     });
   }
 
-  @NotNull
-  public static String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
+  public static @NotNull String buildStringToFindForIndicesFromRegExp(@NotNull String stringToFind, @NotNull Project project) {
     return StringUtil.trim(StringUtil.join(extractStringToFind(stringToFind, project), " "));
   }
 
@@ -482,8 +483,8 @@ public final class FindInProjectUtil {
   }
 
   public static class StringUsageTarget implements ConfigurableUsageTarget, ItemPresentation, DataProvider {
-    @NotNull protected final Project myProject;
-    @NotNull protected final FindModel myFindModel;
+    protected final @NotNull Project myProject;
+    protected final @NotNull FindModel myFindModel;
 
     public StringUsageTarget(@NotNull Project project, @NotNull FindModel findModel) {
       myProject = project;
@@ -491,8 +492,7 @@ public final class FindInProjectUtil {
     }
 
     @Override
-    @NotNull
-    public String getPresentableText() {
+    public @NotNull String getPresentableText() {
       UsageViewPresentation presentation = setupViewPresentation(false, myFindModel);
       return presentation.getToolwindowTitle();
     }
@@ -598,8 +598,7 @@ public final class FindInProjectUtil {
     outSourceRoots.addAll(otherSourceRoots);
   }
 
-  @NotNull
-  static SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
+  static @NotNull SearchScope getScopeFromModel(@NotNull Project project, @NotNull FindModel findModel) {
     SearchScope customScope = findModel.isCustomScope() ? findModel.getCustomScope() : null;
     VirtualFile directory = getDirectory(findModel);
     Module module = findModel.getModuleName() == null ? null : ModuleManager.getInstance(project).findModuleByName(findModel.getModuleName());
@@ -613,10 +612,9 @@ public final class FindInProjectUtil {
            GlobalSearchScope.allScope(project);
   }
 
-  @NotNull
-  private static GlobalSearchScope forDirectory(@NotNull Project project,
-                                                boolean withSubdirectories,
-                                                @NotNull VirtualFile directory) {
+  private static @NotNull GlobalSearchScope forDirectory(@NotNull Project project,
+                                                         boolean withSubdirectories,
+                                                         @NotNull VirtualFile directory) {
     Set<VirtualFile> result = new LinkedHashSet<>();
     result.add(directory);
     addSourceDirectoriesFromLibraries(project, directory, result);

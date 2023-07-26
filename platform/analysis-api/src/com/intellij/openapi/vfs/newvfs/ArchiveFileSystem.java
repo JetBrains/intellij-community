@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -22,7 +22,7 @@ import java.util.function.Function;
 import static com.intellij.openapi.util.Pair.pair;
 
 /**
- * Common interface of archive-based file systems (jar://, phar:// etc).
+ * Common interface of archive-based file systems (jar://, phar://, etc.).
  */
 public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
   private static final Key<VirtualFile> LOCAL_FILE = Key.create("vfs.archive.local.file");
