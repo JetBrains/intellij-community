@@ -268,6 +268,11 @@ public final class PyDataView implements DumbAware {
         addTab(myFrameAccessor);
       }
     }
+
+    @Override
+    public @NotNull ActionUpdateThread getActionUpdateThread() {
+      return ActionUpdateThread.EDT;
+    }
   }
 
   private class ColoredAction extends ToggleAction {
