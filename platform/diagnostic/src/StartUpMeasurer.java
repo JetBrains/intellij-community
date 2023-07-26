@@ -86,24 +86,22 @@ public final class StartUpMeasurer {
       return;
     }
 
-    ActivityImpl activity = new ActivityImpl(name, getCurrentTime(), null, null);
+    ActivityImpl activity = new ActivityImpl(name, System.nanoTime(), null, null);
     activity.setEnd(-1);
     items.add(activity);
   }
 
   public static @NotNull Activity startActivity(@NonNls @NotNull String name, @NotNull ActivityCategory category) {
-    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, category);
+    return new ActivityImpl(name, System.nanoTime(), /* parent = */ null, /* pluginId = */ null, category);
   }
 
   public static @NotNull Activity startActivity(@NonNls @NotNull String name) {
-    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ null, ActivityCategory.DEFAULT);
+    return new ActivityImpl(name, System.nanoTime(), /* parent = */ null, /* pluginId = */ null, ActivityCategory.DEFAULT);
   }
 
   public static @NotNull Activity startActivity(@NonNls @NotNull String name, @Nullable Activity parent) {
-    return new ActivityImpl(name, getCurrentTime(), /* parent = */ (ActivityImpl)parent, /* pluginId = */ null, ActivityCategory.DEFAULT);
+    return new ActivityImpl(name, System.nanoTime(), /* parent = */ (ActivityImpl)parent, /* pluginId = */ null, ActivityCategory.DEFAULT);
   }
-
-
 
   /**
    * The default threshold is applied.
@@ -120,7 +118,7 @@ public final class StartUpMeasurer {
       return;
     }
 
-    long end = getCurrentTime();
+    long end = System.nanoTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
       return;
@@ -140,7 +138,7 @@ public final class StartUpMeasurer {
       return -1;
     }
 
-    long end = getCurrentTime();
+    long end = System.nanoTime();
     long duration = end - start;
     if (duration <= threshold) {
       return duration;
@@ -154,7 +152,7 @@ public final class StartUpMeasurer {
    * The default threshold is applied.
    */
   public static long addCompletedActivity(long start, @NonNls @NotNull String name, @NotNull ActivityCategory category, String pluginId) {
-    long end = getCurrentTime();
+    long end = System.nanoTime();
     long duration = end - start;
     if (duration <= MEASURE_THRESHOLD) {
       return duration;
@@ -226,7 +224,7 @@ public final class StartUpMeasurer {
     }
 
     ActivityImpl parent = new ActivityImpl(parentName, (long)timings.get(1), null, null);
-    parent.setEnd(getCurrentTime());
+    parent.setEnd(System.nanoTime());
 
     for (int i = 0; i < timings.size(); i += 2) {
       long start = (long)timings.get(i + 1);

@@ -396,7 +396,7 @@ public abstract class ExtensionPointImpl<T extends @NotNull Object> implements E
     // check before to avoid any "restore" work if already cancelled
     CHECK_CANCELED.run();
 
-    long startTime = StartUpMeasurer.getCurrentTime();
+    long startTime = System.nanoTime();
 
     List<ExtensionComponentAdapter> adapters = getSortedAdapters();
     int totalSize = adapters.size();

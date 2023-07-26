@@ -202,7 +202,7 @@ private class CoroutineTimeMeasurer(private val parentActivity: ActivityImpl?,
 
 open class DefaultTraceReporter(private val reportScheduleTimeForRoot: Boolean) : TraceReporter {
   override fun start(coroutineName: String, scheduleTime: Long, parentActivity: ActivityImpl?): ActivityImpl {
-    val start = StartUpMeasurer.getCurrentTime()
+    val start = System.nanoTime()
 
     if (reportScheduleTimeForRoot || parentActivity != null) {
       // the main activity cannot be a parent for meta "scheduled" activity since it is outside it (preceding the main activity)

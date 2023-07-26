@@ -252,7 +252,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return
     }
 
-    val startTime = StartUpMeasurer.getCurrentTime()
+    val startTime = System.nanoTime()
     var lastBundleName: String? = null
     var lastBundle: ResourceBundle? = null
     for (descriptor in elements) {
@@ -304,7 +304,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
         }
       }
     }
-    StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", StartUpMeasurer.getCurrentTime() - startTime)
+    StartUpMeasurer.addPluginCost(module.pluginId.idString, "Actions", System.nanoTime() - startTime)
   }
 
   override fun getAction(id: String): AnAction? = getActionImpl(id = id, canReturnStub = false)

@@ -205,7 +205,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       }
 
       val activity = adapter.createInstance<InitProjectActivity>(project) ?: continue
-      val startTime = StartUpMeasurer.getCurrentTime()
+      val startTime = System.nanoTime()
       tracer.spanBuilder("run activity")
         .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
         .setAttribute(AttributeKey.stringKey("plugin"), pluginId.idString)
@@ -314,7 +314,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   private fun runActivityAndMeasureDuration(activity: StartupActivity, pluginId: PluginId): Long {
-    val startTime = StartUpMeasurer.getCurrentTime()
+    val startTime = System.nanoTime()
     try {
       tracer.spanBuilder("run activity")
         .setAttribute(AttributeKey.stringKey("class"), activity.javaClass.name)
@@ -356,7 +356,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       coroutineContext.ensureActive()
 
       val runnable = synchronized(lock, activities::pollFirst) ?: break
-      val startTime = StartUpMeasurer.getCurrentTime()
+      val startTime = System.nanoTime()
       val runnableClass = runnable.javaClass
       val pluginId = (runnableClass.classLoader as? PluginAwareClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID
       try {

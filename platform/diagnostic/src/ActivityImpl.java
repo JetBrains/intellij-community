@@ -75,7 +75,7 @@ public final class ActivityImpl implements Activity {
   // so, parent added to API but as it was not enough, decided to measure time in nanoseconds instead of ms to mitigate such situations
   @Override
   public @NotNull ActivityImpl startChild(@NotNull String name) {
-    return new ActivityImpl(name, StartUpMeasurer.getCurrentTime(), this, pluginId, category);
+    return new ActivityImpl(name, System.nanoTime(), this, pluginId, category);
   }
 
   @Override

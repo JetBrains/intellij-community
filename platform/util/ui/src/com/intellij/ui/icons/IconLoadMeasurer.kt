@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons
 
-import com.intellij.diagnostic.StartUpMeasurer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.LongAdder
@@ -61,7 +60,7 @@ object IconLoadMeasurer {
 
     fun end(startTime: Long) {
       if (startTime > 0) {
-        val duration = StartUpMeasurer.getCurrentTime() - startTime
+        val duration = System.nanoTime() - startTime
         counter.increment()
         totalDuration.add(duration)
       }

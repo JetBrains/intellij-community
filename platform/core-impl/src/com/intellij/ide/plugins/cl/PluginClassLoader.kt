@@ -167,7 +167,7 @@ class PluginClassLoader(classPath: ClassPath,
     val fileNameWithoutExtension = name.replace('.', '/')
     val fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION
     val packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'))
-    val startTime = if (StartUpMeasurer.measuringPluginStartupCosts) StartUpMeasurer.getCurrentTime() else -1
+    val startTime = if (StartUpMeasurer.measuringPluginStartupCosts) System.nanoTime() else -1
     var c: Class<*>?
     var error: PluginException? = null
     try {
@@ -255,7 +255,7 @@ class PluginClassLoader(classPath: ClassPath,
 
     if (startTime != -1L) {
       // EventQueue.isDispatchThread() is expensive
-      (if (EDT.isCurrentThreadEdt()) edtTime else backgroundTime).addAndGet(StartUpMeasurer.getCurrentTime() - startTime)
+      (if (EDT.isCurrentThreadEdt()) edtTime else backgroundTime).addAndGet(System.nanoTime() - startTime)
     }
     return c
   }

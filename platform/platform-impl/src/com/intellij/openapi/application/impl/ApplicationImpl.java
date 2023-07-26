@@ -1423,7 +1423,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     super.logMessageBusDelivery(topic, messageName, handler, duration);
 
     if (topic == ProjectManager.TOPIC) {
-      long start = StartUpMeasurer.getCurrentTime() - duration;
+      long start = System.nanoTime() - duration;
       StartUpMeasurer.addCompletedActivity(start, handler.getClass(), ActivityCategory.PROJECT_OPEN_HANDLER, null,
                                            StartUpMeasurer.MEASURE_THRESHOLD);
     }
