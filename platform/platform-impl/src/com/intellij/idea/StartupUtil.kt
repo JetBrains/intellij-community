@@ -241,26 +241,19 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appDeferred = async {
-    val rwLockHolderDeferred = async {
-      // configure EDT thread
-      initAwtToolkitAndEventQueueJob.join()
-      RwLockHolder(EDT.getEventDispatchThread())
-    }
-
+    initAwtToolkitAndEventQueueJob.join()
     checkSystemDirJob.join()
 
     if (!configImportNeededDeferred.await()) {
       runPreAppClass(args, logDeferred)
     }
 
-    val rwLockHolder = rwLockHolderDeferred.await()
     subtask("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope(ApplicationImpl::class.java.name),
                       isInternal,
                       AppMode.isHeadless(),
-                      AppMode.isCommandLine(),
-                      rwLockHolder)
+                      AppMode.isCommandLine())
     }
   }
 

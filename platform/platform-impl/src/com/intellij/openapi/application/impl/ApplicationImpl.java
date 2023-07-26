@@ -117,12 +117,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   });
 
   @TestOnly
-  public ApplicationImpl(boolean isHeadless, @NotNull RwLockHolder lockHolder) {
+  public ApplicationImpl(boolean isHeadless) {
     super(null,
           CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
           true);
 
-    myLock = lockHolder.lock;
+    myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
     registerFakeServices(this);
 
@@ -142,11 +142,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   public ApplicationImpl(@NotNull CoroutineScope coroutineScope,
                          boolean isInternal,
                          boolean isHeadless,
-                         boolean isCommandLine,
-                         @NotNull RwLockHolder lockHolder) {
+                         boolean isCommandLine) {
     super(null, coroutineScope, true);
 
-    myLock = lockHolder.lock;
+    myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
     registerFakeServices(this);
 
