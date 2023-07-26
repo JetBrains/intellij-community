@@ -263,7 +263,6 @@ internal class MainToolbar(
 private fun createActionBar(group: ActionGroup, customizationGroup: ActionGroup?): MyActionToolbarImpl {
   val toolbar = MyActionToolbarImpl(group = group, customizationGroup = customizationGroup)
   toolbar.setActionButtonBorder(JBUI.Borders.empty(mainToolbarButtonInsets()))
-    toolbar.setActionButtonBorder(5, 5)
   toolbar.setCustomButtonLook(HeaderToolbarButtonLook())
 
   toolbar.setMinimumButtonSize { ActionToolbar.experimentalToolbarMinimumButtonSize() }

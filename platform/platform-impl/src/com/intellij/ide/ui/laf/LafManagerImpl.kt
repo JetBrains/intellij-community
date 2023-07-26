@@ -737,6 +737,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonSizeKey(), cmSize(32, 32))
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconSizeKey(), 16)
       defaults.put(JBUI.CurrentTheme.Toolbar.stripeToolbarButtonIconPaddingKey(), cmInsets(4))
+      defaults.put(JBUI.CurrentTheme.Toolbar.mainToolbarButtonInsetsKey(), cmInsets(2))
       // Run Widget
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarHeightKey(), 26)
       defaults.put(JBUI.CurrentTheme.RunWidget.toolbarBorderHeightKey(), 4)

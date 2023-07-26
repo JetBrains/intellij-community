@@ -1094,7 +1094,12 @@ public final class JBUI {
       }
 
       public static Insets mainToolbarButtonInsets() {
-        return insets("MainToolbar.Button.buttonInsets", isNewUI() ? emptyInsets() : insets(1, 2));
+        return insets(mainToolbarButtonInsetsKey(), isNewUI() ? emptyInsets() : insets(1, 2));
+      }
+
+      @NotNull
+      public static String mainToolbarButtonInsetsKey() {
+        return "MainToolbar.Icon.insets";
       }
 
       public static @NotNull Dimension experimentalToolbarButtonSize() {
