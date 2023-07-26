@@ -103,21 +103,21 @@ internal fun createOpenTelemetryResource(appInfo: ApplicationInfo): Resource {
 
 @Serializable
 internal class AnyValue(
-  val string: String? = null,
+  @JvmField val string: String? = null,
 )
 
 @Serializable
 internal class KeyValue(
-  val key: String,
-  val value: AnyValue,
+  @JvmField val key: String,
+  @JvmField val value: AnyValue,
 )
 
 @Suppress("unused")
 @Serializable
 internal class Resource(
   @ProtoPacked
-  val attributes: List<KeyValue> = emptyList(),
-  val droppedAttributesCount: Int = 0,
+  @JvmField val attributes: List<KeyValue> = emptyList(),
+  @JvmField val droppedAttributesCount: Int = 0,
 )
 
 // https://kotlinlang.org/api/kotlinx.serialization/kotlinx-serialization-protobuf/kotlinx.serialization.protobuf/-proto-buf/
@@ -126,41 +126,41 @@ internal class Resource(
 @Serializable
 internal class TracesData(
   @ProtoPacked
-  val resourceSpans: List<ResourceSpans> = emptyList()
+  @JvmField val resourceSpans: List<ResourceSpans> = emptyList()
 )
 
 @Serializable
 internal class ResourceSpans(
-  val resource: Resource? = null,
+  @JvmField val resource: Resource? = null,
   @ProtoPacked
-  val scopeSpans: List<ScopeSpans> = emptyList(),
-  val schemaUrl: String? = null,
+  @JvmField val scopeSpans: List<ScopeSpans> = emptyList(),
+  @JvmField val schemaUrl: String? = null,
 )
 
 @Serializable
 internal class ScopeSpans(
-  val scope: InstrumentationScope? = null,
+  @JvmField val scope: InstrumentationScope? = null,
   @ProtoPacked
-  val spans: List<Span> = emptyList(),
-  val schemaUrl: String? = null,
+  @JvmField val spans: List<Span> = emptyList(),
+  @JvmField val schemaUrl: String? = null,
 )
 
 @Serializable
 internal class Span(
-  val traceId: ByteArray,
-  val spanId: ByteArray,
-  val traceState: String? = null,
-  val parentSpanId: ByteArray? = null,
-  val name: String,
-  val kind: SpanKind = SpanKind.SPAN_KIND_INTERNAL,
+  @JvmField val traceId: ByteArray,
+  @JvmField val spanId: ByteArray,
+  @JvmField val traceState: String? = null,
+  @JvmField val parentSpanId: ByteArray? = null,
+  @JvmField val name: String,
+  @JvmField val kind: SpanKind = SpanKind.SPAN_KIND_INTERNAL,
 
   @ProtoType(ProtoIntegerType.FIXED)
-  val startTimeUnixNano: Long,
+  @JvmField val startTimeUnixNano: Long,
   @ProtoType(ProtoIntegerType.FIXED)
-  val endTimeUnixNano: Long,
+  @JvmField val endTimeUnixNano: Long,
 
   @ProtoPacked
-  val attributes: List<KeyValue> = emptyList(),
+  @JvmField val attributes: List<KeyValue> = emptyList(),
 )
 
 @Suppress("unused")
@@ -171,10 +171,10 @@ internal enum class SpanKind {
 
 @Serializable
 internal class InstrumentationScope(
-  val name: String = "",
-  val version: String,
+  @JvmField val name: String = "",
+  @JvmField val version: String,
   @ProtoPacked
-  val attributes: List<KeyValue> = emptyList(),
+  @JvmField val attributes: List<KeyValue> = emptyList(),
 )
 
 // https://github.com/segmentio/ksuid/blob/b65a0ff7071caf0c8770b63babb7ae4a3c31034d/ksuid.go#L19
