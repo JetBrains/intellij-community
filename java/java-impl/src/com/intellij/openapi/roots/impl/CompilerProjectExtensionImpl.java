@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.Disposable;
@@ -85,21 +85,21 @@ final class CompilerProjectExtensionImpl extends CompilerProjectExtension implem
       if (extension != null && !extension.isCompilerOutputPathInherited()) {
         String outputUrl = extension.getCompilerOutputUrl();
         if (outputUrl != null && outputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-          rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(outputUrl));
+          rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(outputUrl));
         }
         String testOutputUrl = extension.getCompilerOutputUrlForTests();
         if (testOutputUrl!= null && testOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-          rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(testOutputUrl));
+          rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(testOutputUrl));
         }
       }
-      // otherwise the module output path is beneath the CompilerProjectExtension.getCompilerOutputUrl() which is added below
+      // otherwise, the module output path is beneath the CompilerProjectExtension.getCompilerOutputUrl() which is added below
     }
 
     CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
     if (extension != null) {
       String compilerOutputUrl = extension.getCompilerOutputUrl();
       if (compilerOutputUrl != null && compilerOutputUrl.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
-        rootsToWatch.add(ProjectRootManagerImpl.extractLocalPath(compilerOutputUrl));
+        rootsToWatch.add(ProjectRootManagerImpl.Companion.extractLocalPath(compilerOutputUrl));
       }
     }
 

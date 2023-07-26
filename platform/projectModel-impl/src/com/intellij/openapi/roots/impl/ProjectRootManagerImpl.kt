@@ -1,518 +1,431 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.roots.impl;
+package com.intellij.openapi.roots.impl
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ProjectExtensionPointName;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.RootsChangeRescanningInfo;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
-import com.intellij.util.EventDispatcher;
-import com.intellij.util.SmartList;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
-import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ProjectExtensionPointName
+import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.RootsChangeRescanningInfo
+import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.*
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
+import com.intellij.util.EventDispatcher
+import com.intellij.util.SmartList
+import com.intellij.util.io.URLUtil
+import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
-import java.util.*;
+private val LOG = logger<ProjectRootManagerImpl>()
+
+private val EP_NAME = ProjectExtensionPointName<ProjectExtension>("com.intellij.projectExtension")
+private const val PROJECT_JDK_NAME_ATTR = "project-jdk-name"
+private const val PROJECT_JDK_TYPE_ATTR = "project-jdk-type"
+private const val ATTRIBUTE_VERSION = "version"
 
 @State(name = "ProjectRootManager")
-public class ProjectRootManagerImpl extends ProjectRootManagerEx implements PersistentStateComponent<Element> {
-  private static final Logger LOG = Logger.getInstance(ProjectRootManagerImpl.class);
-  private static final ProjectExtensionPointName<ProjectExtension> EP_NAME = new ProjectExtensionPointName<>("com.intellij.projectExtension");
+open class ProjectRootManagerImpl(val project: Project) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+  private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
+  private var projectSdkName: String? = null
+  private var projectSdkType: String? = null
+  private val rootCache: OrderRootsCache
+  private var isStateLoaded = false
 
-  private static final String PROJECT_JDK_NAME_ATTR = "project-jdk-name";
-  private static final String PROJECT_JDK_TYPE_ATTR = "project-jdk-type";
-  private static final String ATTRIBUTE_VERSION = "version";
+  init {
+    @Suppress("LeakingThis")
+    rootCache = getOrderRootsCache(project)
+    project.getMessageBus().simpleConnect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, object : ProjectJdkTable.Listener {
+      override fun jdkNameChanged(jdk: Sdk, previousName: String) {
+        val currentName = projectSdkName
+        if (previousName == currentName) {
+          // if already had jdk name and that name was the name of the jdk just changed
+          projectSdkName = jdk.getName()
+          projectSdkType = jdk.getSdkType().getName()
+        }
+      }
+    })
+  }
 
-  protected final Project myProject;
+  companion object {
+    @JvmStatic
+    fun getInstanceImpl(project: Project): ProjectRootManagerImpl = getInstance(project) as ProjectRootManagerImpl
 
-  private final EventDispatcher<ProjectJdkListener> myProjectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener.class);
-
-  private String myProjectSdkName;
-  private String myProjectSdkType;
-
-  private final OrderRootsCache myRootsCache;
-
-  private boolean myStateLoaded;
+    fun extractLocalPath(url: String): String {
+      val path = URLUtil.extractPath(url)
+      val separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR)
+      return if (separatorIndex > 0) path.substring(0, separatorIndex) else path
+    }
+  }
 
   @ApiStatus.Internal
-  public abstract class BatchSession<Change, ChangeList> {
-    private final boolean myFileTypes;
-    private int myBatchLevel;
-    private int myPendingRootsChanged;
-    private boolean myChanged;
-    private ChangeList myChanges;
+  abstract inner class BatchSession<Change, ChangeList>(private val fileTypes: Boolean) {
+    private var batchLevel = 0
+    private var pendingRootsChanged = 0
+    private var isChanged = false
+    private var changes: ChangeList? = null
 
-    private BatchSession(final boolean fileTypes) {
-      myFileTypes = fileTypes;
-    }
-
-    void levelUp() {
-      if (myBatchLevel == 0) {
-        myChanged = false;
-        myChanges = null;
+    fun levelUp() {
+      if (batchLevel == 0) {
+        isChanged = false
+        changes = null
       }
-      myBatchLevel += 1;
+      batchLevel += 1
     }
 
-    void levelDown() {
-      myBatchLevel -= 1;
-      if (myChanged && myBatchLevel == 0) {
+    fun levelDown() {
+      batchLevel -= 1
+      if (isChanged && batchLevel == 0) {
         try {
           // todo make sure it should be not null here
-          if (myChanges == null) {
-            myChanges = initiateChangelist(getGenericChange());
+          if (changes == null) {
+            changes = initiateChangelist(genericChange)
           }
-          myPendingRootsChanged--;
-          WriteAction.run(() -> fireRootsChanged(myChanges));
+          pendingRootsChanged--
+          ApplicationManager.getApplication().runWriteAction { fireRootsChanged(changes!!) }
         }
         finally {
-          if (myPendingRootsChanged == 0) {
-            myChanged = false;
-            myChanges = null;
+          if (pendingRootsChanged == 0) {
+            isChanged = false
+            changes = null
           }
         }
       }
     }
 
-    public void beforeRootsChanged() {
-      if (myBatchLevel == 0 || !myChanged) {
-        fireBeforeRootsChanged(myFileTypes);
-        myPendingRootsChanged++;
-        myChanged = true;
+    fun beforeRootsChanged() {
+      if (batchLevel == 0 || !isChanged) {
+        fireBeforeRootsChanged(fileTypes)
+        pendingRootsChanged++
+        isChanged = true
       }
     }
 
-    public void rootsChanged(@NotNull Change change) {
-      myChanges = myChanges == null ? initiateChangelist(change) : accumulate(myChanges, change);
-
-      if (myBatchLevel == 0 && myChanged) {
-        myPendingRootsChanged--;
-        if (fireRootsChanged(myChanges) && myPendingRootsChanged == 0) {
-          myChanged = false;
-          myChanges = null;
+    @JvmOverloads
+    fun rootsChanged(change: Change = genericChange) {
+      changes = if (changes == null) initiateChangelist(change) else accumulate(changes!!, change)
+      if (batchLevel == 0 && isChanged) {
+        pendingRootsChanged--
+        if (fireRootsChanged(changes!!) && pendingRootsChanged == 0) {
+          isChanged = false
+          changes = null
         }
       }
     }
 
-    public void rootsChanged() {
-      rootsChanged(getGenericChange());
-    }
+    protected abstract fun fireRootsChanged(change: ChangeList): Boolean
 
-    protected abstract boolean fireRootsChanged(@NotNull ChangeList change);
+    protected abstract fun initiateChangelist(change: Change): ChangeList
 
-    protected abstract @NotNull ChangeList initiateChangelist(@NotNull Change change);
+    protected abstract fun accumulate(current: ChangeList, change: Change): ChangeList
 
-    protected abstract @NotNull ChangeList accumulate(@NotNull ChangeList current, @NotNull Change change);
-
-    protected abstract @NotNull Change getGenericChange();
+    protected abstract val genericChange: Change
   }
 
-  @ApiStatus.Internal
-  public BatchSession<RootsChangeRescanningInfo, List<RootsChangeRescanningInfo>> getRootsChanged() {
-    return myRootsChanged;
+  @get:ApiStatus.Internal
+  val rootsChanged: BatchSession<RootsChangeRescanningInfo, MutableList<RootsChangeRescanningInfo>> = object : BatchSession<RootsChangeRescanningInfo, MutableList<RootsChangeRescanningInfo>>(false) {
+    override fun fireRootsChanged(change: MutableList<RootsChangeRescanningInfo>): Boolean {
+      return this@ProjectRootManagerImpl.fireRootsChanged(fileTypes = false, indexingInfos = change)
+    }
+
+    override fun accumulate(current: MutableList<RootsChangeRescanningInfo>,
+                            change: RootsChangeRescanningInfo): MutableList<RootsChangeRescanningInfo> {
+      current.add(change)
+      return current
+    }
+
+    override val genericChange: RootsChangeRescanningInfo
+      get() = RootsChangeRescanningInfo.TOTAL_RESCAN
+
+    override fun initiateChangelist(change: RootsChangeRescanningInfo) = SmartList(change)
   }
 
-  protected final BatchSession<RootsChangeRescanningInfo, List<RootsChangeRescanningInfo>>
-    myRootsChanged = new BatchSession<>(false) {
-    @Override
-    protected boolean fireRootsChanged(@NotNull List<RootsChangeRescanningInfo> changes) {
-      return ProjectRootManagerImpl.this.fireRootsChanged(false, changes);
+  protected val fileTypesChanged: BatchSession<Boolean, Boolean> = object : BatchSession<Boolean, Boolean>(true) {
+    override fun fireRootsChanged(change: Boolean): Boolean {
+      return this@ProjectRootManagerImpl.fireRootsChanged(true, emptyList())
     }
 
-    @Override
-    protected @NotNull List<RootsChangeRescanningInfo> accumulate(@NotNull List<RootsChangeRescanningInfo> currentPair,
-                                                                  @NotNull RootsChangeRescanningInfo cause) {
-      currentPair.add(cause);
-      return currentPair;
+    override fun accumulate(current: Boolean, change: Boolean): Boolean {
+      return current || change
     }
 
-    @Override
-    protected @NotNull RootsChangeRescanningInfo getGenericChange() {
-      return RootsChangeRescanningInfo.TOTAL_RESCAN;
-    }
+    override val genericChange: Boolean
+      get() = true
 
-    @Override
-    protected @NotNull List<RootsChangeRescanningInfo> initiateChangelist(@NotNull RootsChangeRescanningInfo info) {
-      return new SmartList<>(info);
-    }
-  };
-
-  protected final BatchSession<Boolean, Boolean> myFileTypesChanged = new BatchSession<>(true) {
-    @Override
-    protected boolean fireRootsChanged(@NotNull Boolean aBoolean) {
-      return ProjectRootManagerImpl.this.fireRootsChanged(true, Collections.emptyList());
-    }
-
-    @Override
-    protected @NotNull Boolean accumulate(@NotNull Boolean current, @NotNull Boolean change) {
-      return current || change;
-    }
-
-    @Override
-    protected @NotNull Boolean getGenericChange() {
-      return Boolean.TRUE;
-    }
-
-    @Override
-    protected @NotNull Boolean initiateChangelist(@NotNull Boolean aBoolean) {
-      return aBoolean;
-    }
-  };
-  private final VirtualFilePointerListener myEmptyRootsValidityChangedListener = new VirtualFilePointerListener(){};
-
-  public static ProjectRootManagerImpl getInstanceImpl(Project project) {
-    return (ProjectRootManagerImpl)getInstance(project);
+    override fun initiateChangelist(change: Boolean): Boolean = change
+  }
+  open val rootsValidityChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {}
+  override fun getFileIndex(): ProjectFileIndex {
+    return ProjectFileIndex.getInstance(project)
   }
 
-  public ProjectRootManagerImpl(@NotNull Project project) {
-    myProject = project;
-    myRootsCache = getOrderRootsCache(project);
-    project.getMessageBus().simpleConnect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
-      @Override
-      public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
-        String currentName = getProjectSdkName();
-        if (previousName.equals(currentName)) {
-          // if already had jdk name and that name was the name of the jdk just changed
-          myProjectSdkName = jdk.getName();
-          myProjectSdkType = jdk.getSdkType().getName();
-        }
+  override fun getContentRootUrls(): List<String> {
+    val modules = moduleManager.modules
+    val result = ArrayList<String>(modules.size)
+    for (module in modules) {
+      result.addAll(ModuleRootManager.getInstance(module).getContentRootUrls())
+    }
+    return result
+  }
+
+  override fun getContentRoots(): Array<VirtualFile> {
+    val modules = moduleManager.modules
+    val result = ArrayList<VirtualFile>(modules.size)
+    for (module in modules) {
+      val contentRoots = ModuleRootManager.getInstance(module).getContentRoots()
+      if (modules.size == 1) {
+        return contentRoots
       }
-    });
-  }
-
-  @Override
-  public @NotNull ProjectFileIndex getFileIndex() {
-    return ProjectFileIndex.getInstance(myProject);
-  }
-
-  @Override
-  public @NotNull List<String> getContentRootUrls() {
-    Module[] modules = getModuleManager().getModules();
-    List<String> result = new ArrayList<>(modules.length);
-    for (Module module : modules) {
-      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getContentRootUrls());
+      result.addAll(contentRoots)
     }
-    return result;
+    return VfsUtilCore.toVirtualFileArray(result)
   }
 
-  @Override
-  public VirtualFile @NotNull [] getContentRoots() {
-    Module[] modules = getModuleManager().getModules();
-    List<VirtualFile> result = new ArrayList<>(modules.length);
-    for (Module module : modules) {
-      VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-      if (modules.length == 1) {
-        return contentRoots;
-      }
-
-      ContainerUtil.addAll(result, contentRoots);
+  override fun getContentSourceRoots(): Array<VirtualFile> {
+    val modules = moduleManager.modules
+    val result = ArrayList<VirtualFile>(modules.size)
+    for (module in modules) {
+      result.addAll(ModuleRootManager.getInstance(module).getSourceRoots())
     }
-    return VfsUtilCore.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result)
   }
 
-  @Override
-  public VirtualFile @NotNull [] getContentSourceRoots() {
-    Module[] modules = getModuleManager().getModules();
-    List<VirtualFile> result = new ArrayList<>(modules.length);
-    for (Module module : modules) {
-      ContainerUtil.addAll(result, ModuleRootManager.getInstance(module).getSourceRoots());
+  override fun getModuleSourceRoots(rootTypes: Set<JpsModuleSourceRootType<*>?>): List<VirtualFile> {
+    val modules = moduleManager.modules
+    val roots = ArrayList<VirtualFile>(modules.size)
+    for (module in modules) {
+      roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes))
     }
-    return VfsUtilCore.toVirtualFileArray(result);
+    return roots
   }
 
-  @Override
-  public @NotNull List<VirtualFile> getModuleSourceRoots(@NotNull Set<? extends JpsModuleSourceRootType<?>> rootTypes) {
-    Module[] modules = getModuleManager().getModules();
-    List<VirtualFile> roots = new ArrayList<>(modules.length);
-    for (Module module : modules) {
-      roots.addAll(ModuleRootManager.getInstance(module).getSourceRoots(rootTypes));
+  override fun orderEntries(): OrderEnumerator = ProjectOrderEnumerator(project, rootCache)
+
+  override fun orderEntries(modules: Collection<Module>): OrderEnumerator = ModulesOrderEnumerator(modules)
+
+  override fun getContentRootsFromAllModules(): Array<VirtualFile> {
+    val modules = moduleManager.sortedModules
+    val result = ArrayList<VirtualFile>(modules.size + 1)
+    for (module in modules) {
+      result.addAll(ModuleRootManager.getInstance(module).getContentRoots())
     }
-    return roots;
-  }
-
-  @Override
-  public @NotNull OrderEnumerator orderEntries() {
-    return new ProjectOrderEnumerator(myProject, myRootsCache);
-  }
-
-  @Override
-  public @NotNull OrderEnumerator orderEntries(@NotNull Collection<? extends Module> modules) {
-    return new ModulesOrderEnumerator(modules);
-  }
-
-  @Override
-  public VirtualFile @NotNull [] getContentRootsFromAllModules() {
-    Module[] modules = getModuleManager().getSortedModules();
-    List<VirtualFile> result = new ArrayList<>(modules.length + 1);
-    for (Module module : modules) {
-      Collections.addAll(result, ModuleRootManager.getInstance(module).getContentRoots());
+    @Suppress("DEPRECATION")
+    project.getBaseDir()?.let {
+      result.add(it)
     }
-    @SuppressWarnings("deprecation") VirtualFile baseDir = myProject.getBaseDir();
-    ContainerUtil.addIfNotNull(result, baseDir);
-    return VfsUtilCore.toVirtualFileArray(result);
+    return VfsUtilCore.toVirtualFileArray(result)
   }
 
-  @Override
-  public Sdk getProjectSdk() {
-    if (myProjectSdkName == null) {
-      return null;
+  override fun getProjectSdk(): Sdk? {
+    if (projectSdkName == null) {
+      return null
     }
 
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    if (myProjectSdkType == null) {
-      return projectJdkTable.findJdk(myProjectSdkName);
+    val projectJdkTable = ProjectJdkTable.getInstance()
+    if (projectSdkType == null) {
+      return projectJdkTable.findJdk(projectSdkName!!)
     }
     else {
-      return projectJdkTable.findJdk(myProjectSdkName, myProjectSdkType);
+      return projectJdkTable.findJdk(projectSdkName!!, projectSdkType!!)
     }
   }
 
-  @Override
-  public @Nullable String getProjectSdkName() {
-    return myProjectSdkName;
-  }
+  override fun getProjectSdkName(): String? = projectSdkName
 
-  @Override
-  public @Nullable String getProjectSdkTypeName() {
-    return myProjectSdkType;
-  }
+  override fun getProjectSdkTypeName(): String? = projectSdkType
 
-  @Override
-  public void setProjectSdk(@Nullable Sdk sdk) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
+  override fun setProjectSdk(sdk: Sdk?) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
     if (sdk == null) {
-      myProjectSdkName = null;
-      myProjectSdkType = null;
+      projectSdkName = null
+      projectSdkType = null
     }
     else {
-      myProjectSdkName = sdk.getName();
-      myProjectSdkType = sdk.getSdkType().getName();
+      projectSdkName = sdk.getName()
+      projectSdkType = sdk.getSdkType().getName()
     }
-    projectJdkChanged();
+    projectJdkChanged()
   }
 
-  public void projectJdkChanged() {
-    incModificationCount();
-    mergeRootsChangesDuring(getActionToRunWhenProjectJdkChanges());
-    fireJdkChanged();
+  fun projectJdkChanged() {
+    incModificationCount()
+    mergeRootsChangesDuring(actionToRunWhenProjectJdkChanges)
+    fireJdkChanged()
   }
 
-  private void fireJdkChanged() {
-    Sdk sdk = getProjectSdk();
-    for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
-      extension.projectSdkChanged(sdk);
+  private fun fireJdkChanged() {
+    val sdk = getProjectSdk()
+    for (extension in EP_NAME.getExtensions(project)) {
+      extension.projectSdkChanged(sdk)
     }
   }
 
-  protected @NotNull Runnable getActionToRunWhenProjectJdkChanges() {
-    return () -> myProjectJdkEventDispatcher.getMulticaster().projectJdkChanged();
+  protected open val actionToRunWhenProjectJdkChanges: Runnable
+    get() = Runnable { projectJdkEventDispatcher.getMulticaster().projectJdkChanged() }
+
+  override fun setProjectSdkName(name: String, sdkTypeName: String) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    projectSdkName = name
+    projectSdkType = sdkTypeName
+    projectJdkChanged()
   }
 
-  @Override
-  public void setProjectSdkName(@NotNull String name, @NotNull String sdkTypeName) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    myProjectSdkName = name;
-    myProjectSdkType = sdkTypeName;
-
-    projectJdkChanged();
+  override fun addProjectJdkListener(listener: ProjectJdkListener) {
+    projectJdkEventDispatcher.addListener(listener)
   }
 
-  @Override
-  public void addProjectJdkListener(@NotNull ProjectJdkListener listener) {
-    myProjectJdkEventDispatcher.addListener(listener);
+  override fun removeProjectJdkListener(listener: ProjectJdkListener) {
+    projectJdkEventDispatcher.removeListener(listener)
   }
 
-  @Override
-  public void removeProjectJdkListener(@NotNull ProjectJdkListener listener) {
-    myProjectJdkEventDispatcher.removeListener(listener);
-  }
-
-  @Override
-  public void loadState(@NotNull Element element) {
-    for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
-      extension.readExternal(element);
+  override fun loadState(element: Element) {
+    for (extension in EP_NAME.getExtensions(project)) {
+      extension.readExternal(element)
     }
-    myProjectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR);
-    myProjectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR);
 
-    Application app = ApplicationManager.getApplication();
+    projectSdkName = element.getAttributeValue(PROJECT_JDK_NAME_ATTR)
+    projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
+    val app = ApplicationManager.getApplication()
     if (app != null) {
-      Runnable runnable = myStateLoaded ?
-                          () -> projectJdkChanged() :
-                          // Prevent root changed event during startup to improve startup performance
-                          () -> fireJdkChanged();
-      app.invokeLater(() -> app.runWriteAction(runnable), ModalityState.nonModal());
-    }
-    myStateLoaded = true;
-  }
-
-  @Override
-  public void noStateLoaded() {
-    myStateLoaded = true;
-  }
-
-  @Override
-  public Element getState() {
-    Element element = new Element("state");
-    element.setAttribute(ATTRIBUTE_VERSION, "2");
-    for (ProjectExtension extension : EP_NAME.getExtensions(myProject)) {
-      extension.writeExternal(element);
-    }
-    if (myProjectSdkName != null) {
-      element.setAttribute(PROJECT_JDK_NAME_ATTR, myProjectSdkName);
-    }
-    if (myProjectSdkType != null) {
-      element.setAttribute(PROJECT_JDK_TYPE_ATTR, myProjectSdkType);
-    }
-
-    if (element.getAttributes().size() == 1) {
-      // remove empty element to not write defaults
-      element.removeAttribute(ATTRIBUTE_VERSION);
-    }
-    return element;
-  }
-
-  @Override
-  public void mergeRootsChangesDuring(@NotNull Runnable runnable) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    BatchSession<?, ?> batchSession = myRootsChanged;
-    batchSession.levelUp();
-    try {
-      runnable.run();
-    }
-    finally {
-      batchSession.levelDown();
-    }
-  }
-
-  protected void clearScopesCaches() {
-    clearScopesCachesForModules();
-  }
-
-  @Override
-  public void clearScopesCachesForModules() {
-    myRootsCache.clearCache();
-    Module[] modules = ModuleManager.getInstance(myProject).getModules();
-    for (Module module : modules) {
-      ModuleRootManagerEx.getInstanceEx(module).dropCaches();
-    }
-  }
-
-  @Deprecated
-  @Override
-  public void makeRootsChange(@NotNull Runnable runnable, boolean fileTypes, boolean fireEvents) {
-    if (myProject.isDisposed()) {
-      return;
-    }
-
-    BatchSession<?, ?> session = fileTypes ? myFileTypesChanged : myRootsChanged;
-    try {
-      if (fireEvents) {
-        session.beforeRootsChanged();
+      val runnable = if (isStateLoaded) {
+        Runnable { projectJdkChanged() }
       }
-      runnable.run();
+      else {
+        // Prevent root changed event during startup to improve startup performance
+        Runnable { fireJdkChanged() }
+      }
+      app.invokeLater(Runnable { app.runWriteAction(runnable) }, ModalityState.nonModal())
+    }
+    isStateLoaded = true
+  }
+
+  override fun noStateLoaded() {
+    isStateLoaded = true
+  }
+
+  override fun getState(): Element? {
+    val element = Element("state")
+    element.setAttribute(ATTRIBUTE_VERSION, "2")
+    for (extension in EP_NAME.getExtensions(project)) {
+      extension.writeExternal(element)
+    }
+    if (projectSdkName != null) {
+      element.setAttribute(PROJECT_JDK_NAME_ATTR, projectSdkName)
+    }
+    if (projectSdkType != null) {
+      element.setAttribute(PROJECT_JDK_TYPE_ATTR, projectSdkType)
+    }
+    if (element.attributes.size == 1) {
+      // remove an empty element to not write defaults
+      element.removeAttribute(ATTRIBUTE_VERSION)
+    }
+    return element
+  }
+
+  override fun mergeRootsChangesDuring(runnable: Runnable) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    val batchSession = rootsChanged
+    batchSession.levelUp()
+    try {
+      runnable.run()
+    }
+    finally {
+      batchSession.levelDown()
+    }
+  }
+
+  protected open fun clearScopesCaches() {
+    clearScopesCachesForModules()
+  }
+
+  override fun clearScopesCachesForModules() {
+    rootCache.clearCache()
+    for (module in ModuleManager.getInstance(project).modules) {
+      ModuleRootManagerEx.getInstanceEx(module).dropCaches()
+    }
+  }
+
+  @Deprecated("")
+  override fun makeRootsChange(runnable: Runnable, fileTypes: Boolean, fireEvents: Boolean) {
+    if (project.isDisposed()) {
+      return
+    }
+
+    val session = if (fileTypes) fileTypesChanged else rootsChanged
+    try {
+      if (fireEvents) {
+        session.beforeRootsChanged()
+      }
+      runnable.run()
     }
     finally {
       if (fireEvents) {
-        session.rootsChanged();
+        session.rootsChanged()
       }
     }
   }
 
-  @Override
-  public void makeRootsChange(@NotNull Runnable runnable, @NotNull RootsChangeRescanningInfo changes) {
-    if (myProject.isDisposed()) {
-      return;
+  override fun makeRootsChange(runnable: Runnable, changes: RootsChangeRescanningInfo) {
+    if (project.isDisposed()) {
+      return
     }
-
     try {
-      myRootsChanged.beforeRootsChanged();
-      runnable.run();
+      rootsChanged.beforeRootsChanged()
+      runnable.run()
     }
     finally {
-      myRootsChanged.rootsChanged(changes);
+      rootsChanged.rootsChanged(changes)
     }
   }
 
-  @Override
-  public @NotNull AutoCloseable withRootsChange(@NotNull RootsChangeRescanningInfo changes) {
-    myRootsChanged.beforeRootsChanged();
-    return () -> myRootsChanged.rootsChanged(changes);
+  override fun withRootsChange(changes: RootsChangeRescanningInfo): AutoCloseable {
+    rootsChanged.beforeRootsChanged()
+    return AutoCloseable { rootsChanged.rootsChanged(changes) }
   }
 
-  protected boolean isFiringEvent;
+  var isFiringEvent: Boolean = false
+    protected set
 
-  private void fireBeforeRootsChanged(boolean fileTypes) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
-
-    fireBeforeRootsChangeEvent(fileTypes);
-  }
-
-  @ApiStatus.Internal
-  protected void fireBeforeRootsChangeEvent(boolean fileTypes) { }
-
-  private boolean fireRootsChanged(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) {
-    if (myProject.isDisposed()) return false;
-
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-
-    LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.");
-
-    clearScopesCaches();
-
-    incModificationCount();
-
-    fireRootsChangedEvent(fileTypes, indexingInfos);
-
-    return true;
+  private fun fireBeforeRootsChanged(fileTypes: Boolean) {
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.")
+    fireBeforeRootsChangeEvent(fileTypes)
   }
 
   @ApiStatus.Internal
-  protected void fireRootsChangedEvent(boolean fileTypes, @NotNull List<? extends RootsChangeRescanningInfo> indexingInfos) { }
+  protected open fun fireBeforeRootsChangeEvent(fileTypes: Boolean) {
+  }
+
+  private fun fireRootsChanged(fileTypes: Boolean, indexingInfos: List<RootsChangeRescanningInfo>): Boolean {
+    if (project.isDisposed()) {
+      return false
+    }
+
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    LOG.assertTrue(!isFiringEvent, "Do not use API that changes roots from roots events. Try using invoke later or something else.")
+    clearScopesCaches()
+    incModificationCount()
+    fireRootsChangedEvent(fileTypes, indexingInfos)
+    return true
+  }
 
   @ApiStatus.Internal
-  protected OrderRootsCache getOrderRootsCache(@NotNull Project project) {
-    return new OrderRootsCache(project);
+  protected open fun fireRootsChangedEvent(fileTypes: Boolean, indexingInfos: List<RootsChangeRescanningInfo>) {
   }
 
-  public @NotNull Project getProject() {
-    return myProject;
-  }
+  @ApiStatus.Internal
+  protected open fun getOrderRootsCache(project: Project): OrderRootsCache = OrderRootsCache(project)
 
-  public static @NotNull String extractLocalPath(@NotNull String url) {
-    String path = URLUtil.extractPath(url);
-    int separatorIndex = path.indexOf(URLUtil.JAR_SEPARATOR);
-    return separatorIndex > 0 ? path.substring(0, separatorIndex) : path;
-  }
+  private val moduleManager: ModuleManager
+    get() = ModuleManager.getInstance(project)
 
-  private @NotNull ModuleManager getModuleManager() {
-    return ModuleManager.getInstance(myProject);
-  }
-
-  @Override
-  public void markRootsForRefresh() { }
-
-  public @NotNull VirtualFilePointerListener getRootsValidityChangedListener() {
-    return myEmptyRootsValidityChangedListener;
-  }
+  override fun markRootsForRefresh() {}
 }

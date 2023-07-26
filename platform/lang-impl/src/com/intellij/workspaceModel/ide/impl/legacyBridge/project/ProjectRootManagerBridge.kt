@@ -25,25 +25,26 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   private val moduleDependencyIndex
     get() = ModuleDependencyIndex.getInstance(project)
 
-  override fun getActionToRunWhenProjectJdkChanges(): Runnable {
-    return Runnable {
-      super.getActionToRunWhenProjectJdkChanges().run()
-      if (moduleDependencyIndex.hasProjectSdkDependency()) fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk())
+  override val actionToRunWhenProjectJdkChanges: Runnable
+    get() {
+      return Runnable {
+        super.actionToRunWhenProjectJdkChanges.run()
+        if (moduleDependencyIndex.hasProjectSdkDependency()) {
+          fireRootsChanged(BuildableRootsChangeRescanningInfo.newInstance().addInheritedSdk())
+        }
+      }
     }
-  }
 
   override fun getOrderRootsCache(project: Project): OrderRootsCache {
     return OrderRootsCacheBridge(project, project)
   }
-
-  fun isFiringEvent(): Boolean = isFiringEvent
 
   fun setupTrackedLibrariesAndJdks() {
     moduleDependencyIndex.setupTrackedLibrariesAndJdks()
   }
 
   private fun fireRootsChanged(info: RootsChangeRescanningInfo) {
-    if (myProject.isOpen) {
+    if (project.isOpen) {
       makeRootsChange(EmptyRunnable.INSTANCE, info)
     }
   }

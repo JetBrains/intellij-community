@@ -94,15 +94,15 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     override fun beforeValidityChanged(pointers: Array<VirtualFilePointer>) {
-      if (myProject.isDisposed) {
+      if (project.isDisposed) {
         return
       }
       if (!isInsideWriteAction && !pointerChangesDetected) {
         pointerChangesDetected = true
         //this is the first pointer changing validity
-        myRootsChanged.levelUp()
+        rootsChanged.levelUp()
       }
-      myRootsChanged.beforeRootsChanged()
+      rootsChanged.beforeRootsChanged()
       if (LOG_CACHES_UPDATE || LOG.isTraceEnabled) {
         LOG.trace(Throwable(if (pointers.isNotEmpty()) pointers[0].presentableUrl else ""))
       }
@@ -110,11 +110,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
 
     override fun validityChanged(pointers: Array<VirtualFilePointer>) {
       val changeInfo = getPointersChanges(pointers)
-      if (myProject.isDisposed) {
+      if (project.isDisposed) {
         return
       }
       if (isInsideWriteAction) {
-        myRootsChanged.rootsChanged(changeInfo)
+        rootsChanged.rootsChanged(changeInfo)
       }
       else {
         clearScopesCaches()
@@ -126,47 +126,47 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   init {
-    if (!myProject.isDefault) {
+    if (!project.isDefault) {
       registerListeners()
     }
   }
 
   private fun registerListeners() {
-    val connection = myProject.messageBus.connect(this)
+    val connection = project.messageBus.connect(this)
     connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
       @Deprecated("Deprecated in Java")
       @Suppress("removal")
       override fun projectOpened(project: Project) {
-        if (project === myProject) {
+        if (project === this@ProjectRootManagerComponent.project) {
           addRootsToWatch()
-          ApplicationManager.getApplication().addApplicationListener(AppListener(), myProject)
+          ApplicationManager.getApplication().addApplicationListener(AppListener(), this@ProjectRootManagerComponent.project)
         }
       }
 
       override fun projectClosed(project: Project) {
-        if (project === myProject) {
+        if (project === this@ProjectRootManagerComponent.project) {
           this@ProjectRootManagerComponent.projectClosed()
         }
       }
     })
     connection.subscribe(FileTypeManager.TOPIC, object : FileTypeListener {
       override fun beforeFileTypesChanged(event: FileTypeEvent) {
-        myFileTypesChanged.beforeRootsChanged()
+        fileTypesChanged.beforeRootsChanged()
       }
 
       override fun fileTypesChanged(event: FileTypeEvent) {
-        myFileTypesChanged.rootsChanged()
+        fileTypesChanged.rootsChanged()
       }
     })
     connection.subscribe(BatchUpdateListener.TOPIC, object : BatchUpdateListener {
       override fun onBatchUpdateStarted() {
-        myRootsChanged.levelUp()
-        myFileTypesChanged.levelUp()
+        rootsChanged.levelUp()
+        fileTypesChanged.levelUp()
       }
 
       override fun onBatchUpdateFinished() {
-        myRootsChanged.levelDown()
-        myFileTypesChanged.levelDown()
+        rootsChanged.levelDown()
+        fileTypesChanged.levelDown()
       }
     })
 
@@ -186,7 +186,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   }
 
   private fun addRootsToWatch() {
-    if (myProject.isDefault) {
+    if (project.isDefault) {
       return
     }
 
@@ -204,7 +204,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
     else {
       @Suppress("DEPRECATION")
-      myProject.coroutineScope.launch {
+      project.coroutineScope.launch {
         val job = launch(start = CoroutineStart.LAZY) {
           val watchRoots = readAction { collectWatchRoots(newDisposable) }
           postCollect(newDisposable, oldDisposable, watchRoots)
@@ -233,9 +233,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun fireBeforeRootsChangeEvent(fileTypes: Boolean) {
     isFiringEvent = true
     try {
-      (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
-      myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(myProject, fileTypes))
+      (DirectoryIndex.getInstance(project) as? DirectoryIndexImpl)?.reset()
+      (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
+      project.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS).beforeRootsChange(ModuleRootEventImpl(project, fileTypes))
     }
     finally {
       isFiringEvent = false
@@ -245,17 +245,17 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun fireRootsChangedEvent(fileTypes: Boolean, indexingInfos: List<RootsChangeRescanningInfo>) {
     isFiringEvent = true
     try {
-      (DirectoryIndex.getInstance(myProject) as? DirectoryIndexImpl)?.reset()
-      (WorkspaceFileIndex.getInstance(myProject) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
+      (DirectoryIndex.getInstance(project) as? DirectoryIndexImpl)?.reset()
+      (WorkspaceFileIndex.getInstance(project) as WorkspaceFileIndexEx).indexData.resetCustomContributors()
 
       val isFromWorkspaceOnly = EntityIndexingService.getInstance().isFromWorkspaceOnly(indexingInfos)
-      myProject.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
-        .rootsChanged(ModuleRootEventImpl(myProject, fileTypes, indexingInfos, isFromWorkspaceOnly))
+      project.messageBus.syncPublisher(ProjectTopics.PROJECT_ROOTS)
+        .rootsChanged(ModuleRootEventImpl(project, fileTypes, indexingInfos, isFromWorkspaceOnly))
     }
     finally {
       isFiringEvent = false
     }
-    EntityIndexingService.getInstance().indexChanges(myProject, indexingInfos)
+    EntityIndexingService.getInstance().indexChanges(project, indexingInfos)
     addRootsToWatch()
   }
 
@@ -263,9 +263,9 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     ApplicationManager.getApplication().assertReadAccessAllowed()
     val recursivePaths = CollectionFactory.createFilePathSet()
     val flatPaths = CollectionFactory.createFilePathSet()
-    WATCH_ROOTS_LOG.trace { "watch roots for ${myProject}}" }
+    WATCH_ROOTS_LOG.trace { "watch roots for ${project}}" }
 
-    val store = myProject.stateStore
+    val store = project.stateStore
     val projectFilePath = store.projectFilePath
     if (Project.DIRECTORY_STORE_FOLDER != projectFilePath.parent.fileName?.toString()) {
       flatPaths += projectFilePath.systemIndependentPath
@@ -274,7 +274,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     for (extension in AdditionalLibraryRootsProvider.EP_NAME.extensionList) {
-      val toWatch = extension.getRootsToWatch(myProject)
+      val toWatch = extension.getRootsToWatch(project)
       if (!toWatch.isEmpty()) {
         WATCH_ROOTS_LOG.trace { "  ${extension::class.java}}: ${toWatch}" }
         for (file in toWatch) {
@@ -284,7 +284,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     for (extension in WATCHED_ROOTS_PROVIDER_EP_NAME.extensionList) {
-      val toWatch = extension.getRootsToWatch(myProject)
+      val toWatch = extension.getRootsToWatch(project)
       if (!toWatch.isEmpty()) {
         WATCH_ROOTS_LOG.trace { "  ${extension::class.java}}: ${toWatch}" }
         for (path in toWatch) {
@@ -295,7 +295,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
 
     val excludedUrls = HashSet<String>()
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
+    for (excludePolicy in DirectoryIndexExcludePolicy.EP_NAME.getExtensions(project)) {
       excludedUrls.addAll(excludePolicy.excludeUrlsForProject)
     }
     // avoid creating empty unnecessary container
@@ -333,7 +333,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
       }
     }
 
-    for (module in ModuleManager.getInstance(myProject).modules) {
+    for (module in ModuleManager.getInstance(project).modules) {
       if (logRoots) LOG.trace { "  module ${module}" }
       val rootManager = ModuleRootManager.getInstance(module)
       collectUrls(rootManager.contentRootUrls, "content")
@@ -381,13 +381,13 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun clearScopesCaches() {
     super.clearScopesCaches()
 
-    myProject.getServiceIfCreated(LibraryScopeCache::class.java)?.clear()
+    project.getServiceIfCreated(LibraryScopeCache::class.java)?.clear()
   }
 
   override fun clearScopesCachesForModules() {
     super.clearScopesCachesForModules()
 
-    for (module in ModuleManager.getInstance(myProject).modules) {
+    for (module in ModuleManager.getInstance(project).modules) {
       (module as ModuleEx).clearScopesCache()
     }
   }
@@ -419,10 +419,11 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     override fun writeActionFinished(action: Any) {
       if (--insideWriteAction == 0 && pointerChangesDetected) {
         pointerChangesDetected = false
-        myRootsChanged.levelDown()
+        rootsChanged.levelDown()
       }
     }
   }
 
-  override fun getRootsValidityChangedListener(): VirtualFilePointerListener = rootsChangedListener
+  override val rootsValidityChangedListener: VirtualFilePointerListener
+    get() = rootsChangedListener
 }
