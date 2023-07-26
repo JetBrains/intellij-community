@@ -210,6 +210,7 @@
     <module name="kotlin.base.fir.analysis-api-providers"/>
     <module name="kotlin.copyright"/>
     <module name="kotlin.coverage"/>
+    <module name="kotlin.i18n"/>
     <module name="kotlin.git"/>
     <module name="kotlin.grazie"/>
     <module name="kotlin.gradle.gradle-tooling"/>
