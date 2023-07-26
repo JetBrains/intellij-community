@@ -64,6 +64,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
@@ -91,7 +92,6 @@ import java.util.concurrent.*;
 import java.util.function.Predicate;
 
 import static com.intellij.codeInsight.util.GlobalInspectionScopeKt.GlobalInspectionScope;
-import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
 import static com.intellij.codeInspection.ex.GlobalInspectionContextImpl.InspectionPerformanceCollector.logPerformance;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL;
 import static com.intellij.codeInspection.ex.InspectListener.InspectionKind.GLOBAL_SIMPLE;
@@ -306,8 +306,11 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     List<Tools> globalSimpleTools = new ArrayList<>();
     initializeTools(globalTools, localTools, globalSimpleTools);
     appendPairedInspectionsForUnfairTools(globalTools, globalSimpleTools, localTools);
+
     runGlobalTools(scope, inspectionManager, globalTools, isOfflineInspections);
-    runExternalTools();
+    TraceUtil.runWithSpanThrows(tracer, "externalInspectionsAnalysis", (__) -> {
+      runExternalTools();
+    });
 
     if (runGlobalToolsOnly || localTools.isEmpty() && globalSimpleTools.isEmpty()) return;
 
@@ -376,6 +379,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
 
       return true;
     };
+    var localInspectionsSpan = tracer.spanBuilder("localInspectionsAnalysis").startSpan();
     try {
       Queue<VirtualFile> filesFailedToInspect = new LinkedBlockingQueue<>();
       while (true) {
@@ -415,6 +419,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
       catch (Exception e) {
         LOG.error("Thread dump: \n" + ThreadDumper.dumpThreadsToString(), e);
       }
+      localInspectionsSpan.end();
     }
 
     ProgressManager.checkCanceled();
@@ -636,62 +641,67 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (isOfflineInspections && System.getProperty("idea.offline.no.global.inspections") != null) {
       return;
     }
-
+    IJTracer tracer = TelemetryManager.getInstance().getTracer(GlobalInspectionScope);
     long refGraphTimestamp = System.currentTimeMillis();
-    buildRefGraphIfNeeded(globalTools);
+    TraceUtil.runWithSpanThrows(tracer, "refGraphBuilding", (__) -> {
+      buildRefGraphIfNeeded(globalTools);
+    });
     long refGraphDuration = System.currentTimeMillis() - refGraphTimestamp;
 
     List<InspectionToolWrapper<?, ?>> needRepeatSearchRequest = new ArrayList<>();
     SearchScope initialSearchScope = ReadAction.compute(scope::toSearchScope);
     boolean canBeExternalUsages = !scope.isTotalScope();
     InspectListener eventPublisher = getEventPublisher();
-    for (Tools tools : globalTools) {
-      for (ScopeToolState state : tools.getTools()) {
-        if (!state.isEnabled()) continue;
-        NamedScope stateScope = state.getScope(getProject());
-        if (stateScope == null) continue;
 
-        SearchScope intersectionScope = ReadAction.compute(() ->
-                                                             GlobalSearchScopesCore.filterScope(getProject(), stateScope)
-                                                               .intersectWith(initialSearchScope));
-        AnalysisScope scopeForState = new AnalysisScope(intersectionScope, getProject());
-        InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
-        GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
-        InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
-        try {
-          ThrowableRunnable<RuntimeException> runnable = () -> {
-            reportWhenInspectionFinished(
-              eventPublisher,
-              toolWrapper,
-              GLOBAL,
-              null,
-              getProject(),
-              () -> {
-                tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
-                return toolPresentation.getProblemDescriptors().size();
-              });
+    TraceUtil.runWithSpanThrows(tracer, "globalInspectionsAnalysis", (__) -> {
+      for (Tools tools : globalTools) {
+        for (ScopeToolState state : tools.getTools()) {
+          if (!state.isEnabled()) continue;
+          NamedScope stateScope = state.getScope(getProject());
+          if (stateScope == null) continue;
 
-            //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
-            if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
-                tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
-              needRepeatSearchRequest.add(toolWrapper);
+          SearchScope intersectionScope = ReadAction.compute(() ->
+                                                               GlobalSearchScopesCore.filterScope(getProject(), stateScope)
+                                                                 .intersectWith(initialSearchScope));
+          AnalysisScope scopeForState = new AnalysisScope(intersectionScope, getProject());
+          InspectionToolWrapper<?, ?> toolWrapper = state.getTool();
+          GlobalInspectionTool tool = (GlobalInspectionTool)toolWrapper.getTool();
+          InspectionToolResultExporter toolPresentation = getPresentation(toolWrapper);
+          try {
+            ThrowableRunnable<RuntimeException> runnable = () -> {
+              reportWhenInspectionFinished(
+                eventPublisher,
+                toolWrapper,
+                GLOBAL,
+                null,
+                getProject(),
+                () -> {
+                  tool.runInspection(scopeForState, inspectionManager, this, toolPresentation);
+                  return toolPresentation.getProblemDescriptors().size();
+                });
+
+              //skip phase when we are sure that scope already contains everything, unused declaration though needs to proceed with its suspicious code
+              if ((canBeExternalUsages || tool.getAdditionalJobs(this) != null) &&
+                  tool.queryExternalUsagesRequests(inspectionManager, this, toolPresentation)) {
+                needRepeatSearchRequest.add(toolWrapper);
+              }
+            };
+            if (tool.isReadActionNeeded()) {
+              ReadAction.run(runnable);
             }
-          };
-          if (tool.isReadActionNeeded()) {
-            ReadAction.run(runnable);
+            else {
+              runnable.run();
+            }
           }
-          else {
-            runnable.run();
+          catch (ProcessCanceledException | IndexNotReadyException e) {
+            throw e;
           }
-        }
-        catch (ProcessCanceledException | IndexNotReadyException e) {
-          throw e;
-        }
-        catch (Throwable e) {
-          LOG.error(e);
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
       }
-    }
+    });
     reportWhenActivityFinished(
       eventPublisher,
       InspectListener.ActivityKind.GLOBAL_POST_RUN_ACTIVITIES,
