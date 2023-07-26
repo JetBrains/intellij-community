@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.Activity;
@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.psi.search.FilenameIndex;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayout;
@@ -91,8 +92,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
                                              myStaleIds,
                                              myDirtyFileIds);
         }
-        catch (IOException io) {
-          throw io;
+        catch (IOException | AlreadyDisposedException e) {
+          throw e;
         }
         catch (Throwable t) {
           handleComponentError(t, extension.getClass().getName(), null);

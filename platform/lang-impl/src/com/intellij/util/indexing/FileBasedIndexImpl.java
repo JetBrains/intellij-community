@@ -90,6 +90,7 @@ import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.SimpleMessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.*;
 
 import java.io.IOException;
@@ -126,7 +127,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static final boolean USE_GENTLE_FLUSHER = SystemProperties.getBooleanProperty("indexes.flushing.use-gentle-flusher", true);
   /** How often, on average, flush each index to the disk */
   private static final long FLUSHING_PERIOD_MS = SECONDS.toMillis(FlushingDaemon.FLUSHING_PERIOD_IN_SECONDS);
-
+  final CoroutineScope coroutineScope;
 
   private volatile RegisteredIndexes myRegisteredIndexes;
   private volatile @Nullable String myShutdownReason;
@@ -171,7 +172,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     myRegisteredIndexes = null;
   }
 
-  public FileBasedIndexImpl() {
+  public FileBasedIndexImpl(@NotNull CoroutineScope coroutineScope) {
+    this.coroutineScope = coroutineScope;
     ReadWriteLock lock = new ReentrantReadWriteLock();
     myReadLock = lock.readLock();
     myWriteLock = lock.writeLock();
@@ -379,26 +381,22 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  static class MyShutDownTask implements Runnable {
-    private final boolean myTermination;
-
-    MyShutDownTask(boolean termination) { myTermination = termination; }
-
-    @Override
-    public void run() {
-      try {
-        FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-        if (fileBasedIndex instanceof FileBasedIndexImpl) {
-          ((FileBasedIndexImpl)fileBasedIndex).performShutdown(false, "IDE shutdown");
-        }
-      }
-      finally {
-        if (!myTermination) {
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            StorageDiagnosticData.dumpOnShutdown();
-          }
-        }
-      }
+  @Override
+  public void requestRebuild(@NotNull final ID<?, ?> indexId, final @NotNull Throwable throwable) {
+    LOG.info("Requesting index rebuild for: " + indexId.getName(), throwable);
+    if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) {
+      advanceIndexVersion(indexId);
+    }
+    else if (!myRegisteredIndexes.isExtensionsDataLoaded()) {
+      IndexDataInitializer.submitGenesisTask(coroutineScope, () -> {
+        // should be always true here since the genesis pool is sequential
+        waitUntilIndicesAreInitialized();
+        doRequestRebuild(indexId, throwable);
+        return null;
+      });
+    }
+    else {
+      doRequestRebuild(indexId, throwable);
     }
   }
 
@@ -1248,21 +1246,26 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  @Override
-  public void requestRebuild(@NotNull final ID<?, ?> indexId, final @NotNull Throwable throwable) {
-    LOG.info("Requesting index rebuild for: " + indexId.getName(), throwable);
-    if (FileBasedIndexScanUtil.isManuallyManaged(indexId)) {
-      advanceIndexVersion(indexId);
-    }
-    else if (!myRegisteredIndexes.isExtensionsDataLoaded()) {
-      IndexDataInitializer.submitGenesisTask(() -> {
-        waitUntilIndicesAreInitialized(); // should be always true here since the genesis pool is sequential
-        doRequestRebuild(indexId, throwable);
-        return null;
-      });
-    }
-    else {
-      doRequestRebuild(indexId, throwable);
+  static class MyShutDownTask implements Runnable {
+    private final boolean myTermination;
+
+    MyShutDownTask(boolean termination) { myTermination = termination; }
+
+    @Override
+    public void run() {
+      try {
+        FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+        if (fileBasedIndex instanceof FileBasedIndexImpl fileBasedIndexImpl) {
+          fileBasedIndexImpl.performShutdown(false, "IDE shutdown");
+        }
+      }
+      finally {
+        if (!myTermination) {
+          if (!ApplicationManager.getApplication().isUnitTestMode()) {
+            StorageDiagnosticData.dumpOnShutdown();
+          }
+        }
+      }
     }
   }
 
@@ -2236,7 +2239,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-
   /**
    * Try to reduce contention by looking on the signs of interference/contention -- like Lock.getQueueLength(),
    * and fail of .tryLock(). Introduce a limit on how many such signs are OK during a single attempt to flush
@@ -2294,7 +2296,11 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       }
 
       if (!overallResult.needsMoreToFlush()) {
-        SnapshotHashEnumeratorService.getInstance().flush();
+        SnapshotHashEnumeratorService snapshotHashEnumeratorService =
+          ApplicationManager.getApplication().getServiceIfCreated(SnapshotHashEnumeratorService.class);
+        if (snapshotHashEnumeratorService != null) {
+          snapshotHashEnumeratorService.flush();
+        }
       }
       return overallResult;
     }

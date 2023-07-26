@@ -41,11 +41,18 @@ abstract class IndexDataInitializer<T>(private val name: String) : Callable<T?> 
 
   companion object {
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO.limitedParallelism(1))
+    private val dispatcher = Dispatchers.IO.limitedParallelism(1)
+
+    private val scope = CoroutineScope(SupervisorJob() + dispatcher)
 
     @JvmStatic
     fun <T> submitGenesisTask(action: Callable<T>): Future<T> {
-      return scope.async { action.call() }.asCompletableFuture()
+      return scope.submitGenesisTask(action)
+    }
+
+    @JvmStatic
+    fun <T> CoroutineScope.submitGenesisTask(action: Callable<T>): Future<T> {
+      return async(dispatcher) { action.call() }.asCompletableFuture()
     }
 
     @JvmStatic
