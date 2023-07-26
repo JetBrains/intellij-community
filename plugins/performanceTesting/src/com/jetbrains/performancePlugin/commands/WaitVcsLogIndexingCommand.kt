@@ -37,7 +37,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
     LOG.info("Need indexing = ${vcsIndex.needIndexing()}, " +
              "is indexing scheduled = ${vcsIndex.isIndexingScheduled()}, " +
              "is indexing paused = ${vcsIndex.isIndexingPaused()}")
-    if (vcsIndex.needIndexing() || vcsIndex.isIndexingScheduled()) {
+    if (vcsIndex.needIndexing()) {
       val isIndexingCompleted = CompletableDeferred<Boolean>()
       vcsIndex.addListener { _ ->
         LOG.info("$NAME command was completed due to indexing was finished after listener invocation")
