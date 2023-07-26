@@ -63,6 +63,8 @@ public class MappedFileStorageHelper implements AutoCloseable {
 
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
+  private static final VarHandle SHORT_HANDLE = byteBufferViewVarHandle(short[].class, nativeOrder())
+    .withInvokeExactBehavior();
   private static final VarHandle INT_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
     .withInvokeExactBehavior();
   private static final VarHandle LONG_HANDLE = byteBufferViewVarHandle(long[].class, nativeOrder())
@@ -78,12 +80,12 @@ public class MappedFileStorageHelper implements AutoCloseable {
   public MappedFileStorageHelper(@NotNull MMappedFileStorage storage,
                                  int bytesPerRow,
                                  @NotNull IntSupplier maxRowsSupplier) throws IOException {
-    if (bytesPerRow % Integer.BYTES != 0) {
-      //nothing really prevents us from support non-32b-aligned rows, but current field accessors are
-      // only long/int anyway, and also .clear() method will need adjustment for non-32b-aligned rows:
-      throw new IllegalArgumentException(
-        "bytesPerRow(=" + bytesPerRow + ") is not int32-aligned: so far only 32b-aligned rows are supported");
-    }
+    //if (bytesPerRow % Integer.BYTES != 0) {
+    //  //nothing really prevents us from support non-32b-aligned rows, but current field accessors are
+    //  // only long/int anyway, and also .clear() method will need adjustment for non-32b-aligned rows:
+    //  throw new IllegalArgumentException(
+    //    "bytesPerRow(=" + bytesPerRow + ") is not int32-aligned: so far only 32b-aligned rows are supported");
+    //}
     if (storage.pageSize() % bytesPerRow != 0) {
       throw new IllegalArgumentException(
         "bytesPerRow(=" + bytesPerRow + ") is not aligned with pageSize(=" + storage.pageSize() + "): rows must be page-aligned");
@@ -217,6 +219,30 @@ public class MappedFileStorageHelper implements AutoCloseable {
 
     INT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
+
+  public short readShortField(int fileId,
+                              int fieldOffsetInRow) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    return (short)SHORT_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+  }
+
+  public void writeShortField(int fileId,
+                              int fieldOffsetInRow,
+                              short attributeValue) throws IOException {
+    int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+    int offsetInPage = storage.toOffsetInPage(offsetInFile);
+
+    Page page = storage.pageByOffset(offsetInFile);
+    ByteBuffer rawPageBuffer = page.rawPageBuffer();
+
+    SHORT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+  }
+
 
   /* ============== implementation: ====================================================================== */
 

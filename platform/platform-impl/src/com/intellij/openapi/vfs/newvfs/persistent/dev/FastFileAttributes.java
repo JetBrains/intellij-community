@@ -25,9 +25,9 @@ public final class FastFileAttributes {
     throw new AssertionError("Not for instantiation");
   }
 
-  private static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
-                                                             @NotNull String storageName,
-                                                             int bytesPerRow) throws IOException {
+  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
+                                                            @NotNull String storageName,
+                                                            int bytesPerRow) throws IOException {
     PersistentFSConnection connection = vfs.connection();
     Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
     Files.createDirectories(fastAttributesDir);
@@ -43,34 +43,41 @@ public final class FastFileAttributes {
     return new MappedFileStorageHelper(storage, bytesPerRow, recordsStorage::maxAllocatedID);
   }
 
-  private static @NotNull MappedFileStorageHelper openHelperAndVerifyMatchVFS(@NotNull FSRecordsImpl vfs,
-                                                                              @NotNull String storageName,
-                                                                              int bytesPerRow) throws IOException {
+  public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
+                                                                             @NotNull String storageName,
+                                                                             int storageFormatVersion,
+                                                                             int bytesPerRow) throws IOException {
     MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow);
 
-    verifyVFSCreationTag(vfs, helper);
+    verifyVFSCreationTag(helper, vfs.getCreationTimestamp(), storageFormatVersion);
 
     return helper;
   }
 
-  static void verifyVFSCreationTag(@NotNull FSRecordsImpl vfs,
-                                   @NotNull MappedFileStorageHelper helper) throws IOException {
-    long vfsCreationTag = vfs.getCreationTimestamp();
+  static void verifyVFSCreationTag(@NotNull MappedFileStorageHelper helper,
+                                   long vfsCreationTag,
+                                   int storageFormatVersion) throws IOException {
     if (helper.getVFSCreationTag() != vfsCreationTag) {
       helper.clear();
     }
+    if(helper.getVersion() != storageFormatVersion){
+      helper.clear();
+    }
     helper.setVFSCreationTag(vfsCreationTag);
+    helper.setVersion(storageFormatVersion);
   }
 
   public static IntFileAttribute intFileAttributes(@NotNull FSRecordsImpl vfs,
-                                                   @NotNull String storageName) throws IOException {
-    MappedFileStorageHelper helper = openHelperAndVerifyMatchVFS(vfs, storageName, IntFileAttribute.ROW_SIZE);
+                                                   @NotNull String storageName,
+                                                   int version) throws IOException {
+    MappedFileStorageHelper helper = openHelperAndVerifyVersions(vfs, storageName, IntFileAttribute.ROW_SIZE, version);
     return new IntFileAttribute(helper);
   }
 
   public static Int3FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
-                                                     @NotNull String storageName) throws IOException {
-    MappedFileStorageHelper helper = openHelperAndVerifyMatchVFS(vfs, storageName, Int3FileAttribute.ROW_SIZE);
+                                                     @NotNull String storageName,
+                                                     int version) throws IOException {
+    MappedFileStorageHelper helper = openHelperAndVerifyVersions(vfs, storageName, Int3FileAttribute.ROW_SIZE, version);
     return new Int3FileAttribute(helper);
   }
 
@@ -100,7 +107,7 @@ public final class FastFileAttributes {
 
     @Override
     public int read(int fileId, int defaultValue) throws IOException {
-      return storageHelper.readIntField(fileId,FIELD_OFFSET);
+      return storageHelper.readIntField(fileId, FIELD_OFFSET);
     }
 
     @Override

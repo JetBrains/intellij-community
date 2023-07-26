@@ -4,6 +4,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -195,11 +197,8 @@ public final class SpecializedFileAttributes {
 
     //FIXME RC: who is responsible for closing the storage?
 
-    //FIXME RC: use actual ShortFileAttributesStorage
-
-    IntFileAttributesStorage attributesStorage = IntFileAttributesStorage.openAndEnsureMatchVFS(vfs, attributeId);
-
-    checkStorageVersion(vfs, attribute, attributesStorage);
+    MappedFileStorageHelper storageHelper =
+      FastFileAttributes.openHelperAndVerifyVersions(vfs, attributeId, attribute.getVersion(), Short.BYTES);
 
     return new ShortFileAttribute() {
       @Override
@@ -209,7 +208,7 @@ public final class SpecializedFileAttributes {
           throw new UnsupportedOperationException(
             "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
         }
-        return (short)attributesStorage.readAttribute(vFile);
+        return storageHelper.readShortField(extractFileId(vFile), 0);
       }
 
       @Override
@@ -219,19 +218,19 @@ public final class SpecializedFileAttributes {
           throw new UnsupportedOperationException(
             "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
         }
-        return (short)attributesStorage.readAttribute(fileId);
+        return storageHelper.readShortField(fileId, 0);
       }
 
       @Override
       public void write(@NotNull VirtualFile vFile,
                         short value) throws IOException {
-        attributesStorage.writeAttribute(vFile, value);
+        storageHelper.writeShortField(extractFileId(vFile), 0, value);
       }
 
       @Override
       public void write(int fileId,
                         short value) throws IOException {
-        attributesStorage.writeAttribute(fileId, value);
+        storageHelper.writeShortField(fileId, 0, value);
       }
     };
   }
