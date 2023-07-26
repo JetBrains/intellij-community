@@ -33,7 +33,10 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.sequences.SequencesKt;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -336,6 +339,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
         boolean added = false;
         for (HighlightInfo.IntentionActionDescriptor fix : additionalFixes) {
           if (!ContainerUtil.exists(fixes, descriptor -> descriptor.getAction().getText().equals(fix.getAction().getText()))) {
+            fix.setProblemOffset(info.startOffset);
             fixes.add(fix);
             added = true;
           }

@@ -700,7 +700,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
           if (selectedItem instanceof IntentionActionWithTextCaching actionWithCaching) {
             IntentionAction action = IntentionActionDelegate.unwrap(actionWithCaching.getAction());
             if (list != null) {
-              popup.updatePreviewPopup(action, list.getOriginalSelectedIndex());
+              popup.updatePreviewPopup(actionWithCaching, list.getOriginalSelectedIndex());
             }
             highlightOnHover(actionWithCaching, context, popup);
             return;
@@ -867,7 +867,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
     }
 
     @RequiresEdt
-    private void updatePreviewPopup(@NotNull IntentionAction action, int index) {
+    private void updatePreviewPopup(IntentionActionWithTextCaching action, int index) {
       myPreviewPopupUpdateProcessor.setup(myListPopup, index);
       myPreviewPopupUpdateProcessor.updatePopup(action);
     }
@@ -923,7 +923,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       if (myListPopup instanceof ListPopupImpl listPopup) {
         JList<?> list = listPopup.getList();
         if (list.getSelectedValue() instanceof IntentionActionWithTextCaching actionWithCaching) {
-          updatePreviewPopup(actionWithCaching.getAction(), list.getSelectedIndex());
+          updatePreviewPopup(actionWithCaching, list.getSelectedIndex());
         }
       }
     }

@@ -256,6 +256,14 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                               @Nullable Editor hostEditor,
                                               @NotNull IntentionAction action,
                                               @NotNull @NlsContexts.Command String commandName) {
+    return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1);
+  }
+
+  static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+                                       @Nullable Editor hostEditor,
+                                       @NotNull IntentionAction action,
+                                       @NotNull @NlsContexts.Command String commandName,
+                                       int problemOffset) {
     Project project = hostFile.getProject();
     ((FeatureUsageTrackerImpl)FeatureUsageTracker.getInstance()).getFixesStats().registerInvocation();
 
@@ -263,7 +271,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
       ModCommandAction commandAction = action.asModCommandAction();
       if (commandAction != null) {
-        invokeCommandAction(hostFile, hostEditor, commandName, commandAction);
+        invokeCommandAction(hostFile, hostEditor, commandName, commandAction, problemOffset);
       } else {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
@@ -278,12 +286,14 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
   private static void invokeCommandAction(@NotNull PsiFile hostFile,
                                           @Nullable Editor hostEditor,
                                           @NotNull @NlsContexts.Command String commandName,
-                                          @NotNull ModCommandAction commandAction) {
+                                          @NotNull ModCommandAction commandAction, int problemOffset) {
     record ContextAndCommand(@NotNull ModCommandAction.ActionContext context, @NotNull ModCommand command) { }
     ThrowableComputable<ContextAndCommand, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
           ModCommandAction.ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
-          return context == null ? null : new ContextAndCommand(context, commandAction.perform(context));
+          if (context == null) return null;
+          ModCommandAction.ActionContext adjusted = problemOffset >= 0 ? context.withOffset(problemOffset) : context;
+          return new ContextAndCommand(adjusted, commandAction.perform(adjusted));
         })
         .expireWhen(() -> hostFile.getProject().isDisposed())
         .executeSynchronously();

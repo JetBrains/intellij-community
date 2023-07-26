@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.intention.impl.preview
 
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.LOADING_PREVIEW
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComponent.Companion.NO_PREVIEW
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
@@ -100,12 +101,12 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
       return
     }
 
-    val action = intentionAction as IntentionAction
+    val action = intentionAction as IntentionActionWithTextCaching
 
     component.startLoading()
 
     ReadAction.nonBlocking(
-      IntentionPreviewComputable(project, action, originalFile, originalEditor))
+      IntentionPreviewComputable(project, action.action, originalFile, originalEditor, action.problemOffset))
       .expireWith(popup)
       .coalesceBy(this)
       .finishOnUiThread(ModalityState.defaultModalityState()) { renderPreview(it) }
@@ -271,7 +272,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
                        originalFile: PsiFile,
                        originalEditor: Editor): IntentionPreviewInfo =
       ProgressManager.getInstance().runProcess<IntentionPreviewInfo>(
-        { IntentionPreviewComputable(project, action, originalFile, originalEditor).generatePreview() },
+        { IntentionPreviewComputable(project, action, originalFile, originalEditor, -1).generatePreview() },
         EmptyProgressIndicator()) ?: IntentionPreviewInfo.EMPTY
   }
 

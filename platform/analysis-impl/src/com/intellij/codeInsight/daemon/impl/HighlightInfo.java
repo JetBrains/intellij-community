@@ -711,6 +711,7 @@ public class HighlightInfo implements Segment {
     private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
+    private int myProblemOffset = -1;
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<? extends IntentionAction> options,
@@ -894,6 +895,14 @@ public class HighlightInfo implements Segment {
     @Nullable
     public String getToolId() {
       return myKey != null ? myKey.getID() : null;
+    }
+
+    public int getProblemOffset() {
+      return myProblemOffset;
+    }
+
+    public void setProblemOffset(int problemOffset) {
+      myProblemOffset = problemOffset;
     }
   }
 

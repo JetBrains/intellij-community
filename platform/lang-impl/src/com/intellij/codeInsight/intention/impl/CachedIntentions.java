@@ -284,7 +284,7 @@ public final class CachedIntentions implements IntentionContainer {
             removeActionFromCached(cached);
             markInvoked(action);
           }
-        });
+        }, descriptor.getProblemOffset());
     for (IntentionAction option : descriptor.getOptions(element, containingEditor)) {
       Editor editor = ObjectUtils.chooseNotNull(myEditor, containingEditor);
       if (editor == null) continue;

@@ -44,17 +44,19 @@ public class IntentionActionWithTextCaching
   private final Icon myIcon;
   @Nullable
   private final String myToolId;
+  private final int myProblemOffset;
 
   public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
     this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, (actWithText, act) -> {
-    });
+    }, -1);
   }
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
                                  @Nullable String toolId,
-                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked,
+                                 int problemOffset) {
     myToolId = toolId;
     myIcon = icon;
     myText = action.getText();
@@ -62,6 +64,7 @@ public class IntentionActionWithTextCaching
     LOG.assertTrue(myText != null, "action " + action.getClass() + " text returned null");
     myAction = new MyIntentionAction(action, markInvoked);
     myDisplayName = displayName;
+    myProblemOffset = problemOffset;
   }
 
   public @NotNull @IntentionName String getText() {
@@ -179,6 +182,10 @@ public class IntentionActionWithTextCaching
   @Nullable
   public String getToolId() {
     return myToolId;
+  }
+
+  public int getProblemOffset() {
+    return myProblemOffset;
   }
 
   private static Class<? extends IntentionAction> getActionClass(IntentionActionWithTextCaching o1) {
