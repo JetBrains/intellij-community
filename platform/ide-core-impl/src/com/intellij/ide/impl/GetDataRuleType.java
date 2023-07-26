@@ -15,6 +15,9 @@ import org.jetbrains.annotations.ApiStatus;
 public enum GetDataRuleType {
   /**
    * a rule that operates on the data-provider level (default)
+   * <p>
+   * ie: if the rule reads multiple data keys, all of them shall be provided by the same {@link com.intellij.openapi.actionSystem.DataProvider}
+   * or calculated by other rules based on the data by the same data provider.
    */
   PROVIDER,
   /**
