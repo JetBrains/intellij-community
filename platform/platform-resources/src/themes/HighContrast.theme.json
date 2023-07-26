@@ -505,9 +505,12 @@
         "borderInsets": "12,6,12,6",
         "background": "#000000",
         "hoverBackground": "#3333FF",
-        "pressedBackground": "#3333FF"
+        "pressedBackground": "#3333FF",
+        "transparentHoverBackground": "#FFFFFF40"
       }
     },
+
+    "TitlePane.Button.hoverBackground": "#FFFFFF40",
 
     "Window.border" : "1,1,1,1,E6E6E6",
 

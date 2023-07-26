@@ -635,7 +635,6 @@
       "background": "Grey13",
       "inactiveBackground": "Grey13",
       "Button": {
-        "hoverBackground": "#00000000",
         "preferredSize": "44,40"
       }
     },
