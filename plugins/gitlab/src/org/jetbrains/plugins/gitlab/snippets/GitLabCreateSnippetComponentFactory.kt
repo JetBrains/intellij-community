@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gitlab.snippets
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.bindItem
@@ -93,14 +94,20 @@ internal object GitLabCreateSnippetComponentFactory {
       }
 
       row(message("snippet.create.path-mode")) {
-        // TODO: Maybe make option unavailable, problem is making the item unselectable
-        comboBox(createSnippetVm.availablePathModes,
+        comboBox(PathHandlingMode.values().toList(),
                  ListCellRenderer { _, value, _, _, _ ->
-                   JLabel(value?.displayName).apply {
-                     toolTipText = value?.tooltip
+                   val selectable = value in createSnippetVm.availablePathModes
+                   object : JLabel(value?.displayName), ComboBox.SelectableItem {
+                     init {
+                       toolTipText = if (selectable) value?.tooltip else message("snippet.create.path-mode.unavailable.tooltip")
+                       isEnabled = selectable
+                     }
+
+                     override fun isSelectable(): Boolean = selectable
                    }
                  }).applyToComponent {
           toolTipText = message("snippet.create.path-mode.tooltip")
+          isSwingPopup = false
         }
           .widthGroup("right")
           .bindItem({ data.pathHandlingMode }, { data.pathHandlingMode = it!! })
