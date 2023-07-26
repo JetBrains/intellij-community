@@ -88,10 +88,13 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     mySearchField.getTextEditor().setFocusable(false);
     mySearchField.setVisible(mySearchAlwaysVisible);
 
+    Color background = list.getBackground();
     if (mySearchFieldWithoutBorder) {
       mySearchField.setBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM));
       mySearchField.getTextEditor().setBorder(JBUI.Borders.empty());
-      UIUtil.setBackgroundRecursively(mySearchField, list.getBackground());
+      if (background != null) {
+        UIUtil.setBackgroundRecursively(mySearchField, background);
+      }
     }
 
 
@@ -119,7 +122,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
       }
     });
 
-    setBackground(list.getBackground());
+    setBackground(background);
     //setFocusable(true);
   }
 
