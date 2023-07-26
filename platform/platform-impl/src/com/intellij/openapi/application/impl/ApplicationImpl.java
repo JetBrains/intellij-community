@@ -930,16 +930,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean acquireWriteIntentLock(@Nullable String ignored) {
-    if (myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired())) {
-      return false;
-    }
-    myLock.writeIntentLock();
-    return true;
+    return IdeEventQueue.getInstance().getRwLockHolder().acquireWriteIntentLock(ignored);
   }
 
   @Override
   public void releaseWriteIntentLock() {
-    myLock.writeIntentUnlock();
+    IdeEventQueue.getInstance().getRwLockHolder().releaseWriteIntentLock();
   }
 
   @Override
@@ -1019,15 +1015,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    boolean writeIntentLock = acquireWriteIntentLock(computation.getClass().getName());
-    try {
-      return computation.compute();
-    }
-    finally {
-      if (writeIntentLock) {
-        releaseWriteIntentLock();
-      }
-    }
+    return IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(computation);
   }
 
   @Override
