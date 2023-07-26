@@ -6,8 +6,7 @@ import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersL
 import java.io.File
 import java.util.zip.GZIPOutputStream
 
-class LinesStorage(val writeToFile: File) {
-
+internal class LinesStorage(writeToFile: File) {
   private var bufferedWriter = GZIPOutputStream(writeToFile.outputStream(), true).bufferedWriter()
   private val lines = ArrayList<String>()
 
