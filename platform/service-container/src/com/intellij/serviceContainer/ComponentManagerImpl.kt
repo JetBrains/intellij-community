@@ -404,6 +404,7 @@ abstract class ComponentManagerImpl(
 
   fun createInitOldComponentsTask(): (() -> Unit)? {
     if (componentAdapters.getImmutableSet().isEmpty()) {
+      containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED)
       return null
     }
 
@@ -411,14 +412,8 @@ abstract class ComponentManagerImpl(
       for (componentAdapter in componentAdapters.getImmutableSet()) {
         componentAdapter.getInstance<Any>(this, keyClass = null)
       }
+      containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED)
     }
-  }
-
-  // we cannot convert ApplicationImpl to kotlin yet
-  @TestOnly
-  suspend fun loadAppComponents() {
-    createComponentsNonBlocking()
-    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 
   @Suppress("DuplicatedCode")

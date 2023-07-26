@@ -270,9 +270,10 @@ fun CoroutineScope.startApplication(args: List<String>,
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   launch {
-    Class.forName(TelemetryManagerImpl::class.java.name, true, AppStarter::class.java.classLoader)
-    Class.forName(OpenTelemetryConfigurator::class.java.name, true, AppStarter::class.java.classLoader)
-    Class.forName(OpenTelemetrySdkBuilder::class.java.name, true, AppStarter::class.java.classLoader)
+    val classLoader = AppStarter::class.java.classLoader
+    Class.forName(TelemetryManagerImpl::class.java.name, true, classLoader)
+    Class.forName(OpenTelemetryConfigurator::class.java.name, true, classLoader)
+    Class.forName(OpenTelemetrySdkBuilder::class.java.name, true, classLoader)
   }
 
   val appLoaded = launch {

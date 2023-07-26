@@ -55,30 +55,30 @@ internal suspend fun initApplicationImpl(args: List<String>,
                                          appInitListeners: Deferred<List<ApplicationInitializedListener>>) {
   val starter = subtask("app initialization") {
     val deferredStarter = subtask("app starter creation") {
-      createAppStarterAsync(args)
+      createAppStarter(args)
     }
 
-    val appInitializedListeners = coroutineScope {
+    launch {
+      val appInitializedListeners = appInitListeners.await()
+      subtask("app initialized callback") {
+        // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
+        callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
+      }
+    }
+
+    asyncScope.launch {
+      launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
+        checkThirdPartyPluginsAllowed()
+      }
+
       // doesn't block app start-up
-      asyncScope.launch(CoroutineName("post app init tasks")) {
+      launch(CoroutineName("post app init tasks")) {
         runPostAppInitTasks()
       }
 
-      asyncScope.launch {
-        launch(CoroutineName("checkThirdPartyPluginsAllowed")) {
-          checkThirdPartyPluginsAllowed()
-        }
-
-        addActivateAndWindowsCliListeners()
-      }
-
-      appInitListeners.await()
+      addActivateAndWindowsCliListeners()
     }
 
-    subtask("app initialized callback") {
-      // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
-      callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
-    }
     deferredStarter.await()
   }
 
@@ -132,7 +132,7 @@ private fun CoroutineScope.runPostAppInitTasks() {
 }
 
 // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-private fun CoroutineScope.createAppStarterAsync(args: List<String>): Deferred<ApplicationStarter> {
+private fun CoroutineScope.createAppStarter(args: List<String>): Deferred<ApplicationStarter> {
   val first = args.firstOrNull()
   // first argument maybe a project path
   if (first == null) {

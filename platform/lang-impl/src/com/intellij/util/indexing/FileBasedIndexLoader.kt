@@ -4,21 +4,12 @@ package com.intellij.util.indexing
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.fileTypes.FileTypeManager
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 private class FileBasedIndexLoader : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
     if (ApplicationManager.getApplication().isUnitTestMode) {
-      (FileBasedIndex.getInstance() as FileBasedIndexEx).loadIndexes()
-    }
-    else {
-      asyncScope.launch {
-        // index wants FileTypeManager
-        serviceAsync<FileTypeManager>()
-        (serviceAsync<FileBasedIndex>() as FileBasedIndexEx).loadIndexes()
-      }
+      serviceAsync<FileBasedIndex>().loadIndexes()
     }
   }
 }

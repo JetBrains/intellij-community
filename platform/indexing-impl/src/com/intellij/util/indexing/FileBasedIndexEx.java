@@ -79,6 +79,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return myTraceSharedIndexUpdates;
   }
 
+  @Override
   @ApiStatus.Internal
   public void loadIndexes() {
     myTraceIndexUpdates = SystemProperties.getBooleanProperty("trace.file.based.index.update", false);

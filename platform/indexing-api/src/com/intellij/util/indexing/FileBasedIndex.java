@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PluginException;
@@ -398,5 +398,9 @@ public abstract class FileBasedIndex {
            ((FileBasedIndexExtension<Key, Value>)indexExtension).hasSnapshotMapping() &&
            ourSnapshotMappingsEnabled &&
            !USE_IN_MEMORY_INDEX;
+  }
+
+  @ApiStatus.Internal
+  public void loadIndexes() {
   }
 }

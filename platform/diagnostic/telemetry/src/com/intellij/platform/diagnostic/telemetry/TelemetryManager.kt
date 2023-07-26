@@ -35,6 +35,12 @@ interface TelemetryManager {
       require(!instance.isInitialized())
       instance.value = value
     }
+
+    fun setNoopTelemetryManager() {
+      if (!instance.isInitialized()) {
+        instance.value = NoopTelemetryManager()
+      }
+    }
   }
 
   var verboseMode: Boolean
@@ -57,15 +63,24 @@ interface TelemetryManager {
 
 private val instance = SynchronizedClearableLazy {
   val log = logger<TelemetryManager>()
-  log.info("Initializing TelemetryTracer ...")
-
   // GlobalOpenTelemetry.set(sdk) can be invoked only once
   val instance = try {
-    getImplementationService(TelemetryManager::class.java)
+    val aClass = TelemetryManager::class.java
+    val implementations = ServiceLoader.load(aClass, aClass.classLoader).toList()
+    if (implementations.isEmpty()) {
+      log.info("TelemetryManager is not set explicitly and service is not specified - NOOP implementation will be used")
+      NoopTelemetryManager()
+    }
+    else if (implementations.size > 1) {
+      log.error("More than one implementation for ${aClass.simpleName} found: ${implementations.map { it::class.qualifiedName }}")
+      NoopTelemetryManager()
+    }
+    else {
+      implementations.single()
+    }
   }
   catch (e: Throwable) {
-    log.info("Something unexpected happened during loading TelemetryTracer", e)
-    log.info("Falling back to loading noop implementation of TelemetryTracer")
+    log.info("Cannot create TelemetryManager, falling back to NOOP implementation", e)
     NoopTelemetryManager()
   }
 
@@ -73,22 +88,7 @@ private val instance = SynchronizedClearableLazy {
   instance
 }
 
-private fun <T> getImplementationService(serviceClass: Class<T>): T {
-  val implementations: List<T> = ServiceLoader.load(serviceClass, serviceClass.classLoader).toList()
-  if (implementations.isEmpty()) {
-    throw ServiceConfigurationError("Implementation for $serviceClass not found")
-  }
-
-  if (implementations.size > 1) {
-    throw ServiceConfigurationError(
-      "More than one implementation for $serviceClass found: ${implementations.map { it!!::class.qualifiedName }}")
-  }
-
-  return implementations.single()
-}
-
-@Internal
-class NoopTelemetryManager : TelemetryManager {
+internal class NoopTelemetryManager : TelemetryManager {
   override var verboseMode: Boolean = false
 
   override fun getTracer(scope: Scope): IJTracer = IJNoopTracer

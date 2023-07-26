@@ -2,8 +2,8 @@ package com.intellij.settingsSync
 
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
@@ -14,7 +14,7 @@ import java.time.Instant
 import java.util.*
 
 /**
- * @param metaInfo Meta-information about this snapshot: when and where was in created, etc.
+ * @param metaInfo Meta-information about this snapshot: when and where it was in created, etc.
  *
  * @param fileStates Files containing IDE settings. These files reflect the file structure of IDE settings
  * (e.g. `options/editor.xml` or `keymaps/mykeymap.xml`), they are copied to their places in the `APP_CONFIG` to update the state of the IDE.
@@ -74,8 +74,8 @@ data class SettingsSnapshot(val metaInfo: MetaInfo,
         state
       )
     }
-    catch (ex: Throwable) {
-      SettingsSyncSettings.LOG.error("Unable to deserialize content of ${SettingsSyncSettings.FILE_SPEC} into object", ex)
+    catch (e: Throwable) {
+      logger<SettingsSyncSettings>().error("Unable to deserialize content of ${SettingsSyncSettings.FILE_SPEC} into object", e)
       return SettingsSyncStateHolder()
     }
   }

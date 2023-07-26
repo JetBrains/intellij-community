@@ -27,6 +27,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
@@ -106,19 +107,30 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
   asyncScope.launch {
     managingFsJob.join()
 
-    // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
-    coroutineScope {
-      launch(CoroutineName("FileTypeManager preloading")) {
-        app.serviceAsync<FileTypeManager>()
+    val fileTypeManagerJob = launch(CoroutineName("FileTypeManager preloading")) {
+      app.serviceAsync<FileTypeManager>()
+    }
+
+    launch {
+      fileTypeManagerJob.join()
+      val fileBasedIndex = subtask("FileBasedIndex preloading") {
+        app.serviceAsync<FileBasedIndex>()
       }
-      // wants ManagingFS
-      launch(CoroutineName("VirtualFilePointerManager preloading")) {
-        app.serviceAsync<VirtualFilePointerManager>()
+      subtask("FileBasedIndex.loadIndexes") {
+        fileBasedIndex.loadIndexes()
       }
     }
 
-    subtask("ProjectJdkTable preloading") {
-      app.serviceAsync<ProjectJdkTable>()
+    launch {
+      // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
+      fileTypeManagerJob.join()
+      // wants ManagingFS
+      subtask("VirtualFilePointerManager preloading") {
+        app.serviceAsync<VirtualFilePointerManager>()
+      }
+      subtask("ProjectJdkTable preloading") {
+        app.serviceAsync<ProjectJdkTable>()
+      }
     }
   }
 
