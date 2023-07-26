@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 /**
  * On app exit report accumulated VFS errors to FUS
  */
-class VFSErrorsToFUSReporter implements AppLifecycleListener {
+final class VFSErrorsToFUSReporter implements AppLifecycleListener {
   VFSErrorsToFUSReporter() {
     Application app = ApplicationManager.getApplication();
     if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {

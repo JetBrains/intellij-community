@@ -8,7 +8,7 @@ import java.io.IOException;
 
 /** Carries errorCategory so different categories frequencies could be monitored */
 @ApiStatus.Internal
-public class VFSInitException extends IOException {
+public final class VFSInitException extends IOException {
   private final @NotNull ErrorCategory errorCategory;
 
   public VFSInitException(@NotNull ErrorCategory errorCategory,

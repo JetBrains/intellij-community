@@ -49,7 +49,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
  * </ol>
  */
 @ApiStatus.Internal
-public class PersistentFSLoader {
+public final class PersistentFSLoader {
   private static final Logger LOG = Logger.getInstance(PersistentFSLoader.class);
 
   private static final StorageLockContext PERSISTENT_FS_STORAGE_CONTEXT = new StorageLockContext(false, true);

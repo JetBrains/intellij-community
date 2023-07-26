@@ -39,8 +39,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls and dragons, so beware
  */
 @ApiStatus.Internal
-public class IntFileAttributesStorage implements Closeable {
-
+public final class IntFileAttributesStorage implements Closeable {
   //MAYBE:
   //    1) Versioning: better have 2 versions: INTERNAL_VERSION (i.e. header format version, managed by the class
   //       itself) and ATTRIBUTE_VERSION (arbitrary version tag managed bt client to track their way of use the attribute)
