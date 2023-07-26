@@ -241,7 +241,7 @@ public final class PersistentFSLoader {
     try (var queryContext = vfsLog.query()) {
       ApplicationManager.getApplication().invokeAndWait(() -> {
         recoveredCaches.set(
-          RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext)
+          RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext, true)
         );
       });
     } catch (Throwable e) {

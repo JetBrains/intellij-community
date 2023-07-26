@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper.CANCEL_EXIT_CODE
 import com.intellij.openapi.ui.DialogWrapper.OK_EXIT_CODE
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.io.toNioPath
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.RecoveryPoint
 import com.intellij.openapi.vfs.newvfs.persistent.VfsRecoveryUtils.thinOut
 import com.intellij.openapi.vfs.newvfs.persistent.log.IteratorUtils.constCopier
 import com.intellij.openapi.vfs.newvfs.persistent.log.OperationLogStorage
+import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogQueryContext
 import com.intellij.util.io.delete
@@ -65,14 +67,18 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     }
   }
 
-  fun suggestAutomaticRecoveryIfAllowed() {
-    val vfsLog = PersistentFS.getInstance().vfsLog ?: return
-    if (!shouldSuggestAutomaticRecovery.get() || isRecoveryRunning.get()) return
-    if (!tryAcquireAutomaticRecoverySuggestion()) return
+  @JvmOverloads
+  fun suggestAutomaticRecoveryIfAllowed(
+    restart: Boolean = true,
+    getVfsLog: () -> VfsLog? = { PersistentFS.getInstance().vfsLog }
+  ): Job? {
+    val vfsLog = getVfsLog() ?: return null
+    if (!shouldSuggestAutomaticRecovery.get() || isRecoveryRunning.get()) return null
+    if (!tryAcquireAutomaticRecoverySuggestion()) return null
 
     val queryContext = vfsLog.query()
 
-    coroutineScope.launch {
+    return coroutineScope.launch {
       val recoveryPoints = getRecoveryPoints(queryContext)
       if (recoveryPoints == null || recoveryPoints.none()) return@launch
       (vfsLog as VfsLogEx).flush() // write pending data to disk, because vfslog storage will be copied inside recovery util
@@ -84,17 +90,19 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
         dialog.show()
         when (dialog.exitCode) {
           CANCEL_EXIT_CODE -> {}
-          OK_EXIT_CODE -> queryContext.transferLock().launchRecoverAndRestart(null, recoveryPoints.first())
+          OK_EXIT_CODE -> queryContext.transferLock().launchRecovery(null, recoveryPoints.first(), restart)
           SuggestAutomaticVfsRecoveryDialog.CHOOSE_RECOVERY_POINT_CODE -> {
             val recoveryPoint = askToChooseRecoveryPoint(queryContext, null, true)
-            if (recoveryPoint != null) queryContext.transferLock().launchRecoverAndRestart(null, recoveryPoint)
+            if (recoveryPoint != null) queryContext.transferLock().launchRecovery(null, recoveryPoint, restart)
           }
           else -> throw IllegalArgumentException("unknown dialog exit code: ${dialog.exitCode}")
         }
       }
-    }.invokeOnCompletion {
-      queryContext.close()
-      releaseAutomaticRecoverySuggestion()
+    }.also {
+      it.invokeOnCompletion {
+        queryContext.close()
+        releaseAutomaticRecoverySuggestion()
+      }
     }
   }
 
@@ -125,7 +133,10 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     return askToChooseRecoveryPoint(project, recoveryPoints)
   }
 
-  private suspend fun recoverAndRestart(queryContext: VfsLogQueryContext, project: Project?, recoveryPoint: RecoveryPoint) {
+  private suspend fun runRecovery(queryContext: VfsLogQueryContext,
+                                  project: Project?,
+                                  recoveryPoint: RecoveryPoint,
+                                  restart: Boolean = true) {
     val app = ApplicationManagerEx.getApplicationEx()
     withModalProgress(
       if (project != null) ModalTaskOwner.project(project) else ModalTaskOwner.guess(),
@@ -135,20 +146,22 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
       LOG.info("recovering a VFS instance as of ${recoveryPoint}...")
       prepareRecoveredCaches(queryContext, recoveryPoint.point, progressReporter!!.rawReporter())
     }
-    LOG.info("restarting...")
-    app.restart(true)
+    if (restart) {
+      LOG.info("restarting...")
+      app.restart(true)
+    }
   }
 
   /**
    * consumes the context
    */
-  fun VfsLogQueryContext.launchRecoverAndRestart(project: Project?, recoveryPoint: RecoveryPoint): Job? {
+  fun VfsLogQueryContext.launchRecovery(project: Project?, recoveryPoint: RecoveryPoint, restart: Boolean = true): Job? {
     if (!tryAcquireRecovery()) {
       close()
       return null
     }
     val job = coroutineScope.launch {
-      recoverAndRestart(this@launchRecoverAndRestart, project, recoveryPoint)
+      runRecovery(this@launchRecovery, project, recoveryPoint, restart)
     }
     job.invokeOnCompletion {
       close()
@@ -164,7 +177,16 @@ class RecoverVfsFromLogService(val coroutineScope: CoroutineScope) {
     private val cachesDir = FSRecords.getCachesDir().toNioPath()
     private val recoveredCachesDir = cachesDir.parent / "recovered-caches"
 
-    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext): Boolean {
+    fun recoverSynchronouslyFromLastRecoveryPoint(queryContext: VfsLogQueryContext, needsConfirmation: Boolean = true): Boolean {
+      val runRecovery: Boolean =
+        if (needsConfirmation) {
+          MessageDialogBuilder.okCancel(
+            IdeBundle.message("recover.caches.from.log.recovery.action.name"),
+            IdeBundle.message("recover.caches.from.log.not.closed.properly.message")
+          ).guessWindowAndAsk()
+        }
+        else true
+      if (!runRecovery) return false;
       // FIXME this modal should be at the call site, but it's java code that is not friendly to coroutines
       return runWithModalProgressBlocking(ModalTaskOwner.guess(), IdeBundle.message("progress.cache.recover.from.logs.title"),
                                           TaskCancellation.nonCancellable()) {

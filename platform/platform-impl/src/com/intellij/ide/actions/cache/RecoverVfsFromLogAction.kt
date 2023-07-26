@@ -24,13 +24,13 @@ class RecoverVfsFromLogAction : RecoveryAction {
     val log = PersistentFS.getInstance().vfsLog ?: throw IllegalStateException("action called with VfsLog disabled")
 
     try {
-      log.query().use {
+      log.query().use { queryContext ->
         with(service<RecoverVfsFromLogService>()) {
-          val recoveryPoint = askToChooseRecoveryPoint(it, recoveryScope.project, true)
+          val recoveryPoint = askToChooseRecoveryPoint(queryContext, recoveryScope.project, true)
           if (recoveryPoint == null) {
             return emptyList()
           }
-          it.transferLock().launchRecoverAndRestart(recoveryScope.project, recoveryPoint)
+          queryContext.transferLock().launchRecovery(recoveryScope.project, recoveryPoint)
         }
       }
     }
