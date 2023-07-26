@@ -23,8 +23,6 @@ import org.jetbrains.annotations.ApiStatus
  * @see InlineCompletionElement
  * @see InlineCompletionRequest
  * @see InlineCompletionEvent
- *
- * @since experimental API
  */
 @ApiStatus.Experimental
 interface InlineCompletionProvider {
