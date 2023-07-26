@@ -1,5 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -17,7 +16,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -267,19 +266,16 @@ public class OptimizeImportsAction extends AnAction {
     @Nullable
     @Override
     protected JComponent createCenterPanel() {
-      JPanel panel = new JPanel();
-      BoxLayout layout = new BoxLayout(panel, BoxLayout.Y_AXIS);
-      panel.setLayout(layout);
-
-      panel.add(new JLabel(myText));
       myOnlyVcsCheckBox = new JCheckBox(CodeInsightBundle.message("process.scope.changed.files"));
-      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
-
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
+      boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;
       myOnlyVcsCheckBox.setSelected(myContextHasChanges && lastRunVcsChangedTextEnabled);
-      myOnlyVcsCheckBox.setBorder(JBUI.Borders.emptyLeft(10));
-      panel.add(myOnlyVcsCheckBox);
-      return panel;
+
+      return new FormBuilder()
+        .addComponent(new JLabel(myText))
+        .setVerticalGap(UIUtil.LARGE_VGAP)
+        .addComponent(myOnlyVcsCheckBox)
+        .getPanel();
     }
 
     @Nullable
