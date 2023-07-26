@@ -71,10 +71,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-/**
- * @author MYakovlev
- */
 @ExcludeFromTestDiscovery
 public class FindManagerTest extends DaemonAnalyzerTestCase {
   private FindManager myFindManager;
@@ -94,16 +92,12 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
   public void testFindInDirectoryCorrectlyFindVirtualFileForJars() {
     FindModel findModel = FindManagerTestUtils.configureFindModel("done");
-    VirtualFile[] files = getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES);
-    VirtualFile rtJar = null;
-    for(VirtualFile file:files) {
-      if (file.getPath().contains("rt.jar")) {
-        rtJar = JarFileSystem.getInstance().getLocalVirtualFileFor(file);
-        break;
-      }
-    }
-
+    VirtualFile rtJar = Stream.of(getTestProjectJdk().getRootProvider().getFiles(OrderRootType.CLASSES))
+      .filter(file -> file.getPath().contains("rt.jar"))
+      .map(file -> JarFileSystem.getInstance().getLocalByEntry(file))
+      .findFirst().orElse(null);
     assertNotNull(rtJar);
+
     findModel.setProjectScope(false);
     findModel.setDirectoryName(rtJar.getPath());
     assertNotNull(FindInProjectUtil.getDirectory(findModel));

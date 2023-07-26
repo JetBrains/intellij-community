@@ -313,22 +313,18 @@ public final class JavaParametersUtil {
     }
   }
 
-  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule,
-                                               ProjectFileIndex fileIndex,
-                                               JarFileSystem jarFileSystem) {
-    VirtualFile moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
-
-    Module moduleDependency = fileIndex.getModuleForFile(moduleFile);
-    if (moduleDependency == null) {
-      return jarFileSystem.getLocalVirtualFileFor(moduleFile);
+  private static VirtualFile getClasspathEntry(PsiJavaModule javaModule, ProjectFileIndex fileIndex, JarFileSystem jarFileSystem) {
+    var moduleFile = PsiImplUtil.getModuleVirtualFile(javaModule);
+    var moduleDependency = fileIndex.getModuleForFile(moduleFile);
+    if (moduleDependency != null) {
+      var moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
+      if (moduleExtension != null) {
+        var inTests = fileIndex.isInTestSourceContent(moduleFile);
+        return inTests ? moduleExtension.getCompilerOutputPathForTests() : moduleExtension.getCompilerOutputPath();
+      }
     }
 
-    CompilerModuleExtension moduleExtension = CompilerModuleExtension.getInstance(moduleDependency);
-    if (moduleExtension != null) {
-      return fileIndex.isInTestSourceContent(moduleFile) ? moduleExtension.getCompilerOutputPathForTests()
-                                                         : moduleExtension.getCompilerOutputPath();
-    }
-    return null;
+    return jarFileSystem.getLocalByEntry(moduleFile);
   }
 
   public static void applyModifications(JavaParameters parameters, List<ModuleBasedConfigurationOptions.ClasspathModification> modifications) {

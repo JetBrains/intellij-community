@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.search.*;
 import com.intellij.ui.content.Content;
@@ -164,7 +165,7 @@ public final class FindInProjectUtil {
       List<VirtualFileSystem> fileSystems = ((VirtualFileManagerImpl)VirtualFileManager.getInstance()).getPhysicalFileSystems();
 
       for (VirtualFileSystem fs : fileSystems) {
-        if (!(fs instanceof LocalFileProvider)) continue;
+        if (!(fs instanceof ArchiveFileSystem)) continue;
         VirtualFile file = fs.findFileByPath(path);
         if (file != null && file.isDirectory()) {
           if (file.getChildren().length > 0) {

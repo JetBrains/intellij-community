@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
@@ -370,7 +370,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     assertTrue(a.isValid());
     assertTrue(jarRoot.isValid());
 
-    VirtualFile local = JarFileSystem.getInstance().getLocalVirtualFileFor(jarRoot);
+    VirtualFile local = JarFileSystem.getInstance().getLocalByEntry(jarRoot);
     assertEquals(LocalFileSystem.getInstance(), local.getFileSystem());
     JarFileSystemImpl.cleanupForNextTest(); // WTF, won't let delete jar otherwise
 

@@ -28,7 +28,7 @@ class ResolveInLibrariesTest extends JavaCodeInsightFixtureTestCase {
   void "test inheritance transitivity"() {
     def protobufJar = IntelliJProjectConfiguration.getJarFromSingleJarProjectLibrary("protobuf")
     VirtualFile jarCopy = WriteAction.compute {
-      JarFileSystem.instance.getLocalVirtualFileFor(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
+      JarFileSystem.instance.getLocalByEntry(protobufJar).copy(this, myFixture.getTempDirFixture().findOrCreateDir("lib"), "protoJar.jar")
     }
 
     PsiTestUtil.addProjectLibrary(module, 'proto1', [protobufJar], [])
