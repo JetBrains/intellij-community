@@ -3,6 +3,7 @@
 
 package com.intellij.diagnostic
 
+import com.intellij.platform.diagnostic.telemetry.impl.TraceReporter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
