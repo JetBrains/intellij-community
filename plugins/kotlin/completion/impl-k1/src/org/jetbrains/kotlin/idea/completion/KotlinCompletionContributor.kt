@@ -161,10 +161,6 @@ class KotlinCompletionContributor : CompletionContributor() {
             return
         }
 
-        for (extension in KotlinCompletionExtension.EP_NAME.extensionList) {
-            if (extension.perform(parameters, result)) return
-        }
-
         fun addPostProcessor(session: CompletionSession) {
             if (lookupElementPostProcessor != null) {
                 session.addLookupElementPostProcessor(lookupElementPostProcessor)

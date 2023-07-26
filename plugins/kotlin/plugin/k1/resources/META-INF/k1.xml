@@ -57,7 +57,6 @@
     <module name="kotlin.project-wizard.gradle"/>
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
-    <module name="kotlin.properties"/>
     <module name="kotlin.jvm-decompiler"/>
     <module name="kotlin.jvm-debugger.sequence"/>
     <module name="kotlin.run-configurations.junit"/>

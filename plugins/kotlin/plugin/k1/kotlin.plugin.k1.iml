@@ -123,7 +123,6 @@
     <orderEntry type="module" module-name="kotlin.project-wizard.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.maven" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.compose" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.properties" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.repl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />

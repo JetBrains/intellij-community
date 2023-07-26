@@ -148,7 +148,6 @@
     <orderEntry type="module" module-name="kotlin.copyright" exported="" />
     <orderEntry type="module" module-name="kotlin.spellchecker" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-decompiler" exported="" />
-    <orderEntry type="module" module-name="kotlin.properties" exported="" />
     <orderEntry type="module" module-name="kotlin.plugin-updater" exported="" />
     <orderEntry type="module" module-name="kotlin.preferences" exported="" />
     <orderEntry type="module" module-name="kotlin.project-configuration" exported="" />

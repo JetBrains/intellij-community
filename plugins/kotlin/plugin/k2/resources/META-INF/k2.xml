@@ -215,7 +215,6 @@
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.maven"/>
     <module name="kotlin.ml-completion"/>
-    <module name="kotlin.properties"/>
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.testng"/>
     <module name="kotlin.run-configurations.jvm"/>

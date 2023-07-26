@@ -11,3 +11,4 @@ fun test() {
 // EXIST: { lookupString: "foo.bar.baz", itemText: "foo.bar.baz", tailText: "=3", typeText: "PropertyKeysWithPrefix", icon: "Property"}
 // EXIST: { lookupString: "foo.test", itemText: "foo.test", tailText: "=4", typeText: "PropertyKeysWithPrefix", icon: "Property"}
 // NOTHING_ELSE
+// FIR_COMPARISON
