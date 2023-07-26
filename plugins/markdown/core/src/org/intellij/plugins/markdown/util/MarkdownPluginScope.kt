@@ -10,7 +10,11 @@ import kotlinx.coroutines.CoroutineScope
 internal class MarkdownPluginScope(private val coroutineScope: CoroutineScope) {
   companion object {
     fun createChildScope(project: Project): CoroutineScope {
-      return project.service<MarkdownPluginScope>().coroutineScope.childScope()
+      return scope(project).childScope()
+    }
+
+    fun scope(project: Project): CoroutineScope {
+      return project.service<MarkdownPluginScope>().coroutineScope
     }
   }
 }

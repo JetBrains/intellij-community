@@ -7,6 +7,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -14,12 +15,15 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.launch
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.MarkdownLanguageUtils.hasMarkdownType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.MarkdownNotifications
+import org.intellij.plugins.markdown.util.MarkdownPluginScope
 
 internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
   class CodeAnalyzerRestartListener: MarkdownSettings.ChangeListener {
@@ -29,13 +33,17 @@ internal class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
       val codeAnalyzer = DaemonCodeAnalyzer.getInstance(project) ?: return
       val psiManager = PsiManager.getInstance(project)
       val files = editorManager.openFiles.asSequence().filter { it.hasMarkdownType() }
-      for (file in files) {
-        if (!file.isValid) {
-          thisLogger().warn("Virtual file $file is not valid")
-          continue
+      MarkdownPluginScope.scope(project).launch(start = CoroutineStart.UNDISPATCHED) {
+        readAction {
+          for (file in files) {
+            if (!file.isValid) {
+              thisLogger().warn("Virtual file $file is not valid")
+              continue
+            }
+            val psi = psiManager.findFile(file) ?: continue
+            codeAnalyzer.restart(psi)
+          }
         }
-        val psi = psiManager.findFile(file) ?: continue
-        codeAnalyzer.restart(psi)
       }
     }
   }
