@@ -7,6 +7,7 @@ import com.intellij.notification.BrowseNotificationAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.PersistentStateComponent
@@ -90,9 +91,15 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        runBlockingCancellable {
-            writeAction {
-                KotlinJpsPluginSettings.getInstance(module.project)?.dropExplicitVersion()
+        if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+            // We are in legacy import mode, under write action.
+            KotlinJpsPluginSettings.getInstance(module.project).dropExplicitVersion()
+        } else {
+            // We are in workspace import mode, on BGT.
+            runBlockingCancellable {
+                writeAction {
+                    KotlinJpsPluginSettings.getInstance(module.project).dropExplicitVersion()
+                }
             }
         }
         module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, null)
@@ -501,17 +508,31 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }.distinct()
 
     private fun setImplementedModuleName(kotlinFacet: KotlinFacet, mavenProject: MavenProject, module: Module) {
-        runBlockingCancellable {
-            val names = readAction {
-                if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) return@readAction emptyList()
+        if (ApplicationManager.getApplication().isWriteAccessAllowed) {
+            // We are in legacy import mode, under write action.
+            if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) {
+                kotlinFacet.configuration.settings.implementedModuleNames = emptyList()
+            } else {
                 val manager = MavenProjectsManager.getInstance(module.project)
                 val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
                 val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
-                implemented.map { manager.findModule(it)?.name ?: it.displayName }
-            }
 
-            writeAction {
-                kotlinFacet.configuration.settings.implementedModuleNames = names
+                kotlinFacet.configuration.settings.implementedModuleNames = implemented.map { manager.findModule(it)?.name ?: it.displayName }
+            }
+        } else {
+            // We are in workspace import mode, on BGT.
+            runBlockingCancellable {
+                val names = readAction {
+                    if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) return@readAction emptyList()
+                    val manager = MavenProjectsManager.getInstance(module.project)
+                    val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
+                    val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
+                    implemented.map { manager.findModule(it)?.name ?: it.displayName }
+                }
+
+                writeAction {
+                    kotlinFacet.configuration.settings.implementedModuleNames = names
+                }
             }
         }
     }
