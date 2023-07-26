@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.codeStyle;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ImportFilter;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.jsp.JspSpiUtil;
 import com.intellij.lang.ASTNode;
@@ -57,6 +58,7 @@ public final class ImportHelper{
 
   private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
+  private static final String STRING_TEMPLATE_STR = "java.lang.StringTemplate.STR";
 
   public ImportHelper(@NotNull JavaCodeStyleSettings settings) {
     mySettings = settings;
@@ -125,7 +127,8 @@ public final class ImportHelper{
     classesToUseSingle.addAll(toReimport);
 
     try {
-      StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle);
+      boolean stringTemplates = HighlightingFeature.STRING_TEMPLATES.isAvailable(file);
+      StringBuilder text = buildImportListText(resultList, classesOrPackagesToImportOnDemand.keySet(), classesToUseSingle, stringTemplates);
       for (PsiElement nonImport : nonImports) {
         text.append("\n").append(nonImport.getText());
       }
@@ -367,15 +370,17 @@ public final class ImportHelper{
 
   @NotNull
   private static StringBuilder buildImportListText(@NotNull List<? extends Pair<String, Boolean>> names,
-                                                   @NotNull final Set<String> packagesOrClassesToImportOnDemand,
-                                                   @NotNull final Set<String> namesToUseSingle) {
+                                                   @NotNull Set<String> packagesOrClassesToImportOnDemand,
+                                                   @NotNull Set<String> namesToUseSingle,
+                                                   boolean stringTemplates) {
     final Set<Pair<String, Boolean>> importedPackagesOrClasses = new HashSet<>();
     @NonNls final StringBuilder buffer = new StringBuilder();
     for (Pair<String, Boolean> pair : names) {
       String name = pair.getFirst();
       Boolean isStatic = pair.getSecond();
       String packageOrClassName = getPackageOrClassName(name);
-      final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName);
+      final boolean implicitlyImported = JAVA_LANG_PACKAGE.equals(packageOrClassName) ||
+                                         stringTemplates && STRING_TEMPLATE_STR.equals(name);
       boolean useOnDemand = implicitlyImported || packagesOrClassesToImportOnDemand.contains(packageOrClassName);
       final Pair<String, Boolean> current = Pair.create(packageOrClassName, isStatic);
       if (namesToUseSingle.remove(name)) {
