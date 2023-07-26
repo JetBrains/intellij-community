@@ -28,7 +28,6 @@ import training.ui.showOnboardingFeedbackNotification
 import training.util.enableLessonsAndPromoters
 import training.util.resetPrimaryLanguage
 import javax.swing.Icon
-import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
@@ -41,16 +40,14 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
   override val promoImage: Icon
     get() = FeaturesTrainerIcons.PluginIcon
 
-  override fun getPromotion(isEmptyState: Boolean): JComponent {
-    scheduleOnboardingFeedback()
-    return super.getPromotion(isEmptyState)
+  override fun canCreatePromo(isEmptyState: Boolean): Boolean {
+    val notificationScheduled = scheduleOnboardingFeedback()
+    return enableLessonsAndPromoters &&
+           !notificationScheduled &&
+           !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
+           RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5 &&
+           LessonStateManager.getStateFromBase(lessonId) == LessonState.NOT_PASSED
   }
-
-  override fun canCreatePromo(isEmptyState: Boolean): Boolean =
-    enableLessonsAndPromoters &&
-    !PropertiesComponent.getInstance().getBoolean(PROMO_HIDDEN, false) &&
-    RecentProjectsManagerBase.getInstanceEx().getRecentPaths().size < 5 &&
-    LessonStateManager.getStateFromBase(lessonId) == LessonState.NOT_PASSED
 
   override val headerLabel: String
     get() = LearnBundle.message("welcome.promo.header")
@@ -80,9 +77,9 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
 
 
   // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
-  private fun scheduleOnboardingFeedback() {
-    val langSupport = LangManager.getInstance().getLangSupport() ?: return
-    val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
+  private fun scheduleOnboardingFeedback(): Boolean {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return false
+    val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return false
     langSupport.onboardingFeedbackData = null
 
     invokeLater {
@@ -91,6 +88,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String,
         (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
       }
     }
+    return true
   }
 
   override val closeAction: ((JPanel) -> Unit) = { promoPanel ->
