@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.rd.util
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.jetbrains.rd.framework.util.*
@@ -40,11 +41,18 @@ fun Lifetime.launchOnUiAllowInlining(
   action: suspend CoroutineScope.() -> Unit
 ): Job = launch(uiDispatcherWithInlining + context, start, action)
 
+@Deprecated("Please use launch with an explicit modality statement")
 fun Lifetime.launchOnUiAnyModality(
   context: CoroutineContext = EmptyCoroutineContext,
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> Unit
-): Job = launch(uiDispatcherAnyModality + context, start, action)
+): Job {
+  if (ApplicationManager.getApplication().isDispatchThread && start == CoroutineStart.DEFAULT)
+    // for backward compatibility
+    return launch(uiDispatcherAnyModality + context, CoroutineStart.UNDISPATCHED, action)
+
+  return launch(uiDispatcherAnyModality + context, start, action)
+}
 
 @ApiStatus.ScheduledForRemoval
 @Deprecated("Use launchSyncIOBackground or launchBackground")
@@ -96,11 +104,18 @@ fun <T> Lifetime.startOnUiAllowInliningAsync(
   action: suspend CoroutineScope.() -> T
 ): Deferred<T> = startAsync(uiDispatcherWithInlining + context, start, action)
 
+@Deprecated("Please use async with modality specified explicitly")
 fun <T> Lifetime.startOnUiAnyModalityAsync(
   context: CoroutineContext = EmptyCoroutineContext,
   start: CoroutineStart = CoroutineStart.DEFAULT,
   action: suspend CoroutineScope.() -> T
-): Deferred<T> = startAsync(uiDispatcherAnyModality + context, start, action)
+): Deferred<T> {
+  if (ApplicationManager.getApplication().isDispatchThread && start == CoroutineStart.DEFAULT)
+    // for backward compatibility
+    return startAsync(uiDispatcherAnyModality + context, CoroutineStart.UNDISPATCHED, action)
+
+  return startAsync(uiDispatcherAnyModality + context, start, action)
+}
 
 @Deprecated("Use startSyncIOBackgroundAsync or startBackgroundAsync")
 fun <T> Lifetime.startIOBackgroundAsync(
@@ -246,6 +261,7 @@ suspend fun <T> withUiContext(lifetime: Lifetime = Lifetime.Eternal, action: sus
 suspend fun <T> withUiAllowInliningContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, uiDispatcherWithInlining, action)
 
+@Deprecated("Please use withContext with modality specified explicitly")
 suspend fun <T> withUiAnyModalityContext(lifetime: Lifetime = Lifetime.Eternal, action: suspend CoroutineScope.() -> T): T =
   withContext(lifetime, uiDispatcherAnyModality, action)
 

@@ -2,10 +2,7 @@
 package com.intellij.openapi.rd.util
 
 import com.intellij.execution.process.ProcessIOExecutorService
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.TransactionGuard
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.rd.createLifetime
@@ -36,6 +33,7 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
   val uiDispatcher: CoroutineContext
     get() = Dispatchers.EDT
 
+  @Deprecated("This is a deprecated dispatcher used before Dispatchers.EDT. Please switch to the Dispatchers.EDT")
   val uiDispatcherWithInlining = object : CoroutineDispatcher() {
     override fun dispatch(context: CoroutineContext, block: Runnable) {
       ApplicationManager.getApplication().invokeLater(block, ModalityState.defaultModalityState())
@@ -52,13 +50,10 @@ class RdCoroutineHost(lifetime: Lifetime) : RdCoroutineScope(lifetime) {
     }
   }
 
-  val uiDispatcherAnyModality = object : CoroutineDispatcher() {
-    override fun dispatch(context: CoroutineContext, block: Runnable) {
-      ApplicationManager.getApplication().invokeLater(block, ModalityState.any())
-    }
-
-    override fun isDispatchNeeded(context: CoroutineContext) = !ApplicationManager.getApplication().isDispatchThread
-  }
+  @Deprecated("Dispatchers.EDT + ModalityState.any().asContextElement()", ReplaceWith("Dispatchers.EDT + ModalityState.any().asContextElement()", "kotlinx.coroutines.Dispatchers",
+                                   "com.intellij.openapi.application.EDT", "com.intellij.openapi.application.ModalityState",
+                                   "com.intellij.openapi.application.asContextElement"))
+  val uiDispatcherAnyModality get() = Dispatchers.EDT + ModalityState.any().asContextElement()
 
   init {
     override(lifetime, this)
