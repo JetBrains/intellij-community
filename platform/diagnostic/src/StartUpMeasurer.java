@@ -103,11 +103,7 @@ public final class StartUpMeasurer {
     return new ActivityImpl(name, getCurrentTime(), /* parent = */ (ActivityImpl)parent, /* pluginId = */ null, ActivityCategory.DEFAULT);
   }
 
-  public static @NotNull Activity startActivity(@NonNls @NotNull String name,
-                                                @NotNull ActivityCategory category,
-                                                @Nullable String pluginId) {
-    return new ActivityImpl(name, getCurrentTime(), /* parent = */ null, /* pluginId = */ pluginId, category);
-  }
+
 
   /**
    * The default threshold is applied.

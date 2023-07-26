@@ -1313,7 +1313,7 @@ private suspend fun confirmOpenNewProject(options: OpenProjectTask): Int {
 }
 
 private inline fun createActivity(project: ProjectImpl, message: () -> String): Activity? {
-  return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message(), ActivityCategory.DEFAULT)
+  return if (!StartUpMeasurer.isEnabled() || project.isDefault) null else StartUpMeasurer.startActivity(message())
 }
 
 internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {

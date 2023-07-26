@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -187,7 +186,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private void doConnect() {
     if (myConnected.compareAndSet(false, true)) {
-      Activity activity = StartUpMeasurer.startActivity("connect FSRecords", ActivityCategory.DEFAULT);
+      Activity activity = StartUpMeasurer.startActivity("connect FSRecords");
       if (VfsLog.LOG_VFS_OPERATIONS_ENABLED) {
         try {
           if (VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(Path.of(FSRecords.getCachesDir()))) {
