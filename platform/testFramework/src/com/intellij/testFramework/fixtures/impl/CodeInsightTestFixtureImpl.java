@@ -16,8 +16,11 @@ import com.intellij.codeInsight.highlighting.actions.HighlightUsagesAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.impl.CachedIntentions;
+import com.intellij.codeInsight.intention.impl.IntentionActionWithTextCaching;
 import com.intellij.codeInsight.intention.impl.IntentionListStep;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewComputable;
+import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewDiffResult;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewPopupUpdateProcessor;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -346,11 +349,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   private static List<IntentionAction> doGetAvailableIntentions(@NotNull Editor editor, @NotNull PsiFile file) {
-    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
-
+    IntentionListStep intentionListStep = getIntentionListStep(editor, file);
     List<IntentionAction> result = new ArrayList<>();
-    IntentionListStep intentionListStep = new IntentionListStep(null, editor, file, file.getProject(),
-                                                                CachedIntentions.create(file.getProject(), file, editor, intentions));
     for (Map.Entry<IntentionAction, List<IntentionAction>> entry : intentionListStep.getActionsWithSubActions().entrySet()) {
       result.add(entry.getKey());
       result.addAll(entry.getValue());
@@ -371,6 +371,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       });
     }
     return result;
+  }
+
+  @NotNull
+  private static IntentionListStep getIntentionListStep(@NotNull Editor editor, @NotNull PsiFile file) {
+    ShowIntentionsPass.IntentionsInfo intentions = ShowIntentionsPass.getActionsToShow(editor, file, false);
+
+    return new IntentionListStep(null, editor, file, file.getProject(),
+                                 CachedIntentions.create(file.getProject(), file, editor, intentions));
   }
 
   public static void waitForUnresolvedReferencesQuickFixesUnderCaret(@NotNull PsiFile file, @NotNull Editor editor) {
@@ -787,6 +795,29 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public @Nullable String getIntentionPreviewText(@NotNull String hint) {
+    IntentionActionWithTextCaching action = findCachingAction(hint);
+    if (action == null) return null;
+    IntentionPreviewInfo info =
+      new IntentionPreviewComputable(getProject(), action.getAction(), getFile(), getEditor(), action.getProblemOffset()).generatePreview();
+    return info == null ? null : ((IntentionPreviewDiffResult)info).getNewText();
+  }
+
+  @Override
+  public void launchIntention(@NotNull String hint) {
+    IntentionActionWithTextCaching action = findCachingAction(hint);
+    if (action == null) throw new IllegalArgumentException();
+    ShowIntentionActionsHandler.chooseActionAndInvoke(getHostFile(), getHostEditor(), action.getAction(), action.getText(), action.getProblemOffset());
+  }
+
+  @Nullable
+  private IntentionActionWithTextCaching findCachingAction(@NotNull String hint) {
+    doHighlighting();
+    List<IntentionActionWithTextCaching> list = getIntentionListStep(getEditor(), getFile()).getValues();
+    return ContainerUtil.find(list, caching -> caching.getAction().getText().startsWith(hint));
   }
 
   @Override

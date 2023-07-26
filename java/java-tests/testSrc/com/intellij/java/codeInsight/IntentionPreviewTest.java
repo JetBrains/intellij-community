@@ -252,4 +252,12 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
     IntentionAction action = myFixture.findSingleIntention(XmlAnalysisBundle.message("xml.quickfix.remove.tag.family"));
     assertEquals("<b></b>", myFixture.getIntentionPreviewText(action));
   }
+
+  public void testCaretOutsideOfProblem() {
+    myFixture.configureByText("Test.java", "class Test { int foo() { return 1 } }<caret>");
+    String expected = "class Test { int foo() { return 1; } }";
+    assertEquals(expected, myFixture.getIntentionPreviewText("Insert"));
+    myFixture.launchIntention("Insert");
+    myFixture.checkResult(expected);
+  }
 }

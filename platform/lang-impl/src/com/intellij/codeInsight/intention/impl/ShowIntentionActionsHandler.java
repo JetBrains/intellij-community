@@ -259,7 +259,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     return chooseActionAndInvoke(hostFile, hostEditor, action, commandName, -1);
   }
 
-  static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
+  public static boolean chooseActionAndInvoke(@NotNull PsiFile hostFile,
                                        @Nullable Editor hostEditor,
                                        @NotNull IntentionAction action,
                                        @NotNull @NlsContexts.Command String commandName,
