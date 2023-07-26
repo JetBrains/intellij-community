@@ -139,6 +139,7 @@ public interface JavaElementType {
   IElementType ANNOTATION_ARRAY_INITIALIZER = new JavaCompositeElementType("ANNOTATION_ARRAY_INITIALIZER", () -> new PsiArrayInitializerMemberValueImpl());
   IElementType RECEIVER_PARAMETER = new JavaCompositeElementType("RECEIVER", () -> new PsiReceiverParameterImpl());
   IElementType MODULE_REFERENCE = new JavaCompositeElementType("MODULE_REFERENCE", () -> new PsiJavaModuleReferenceElementImpl());
+  IElementType UNNAMED_PATTERN = new JavaCompositeElementType("UNNAMED_PATTERN", () -> new PsiUnnamedPatternImpl());
   IElementType TYPE_TEST_PATTERN = new JavaCompositeElementType("TYPE_TEST_PATTERN", () -> new PsiTypeTestPatternImpl());
   IElementType PATTERN_VARIABLE = new JavaCompositeElementType("PATTERN_VARIABLE", () -> new PsiPatternVariableImpl());
   IElementType DECONSTRUCTION_PATTERN = new JavaCompositeElementType("DECONSTRUCTION_PATTERN", () -> new PsiDeconstructionPatternImpl());

@@ -2122,6 +2122,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     }
   }
 
+  @Override
+  public void visitUnnamedPattern(@NotNull PsiUnnamedPattern pattern) {
+    super.visitUnnamedPattern(pattern);
+    add(checkFeature(pattern, HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES));
+  }
+
   private HighlightInfo.Builder checkFeature(@NotNull PsiElement element, @NotNull HighlightingFeature feature) {
     return HighlightUtil.checkFeature(element, feature, myLanguageLevel, myFile);
   }

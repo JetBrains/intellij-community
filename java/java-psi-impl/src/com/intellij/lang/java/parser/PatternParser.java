@@ -37,6 +37,20 @@ public class PatternParser {
     return true;
   }
 
+  private static boolean parseUnnamedPattern(final PsiBuilder builder) {
+    PsiBuilder.Marker patternStart = builder.mark();
+    if (builder.getTokenType() == JavaTokenType.IDENTIFIER &&
+        "_".equals(builder.getTokenText())) {
+      emptyElement(builder, JavaElementType.TYPE);
+      builder.advanceLexer();
+      done(patternStart, JavaElementType.UNNAMED_PATTERN);
+      return true;
+    }
+    patternStart.rollbackTo();
+    return false;
+  }
+
+
   @Nullable("when not pattern")
   PsiBuilder.Marker preParsePattern(final PsiBuilder builder, boolean parensAllowed) {
     PsiBuilder.Marker patternStart = builder.mark();
@@ -98,6 +112,9 @@ public class PatternParser {
 
       if (isPattern(builder)) {
         parsePattern(builder, true);
+        isFirst = false;
+      }
+      else if (parseUnnamedPattern(builder)) {
         isFirst = false;
       }
       else {

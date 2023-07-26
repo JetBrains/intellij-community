@@ -77,14 +77,14 @@ public enum HighlightingFeature {
       return until == useSiteLevel;
     }
 
-
     @Override
     boolean isLimited() {
       return true;
     }
   },
   ENUM_QUALIFIED_NAME_IN_SWITCH(LanguageLevel.JDK_21, "feature.enum.qualified.name.in.switch"),
-  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates");
+  STRING_TEMPLATES(LanguageLevel.JDK_21_PREVIEW, "feature.string.templates"),
+  UNNAMED_PATTERNS_AND_VARIABLES(LanguageLevel.JDK_21_PREVIEW, "feature.unnamed.vars");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
