@@ -330,6 +330,24 @@ final class PatternHighlightingModel {
 
   record ReduceResultCacheContext(@NotNull PsiType selectorType,
                                   @NotNull Set<? extends PatternDescription> currentPatterns) {
+    @NotNull
+    private ReduceResult reduceClassesInner(@NotNull PsiElement context) {
+      Set<PatternTypeTestDescription> typeTestDescriptions =
+        StreamEx.of(currentPatterns).select(PatternTypeTestDescription.class).toSet();
+      Set<PatternTypeTestDescription> toAdd = new HashSet<>();
+      Set<PsiType> existedTypes = StreamEx.of(typeTestDescriptions).map(t -> t.type()).toSet();
+      Set<PsiClass> visitedCovered =
+        findMissedClasses(selectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
+      boolean changed = addNewClasses(selectorType, visitedCovered, existedTypes, toAdd);
+      if (!changed) {
+        return new ReduceResult(currentPatterns, false);
+      }
+      Set<PatternDescription> newPatterns = combineResult(currentPatterns, Set.of(), toAdd);
+      if (newPatterns.size() == currentPatterns.size()) {
+        return new ReduceResult(currentPatterns, false);
+      }
+      return new ReduceResult(newPatterns, true);
+    }
   }
 
   /**
@@ -342,101 +360,170 @@ final class PatternHighlightingModel {
                                      @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
     currentPatterns = new HashSet<>(currentPatterns);
     ReduceResultCacheContext cacheContext = new ReduceResultCacheContext(selectorType, currentPatterns);
-    ReduceResult fromCache = cache.get(cacheContext);
-    if (fromCache != null) {
-      return fromCache;
+    ReduceResult result = cache.get(cacheContext);
+    if (result == null) {
+      result = new ReduceResult(currentPatterns, false)
+        .reduceRecordPatterns(context, cache)
+        .reduceDeconstructionRecordToTypePattern(context)
+        .reduceClasses(selectorType, context);
+      cache.put(cacheContext, result);
     }
-    ReduceResult result = reduceRecordPatterns(currentPatterns, context, cache);
-    boolean changed = result.changed();
-    currentPatterns = result.patterns();
-    result = reduceDeconstructionRecordToTypePattern(currentPatterns, context);
-    changed |= result.changed();
-    currentPatterns = result.patterns();
-    result = reduceClasses(currentPatterns, selectorType, context);
-    changed |= result.changed();
-    currentPatterns = result.patterns();
-    ReduceResult reduceResult = new ReduceResult(currentPatterns, changed);
-    cache.put(cacheContext, reduceResult);
-    return reduceResult;
+    return result;
   }
 
   record ReduceResult(Set<? extends PatternDescription> patterns, boolean changed) {
-  }
+    /**
+     * Reduce i-component for a set of deconstruction patterns.
+     * Pattern(q0,...qi,.. qn)
+     * This method finds all patterns, when q0..qk..qn (k!=i) equal across all patterns and
+     * recursively call all reduction types for a set of qi components
+     * This way leads that the next case is NOT exhaustive:
+     * <pre>{@code
+     * sealed interface I permits C, D {}
+     * final class C implements I {}
+     * final class D implements I {}
+     * record Pair<T>(T x, T y) {}
+     *
+     *     switch (pairI) {
+     *       case Pair<I>(C fst, D snd) -> {}
+     *       case Pair<I>(I fst, C snd) -> {}
+     *       case Pair<I>(D fst, I snd) -> {}
+     *     }
+     * }</pre>
+     * because there are no components with equal types.
+     * Also, see <a href="https://bugs.openjdk.org/browse/JDK-8311815">bug in OpenJDK</a>
+     * }</pre>
+     */
+    @NotNull
+    private ReduceResult reduceRecordPatterns(@NotNull PsiElement context, @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
+      boolean changed = false;
+      Map<PsiType, Set<PatternDeconstructionDescription>> byType = StreamEx.of(patterns)
+        .select(PatternDeconstructionDescription.class)
+        .groupingBy(t -> t.type(), Collectors.toSet());
+      Set<PatternDescription> toRemove = new HashSet<>();
+      Set<PatternDescription> toAdd = new HashSet<>();
+      Map<PsiType, List<PsiType>> componentCaches = new HashMap<>();
+      for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : byType.entrySet()) {
+        Set<PatternDeconstructionDescription> descriptions = entry.getValue();
+        if (descriptions.isEmpty()) {
+          continue;
+        }
+        PatternDeconstructionDescription first = descriptions.iterator().next();
+        for (int i = 0; i < first.list().size(); i++) {
+          MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent =
+            getGroupWithoutOneComponent(descriptions, i);
 
-  /**
-   * Reduce i-component for a set of deconstruction patterns.
-   * Pattern(q0,...qi,.. qn)
-   * This method finds all patterns, when q0..qk..qn (k!=i) equal accros all patterns and
-   * recursively call all reduction types for a set of qi components
-   * This way leads that the next case is NOT exhaustive:
-   * <pre>{@code
-   * sealed interface I permits C, D {}
-   * final class C implements I {}
-   * final class D implements I {}
-   * record Pair<T>(T x, T y) {}
-   *
-   *     switch (pairI) {
-   *       case Pair<I>(C fst, D snd) -> {}
-   *       case Pair<I>(I fst, C snd) -> {}
-   *       case Pair<I>(D fst, I snd) -> {}
-   *     }
-   * }</pre>
-   * because there are no components with equal types.
-   * Also, see <a href="https://bugs.openjdk.org/browse/JDK-8311815">bug in OpenJDK</a>
-   * }</pre>
-   */
-  @NotNull
-  private static ReduceResult reduceRecordPatterns(@NotNull Set<? extends PatternDescription> patterns,
-                                                   @NotNull PsiElement context,
-                                                   @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
-    boolean changed = false;
-    Map<PsiType, Set<PatternDeconstructionDescription>> byType = StreamEx.of(patterns)
-      .select(PatternDeconstructionDescription.class)
-      .groupingBy(t -> t.type(), Collectors.toSet());
-    Set<PatternDescription> toRemove = new HashSet<>();
-    Set<PatternDescription> toAdd = new HashSet<>();
-    Map<PsiType, List<PsiType>> componentCaches = new HashMap<>();
-    for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : byType.entrySet()) {
-      Set<PatternDeconstructionDescription> descriptions = entry.getValue();
-      if (descriptions.isEmpty()) {
-        continue;
-      }
-      PatternDeconstructionDescription first = descriptions.iterator().next();
-      for (int i = 0; i < first.list().size(); i++) {
-        MultiMap<List<PatternDescription>, PatternDeconstructionDescription> groupWithoutOneComponent = getGroupWithoutOneComponent(descriptions, i);
-
-        for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value :
-          groupWithoutOneComponent.entrySet()) {
-          Collection<PatternDeconstructionDescription> setWithOneDifferentElement = value.getValue();
-          if (setWithOneDifferentElement.isEmpty()) {
-            continue;
-          }
-          int finalI = i;
-          Set<PatternDescription> nestedDescriptions = setWithOneDifferentElement.stream()
-            .map(t -> t.list().get(finalI))
-            .collect(Collectors.toSet());
-          PsiType recordType = entry.getKey();
-          List<PsiType> componentTypes = componentCaches.get(recordType);
-          if (componentTypes == null) {
-            componentTypes = getComponentTypes(context, recordType);
-            componentCaches.put(recordType, componentTypes);
-          }
-          if (componentTypes == null || componentTypes.size() <= i) {
-            continue;
-          }
-          ReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache);
-          if (result.changed()) {
-            changed = true;
-            toRemove.addAll(setWithOneDifferentElement);
-            toAdd.addAll(createPatternsFrom(i, result.patterns(), setWithOneDifferentElement.iterator().next()));
+          for (Map.Entry<List<PatternDescription>, Collection<PatternDeconstructionDescription>> value :
+            groupWithoutOneComponent.entrySet()) {
+            Collection<PatternDeconstructionDescription> setWithOneDifferentElement = value.getValue();
+            if (setWithOneDifferentElement.isEmpty()) {
+              continue;
+            }
+            int finalI = i;
+            Set<PatternDescription> nestedDescriptions = setWithOneDifferentElement.stream()
+              .map(t -> t.list().get(finalI))
+              .collect(Collectors.toSet());
+            PsiType recordType = entry.getKey();
+            List<PsiType> componentTypes = componentCaches.get(recordType);
+            if (componentTypes == null) {
+              componentTypes = getComponentTypes(context, recordType);
+              componentCaches.put(recordType, componentTypes);
+            }
+            if (componentTypes == null || componentTypes.size() <= i) {
+              continue;
+            }
+            ReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache);
+            if (result.changed()) {
+              changed = true;
+              toRemove.addAll(setWithOneDifferentElement);
+              toAdd.addAll(createPatternsFrom(i, result.patterns(), setWithOneDifferentElement.iterator().next()));
+            }
           }
         }
       }
+      if (!changed) {
+        return new ReduceResult(patterns, changed());
+      }
+      return new ReduceResult(combineResult(patterns, toRemove, toAdd), true);
     }
-    if (!changed) {
-      return new ReduceResult(patterns, false);
+
+    /**
+     * Reduce deconstruction pattern to TypePattern equivalent.
+     * R(q0..qn) -> R r
+     */
+    @NotNull
+    private ReduceResult reduceDeconstructionRecordToTypePattern(@NotNull PsiElement context) {
+      boolean changed = false;
+      Map<PsiType, List<PsiType>> componentCache = new HashMap<>();
+      Set<PatternDescription> toAdd = new HashSet<>();
+      Set<PatternDescription> toRemove = new HashSet<>();
+      Map<PsiType, Set<PatternDeconstructionDescription>> groupedByType =
+        StreamEx.of(patterns)
+          .select(PatternDeconstructionDescription.class)
+          .groupingBy(t -> t.type(), Collectors.toSet());
+      for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : groupedByType.entrySet()) {
+        for (PatternDeconstructionDescription patternDeconstructionDescription : entry.getValue()) {
+          List<PsiType> descriptionTypes = new ArrayList<>();
+          for (PatternDescription description : patternDeconstructionDescription.list()) {
+            if (description instanceof PatternTypeTestDescription patternTypeTestDescription) {
+              descriptionTypes.add(patternTypeTestDescription.type());
+            }
+          }
+          PsiType descriptionType = patternDeconstructionDescription.type();
+          List<PsiType> recordComponentTypes = componentCache.get(descriptionType);
+          if (recordComponentTypes == null) {
+            List<PsiType> recordTypes = getComponentTypes(context, descriptionType);
+            if (recordTypes == null) continue;
+            componentCache.put(descriptionType, recordTypes);
+            recordComponentTypes = recordTypes;
+          }
+          if (recordComponentTypes.size() != descriptionTypes.size()) {
+            continue;
+          }
+          boolean allCovered = true;
+          for (int i = 0; i < recordComponentTypes.size(); i++) {
+            PsiType recordComponentType = recordComponentTypes.get(i);
+            PsiType descriptionComponentType = descriptionTypes.get(i);
+            if (!SwitchBlockHighlightingModel.oneOfUnconditional(descriptionComponentType, recordComponentType)) {
+              allCovered = false;
+              break;
+            }
+          }
+          if (allCovered) {
+            changed = true;
+            toAdd.add(new PatternTypeTestDescription(descriptionType));
+            toRemove.addAll(entry.getValue());
+            break;
+          }
+        }
+      }
+      if (!changed) {
+        return new ReduceResult(patterns, changed());
+      }
+      Set<PatternDescription> result = combineResult(patterns, toRemove, toAdd);
+      return new ReduceResult(result, true);
     }
-    return new ReduceResult(combineResult(patterns, toRemove, toAdd), changed);
+
+    /**
+     * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
+     * Previous sealed classes are not excluded because they can be used in another combination.
+     * This method uses {@link SwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClassesForSealed}
+     * To prevent recursive calls, only TypeTest descriptions are passed to this method.
+     */
+    @NotNull
+    private ReduceResult reduceClasses(@NotNull PsiType selectorType, @NotNull PsiElement context) {
+      Set<PatternTypeTestDescription> consideredDescription =
+        StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
+      if (consideredDescription.isEmpty()) {
+        return new ReduceResult(patterns, changed());
+      }
+      ReduceResult result = CachedValuesManager.getCachedValue(context, () -> {
+        Map<ReduceResultCacheContext, ReduceResult> map = ConcurrentFactoryMap.createMap(
+          reduceContext -> reduceContext.reduceClassesInner(context));
+        return CachedValueProvider.Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
+      }).get(new ReduceResultCacheContext(selectorType, patterns));
+      return !result.changed() ? this : result;
+    }
   }
 
   private static @NotNull Collection<PatternDeconstructionDescription> createPatternsFrom(int differentElement,
@@ -459,64 +546,6 @@ final class PatternHighlightingModel {
       shortKey.add(description.list().get(i));
     }
     return shortKey;
-  }
-
-  /**
-   * Reduce deconstruction pattern to TypePattern equivalent.
-   * R(q0..qn) -> R r
-   */
-  @NotNull
-  private static ReduceResult reduceDeconstructionRecordToTypePattern(@NotNull Set<? extends PatternDescription> patterns,
-                                                                      @NotNull PsiElement context) {
-    boolean changed = false;
-    Map<PsiType, List<PsiType>> componentCache = new HashMap<>();
-    Set<PatternDescription> toAdd = new HashSet<>();
-    Set<PatternDescription> toRemove = new HashSet<>();
-    Map<PsiType, Set<PatternDeconstructionDescription>> groupedByType =
-      StreamEx.of(patterns)
-        .select(PatternDeconstructionDescription.class)
-        .groupingBy(t -> t.type(), Collectors.toSet());
-    for (Map.Entry<PsiType, Set<PatternDeconstructionDescription>> entry : groupedByType.entrySet()) {
-      for (PatternDeconstructionDescription patternDeconstructionDescription : entry.getValue()) {
-        List<PsiType> descriptionTypes = new ArrayList<>();
-        for (PatternDescription description : patternDeconstructionDescription.list()) {
-          if (description instanceof PatternTypeTestDescription patternTypeTestDescription) {
-            descriptionTypes.add(patternTypeTestDescription.type());
-          }
-        }
-        PsiType descriptionType = patternDeconstructionDescription.type();
-        List<PsiType> recordComponentTypes = componentCache.get(descriptionType);
-        if (recordComponentTypes == null) {
-          List<PsiType> recordTypes = getComponentTypes(context, descriptionType);
-          if (recordTypes == null) continue;
-          componentCache.put(descriptionType, recordTypes);
-          recordComponentTypes = recordTypes;
-        }
-        if (recordComponentTypes.size() != descriptionTypes.size()) {
-          continue;
-        }
-        boolean allCovered = true;
-        for (int i = 0; i < recordComponentTypes.size(); i++) {
-          PsiType recordComponentType = recordComponentTypes.get(i);
-          PsiType descriptionComponentType = descriptionTypes.get(i);
-          if (!SwitchBlockHighlightingModel.oneOfUnconditional(descriptionComponentType, recordComponentType)) {
-            allCovered = false;
-            break;
-          }
-        }
-        if (allCovered) {
-          changed = true;
-          toAdd.add(new PatternTypeTestDescription(descriptionType));
-          toRemove.addAll(entry.getValue());
-          break;
-        }
-      }
-    }
-    if (!changed) {
-      return new ReduceResult(patterns, false);
-    }
-    Set<PatternDescription> result = combineResult(patterns, toRemove, toAdd);
-    return new ReduceResult(result, true);
   }
 
   @Nullable
@@ -546,50 +575,6 @@ final class PatternHighlightingModel {
     }
     result.addAll(toAdd);
     return result;
-  }
-
-  /**
-   * Try to reduce sealed classes to their supertypes or if selectorType is covered any of types,then return selectorType.
-   * Previous sealed classes are not excluded because they can be used in another combination.
-   * This method uses {@link SwitchBlockHighlightingModel#findMissedClasses(PsiType, List, List, PsiElement) findMissedClassesForSealed}
-   * To prevent recursive calls, only TypeTest descriptions are passed to this method.
-   */
-  @NotNull
-  private static ReduceResult reduceClasses(@NotNull Set<? extends PatternDescription> patterns,
-                                            @NotNull PsiType selectorType,
-                                            @NotNull PsiElement context) {
-    Set<PatternTypeTestDescription> consideredDescription =
-      StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
-    if (consideredDescription.isEmpty()) {
-      return new ReduceResult(patterns, false);
-    }
-    return CachedValuesManager.getCachedValue(context, () -> {
-      Map<ReduceResultCacheContext, ReduceResult> result = ConcurrentFactoryMap.createMap(reduceContext -> {
-        return reduceClassesInner(reduceContext.currentPatterns, reduceContext.selectorType, context);
-      });
-      return CachedValueProvider.Result.create(result, PsiModificationTracker.MODIFICATION_COUNT);
-    }).get(new ReduceResultCacheContext(selectorType, patterns));
-  }
-
-  @NotNull
-  private static ReduceResult reduceClassesInner(@NotNull Set<? extends PatternDescription> patterns,
-                                                 @NotNull PsiType selectorType,
-                                                 @NotNull PsiElement context) {
-    Set<PatternTypeTestDescription> typeTestDescriptions =
-      StreamEx.of(patterns).select(PatternTypeTestDescription.class).collect(Collectors.toSet());
-    Set<PatternTypeTestDescription> toAdd = new HashSet<>();
-    Set<PsiType> existedTypes = typeTestDescriptions.stream().map(t -> t.type()).collect(Collectors.toSet());
-    Set<PsiClass> visitedCovered =
-      findMissedClasses(selectorType, new ArrayList<>(typeTestDescriptions), new ArrayList<>(), context).coveredClasses();
-    boolean changed = addNewClasses(selectorType, visitedCovered, existedTypes, toAdd);
-    if (!changed) {
-      return new ReduceResult(patterns, false);
-    }
-    Set<PatternDescription> newPatterns = combineResult(patterns, new HashSet<>(), toAdd);
-    if (newPatterns.size() == patterns.size()) {
-      return new ReduceResult(patterns, false);
-    }
-    return new ReduceResult(newPatterns, true);
   }
 
   private static boolean addNewClasses(@NotNull PsiType selectorType,
