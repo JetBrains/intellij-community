@@ -35,7 +35,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         } ?: return null
         val compilations = reflectionsByCompilations.mapNotNull { it.key }
 
-        val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
+        val testRunTasks = buildTestRunTasks(importingContext.project, origin)
 
         val nativeMainRunTasks =
             if (platform == KotlinPlatform.NATIVE) origin.nativeMainRunTasks.orEmpty().mapNotNull { nativeMainRunReflection ->
@@ -100,7 +100,8 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun buildTestRunTasks(project: Project, gradleTarget: Named): Collection<KotlinTestRunTask> {
+    private fun buildTestRunTasks(project: Project, target: KotlinTargetReflection): Collection<KotlinTestRunTask> {
+        val gradleTarget = target.gradleTarget
         val getTestRunsMethod = gradleTarget.javaClass.getMethodOrNull("getTestRuns")
         if (getTestRunsMethod != null) {
             val testRuns = getTestRunsMethod.invoke(gradleTarget) as? Iterable<Any>
@@ -132,13 +133,6 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         // aggregate Android JVM tasks (like testDebugUnitTest).
         val kotlinTestTaskClass = gradleTarget.testTaskClass("org.jetbrains.kotlin.gradle.tasks.KotlinTest") ?: return emptyList()
 
-        val targetDisambiguationClassifier = run {
-            val getDisambiguationClassifier = gradleTarget.javaClass.getMethodOrNull("getDisambiguationClassifier")
-                ?: return emptyList()
-
-            getDisambiguationClassifier(gradleTarget) as String?
-        }
-
         // The 'targetName' of a test task matches the target disambiguation classifier, potentially with suffix, e.g. jsBrowser
         val getTargetName = kotlinTestTaskClass.getDeclaredMethodOrNull("getTargetName") ?: return emptyList()
 
@@ -146,7 +140,12 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             gradleTarget.testTaskClass("org.jetbrains.kotlin.gradle.targets.jvm.tasks.KotlinJvmTest") ?: return emptyList()
         val getJvmTargetName = jvmTestTaskClass.getDeclaredMethodOrNull("getTargetName") ?: return emptyList()
 
-        if (targetDisambiguationClassifier == "android") {
+        /**
+         * Only run this branch for the 'KotlinAndroidTarget'  maintained in KGP:
+         * This target can be identified checking the 'presetName' here.
+         * The External Android target will not have any presetName as it is using the external target API instead of presets.
+         */
+        if (target.presetName ==  "android") {
             val androidUnitTestClass = gradleTarget.testTaskClass("com.android.build.gradle.tasks.factory.AndroidUnitTest")
                 ?: return emptyList()
 
@@ -158,9 +157,9 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
             val testTaskDisambiguationClassifier =
                 (if (kotlinTestTaskClass.isInstance(task)) getTargetName(task) else getJvmTargetName(task)) as String?
             task.name.takeIf {
-                targetDisambiguationClassifier.isNullOrEmpty() ||
+                target.disambiguationClassifier.isNullOrEmpty() ||
                         testTaskDisambiguationClassifier != null &&
-                        testTaskDisambiguationClassifier.startsWith(targetDisambiguationClassifier)
+                        testTaskDisambiguationClassifier.startsWith(target.disambiguationClassifier.orEmpty())
             }
         }.map { KotlinTestRunTaskImpl(it, KotlinCompilation.TEST_COMPILATION_NAME) }
     }
