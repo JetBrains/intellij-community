@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.extensions.impl.findByIdOrFromInstance
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
@@ -238,7 +239,7 @@ private suspend fun handleExternalCommand(args: List<String>, currentDirectory: 
 
 fun findStarter(key: String): ApplicationStarter? {
   @Suppress("DEPRECATION")
-  return ApplicationStarter.EP_NAME.findByIdOrFromInstance(key) { it.commandName }
+  return ExtensionPointName<ApplicationStarter>("com.intellij.appStarter").findByIdOrFromInstance(key) { it.commandName }
 }
 
 @VisibleForTesting

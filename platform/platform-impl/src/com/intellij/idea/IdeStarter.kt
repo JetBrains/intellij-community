@@ -16,7 +16,6 @@ import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -62,7 +61,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
   override suspend fun start(args: List<String>) {
     coroutineScope {
-      val app = ApplicationManagerEx.getApplicationEx()
+      val app = ApplicationManager.getApplication()
       val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
       openProjectIfNeeded(args = args, app = app, asyncCoroutineScope = this, lifecyclePublisher = lifecyclePublisher)
 
@@ -83,7 +82,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
   @OptIn(IntellijInternalApi::class)
   protected open suspend fun openProjectIfNeeded(args: List<String>,
-                                                 app: ApplicationEx,
+                                                 app: Application,
                                                  asyncCoroutineScope: CoroutineScope,
                                                  lifecyclePublisher: AppLifecycleListener) {
     var willReopenRecentProjectOnStart = false
@@ -176,7 +175,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
   internal class StandaloneLightEditStarter : IdeStarter() {
     override suspend fun openProjectIfNeeded(args: List<String>,
-                                             app: ApplicationEx,
+                                             app: Application,
                                              asyncCoroutineScope: CoroutineScope,
                                              lifecyclePublisher: AppLifecycleListener) {
       val project = when {
