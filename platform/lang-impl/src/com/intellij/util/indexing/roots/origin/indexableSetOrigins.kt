@@ -112,22 +112,6 @@ internal open class IndexingRootHolderImpl(override val roots: List<VirtualFile>
   }
 }
 
-internal class MutableIndexingRootHolder(override var roots: MutableList<VirtualFile> = mutableListOf(),
-                                         override val nonRecursiveRoots: MutableList<VirtualFile> = mutableListOf()) :
-  IndexingRootHolderImpl(roots, nonRecursiveRoots) {
-  fun addRoots(value: IndexingRootHolder) {
-    roots.addAll(value.roots)
-    nonRecursiveRoots.addAll(value.nonRecursiveRoots)
-  }
-
-  fun remove(otherHolder: MutableIndexingRootHolder?) {
-    otherHolder?.also {
-      roots.removeAll(it.roots)
-      nonRecursiveRoots.removeAll(it.nonRecursiveRoots)
-    }
-  }
-}
-
 internal open class IndexingSourceRootHolderImpl(override val roots: List<VirtualFile>,
                                                  override val nonRecursiveRoots: List<VirtualFile>,
                                                  override val sourceRoots: List<VirtualFile>,

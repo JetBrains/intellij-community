@@ -359,15 +359,18 @@ open class ProjectRootManagerComponent(project: Project,
       rootFiles.forEach { recursivePaths.add(it.path) }
     }
 
-    builder.forEachModuleContentEntitiesRoots { roots ->
+    builder.forEachModuleContentEntitiesRoots { urlRoots ->
+      val roots = urlRoots.toRootHolder()
       register(roots.roots, "module content roots")
       register(roots.nonRecursiveRoots, "module non-recursive content roots")
     }
-    builder.forEachContentEntitiesRoots { roots ->
+    builder.forEachContentEntitiesRoots { urlRoots ->
+      val roots = urlRoots.toRootHolder()
       register(roots.roots, "content roots")
       register(roots.nonRecursiveRoots, "non-recursive content roots")
     }
-    builder.forEachExternalEntitiesRoots { roots ->
+    builder.forEachExternalEntitiesRoots { urlRoots ->
+      val roots = urlRoots.toSourceRootHolder()
       register(roots.roots, "external roots")
       register(roots.sourceRoots, "external source roots")
       register(roots.nonRecursiveRoots, "non-recursive external roots")

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder
+import com.intellij.util.indexing.roots.origin.IndexingUrlRootHolder
 import com.intellij.util.indexing.roots.origin.ModuleRootOriginImpl
 
 open class ModuleIndexableFilesPolicy {
@@ -39,7 +40,9 @@ internal class ModuleIndexableFilesIteratorImpl private constructor(private val 
 
   companion object {
 
-    fun createIterators(module: Module, roots: IndexingRootHolder): Collection<IndexableFilesIterator> {
+    fun createIterators(module: Module, urlRoots: IndexingUrlRootHolder): Collection<IndexableFilesIterator> {
+      val roots = urlRoots.toRootHolder()
+      if (roots.isEmpty()) return emptyList()
       // 100 is a totally magic constant here, designed to help Rider to avoid indexing all non-recursive roots with one iterator => on a
       // single thread
       if (roots.size() > 100) {

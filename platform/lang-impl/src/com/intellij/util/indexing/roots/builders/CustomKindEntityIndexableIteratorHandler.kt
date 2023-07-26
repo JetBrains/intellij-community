@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.util.indexing.roots.CustomKindEntityIteratorImpl
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.origin.MutableIndexingRootHolder
+import com.intellij.util.indexing.roots.origin.MutableIndexingUrlRootHolder
 
 class CustomKindEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun accepts(builder: IndexableEntityProvider.IndexableIteratorBuilder): Boolean {
@@ -20,12 +20,14 @@ class CustomKindEntityIndexableIteratorHandler : IndexableIteratorBuilderHandler
     @Suppress("UNCHECKED_CAST")
     builders as Collection<CustomKindEntityBuilder<WorkspaceEntity>>
 
-    return builders.groupBy { it.entityReference }.map {
-      CustomKindEntityIteratorImpl(it.key, it.value.fold(
-        MutableIndexingRootHolder()) { holder, builder ->
+    return builders.groupBy { it.entityReference }.mapNotNull {
+      it.value.fold(MutableIndexingUrlRootHolder()) { holder, builder ->
         holder.addRoots(builder.roots)
         return@fold holder
-      }, it.value[0].presentation)
+      }.toRootHolder().let { rootHolder ->
+        if (rootHolder.isEmpty()) null
+        else CustomKindEntityIteratorImpl(it.key, rootHolder, it.value[0].presentation)
+      }
     }
   }
 }
