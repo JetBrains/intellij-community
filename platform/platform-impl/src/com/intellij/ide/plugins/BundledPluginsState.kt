@@ -11,17 +11,16 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.time.Duration.Companion.minutes
 
 private const val SAVED_VERSION_KEY = "bundled.plugins.list.saved.version"
 
@@ -42,8 +41,17 @@ class BundledPluginsState : ApplicationInitializedListener {
       @VisibleForTesting get() = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
   }
 
+  init {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      throw ExtensionNotApplicableException.create()
+    }
+  }
+
   override suspend fun execute(asyncScope: CoroutineScope) {
     asyncScope.launch {
+      // postpone avoiding getting PropertiesComponent and writing to disk too early
+      delay(1.minutes)
+
       val savedBuildNumber = serviceAsync<PropertiesComponent>().savedBuildNumber
       val currentBuildNumber = ApplicationInfo.getInstance().build
 
@@ -77,8 +85,8 @@ fun writePluginIdsToFile(pluginIds: Set<IdeaPluginDescriptor>, configDir: Path =
   )
 }
 
-fun readPluginIdsFromFile(path: Path = PathManager.getConfigDir()): Set<Pair<PluginId, Category>> {
-  val file = path.resolve(BUNDLED_PLUGINS_FILENAME)
+fun readPluginIdsFromFile(configDir: Path = PathManager.getConfigDir()): Set<Pair<PluginId, Category>> {
+  val file = configDir.resolve(BUNDLED_PLUGINS_FILENAME)
   if (!Files.exists(file)) {
     return emptySet()
   }
