@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
@@ -47,11 +48,9 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
+import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -64,9 +63,10 @@ private val WATCH_ROOTS_LOG = Logger.getInstance("#com.intellij.openapi.vfs.Watc
 private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProvider>("com.intellij.roots.watchedRootsProvider")
 
 /**
- * ProjectRootManager extended with ability to watch events.
+ * ProjectRootManager extended with the ability to watch events.
  */
-open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImpl(project), Disposable {
+open class ProjectRootManagerComponent(project: Project,
+                                       coroutineScope: CoroutineScope) : ProjectRootManagerImpl(project, coroutineScope), Disposable {
   // accessed in EDT only
   private var collectWatchRootsJob = AtomicReference<Job>()
   private var pointerChangesDetected = false
@@ -80,7 +80,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   private val rootWatchLock = ReentrantLock()
 
   private val rootsChangedListener: VirtualFilePointerListener = object : VirtualFilePointerListener {
-    private fun getPointersChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
+    private fun getPointerChanges(pointers: Array<VirtualFilePointer>): RootsChangeRescanningInfo {
       var result: RootsChangeRescanningInfo? = null
       for (pointer in pointers) {
         if (pointer.isValid) {
@@ -109,7 +109,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     override fun validityChanged(pointers: Array<VirtualFilePointer>) {
-      val changeInfo = getPointersChanges(pointers)
+      val changeInfo = getPointerChanges(pointers)
       if (project.isDisposed) {
         return
       }
@@ -363,7 +363,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
     }
 
     builder.forEachModuleContentEntitiesRoots { roots ->
-      register(roots.roots, "module content roots");
+      register(roots.roots, "module content roots")
       register(roots.nonRecursiveRoots, "module non-recursive content roots")
     }
     builder.forEachContentEntitiesRoots { roots ->
@@ -381,7 +381,7 @@ open class ProjectRootManagerComponent(project: Project) : ProjectRootManagerImp
   override fun clearScopesCaches() {
     super.clearScopesCaches()
 
-    project.getServiceIfCreated(LibraryScopeCache::class.java)?.clear()
+    project.serviceIfCreated<LibraryScopeCache>()?.clear()
   }
 
   override fun clearScopesCachesForModules() {

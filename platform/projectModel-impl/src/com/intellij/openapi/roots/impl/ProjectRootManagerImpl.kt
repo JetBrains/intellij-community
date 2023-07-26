@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.module.Module
@@ -21,6 +21,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -33,7 +35,8 @@ private const val PROJECT_JDK_TYPE_ATTR = "project-jdk-type"
 private const val ATTRIBUTE_VERSION = "version"
 
 @State(name = "ProjectRootManager")
-open class ProjectRootManagerImpl(val project: Project) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+open class ProjectRootManagerImpl(val project: Project,
+                                  private val coroutineScope: CoroutineScope) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private var projectSdkName: String? = null
   private var projectSdkType: String? = null
@@ -224,7 +227,7 @@ open class ProjectRootManagerImpl(val project: Project) : ProjectRootManagerEx()
     return VfsUtilCore.toVirtualFileArray(result)
   }
 
-  override fun getProjectSdk(): Sdk? {
+  final override fun getProjectSdk(): Sdk? {
     if (projectSdkName == null) {
       return null
     }
@@ -295,16 +298,45 @@ open class ProjectRootManagerImpl(val project: Project) : ProjectRootManagerEx()
     projectSdkType = element.getAttributeValue(PROJECT_JDK_TYPE_ATTR)
     val app = ApplicationManager.getApplication()
     if (app != null) {
-      val runnable = if (isStateLoaded) {
-        Runnable { projectJdkChanged() }
+      val isStateLoaded = isStateLoaded
+      coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
+        applyState(isStateLoaded)
       }
-      else {
-        // Prevent root changed event during startup to improve startup performance
-        Runnable { fireJdkChanged() }
-      }
-      app.invokeLater(Runnable { app.runWriteAction(runnable) }, ModalityState.nonModal())
     }
     isStateLoaded = true
+  }
+
+  private suspend fun applyState(isStateLoaded: Boolean) {
+    if (isStateLoaded) {
+      writeAction {
+        projectJdkChanged()
+      }
+      return
+    }
+
+    // prevent root changed event during startup to improve startup performance
+    val projectSdkName = projectSdkName
+    val sdk = if (projectSdkName == null) {
+      null
+    }
+    else {
+      val projectJdkTable = serviceAsync<ProjectJdkTable>()
+      readActionBlocking {
+        if (projectSdkType == null) {
+          projectJdkTable.findJdk(projectSdkName)
+        }
+        else {
+          projectJdkTable.findJdk(projectSdkName, projectSdkType!!)
+        }
+      }
+    }
+
+    val extensions = EP_NAME.getExtensions(project)
+    writeAction {
+      for (extension in extensions) {
+        extension.projectSdkChanged(sdk)
+      }
+    }
   }
 
   override fun noStateLoaded() {

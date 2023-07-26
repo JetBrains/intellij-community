@@ -14,8 +14,9 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRoots
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyIndex
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleDependencyListener
+import kotlinx.coroutines.CoroutineScope
 
-class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
+class ProjectRootManagerBridge(project: Project, coroutineScope: CoroutineScope) : ProjectRootManagerComponent(project, coroutineScope) {
   init {
     if (!project.isDefault) {
       moduleDependencyIndex.addListener(ModuleDependencyListenerImpl())
