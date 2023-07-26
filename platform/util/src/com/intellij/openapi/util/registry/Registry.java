@@ -3,7 +3,6 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.MathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -236,18 +235,20 @@ public final class Registry  {
       userProperties.clear();
       return userProperties;
     }
+
     Map<String, String> map = fromState(state);
     Set<String> keys2process = new HashSet<>(userProperties.keySet());
     for (Map.Entry<String, String> entry : map.entrySet()) {
       RegistryValue registryValue = registry.doGet(entry.getKey());
       String currentValue = registryValue.get(entry.getKey(), null, false);
       // currentValue == null means value is not in the bundle. Simply ignore it
-      if (currentValue != null && !StringUtil.equals(currentValue, entry.getValue())) {
+      if (currentValue != null && !currentValue.equals(entry.getValue())) {
         registryValue.setValue(entry.getValue());
       }
       keys2process.remove(entry.getKey());
     }
-    //keys that are not in the state, we need to reset them to default value
+
+    // keys that are not in the state, we need to reset them to default value
     for (String key : keys2process) {
       registry.doGet(key).resetToDefault();
     }
