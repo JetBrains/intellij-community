@@ -6,7 +6,7 @@ public class LocalClass {
         MyObject<Integer, T> h = new MyObject<>(1, x);
         MyObject<String, T> h2 = new MyObject<>("1", x);
         MyObject raw = new MyObject("1", x);
-        IntFunction<MyObject<Character, T>> ic = a -> new MyObject(a, x);
+        IntFunction<MyObject<Character, T>> ic = a -> new MyObject<>(a, x);
         System.out.println(new MyObject<Number, T>(1, x) {
             void test() {}
         });

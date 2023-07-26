@@ -162,4 +162,8 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testBrokenPrimitiveArray() {
     doTest();
   }
+  
+  public void testLocalGenericClass() { doTest(); }
+  public void testInnerGenericClass() { doTest(); }
+  public void testInnerGenericClass2() { doTest(); }
 }

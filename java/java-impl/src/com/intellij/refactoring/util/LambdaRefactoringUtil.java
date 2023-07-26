@@ -23,6 +23,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.JavaIntroduceVariableHandlerBase;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -212,7 +213,8 @@ public final class LambdaRefactoringUtil {
           final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
           LOG.assertTrue(containingClass != null);
-          if (containingClass.hasTypeParameters() && !PsiUtil.isRawSubstitutor(containingClass, substitutor)) {
+          if (containingClass.hasTypeParameters() &&
+              ContainerUtil.all(containingClass.getTypeParameters(), tp -> substitutor.substitute(tp) != null)) {
             buf.append("<").append(StringUtil.join(containingClass.getTypeParameters(), parameter -> {
               final PsiType psiType = substitutor.substitute(parameter);
               LOG.assertTrue(psiType != null);
