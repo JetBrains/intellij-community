@@ -1253,17 +1253,20 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     @Override
     public void run() {
+      Application app = ApplicationManager.getApplication();
+      if (app == null) {
+        return;
+      }
+
       try {
-        FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
+        FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
         if (fileBasedIndex instanceof FileBasedIndexImpl fileBasedIndexImpl) {
           fileBasedIndexImpl.performShutdown(false, "IDE shutdown");
         }
       }
       finally {
-        if (!myTermination) {
-          if (!ApplicationManager.getApplication().isUnitTestMode()) {
-            StorageDiagnosticData.dumpOnShutdown();
-          }
+        if (!myTermination && !app.isUnitTestMode()) {
+          StorageDiagnosticData.dumpOnShutdown();
         }
       }
     }
