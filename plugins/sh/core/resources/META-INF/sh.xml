@@ -33,7 +33,7 @@
     <typedHandler implementation="com.intellij.sh.ShTypedHandler"/>
     <completion.contributor id="shShebang" language="Shell Script"
                             implementationClass="com.intellij.sh.completion.ShShebangCompletionContributor"
-                            order="after terminalCommandSpec"/>
+                            order="first"/>
     <completion.contributor id="shFilePathCompletionContributor" language="Shell Script"
                             implementationClass="com.intellij.sh.completion.ShFilePathCompletionContributor"
                             order="after shShebang"/>
