@@ -62,17 +62,21 @@ class SettingsSyncBridge(parentDisposable: Disposable,
 
   @RequiresBackgroundThread
   internal fun initialize(initMode: InitMode) {
-    saveIdeSettings()
+    try {
+      saveIdeSettings()
 
-    settingsLog.initialize()
+      settingsLog.initialize()
 
-    // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
-    SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
-    ideMediator.activateStreamProvider()
+      // the queue is not activated initially => events will be collected but not processed until we perform all initialization tasks
+      SettingsSyncEvents.getInstance().addListener(settingsChangeListener)
+      ideMediator.activateStreamProvider()
 
-    applyInitialChanges(initMode)
+      applyInitialChanges(initMode)
 
-    queue.activate()
+      queue.activate()
+    } catch (ex: Exception) {
+      stopSyncingAndRollback(null, ex)
+    }
   }
 
   private fun saveIdeSettings() {
@@ -276,16 +280,20 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     val idePosition: SettingsLog.Position,
     val cloudPosition: SettingsLog.Position,
     val knownServerId: String?
-  )
+  ) {
+    override fun toString(): String {
+      return "CurrentState(masterPosition=$masterPosition, idePosition=$idePosition, cloudPosition=$cloudPosition, knownServerId=$knownServerId)"
+    }
+  }
 
   private fun collectCurrentState(): CurrentState = CurrentState(settingsLog.getMasterPosition(),
                                                                  settingsLog.getIdePosition(),
                                                                  settingsLog.getCloudPosition(),
                                                                  SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId)
 
-  private fun stopSyncingAndRollback(previousState: CurrentState, exception: Throwable? = null) {
+  private fun stopSyncingAndRollback(previousState: CurrentState?, exception: Throwable? = null) {
     if (exception != null) {
-      LOG.error("Couldn't apply settings. Disabling sync and rolling back.", exception)
+      LOG.error("Couldn't apply settings. Settings sync will be disabled.", exception)
       SettingsSyncEventsStatistics.DISABLED_AUTOMATICALLY.log(SettingsSyncEventsStatistics.AutomaticDisableReason.EXCEPTION)
     }
     else {
@@ -299,12 +307,15 @@ class SettingsSyncBridge(parentDisposable: Disposable,
     ideMediator.removeStreamProvider()
     SettingsSyncEvents.getInstance().removeListener(settingsChangeListener)
     pendingEvents.clear()
-    rollback(previousState)
+    if (previousState != null) {
+      rollback(previousState)
+    }
     queue.deactivate() // for tests it is important to have it the last statement, otherwise waitForAllExecuted can finish before rollback
   }
 
   private fun rollback(previousState: CurrentState) {
     try {
+      LOG.warn("Rolling back to previous state: $previousState")
       SettingsSyncLocalSettings.getInstance().knownAndAppliedServerId = previousState.knownServerId
       settingsLog.setIdePosition(previousState.idePosition)
       settingsLog.setCloudPosition(previousState.cloudPosition)
