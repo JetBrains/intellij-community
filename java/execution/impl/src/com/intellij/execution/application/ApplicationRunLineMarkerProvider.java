@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiMethodUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
     else if (parent instanceof PsiMethod method) {
       if (!"main".equals(method.getName()) || !PsiMethodUtil.isMainMethod(method)) return null;
       PsiClass containingClass = method.getContainingClass();
+      if (!(containingClass instanceof PsiUnnamedClass) && PsiTreeUtil.getParentOfType(containingClass, PsiUnnamedClass.class) != null) return null;
       if (containingClass == null || PsiUtil.isLocalOrAnonymousClass(containingClass)) return null;
       if (containingClass instanceof PsiUnnamedClass) {
         Optional<PsiMethod> mainMethod =
