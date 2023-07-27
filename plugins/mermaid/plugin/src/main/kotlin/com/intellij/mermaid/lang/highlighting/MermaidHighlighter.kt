@@ -163,7 +163,19 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Gantt.EXCLUDES,
         MermaidTokens.Gantt.INCLUDES,
         MermaidTokens.Gantt.TICK_INTERVAL,
-        MermaidTokens.Gantt.TODAY_MARKER
+        MermaidTokens.Gantt.TODAY_MARKER,
+        MermaidTokens.Gantt.WEEKDAY
+      )
+      fillMap(
+        holder,
+        MermaidTextAttributes.constant,
+        MermaidTokens.Gantt.MONDAY,
+        MermaidTokens.Gantt.TUESDAY,
+        MermaidTokens.Gantt.WEDNESDAY,
+        MermaidTokens.Gantt.THURSDAY,
+        MermaidTokens.Gantt.FRIDAY,
+        MermaidTokens.Gantt.SATURDAY,
+        MermaidTokens.Gantt.SUNDAY
       )
     }
 

@@ -480,6 +480,9 @@ private ganttStatement ::= ganttDateFormatStatement
   | ganttTickIntervalStatement
   | ganttSectionStatement
   | ganttDataStatement
+  | ganttInclusiveEndDatesStatement
+  | ganttTopAxisStatement
+  | ganttWeekdayStatement
   | directive
   | ganttClickStatement
   | accStatement
@@ -499,7 +502,9 @@ ganttIncludesStatement ::= INCLUDES GANTT_VALUE+
 ganttAxisFormatStatement ::= AXIS_FORMAT GANTT_VALUE+
 ganttTodayMarkerStatement ::= TODAY_MARKER GANTT_VALUE+
 ganttTickIntervalStatement ::= TICK_INTERVAL GANTT_VALUE+
-
+ganttInclusiveEndDatesStatement ::= INCLUSIVE_END_DATES
+ganttTopAxisStatement ::= TOP_AXIS
+ganttWeekdayStatement ::= WEEKDAY (MONDAY | TUESDAY | WEDNESDAY | THURSDAY | FRIDAY | SATURDAY | SUNDAY)
 
 requirementDiagramHeader ::= REQUIREMENT_DIAGRAM
 

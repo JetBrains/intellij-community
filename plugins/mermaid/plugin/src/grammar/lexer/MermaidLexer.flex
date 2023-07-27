@@ -697,12 +697,24 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 <gantt> {
   "title" { yypushstate(title); return TITLE; }
   "dateFormat" { yybegin(gantt_value); return Gantt.DATE_FORMAT; }
+  "inclusiveEndDates" { return Gantt.INCLUSIVE_END_DATES; }
+  "topAxis" { return Gantt.TOP_AXIS; }
   "axisFormat" { yybegin(gantt_value); return Gantt.AXIS_FORMAT; }
   "includes" { yybegin(gantt_value); return Gantt.INCLUDES; }
   "excludes" { yybegin(gantt_value); return Gantt.EXCLUDES; }
   "todayMarker" { yybegin(gantt_today_marker_value); return Gantt.TODAY_MARKER; }
   "tickInterval" { yybegin(gantt_value); return Gantt.TICK_INTERVAL; }
   "section" { yypushstate(section); return SECTION; }
+  
+  "weekday" { return Gantt.WEEKDAY; }
+  "monday"  { return Gantt.MONDAY; }
+  "tuesday"  { return Gantt.TUESDAY; }
+  "wednesday" { return Gantt.WEDNESDAY; }
+  "thursday" { return Gantt.THURSDAY; }
+  "friday" { return Gantt.FRIDAY; }
+  "saturday" { return Gantt.SATURDAY; }
+  "sunday" { return Gantt.SUNDAY; }
+  
   [^\s#:;]+ { return TASK_NAME; }
   ":" { yybegin(gantt_task_data); return COLON; }
 }

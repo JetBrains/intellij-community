@@ -552,6 +552,12 @@ object MermaidTokens {
     val DATE_FORMAT = MermaidToken("Gantt.DATE_FORMAT")
 
     @JvmField
+    val INCLUSIVE_END_DATES = MermaidToken("Gantt.INCLUSIVE_END_DATES")
+
+    @JvmField
+    val TOP_AXIS = MermaidToken("Gantt.TOP_AXIS")
+
+    @JvmField
     val EXCLUDES = MermaidToken("Gantt.EXCLUDES")
 
     @JvmField
@@ -568,6 +574,30 @@ object MermaidTokens {
 
     @JvmField
     val GANTT_VALUE = MermaidToken("Gantt.GANTT_VALUE")
+
+    @JvmField
+    val WEEKDAY = MermaidToken("Gantt.WEEKDAY")
+
+    @JvmField
+    val MONDAY = MermaidToken("Gantt.MONDAY")
+
+    @JvmField
+    val TUESDAY = MermaidToken("Gantt.TUESDAY")
+
+    @JvmField
+    val WEDNESDAY = MermaidToken("Gantt.WEDNESDAY")
+
+    @JvmField
+    val THURSDAY = MermaidToken("Gantt.THURSDAY")
+
+    @JvmField
+    val FRIDAY = MermaidToken("Gantt.FRIDAY")
+
+    @JvmField
+    val SATURDAY = MermaidToken("Gantt.SATURDAY")
+
+    @JvmField
+    val SUNDAY = MermaidToken("Gantt.SUNDAY")
   }
 
   object Requirement {

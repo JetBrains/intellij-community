@@ -88,6 +88,9 @@ object MermaidTokenTypeSets {
     MermaidElements.GANTT_SECTION_STATEMENT,
     MermaidElements.GANTT_DATA_STATEMENT,
     MermaidElements.GANTT_CLICK_STATEMENT,
+    MermaidElements.GANTT_INCLUSIVE_END_DATES_STATEMENT,
+    MermaidElements.GANTT_TOP_AXIS_STATEMENT,
+    MermaidElements.GANTT_WEEKDAY_STATEMENT,
     //endregion
     //region REQUIREMENT
     MermaidElements.REQUIREMENT_DEF,
