@@ -33,7 +33,7 @@ data class HtmlAnchorSymbol(
   override val anchorText: @NlsSafe String
 ): MarkdownHeaderSymbol, MarkdownSymbolInsideInjection, NavigationTarget, SearchTarget {
   init {
-    check(file.language.isMarkdownLanguage()) { "Should be created only on host Markdown files" }
+    check(file.language.isMarkdownLanguage()) { "Should be created only on host Markdown files. File was $file." }
   }
 
   override fun createPointer(): Pointer<out HtmlAnchorSymbol> {
