@@ -4,6 +4,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
@@ -18,21 +19,29 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final int MAX_RESULT_LENGTH_TO_DISPLAY = 40;
   private static final int MAX_EXPRESSION_LENGTH = 200;
 
   public boolean skipIfContainsReferenceExpression = false;
+  public boolean reportOnlyCompileTimeConstants = false;
 
   @Override
   public @NotNull OptPane getOptionsPane() {
     return OptPane.pane(
       OptPane.checkbox("skipIfContainsReferenceExpression",
-                       InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal")));
+                       InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal")),
+      OptPane.checkbox("reportOnlyCompileTimeConstants",
+                       InspectionGadgetsBundle.message("inspection.constant.expression.report.compile.time"))
+        .description(InspectionGadgetsBundle.message("inspection.constant.expression.report.compile.time.description")));
   }
 
   @NotNull
@@ -40,51 +49,78 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Override
-      public void visitUnaryExpression(@NotNull PsiUnaryExpression expression) {
+      public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         handle(expression);
       }
-
+      
       @Override
-      public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+      public void visitExpression(@NotNull PsiExpression expression) {
         handle(expression);
       }
-
-      void handle(PsiExpression expression) {
+      
+      private void handle(@NotNull PsiExpression expression) {
         // inspection disabled for long expressions because of performance issues on
         // relatively common large string expressions.
-        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return;
-        if (expression.getType() == null) return;
-        if (!PsiUtil.isConstantExpression(expression)) return;
-        final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-        if (parent instanceof PsiExpression && PsiUtil.isConstantExpression((PsiExpression)parent)) return;
+        Object value = computeConstant(expression);
+        if (value == null) return;
+        if (value instanceof PsiField && !(value instanceof PsiEnumConstant)) return;
+        if (value instanceof PsiElement e && expression instanceof PsiReferenceExpression ref && ref.isReferenceTo(e)) return;
+        String valueText = getValueText(value);
+        if (valueText == null || expression.textMatches(valueText)) return;
+        String message = valueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY ?
+                         InspectionGadgetsBundle.message("inspection.constant.expression.display.name") :
+                         InspectionGadgetsBundle.message("inspection.constant.expression.message", valueText);
+        if (skipIfContainsReferenceExpression && hasReferences(expression)) {
+          if (isOnTheFly) {
+            holder.registerProblem(expression, message, ProblemHighlightType.INFORMATION,
+                                   new ComputeConstantValueFix(expression, valueText));
+          }
+        }
+        else {
+          holder.registerProblem(expression, message,
+                                 new ComputeConstantValueFix(expression, valueText));
+        }
+      }
+
+      @Nullable
+      private Object computeConstant(PsiExpression expression) {
+        if (expression.getTextLength() > MAX_EXPRESSION_LENGTH) return null;
+        if (expression.getType() == null) return null;
+        Object value = computeValue(expression);
+        if (value == null) return null;
+        final PsiExpression parent = getParentExpression(expression);
+        if (parent != null && computeValue(parent) != null) return null;
+        return value;
+      }
+
+      private Object computeValue(PsiExpression expression) {
+        if (expression instanceof PsiClassObjectAccessExpression) return null;
         try {
-          final Object value = ExpressionUtils.computeConstantExpression(expression, true);
-          if (value != null) {
-            String valueText = getValueText(value);
-            if (!expression.textMatches(valueText)) {
-              String message = valueText.length() > MAX_RESULT_LENGTH_TO_DISPLAY ?
-                               InspectionGadgetsBundle.message("inspection.constant.expression.display.name") :
-                               InspectionGadgetsBundle.message("inspection.constant.expression.message", valueText);
-              if (skipIfContainsReferenceExpression &&
-                  hasReferences(expression)) {
-                if (isOnTheFly) {
-                  holder.registerProblem(expression, message, ProblemHighlightType.INFORMATION,
-                                         new ComputeConstantValueFix(expression, valueText));
-                }
-              }
-              else {
-                holder.registerProblem(expression, message,
-                                       new ComputeConstantValueFix(expression, valueText));
-              }
-            }
+          Object value = ExpressionUtils.computeConstantExpression(expression, true);
+          if (value != null && !(value instanceof Enum<?>)) {
+            return value;
           }
         }
         catch (ConstantEvaluationOverflowException ignore) {
+          return null;
         }
+        if (reportOnlyCompileTimeConstants) return null;
+        if (SideEffectChecker.mayHaveSideEffects(expression)) return null;
+        return CommonDataflow.computeValue(expression);
+      }
+
+      @Nullable
+      private static PsiExpression getParentExpression(PsiExpression expression) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        if (parent instanceof PsiExpressionList || parent instanceof PsiTemplate) {
+          parent = parent.getParent();
+        }
+        return tryCast(parent, PsiExpression.class);
       }
 
       private static boolean hasReferences(@NotNull PsiExpression expression) {
-        return PsiTreeUtil.getChildOfAnyType(expression, PsiReferenceExpression.class) != null;
+        return expression instanceof PsiReferenceExpression || 
+               PsiTreeUtil.getChildOfType(expression, PsiReferenceExpression.class) != null;
       }
     };
   }
@@ -102,7 +138,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     @NotNull
     @Override
     public String getName() {
-      if (myValueText.length() < MAX_RESULT_LENGTH_TO_DISPLAY) {
+      if (myText.length() < MAX_RESULT_LENGTH_TO_DISPLAY) {
         return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name", myText);
       }
       return InspectionGadgetsBundle.message("inspection.constant.expression.fix.name.short");
@@ -118,9 +154,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     @Override
     protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
       final PsiExpression expression = (PsiExpression)element;
-      final Object value = ExpressionUtils.computeConstantExpression(expression);
-      @NonNls final String newExpression = getValueText(value);
-      PsiReplacementUtil.replaceExpression(expression, newExpression, new CommentTracker());
+      PsiReplacementUtil.replaceExpression(expression, myValueText, new CommentTracker());
     }
   }
 
@@ -171,6 +205,17 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
     }
     else if (value == null) {
       newExpression = "null";
+    }
+    else if (value instanceof PsiField field) {
+      PsiClass containingClass = field.getContainingClass();
+      if (containingClass == null) return null;
+      return containingClass.getQualifiedName() + "." + field.getName();
+    }
+    else if (value instanceof PsiType) {
+      if (value instanceof PsiClassType clsType) {
+        return clsType.getCanonicalText() + ".class";
+      }
+      return null;
     }
     else {
       newExpression = String.valueOf(value);
