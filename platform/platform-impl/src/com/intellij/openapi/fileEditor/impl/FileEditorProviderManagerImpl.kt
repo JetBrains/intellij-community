@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.SlowOperations
 import kotlinx.coroutines.*
 import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.TestOnly
@@ -63,7 +64,9 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
       }
 
       if (ApplicationManager.getApplication().runReadAction<Boolean, RuntimeException> {
-          checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+          SlowOperations.knownIssue("IDEA-307300, EA-816241").use {
+            checkProvider(project = project, file = file, provider = provider, suppressors = suppressors)
+          }
         }) {
         sharedProviders.add(provider)
         hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)

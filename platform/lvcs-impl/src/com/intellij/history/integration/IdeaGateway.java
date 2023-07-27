@@ -9,6 +9,7 @@ import com.intellij.history.core.tree.Entry;
 import com.intellij.history.core.tree.FileEntry;
 import com.intellij.history.core.tree.RootEntry;
 import com.intellij.ide.scratch.ScratchFileService;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -29,6 +30,7 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
@@ -400,7 +402,9 @@ public class IdeaGateway {
   }
 
   private boolean shouldRegisterDocument(@Nullable VirtualFile f) {
-    return f != null && f.isValid() && areContentChangesVersioned(f);
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307668, EA-821075")) {
+      return f != null && f.isValid() && areContentChangesVersioned(f);
+    }
   }
 
   private void registerDocumentContents(@NotNull LocalHistoryFacade vcs, @NotNull VirtualFile f, Document d) {

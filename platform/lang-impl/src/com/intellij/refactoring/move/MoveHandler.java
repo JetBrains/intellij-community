@@ -7,6 +7,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbService;
@@ -162,7 +163,9 @@ public class MoveHandler implements RefactoringActionHandler {
    * target container can be null => means that container is not determined yet and must be specified by the user
    */
   public static boolean canMove(PsiElement @NotNull [] elements, PsiElement targetContainer) {
-    return findDelegate(elements, targetContainer, null) != null;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326650, EA-659473")) {
+      return findDelegate(elements, targetContainer, null) != null;
+    }
   }
 
   @Nullable

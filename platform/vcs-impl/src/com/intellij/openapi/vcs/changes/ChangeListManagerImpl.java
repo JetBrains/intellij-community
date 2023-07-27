@@ -6,6 +6,7 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.highlighter.WorkspaceFileType;
 import com.intellij.internal.statistic.StructuredIdeActivity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -1170,8 +1171,11 @@ public final class ChangeListManagerImpl extends ChangeListManagerEx implements 
 
   @Override
   public boolean isUnversioned(@NotNull VirtualFile file) {
-    VcsRoot vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file);
-    if (vcsRoot == null) return false;
+    VcsRoot vcsRoot;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322445, EA-857508")) {
+      vcsRoot = ProjectLevelVcsManager.getInstance(myProject).getVcsRootObjectFor(file);
+      if (vcsRoot == null) return false;
+    }
 
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {

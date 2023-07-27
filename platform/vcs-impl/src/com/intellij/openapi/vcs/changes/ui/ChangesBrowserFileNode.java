@@ -2,10 +2,12 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.SlowOperations;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +39,10 @@ public class ChangesBrowserFileNode extends ChangesBrowserNode<VirtualFile> impl
   @Override
   public void render(@NotNull final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     final VirtualFile file = getUserObject();
-    FileStatus fileStatus = getFileStatus();
-
-    renderer.appendFileName(file, file.getName(), fileStatus.getColor());
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-322065, EA-857522")) {
+      FileStatus fileStatus = getFileStatus();
+      renderer.appendFileName(file, file.getName(), fileStatus.getColor());
+    }
 
     if (renderer.isShowFlatten()) {
       if (file.isValid()) {

@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientKind;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -256,7 +258,9 @@ public final class TrailingSpacesStripper implements FileDocumentManagerListener
     }
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file != null) {
-      return ProjectUtil.guessProjectForFile(file);
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-323372, EA-857522")) {
+        return ProjectUtil.guessProjectForFile(file);
+      }
     }
     return null;
   }

@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
@@ -133,11 +134,13 @@ final class UpdateFoldRegionsOperation implements Runnable {
                                                         descriptor.isNonExpandable());
       if (region == null) continue;
 
-      PsiElement psi = descriptor.getElement().getPsi();
-
-      if (psi == null || !psi.isValid() || !myFile.isValid()) {
-        region.dispose();
-        continue;
+      PsiElement psi;
+      try (AccessToken ignore = SlowOperations.knownIssue("IDEA-326651, EA-831712")) {
+        psi = descriptor.getElement().getPsi();
+        if (psi == null || !psi.isValid() || !myFile.isValid()) {
+          region.dispose();
+          continue;
+        }
       }
 
       region.setGutterMarkEnabledForSingleLine(descriptor.isGutterMarkEnabledForSingleLine());
