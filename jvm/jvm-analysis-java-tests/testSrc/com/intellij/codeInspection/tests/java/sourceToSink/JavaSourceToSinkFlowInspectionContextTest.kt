@@ -10,12 +10,12 @@ private const val INSPECTION_PATH = "/codeInspection/sourceToSinkFlow/context"
 class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTestBase() {
 
   override val inspection: SourceToSinkFlowInspection
-    get() = super.inspection.also {
-      it.untaintedParameterWithPlaceMethodClass.add("java.io.PrintWriter")
-      it.untaintedParameterWithPlaceMethodName.add("write")
-      it.untaintedParameterWithPlaceIndex.add("0")
-      it.untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
-      it.untaintedParameterWithPlacePlaceMethod.add("getWriter")
+    get() = super.inspection.apply {
+      untaintedParameterWithPlaceMethodClass.add("java.io.PrintWriter")
+      untaintedParameterWithPlaceMethodName.add("write")
+      untaintedParameterWithPlaceIndex.add("0")
+      untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
+      untaintedParameterWithPlacePlaceMethod.add("getWriter")
     }
 
   override fun getBasePath(): String {

@@ -19,7 +19,7 @@ import org.jetbrains.uast.toUElement
 import kotlin.streams.asSequence
 
 
-data class CustomContext(val target: PsiElement, val place: PsiElement?)
+internal class CustomContext(val target: PsiElement, val place: PsiElement?)
 
 class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   private val JAVAX_ANNOTATION_UNTAINTED = "javax.annotation.Untainted"
@@ -42,7 +42,7 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
     customFactories.add(adapterToContext(customFactory))
   }
 
-  fun addForContext(customFactory: (CustomContext) -> TaintValue?) {
+  internal fun addForContext(customFactory: (CustomContext) -> TaintValue?) {
     customFactories.add(customFactory)
   }
 
