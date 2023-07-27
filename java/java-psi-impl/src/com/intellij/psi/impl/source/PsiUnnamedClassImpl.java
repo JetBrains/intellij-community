@@ -19,6 +19,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -286,6 +287,11 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
                                      @NotNull PsiElement place) {
     LanguageLevel level = PsiUtil.getLanguageLevel(place);
     return PsiClassImplUtil.processDeclarationsInClass(this, processor, state, null, lastParent, place, level, false);
+  }
+
+  @Override
+  public Icon getElementIcon(int flags) {
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 
   @Override
