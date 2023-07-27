@@ -363,9 +363,7 @@ object CodeWithMeClientDownloader {
 
     val dataList = listOfNotNull(jdkData, guestData)
 
-    val activity: StructuredIdeActivity? =
-      if (dataList.isNotEmpty()) RemoteDevStatisticsCollector.onGuestDownloadStarted()
-      else null
+    val activity: StructuredIdeActivity? = if (dataList.isEmpty()) null else RemoteDevStatisticsCollector.onGuestDownloadStarted()
 
     fun updateStateText() {
       val downloadList = dataList.filter { it.status.get() == DownloadableFileData.DownloadableFileState.Downloading }.joinToString(", ") { it.fileCaption }
