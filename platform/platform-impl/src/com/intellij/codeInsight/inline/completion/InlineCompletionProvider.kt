@@ -31,7 +31,7 @@ interface InlineCompletionProvider {
   fun isEnabled(event: InlineCompletionEvent): Boolean
 
   companion object {
-    private val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
+    val EP_NAME = ExtensionPointName.create<InlineCompletionProvider>("com.intellij.inline.completion.provider")
     fun extensions(): List<InlineCompletionProvider> = EP_NAME.extensionList
   }
 
