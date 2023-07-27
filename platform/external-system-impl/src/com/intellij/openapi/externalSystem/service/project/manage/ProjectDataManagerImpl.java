@@ -203,6 +203,10 @@ public final class ProjectDataManagerImpl implements ProjectDataManager {
       if (!app.isUnitTestMode() && !app.isHeadlessEnvironment()) {
         StartUpPerformanceService.Companion.getInstance().reportStatistics(project);
       }
+
+      if (importSucceeded) {
+        trace.reportStatistics();
+      }
     }
   }
 
