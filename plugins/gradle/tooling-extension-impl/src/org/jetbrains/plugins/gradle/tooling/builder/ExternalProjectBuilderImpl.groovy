@@ -14,7 +14,6 @@ import org.gradle.api.file.ContentFilterable
 import org.gradle.api.file.FileCopyDetails
 import org.gradle.api.file.RegularFile
 import org.gradle.api.internal.project.ProjectInternal
-import org.gradle.api.invocation.Gradle
 import org.gradle.api.tasks.AbstractCopyTask
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
@@ -33,7 +32,6 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
-import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
 import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
@@ -42,15 +40,11 @@ import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.nio.file.Path
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
 
-import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
 import static org.jetbrains.plugins.gradle.tooling.builder.ModelBuildersDataProviders.TASKS_PROVIDER
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.dynamicCheckInstanceOf
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveGetProperty
 import static org.jetbrains.plugins.gradle.tooling.util.StringUtils.toCamelCase
-
 /**
  * @author Vladislav.Soroka
  */
@@ -65,14 +59,6 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   public static final boolean is74OrBetter = gradleBaseVersion >= GradleVersion.version("7.4")
   public static final boolean is80OrBetter = gradleBaseVersion >= GradleVersion.version("8.0")
 
-  static final DataProvider<ConcurrentMap<Project, ExternalProject>> PROJECTS_PROVIDER = new DataProvider<ConcurrentMap<Project, ExternalProject>>() {
-    @NotNull
-    @Override
-    ConcurrentMap<Project, ExternalProject> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new ConcurrentHashMap<Project, ExternalProject>()
-    }
-  }
-
   @Override
   boolean canBuild(String modelName) {
     return ExternalProject.name == modelName || ExternalProjectPreview.name == modelName
@@ -81,32 +67,26 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
   @Nullable
   @Override
   Object buildAll(@NotNull final String modelName, @NotNull final Project project, @NotNull ModelBuilderContext context) {
-    if (project != project.rootProject) return null
     if (System.properties.'idea.internal.failEsModelBuilder' as boolean) {
       throw new RuntimeException("Boom!")
     }
-    def cache = context.getData(PROJECTS_PROVIDER)
     def tasksFactory = context.getData(TASKS_PROVIDER)
     def sourceSetFinder = new SourceSetCachedFinder(context)
-    return doBuild(modelName, project, context, cache, tasksFactory, sourceSetFinder)
+    return buildExternalProject(project, context, tasksFactory, sourceSetFinder)
   }
 
-  @Nullable
-  private static Object doBuild(final String modelName,
-                                final Project project,
-                                ModelBuilderContext context,
-                                ConcurrentMap<Project, ExternalProject> cache,
-                                TasksFactory tasksFactory,
-                                SourceSetCachedFinder sourceSetFinder) {
-    ExternalProject externalProject = cache[project]
-    if (externalProject != null) return externalProject
-
-    def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
-    DefaultExternalProject defaultExternalProject = new DefaultExternalProject()
-    defaultExternalProject.externalSystemId = "GRADLE"
-    defaultExternalProject.name = project.name
+  @NotNull
+  private static DefaultExternalProject buildExternalProject(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull TasksFactory tasksFactory,
+    @NotNull SourceSetCachedFinder sourceSetFinder
+  ) {
+    DefaultExternalProject externalProject = new DefaultExternalProject()
+    externalProject.externalSystemId = "GRADLE"
+    externalProject.name = project.name
     def qName = ":" == project.path ? project.name : project.path
-    defaultExternalProject.QName = qName
+    externalProject.QName = qName
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
     def ideaModuleName = ideaPluginModule?.name ?: project.name
@@ -123,36 +103,23 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     def projectIdentityPath = GradleVersion.current() >= GradleVersion.version("3.3") ?
                               (project as ProjectInternal).identityPath.path : project.path
 
-    defaultExternalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
-    defaultExternalProject.path = project.path
-    defaultExternalProject.identityPath = projectIdentityPath
-    defaultExternalProject.version = wrap(project.version)
-    defaultExternalProject.description = project.description
-    defaultExternalProject.buildDir = project.buildDir
-    defaultExternalProject.buildFile = project.buildFile
-    defaultExternalProject.group = wrap(project.group)
-    defaultExternalProject.projectDir = project.projectDir
-    defaultExternalProject.sourceSets = getSourceSets(project, context, resolveSourceSetDependencies, sourceSetFinder)
-    defaultExternalProject.tasks = getTasks(project, tasksFactory)
-    defaultExternalProject.sourceCompatibility = getSourceCompatibility(project)
-    defaultExternalProject.targetCompatibility = getTargetCompatibility(project)
+    externalProject.id = projectIdentityPath == ":" ? ideaModuleName : projectIdentityPath
+    externalProject.path = project.path
+    externalProject.identityPath = projectIdentityPath
+    externalProject.version = wrap(project.version)
+    externalProject.description = project.description
+    externalProject.buildDir = project.buildDir
+    externalProject.buildFile = project.buildFile
+    externalProject.group = wrap(project.group)
+    externalProject.projectDir = project.projectDir
+    externalProject.sourceSets = getSourceSets(project, context, sourceSetFinder)
+    externalProject.tasks = getTasks(project, tasksFactory)
+    externalProject.sourceCompatibility = getSourceCompatibility(project)
+    externalProject.targetCompatibility = getTargetCompatibility(project)
 
-    addArtifactsData(project, defaultExternalProject)
+    addArtifactsData(project, externalProject)
 
-    final Map<String, DefaultExternalProject> childProjects = new TreeMap<String, DefaultExternalProject>()
-    for (Map.Entry<String, Project> projectEntry : project.getChildProjects().entrySet()) {
-      final Object externalProjectChild = doBuild(modelName, projectEntry.getValue(), context, cache, tasksFactory, sourceSetFinder)
-      if (externalProjectChild instanceof DefaultExternalProject) {
-        childProjects.put(projectEntry.getKey(), (DefaultExternalProject)externalProjectChild)
-      }
-      else if (externalProjectChild instanceof ExternalProject) {
-        // convert from proxy to our model class
-        childProjects.put(projectEntry.getKey(), new DefaultExternalProject((ExternalProject)externalProjectChild))
-      }
-    }
-    defaultExternalProject.setChildProjects(childProjects)
-    def calculatedProject = cache.putIfAbsent(project, defaultExternalProject)
-    return calculatedProject != null ? calculatedProject : defaultExternalProject
+    return externalProject
   }
 
   static void addArtifactsData(final Project project, DefaultExternalProject externalProject) {
@@ -223,11 +190,14 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     result
   }
 
+  @NotNull
   @CompileDynamic
-  private static Map<String, DefaultExternalSourceSet> getSourceSets(Project project,
-                                                                     ModelBuilderContext context,
-                                                                     boolean resolveSourceSetDependencies,
-                                                                     SourceSetCachedFinder sourceSetFinder) {
+  private static Map<String, DefaultExternalSourceSet> getSourceSets(
+    @NotNull Project project,
+    @NotNull ModelBuilderContext context,
+    @NotNull SourceSetCachedFinder sourceSetFinder
+  ) {
+    def resolveSourceSetDependencies = System.properties.'idea.resolveSourceSetDependencies' as boolean
     final IdeaPlugin ideaPlugin = project.getPlugins().findPlugin(IdeaPlugin.class)
     def ideaPluginModule = ideaPlugin?.model?.module
     boolean inheritOutputDirs = ideaPluginModule?.inheritOutputDirs ?: false
