@@ -47,7 +47,6 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
   )
 
   val aggregatedMetricExporter: AggregatedMetricExporter = AggregatedMetricExporter()
-  val aggregatedSpanProcessor: AggregatedSpanProcessor = AggregatedSpanProcessor(mainScope)
 
   private fun isMetricsEnabled(): Boolean = metricsReportingPath != null
 
@@ -58,7 +57,6 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
 
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(BatchSpanProcessor(coroutineScope = mainScope, spanExporters = spanExporters))
-      .addSpanProcessor(aggregatedSpanProcessor)
       .setResource(resource)
       .build()
 

@@ -56,8 +56,6 @@ interface TelemetryManager {
 
   fun getMeter(scope: Scope): Meter
 
-  fun addSpansExporters(exporters: List<AsyncSpanExporter>)
-
   fun addMetricsExporters(exporters: List<MetricsExporterEntry>)
 }
 
@@ -96,9 +94,6 @@ internal class NoopTelemetryManager : TelemetryManager {
   override fun getSimpleTracer(scope: Scope) = NoopIntelliJTracer
 
   override fun getMeter(scope: Scope): Meter = OpenTelemetry.noop().getMeter(scope.toString())
-
-  override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
-  }
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
   }

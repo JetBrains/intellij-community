@@ -9,7 +9,7 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import kotlinx.coroutines.CoroutineScope
 
-private val EP: ExtensionPointName<OpenTelemetryExporterProvider> = ExtensionPointName("com.intellij.oTelExportersProvider")
+private val EP: ExtensionPointName<OpenTelemetryExporterProvider> = ExtensionPointName("com.intellij.openTelemetryExporterProvider")
 
 private class CustomExportersListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {
@@ -31,7 +31,6 @@ private class CustomExportersListener : ApplicationInitializedListener {
     }
 
     val telemetryManager = TelemetryManager.getInstance()
-    telemetryManager.addSpansExporters(spanExporters)
     telemetryManager.addMetricsExporters(metricsExporters)
   }
 }

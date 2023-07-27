@@ -83,7 +83,7 @@
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
     <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider" fileType="VcsLog"/>
     <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
-    <oTelExportersProvider implementation="com.intellij.vcs.log.VcsLogTelemetryExporter"/>
+    <openTelemetryExporterProvider implementation="com.intellij.vcs.log.VcsLogTelemetryExporter"/>
   </extensions>
 
   <projectListeners>

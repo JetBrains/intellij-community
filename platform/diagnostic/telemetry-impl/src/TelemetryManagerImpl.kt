@@ -42,7 +42,6 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
   override var verboseMode: Boolean = false
 
   private val aggregatedMetricExporter: AggregatedMetricExporter
-  private val aggregatedSpanProcessor: AggregatedSpanProcessor
 
   @Volatile
   private var hasExporters: Boolean
@@ -55,7 +54,6 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
                                                        appInfo = ApplicationInfoImpl.getShadowInstance())
 
     aggregatedMetricExporter = configurator.aggregatedMetricExporter
-    aggregatedSpanProcessor = configurator.aggregatedSpanProcessor
 
     val spanExporters = createSpanExporters(configurator.resource)
     hasExporters = !spanExporters.isEmpty()
@@ -63,13 +61,6 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
     sdk = configurator.getConfiguredSdkBuilder()
       .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .buildAndRegisterGlobal()
-  }
-
-  override fun addSpansExporters(exporters: List<AsyncSpanExporter>) {
-    if (!hasExporters && !exporters.isEmpty()) {
-      hasExporters = true
-    }
-    aggregatedSpanProcessor.addSpansExporters(exporters)
   }
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
