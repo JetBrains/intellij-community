@@ -66,11 +66,11 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     fragments.add(addContentRoots)
 
     val addSourceRoots = SettingsEditorFragment.createTag<T>(
-      "py.add.content.roots",
+      "py.add.source.roots",
       PyBundle.message("python.run.configuration.fragments.source.roots"),
       PyBundle.message("python.run.configuration.fragments.python.group"),
-      { it.shouldAddContentRoots() },
-      { config, value -> config.setAddContentRoots(value) })
+      { it.shouldAddSourceRoots() },
+      { config, value -> config.setAddSourceRoots(value) })
 
     addSourceRoots.actionHint = PyBundle.message("python.run.configuration.fragments.source.roots.hint")
     fragments.add(addSourceRoots)
