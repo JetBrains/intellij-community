@@ -2,7 +2,6 @@
 package com.intellij.modcommand;
 
 import com.intellij.analysis.AnalysisBundle;
-import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.NlsContexts;

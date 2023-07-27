@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.expression;
 
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;

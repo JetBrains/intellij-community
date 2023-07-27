@@ -2,6 +2,7 @@
 package com.siyeh.ipp.trivialif;
 
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;

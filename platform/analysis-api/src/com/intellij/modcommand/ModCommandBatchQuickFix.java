@@ -38,7 +38,7 @@ public abstract class ModCommandBatchQuickFix extends ModCommandQuickFix impleme
     List<ProblemDescriptor> descriptorList = ContainerUtil.filterIsInstance(descriptors, ProblemDescriptor.class);
     if (!descriptorList.isEmpty()) {
       ModCommand command = perform(project, descriptorList);
-      ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(descriptorList.get(0)), command);
+      ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(descriptorList.get(0)), command);
     }
     if (refreshViews != null) {
       refreshViews.run();

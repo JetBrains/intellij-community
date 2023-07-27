@@ -5,6 +5,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;

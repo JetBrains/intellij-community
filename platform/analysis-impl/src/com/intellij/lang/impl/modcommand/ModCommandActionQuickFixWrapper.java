@@ -3,6 +3,7 @@ package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandQuickFix;
@@ -22,12 +23,12 @@ final class ModCommandActionQuickFixWrapper extends ModCommandQuickFix {
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return myAction.perform(ModCommandAction.ActionContext.from(descriptor));
+    return myAction.perform(ActionContext.from(descriptor));
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return myAction.generatePreview(ModCommandAction.ActionContext.from(previewDescriptor));
+    return myAction.generatePreview(ActionContext.from(previewDescriptor));
   }
 
   @Override

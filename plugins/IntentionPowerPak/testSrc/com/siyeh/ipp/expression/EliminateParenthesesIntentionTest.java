@@ -1,8 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.expression;
 
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.command.CommandProcessor;
@@ -33,7 +33,7 @@ public class EliminateParenthesesIntentionTest extends IPPTestCase {
     CaretModel model = myFixture.getEditor().getCaretModel();
     EliminateParenthesesIntention intention = new EliminateParenthesesIntention();
     model.runForEachCaret(caret -> {
-      ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(getEditor(), getFile());
+      ActionContext context = ActionContext.from(getEditor(), getFile());
       assertNotNull(intention.getPresentation(context));
       ModCommand command = intention.perform(context);
       CommandProcessor.getInstance().executeCommand(

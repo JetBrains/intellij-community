@@ -4,8 +4,8 @@ package com.intellij.java.codeInsight.intention;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.impl.SplitIfAction;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -70,7 +70,7 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
   public void testIncomplete() {
     configureByFile("/codeInsight/splitIfAction/before" + getTestName(false) + ".java");
     SplitIfAction action = new SplitIfAction();
-    assertNull(action.getPresentation(ModCommandAction.ActionContext.from(getEditor(), getFile())));
+    assertNull(action.getPresentation(ActionContext.from(getEditor(), getFile())));
   }
 
   public void testIncomplete2() {
@@ -88,13 +88,13 @@ public class SplitIfActionTest extends LightJavaCodeInsightTestCase {
    public void test8() {
     configureByFile("/codeInsight/splitIfAction/beforeOrAndMixed.java");
     SplitIfAction action = new SplitIfAction();
-     assertNull(action.getPresentation(ModCommandAction.ActionContext.from(getEditor(), getFile())));
+     assertNull(action.getPresentation(ActionContext.from(getEditor(), getFile())));
    }
 
 
   private void perform() {
     SplitIfAction action = new SplitIfAction();
-    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(getEditor(), getFile());
+    ActionContext context = ActionContext.from(getEditor(), getFile());
     assertNotNull(action.getPresentation(context));
     ModCommand command = action.perform(context);
     ApplicationManager.getApplication().runWriteAction(

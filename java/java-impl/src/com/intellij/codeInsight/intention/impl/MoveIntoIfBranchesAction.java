@@ -3,11 +3,12 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;

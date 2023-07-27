@@ -2,10 +2,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;

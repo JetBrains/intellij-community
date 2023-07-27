@@ -2,6 +2,7 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiSwitchBlock;
 import com.intellij.psi.util.PsiTreeUtil;

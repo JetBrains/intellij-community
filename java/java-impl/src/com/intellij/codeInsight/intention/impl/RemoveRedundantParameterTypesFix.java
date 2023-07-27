@@ -3,6 +3,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.java.JavaBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;

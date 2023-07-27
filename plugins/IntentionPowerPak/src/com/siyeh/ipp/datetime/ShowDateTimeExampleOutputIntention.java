@@ -2,6 +2,7 @@
 package com.siyeh.ipp.datetime;
 
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;

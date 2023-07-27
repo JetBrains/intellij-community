@@ -2,7 +2,6 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.modcommand.*;
@@ -66,8 +65,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       .refactoringStarted(refactoringId, beforeData);
     try {
-      ModCommandAction.ActionContext context =
-        ModCommandAction.ActionContext.from(editor, element.getContainingFile()).withElement(element);
+      ActionContext context =
+        ActionContext.from(editor, element.getContainingFile()).withElement(element);
       String name = getActionName(element);
       ModCommand command = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         return ReadAction.nonBlocking(() -> perform(context)).executeSynchronously();
@@ -92,7 +91,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return PsiUtil.getVariableCodeBlock((PsiVariable)element, null);
   }
 
-  private static @NotNull ModCommand perform(ModCommandAction.ActionContext context) {
+  private static @NotNull ModCommand perform(ActionContext context) {
     PsiElement element = context.findLeaf();
     if (!(element instanceof PsiIdentifier)) {
       element = context.findLeafOnTheLeft();
@@ -101,7 +100,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return doInline(context, (PsiVariable)Objects.requireNonNull(context.element()), refExpr, InlineMode.CHECK_CONFLICTS);
   }
 
-  private static ModCommand doInline(@NotNull ModCommandAction.ActionContext context,
+  private static ModCommand doInline(@NotNull ActionContext context,
                                      @NotNull PsiVariable var,
                                      PsiReferenceExpression refExpr,
                                      @NotNull InlineMode mode) {
@@ -118,7 +117,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     return inlinePattern(context, (PsiPatternVariable)var, refExpr, allRefs, mode);
   }
 
-  private static @NotNull ModCommand inlinePattern(@NotNull ModCommandAction.ActionContext context,
+  private static @NotNull ModCommand inlinePattern(@NotNull ActionContext context,
                                                    @NotNull PsiPatternVariable pattern,
                                                    @Nullable PsiReferenceExpression refExpr,
                                                    @NotNull List<PsiReferenceExpression> allRefs,
@@ -172,7 +171,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   }
 
 
-  private static @NotNull ModCommand inlineLocal(@NotNull ModCommandAction.ActionContext context,
+  private static @NotNull ModCommand inlineLocal(@NotNull ActionContext context,
                                                  @NotNull PsiLocalVariable local,
                                                  @Nullable PsiReferenceExpression refExpr,
                                                  @NotNull List<PsiReferenceExpression> allRefs,

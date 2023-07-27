@@ -27,6 +27,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.statistic.IntentionFUSCollector;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -286,12 +287,12 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
                                           @Nullable Editor hostEditor,
                                           @NotNull @NlsContexts.Command String commandName,
                                           @NotNull ModCommandAction commandAction, int problemOffset) {
-    record ContextAndCommand(@NotNull ModCommandAction.ActionContext context, @NotNull ModCommand command) { }
+    record ContextAndCommand(@NotNull ActionContext context, @NotNull ModCommand command) { }
     ThrowableComputable<ContextAndCommand, RuntimeException> computable =
       () -> ReadAction.nonBlocking(() -> {
-          ModCommandAction.ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
+          ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction);
           if (context == null) return null;
-          ModCommandAction.ActionContext adjusted = problemOffset >= 0 ? context.withOffset(problemOffset) : context;
+          ActionContext adjusted = problemOffset >= 0 ? context.withOffset(problemOffset) : context;
           return new ContextAndCommand(adjusted, commandAction.perform(adjusted));
         })
         .expireWhen(() -> hostFile.getProject().isDisposed())
@@ -299,7 +300,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     ContextAndCommand contextAndCommand = ProgressManager.getInstance().
       runProcessWithProgressSynchronously(computable, commandName, true, hostFile.getProject());
     if (contextAndCommand == null) return;
-    ModCommandAction.ActionContext context = contextAndCommand.context();
+    ActionContext context = contextAndCommand.context();
     Project project = context.project();
     IntentionFUSCollector.record(project, commandAction, context.file().getLanguage());
     CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -309,24 +310,24 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
   @Nullable
   @RequiresBackgroundThread
-  private static ModCommandAction.ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
-                                                                       @Nullable Editor hostEditor,
-                                                                       @NotNull ModCommandAction commandAction) {
+  private static ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
+                                                      @Nullable Editor hostEditor,
+                                                      @NotNull ModCommandAction commandAction) {
     if (hostEditor == null) {
-      return ModCommandAction.ActionContext.from(null, hostFile);
+      return ActionContext.from(null, hostFile);
     }
     PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, hostEditor.getCaretModel().getOffset());
     Editor injectedEditor = null;
     if (injectedFile != null && !(hostEditor instanceof IntentionPreviewEditor)) {
       injectedEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(hostEditor, injectedFile);
-      ModCommandAction.ActionContext injectedContext = ModCommandAction.ActionContext.from(injectedEditor, injectedFile);
+      ActionContext injectedContext = ActionContext.from(injectedEditor, injectedFile);
       if (commandAction.getPresentation(injectedContext) != null) {
         return injectedContext;
       }
     }
 
     if (hostEditor != injectedEditor) {
-      ModCommandAction.ActionContext hostContext = ModCommandAction.ActionContext.from(hostEditor, hostFile);
+      ActionContext hostContext = ActionContext.from(hostEditor, hostFile);
       if (commandAction.getPresentation(hostContext) != null) {
         return hostContext;
       }

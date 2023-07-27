@@ -15,7 +15,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.find.usages.api.SearchTarget;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -88,8 +88,8 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @return the action context for current in-memory editor
    */
   @RequiresReadLock
-  default ModCommandAction.ActionContext getActionContext() {
-    return ModCommandAction.ActionContext.from(getEditor(), getFile());
+  default ActionContext getActionContext() {
+    return ActionContext.from(getEditor(), getFile());
   }
 
   void setTestDataPath(@NotNull String dataPath);

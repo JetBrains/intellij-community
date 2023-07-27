@@ -1,11 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.modcommand.ModCommands;
 import com.intellij.java.JavaBundle;
-import com.intellij.modcommand.ModChooseAction;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.PsiBasedModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;

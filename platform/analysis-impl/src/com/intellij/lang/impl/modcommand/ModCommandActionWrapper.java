@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -61,7 +62,7 @@ import java.util.Objects;
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    ModCommandAction.Presentation presentation = myAction.getPresentation(ModCommandAction.ActionContext.from(editor, file));
+    ModCommandAction.Presentation presentation = myAction.getPresentation(ActionContext.from(editor, file));
     if (presentation == null) return false;
     myPresentation = presentation;
     return true;
@@ -69,7 +70,7 @@ import java.util.Objects;
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file);
+    ActionContext context = ActionContext.from(editor, file);
     ModCommand command = myAction.perform(context);
     ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
   }
@@ -81,7 +82,7 @@ import java.util.Objects;
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myAction.generatePreview(ModCommandAction.ActionContext.from(editor, file));
+    return myAction.generatePreview(ActionContext.from(editor, file));
   }
 
   @Override

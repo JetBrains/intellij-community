@@ -2,6 +2,7 @@
 package com.siyeh.ig.fixes.braces;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.util.TextRange;
@@ -48,7 +49,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
     ModCommandAction mcAction = action.asModCommandAction();
     assertNotNull(mcAction);
     ModCommandAction.Presentation presentation =
-      mcAction.getPresentation(ModCommandAction.ActionContext.from(myFixture.getEditor(), myFixture.getFile()));
+      mcAction.getPresentation(ActionContext.from(myFixture.getEditor(), myFixture.getFile()));
     assertNotNull(presentation);
     assertEquals(List.of(new ModCommandAction.HighlightRange(TextRange.from(44, 1), EditorColors.DELETED_TEXT_ATTRIBUTES),
       new ModCommandAction.HighlightRange(TextRange.from(87, 1), EditorColors.DELETED_TEXT_ATTRIBUTES)), presentation.rangesToHighlight());

@@ -10,8 +10,8 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult;
 import com.intellij.modcommand.ModCommandQuickFix;
@@ -112,7 +112,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
             ProblemDescriptor problemDescriptor = (ProblemDescriptor)descriptor;
             ModCommand command = modCommandQuickFix.perform(project, problemDescriptor);
             result = result.compose(
-              ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(problemDescriptor), command));
+              ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(problemDescriptor), command));
           } else {
             //CCE here means QuickFix was incorrectly inherited, is there a way to signal (plugin) it is wrong?
             fix.applyFix(project, descriptor);

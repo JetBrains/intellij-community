@@ -4,8 +4,8 @@ package com.intellij.codeInspection.actions
 import com.intellij.codeInspection.CommonProblemDescriptor
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.QuickFix
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
-import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
 import com.intellij.modcommand.ModCommandExecutor.BatchExecutionResult
 import com.intellij.modcommand.ModCommandQuickFix
@@ -18,7 +18,7 @@ open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDes
     if (fix is ModCommandQuickFix) {
       descriptor as ProblemDescriptor
       val command: ModCommand = fix.perform(project, descriptor)
-      return ModCommandExecutor.getInstance().executeInBatch(ModCommandAction.ActionContext.from(descriptor), command)
+      return ModCommandExecutor.getInstance().executeInBatch(ActionContext.from(descriptor), command)
     }
     fix.applyFix(project, descriptor)
     return ModCommandExecutor.Result.SUCCESS

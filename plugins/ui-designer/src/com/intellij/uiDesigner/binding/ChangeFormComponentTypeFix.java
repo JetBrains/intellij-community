@@ -2,6 +2,7 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.psi.PsiClass;

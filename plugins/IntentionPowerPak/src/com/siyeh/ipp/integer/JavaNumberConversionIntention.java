@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.lang.LangBundle;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModChooseAction;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;

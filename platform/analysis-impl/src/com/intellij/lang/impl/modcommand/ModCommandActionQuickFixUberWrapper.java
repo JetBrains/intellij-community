@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -51,7 +52,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
     if (myPresentation != null) return myPresentation;
     PsiElement element = getStartElement();
     if (element == null) return null;
-    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(null, element.getContainingFile())
+    ActionContext context = ActionContext.from(null, element.getContainingFile())
       .withElement(element);
     return myAction.getPresentation(context);
   }
@@ -62,7 +63,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
                              @Nullable Editor editor,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
+    ActionContext context = ActionContext.from(editor, file).withElement(startElement);
     myPresentation = myAction.getPresentation(context);
     return myPresentation != null;
   }
@@ -73,19 +74,19 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
                      @Nullable Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(editor, file).withElement(startElement);
+    ActionContext context = ActionContext.from(editor, file).withElement(startElement);
     ModCommand command = myAction.perform(context);
     ModCommandExecutor.getInstance().executeInteractively(context, command, editor);
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
-    return myAction.generatePreview(ModCommandAction.ActionContext.from(previewDescriptor));
+    return myAction.generatePreview(ActionContext.from(previewDescriptor));
   }
 
   @Override
   public @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
-    return myAction.generatePreview(ModCommandAction.ActionContext.from(editor, file));
+    return myAction.generatePreview(ActionContext.from(editor, file));
   }
 
   @Override

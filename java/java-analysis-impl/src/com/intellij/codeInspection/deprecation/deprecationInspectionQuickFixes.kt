@@ -1,10 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.deprecation
 
-import com.intellij.modcommand.PsiUpdateModCommandAction
-import com.intellij.modcommand.ModCommandAction
+import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommandAction.Presentation
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
 import com.intellij.psi.util.PsiFormatUtil
@@ -34,7 +34,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
   private val myReplacementText =
     PsiFormatUtil.formatMethod(replacementMethod, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_CONTAINING_CLASS or PsiFormatUtilBase.SHOW_NAME, 0)
 
-  override fun getPresentation(context: ModCommandAction.ActionContext, element: PsiMethodCallExpression): Presentation {
+  override fun getPresentation(context: ActionContext, element: PsiMethodCallExpression): Presentation {
     return Presentation.of(InspectionGadgetsBundle.message("replace.method.call.fix.text", myReplacementText))
   }
 
@@ -43,7 +43,7 @@ internal class ReplaceMethodCallFix(expr: PsiMethodCallExpression, replacementMe
     return InspectionGadgetsBundle.message("replace.method.call.fix.family.name")
   }
 
-  override fun invoke(context: ModCommandAction.ActionContext, expr: PsiMethodCallExpression, updater: ModPsiUpdater) {
+  override fun invoke(context: ActionContext, expr: PsiMethodCallExpression, updater: ModPsiUpdater) {
     val replacementMethod = myReplacementMethodPointer.element ?: return
 
     val qualifierText = generateQualifierText(expr.methodExpression, replacementMethod)
@@ -74,11 +74,11 @@ internal class ReplaceFieldReferenceFix(expr: PsiReferenceExpression, replacemen
     return InspectionGadgetsBundle.message("replace.field.reference.fix.family.name")
   }
 
-  override fun getPresentation(context: ModCommandAction.ActionContext, element: PsiReferenceExpression): Presentation {
+  override fun getPresentation(context: ActionContext, element: PsiReferenceExpression): Presentation {
     return Presentation.of(InspectionGadgetsBundle.message("replace.field.reference.fix.text", myReplacementText))
   }
 
-  override fun invoke(context: ModCommandAction.ActionContext, expr: PsiReferenceExpression, updater: ModPsiUpdater) {
+  override fun invoke(context: ActionContext, expr: PsiReferenceExpression, updater: ModPsiUpdater) {
     val replacementMember = myReplacementMemberPointer.element ?: return
 
     val qualifierText = generateQualifierText(expr, replacementMember)

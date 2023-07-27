@@ -23,7 +23,6 @@ import com.intellij.ide.util.MemberChooser;
 import com.intellij.lang.LangBundle;
 import com.intellij.modcommand.*;
 import com.intellij.modcommand.ModChooseMember.SelectionMode;
-import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.modcommand.ModUpdateFileText.Fragment;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;

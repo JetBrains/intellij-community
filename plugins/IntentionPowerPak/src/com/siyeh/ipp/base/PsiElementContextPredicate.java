@@ -15,12 +15,12 @@
  */
 package com.siyeh.ipp.base;
 
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class PsiElementContextPredicate implements PsiElementPredicate {
-  public abstract boolean satisfiedBy(PsiElement element, @NotNull ModCommandAction.ActionContext context);
+  public abstract boolean satisfiedBy(PsiElement element, @NotNull ActionContext context);
 
   @Override
   public boolean satisfiedBy(PsiElement element) {

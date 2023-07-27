@@ -3,8 +3,8 @@ package com.intellij.codeInsight.intention.preview;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction.ActionContext;
 import com.intellij.modcommand.ModCommandService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;

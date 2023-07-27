@@ -19,13 +19,9 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInsight.options.JavaClassValidator;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandBatchQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -95,7 +91,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
       final List<Handler> handlers = StreamEx.of(descriptors).map(descriptor -> descriptor.getPsiElement().getParent())
         .select(PsiClass.class).map(Handler::new).toList();
-      return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptors.get(0)), updater -> {
+      return ModCommands.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
         ContainerUtil.map(handlers, h -> h.getWritable(updater))
           .forEach(Handler::makeStatic);
       });

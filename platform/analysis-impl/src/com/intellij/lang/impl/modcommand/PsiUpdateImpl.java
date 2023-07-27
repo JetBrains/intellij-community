@@ -37,7 +37,7 @@ import static com.intellij.modcommand.ModCommands.error;
 import static com.intellij.modcommand.ModCommands.nop;
 
 final class PsiUpdateImpl {
-  static @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
+  static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
                                        @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     var runnable = new Runnable() {
       private ModPsiUpdaterImpl myUpdater;
@@ -247,7 +247,7 @@ final class PsiUpdateImpl {
       }
     }
 
-    private ModPsiUpdaterImpl(@NotNull ModCommandAction.ActionContext actionContext) {
+    private ModPsiUpdaterImpl(@NotNull ActionContext actionContext) {
       myCaretOffset = actionContext.offset();
       mySelection = actionContext.selection();
       // TODO: lazily get the tracker for the current file

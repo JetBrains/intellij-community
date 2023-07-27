@@ -4,6 +4,7 @@ package com.intellij.java.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
@@ -56,7 +57,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
       UiInterceptors.register(new ChooserInterceptor(null, Pattern.quote(targetClassName)));
     }
     ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
-    ModCommandAction.ActionContext context = ModCommandAction.ActionContext.from(getEditor(), getFile());
+    ActionContext context = ActionContext.from(getEditor(), getFile());
     ModCommandAction.Presentation presentation = action.getPresentation(context);
     assertNotNull(presentation);
     ModCommand command = action.perform(context);

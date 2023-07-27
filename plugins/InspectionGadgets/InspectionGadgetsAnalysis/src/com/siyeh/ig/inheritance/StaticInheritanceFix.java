@@ -53,7 +53,7 @@ class StaticInheritanceFix extends ModCommandQuickFix {
     assert implementingClass != null;
     final PsiFile file = implementingClass.getContainingFile();
 
-    return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptor), updater ->
+    return ModCommands.psiUpdate(ActionContext.from(descriptor), updater ->
       processUsages(allFields, implementingClass, project, iface, file, updater));
   }
 

@@ -234,7 +234,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
         return new ModChooseAction(JavaBundle.message("inspection.join.declaration.and.assignment.fix.title"), subActions);
       }
       else {
-        return action.perform(ModCommandAction.ActionContext.from(descriptor));
+        return action.perform(ActionContext.from(descriptor));
       }
     }
   }

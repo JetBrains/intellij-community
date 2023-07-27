@@ -114,7 +114,7 @@ public final class ModCommands {
    *                also additional editor operation like caret positioning could be performed
    * @return a command that will perform the corresponding update to the original elements and the editor
    */
-  public static @NotNull ModCommand psiUpdate(@NotNull ModCommandAction.ActionContext context,
+  public static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
                                               @NotNull Consumer<@NotNull ModPsiUpdater> updater) {
     return ModCommandService.getInstance().psiUpdate(context, updater);
   }
@@ -138,7 +138,7 @@ public final class ModCommands {
    */
   public static <E extends PsiElement> @NotNull ModCommand psiUpdate(@NotNull E orig,
                                                                      @NotNull BiConsumer<@NotNull E, @NotNull ModPsiUpdater> updater) {
-    return psiUpdate(ModCommandAction.ActionContext.from(null, orig.getContainingFile()), eu -> updater.accept(eu.getWritable(orig), eu));
+    return psiUpdate(ActionContext.from(null, orig.getContainingFile()), eu -> updater.accept(eu.getWritable(orig), eu));
   }
 
   /**
@@ -191,12 +191,12 @@ public final class ModCommands {
     @NotNull Function<@NotNull T, @NotNull TextRange> range) {
     return new PsiUpdateModCommandAction<T>(element) {
       @Override
-      protected void invoke(@NotNull ModCommandAction.ActionContext context, @NotNull T element, @NotNull ModPsiUpdater updater) {
+      protected void invoke(@NotNull ActionContext context, @NotNull T element, @NotNull ModPsiUpdater updater) {
         action.accept(element, updater);
       }
 
       @Override
-      protected @NotNull ModCommandAction.Presentation getPresentation(@NotNull ModCommandAction.ActionContext context, @NotNull T section) {
+      protected @NotNull ModCommandAction.Presentation getPresentation(@NotNull ActionContext context, @NotNull T section) {
         return ModCommandAction.Presentation.of(getFamilyName()).withHighlighting(range.apply(section));
       }
 

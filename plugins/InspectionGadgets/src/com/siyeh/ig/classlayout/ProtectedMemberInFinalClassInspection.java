@@ -17,12 +17,8 @@ package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandBatchQuickFix;
-import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -67,7 +63,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
-      return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptors.get(0)), updater -> {
+      return ModCommands.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
         List<FixData> elements =
           ContainerUtil.map(descriptors, descriptor -> prepareDataForFix(updater, descriptor.getPsiElement()));
         elements.forEach(FixData::apply);

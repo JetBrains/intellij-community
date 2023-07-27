@@ -17,12 +17,12 @@ package com.siyeh.ig.threading;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandQuickFix;
+import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -209,7 +209,7 @@ public class WhileLoopSpinsOnFieldInspection extends BaseInspection {
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       var element = descriptor.getStartElement();
-      return ModCommands.psiUpdate(ModCommandAction.ActionContext.from(descriptor), updater -> {
+      return ModCommands.psiUpdate(ActionContext.from(descriptor), updater -> {
         PsiModifierList modifierList = null;
         if (myAddVolatile) {
           modifierList = updater.getWritable(getFieldModifierList(element));

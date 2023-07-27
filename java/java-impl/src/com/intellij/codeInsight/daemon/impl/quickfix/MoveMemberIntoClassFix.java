@@ -3,10 +3,11 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.analysis.MemberModel;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
-import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtilRt;
