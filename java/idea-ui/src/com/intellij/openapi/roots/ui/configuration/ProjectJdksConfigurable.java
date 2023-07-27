@@ -10,7 +10,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
+import com.intellij.openapi.projectRoots.impl.ProjectJdk;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.JdkConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -72,9 +72,9 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
     myRoot.removeAllChildren();
     final Map<Sdk, Sdk> sdks = myProjectJdksModel.getProjectSdks();
     for (Sdk sdk : sdks.keySet()) {
-      if (!(sdk instanceof ProjectJdkImpl)) continue;
+      if (!(sdk instanceof ProjectJdk)) continue;
 
-      final JdkConfigurable configurable = new JdkConfigurable((ProjectJdkImpl)sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
+      final JdkConfigurable configurable = new JdkConfigurable(sdks.get(sdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject);
       addNode(new MyNode(configurable), myRoot);
     }
     selectJdk(myProjectJdksModel.getProjectSdk()); //restore selection
@@ -138,13 +138,10 @@ public final class ProjectJdksConfigurable extends MasterDetailsComponent {
     final ArrayList<AnAction> actions = new ArrayList<>();
     DefaultActionGroup group = DefaultActionGroup.createPopupGroup(JavaUiBundle.messagePointer("add.new.jdk.text"));
     group.getTemplatePresentation().setIcon(IconUtil.getAddIcon());
-    myProjectJdksModel.createAddActions(group,
-                                        myTree,
-                                        projectJdk -> {
-                                          addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
-                                          selectNodeInTree(findNodeByObject(myRoot, projectJdk));
-                                        },
-                                        SimpleJavaSdkType.notSimpleJavaSdkType());
+    myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
+      addNode(new MyNode(new JdkConfigurable(projectJdk, myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
+      selectNodeInTree(findNodeByObject(myRoot, projectJdk));
+    }, SimpleJavaSdkType.notSimpleJavaSdkType());
     actions.add(new MyActionGroupWrapper(group));
     actions.add(new MyDeleteAction());
     return actions;

@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
-public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
+public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, SdkModificator, Disposable {
   private static final Logger LOG = Logger.getInstance(ProjectJdkImpl.class);
   private String myName;
   private String myVersionString;

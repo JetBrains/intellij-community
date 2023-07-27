@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
@@ -11,13 +12,16 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.NonNls
 import java.io.Serializable
 
-interface SdkMainEntity: WorkspaceEntity {
+interface SdkMainEntity: WorkspaceEntityWithSymbolicId {
   val name: String
   val type: String
-  val version: String
+  val version: String?
   val homePath: VirtualFileUrl
   val roots: List<SdkRoot>
   val additionalData: String
+
+  override val symbolicId: SdkId
+    get() = SdkId(name, type)
 
   //region generated code
   @GeneratedCodeApiVersion(2)
@@ -25,7 +29,7 @@ interface SdkMainEntity: WorkspaceEntity {
     override var entitySource: EntitySource
     override var name: String
     override var type: String
-    override var version: String
+    override var version: String?
     override var homePath: VirtualFileUrl
     override var roots: MutableList<SdkRoot>
     override var additionalData: String
@@ -37,7 +41,6 @@ interface SdkMainEntity: WorkspaceEntity {
     @JvmName("create")
     operator fun invoke(name: String,
                         type: String,
-                        version: String,
                         homePath: VirtualFileUrl,
                         roots: List<SdkRoot>,
                         additionalData: String,
@@ -46,7 +49,6 @@ interface SdkMainEntity: WorkspaceEntity {
       val builder = builder()
       builder.name = name
       builder.type = type
-      builder.version = version
       builder.homePath = homePath
       builder.roots = roots.toMutableWorkspaceList()
       builder.additionalData = additionalData

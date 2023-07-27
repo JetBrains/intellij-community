@@ -3,7 +3,7 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.projectRoots.ProjectJdkTable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.SdkTypeId
@@ -12,10 +12,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.platform.workspace.jps.JpsGlobalFileEntitySource
-import com.intellij.platform.workspace.jps.entities.SdkMainEntity
-import com.intellij.platform.workspace.jps.entities.SdkRoot
-import com.intellij.platform.workspace.jps.entities.SdkRootTypeId
-import com.intellij.platform.workspace.jps.entities.modifyEntity
+import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.jps.serialization.impl.ELEMENT_ADDITIONAL
 import com.intellij.platform.workspace.jps.serialization.impl.JpsGlobalEntitiesSerializers
 import com.intellij.platform.workspace.storage.*
@@ -24,6 +21,11 @@ import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.GlobalLibraryTableBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import org.jdom.Element
 
 //TODO::
@@ -31,12 +33,27 @@ import org.jdom.Element
 // [] Old version `2` constantly serialized for SDK
 // [] Strange to have type `SDK` but methods - `updateJDK`
 // [] One more implementation of `ProjectJdkTable` => `JavaAwareProjectJdkTableImpl`
+// [] SdkType.EP_NAME.addExtensionPointListener
 // [] Additional data loading/saving
 // [] The same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
-class SdkTableBridgeImpl: ProjectJdkTable() {
+internal val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
+class SdkTableBridgeImpl: GlobalSdkTableBridge() {
 
   private val cachedProjectJdks: MutableMap<String, SdkBridgeImpl> = HashMap()
-  private val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
+  override fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
+                                                initialEntityStorage: VersionedEntityStorage): () -> Unit {
+     val sdks = mutableStorage
+      .entities(SdkMainEntity::class.java)
+      .filter { mutableStorage.sdkMap.getDataByEntity(it) == null }
+      .map { sdkEntity -> sdkEntity to SdkBridgeImpl(sdkEntity as SdkMainEntity.Builder) }
+      .toList()
+    thisLogger().debug("Initial load of SDKs")
+
+    for ((entity, sdkBridge) in sdks) {
+      mutableStorage.mutableSdkMap.addIfAbsent(entity, sdkBridge)
+    }
+    return {}
+  }
 
   override fun findJdk(name: String): Sdk? {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
@@ -59,7 +76,7 @@ class SdkTableBridgeImpl: ProjectJdkTable() {
 
     val sdkType = SdkType.findByName(type)
     if (sdkType != null && sdkType.isValidSdkHome(sdkPath)) {
-      val createdSdk = createSdk(name, sdkType.name, sdkPath)
+      val createdSdk = createSdkBridge(name, sdkType.name, sdkPath)
       sdkType.setupSdkPaths(createdSdk)
       cachedProjectJdks[uniqueName] = createdSdk
       return createdSdk
@@ -119,7 +136,9 @@ class SdkTableBridgeImpl: ProjectJdkTable() {
       JDOMUtil.write(additionalDataElement)
     } else ""
 
-    val sdkEntity = SdkMainEntity(sdk.name, sdk.sdkType.name, sdk.versionString, homePathVfu, roots, additionalDataAsString, sdkEntitySource)
+    val sdkEntity = SdkMainEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
+      this.version = sdk.versionString
+    }
     globalWorkspaceModel.updateModel("Adding SDK: ${sdk.name} ${sdk.sdkType}") {
       it.addEntity(sdkEntity)
       it.mutableSdkMap.addIfAbsent(sdkEntity, sdk)
@@ -173,22 +192,12 @@ class SdkTableBridgeImpl: ProjectJdkTable() {
   }
 
   override fun createSdk(name: String, sdkType: SdkTypeId): Sdk {
-    return createSdk(name, sdkType.name, "")
+    return createSdkBridge(name, sdkType.name, "")
   }
 
-  private fun createSdk(name: String, type: String, homePath: String): SdkBridgeImpl {
-    val sdkEntitySource = createEntitySourceForSdk()
-    val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val homePathVfu = virtualFileUrlManager.fromUrl(homePath)
-    val sdkEntity = SdkMainEntity(name, type, "", homePathVfu, emptyList(), "", sdkEntitySource)
-
-    return SdkBridgeImpl(sdkEntity as SdkMainEntity.Builder)
-  }
-
-  private fun createEntitySourceForSdk(): EntitySource {
-    val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
-    val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
-    return JpsGlobalFileEntitySource(globalLibrariesFile)
+  private fun createSdkBridge(name: String, type: String, homePath: String): SdkBridgeImpl {
+    val emptySdkEntity = createEmptySdkEntity(name, type, homePath)
+    return SdkBridgeImpl(emptySdkEntity)
   }
 
 
@@ -199,5 +208,18 @@ class SdkTableBridgeImpl: ProjectJdkTable() {
       get() = getExternalMapping(SDK_BRIDGE_MAPPING_ID)
     val MutableEntityStorage.mutableSdkMap: MutableExternalEntityMapping<SdkBridgeImpl>
       get() = getMutableExternalMapping(SDK_BRIDGE_MAPPING_ID)
+
+    internal fun createEmptySdkEntity(name: String, type: String, homePath: String): SdkMainEntity.Builder {
+      val sdkEntitySource = createEntitySourceForSdk()
+      val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+      val homePathVfu = virtualFileUrlManager.fromUrl(homePath)
+      return SdkMainEntity(name, type, homePathVfu, emptyList(), "", sdkEntitySource) as SdkMainEntity.Builder
+    }
+
+    private fun createEntitySourceForSdk(): EntitySource {
+      val virtualFileUrlManager = VirtualFileUrlManager.getGlobalInstance()
+      val globalLibrariesFile = virtualFileUrlManager.fromUrl(PathManager.getOptionsFile(JpsGlobalEntitiesSerializers.SDK_FILE_NAME).absolutePath)
+      return JpsGlobalFileEntitySource(globalLibrariesFile)
+    }
   }
 }

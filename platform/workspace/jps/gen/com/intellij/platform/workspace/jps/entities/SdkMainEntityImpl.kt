@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.entities
 
+import com.intellij.platform.workspace.storage.*
 import com.intellij.platform.workspace.storage.EntityInformation
 import com.intellij.platform.workspace.storage.EntitySource
 import com.intellij.platform.workspace.storage.EntityStorage
@@ -8,6 +9,7 @@ import com.intellij.platform.workspace.storage.EntityType
 import com.intellij.platform.workspace.storage.GeneratedCodeApiVersion
 import com.intellij.platform.workspace.storage.GeneratedCodeImplVersion
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.ConnectionId
 import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
@@ -38,7 +40,7 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
   override val type: String
     get() = dataSource.type
 
-  override val version: String
+  override val version: String?
     get() = dataSource.version
 
   override val homePath: VirtualFileUrl
@@ -97,9 +99,6 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       if (!getEntityData().isTypeInitialized()) {
         error("Field SdkMainEntity#type should be initialized")
       }
-      if (!getEntityData().isVersionInitialized()) {
-        error("Field SdkMainEntity#version should be initialized")
-      }
       if (!getEntityData().isHomePathInitialized()) {
         error("Field SdkMainEntity#homePath should be initialized")
       }
@@ -128,7 +127,7 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
       if (this.entitySource != dataSource.entitySource) this.entitySource = dataSource.entitySource
       if (this.name != dataSource.name) this.name = dataSource.name
       if (this.type != dataSource.type) this.type = dataSource.type
-      if (this.version != dataSource.version) this.version = dataSource.version
+      if (this.version != dataSource?.version) this.version = dataSource.version
       if (this.homePath != dataSource.homePath) this.homePath = dataSource.homePath
       if (this.roots != dataSource.roots) this.roots = dataSource.roots.toMutableList()
       if (this.additionalData != dataSource.additionalData) this.additionalData = dataSource.additionalData
@@ -161,7 +160,7 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
         changedProperty.add("type")
       }
 
-    override var version: String
+    override var version: String?
       get() = getEntityData().version
       set(value) {
         checkModificationAllowed()
@@ -213,17 +212,16 @@ open class SdkMainEntityImpl(val dataSource: SdkMainEntityData) : SdkMainEntity,
   }
 }
 
-class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
+class SdkMainEntityData : WorkspaceEntityData.WithCalculableSymbolicId<SdkMainEntity>() {
   lateinit var name: String
   lateinit var type: String
-  lateinit var version: String
+  var version: String? = null
   lateinit var homePath: VirtualFileUrl
   lateinit var roots: MutableList<SdkRoot>
   lateinit var additionalData: String
 
   fun isNameInitialized(): Boolean = ::name.isInitialized
   fun isTypeInitialized(): Boolean = ::type.isInitialized
-  fun isVersionInitialized(): Boolean = ::version.isInitialized
   fun isHomePathInitialized(): Boolean = ::homePath.isInitialized
   fun isRootsInitialized(): Boolean = ::roots.isInitialized
   fun isAdditionalDataInitialized(): Boolean = ::additionalData.isInitialized
@@ -252,6 +250,10 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
     return clonedEntity
   }
 
+  override fun symbolicId(): SymbolicEntityId<*> {
+    return SdkId(name, type)
+  }
+
   override fun getEntityInterface(): Class<out WorkspaceEntity> {
     return SdkMainEntity::class.java
   }
@@ -263,7 +265,8 @@ class SdkMainEntityData : WorkspaceEntityData<SdkMainEntity>() {
   }
 
   override fun createDetachedEntity(parents: List<WorkspaceEntity>): WorkspaceEntity {
-    return SdkMainEntity(name, type, version, homePath, roots, additionalData, entitySource) {
+    return SdkMainEntity(name, type, homePath, roots, additionalData, entitySource) {
+      this.version = this@SdkMainEntityData.version
     }
   }
 

@@ -78,6 +78,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
   private String myVersionString;
 
   private String myInitialName;
+  private String myModifiedName;
   private String myInitialPath;
   private boolean myIsDownloading = false;
   private final History myHistory;
@@ -92,12 +93,13 @@ public class SdkEditor implements Configurable, Place.Navigator {
   public SdkEditor(@NotNull Project project,
                    @NotNull ProjectSdksModel sdkModel,
                    @NotNull History history,
-                   @NotNull ProjectJdkImpl sdk) {
+                   @NotNull Sdk sdk) {
     myProject = project;
     mySdkModel = sdkModel;
     myHistory = history;
     mySdk = sdk;
     myInitialName = mySdk.getName();
+    myModifiedName = myInitialName;
     myInitialPath = mySdk.getHomePath();
     createMainPanel();
     for (final AdditionalDataConfigurable additionalDataConfigurable : getAdditionalDataConfigurable()) {
@@ -188,7 +190,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
 
   @Override
   public boolean isModified() {
-    boolean isModified = !Objects.equals(mySdk.getName(), myInitialName);
+    boolean isModified = !Objects.equals(myModifiedName, myInitialName);
     if (myIsDownloading) return isModified;
 
     isModified =
@@ -202,18 +204,28 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return isModified;
   }
 
+  public void setNewSdkName(String name) {
+    myModifiedName = name;
+  }
+
+  @NlsSafe
+  public String getActualSdkName() {
+    return myModifiedName;
+  }
+
   @Override
   public void apply() throws ConfigurationException {
     if (myIsDownloading) return;
 
-    if (!Objects.equals(myInitialName, mySdk.getName())) {
-      if (mySdk.getName().isEmpty()) {
+    if (!Objects.equals(myInitialName, myModifiedName)) {
+      if (myModifiedName.isEmpty()) {
         throw new ConfigurationException(ProjectBundle.message("sdk.list.name.required.error"));
       }
     }
-    myInitialName = mySdk.getName();
+    myInitialName = myModifiedName;
     myInitialPath = mySdk.getHomePath();
     SdkModificator sdkModificator = mySdk.getSdkModificator();
+    sdkModificator.setName(myModifiedName);
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(getHomeValue()));
     for (SdkPathEditor pathEditor : myPathEditors.values()) {
       pathEditor.apply(sdkModificator);
@@ -234,7 +246,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
       for (OrderRootType type : myPathEditors.keySet()) {
         myPathEditors.get(type).reset(sdkModificator);
       }
-      sdkModificator.commitChanges();
+      ApplicationManager.getApplication().runWriteAction(sdkModificator::commitChanges);
     }
 
     setHomePathValue(FileUtil.toSystemDependentName(ObjectUtils.notNull(mySdk.getHomePath(), "")));
@@ -325,7 +337,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
         if (sdk == null) return false;
 
         if (sdk.getName().equals(this.myInitialName)) return false;
-        if (sdk.getName().equals(mySdk.getName())) return false;
+        if (sdk.getName().equals(this.myModifiedName)) return false;
 
         if (FileUtil.pathsEqual(sdk.getHomePath(), mySdk.getHomePath())) return false;
 

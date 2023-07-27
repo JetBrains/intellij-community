@@ -15,6 +15,7 @@ import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.jpsMetrics
 import io.opentelemetry.api.metrics.Meter
@@ -57,7 +58,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     val start = System.currentTimeMillis()
 
     val callback = if (loadedFromCache) {
-      val callback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage, initialEntityStorage)
+      val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage)
       coroutineScope.launch {
         delay(10.seconds)
         delayLoadGlobalWorkspaceModel()
@@ -114,7 +115,7 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
       serializer.checkAndAddToBuilder(mutableStorage, mutableStorage, newEntities.data)
       newEntities.exception?.let { throw it }
     }
-    val callback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage, initialEntityStorage)
+    val callback = bridgesInitializationCallback(mutableStorage, initialEntityStorage)
     loadedFromDisk = true
     return callback
   }
@@ -123,6 +124,18 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
     if (prohibited) return emptyList()
 
     return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance())
+  }
+
+  private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,
+                                            initialEntityStorage: VersionedEntityStorage): () -> Unit {
+    val sdkCallback = GlobalSdkTableBridge.getInstance().initializeSdkBridgesAfterLoading(mutableStorage,
+                                                                                          initialEntityStorage)
+    val librariesCallback = GlobalLibraryTableBridge.getInstance().initializeLibraryBridgesAfterLoading(mutableStorage,
+                                                                                                        initialEntityStorage)
+    return {
+      sdkCallback.invoke()
+      librariesCallback.invoke()
+    }
   }
 
   companion object {

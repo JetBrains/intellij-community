@@ -5,7 +5,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.messages.Topic;
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +22,11 @@ import java.util.List;
 @ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
-    return ApplicationManager.getApplication().getService(ProjectJdkTable.class);
+    if (GlobalSdkTableBridge.Companion.isEnabled()) {
+      return GlobalSdkTableBridge.Companion.getInstance();
+    } else {
+      return ApplicationManager.getApplication().getService(ProjectJdkTable.class);
+    }
   }
 
   public abstract @Nullable Sdk findJdk(@NotNull String name);
@@ -35,6 +41,7 @@ public abstract class ProjectJdkTable {
     return getSdksOfType(type).stream().max(type.versionComparator()).orElse(null);
   }
 
+  @RequiresWriteLock
   public abstract void addJdk(@NotNull Sdk jdk);
 
   @TestOnly
@@ -45,8 +52,10 @@ public abstract class ProjectJdkTable {
     Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> removeJdk(jdk)));
   }
 
+  @RequiresWriteLock
   public abstract void removeJdk(@NotNull Sdk jdk);
 
+  @RequiresWriteLock
   public abstract void updateJdk(@NotNull Sdk originalJdk, @NotNull Sdk modifiedJdk);
 
   public interface Listener extends EventListener {
