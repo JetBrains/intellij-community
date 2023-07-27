@@ -42,6 +42,9 @@ class MermaidCustomCodeStyleSettings(settings: CodeStyleSettings) :
   var WITHIN_ROUND: Boolean = false
 
   @JvmField
+  var WITHIN_SQUARE: Boolean = false
+
+  @JvmField
   var WITHIN_CURLY: Boolean = true
 
   @JvmField

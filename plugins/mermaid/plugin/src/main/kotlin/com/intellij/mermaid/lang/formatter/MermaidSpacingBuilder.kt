@@ -150,8 +150,8 @@ internal object MermaidSpacingBuilder {
     val mermaid = settings.getCustomSettings(MermaidCustomCodeStyleSettings::class.java)
     val indentOptions = settings.getLanguageIndentOptions(MermaidLanguage)
     return SpacingBuilder(settings, MermaidLanguage)
-      .addCustomizableRules(mermaid)
       .addRulesRequiredByMermaid()
+      .addCustomizableRules(mermaid)
       .applyIf(mermaid.FORCE_ONE_SPACE_BETWEEN_WORDS) {
         addForceOneSpaceBetweenWordsRule()
       }
@@ -184,6 +184,9 @@ internal object MermaidSpacingBuilder {
       .after(C4_KEYWORDS_SPACE_AFTER).spaceIf(mermaid.BEFORE_OPEN_ROUND)
       .between(MermaidTokens.ATTRIBUTE_WORD, MermaidTokens.OPEN_ROUND).spaceIf(mermaid.BEFORE_OPEN_ROUND)
       .before(MermaidElements.CALLBACK_ARGS).spaceIf(mermaid.BEFORE_OPEN_ROUND)
+
+      .after(MermaidTokens.OPEN_SQUARE).spaceIf(mermaid.WITHIN_SQUARE)
+      .before(MermaidTokens.CLOSE_SQUARE).spaceIf(mermaid.WITHIN_SQUARE)
 
       .after(MermaidTokens.OPEN_ROUND).spaceIf(mermaid.WITHIN_ROUND)
       .before(MermaidTokens.CLOSE_ROUND).spaceIf(mermaid.WITHIN_ROUND)

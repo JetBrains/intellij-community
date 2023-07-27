@@ -133,6 +133,12 @@ internal class MermaidCodeStyleSettingsProvider : LanguageCodeStyleSettingsProvi
           MermaidBundle.message("mermaid.style.settings.spacing.within.round"),
           MermaidBundle.message("mermaid.style.settings.spacing.parentheses")
         )
+        consumer.showCustomOption(
+          MermaidCustomCodeStyleSettings::class.java,
+          MermaidCustomCodeStyleSettings::WITHIN_SQUARE.name,
+          MermaidBundle.message("mermaid.style.settings.spacing.within.square"),
+          MermaidBundle.message("mermaid.style.settings.spacing.parentheses")
+        )
 
         consumer.showCustomOption(
           MermaidCustomCodeStyleSettings::class.java,

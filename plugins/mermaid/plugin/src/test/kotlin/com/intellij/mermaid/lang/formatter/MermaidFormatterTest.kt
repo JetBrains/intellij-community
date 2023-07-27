@@ -35,6 +35,8 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
 
   fun `test timeline`() = doTest()
 
+  fun `test quadrant`() = doTest()
+
   private fun doTest() {
     val before = getTestName(true) + "_before.mermaid"
     val after = getTestName(true) + "_after.mermaid"
