@@ -78,6 +78,7 @@ internal val EMPTY_MENU_ACTION_ICON: Icon = EmptyIcon.create(16, 1)
 
 private val IS_MODAL_CONTEXT = Key.create<Boolean>("Component.isModalContext")
 private val OT_ENABLE_SPANS: ContextKey<Boolean> = ContextKey.named("OT_ENABLE_SPANS")
+
 // for tests and debug
 private val DO_FULL_EXPAND = java.lang.Boolean.getBoolean("actionSystem.use.full.group.expand")
 
@@ -957,7 +958,7 @@ object Utils {
   fun rearrangeByPromoters(actions: MutableList<AnAction>, dataContext: DataContext) {
     val frozenContext = freezeDataContext(dataContext = dataContext, missedKeys = null)
     val readOnlyActions = Collections.unmodifiableList(actions)
-    val promoters = ActionPromoter.EP_NAME.extensionList.asSequence() + actions.asSequence().filterIsInstance<ActionPromoter>()
+    val promoters = ActionPromoter.EP_NAME.extensionList + actions.filterIsInstance<ActionPromoter>()
     for (promoter in promoters) {
       try {
         SlowOperations.startSection(SlowOperations.FORCE_ASSERT).use {
