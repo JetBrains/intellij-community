@@ -7,11 +7,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
+public final class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
+  private final boolean shouldWiden;
+
   DfDoubleConstantType(double value) {
-    super(value);
+    this(value, false);
   }
 
+  private DfDoubleConstantType(double value, boolean widen) {
+    super(value);
+    shouldWiden = widen;
+  }
+
+  public DfDoubleConstantType makeWide() {
+    return shouldWiden ? this : new DfDoubleConstantType(getValue(), true);
+  }
+
+  @Override
+  public DfType widen() {
+    return shouldWiden ? DfTypes.DOUBLE : super.widen();
+  }
+  
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {
@@ -62,5 +78,16 @@ public class DfDoubleConstantType extends DfConstantType<Double> implements DfDo
       return DfDoubleRangeType.create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, false);
     }
     return DfDoubleRangeType.create(value, value, true, true);
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    return o instanceof DfDoubleConstantType that && super.equals(o) && shouldWiden == that.shouldWiden;
+  }
+
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + (shouldWiden ? 1 : 0);
   }
 }
