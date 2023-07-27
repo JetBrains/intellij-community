@@ -5,6 +5,6 @@ abstract class BoxingBoxedValue {
   void anotherMethod() {
     Integer value = 1;
 
-    method(Integer.valueOf(<warning descr="Boxing of already boxed 'value'">value</warning>));
+    method(<warning descr="Boxing of already boxed 'value'">Integer.valueOf</warning>(value));
   }
 }

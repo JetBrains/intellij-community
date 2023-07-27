@@ -13,18 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.igtest.controlflow.duplicate_condition;
+package com.siyeh.ig.style;
 
-public class DuplicateWithNegation {
-  void test(String string) {
-    if (string.startsWith("xyz")) {}
-    else if (!<warning descr="Duplicate condition 'string.startsWith(\"xyz\")'">string.startsWith("xyz")</warning>) {}
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
+
+/**
+ * @author Fabrice TIERCELIN
+ */
+public class ExtendsObjectInspectionTest extends LightJavaInspectionTestCase {
+
+  public void testExtendsObject() {
+    doTest();
   }
 
-  void test2(String s) {
-    if (!(s.startsWith("x") || s.endsWith("y"))) {
-    } else if (s.startsWith("x")) {
-
-    }
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ExtendsObjectInspection();
   }
 }

@@ -1399,6 +1399,7 @@
                      key="inspection.move.field.assignment.to.initializer.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="ConditionCoveredByFurtherCondition" enabledByDefault="true" level="WARNING"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.controlflow.ConditionCoveredByFurtherConditionInspection"
                      key="inspection.condition.covered.by.further.condition.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="ExcessiveRangeCheck" enabledByDefault="true" level="WARNING"
@@ -1581,7 +1582,7 @@
                      implementationClass="com.intellij.codeInspection.RedundantRecordConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MeaninglessRecordAnnotationInspection" enabledByDefault="true" level="WARNING"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
-                     bundle="messages.JavaBundle" key="inspection.meaningless.record.annotation.description"
+                     bundle="messages.JavaBundle" key="inspection.meaningless.record.annotation.description" editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.intellij.codeInspection.MeaninglessRecordAnnotationInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RecordCanBeClass" enabledByDefault="true" level="INFORMATION"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"

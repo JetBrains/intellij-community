@@ -11,57 +11,57 @@ public class UnnecessaryBoxing {
 
     public static void main(String[] args)
     {
-        final Integer intValue = new <warning descr="Unnecessary boxing">Integer</warning>(3);
-        final Long longValue = new <warning descr="Unnecessary boxing">Long</warning>(3L);
-        final Long longValue2 = new <warning descr="Unnecessary boxing">Long</warning>(3);
-        final Short shortValue = new <warning descr="Unnecessary boxing">Short</warning>((short)3);
-        final Double doubleValue = new <warning descr="Unnecessary boxing">Double</warning>(3.0);
-        final Float floatValue = new <warning descr="Unnecessary boxing">Float</warning>(3.0F);
-        final Byte byteValue = new <warning descr="Unnecessary boxing">Byte</warning>((byte)3);
-        final Boolean booleanValue = new <warning descr="Unnecessary boxing">Boolean</warning>(true);
-        final Character character = new <warning descr="Unnecessary boxing">Character</warning>('c');
+        final Integer intValue = <warning descr="Unnecessary boxing">new Integer</warning>(3);
+        final Long longValue = <warning descr="Unnecessary boxing">new Long</warning>(3L);
+        final Long longValue2 = <warning descr="Unnecessary boxing">new Long</warning>(3);
+        final Short shortValue = <warning descr="Unnecessary boxing">new Short</warning>((short)3);
+        final Double doubleValue = <warning descr="Unnecessary boxing">new Double</warning>(3.0);
+        final Float floatValue = <warning descr="Unnecessary boxing">new Float</warning>(3.0F);
+        final Byte byteValue = <warning descr="Unnecessary boxing">new Byte</warning>((byte)3);
+        final Boolean booleanValue = <warning descr="Unnecessary boxing">new Boolean</warning>(true);
+        final Character character = <warning descr="Unnecessary boxing">new Character</warning>('c');
     }
 
     Integer foo2(String foo, int bar) {
-        return foo == null ? Integer.<warning descr="Unnecessary boxing">valueOf</warning>(0) : bar;
+        return foo == null ? <warning descr="Unnecessary boxing">Integer.valueOf</warning>(0) : bar;
     }
 
     void additionalInnerBoxing(String str) {
-      short s = Short.<warning descr="Redundant boxing, 'Short.parseShort()' call can be used instead">valueOf</warning>(str);
-      int i = Integer.<warning descr="Redundant boxing, 'Integer.parseInt()' call can be used instead">valueOf</warning>(str);
-      long l = Long.<warning descr="Redundant boxing, 'Long.parseLong()' call can be used instead">valueOf</warning>(str);
-      double d = Double.<warning descr="Redundant boxing, 'Double.parseDouble()' call can be used instead">valueOf</warning>(str);
-      float f = Float.<warning descr="Redundant boxing, 'Float.parseFloat()' call can be used instead">valueOf</warning>(str);
-      boolean bool = Boolean.<warning descr="Redundant boxing, 'Boolean.parseBoolean()' call can be used instead">valueOf</warning>(str);
-      byte b = Byte.<warning descr="Redundant boxing, 'Byte.parseByte()' call can be used instead">valueOf</warning>(str);
+      short s = <warning descr="Redundant boxing, 'Short.parseShort()' call can be used instead">Short.valueOf</warning>(str);
+      int i = <warning descr="Redundant boxing, 'Integer.parseInt()' call can be used instead">Integer.valueOf</warning>(str);
+      long l = <warning descr="Redundant boxing, 'Long.parseLong()' call can be used instead">Long.valueOf</warning>(str);
+      double d = <warning descr="Redundant boxing, 'Double.parseDouble()' call can be used instead">Double.valueOf</warning>(str);
+      float f = <warning descr="Redundant boxing, 'Float.parseFloat()' call can be used instead">Float.valueOf</warning>(str);
+      boolean bool = <warning descr="Redundant boxing, 'Boolean.parseBoolean()' call can be used instead">Boolean.valueOf</warning>(str);
+      byte b = <warning descr="Redundant boxing, 'Byte.parseByte()' call can be used instead">Byte.valueOf</warning>(str);
     }
 
     short parseShort(String id) {
-      return Short.<warning descr="Redundant boxing, 'Short.parseShort()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Short.parseShort()' call can be used instead">Short.valueOf</warning>(id);
     }
 
     int parseInt(String id) {
-      return Integer.<warning descr="Redundant boxing, 'Integer.parseInt()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Integer.parseInt()' call can be used instead">Integer.valueOf</warning>(id);
     }
 
     long parseLong(String id) {
-      return Long.<warning descr="Redundant boxing, 'Long.parseLong()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Long.parseLong()' call can be used instead">Long.valueOf</warning>(id);
     }
 
     double parseDouble(String id) {
-      return Double.<warning descr="Redundant boxing, 'Double.parseDouble()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Double.parseDouble()' call can be used instead">Double.valueOf</warning>(id);
     }
 
     float parseFloat(String id) {
-      return Float.<warning descr="Redundant boxing, 'Float.parseFloat()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Float.parseFloat()' call can be used instead">Float.valueOf</warning>(id);
     }
 
     boolean parseBoolean(String id) {
-      return Boolean.<warning descr="Redundant boxing, 'Boolean.parseBoolean()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Boolean.parseBoolean()' call can be used instead">Boolean.valueOf</warning>(id);
     }
 
     byte parseByte(String id) {
-      return Byte.<warning descr="Redundant boxing, 'Byte.parseByte()' call can be used instead">valueOf</warning>(id);
+      return <warning descr="Redundant boxing, 'Byte.parseByte()' call can be used instead">Byte.valueOf</warning>(id);
     }
 
     void noUnboxing(Object val) {
@@ -118,14 +118,14 @@ class IntIntegerTest {
   public void test() {
     new IntIntegerTest(new Integer(1)); // <-- incorrectly triggered
     f(new Integer(1)); // <-- not triggered
-    g(((Integer.<warning descr="Unnecessary boxing">valueOf</warning>(1))));
-    g(((new <warning descr="Unnecessary boxing">Integer</warning>(1))));
+    g(((<warning descr="Unnecessary boxing">Integer.valueOf</warning>(1))));
+    g(((<warning descr="Unnecessary boxing">new Integer</warning>(1))));
   }
 
   boolean m(@org.jetbrains.annotations.NotNull Boolean p) {
     Boolean o = null;
     boolean b = o != Boolean.valueOf(false) || p != Boolean.valueOf(false); // object comparison
-    return b == Boolean.<warning descr="Unnecessary boxing">valueOf</warning>(false);
+    return b == <warning descr="Unnecessary boxing">Boolean.valueOf</warning>(false);
   }
 }
 class test {
@@ -176,14 +176,14 @@ class WithLambdaUnfriendlyOverloads {
 
   void testVar() {
     var x = Integer.valueOf(5);
-    Integer y = Integer.<warning descr="Unnecessary boxing">valueOf</warning>(5);
+    Integer y = <warning descr="Unnecessary boxing">Integer.valueOf</warning>(5);
     System.out.println(x.getClass());
     System.out.println(y.getClass());
   }
 
   int testSwitchExpression(int x) {
     return switch(x) {
-      default -> Integer.<warning descr="Unnecessary boxing">valueOf</warning>(x);
+      default -> <warning descr="Unnecessary boxing">Integer.valueOf</warning>(x);
     };
   }
 }

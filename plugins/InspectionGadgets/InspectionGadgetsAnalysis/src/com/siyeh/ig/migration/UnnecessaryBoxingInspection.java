@@ -22,6 +22,7 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -96,6 +97,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
       if (expression == null) {
         return;
       }
+      final PsiCallExpression expression = (PsiCallExpression)element;
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList == null) {
         return;
@@ -113,7 +115,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         return;
       }
       final CommentTracker commentTracker = new CommentTracker();
-      if (unboxedExpressionType.getCanonicalText().equals("java.lang.String")) {
+      if (CommonClassNames.JAVA_LANG_STRING.equals(unboxedExpressionType.getCanonicalText())) {
         PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
         final String parseMethodName = JavaPsiBoxingUtils.getParseMethod(methodCall.getType());
         if (parseMethodName == null) {
@@ -224,7 +226,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return;
         }
       }
-      registerNewExpressionError(expression);
+      registerConstructorOrMethodCallError(expression);
     }
 
     @Override
@@ -261,7 +263,7 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
         if (expectedType instanceof PsiPrimitiveType) {
           final String parseMethod = JavaPsiBoxingUtils.getParseMethod(methodReturnType);
           if (parseMethod != null) {
-            registerMethodCallError(expression, methodReturnType, parseMethod);
+            registerConstructorOrMethodCallError(expression, methodReturnType, parseMethod);
           }
         }
         return;
@@ -278,7 +280,14 @@ public class UnnecessaryBoxingInspection extends BaseInspection {
           return;
         }
       }
-      registerMethodCallError(expression);
+      registerConstructorOrMethodCallError(expression);
+    }
+
+    private void registerConstructorOrMethodCallError(@NotNull PsiCallExpression constructorOrMethodCall, @NonNls Object... infos) {
+      PsiExpressionList argList = constructorOrMethodCall.getArgumentList();
+      if (argList == null) return;
+
+      registerErrorAtOffset(constructorOrMethodCall, 0, argList.getStartOffsetInParent(), infos);
     }
 
     private boolean isBoxingNecessary(PsiExpression boxingExpression, PsiExpression boxedExpression) {
