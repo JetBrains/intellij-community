@@ -7,26 +7,21 @@ import java.io.IOException
 import java.io.InputStream
 import java.time.Duration
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentMap
 
 open class CachingGraphQLQueryLoader(
+  private val fragmentsCache: ConcurrentMap<String, Block> = createFragmentCache(),
+  private val queriesCache: ConcurrentMap<String, String> = createQueryCache(),
   private val fragmentsDirectories: List<String> = listOf("graphql/fragment"),
   private val fragmentsFileExtension: String = "graphql"
 ) {
 
   private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
 
-  private val fragmentsCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
-    .build<String, Block>()
-
-  private val queriesCache = Caffeine.newBuilder()
-    .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
-    .build<String, String>()
-
   // Use path to allow going to the file quickly
   @Throws(IOException::class)
   fun loadQuery(queryPath: String): String {
-    return queriesCache.get(queryPath) { path ->
+    return queriesCache.computeIfAbsent(queryPath) { path ->
       val (body, fragmentNames) = readBlock(path)
                                   ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
 
@@ -46,7 +41,7 @@ open class CachingGraphQLQueryLoader(
     for (fragmentName in names) {
       val fragment = fragmentsDirectories.firstNotNullOfOrNull {
         val path = "$it/${fragmentName}.$fragmentsFileExtension"
-        fragmentsCache.get(path, ::readBlock)
+        fragmentsCache.computeIfAbsent(path, ::readBlock)
       } ?: throw GraphQLFileNotFoundException("Couldn't find file for fragment $fragmentName")
       into[fragmentName] = fragment
 
@@ -84,5 +79,19 @@ open class CachingGraphQLQueryLoader(
   @VisibleForTesting
   protected open fun getFileStream(relativePath: String): InputStream? = this::class.java.classLoader.getResourceAsStream(relativePath)
 
-  private data class Block(val body: String, val dependencies: Set<String>)
+  companion object {
+    data class Block(val body: String, val dependencies: Set<String>)
+
+    private fun createFragmentCache(): ConcurrentMap<String, Block> =
+      Caffeine.newBuilder()
+        .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
+        .build<String, Block>()
+        .asMap()
+
+    private fun createQueryCache(): ConcurrentMap<String, String> =
+      Caffeine.newBuilder()
+        .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
+        .build<String, String>()
+        .asMap()
+  }
 }
