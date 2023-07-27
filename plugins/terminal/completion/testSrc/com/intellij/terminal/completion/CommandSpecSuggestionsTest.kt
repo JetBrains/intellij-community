@@ -6,6 +6,7 @@ import com.intellij.terminal.completion.util.FakeShellRuntimeDataProvider
 import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.testFramework.UsefulTestCase.assertSameElements
 import com.intellij.util.containers.TreeTraversal
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -271,7 +272,7 @@ class CommandSpecSuggestionsTest {
     doTest("cd", typedPrefix = "someDir/", expected = listOf("dir/", "folder/"))
   }
 
-  private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) {
+  private fun doTest(vararg arguments: String, typedPrefix: String = "", expected: List<String>) = runBlocking {
     val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
     val rootNode: SubcommandNode = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
                                                             commandName, spec, arguments.asList())

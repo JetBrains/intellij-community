@@ -7,7 +7,7 @@ import org.jetbrains.terminal.completion.ShellOption
 import org.jetbrains.terminal.completion.ShellSuggestion
 
 class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
-  fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
+  suspend fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {
       is SubcommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
       is OptionNode -> getSuggestionsForOption(node, nextNodeText)
@@ -16,7 +16,7 @@ class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRunti
     }
   }
 
-  fun getDirectSuggestionsOfNext(option: OptionNode, nextNodeText: String): List<BaseSuggestion> {
+  suspend fun getDirectSuggestionsOfNext(option: OptionNode, nextNodeText: String): List<BaseSuggestion> {
     val availableArgs = getAvailableArguments(option)
     return availableArgs.flatMap { getArgumentSuggestions(it, nextNodeText) }
   }
@@ -40,7 +40,7 @@ class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRunti
     return allArgs.subList(lastExistingArgIndex + if (includeLast) 0 else 1, firstRequiredArgIndex + 1)
   }
 
-  private fun getSuggestionsForSubcommand(node: SubcommandNode, nextNodeText: String): List<BaseSuggestion> {
+  private suspend fun getSuggestionsForSubcommand(node: SubcommandNode, nextNodeText: String): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
 
     // suggest subcommands and options only if the provided value is not a file path
@@ -88,7 +88,7 @@ class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRunti
     return options
   }
 
-  private fun getSuggestionsForOption(node: OptionNode, nextNodeText: String): List<BaseSuggestion> {
+  private suspend fun getSuggestionsForOption(node: OptionNode, nextNodeText: String): List<BaseSuggestion> {
     val suggestions = mutableListOf<BaseSuggestion>()
     val directSuggestions = getDirectSuggestionsOfNext(node, nextNodeText)
     suggestions.addAll(directSuggestions)
@@ -104,7 +104,7 @@ class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRunti
     return suggestions
   }
 
-  private fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<ShellArgumentSuggestion> {
+  private suspend fun getArgumentSuggestions(arg: ShellArgument, nextNodeText: String): List<ShellArgumentSuggestion> {
     val suggestions = mutableListOf<ShellArgumentSuggestion>()
 
     val suggestAllFiles = arg.isFilePath()
@@ -119,7 +119,7 @@ class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRunti
     return suggestions
   }
 
-  private fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
+  private suspend fun getFileSuggestions(arg: ShellArgument, nextNodeText: String, onlyDirectories: Boolean): List<ShellArgumentSuggestion> {
     val basePath = if (nextNodeText.contains('/')) {
       nextNodeText.substringBeforeLast('/') + "/"
     }

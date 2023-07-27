@@ -7,6 +7,7 @@ import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import junit.framework.TestCase.assertTrue
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.jetbrains.terminal.completion.ShellSuggestionsGenerator
 import org.junit.Test
@@ -239,7 +240,7 @@ class CommandTreeBuilderTest {
     }
   }
 
-  private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) {
+  private fun doTest(vararg arguments: String, assertions: CommandTreeAssertions.() -> Unit) = runBlocking {
     val suggestionsProvider = CommandTreeSuggestionsProvider(FakeShellRuntimeDataProvider(filePathSuggestions))
     val root = CommandTreeBuilder.build(suggestionsProvider, FakeCommandSpecManager(),
                                         commandName, spec, arguments.asList())

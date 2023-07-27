@@ -13,7 +13,7 @@ class CommandTreeBuilder private constructor(
   private val arguments: List<String>
 ) {
   companion object {
-    fun build(suggestionsProvider: CommandTreeSuggestionsProvider,
+    suspend fun build(suggestionsProvider: CommandTreeSuggestionsProvider,
               commandSpecManager: CommandSpecManager,
               command: String,
               commandSpec: ShellCommand,
@@ -29,7 +29,7 @@ class CommandTreeBuilder private constructor(
 
   private var curIndex = 0
 
-  private fun buildSubcommandTree(root: SubcommandNode) {
+  private suspend fun buildSubcommandTree(root: SubcommandNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
       val suggestions = suggestionsProvider.getSuggestionsOfNext(root, name)
@@ -62,7 +62,7 @@ class CommandTreeBuilder private constructor(
     }
   }
 
-  private fun buildOptionTree(root: OptionNode) {
+  private suspend fun buildOptionTree(root: OptionNode) {
     while (curIndex < arguments.size) {
       val name = arguments[curIndex]
       val suggestions = suggestionsProvider.getDirectSuggestionsOfNext(root, name)
@@ -85,7 +85,7 @@ class CommandTreeBuilder private constructor(
   }
 
   /** [options] is a posix chained options string, for example -abcde */
-  private fun addChainedOptions(root: SubcommandNode, suggestions: List<BaseSuggestion>, options: String) {
+  private suspend fun addChainedOptions(root: SubcommandNode, suggestions: List<BaseSuggestion>, options: String) {
     val flags = options.removePrefix("-").toCharArray().map { "-$it" }
     for (flag in flags) {
       val option = suggestions.find { it.names.contains(flag) }
@@ -119,7 +119,7 @@ class CommandTreeBuilder private constructor(
     } ?: false
   }
 
-  private fun createChildNode(name: String, suggestion: BaseSuggestion, parent: CommandPartNode<*>?): CommandPartNode<*> {
+  private suspend fun createChildNode(name: String, suggestion: BaseSuggestion, parent: CommandPartNode<*>?): CommandPartNode<*> {
     return when (suggestion) {
       is ShellCommand -> createSubcommandNode(name, suggestion, parent)
       is ShellOption -> OptionNode(name, suggestion, parent)
@@ -128,12 +128,12 @@ class CommandTreeBuilder private constructor(
     }
   }
 
-  private fun createSubcommandNode(name: String, subcommand: ShellCommand, parent: CommandPartNode<*>?): SubcommandNode {
+  private suspend fun createSubcommandNode(name: String, subcommand: ShellCommand, parent: CommandPartNode<*>?): SubcommandNode {
     val spec = getLoadedCommandSpec(subcommand)
     return SubcommandNode(name, spec, parent)
   }
 
-  private fun getLoadedCommandSpec(spec: ShellCommand): ShellCommand {
+  private suspend fun getLoadedCommandSpec(spec: ShellCommand): ShellCommand {
     val specRef = spec.loadSpec ?: return spec
     val loadedSpec = commandSpecManager.getCommandSpec(specRef)
     return if (loadedSpec != null) {

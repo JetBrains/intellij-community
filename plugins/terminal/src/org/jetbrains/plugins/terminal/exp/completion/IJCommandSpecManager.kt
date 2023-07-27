@@ -35,7 +35,7 @@ class IJCommandSpecManager : CommandSpecManager {
    *     - sub.json
    *     - sub2.json
    */
-  override fun getCommandSpec(commandName: String): ShellCommand? {
+  override suspend fun getCommandSpec(commandName: String): ShellCommand? {
     completionSpecs.getIfPresent(commandName)?.let { return it }
 
     val (spec, path) = if (commandName.contains('/')) {

@@ -2,5 +2,5 @@
 package com.intellij.terminal.completion
 
 interface ShellRuntimeDataProvider {
-  fun getFilesFromDirectory(path: String): List<String>
+  suspend fun getFilesFromDirectory(path: String): List<String>
 }

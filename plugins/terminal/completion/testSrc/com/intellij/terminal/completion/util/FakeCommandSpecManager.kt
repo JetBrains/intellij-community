@@ -5,7 +5,7 @@ import com.intellij.terminal.completion.CommandSpecManager
 import org.jetbrains.terminal.completion.ShellCommand
 
 class FakeCommandSpecManager : CommandSpecManager {
-  override fun getCommandSpec(commandName: String): ShellCommand? {
+  override suspend fun getCommandSpec(commandName: String): ShellCommand? {
     return null
   }
 }

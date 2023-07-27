@@ -4,7 +4,7 @@ package com.intellij.terminal.completion.util
 import com.intellij.terminal.completion.ShellRuntimeDataProvider
 
 class FakeShellRuntimeDataProvider(private val filesToReturn: List<String> = emptyList()) : ShellRuntimeDataProvider {
-  override fun getFilesFromDirectory(path: String): List<String> {
+  override suspend fun getFilesFromDirectory(path: String): List<String> {
     return filesToReturn
   }
 }

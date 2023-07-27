@@ -5,6 +5,7 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.terminal.completion.CommandPartNode
 import com.intellij.terminal.completion.CommandTreeBuilder
 import com.intellij.terminal.completion.CommandTreeSuggestionsProvider
@@ -38,7 +39,9 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
       return // command itself is incomplete
     }
 
-    val elements = computeCompletionElements(session, commandName, arguments)
+    val elements = runBlockingCancellable {
+      computeCompletionElements(session, commandName, arguments)
+    }
     if (elements == null) {
       return // failed to find completion spec for command
     }
@@ -47,13 +50,13 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
     resultSet.stopHere()
   }
 
-  private fun computeCompletionElements(session: TerminalSession, command: String, arguments: List<String>): List<LookupElement>? {
+  private suspend fun computeCompletionElements(session: TerminalSession, command: String, arguments: List<String>): List<LookupElement>? {
     val commandSpec: ShellCommand = IJCommandSpecManager.getInstance().getCommandSpec(command)
                                     ?: return null
     return computeCompletionElements(session, commandSpec, command, arguments)
   }
 
-  private fun computeCompletionElements(session: TerminalSession,
+  private suspend fun computeCompletionElements(session: TerminalSession,
                                         spec: ShellCommand,
                                         command: String,
                                         arguments: List<String>): List<LookupElement> {
@@ -67,7 +70,7 @@ class TerminalCommandSpecCompletionContributor : CompletionContributor() {
     return suggestions.flatMap { it.toLookupElements() }
   }
 
-  private fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
+  private suspend fun computeSuggestions(suggestionsProvider: CommandTreeSuggestionsProvider,
                                  root: SubcommandNode,
                                  lastArgument: String): List<BaseSuggestion> {
     val allChildren = TreeTraversal.PRE_ORDER_DFS.traversal(root as CommandPartNode<*>) { node -> node.children }

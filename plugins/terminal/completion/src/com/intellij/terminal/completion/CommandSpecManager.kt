@@ -15,5 +15,5 @@ interface CommandSpecManager {
    *     - sub.json
    *     - sub2.json
    */
-  fun getCommandSpec(commandName: String): ShellCommand?
+  suspend fun getCommandSpec(commandName: String): ShellCommand?
 }
