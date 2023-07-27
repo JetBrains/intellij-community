@@ -33,6 +33,8 @@ import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlight
 
 final class PatternHighlightingModel {
   private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
+
+  //it is approximately equals max method size * 10
   private static final int MAX_ITERATION_COVERAGE = 5_000;
   private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
 
