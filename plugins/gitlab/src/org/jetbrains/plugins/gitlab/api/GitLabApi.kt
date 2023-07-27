@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.io.HttpSecurityUtil
 import org.jetbrains.plugins.gitlab.GitLabServersManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGraphQLMutationResultDTO
-import org.jetbrains.plugins.gitlab.api.request.getServerMetadata
+import org.jetbrains.plugins.gitlab.api.request.getServerMetadataOrVersion
 import org.jetbrains.plugins.gitlab.util.GitLabApiRequestName
 import java.net.URI
 import java.net.http.HttpRequest
@@ -58,7 +58,7 @@ class GitLabApiImpl(httpHelper: HttpApiHelper) : GitLabApi, HttpApiHelper by htt
 
 suspend fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: GitLabGQLQuery, variablesObject: Any? = null): HttpRequest {
   val serverMeta = service<GitLabServersManager>().getMetadata(serverPath) {
-    runCatching { rest.getServerMetadata(it).body() }
+    runCatching { rest.getServerMetadataOrVersion(it) }
   }
   val queryLoader = if (serverMeta?.enterprise == false) {
     GitLabGQLQueryLoaders.community
