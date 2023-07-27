@@ -5,7 +5,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.registry.withValue
 import com.intellij.testFramework.RuleChain
 import com.intellij.testFramework.fixtures.TestFixtureRule
-import org.junit.Assert.assertTrue
+import org.hamcrest.MatcherAssert
+import org.hamcrest.Matchers
 import org.junit.ClassRule
 import org.junit.Test
 import kotlin.test.assertEquals
@@ -25,7 +26,7 @@ class WslNetworkTest {
 
   @Test
   fun testWslIp() {
-    assertTrue("Wrong WSL IP", wslRule.wsl.wslIpAddress.hostAddress.startsWith("172."))
+    MatcherAssert.assertThat("Wrong WSL IP", wslRule.wsl.wslIpAddress.hostAddress, Matchers.startsWith("172."))
   }
 
   @Test
@@ -39,7 +40,7 @@ class WslNetworkTest {
   fun testWslHostIp() {
     for (alt in arrayOf(true, false)) {
       Registry.get("wsl.obtain.windows.host.ip.alternatively").withValue(alt) {
-        assertTrue("Wrong host IP", wslRule.wsl.hostIpAddress.hostAddress.startsWith("172."))
+        MatcherAssert.assertThat("Wrong host IP: alternative: $alt", wslRule.wsl.hostIpAddress.hostAddress, Matchers.startsWith("172."))
       }
     }
   }
