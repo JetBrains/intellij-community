@@ -23,6 +23,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
     private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
         val expression = when (val parent = target.parent) {
             is KtNamedFunction -> parent
+            is KtPropertyAccessor -> parent
             is KtReturnExpression, is KtThrowExpression -> parent
             is KtLabelReferenceExpression ->
                 PsiTreeUtil.getParentOfType(
@@ -99,14 +100,19 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             val relevantFunction: KtDeclarationWithBody? =
                 when (target) {
                     is KtFunctionLiteral -> target
+                    is KtPropertyAccessor -> target
                     is KtNamedFunction -> target
                     else -> getRelevantDeclaration(target)
                 }
 
             var targetOccurrenceAdded = false
-            if (target is KtReturnExpression || target is KtThrowExpression || target is KtNamedFunction) {
+            if (target is KtReturnExpression || target is KtThrowExpression || target is KtNamedFunction || target is KtPropertyAccessor) {
                 when (relevantFunction) {
                     is KtNamedFunction -> (relevantFunction.nameIdentifier ?: relevantFunction.funKeyword)?.let {
+                        targetOccurrenceAdded = true
+                        addOccurrence(it)
+                    }
+                    is KtPropertyAccessor -> relevantFunction.namePlaceholder.let {
                         targetOccurrenceAdded = true
                         addOccurrence(it)
                     }

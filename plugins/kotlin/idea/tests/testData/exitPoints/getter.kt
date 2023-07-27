@@ -9,4 +9,5 @@ val Any?.foo: Int
 public inline fun <T> T.let(block: (T) -> Unit) {}
 
 //HIGHLIGHTED: return 1
+//HIGHLIGHTED: get
 //HIGHLIGHTED: return 2

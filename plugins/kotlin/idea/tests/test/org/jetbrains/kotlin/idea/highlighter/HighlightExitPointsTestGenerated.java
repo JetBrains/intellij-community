@@ -58,6 +58,16 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         runTest("testData/exitPoints/getter.kt");
     }
 
+    @TestMetadata("getter2.kt")
+    public void testGetter2() throws Exception {
+        runTest("testData/exitPoints/getter2.kt");
+    }
+
+    @TestMetadata("getter3.kt")
+    public void testGetter3() throws Exception {
+        runTest("testData/exitPoints/getter3.kt");
+    }
+
     @TestMetadata("inLambda.kt")
     public void testInLambda() throws Exception {
         runTest("testData/exitPoints/inLambda.kt");
