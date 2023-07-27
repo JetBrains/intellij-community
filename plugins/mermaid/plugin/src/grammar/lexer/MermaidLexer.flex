@@ -31,8 +31,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 %function advance
 %type IElementType
 %unicode
-%caseless
-%ignorecase
+//%caseless
+//%ignorecase
 
 %state double_quoted_string
 %state back_quoted_string
@@ -92,7 +92,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "graph" { yybegin(flowchart); return Flowchart.FLOWCHART; }
   "flowchart-elk" { yybegin(flowchart); return Flowchart.FLOWCHART; }
   "sequenceDiagram" { yybegin(sequence); return Sequence.SEQUENCE; }
-  "classDiagram" { yybegin(class_diagram); return ClassDiagram.CLASS_DIAGRAM; }
+  "classDiagram" |
+  "classDiagram-v2"  { yybegin(class_diagram); return ClassDiagram.CLASS_DIAGRAM; }
   "stateDiagram-v2" |
   "stateDiagram" { yybegin(state_diagram); return StateDiagram.STATE_DIAGRAM; }
   "erDiagram" { yybegin(entity_relationship); return EntityRelationship.ENTITY_RELATIONSHIP; }
@@ -457,7 +458,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "<|"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.EXTENSION_START; }
   "<"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.DEPENDENCY_START; }
   [\*]/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.COMPOSITION; }
-  "o"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.AGGREGATION; }
+  [oO]/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.AGGREGATION; }
   "()"/\s*"--"|".." { yybegin(class_relation_line); return ClassDiagram.LOLLIPOP; }
 }
 <class_relation_line, class_diagram> {
@@ -484,7 +485,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "direction" { yypushstate(direction_value); return DIRECTION; }
   "namespace" { yybegin(namespace_body); return ClassDiagram.NAMESPACE; }
 
-  [\w_-]+/[^\S\n\r]*[o|O]("--"|"..")[^\S\n\r]*[\w_-]+ { yybegin(class_relation_start); return ClassDiagram.CLASS_ID; }
+  [\w_-]+/[^\S\n\r]*[oO]("--"|"..")[^\S\n\r]*[\w_-]+ { yybegin(class_relation_start); return ClassDiagram.CLASS_ID; }
   [\w_-]+/[^\S\n\r]*"--"[^\S\n\r]*[\w_-]+ { yybegin(class_relation_line); return ClassDiagram.CLASS_ID; }
   [\w_-]+/[^\S\n\r]*"--" { yybegin(class_relation_line); return ClassDiagram.CLASS_ID; }
   [\w_-]+ { return ClassDiagram.CLASS_ID; }
@@ -678,7 +679,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <entity_attributes> {
   "FK" | "PK" | "UK" { return EntityRelationship.ATTR_KEY; }
-  [a-zA-Z_][\w\-\[\]\(\)]* { return ATTRIBUTE_WORD; }
+  [\*a-zA-Z_][\w\-\[\]\(\)]* { return ATTRIBUTE_WORD; }
   [~] { yypushstate(generic); return TILDA; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }
   "{" { return OPEN_CURLY; }
@@ -754,7 +755,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 }
 <req_element> {
   "type" { return TYPE; }
-  "docref" { return Requirement.DOCREF; }
+  "doc"[rR]"ef" { return Requirement.DOCREF; }
 }
 <requirement_diagram, requirement, req_element> {
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }

@@ -98,4 +98,12 @@ class EntityRelationshipTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test keyword in attribute`() {
+    val content = """
+    erDiagram
+      BOOK{string *title}
+    """.trimIndent()
+    doTest(content)
+  }
 }

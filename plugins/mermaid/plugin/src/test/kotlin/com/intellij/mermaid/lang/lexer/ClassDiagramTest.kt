@@ -339,4 +339,145 @@ class ClassDiagramTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test keywords in identifiers`() {
+    val keywords = listOf(
+      "direction",
+      "classDiagram",
+      "classDiagram-v2",
+      "namespace",
+      "{}",
+      "{",
+      "}",
+      "()",
+      "(",
+      ")",
+      "[]",
+      "[",
+      "]",
+      "class",
+      "\\n",
+      "cssClass",
+      "callback",
+      "link",
+      "click",
+      "note",
+      "note for",
+      "<<",
+      ">>",
+      "call ",
+      "~",
+      "~Generic~",
+      "_self",
+      "_blank",
+      "_parent",
+      "_top",
+      "<|",
+      "|>",
+      ">",
+      "<",
+      "*",
+      "o",
+      "\\",
+      "--",
+      "..",
+      "-->",
+      "--|>",
+      ": label",
+      ":::",
+      ".",
+      "+",
+      "alphaNum",
+      "!",
+      "0123",
+      "function()",
+      "function(arg1, arg2)"
+    )
+
+    for (keyword in keywords) {
+      val content = """
+      classDiagram
+        note "This is a keyword: $keyword. It truly is."
+      """.trimIndent()
+
+      val expected = """
+      ClassDiagram.CLASS_DIAGRAM ('classDiagram')
+      EOL ('\n')
+      WHITE_SPACE ('  ')
+      NOTE ('note')
+      WHITE_SPACE (' ')
+      DOUBLE_QUOTE ('"')
+      STRING_VALUE ('This is a keyword: $keyword. It truly is.')
+      DOUBLE_QUOTE ('"')
+      """.trimIndent()
+
+      doTest(content, expected)
+    }
+
+    for (keyword in keywords) {
+      val content = """
+      classDiagram
+        note "$keyword"
+      """.trimIndent()
+
+      val expected = """
+      ClassDiagram.CLASS_DIAGRAM ('classDiagram')
+      EOL ('\n')
+      WHITE_SPACE ('  ')
+      NOTE ('note')
+      WHITE_SPACE (' ')
+      DOUBLE_QUOTE ('"')
+      STRING_VALUE ('$keyword')
+      DOUBLE_QUOTE ('"')
+      """.trimIndent()
+
+      doTest(content, expected)
+    }
+
+    for (keyword in keywords) {
+      val content = """
+      classDiagram
+        class Something {
+          int id
+          string name
+        }
+        note for Something "This is a keyword: $keyword. It truly is."
+      """.trimIndent()
+
+      val expected = """
+      ClassDiagram.CLASS_DIAGRAM ('classDiagram')
+      EOL ('\n')
+      WHITE_SPACE ('  ')
+      CLASS ('class')
+      WHITE_SPACE (' ')
+      ClassDiagram.CLASS_ID ('Something')
+      WHITE_SPACE (' ')
+      OPEN_CURLY ('{')
+      EOL ('\n')
+      WHITE_SPACE ('    ')
+      ATTRIBUTE_WORD ('int')
+      WHITE_SPACE (' ')
+      ATTRIBUTE_WORD ('id')
+      EOL ('\n')
+      WHITE_SPACE ('    ')
+      ATTRIBUTE_WORD ('string')
+      WHITE_SPACE (' ')
+      ATTRIBUTE_WORD ('name')
+      EOL ('\n')
+      WHITE_SPACE ('  ')
+      CLOSE_CURLY ('}')
+      EOL ('\n')
+      WHITE_SPACE ('  ')
+      ClassDiagram.NOTE_FOR ('note for')
+      WHITE_SPACE (' ')
+      ClassDiagram.CLASS_ID ('Something')
+      WHITE_SPACE (' ')
+      DOUBLE_QUOTE ('"')
+      STRING_VALUE ('This is a keyword: $keyword. It truly is.')
+      DOUBLE_QUOTE ('"')
+      """.trimIndent()
+
+      doTest(content, expected)
+    }
+  }
 }
