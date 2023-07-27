@@ -33,6 +33,26 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         runTest("testData/exitPoints/anonymousFunction2.kt");
     }
 
+    @TestMetadata("functionNameIdentifier.kt")
+    public void testFunctionNameIdentifier() throws Exception {
+        runTest("testData/exitPoints/functionNameIdentifier.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier2.kt")
+    public void testFunctionNameIdentifier2() throws Exception {
+        runTest("testData/exitPoints/functionNameIdentifier2.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier3.kt")
+    public void testFunctionNameIdentifier3() throws Exception {
+        runTest("testData/exitPoints/functionNameIdentifier3.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier31.kt")
+    public void testFunctionNameIdentifier31() throws Exception {
+        runTest("testData/exitPoints/functionNameIdentifier31.kt");
+    }
+
     @TestMetadata("getter.kt")
     public void testGetter() throws Exception {
         runTest("testData/exitPoints/getter.kt");

@@ -33,6 +33,26 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
         runTest("../idea/tests/testData/exitPoints/anonymousFunction2.kt");
     }
 
+    @TestMetadata("functionNameIdentifier.kt")
+    public void testFunctionNameIdentifier() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/functionNameIdentifier.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier2.kt")
+    public void testFunctionNameIdentifier2() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/functionNameIdentifier2.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier3.kt")
+    public void testFunctionNameIdentifier3() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/functionNameIdentifier3.kt");
+    }
+
+    @TestMetadata("functionNameIdentifier31.kt")
+    public void testFunctionNameIdentifier31() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/functionNameIdentifier31.kt");
+    }
+
     @TestMetadata("getter.kt")
     public void testGetter() throws Exception {
         runTest("../idea/tests/testData/exitPoints/getter.kt");

@@ -21,7 +21,8 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-        val returnOrThrow = when (val parent = target.parent) {
+        val expression = when (val parent = target.parent) {
+            is KtNamedFunction -> parent
             is KtReturnExpression, is KtThrowExpression -> parent
             is KtLabelReferenceExpression ->
                 PsiTreeUtil.getParentOfType(
@@ -29,35 +30,69 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 )?.takeUnless { it is KtFunction }
             is KtIfExpression, is KtWhenExpression, is KtBlockExpression -> null
             is KtExpression -> {
-                var node: PsiElement? = parent
-                var functionLiteral: KtFunctionLiteral? = null
+                var ktFunction: KtFunction? = (parent as? KtNameReferenceExpression)?.asFunctionLiteral()
                 val expressions = hashSetOf<KtExpression>()
-                while (node != null) {
-                    val nextParent = node.parent
-                    when(node) {
-                        is PsiFile, is KtNamedFunction, is KtClassOrObject -> break
-                        is KtFunctionLiteral -> {
-                            functionLiteral = node
-                            break
-                        }
-                        is KtExpression -> expressions += node
-                        else -> {
-                            if ((nextParent is KtIfExpression || nextParent is KtWhenExpression || nextParent is KtBlockExpression) &&
-                                !KtPsiUtil.isStatementContainer(node)) {
+                if (ktFunction == null) {
+                    var node: PsiElement? = parent
+                    while (node != null) {
+                        val nextParent = node.parent
+                        when (node) {
+                            is PsiFile, is KtClassOrObject -> break
+                            //is PsiFile, is KtNamedFunction, is KtClassOrObject -> break
+                            is KtNamedFunction -> {
+                                ktFunction = node
                                 break
                             }
+
+                            is KtFunctionLiteral -> {
+                                ktFunction = node
+                                break
+                            }
+
+                            is KtExpression -> expressions += node
+                            else -> {
+                                if ((nextParent is KtIfExpression || nextParent is KtWhenExpression || nextParent is KtBlockExpression) &&
+                                    !KtPsiUtil.isStatementContainer(node)
+                                ) {
+                                    break
+                                }
+                            }
                         }
+                        node = nextParent
                     }
-                    node = nextParent
                 }
-                functionLiteral?.let {
-                    val lastStatement = it.bodyExpression?.statements?.lastOrNull()
-                    parent.takeIf { lastStatement in expressions }
+                ktFunction?.let {
+                    val lastStatement =
+                        when(it) {
+                            is KtFunctionLiteral -> it.bodyExpression?.lastStatementOrNull()
+                            is KtNamedFunction -> {
+                                val bodyBlockExpression = it.bodyBlockExpression
+                                if (bodyBlockExpression != null) {
+                                    bodyBlockExpression.lastStatementOrNull()
+                                } else {
+                                    it.bodyExpression
+                                }
+                            }
+                            else -> null
+                        }
+                    if (lastStatement in expressions) {
+                        if (ktFunction is KtFunctionLiteral) {
+                            parent
+                        } else if (ktFunction.bodyBlockExpression != null) {
+                            parent.takeIf { _ ->
+                                expressions.any { e -> e is KtReturnExpression || e is KtThrowExpression }
+                            }
+                        } else {
+                            parent
+                        }
+                    } else {
+                        null
+                    }
                 }
             }
             else -> null
         } as? KtExpression ?: return null
-        return OnExitUsagesHandler(editor, file, returnOrThrow)
+        return OnExitUsagesHandler(editor, file, expression)
     }
 
     private fun getOnLambdaCallUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -67,14 +102,17 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             return null
         }
 
-        val refExpr = target.parent as? KtNameReferenceExpression ?: return null
-        val call = refExpr.parent as? KtCallExpression ?: return null
-        if (call.calleeExpression != refExpr) return null
+        val literal = (target.parent as? KtNameReferenceExpression).asFunctionLiteral() ?: return null
+        return OnExitUsagesHandler(editor, file, literal, highlightReferences = true)
+    }
+
+    private fun KtNameReferenceExpression?.asFunctionLiteral(): KtFunctionLiteral? {
+        val call = this?.parent as? KtCallExpression ?: return null
+        if (call.calleeExpression != this) return null
 
         val lambda = call.lambdaArguments.singleOrNull() ?: return null
         val literal = lambda.getLambdaExpression()?.functionLiteral ?: return null
-
-        return OnExitUsagesHandler(editor, file, literal, highlightReferences = true)
+        return literal
     }
 
     override fun createHighlightUsagesHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
@@ -121,14 +159,14 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
         override fun computeUsages(targets: List<PsiElement>) {
             val relevantFunction: KtDeclarationWithBody? =
-                if (target is KtFunctionLiteral) {
-                    target
-                } else {
-                    getRelevantDeclaration(target)
+                when (target) {
+                    is KtFunctionLiteral -> target
+                    is KtNamedFunction -> target
+                    else -> getRelevantDeclaration(target)
                 }
 
             var targetOccurrenceAdded = false
-            if (target is KtReturnExpression || target is KtThrowExpression) {
+            if (target is KtReturnExpression || target is KtThrowExpression || target is KtNamedFunction) {
                 when (relevantFunction) {
                     is KtNamedFunction -> (relevantFunction.nameIdentifier ?: relevantFunction.funKeyword)?.let {
                         targetOccurrenceAdded = true
@@ -144,47 +182,46 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 }
             }
 
-            val lastLambdaStatementExpressions =
-                if (relevantFunction is KtFunctionLiteral) {
-                    buildSet {
-                        val set = this
-                        set += relevantFunction
-                        relevantFunction.acceptChildren(object : KtVisitorVoid() {
-                            override fun visitKtElement(element: KtElement) {
-                                ProgressIndicatorProvider.checkCanceled()
-                                element.acceptChildren(this)
-                            }
+            val lastStatementExpressions =
+                if (relevantFunction is KtFunctionLiteral ||
+                    (relevantFunction is KtNamedFunction && relevantFunction.bodyBlockExpression == null)
+                ) {
+                    val lastStatementStatements = mutableSetOf<PsiElement>(relevantFunction)
+                    relevantFunction.acceptChildren(object : KtVisitorVoid() {
+                        override fun visitKtElement(element: KtElement) {
+                            ProgressIndicatorProvider.checkCanceled()
+                            element.acceptChildren(this)
+                        }
 
-                            override fun visitExpression(expression: KtExpression) {
-                                when(expression) {
-                                    is KtBinaryExpression -> {
-                                        set.addIfNotNullAndNotBlock(expression.left)
-                                        set.addIfNotNullAndNotBlock(expression.right)
-                                    }
-                                    is KtCallExpression -> {
-                                        set.addIfNotNullAndNotBlock(expression.calleeExpression)
-                                    }
-                                    is KtBlockExpression -> set.addIfNotNullAndNotBlock(expression.statements.lastOrNull())
-                                    is KtIfExpression -> {
-                                        set.addIfNotNullAndNotBlock(expression.then)
-                                        set.addIfNotNullAndNotBlock(expression.`else`)
-                                    }
-                                    is KtWhenExpression ->
-                                        expression.entries.map { it.expression }.forEach {
-                                            set.addIfNotNullAndNotBlock(it)
-                                        }
+                        override fun visitExpression(expression: KtExpression) {
+                            when(expression) {
+                                is KtBinaryExpression -> {
+                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.left)
+                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.right)
                                 }
-                                super.visitExpression(expression)
+                                is KtCallExpression -> {
+                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.calleeExpression)
+                                }
+                                is KtBlockExpression -> lastStatementStatements.addIfNotNullAndNotBlock(expression.lastStatementOrNull())
+                                is KtIfExpression -> {
+                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.then)
+                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.`else`)
+                                }
+                                is KtWhenExpression ->
+                                    expression.entries.map { it.expression }.forEach {
+                                        lastStatementStatements.addIfNotNullAndNotBlock(it)
+                                    }
                             }
-                        })
+                            super.visitExpression(expression)
+                        }
+                    })
+                    if (target !in lastStatementStatements) {
+                        return
                     }
+                    lastStatementStatements
                 } else {
                     emptySet()
                 }
-
-            if (relevantFunction is KtFunctionLiteral && target !in lastLambdaStatementExpressions) {
-                return
-            }
 
             relevantFunction?.accept(object : KtVisitorVoid() {
                 override fun visitKtElement(element: KtElement) {
@@ -193,10 +230,14 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 }
 
                 override fun visitExpression(expression: KtExpression) {
-                    if (relevantFunction is KtFunctionLiteral) {
-                        if (occurrenceForFunctionLiteralReturnExpression(expression, expression in lastLambdaStatementExpressions)) {
+                    if (relevantFunction is KtFunctionLiteral || relevantFunction is KtNamedFunction) {
+                        if (occurrenceForFunctionLiteralReturnExpression(expression, expression in lastStatementExpressions)) {
                             if (!targetOccurrenceAdded) {
-                                relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression?.let {
+                                when (relevantFunction) {
+                                    is KtFunctionLiteral -> relevantFunction.parentOfTypes(KtCallExpression::class)?.calleeExpression
+                                    is KtNamedFunction -> relevantFunction.nameIdentifier
+                                    else -> null
+                                }?.let {
                                     targetOccurrenceAdded = true
                                     addOccurrence(it)
                                 }
@@ -243,10 +284,21 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
             })
         }
 
-        private fun MutableSet<Any>.addIfNotNullAndNotBlock(element: PsiElement?) {
-            addIfNotNull(element.takeUnless { it is KtBlockExpression })
-        }
-
         override fun highlightReferences() = highlightReferences
     }
+
+    private fun MutableSet<PsiElement>.addIfNotNullAndNotBlock(element: PsiElement?) {
+        addIfNotNull(element.takeUnless { it is KtBlockExpression })
+    }
+
+    private fun KtBlockExpression.lastStatementOrNull(): KtExpression? {
+        var expression: KtExpression? = null
+        var cur = getFirstChild()
+        while (cur != null) {
+            (cur as? KtExpression)?.let { expression = it }
+            cur = cur.getNextSibling()
+        }
+        return expression
+    }
+
 }
