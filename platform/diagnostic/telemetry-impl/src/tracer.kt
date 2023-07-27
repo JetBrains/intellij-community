@@ -5,11 +5,9 @@ package com.intellij.diagnostic
 
 import com.intellij.platform.diagnostic.telemetry.impl.TraceReporter
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.VarHandle
-import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.coroutines.coroutineContext
@@ -33,8 +31,13 @@ private val defaultTracer = MeasureCoroutineTime(reporter = DefaultTraceReporter
  */
 fun rootTask(): CoroutineContext = defaultTracer
 
-@Internal
-fun rootTask(traceReporter: TraceReporter): CoroutineContext = MeasureCoroutineTime(reporter = traceReporter)
+internal suspend fun createSpan(traceReporter: TraceReporter): CoroutineContext {
+  return CoroutineTimeMeasurer(reporter = traceReporter, parentActivity = coroutineContext[CoroutineTimeMeasurerKey]?.getActivity())
+}
+
+internal fun createRootSpan(traceReporter: TraceReporter): CoroutineContext {
+  return CoroutineTimeMeasurer(reporter = traceReporter, parentActivity = null)
+}
 
 /**
  * This function is designed to be used instead of `withContext(CoroutineName("subtask")) { ... }`.
@@ -50,17 +53,6 @@ suspend fun <T> span(name: String, context: CoroutineContext = EmptyCoroutineCon
   else {
     withContext(namedContext + measurer.copyForChild(), action)
   }
-}
-
-@Experimental
-class SpanAttributes(@JvmField val attributes: Array<String>) : AbstractCoroutineContextElement(SpanAttributes) {
-  companion object Key : CoroutineContext.Key<SpanAttributes>
-
-  override fun toString(): String = "SpanAttributes($attributes)"
-
-  override fun equals(other: Any?): Boolean = this === other || (other is SpanAttributes && attributes.contentEquals(other.attributes))
-
-  override fun hashCode(): Int = attributes.contentHashCode()
 }
 
 @Internal
@@ -153,7 +145,6 @@ private class CoroutineTimeMeasurer(private val parentActivity: ActivityImpl?,
     val activity = reporter.start(coroutineName = coroutineName, scheduleTime = creationTime, parentActivity = parentActivity)
     CURRENT_ACTIVITY.setVolatile(this, activity)
 
-    activity.attributes = context[SpanAttributes]?.attributes
     val job = context.job
     job.invokeOnCompletion {
       val end = System.nanoTime()
@@ -168,11 +159,9 @@ private class CoroutineTimeMeasurer(private val parentActivity: ActivityImpl?,
   }
 
   override fun copyForChild(): CopyableThreadContextElement<Unit> {
-    val activity = checkNotNull(CURRENT_ACTIVITY.getVolatile(this)) {
-      "updateThreadContext was never called"
-    }
+    val activity = CURRENT_ACTIVITY.getVolatile(this)
     // don't format into one line - complicates debugging
-    if (activity === noActivity) {
+    if (activity === noActivity || activity == null) {
       return CoroutineTimeMeasurer(parentActivity = null, reporter = reporter)
     }
     else {
@@ -182,7 +171,7 @@ private class CoroutineTimeMeasurer(private val parentActivity: ActivityImpl?,
 
   override fun mergeForChild(overwritingElement: CoroutineContext.Element): CoroutineContext = overwritingElement
 
-  fun getActivity() = CURRENT_ACTIVITY.getVolatile(this) as Activity?
+  fun getActivity() = CURRENT_ACTIVITY.getVolatile(this) as ActivityImpl?
 }
 
 open class DefaultTraceReporter(private val reportScheduleTimeForRoot: Boolean) : TraceReporter {

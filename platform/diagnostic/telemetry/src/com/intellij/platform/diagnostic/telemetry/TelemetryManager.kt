@@ -5,7 +5,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
-import org.jetbrains.annotations.ApiStatus
+import kotlinx.coroutines.CoroutineName
+import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.coroutines.CoroutineContext
@@ -15,7 +16,7 @@ import kotlin.coroutines.EmptyCoroutineContext
  * See [Span](https://opentelemetry.io/docs/reference/specification),
  * [Manual Instrumentation](https://opentelemetry.io/docs/instrumentation/java/manual/#create-spans-with-events).
  */
-@ApiStatus.Experimental
+@Experimental
 @Internal
 interface TelemetryManager {
   companion object {
@@ -96,11 +97,22 @@ internal class NoopTelemetryManager : TelemetryManager {
   }
 }
 
+// suspend here is required to get parent span from coroutine context; that's why a version without `suspend` is called `rootSpan`.
+@Internal
+@Experimental
 interface IntelliJTracer {
-  fun createSpan(name: String): CoroutineContext
+  suspend fun span(name: String): CoroutineContext
+
+  suspend fun span(name: String, attributes: Array<String>): CoroutineContext
+
+  fun rootSpan(name: String, attributes: Array<String>): CoroutineContext
 }
 
 @Internal
 object NoopIntelliJTracer : IntelliJTracer {
-  override fun createSpan(name: String): CoroutineContext = EmptyCoroutineContext
+  override suspend fun span(name: String) = CoroutineName(name)
+
+  override suspend fun span(name: String, attributes: Array<String>) = span(name)
+
+  override fun rootSpan(name: String, attributes: Array<String>) = EmptyCoroutineContext
 }

@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
-import com.intellij.diagnostic.ActivityImpl
-import com.intellij.diagnostic.DefaultTraceReporter
-import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.rootTask
+import com.intellij.diagnostic.*
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -13,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.util.Ref
 import com.intellij.platform.diagnostic.telemetry.*
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.childScope
@@ -81,14 +79,40 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
 }
 
 private class IntelliJTracerImpl(private val scope: Scope, private val otlpService: OtlpService) : IntelliJTracer {
-  override fun createSpan(name: String): CoroutineContext {
-    return rootTask(traceReporter = object : DefaultTraceReporter(reportScheduleTimeForRoot = true) {
+  private val traceReporter = object : DefaultTraceReporter(reportScheduleTimeForRoot = true) {
+    override fun setEndAndAdd(activity: ActivityImpl, end: Long) {
+      activity.setEnd(end)
+      activity.scope = scope
+      otlpService.add(activity)
+    }
+  }
+
+  override suspend fun span(name: String): CoroutineContext {
+    return createSpan(traceReporter = traceReporter) + CoroutineName(name)
+  }
+
+  override suspend fun span(name: String, attributes: Array<String>): CoroutineContext {
+    return CoroutineName(name) +
+           createSpan(traceReporter = createAttributeAwareReporter(name, Ref(attributes.takeIf { it.isNotEmpty() })))
+  }
+
+  override fun rootSpan(name: String, attributes: Array<String>): CoroutineContext {
+    return CoroutineName(name) +
+           createRootSpan(traceReporter = createAttributeAwareReporter(name, Ref(attributes.takeIf { it.isNotEmpty() })))
+  }
+
+  private fun createAttributeAwareReporter(name: String, ref: Ref<Array<String>>): DefaultTraceReporter {
+    return object : DefaultTraceReporter(reportScheduleTimeForRoot = true) {
       override fun setEndAndAdd(activity: ActivityImpl, end: Long) {
-        activity.setEnd(end)
-        activity.scope = scope
-        otlpService.add(activity)
+        // yes, compare by identity
+        if (activity.name === name) {
+          activity.attributes = ref.get()
+          ref.set(null)
+        }
+
+        traceReporter.setEndAndAdd(activity, end)
       }
-    }) + CoroutineName(name)
+    }
   }
 }
 

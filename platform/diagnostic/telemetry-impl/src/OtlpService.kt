@@ -138,7 +138,7 @@ internal class OtlpService(private val coroutineScope: CoroutineScope) {
     return byteBuffer.array()
   }
 
-  private suspend fun flush(scopeToSpans: Map<Scope, ScopeSpans>, resource: Resource, endpoint: String) {
+  private suspend fun flush(scopeToSpans: MutableMap<Scope, ScopeSpans>, resource: Resource, endpoint: String) {
     if (scopeToSpans.isEmpty()) {
       return
     }
@@ -152,6 +152,7 @@ internal class OtlpService(private val coroutineScope: CoroutineScope) {
       ),
     )
     httpPost(url = endpoint, contentType = ContentType.XProtobuf, body = ProtoBuf.encodeToByteArray(data))
+    scopeToSpans.clear()
   }
 
   fun add(activity: ActivityImpl) {
