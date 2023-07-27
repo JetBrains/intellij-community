@@ -28,10 +28,10 @@ class MermaidDiagramCompletionProvider : CompletionProvider<CompletionParameters
       "C4Dynamic",
       "C4Deployment",
       "mindmap",
-      "quadrantChart"
       "quadrantChart",
       "timeline",
       "zenuml",
+      "sankey-beta",
     )
 
   override fun addCompletions(

@@ -920,4 +920,13 @@ object MermaidTokens {
     @JvmField
     val ZEN_UML = MermaidToken("ZenUML.ZEN_UML")
   }
+
+
+  object Sankey {
+    @JvmField
+    val SANKEY = MermaidToken("Sankey.SANKEY")
+
+    @JvmField
+    val SANKEY_TEXT = MermaidToken("Sankey.SANKEY_TEXT")
+  }
 }

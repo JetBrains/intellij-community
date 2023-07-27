@@ -27,6 +27,7 @@
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Timeline.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.Quadrant.*'
     'static com.intellij.mermaid.lang.lexer.MermaidTokens.ZenUML.*'
+    'static com.intellij.mermaid.lang.lexer.MermaidTokens.Sankey.*'
   ]
   generateTokens=false
   implements="com.intellij.mermaid.lang.psi.MermaidPsiElement"
@@ -53,6 +54,7 @@ private diagram ::= pieHeader EOL* [pieBody]
   | timelineHeader EOL* [timelineBody]
   | quadrantHeader EOL* [quadrantBody]
   | ZEN_UML
+  | sankeyHeader EOL* [sankeyBody]
 
 titleStatement ::= TITLE complexTitleValue
 complexTitleValue ::= TITLE_VALUE+
@@ -833,6 +835,35 @@ quadrantComplexText ::=
     (maybeEmptyString | maybeEmptyMdText) QUADRANT_TEXT+
   | (string | mdText) QUADRANT_TEXT*
   | QUADRANT_TEXT+
+
+
+sankeyHeader ::= SANKEY
+
+sankeyBody ::= sankeyLines { implements="com.intellij.mermaid.lang.psi.MermaidDiagramBlock" }
+private sankeyLines ::= sankeyLine [sankeyLines]
+private sankeyLine ::= sankeyStatement [EOL] | EOL
+private sankeyStatement ::= sankeyRecordStatement
+
+sankeyRecordStatement ::= identifyingSankeyField COMMA identifyingSankeyField COMMA sankeyField
+private identifyingSankeyField ::= identifyingQuotedSankeyField | identifyingComplexSankeyText
+private sankeyField ::= quotedSankeyField | complexSankeyText
+
+
+identifyingQuotedSankeyField ::= DOUBLE_QUOTE identifyingQuotedSankeyFieldValue DOUBLE_QUOTE
+identifyingQuotedSankeyFieldValue ::= ( quotedSankeyFieldInnerValue | (complexSankeyText | COMMA)+ )+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+identifyingComplexSankeyText ::= SANKEY_TEXT+ {
+  mixin="com.intellij.mermaid.lang.psi.impl.MermaidNamedPsiElement"
+}
+
+
+quotedSankeyField ::= DOUBLE_QUOTE quotedSankeyFieldValue DOUBLE_QUOTE
+quotedSankeyFieldValue ::= ( quotedSankeyFieldInnerValue | (complexSankeyText | COMMA)+ )+
+quotedSankeyFieldInnerValue ::= DOUBLE_QUOTE DOUBLE_QUOTE quotedSankeyFieldValue DOUBLE_QUOTE DOUBLE_QUOTE
+
+complexSankeyText ::= SANKEY_TEXT+
 
 
 directive ::= OPEN_DIRECTIVE directiveValue? CLOSE_DIRECTIVE

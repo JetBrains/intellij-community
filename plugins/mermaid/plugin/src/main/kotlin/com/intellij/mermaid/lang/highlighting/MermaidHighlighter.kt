@@ -38,6 +38,7 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
       addSequenceHighlights(holder)
       addTimelineHighlights(holder)
       addQuadrantHighlights(holder)
+      addSankeyHighlights(holder)
       return holder
     }
 
@@ -334,6 +335,15 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTokens.Quadrant.X_AXIS,
         MermaidTokens.Quadrant.Y_AXIS,
         MermaidTokens.Quadrant.QUADRANT
+      )
+    }
+
+    private fun addSankeyHighlights(holder: MutableMap<IElementType, TextAttributesKey>) {
+      holder[MermaidTokens.Sankey.SANKEY] = MermaidTextAttributes.diagram_name
+      fillMap(
+        holder,
+        MermaidTextAttributes.string,
+        MermaidTokens.Sankey.SANKEY_TEXT
       )
     }
 

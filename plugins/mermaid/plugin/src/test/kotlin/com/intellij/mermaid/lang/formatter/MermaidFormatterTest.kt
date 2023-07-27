@@ -37,6 +37,8 @@ class MermaidFormatterTest : MermaidBaseTestCase("formatter") {
 
   fun `test quadrant`() = doTest()
 
+  fun `test sankey`() = doTest()
+
   private fun doTest() {
     val before = getTestName(true) + "_before.mermaid"
     val after = getTestName(true) + "_after.mermaid"

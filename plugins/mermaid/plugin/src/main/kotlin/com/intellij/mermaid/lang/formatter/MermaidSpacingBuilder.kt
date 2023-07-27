@@ -245,6 +245,8 @@ internal object MermaidSpacingBuilder {
   private fun SpacingBuilder.addRulesRequiredByMermaid(): SpacingBuilder {
     return between(MermaidTokens.COMMA, MermaidTokens.Flowchart.STYLE_TARGET).spaceIf(false)
       .between(MermaidTokens.COMMA, MermaidTokens.Flowchart.CLASS_ID_STYLE).spaceIf(false)
+      .between(MermaidTokens.COMMA, MermaidElements.QUOTED_SANKEY_FIELD).spaceIf(false)
+      .between(MermaidTokens.COMMA, MermaidElements.IDENTIFYING_QUOTED_SANKEY_FIELD).spaceIf(false)
       .aroundInside(MermaidTokens.STYLE_SEPARATOR, MermaidElements.STYLED_VERTEX).spaceIf(false)
       .around(MermaidElements.GENERIC_TYPE_ID).spaceIf(false)
       .after(MermaidTokens.Directives.CLOSE_DIRECTIVE).spaceIf(false)
@@ -326,6 +328,8 @@ internal object MermaidSpacingBuilder {
       .between(MermaidTokens.Gantt.INCLUDES, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
       .between(MermaidTokens.Gantt.EXCLUDES, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
       .between(MermaidTokens.Gantt.AXIS_FORMAT, MermaidTokens.Gantt.GANTT_VALUE).spaces(1)
+      // Sankey
+      .between(MermaidTokens.Sankey.SANKEY_TEXT, MermaidTokens.Sankey.SANKEY_TEXT).spaces(1)
   }
 
   private fun SpacingBuilder.addIndentRules(indentOptions: CommonCodeStyleSettings.IndentOptions): SpacingBuilder {

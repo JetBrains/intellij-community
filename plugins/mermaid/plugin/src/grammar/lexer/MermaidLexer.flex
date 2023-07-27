@@ -77,6 +77,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
 %states quadrant, quadrant_point
 
+%states sankey, sankey_quoted_text
+
 %%
 
 "%%"/"{"[^]* { yypushstate(directive); return Directives.OPEN_DIRECTIVE; }
@@ -109,6 +111,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "timeline" { yybegin(timeline); return Timeline.TIMELINE; }
   "quadrantChart" { yybegin(quadrant); return Quadrant.QUADRANT_CHART; }
   "zenuml"[^]* { return ZenUML.ZEN_UML; }
+  "sankey-beta" { yybegin(sankey); return Sankey.SANKEY; }
 
   --- { yybegin(frontmatter); return Frontmatter.FRONTMATTER_START; }
 
@@ -132,7 +135,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "---" { yybegin(YYINITIAL); return Frontmatter.FRONTMATTER_END; }
 }
 
-<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant> {
+<pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, mindmap, timeline, quadrant, sankey> {
   %%([^{][^\n\r]*)? { return LINE_COMMENT; }
 }
 <pie, journey, flowchart, flowchart_body, sequence, class_diagram, struct, state_diagram, state_statement, entity_relationship, entity_attributes, note_content, gantt, requirement_diagram, requirement, requirement_value, req_element, gitgraph, c4, timeline, quadrant> {
@@ -976,10 +979,18 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "]" { yybegin(quadrant); return CLOSE_SQUARE; }
 }
 
-//---zen-uml---------------------------------------------------------------------
-//<quadrant> {
-//  [^\s]+ { return Quadrant.QUADRANT_DUMMY; }
-//}
+//---sankey----------------------------------------------------------------------
+<sankey> {
+  "," { return COMMA; }
+  [\"] { yypushstate(sankey_quoted_text); return DOUBLE_QUOTE; }
+  [^,\"\s]+ { return Sankey.SANKEY_TEXT; }
+}
+<sankey_quoted_text> {
+  "," { return COMMA; }
+  [\"]/[^\"]? { yypopstate(); return DOUBLE_QUOTE; }
+  [\"] { return DOUBLE_QUOTE; }
+  [^,\"\s]* { return Sankey.SANKEY_TEXT; }
+}
 
 //--------------------------------------------------------------------------------
 <double_quoted_string> {

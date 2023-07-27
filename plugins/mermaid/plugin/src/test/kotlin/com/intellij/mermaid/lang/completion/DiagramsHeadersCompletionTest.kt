@@ -21,10 +21,10 @@ class DiagramsHeadersCompletionTest : MermaidBaseTestCase("completion/diagrams")
     "C4Dynamic",
     "C4Deployment",
     "mindmap",
-    "quadrantChart"
     "quadrantChart",
     "timeline",
     "zenuml",
+    "sankey-beta"
   )
 
   fun `test diagrams headers`() = doTest(*diagrams)
