@@ -780,6 +780,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
                 runTest("../testData/basic/common/extensions/ComplexCapture2.kt");
             }
 
+            @TestMetadata("ContextReceiverType.kt")
+            public void testContextReceiverType() throws Exception {
+                runTest("../testData/basic/common/extensions/ContextReceiverType.kt");
+            }
+
+            @TestMetadata("ContextReceiverType2.kt")
+            public void testContextReceiverType2() throws Exception {
+                runTest("../testData/basic/common/extensions/ContextReceiverType2.kt");
+            }
+
             @TestMetadata("ExtensionInExtendedClass.kt")
             public void testExtensionInExtendedClass() throws Exception {
                 runTest("../testData/basic/common/extensions/ExtensionInExtendedClass.kt");
