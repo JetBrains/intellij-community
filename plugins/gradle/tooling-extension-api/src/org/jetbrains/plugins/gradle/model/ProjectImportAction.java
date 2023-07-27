@@ -153,7 +153,9 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       myIsPreviewMode,
       isProjectsLoadedAction
     );
+    long startTime = System.currentTimeMillis();
     modelFetchAction.execute(new DefaultBuildController(controller, myGradleBuild));
+    myAllModels.logPerformance("Execute GradleModelFetchAction", System.currentTimeMillis() - startTime);
 
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
