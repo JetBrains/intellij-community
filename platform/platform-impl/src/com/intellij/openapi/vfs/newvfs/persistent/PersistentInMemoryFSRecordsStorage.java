@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.channels.ByteChannel;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
@@ -19,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
+import static java.nio.ByteOrder.nativeOrder;
 import static java.nio.file.StandardOpenOption.CREATE;
 import static java.nio.file.StandardOpenOption.WRITE;
 
@@ -62,8 +62,8 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
 
   /* ================ RECORD FIELDS LAYOUT end             ======================================== */
 
-  private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.nativeOrder());
-  private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.nativeOrder());
+  private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, nativeOrder());
+  private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, nativeOrder());
 
 
   private final int maxRecords;
@@ -89,7 +89,7 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
     this.maxRecords = maxRecords;
     //this.records = new UnsafeBuffer(maxRecords * RECORD_SIZE_IN_BYTES+ HEADER_SIZE);
     this.records = ByteBuffer.allocate(maxRecords * RECORD_SIZE_IN_BYTES + HEADER_SIZE)
-      .order(ByteOrder.nativeOrder());
+      .order(nativeOrder());
 
     if (Files.exists(path)) {
       final long fileSize = Files.size(path);
@@ -102,14 +102,19 @@ public class PersistentInMemoryFSRecordsStorage implements PersistentFSRecordsSt
 
       try (ByteChannel channel = Files.newByteChannel(path)) {
         final int actualBytesRead = channel.read(records);
-        final int recordsRead = (actualBytesRead - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
-        final int recordExcess = (actualBytesRead - HEADER_SIZE) % RECORD_SIZE_IN_BYTES;
-        if (recordExcess > 0) {
-          throw new IOException(
-            "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
-            " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+        if (actualBytesRead <= 0) {
+          allocatedRecordsCount.set(0);
         }
-        allocatedRecordsCount.set(recordsRead);
+        else {
+          final int recordsRead = (actualBytesRead - HEADER_SIZE) / RECORD_SIZE_IN_BYTES;
+          final int recordExcess = (actualBytesRead - HEADER_SIZE) % RECORD_SIZE_IN_BYTES;
+          if (recordExcess > 0) {
+            throw new IOException(
+              "[" + path + "] likely truncated: (" + actualBytesRead + "b) " +
+              " = (" + recordsRead + " whole records) + " + recordExcess + "b excess");
+          }
+          allocatedRecordsCount.set(recordsRead);
+        }
       }
     }
     globalModCount.set(getIntHeaderField(HEADER_GLOBAL_MOD_COUNT_OFFSET));

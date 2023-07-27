@@ -539,7 +539,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
 
   @Test
-  public void globalStorageModCountShouldNotChangeOnForceAndClose() throws IOException {
+  public void globalStorageModCount_ShouldNotChange_OnForceAndClose() throws IOException {
     int modCountBefore = storage.getGlobalModCount();
     storage.force();
     assertEquals("globalModCount should not change with .force()",
@@ -553,6 +553,21 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
                  storage.getGlobalModCount());
   }
 
+  @Test
+  public void errorsAccumulated_RestoredAfterReopen() throws IOException {
+    int errorsWritten = 42;
+
+    storage.setErrorsAccumulated(errorsWritten);
+    storage.close();
+
+    final T storageReopened = openStorage(storagePath);
+    storage = storageReopened;//for tearDown to successfully close it
+    assertEquals("errorsAccumulated be restored",
+                 errorsWritten,
+                 storage.getErrorsAccumulated());
+  }
+
+
   @After
   public void tearDown() throws Exception {
     if (storage != null) {
@@ -561,7 +576,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   }
 
 
-  /* ========================== INFRASTRUCTURE =============================================================== */
+  // ========================== INFRASTRUCTURE ===============================================================
 
   /**
    * Plain data holder

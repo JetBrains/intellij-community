@@ -183,8 +183,8 @@ public final class FSRecordsImpl {
   }
 
   public static int currentImplementationVersion() {
-    //bumped main version (59 -> 60) because of VfsDependentEnumerator removal, and filenames change
-    final int mainVFSFormatVersion = 60;
+    //bumped main version (60 -> 61) because of PFSRecords header enlargement (HEADER_ERRORS_ACCUMULATED)
+    final int mainVFSFormatVersion = 61;
     //@formatter:off (nextMask better be aligned)
     return nextMask(mainVFSFormatVersion + (PersistentFSRecordsStorageFactory.getRecordsStorageImplementation().ordinal()), /* acceptable range is [0..255] */ 8,
            nextMask(USE_CONTENT_HASHES,

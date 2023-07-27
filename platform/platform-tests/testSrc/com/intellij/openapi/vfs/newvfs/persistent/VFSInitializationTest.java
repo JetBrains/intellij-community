@@ -295,31 +295,31 @@ public class VFSInitializationTest {
     //check all combinations (from->to) of implementations:
     for (RecordsStorageKind kindBefore : allKinds) {
       for (RecordsStorageKind kindAfter : allKinds) {
-        final Path cachesDir = temporaryDirectory.createDir();
+        Path cachesDir = temporaryDirectory.createDir();
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindBefore);
-        final FSRecordsImpl records = FSRecordsImpl.connect(cachesDir);
+        FSRecordsImpl vfs = FSRecordsImpl.connect(cachesDir);
 
-        final long firstVfsCreationTimestamp = records.getCreationTimestamp();
+        long firstVfsCreationTimestamp = vfs.getCreationTimestamp();
 
-        records.dispose();
+        vfs.dispose();
         Thread.sleep(500);//ensure system clock is moving
 
         //reopen:
         PersistentFSRecordsStorageFactory.setRecordsStorageImplementation(kindAfter);
-        final FSRecordsImpl reopenedRecords = FSRecordsImpl.connect(cachesDir);
-        final long reopenedVfsCreationTimestamp = reopenedRecords.getCreationTimestamp();
+        FSRecordsImpl reopenedVfs = FSRecordsImpl.connect(cachesDir);
+        long reopenedVfsCreationTimestamp = reopenedVfs.getCreationTimestamp();
 
 
         if (kindBefore == kindAfter) {
           assertEquals(
-            "VFS must _not_ be rebuild since storage version impl is not changed (" + kindBefore + " -> " + kindAfter + ")",
+            "VFS must NOT be rebuild since storage version impl is not changed (" + kindBefore + " -> " + kindAfter + ")",
             firstVfsCreationTimestamp,
             reopenedVfsCreationTimestamp
           );
         }
         else {
           assertNotEquals(
-            "VFS _must_ be rebuild from scratch since storage version impl is changed (" + kindBefore + " -> " + kindAfter + ")",
+            "VFS MUST be rebuild from scratch since storage version impl is changed (" + kindBefore + " -> " + kindAfter + ")",
             firstVfsCreationTimestamp,
             reopenedVfsCreationTimestamp
           );

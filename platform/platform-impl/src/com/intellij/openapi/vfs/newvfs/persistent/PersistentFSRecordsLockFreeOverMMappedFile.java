@@ -41,8 +41,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
    * For mmapped implementation file size is page-aligned, we can't calculate records size from it. Instead
    * we store allocated records count in header, in a reserved field (HEADER_RESERVED_4BYTES_OFFSET)
    */
-  private static final int HEADER_RECORDS_ALLOCATED = HEADER_VERSION_OFFSET + Integer.BYTES;
-  public static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
+  private static final int HEADER_RECORDS_ALLOCATED = HEADER_RESERVED_OFFSET_1;
+
+  private static final int HEADER_SIZE = PersistentFSHeaders.HEADER_SIZE;
 
   /* ================ RECORD FIELDS LAYOUT  =========================================================== */
 

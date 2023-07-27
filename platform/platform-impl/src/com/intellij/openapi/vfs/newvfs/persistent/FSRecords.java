@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
@@ -107,7 +108,7 @@ public final class FSRecords {
   private static @NotNull FSRecordsImpl implOrFail() {
     FSRecordsImpl _impl = impl;
     if (_impl == null) {
-      throw new IllegalStateException("VFS instance is not initialized yet");
+      throw new ServiceNotReadyException("VFS instance is not initialized yet");
     }
     else if (_impl.isDisposed()) {
       //guaranteed to fail, and provides diagnostic:
