@@ -117,6 +117,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
       setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
       setOKButtonMnemonic('P');
+      setKeepPopupsOpen(true);
     }
 
     @Override

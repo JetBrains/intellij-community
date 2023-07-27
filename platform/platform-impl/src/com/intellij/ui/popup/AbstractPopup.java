@@ -26,6 +26,7 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
@@ -916,12 +917,12 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   @Override
   public boolean canClose() {
     return
-      !anyModalWindowsOpenedFromPopupShowingNow() &&
+      !anyModalWindowsKeepPopupOpen() &&
       (myCallBack == null || myCallBack.compute().booleanValue()) &&
       !preventImmediateClosingAfterOpening();
   }
 
-  private boolean anyModalWindowsOpenedFromPopupShowingNow() {
+  private boolean anyModalWindowsKeepPopupOpen() {
     var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
     var i = 0;
     for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
@@ -930,7 +931,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
     for (; i < modalEntitiesNow.length; ++i) {
-      if (modalEntitiesNow[i] instanceof Window) {
+      if (modalEntitiesNow[i] instanceof Window modalWindow && ClientProperty.isTrue(modalWindow, DialogWrapper.KEEP_POPUPS_OPEN)) {
         return true;
       }
     }

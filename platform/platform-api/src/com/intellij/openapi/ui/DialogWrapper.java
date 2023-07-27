@@ -92,6 +92,9 @@ public abstract class DialogWrapper {
   @ApiStatus.Internal
   public static final @NotNull String IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY = "isVisualPaddingCompensatedOnComponentLevel";
 
+  @ApiStatus.Internal
+  public static final @NotNull Key<Boolean> KEEP_POPUPS_OPEN = Key.create("KEEP_POPUPS_OPEN");
+
   /**
    * The default exit code for "OK" action.
    */
@@ -181,6 +184,7 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
+  private boolean myKeepPopupsOpen;
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -1483,6 +1487,33 @@ public abstract class DialogWrapper {
     return myPeer.isModal();
   }
 
+  /**
+   * Checks if this dialog will keep previously opened popup open while it's showing.
+   *
+   * @see #setKeepPopupsOpen(boolean)
+   * @return the current value of the "keep popups open" flag
+   */
+  @ApiStatus.Experimental
+  public boolean isKeepPopupsOpen() {
+    return myKeepPopupsOpen;
+  }
+
+  /**
+   * Sets whether this dialog will keep previously opened popup open while it's showing.
+   *
+   * Some dialogs (e.g. Paste from History) can be invoked from a popup to perform
+   * a certain task and then get back to working with the popup. However, as popups
+   * normally disappear on losing focus, this doesn't work by default. Calling this
+   * method with the parameter set to {@code true} will override this behavior
+   * and keep all previously opened popups while the dialog is displayed.
+   *
+   * @param keepPopupsOpen whether to keep previously opened popups open
+   */
+  @ApiStatus.Experimental
+  public void setKeepPopupsOpen(boolean keepPopupsOpen) {
+    myKeepPopupsOpen = keepPopupsOpen;
+  }
+
   public void setOnDeactivationAction(@NotNull Runnable action) {
     myPeer.setOnDeactivationAction(myDisposable, action);
   }
@@ -1685,6 +1716,10 @@ public abstract class DialogWrapper {
       Disposer.register(uiParent, myDisposable); // ensure everything is disposed on app quit
     }
 
+    Window window = myPeer.getWindow();
+    if (window != null) {
+      ClientProperty.put(window, KEEP_POPUPS_OPEN, myKeepPopupsOpen);
+    }
     myPeer.show();
   }
 
