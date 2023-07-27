@@ -72,6 +72,8 @@ class MermaidHighlighter : SyntaxHighlighterBase() {
         MermaidTextAttributes.keyword,
         MermaidTokens.Sequence.PARTICIPANT,
         MermaidTokens.Sequence.ACTOR,
+        MermaidTokens.Sequence.CREATE,
+        MermaidTokens.Sequence.DESTROY,
         MermaidTokens.Sequence.ACTIVATE,
         MermaidTokens.Sequence.DEACTIVATE,
         MermaidTokens.Sequence.OVER,

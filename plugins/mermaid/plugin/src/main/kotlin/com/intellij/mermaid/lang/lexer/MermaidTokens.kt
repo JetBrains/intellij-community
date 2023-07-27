@@ -354,6 +354,12 @@ object MermaidTokens {
     val ACTOR = MermaidToken("Sequence.ACTOR")
 
     @JvmField
+    val CREATE = MermaidToken("Sequence.CREATE")
+
+    @JvmField
+    val DESTROY = MermaidToken("Sequence.DESTROY")
+
+    @JvmField
     val SOLID_ARROW = MermaidToken("Sequence.SOLID_ARROW")
 
     @JvmField

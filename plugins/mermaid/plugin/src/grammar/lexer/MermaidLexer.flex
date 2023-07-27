@@ -368,6 +368,8 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
 
   "participant" { yybegin(sequence_id); return Sequence.PARTICIPANT; }
   "actor" { yybegin(sequence_id); return Sequence.ACTOR; }
+  "create" { return Sequence.CREATE; }
+  "destroy" { yybegin(sequence_id); return Sequence.DESTROY; }
   "activate" { return Sequence.ACTIVATE; }
   "deactivate" { return Sequence.DEACTIVATE; }
   "Note" { return NOTE; }

@@ -219,7 +219,8 @@ deactivateStatement ::= DEACTIVATE complexIdentifier
 
 idAlias ::= ALIAS+
 
-actorStatement ::= (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
+actorStatement ::= [CREATE] (PARTICIPANT | ACTOR) complexIdentifier [AS idAlias]
+  | DESTROY complexIdentifier
 
 signalStatement ::= complexIdentifier signal complexIdentifier COLON complexMessage
 signal ::= signalType [PLUS | MINUS]
