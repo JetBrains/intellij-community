@@ -145,8 +145,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
   }
 
   override fun cancelTask(task: DumbModeTask) {
-    if (ApplicationManager.getApplication().isInternal) LOG.info(
-      "cancel $task")
+    LOG.info("cancel $task [${project.name}]")
     myTaskQueue.cancelTask(task)
   }
 
