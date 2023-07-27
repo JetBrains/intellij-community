@@ -63,7 +63,7 @@ class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMet
   override val name = "Matched Ratio At $n"
   override val description: String = "Length of the longest matching proposal among top-$n normalized by expected text (avg by invocations)"
 
-  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double {
     val numConsideredSuggestions = min(n, lookup.suggestions.size)
     var maxMatchedLen = 0
     for (i in 0 until numConsideredSuggestions) {
