@@ -50,7 +50,7 @@ public class MavenConfig {
     return null;
   }
 
-  public @Nullable String getFilePath(@NotNull MavenConfigSettings configSetting) {
+  public String getFilePath(@NotNull MavenConfigSettings configSetting) {
     Option option = optionMap.get(configSetting.key);
     if (option == null) return null;
 

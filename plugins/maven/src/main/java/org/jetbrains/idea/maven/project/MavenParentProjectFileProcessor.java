@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.apache.commons.lang.StringUtils;
@@ -24,24 +23,17 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.nio.file.Path;
 
 import static org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils.DEFAULT_RELATIVE_PATH;
 
 public abstract class MavenParentProjectFileProcessor<RESULT_TYPE> {
-  private final Project myProject;
-
-  public MavenParentProjectFileProcessor(Project project) {
-    myProject = project;
-  }
-
   @Nullable
   public RESULT_TYPE process(@NotNull MavenGeneralSettings generalSettings,
                              @NotNull VirtualFile projectFile,
                              @Nullable MavenParentDesc parentDesc) {
-    VirtualFile superPom = MavenUtil.getEffectiveSuperPomWithNoRespectToWrapper(myProject);
+    VirtualFile superPom = generalSettings.getEffectiveSuperPom();
     if (superPom == null || projectFile.equals(superPom)) return null;
 
     RESULT_TYPE result = null;

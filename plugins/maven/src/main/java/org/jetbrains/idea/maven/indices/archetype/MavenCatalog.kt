@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.project.staticOrBundled
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.io.File
@@ -30,7 +29,7 @@ sealed interface MavenCatalog {
         get() {
           val generalSettings = MavenProjectsManager.getInstance(project).generalSettings
           val mavenConfig = generalSettings.mavenConfig
-          val mavenHome = generalSettings.mavenHomeType.staticOrBundled()
+          val mavenHome = generalSettings.mavenHome
           val userSettings = MavenWslUtil.getUserSettings(project, "", mavenConfig).path
           return MavenWslUtil.getLocalRepo(project, "", mavenHome, userSettings, mavenConfig)
         }

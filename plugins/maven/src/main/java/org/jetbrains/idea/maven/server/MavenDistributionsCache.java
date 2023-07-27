@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.project.Project;
@@ -17,18 +16,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenExternalParameters;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
 import org.jetbrains.intellij.build.impl.BundledMavenDownloader;
 
-import java.io.File;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-
-import static org.jetbrains.idea.maven.utils.MavenUtil.isValidMavenHome;
 
 public final class MavenDistributionsCache {
   private final static ClearableLazyValue<Path> mySourcePath = ClearableLazyValue.create(MavenDistributionsCache::getSourceMavenPath);
@@ -57,43 +56,24 @@ public final class MavenDistributionsCache {
   public @NotNull MavenDistribution getSettingsDistribution() {
     var projectsManager = MavenProjectsManager.getInstance(myProject);
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    MavenHomeType type = settings.getGeneralSettings().getMavenHomeType();
-    if (type instanceof MavenWrapper) {
-      var baseDir = myProject.getBasePath();
-      var projects = projectsManager.getProjects();
-      if (projects.size() > 0) {
-        baseDir = projects.get(0).getDirectory();
+    MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.getGeneralSettings().getMavenHome());
+    if (distribution == null) {
+      if (useWrapper()) {
+        var baseDir = myProject.getBasePath();
+        var projects = projectsManager.getProjects();
+        if (projects.size() > 0) {
+          baseDir = projects.get(0).getDirectory();
+        }
+        distribution = getMavenDistribution(baseDir);
       }
-      if (baseDir != null) {
-        String multiModuleDir = myWorkingDirToMultiModuleMap.computeIfAbsent(baseDir, this::resolveMultiModuleDirectory);
-        return myMultimoduleDirToWrapperedMavenDistributionsMap.computeIfAbsent(multiModuleDir, this::getWrapperDistribution);
-      }
     }
-    else if (type instanceof MavenInSpecificPath sp) {
-      MavenDistribution mavenDistribution = fromPath(sp.getMavenHome(), sp.getTitle());
-      if (mavenDistribution != null) return mavenDistribution;
-    }
-    else if (type instanceof BundledMaven3 || type instanceof BundledMaven4) {
+    if (distribution == null) {
+      projectsManager.getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
+        .message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHome()));
       return resolveEmbeddedMavenHome();
-    }
-
-
-    projectsManager.getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
-      .message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHomeType().getTitle()));
-      return resolveEmbeddedMavenHome();
-
-  }
-
-  @Nullable
-  private static MavenDistribution fromPath(@NotNull String path, @NotNull String label) {
-    File file = new File(path);
-    if (!isValidMavenHome(file)) return null;
-    WslPath wslPath = WslPath.parseWindowsUncPath(file.getAbsolutePath());
-    if (wslPath == null) {
-      return new LocalMavenDistribution(file.toPath(), label);
     }
     else {
-      return new WslMavenDistribution(wslPath.getDistribution(), wslPath.getLinuxPath(), label);
+      return distribution;
     }
   }
 
@@ -144,14 +124,14 @@ public final class MavenDistributionsCache {
   public static LocalMavenDistribution resolveEmbeddedMavenHome() {
     if (PluginManagerCore.isRunningFromSources()) {
       Path mavenPath = mySourcePath.getValue();
-      return new LocalMavenDistribution(mavenPath, BundledMaven3.INSTANCE.getTitle());
+      return new LocalMavenDistribution(mavenPath, MavenServerManager.BUNDLED_MAVEN_3);
     }
     else {
       final Path pluginFileOrDir = Path.of(PathUtil.getJarPathForClass(MavenServerManager.class));
       final Path root = pluginFileOrDir.getParent();
 
       // maven3 folder inside maven plugin layout
-      return new LocalMavenDistribution(root.resolve("maven3"), BundledMaven3.INSTANCE.getTitle());
+      return new LocalMavenDistribution(root.resolve("maven3"), MavenServerManager.BUNDLED_MAVEN_3);
     }
   }
 
@@ -166,7 +146,16 @@ public final class MavenDistributionsCache {
     if (baseDir == null) {
       return null;
     }
-    return MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
+    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
+    if (distributionUrl == null) {
+      MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
+      MavenProjectsManager.getInstance(myProject).getSyncConsole()
+        .addWarning(
+          SyncBundle.message("cannot.resolve.maven.home"),
+          SyncBundle.message("is.not.correct.maven.home.reverting.to.embedded", settings.getGeneralSettings().getMavenHome())
+        );
+    }
+    return distributionUrl;
   }
 
   private @NotNull String resolveMultiModuleDirectory(@NotNull String workingDirectory) {

@@ -93,7 +93,8 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
 
     myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(() -> getCurrentCodeStyleSettings());
 
-      File settingsFile = MavenUtil.resolveGlobalSettingsFile(BundledMaven3.INSTANCE);
+    File settingsFile =
+      MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings().generalSettings.getEffectiveGlobalSettingsIoFile();
     if (settingsFile != null) {
       VfsRootAccess.allowRootAccess(getTestRootDisposable(), settingsFile.getAbsolutePath());
     }
@@ -102,7 +103,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myNotificationAware = AutoImportProjectNotificationAware.getInstance(myProject);
     myProjectTracker = AutoImportProjectTracker.getInstance(myProject);
   }
-
 
   @Override
   protected void tearDown() throws Exception {

@@ -47,7 +47,8 @@ class MavenArtifactCoordinatesVersionConverter : MavenArtifactCoordinatesConvert
       return false
     }
 
-    val mavenVersion = MavenUtil.getMavenVersion(context.project, context.file.containingDirectory.virtualFile.path);
+    val mavenVersion = MavenUtil.getMavenVersion(
+      MavenWorkspaceSettingsComponent.getInstance(context.project).settings.generalSettings.effectiveMavenHome)
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.3") <= 0 && id.version == null) {
       return false
     }

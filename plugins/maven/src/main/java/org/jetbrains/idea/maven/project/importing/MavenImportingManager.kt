@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.importing.MavenImportStats
 import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -203,7 +204,7 @@ class MavenImportingManager(val project: Project) {
       if (readMavenFiles.wrapperData != null) {
         try {
           readMavenFiles = flow.setupMavenWrapper(readMavenFiles)
-          readMavenFiles.initialContext.generalSettings.mavenHomeType = MavenWrapper
+          readMavenFiles.initialContext.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
         }
         catch (e: Throwable) {
           MavenLog.LOG.warn(e)

@@ -13,7 +13,6 @@ import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
 import org.jetbrains.idea.maven.execution.SyncBundle.message
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.util.concurrent.CompletableFuture
 
 object RepositoryBlockedSyncIssue {

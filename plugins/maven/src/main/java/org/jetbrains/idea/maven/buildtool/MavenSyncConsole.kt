@@ -39,8 +39,8 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent
 import org.jetbrains.idea.maven.server.MavenArtifactEvent.ArtifactEventType
-import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import java.io.File
@@ -303,7 +303,7 @@ class MavenSyncConsole(private val myProject: Project) {
 
   private fun attachOfflineQuickFix() {
     try {
-      val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings()
+      val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings
       if (hasUnresolved && generalSettings.isWorkOffline) {
         mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
           override val title: String = "Dependency Resolution Failed"
@@ -428,7 +428,8 @@ class MavenSyncConsole(private val myProject: Project) {
 
   @Synchronized
   fun showQuickFixBadMaven(message: String, kind: MessageEvent.Kind) {
-    val bundledVersion = MavenDistributionsCache.resolveEmbeddedMavenHome().version
+    val bundledVersion = MavenUtil.getMavenVersionByMavenHome(
+      MavenServerManager.BUNDLED_MAVEN_3)
     mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
       override val title = SyncBundle.message("maven.sync.version.issue.title")
       override val description: String = "${message}\n" +

@@ -6,9 +6,17 @@ import java.util.Collection;
 import java.util.List;
 
 public final class MavenWorkspaceSettings {
+  /**
+   * @deprecated Do not use this public field
+   */
+  @Deprecated
+  public MavenGeneralSettings generalSettings = new MavenGeneralSettings();
 
-  private MavenGeneralSettings generalSettings = new MavenGeneralSettings();
-  private MavenImportingSettings importingSettings = new MavenImportingSettings();
+  /**
+   * @deprecated Do not use this public field
+   */
+  @Deprecated(forRemoval = true)
+  public MavenImportingSettings importingSettings = new MavenImportingSettings();
 
   public List<String> enabledProfiles = new ArrayList<>();
   public List<String> disabledProfiles = new ArrayList<>();

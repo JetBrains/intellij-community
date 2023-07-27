@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil.collectWslMavenDirectories
+import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveMavenHomeDirectory
 import java.io.File
 
 class MavenWslTargetConfigurator : MavenImporter("", ""),
@@ -59,8 +59,7 @@ class MavenWslTargetConfigurator : MavenImporter("", ""),
       return
     }
     dataHolder.putUserData(WSL_DISTRIBUTION, wslDistribution)
-    val mavenPath = wslDistribution.collectWslMavenDirectories()
-      .firstOrNull()?.let { MavenUtil.getMavenHomeFile(it) }
+    val mavenPath = wslDistribution.resolveMavenHomeDirectory(null)
     dataHolder.putUserData(MAVEN_HOME_DIR, mavenPath)
     val targetMavenPath = mavenPath?.let { wslDistribution.getWslPath(it.path) }
     dataHolder.putUserData(MAVEN_TARGET_PATH, targetMavenPath)

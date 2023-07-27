@@ -8,7 +8,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
 import com.intellij.testFramework.RunAll
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.project.BundledMaven3
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWindowsFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveLocalRepository
@@ -60,7 +59,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
   fun testShouldReturnMavenLocalDirOnWsl() {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "repository"),
-      myDistribution.resolveLocalRepository(null, BundledMaven3, null))
+      myDistribution.resolveLocalRepository(null, null, null))
   }
 
   @Test
@@ -80,7 +79,7 @@ class MavenWslUtilTestCase : MavenTestCase() {
                                        "</settings>")
     TestCase.assertEquals(
       File(myDistribution.getWindowsPath("/tmp/path/to/repo")!!),
-      myDistribution.resolveLocalRepository(null, BundledMaven3, subFile.path))
+      myDistribution.resolveLocalRepository(null, null, subFile.path))
   }
 
   @Test

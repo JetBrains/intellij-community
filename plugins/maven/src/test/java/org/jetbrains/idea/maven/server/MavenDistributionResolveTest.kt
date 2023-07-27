@@ -4,13 +4,15 @@ package org.jetbrains.idea.maven.server
 import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.build.events.MessageEvent
-import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.replaceService
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.io.ZipUtil
 import com.sun.net.httpserver.HttpExchange
 import com.sun.net.httpserver.HttpServer
-import org.jetbrains.idea.maven.project.*
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.junit.Test
 import java.io.IOException
 import java.net.HttpURLConnection
@@ -42,7 +44,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
     assertEquals(
@@ -56,7 +58,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
     createWrapperProperties("distributionUrl=http://example.org/repo/maven.bin.zip")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
     assertEquals(
@@ -75,7 +77,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=$url")
-      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = MavenWrapper
+      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.WRAPPED_MAVEN
       importProject()
       val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
       assertTrue(connector.mavenDistribution.mavenHome.absolutePathString().contains("wrapper"))
@@ -90,7 +92,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
                        "<artifactId>project</artifactId>" +
                        "<version>1</version>")
       createWrapperProperties("distributionUrl=$url")
-      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = BundledMaven3
+      MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = MavenServerManager.BUNDLED_MAVEN_3
       importProject()
       val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
       assertFalse(connector.mavenDistribution.mavenHome.toFile().absolutePath.contains(".wrapper"))
@@ -103,8 +105,7 @@ class MavenDistributionResolveTest : MavenMultiVersionImportingTestCase() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>")
-    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().mavenHomeType = MavenInSpecificPath(
-      "path/to/unexisted/maven/home")
+    MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings.mavenHome = FileUtil.toSystemDependentName("path/to/unexisted/maven/home")
     importProject()
     val connector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.path)
     assertEquals(

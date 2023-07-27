@@ -15,9 +15,12 @@ import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
-import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.project.importing.MavenImportFinishedContext;
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
@@ -57,8 +60,8 @@ public class MavenImportWizardTest extends MavenProjectWizardTestCase {
     });
 
     MavenGeneralSettings settings = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings();
-    MavenHomeType mavenHome = settings.getMavenHomeType();
-    assertSame(BundledMaven3.INSTANCE, mavenHome);
+    String mavenHome = settings.getMavenHome();
+    assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
     assertTrue(MavenProjectsNavigator.getInstance(module.getProject()).getGroupModules());
     assertTrue(settings.isUseMavenConfig());
   }
@@ -73,9 +76,8 @@ public class MavenImportWizardTest extends MavenProjectWizardTestCase {
       assertThat(ModuleManager.getInstance(c.getProject()).getModules()).hasOnlyOneElementSatisfying(
         m -> assertThat(m.getName()).isEqualTo("project"));
     });
-    MavenHomeType mavenHome =
-      MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHomeType();
-    assertSame(MavenWrapper.INSTANCE, mavenHome);
+    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
+    assertEquals(MavenServerManager.WRAPPED_MAVEN, mavenHome);
   }
 
 
@@ -83,9 +85,8 @@ public class MavenImportWizardTest extends MavenProjectWizardTestCase {
     Path pom = createPom();
     createMavenWrapper(pom, "property1=value1");
     Module module = importProjectFrom(pom.toString(), null, new MavenProjectImportProvider());
-    MavenHomeType mavenHome =
-      MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHomeType();
-    assertSame(BundledMaven3.INSTANCE, mavenHome);
+    String mavenHome = MavenWorkspaceSettingsComponent.getInstance(module.getProject()).getSettings().getGeneralSettings().getMavenHome();
+    assertEquals(MavenServerManager.BUNDLED_MAVEN_3, mavenHome);
 
     afterImportFinished(module.getProject(), c -> {
       assertThat(ModuleManager.getInstance(c.getProject()).getModules()).hasOnlyOneElementSatisfying(

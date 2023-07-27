@@ -48,12 +48,15 @@ import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.execution.RunnerBundle
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asDistributionInfo
 import org.jetbrains.idea.maven.execution.run.configuration.MavenDistributionsInfo.Companion.asMavenHome
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.MavenServerUtil
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 import java.awt.Component
-import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JCheckBox
 import javax.swing.JComponent
@@ -375,14 +378,11 @@ class MavenRunConfigurationSettingsEditor(
     addDistributionFragment(
       project,
       MavenDistributionsInfo(),
-      { asDistributionInfo(generalSettingsOrDefault.mavenHomeType) },
-      { generalSettingsOrDefault.mavenHomeType = it?.let(::asMavenHome) ?: BundledMaven3 }
+      { asDistributionInfo(generalSettingsOrDefault.mavenHome.ifEmpty { MavenServerManager.BUNDLED_MAVEN_3 }) },
+      { generalSettingsOrDefault.mavenHome = it?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3 }
     ).addValidation {
-      val type = it.generalSettingsOrDefault.mavenHomeType
-      if (type is MavenInSpecificPath) {
-        if (!MavenUtil.isValidMavenHome(File(type.mavenHome))) {
-          throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
-        }
+      if (!MavenUtil.isValidMavenHome(it.generalSettingsOrDefault.mavenHome)) {
+        throw RuntimeConfigurationError(MavenConfigurableBundle.message("maven.run.configuration.distribution.invalid.home.error"))
       }
     }
 
@@ -540,11 +540,11 @@ class MavenRunConfigurationSettingsEditor(
     {
       val mavenConfig = MavenProjectsManager.getInstance(project)?.generalSettings?.mavenConfig
       val distributionInfo = distributionComponent.selectedDistribution
-      val distribution = distributionInfo?.let(::asMavenHome) ?: BundledMaven3
+      val distribution = distributionInfo?.let(::asMavenHome) ?: MavenServerManager.BUNDLED_MAVEN_3
       val userSettingsPath = getCanonicalPath(userSettingsComponent.text)
       val userSettingsFile = MavenWslUtil.getUserSettings(project, userSettingsPath, mavenConfig)
       val userSettings = getCanonicalPath(userSettingsFile.path)
-      val localRepository = MavenWslUtil.getLocalRepoForUserPreview(project, "", distribution, userSettings, mavenConfig)
+      val localRepository = MavenWslUtil.getLocalRepo(project, "", distribution, userSettings, mavenConfig)
       getCanonicalPath(localRepository.path)
     }
   )

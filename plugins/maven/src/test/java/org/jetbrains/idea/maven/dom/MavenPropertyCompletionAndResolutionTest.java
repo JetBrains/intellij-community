@@ -20,7 +20,6 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
 import org.junit.Test;
 
@@ -413,7 +412,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                        <name>${<caret>project.build.finalName}</name>
                        """);
 
-    VirtualFile effectiveSuperPom = MavenUtil.getEffectiveSuperPom(myProject, myProjectRoot.toNioPath().toString());
+    VirtualFile effectiveSuperPom = getMavenGeneralSettings().getEffectiveSuperPom();
     assertNotNull(effectiveSuperPom);
     assertResolved(myProjectPom, findTag(effectiveSuperPom, "project.build.finalName"));
   }
