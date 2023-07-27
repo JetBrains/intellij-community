@@ -14,6 +14,8 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.testFramework.EditorTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
@@ -146,5 +148,14 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   private fun rehighlight(editor: Editor) {
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     CodeInsightTestFixtureImpl.instantiateAndRun(psiFile!!, editor, ArrayUtilRt.EMPTY_INT_ARRAY, false)
+  }
+
+  fun testSplitChooserSameSideTwice() {
+    val classA = myFixture.addClass("public class A {}")
+    val editors = manager!!.openFile(classA.containingFile.virtualFile, true)
+    val editor = (UsefulTestCase.assertOneElement(editors) as TextEditorImpl).editor
+    EditorTestUtil.executeAction(editor, "SplitChooser", true)
+    EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
+    EditorTestUtil.executeAction(editor, "SplitChooser.SplitLeft", true)
   }
 }

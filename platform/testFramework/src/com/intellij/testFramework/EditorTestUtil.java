@@ -141,6 +141,7 @@ public final class EditorTestUtil {
       .setParent(parent)
       .add(CommonDataKeys.HOST_EDITOR, hostEditor)
       .add(CommonDataKeys.EDITOR, editor)
+      .add(CommonDataKeys.VIRTUAL_FILE, editor.getVirtualFile())
       .build();
   }
 

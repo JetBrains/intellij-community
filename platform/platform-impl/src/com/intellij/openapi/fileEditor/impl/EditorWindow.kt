@@ -47,6 +47,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.awt.event.MouseEvent
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
 import java.time.Instant
@@ -230,15 +231,18 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     for (window in windows) {
       panelToWindow.put(window.panel, window)
     }
-    val relativePoint = RelativePoint(panel.locationOnScreen)
+    val relativePoint = if (ApplicationManager.getApplication().isUnitTestMode)
+      RelativePoint(MouseEvent(JLabel(), 0, 0, 0, 0, 0, 0, false))
+    else
+      RelativePoint(panel.locationOnScreen)
     val point = relativePoint.getPoint(owner)
-    val nearestComponent: (Int, Int) -> Component = { x, y ->
+    val nearestComponent: (Int, Int) -> Component? = { x, y ->
       SwingUtilities.getDeepestComponentAt(owner, x, y)
     }
 
-    fun findAdjacentEditor(startComponent: Component): EditorWindow? {
+    fun findAdjacentEditor(startComponent: Component?): EditorWindow? {
       var component = startComponent
-      while (component !== owner) {
+      while (component !== owner && component != null) {
         if (panelToWindow.containsKey(component)) {
           return panelToWindow.get(component)
         }
@@ -686,7 +690,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
   internal fun showSplitChooser(project: Project, showInfoPanel: Boolean): SplitChooser {
     val disposable = Disposer.newDisposable("GlassPaneListeners")
     val painter = MySplitPainter(project, showInfoPanel, tabbedPane, owner)
-    IdeGlassPaneUtil.find(panel).addPainter(panel, painter, disposable)
+    if (!ApplicationManager.getApplication().isUnitTestMode) {
+      IdeGlassPaneUtil.find(panel).addPainter(panel, painter, disposable)
+    }
     panel.repaint()
     panel.isFocusable = true
     panel.grabFocus()
