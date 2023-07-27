@@ -20,7 +20,7 @@ import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import kotlin.time.Duration.Companion.minutes
 
-private const val chunkSize = 400
+private const val chunkSize = 512
 
 fun getOtlpEndPoint(): String? {
   return normalizeOtlpEndPoint(System.getProperty("idea.diagnostic.opentelemetry.otlp"))
@@ -100,7 +100,7 @@ internal class OtlpService(private val coroutineScope: CoroutineScope) {
             }
 
             // or if no new spans for a while, flush buffer
-            onTimeout(1.minutes) {
+            onTimeout(5.minutes) {
               flush(scopeToSpans = scopeToSpans, resource = resource, endpoint = endpoint)
             }
           }

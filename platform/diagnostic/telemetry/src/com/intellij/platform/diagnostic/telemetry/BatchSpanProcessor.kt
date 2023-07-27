@@ -4,10 +4,6 @@
 package com.intellij.platform.diagnostic.telemetry
 
 import com.intellij.openapi.diagnostic.logger
-import io.opentelemetry.api.common.AttributeKey
-import io.opentelemetry.api.common.Attributes
-import io.opentelemetry.api.metrics.LongCounter
-import io.opentelemetry.api.metrics.MeterProvider
 import io.opentelemetry.context.Context
 import io.opentelemetry.sdk.common.CompletableResultCode
 import io.opentelemetry.sdk.trace.ReadWriteSpan
@@ -17,21 +13,12 @@ import io.opentelemetry.sdk.trace.data.SpanData
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.future.asCompletableFuture
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import org.jetbrains.annotations.ApiStatus.Internal
-import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.atomic.AtomicInteger
-import java.util.concurrent.atomic.AtomicReference
-import java.util.concurrent.atomic.LongAdder
 import java.util.function.BiFunction
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlin.time.DurationUnit
-import kotlin.time.toDuration
-
-private val SPAN_PROCESSOR_TYPE_LABEL = AttributeKey.stringKey("spanProcessorType")
-private val SPAN_PROCESSOR_DROPPED_LABEL = AttributeKey.booleanKey("dropped")
-private val SPAN_PROCESSOR_TYPE_VALUE = BatchSpanProcessor::class.java.simpleName
 
 @Internal
 interface AsyncSpanExporter {
@@ -41,68 +28,71 @@ interface AsyncSpanExporter {
   }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 @Internal
 class BatchSpanProcessor(
   coroutineScope: CoroutineScope,
   private val spanExporters: List<AsyncSpanExporter>,
-  meterProvider: MeterProvider = MeterProvider.noop(),
   private val scheduleDelay: Duration = 5.seconds,
-  maxQueueSize: Int = 2048,
   private val maxExportBatchSize: Int = 512,
   private val exporterTimeout: Duration = 30.seconds,
 ) : SpanProcessor {
-  private val isShutdown = AtomicBoolean(false)
+  private val queue = Channel<ReadableSpan>(capacity = Channel.UNLIMITED)
+  private val flushRequested = Channel<CompletableDeferred<Unit>>(capacity = Channel.UNLIMITED)
 
-  private val queue = Channel<ReadableSpan>(maxQueueSize)
-  private val processedSpanCounter: LongCounter
-  private val droppedAttrs: Attributes
-  private val exportedAttrs: Attributes
-  private var nextExportTime: Duration = Duration.ZERO
-
-  private val queueSize = LongAdder()
-
-  // When waiting on the span queue, exporter thread sets this atomic to the number of more
-  // spans it needs before doing an export. Writer threads would then wait for the queue to reach
-  // spansNeeded size before notifying the exporter thread about new entries.
-  // Integer.MAX_VALUE is used to imply that exporter thread is not expecting any signal. Since
-  // exporter thread doesn't expect any signal initially, this value is initialized to
-  // Integer.MAX_VALUE.
-  private val spansNeeded = AtomicInteger(Int.MAX_VALUE)
-  private val signal = Channel<Boolean>(1)
-  private val flushRequested = AtomicReference<CompletableDeferred<Unit>?>()
-
-  @Volatile
-  private var continueWork = true
   private val processingJob: Job
 
   init {
-    val meter = meterProvider.meterBuilder("io.opentelemetry.sdk.trace").build()
-    meter
-      .gaugeBuilder("queueSize")
-      .ofLongs()
-      .setDescription("The number of spans queued")
-      .setUnit("1")
-      .buildWithCallback {
-        it.record(queueSize.sum(), Attributes.of(SPAN_PROCESSOR_TYPE_LABEL, SPAN_PROCESSOR_TYPE_VALUE))
-      }
-    processedSpanCounter = meter
-      .counterBuilder("processedSpans")
-      .setUnit("1")
-      .setDescription("The number of spans processed by the BatchSpanProcessor. [dropped=true if they were dropped due to high throughput]")
-      .build()
-    droppedAttrs = Attributes.of(
-      SPAN_PROCESSOR_TYPE_LABEL,
-      SPAN_PROCESSOR_TYPE_VALUE,
-      SPAN_PROCESSOR_DROPPED_LABEL,
-      true)
-    exportedAttrs = Attributes.of(
-      SPAN_PROCESSOR_TYPE_LABEL,
-      SPAN_PROCESSOR_TYPE_VALUE,
-      SPAN_PROCESSOR_DROPPED_LABEL,
-      false)
-
     processingJob = coroutineScope.launch {
-      processQueue()
+      val batch = ArrayList<SpanData>(maxExportBatchSize)
+      try {
+        var counter = 0
+        while (true) {
+          select {
+            flushRequested.onReceive { result ->
+              try {
+                exportCurrentBatch(batch)
+              }
+              finally {
+                result.complete(Unit)
+              }
+            }
+
+            queue.onReceive { span ->
+              batch.add(span.toSpanData())
+
+              if (counter++ >= maxExportBatchSize) {
+                counter = 0
+                try {
+                  exportCurrentBatch(batch)
+                }
+                catch (e: CancellationException) {
+                  throw e
+                }
+                catch (e: Throwable) {
+                  logger<BatchSpanProcessor>().error("Cannot flush", e)
+                }
+              }
+            }
+
+            // or if no new spans for a while, flush buffer
+            onTimeout(scheduleDelay) {
+              exportCurrentBatch(batch)
+            }
+          }
+        }
+      }
+      catch (e: CancellationException) {
+        withContext(NonCancellable) {
+          try {
+            exportCurrentBatch(batch)
+          }
+          finally {
+            shutdownExporters()
+          }
+        }
+        throw e
+      }
     }
   }
 
@@ -120,82 +110,27 @@ class BatchSpanProcessor(
   override fun isEndRequired(): Boolean = true
 
   override fun shutdown(): CompletableResultCode {
-    if (isShutdown.getAndSet(true)) {
-      return CompletableResultCode.ofSuccess()
-    }
-
-    continueWork = false
-    runBlocking(NonCancellable) {
-      try {
-        withTimeout(1.minutes) {
-          @Suppress("DuplicatedCode")
-          processingJob.join()
-
-          val batch = ArrayList<SpanData>(maxExportBatchSize)
-          while (true) {
-            val span = queue.tryReceive().getOrNull() ?: break
-            queueSize.decrement()
-            batch.add(span.toSpanData())
-          }
-          exportCurrentBatch(batch)
-        }
-      }
-      finally {
-        withContext(NonCancellable) {
-          for (spanExporter in spanExporters) {
-            try {
-              spanExporter.shutdown()
-            }
-            catch (e: Throwable) {
-              logger<BatchSpanProcessor>().error("Failed to shutdown", e)
-            }
-          }
-        }
-      }
-    }
-    processingJob.cancel()
+    // shutdown must be performed using scope - explicit shutdown is not required
     return CompletableResultCode.ofSuccess()
   }
 
-  @Suppress("DuplicatedCode")
-  suspend fun shutdownAsync() {
-    if (isShutdown.getAndSet(true)) {
-      return
-    }
-
-    continueWork = false
-    withContext(NonCancellable) {
+  private fun shutdownExporters() {
+    for (spanExporter in spanExporters) {
       try {
-        processingJob.join()
-
-        val batch = ArrayList<SpanData>(maxExportBatchSize)
-        while (true) {
-          val span = queue.tryReceive().getOrNull() ?: break
-          queueSize.decrement()
-          batch.add(span.toSpanData())
-        }
-        exportCurrentBatch(batch)
+        spanExporter.shutdown()
       }
-      finally {
-        for (spanExporter in spanExporters) {
-          try {
-            spanExporter.shutdown()
-          }
-          catch (e: Throwable) {
-            logger<BatchSpanProcessor>().error("Failed to shutdown", e)
-          }
-        }
+      catch (e: Throwable) {
+        logger<BatchSpanProcessor>().error("Failed to shutdown", e)
       }
     }
-    processingJob.cancel()
   }
 
   override fun forceFlush(): CompletableResultCode {
-    // we set the atomic here to trigger the worker loop to do a flush of the entire queue
     val completableDeferred = CompletableDeferred<Unit>()
-    if (flushRequested.compareAndSet(null, CompletableDeferred())) {
-      signal.trySend(true)
+    if (flushRequested.trySend(completableDeferred).isClosed) {
+      return CompletableResultCode.ofSuccess()
     }
+
     val result = CompletableResultCode()
     completableDeferred.asCompletableFuture().handle(BiFunction { _, error ->
       if (error == null) {
@@ -210,75 +145,7 @@ class BatchSpanProcessor(
   }
 
   private fun addSpan(span: ReadableSpan) {
-    if (queue.trySend(span).isSuccess) {
-      queueSize.increment()
-      if (queueSize.sum() >= spansNeeded.get()) {
-        signal.trySend(true)
-      }
-    }
-    else {
-      processedSpanCounter.add(1, droppedAttrs)
-    }
-  }
-
-  private suspend fun processQueue() {
-    updateNextExportTime()
-    val batch = ArrayList<SpanData>(maxExportBatchSize)
-    while (continueWork) {
-      val flushRequestJob = flushRequested.get()
-      if (flushRequestJob != null) {
-        try {
-          flush(batch)
-        }
-        finally {
-          flushRequested.compareAndSet(flushRequestJob, null)
-          flushRequestJob.complete(Unit)
-        }
-      }
-
-      val limit = maxExportBatchSize - batch.size
-      var polledCount = 0
-      while (polledCount++ < limit) {
-        val span = queue.tryReceive().getOrNull() ?: break
-        queueSize.decrement()
-        batch.add(span.toSpanData())
-      }
-
-      if (batch.size >= maxExportBatchSize || System.nanoTime().toDuration(DurationUnit.NANOSECONDS) >= nextExportTime) {
-        exportCurrentBatch(batch)
-        updateNextExportTime()
-      }
-
-      if (queueSize.sum() == 0L) {
-        val pollWaitTime = nextExportTime - System.nanoTime().toDuration(DurationUnit.NANOSECONDS)
-        if (pollWaitTime > Duration.ZERO) {
-          spansNeeded.set(maxExportBatchSize - batch.size)
-          withTimeoutOrNull(pollWaitTime) {
-            signal.receive()
-          }
-          spansNeeded.set(Int.MAX_VALUE)
-        }
-      }
-    }
-  }
-
-  private suspend fun flush(batch: MutableList<SpanData>) {
-    var spansToFlush = queueSize.sum()
-    while (spansToFlush > 0) {
-      val span = queue.tryReceive().getOrNull() ?: break
-      queueSize.decrement()
-      batch.add(span.toSpanData())
-      spansToFlush--
-      if (batch.size >= maxExportBatchSize) {
-        exportCurrentBatch(batch)
-      }
-    }
-
-    exportCurrentBatch(batch)
-  }
-
-  private fun updateNextExportTime() {
-    nextExportTime = scheduleDelay + System.nanoTime().toDuration(DurationUnit.NANOSECONDS)
+    queue.trySend(span)
   }
 
   private suspend fun exportCurrentBatch(batch: MutableList<SpanData>) {
@@ -288,10 +155,9 @@ class BatchSpanProcessor(
 
     try {
       for (spanExporter in spanExporters) {
-        withTimeout(exporterTimeout) {
+        withTimeoutOrNull(exporterTimeout) {
           spanExporter.export(batch)
         }
-        processedSpanCounter.add(batch.size.toLong(), exportedAttrs)
       }
     }
     catch (e: CancellationException) {

@@ -62,7 +62,6 @@ fun buildDevMain(): Collection<Path> {
     }
     finally {
       traceManagerInitializer = { throw IllegalStateException("already built") }
-      spanProcessor.shutdownAsync()
     }
   }
   if (homePath != null) {
