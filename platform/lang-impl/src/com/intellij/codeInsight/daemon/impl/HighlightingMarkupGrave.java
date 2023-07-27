@@ -272,7 +272,7 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
                  (info.getSeverity().compareTo(HighlightSeverity.INFORMATION) > 0   // either warning/error or symbol type (e.g. field text attribute)
                   || info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY
                  )
-                 || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.createGutterRenderer() != null; // or a line marker with a gutter icon
+                 || (lm = LineMarkersUtil.getLineMarkerInfo(h)) != null && lm.getIcon() != null; // or a line marker with a gutter icon
           }
         )
         .map(h -> new HighlighterState(h, colorsScheme))
