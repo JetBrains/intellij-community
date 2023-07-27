@@ -24,10 +24,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.ui.AnimatedIcon
 import com.intellij.util.ui.AsyncProcessIcon
 import com.jetbrains.JBR
 import kotlinx.coroutines.*
+import java.util.concurrent.CancellationException
 
 internal fun CoroutineScope.loadApp(app: ApplicationImpl,
                                     pluginSetDeferred: Deferred<Deferred<PluginSet>>,
@@ -36,13 +39,21 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
                                     initLafJob: Job,
                                     logDeferred: Deferred<Logger>,
                                     appRegisteredJob: CompletableDeferred<Unit>,
-                                    args: List<String>,
-                                    telemetryInitJob: Job) {
+                                    args: List<String>) {
   val initServiceContainerJob = launch {
     initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+  }
 
-    span("telemetry waiting") {
-      telemetryInitJob.join()
+  val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
+    initServiceContainerJob.join()
+    try {
+      TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
     }
   }
 
@@ -62,6 +73,9 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
 
   val preloadCriticalServicesJob = async(CoroutineName("app pre-initialization")) {
     initConfigurationStoreJob.join()
+    span("telemetry waiting") {
+      initTelemetryJob.join()
+    }
     preInitApp(app = app,
                asyncScope = asyncScope,
                initLafJob = initLafJob,

@@ -3,13 +3,17 @@ package com.intellij.platform.diagnostic.telemetry.impl.otExporters
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.sdk.metrics.export.MetricExporter
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 
 /**
  * EP for custom spans and metrics providers. These providers will be loaded after the application startup.
  * By this time, default platform providers will be already added.
+ *
+ * Only bundled plugins can provide it.
  */
+@Internal
 interface OpenTelemetryExporterProvider {
   fun getSpanExporters(): List<AsyncSpanExporter> = emptyList()
 

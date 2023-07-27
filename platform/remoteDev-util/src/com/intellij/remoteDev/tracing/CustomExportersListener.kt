@@ -3,7 +3,6 @@ package com.intellij.remoteDev.tracing
 
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
@@ -18,19 +17,16 @@ private class CustomExportersListener : ApplicationInitializedListener {
       return
     }
 
-    val spanExporters = mutableListOf<AsyncSpanExporter>()
     val metricsExporters = mutableListOf<MetricsExporterEntry>()
-
     for (provider in providers) {
-      spanExporters.addAll(provider.getSpanExporters())
-
       val metrics = provider.getMetricsExporters()
       if (metrics.isNotEmpty()) {
         metricsExporters.add(MetricsExporterEntry(metrics = metrics, duration = provider.getReadInterval()))
       }
     }
 
-    val telemetryManager = TelemetryManager.getInstance()
-    telemetryManager.addMetricsExporters(metricsExporters)
+    if (metricsExporters.isNotEmpty()) {
+      TelemetryManager.getInstance().addMetricsExporters(metricsExporters)
+    }
   }
 }

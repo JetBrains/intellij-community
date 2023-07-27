@@ -63,7 +63,7 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
     sdkBuilder.setTracerProvider(tracerProvider)
   }
 
-  private fun registerMetricsExporter(metricsExporters: List<MetricsExporterEntry>) {
+  private fun registerMetricExporters(metricsExporters: List<MetricsExporterEntry>) {
     val registeredMetricsReaders = SdkMeterProvider.builder()
     // can't reuse standard BoundedScheduledExecutorService because this library uses unsupported `scheduleAtFixedRate`
     val pool = Executors.newScheduledThreadPool(1, ConcurrencyUtil.newNamedThreadFactory("PeriodicMetricReader"))
@@ -103,7 +103,7 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
 
   fun getConfiguredSdkBuilder(): OpenTelemetrySdkBuilder {
     if (isMetricsEnabled()) {
-      registerMetricsExporter(createMetricsExporters())
+      registerMetricExporters(createMetricsExporters())
     }
     return sdkBuilder
   }

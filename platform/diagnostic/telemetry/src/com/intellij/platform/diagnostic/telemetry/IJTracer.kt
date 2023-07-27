@@ -3,6 +3,7 @@ package com.intellij.platform.diagnostic.telemetry
 
 import io.opentelemetry.api.trace.SpanBuilder
 import io.opentelemetry.api.trace.Tracer
+import io.opentelemetry.api.trace.TracerProvider
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -23,4 +24,14 @@ interface IJTracer : Tracer {
 enum class TracerLevel {
   DEFAULT,
   DETAILED,
+}
+
+@ApiStatus.Internal
+object IJNoopTracer : IJTracer {
+  @JvmField
+  val noopTrace: Tracer = TracerProvider.noop().get("")
+
+  override fun spanBuilder(spanName: String): SpanBuilder = noopTrace.spanBuilder(spanName)
+
+  override fun spanBuilder(spanName: String, level: TracerLevel): SpanBuilder = spanBuilder(spanName)
 }

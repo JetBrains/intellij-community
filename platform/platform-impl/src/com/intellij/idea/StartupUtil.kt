@@ -28,7 +28,6 @@ import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
-import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
@@ -58,7 +57,6 @@ import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
@@ -267,29 +265,14 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appLoaded = launch {
-    val app = appDeferred.await()
-
-    val telemetryInitJob = launch(CoroutineName("opentelemetry configuration")) {
-      try {
-        TelemetryManager.setTelemetryManager(TelemetryManagerImpl(app))
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        logDeferred.await().error("Can't initialize OpenTelemetry: will use default (noop) SDK impl", e)
-      }
-    }
-
-    loadApp(app = app,
+    loadApp(app = appDeferred.await(),
             pluginSetDeferred = pluginSetDeferred,
             euaDocumentDeferred = euaDocumentDeferred,
             asyncScope = asyncScope,
             initLafJob = initLafJob,
             logDeferred = logDeferred,
             appRegisteredJob = appRegisteredJob,
-            args = args,
-            telemetryInitJob = telemetryInitJob)
+            args = args)
   }
 
   launch {

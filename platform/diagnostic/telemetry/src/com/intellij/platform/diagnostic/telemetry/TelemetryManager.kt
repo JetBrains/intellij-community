@@ -9,10 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.coroutines.CoroutineContext
-
-interface IntelliJTracer {
-  fun createSpan(name: String): CoroutineContext
-}
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * See [Span](https://opentelemetry.io/docs/reference/specification),
@@ -97,4 +94,13 @@ internal class NoopTelemetryManager : TelemetryManager {
 
   override fun addMetricsExporters(exporters: List<MetricsExporterEntry>) {
   }
+}
+
+interface IntelliJTracer {
+  fun createSpan(name: String): CoroutineContext
+}
+
+@Internal
+object NoopIntelliJTracer : IntelliJTracer {
+  override fun createSpan(name: String): CoroutineContext = EmptyCoroutineContext
 }
