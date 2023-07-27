@@ -16157,6 +16157,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/multiFakeOverride.kt");
             }
 
+            @TestMetadata("stdlibFunction.kt")
+            public void testStdlibFunction() throws Exception {
+                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/stdlibFunction.kt");
+            }
+
             @TestMetadata("unsigned.kt")
             public void testUnsigned() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/unsigned.kt");
