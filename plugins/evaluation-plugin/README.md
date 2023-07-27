@@ -50,6 +50,7 @@ HTML-reports contain examples of source code with the results of invocation, so 
   "suggestionsProvider": "DEFAULT" // provider of proposals (DEFAULT - completion engine), can be extended
 }
 ```
+  - you can use `pathToModelZip` to use custom ranking model for the completions (do not pass `source` in this case to use the suggestions from all contributors)
 - **line-completion-golf**:
   - also takes into account full line proposals but tries to write the entire file from the beginning using completion (instead of calling at fixed positions).
   - strategy the same as for line-completion
