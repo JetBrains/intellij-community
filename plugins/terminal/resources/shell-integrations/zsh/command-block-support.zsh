@@ -60,6 +60,7 @@ __jetbrains_intellij_command_preexec() {
   then
     return 0
   fi
+  builtin local entered_command="$1"
   builtin local current_directory="$PWD"
   builtin printf '\e]1341;command_started;command=%s;current_directory=%s\a' \
     "$(__jetbrains_intellij_encode "${entered_command}")" \
