@@ -3,7 +3,8 @@ package com.intellij.platform.diagnostic.telemetry.impl.otExporters
 
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import io.opentelemetry.sdk.metrics.export.MetricExporter
-import java.time.Duration
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.minutes
 
 /**
  * EP for custom spans and metrics providers. These providers will be loaded after the application startup.
@@ -14,5 +15,5 @@ interface OpenTelemetryExporterProvider {
 
   fun getMetricsExporters(): List<MetricExporter>
 
-  fun getReadInterval(): Duration = Duration.ofMinutes(1)
+  fun getReadInterval(): Duration = 1.minutes
 }

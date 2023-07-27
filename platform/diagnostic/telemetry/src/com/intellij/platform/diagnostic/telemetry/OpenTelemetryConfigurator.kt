@@ -16,10 +16,11 @@ import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
-import java.time.Duration
 import java.time.Instant
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.Executors
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.toJavaDuration
 
 @ApiStatus.Internal
 class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
@@ -70,7 +71,10 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
     val pool = Executors.newScheduledThreadPool(1, ConcurrencyUtil.newNamedThreadFactory("PeriodicMetricReader"))
     for (entry in metricsExporters) {
       for (metricExporter in entry.metrics) {
-        val metricsReader = PeriodicMetricReader.builder(metricExporter).setExecutor(pool).setInterval(entry.duration).build()
+        val metricsReader = PeriodicMetricReader.builder(metricExporter)
+          .setExecutor(pool)
+          .setInterval(entry.duration.toJavaDuration())
+          .build()
         registeredMetricsReaders.registerMetricReader(metricsReader)
       }
     }
@@ -92,10 +96,10 @@ class OpenTelemetryConfigurator(private val mainScope: CoroutineScope,
           predicate = { metric -> metric.belongsToScope(PlatformMetrics) },
         ),
       ),
-      duration = Duration.ofMinutes(1))
+      duration = 1.minutes)
     )
 
-    result.add(MetricsExporterEntry(listOf(aggregatedMetricExporter), Duration.ofMinutes(1)))
+    result.add(MetricsExporterEntry(listOf(aggregatedMetricExporter), 1.minutes))
     return result
   }
 

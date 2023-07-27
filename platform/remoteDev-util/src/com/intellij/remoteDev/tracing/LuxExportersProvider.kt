@@ -10,7 +10,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetry
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.nio.file.Path
-import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private class LuxExportersProvider : OpenTelemetryExporterProvider {
   override fun getMetricsExporters(): List<MetricExporter> {
@@ -35,5 +35,5 @@ private class LuxExportersProvider : OpenTelemetryExporterProvider {
     return emptyList()
   }
 
-  override fun getReadInterval(): Duration = Duration.ofSeconds(1)
+  override fun getReadInterval() = 1.seconds
 }

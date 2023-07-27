@@ -13,7 +13,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetry
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.nio.file.Path
-import java.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 private class RdctExportersProvider : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
@@ -46,5 +46,5 @@ private class RdctExportersProvider : OpenTelemetryExporterProvider {
     return emptyList()
   }
 
-  override fun getReadInterval(): Duration = Duration.ofSeconds(1)
+  override fun getReadInterval() = 1.seconds
 }
