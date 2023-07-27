@@ -51,8 +51,10 @@ class ZenDeskRequests {
             LOG.info(bytes.toString(Charsets.UTF_8))
           }
           catch (e: IOException) {
-            val errorResponse = (it.connection as HttpURLConnection).errorStream.readAllBytes().toString(Charsets.UTF_8)
-            LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nServer response:\n$errorResponse")
+            val errorResponse = (it.connection as HttpURLConnection).errorStream?.readAllBytes()?.toString(Charsets.UTF_8)
+            LOG.info("Failed to submit feedback. Feedback data:\n$requestData\n" +
+                     "Server response:\n$errorResponse\n" +
+                     "Exception:\n${e.stackTraceToString()}")
             onError()
             return@connect
           }
