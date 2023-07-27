@@ -852,6 +852,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   protected void onSpeedSearchPatternChanged() {
+    ListPopupStep<?> step = getListStep();
+    if (step instanceof FilterableListPopupStep<?>) {
+      ((FilterableListPopupStep<?>)step).updateFilter(mySpeedSearch.getFilter());
+    }
     myListModel.refilter();
     if (myListModel.getSize() > 0) {
       if (!(shouldUseStatistics() && autoSelectUsingStatistics())) {
