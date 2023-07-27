@@ -373,7 +373,7 @@ public class GradleExecutionHelper {
     setupStandardIO(operation, settings, id, listener);
 
     GradleOperationHelperExtension.EP_NAME
-      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings));
+      .forEachExtensionSafe(proc -> proc.prepareForExecution(id, operation, settings, buildEnvironment));
   }
 
   private static void clearSystemProperties(LongRunningOperation operation) {
