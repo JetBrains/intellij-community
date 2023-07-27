@@ -2716,6 +2716,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inAnonymousRunWrapped.kt");
         }
 
+        @TestMetadata("infixCall.kt")
+        public void testInfixCall() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/infixCall.kt");
+        }
+
         @TestMetadata("inlineClassConstructor.kt")
         public void testInlineClassConstructor() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/inlineClassConstructor.kt");

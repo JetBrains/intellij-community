@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.highlighting.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.idea.highlighting.KotlinCallHighlighterExtension
 import org.jetbrains.kotlin.idea.highlighting.KotlinRefsHolder
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.Name
@@ -40,6 +41,9 @@ internal class FunctionCallHighlighter(
         val operationReference = expression.operationReference as? KtReferenceExpression ?: return emptyList()
         if (operationReference.isAssignment()) return emptyList()
         val call = expression.resolveCall()?.successfulCallOrNull<KtCall>() ?: return emptyList()
+        if (call is KtSimpleFunctionCall) {
+            kotlinRefsHolder.registerLocalRef(call.symbol.psi, expression)
+        }
         if (call is KtSimpleFunctionCall && (call.symbol as? KtFunctionSymbol)?.isOperator == true) return emptyList()
         val h = getDefaultHighlightInfoTypeForCall(call)?.let { highlightInfoType ->
             HighlightingFactory.highlightName(operationReference, highlightInfoType)
