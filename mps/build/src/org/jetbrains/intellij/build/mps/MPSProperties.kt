@@ -37,7 +37,6 @@ class MPSProperties : JetBrainsProductProperties() {
         productLayout.productApiModules = listOf("intellij.java.execution")
         productLayout.productImplementationModules = listOf(
             "intellij.platform.main",
-            "intellij.java.execution.impl",
             "intellij.idea.community.resources",
             "intellij.java.ide.resources",
             "intellij.xml.dom",
