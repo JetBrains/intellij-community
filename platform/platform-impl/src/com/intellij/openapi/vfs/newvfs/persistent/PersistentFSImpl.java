@@ -179,10 +179,14 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       myIdToDirCache.clear();
       long ms = System.currentTimeMillis();
       LOG.info("VFS dispose started");
-      vfsPeer.dispose();
-      vfsPeer = null;
+      if (vfsPeer != null) {
+        vfsPeer.dispose();
+        vfsPeer = null;
+      }
       LOG.info("VFS dispose completed in " + (System.currentTimeMillis() - ms) + "ms.");
-      myVfsLog.dispose();
+      if (myVfsLog != null) {
+        myVfsLog.dispose();
+      }
     }
   }
 
