@@ -82,13 +82,13 @@ open class CachingGraphQLQueryLoader(
   companion object {
     data class Block(val body: String, val dependencies: Set<String>)
 
-    private fun createFragmentCache(): ConcurrentMap<String, Block> =
+    fun createFragmentCache(): ConcurrentMap<String, Block> =
       Caffeine.newBuilder()
         .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
         .build<String, Block>()
         .asMap()
 
-    private fun createQueryCache(): ConcurrentMap<String, String> =
+    fun createQueryCache(): ConcurrentMap<String, String> =
       Caffeine.newBuilder()
         .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
         .build<String, String>()
