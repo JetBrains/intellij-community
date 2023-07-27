@@ -2,7 +2,6 @@
 package com.intellij.platform.workspace.storage
 
 import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
-import com.intellij.platform.workspace.storage.url.MutableVirtualFileUrlIndex
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
@@ -15,6 +14,28 @@ import org.jetbrains.annotations.NonNls
  * interface.
  * 
  * Instances of this interface are not thread safe.
+ *
+ * ## Batch operations
+ * Besides operation with individual entities, [MutableEntityStorage] supports two batch operations: [addDiff] and [replaceBySource].
+ * 
+ * ### Add Diff
+ * Each instance of [MutableEntityStorage] records changes made in it: addition, modification and removal of entities. Such changes made
+ * in one instance may be applied to a different instance by calling [addDiff] function. This can be used to run tasks which fill the
+ * storage in parallel. For example, when configuration of a project is read from *.iml files, the IDE creates a separate empty 
+ * [MutableEntityStorage] for each file, and run tasks which parse an *.iml file and load entities from it to the corresponding storage 
+ * concurrently. When the tasks finish, their results are merged into the single storage via [addDiff].
+ * 
+ * ### Replace by source
+ * 
+ * Usually, entities in the workspace model storage are created from data loaded from some configuration files. When these configuration 
+ * files change, we need to update the corresponding entities in the storage. It would be rather hard and error-prone to analyze what
+ * exactly was changed in the files since the previous version, so we use a different approach. Each entity must specify its 
+ * [source][WorkspaceEntity.entitySource] describing where the entity comes from. For example, for entities loaded from configuration files
+ * from .idea directory, [entitySource][WorkspaceEntity.entitySource] points to the corresponding xml file. When IDE detects changes in some
+ * configuration files, it loads new entities from the created and modified files to a separate [MutableEntityStorage] instance, and then
+ * calls [replaceBySource] passing a filter which accepts entity sources corresponding to the all created, modified and deleted files and
+ * the prepared [MutableEntityStorage] instance. This operation actualizes the part of the storage affected by the change trying to minimize
+ * the number of changes in the entities.
  */
 interface MutableEntityStorage : EntityStorage {
   /**
