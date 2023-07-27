@@ -160,7 +160,7 @@ object VcsLogNavigationUtil {
     return nodeId != VcsLogUiEx.COMMIT_NOT_FOUND
   }
 
-  private suspend fun VcsLogManager.waitForRefresh() {
+  suspend fun VcsLogManager.waitForRefresh() {
     suspendCancellableCoroutine { continuation ->
       val dataPackListener = object : DataPackChangeListener {
         override fun onDataPackChange(newDataPack: DataPack) {

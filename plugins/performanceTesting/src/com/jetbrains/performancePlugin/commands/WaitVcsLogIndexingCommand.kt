@@ -1,5 +1,6 @@
 package com.jetbrains.performancePlugin.commands
 
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -7,9 +8,12 @@ import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.data.index.isIndexingPaused
 import com.intellij.vcs.log.data.index.isIndexingScheduled
 import com.intellij.vcs.log.data.index.needIndexing
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.waitForRefresh
 import com.intellij.vcs.log.impl.VcsProjectLog.Companion.getInstance
 import com.jetbrains.performancePlugin.utils.TimeArgumentParserUtil
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
@@ -30,9 +34,13 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
 
   override suspend fun doExecute(context: PlaybackContext) {
     LOG.info("$NAME command started its execution")
+
     val logManager = getInstance(context.project).logManager ?: return
-    val dataManager = logManager.dataManager
-    val vcsIndex = dataManager.index as VcsLogModifiableIndex
+    withContext(Dispatchers.EDT) {
+      if (!logManager.isLogUpToDate) logManager.waitForRefresh()
+    }
+
+    val vcsIndex = logManager.dataManager.index as VcsLogModifiableIndex
 
     LOG.info("Need indexing = ${vcsIndex.needIndexing()}, " +
              "is indexing scheduled = ${vcsIndex.isIndexingScheduled()}, " +
