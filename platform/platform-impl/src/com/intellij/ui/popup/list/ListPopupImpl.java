@@ -555,7 +555,10 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       y += swt.getPreferredSize().height - 1;
     }
 
-    myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+    if (!UiInterceptors.tryIntercept(myChild)) {
+      // Intercept child popup in tests because it is impossible to calculate location on screen there
+      myChild.show(container, container.getLocationOnScreen().x + container.getWidth() - STEP_X_PADDING, y, true);
+    }
     setIndexForShowingChild(myList.getSelectedIndex());
     myMouseMovementTracker.reset();
   }
