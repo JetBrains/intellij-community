@@ -57,6 +57,7 @@
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleDaemonStartupIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleBuildCancelledIssueChecker"/>
     <issueChecker implementation="org.jetbrains.plugins.gradle.issue.GradleOutOfMemoryIssueChecker"/>
+    <operationHelperExtension implementation="org.jetbrains.plugins.gradle.service.execution.GradleExecutionMeasuringExtension"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -146,6 +147,9 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleActionsUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector$TaskKindValidator"/>
+    <statistics.validation.customValidationRule implementation="org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector$TaskPluginValidator"/>
 
     <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
