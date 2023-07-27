@@ -12,6 +12,7 @@ import java.util.HashSet;
 import java.util.*;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 /**
  * Pass custom map using {@link #MultiMap(Map)} if needed.
@@ -84,11 +85,11 @@ public class MultiMap<K, V> implements Serializable {
   }
 
   public final void putValues(K key, @NotNull Collection<? extends V> values) {
-    myMap.computeIfAbsent(key, __ -> createCollection()).addAll(values);
+    getModifiable(key).addAll(values);
   }
 
   public final void putValue(@Nullable K key, V value) {
-    myMap.computeIfAbsent(key, __ -> createCollection()).add(value);
+    getModifiable(key).add(value);
   }
 
   public final @NotNull Set<Map.Entry<K, Collection<V>>> entrySet() {
@@ -136,6 +137,14 @@ public class MultiMap<K, V> implements Serializable {
   public final @NotNull Collection<V> get(K key) {
     Collection<V> collection = myMap.get(key);
     return collection == null ? createEmptyCollection() : collection;
+  }
+
+  public final @NotNull Collection<V> getOrPut(K key, Supplier<? extends V> defaultValue) {
+    Collection<V> collection = getModifiable(key);
+    if (collection.isEmpty()) {
+      collection.add(defaultValue.get());
+    }
+    return collection;
   }
 
   public final @NotNull Collection<V> getModifiable(K key) {

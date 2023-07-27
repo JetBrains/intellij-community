@@ -204,8 +204,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      boolean isBuildSrcProject)
     throws IllegalArgumentException, IllegalStateException {
     final long activityId = resolverCtx.getExternalSystemTaskId().getId();
-    final PerformanceTrace performanceTrace = new PerformanceTrace();
-    performanceTrace.setId(activityId);
+    final PerformanceTrace performanceTrace = new PerformanceTrace(activityId);
     final GradleProjectResolverExtension tracedResolverChain = new TracedProjectResolverExtension(projectResolverChain, performanceTrace);
 
     final BuildEnvironment buildEnvironment = GradleExecutionHelper.getBuildEnvironment(resolverCtx);
