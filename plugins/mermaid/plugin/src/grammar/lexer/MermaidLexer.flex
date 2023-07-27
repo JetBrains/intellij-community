@@ -906,7 +906,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "["  |
   "{{" { yybegin(mindmap_node); return Mindmap.NODE_DESCR_START; }
 
-  [^:(\[\s\-){}][^(\[\s\-){}]* { return ID; }
+  [^:(\[\s){}][^(\[\s){}]* { return ID; }
 }
 <mindmap_class> {
   [^\s]* { return CLASS; }
