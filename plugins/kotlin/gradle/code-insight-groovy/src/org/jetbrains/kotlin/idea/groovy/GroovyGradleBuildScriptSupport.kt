@@ -316,9 +316,9 @@ class GroovyBuildScriptManipulator(
             return
         }
 
+        changedFiles.storeOriginalFileContent(settingsFile)
         val pluginBlock = settingsFile.getSettingsPluginsBlock()
         if (pluginBlock.text.contains(FOOJAY_RESOLVER_NAME)) return
-        changedFiles.storeOriginalFileContent(settingsFile)
         val foojayVersion = Versions.GRADLE_PLUGINS.FOOJAY_VERSION
         pluginBlock.addLastStatementInBlockIfNeeded("id '$FOOJAY_RESOLVER_CONVENTION_NAME' version '$foojayVersion'")
     }

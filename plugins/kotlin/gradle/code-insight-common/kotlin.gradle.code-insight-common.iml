@@ -38,5 +38,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="module" module-name="intellij.platform.vcs.core" />
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>

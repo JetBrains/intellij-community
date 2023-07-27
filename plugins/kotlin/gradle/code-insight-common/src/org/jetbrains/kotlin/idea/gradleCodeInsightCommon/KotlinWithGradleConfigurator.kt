@@ -4,10 +4,9 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
-import com.intellij.notification.NotificationAction
-import com.intellij.notification.NotificationGroupManager
-import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.command.undo.BasicUndoableAction
+import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
@@ -23,7 +22,6 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.gradle.util.GradleVersion
@@ -35,14 +33,12 @@ import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.*
-import org.jetbrains.kotlin.idea.configuration.ui.changes.KotlinConfiguratorChangesDialog
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GRADLE_PLUGIN_ID
 import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleConstants.GROUP_ID
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersion
 import org.jetbrains.kotlin.idea.facet.getRuntimeLibraryVersionOrDefault
 import org.jetbrains.kotlin.idea.framework.ui.ConfigureDialogWithModulesAndVersion
 import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
-import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.projectConfiguration.getJvmStdlibArtifactId
 import org.jetbrains.kotlin.idea.quickfix.AbstractChangeFeatureSupportLevelFix
@@ -118,6 +114,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             IdeKotlinVersion.get(dialog.kotlinVersion),
             dialog.modulesAndJvmTargets
         )
+
+        for (file in result.changedFiles.getChangedFiles()) {
+            OpenFileAction.openFile(file.virtualFile, project)
+        }
+
         result.collector.showNotification()
     }
 
@@ -179,6 +180,10 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return AutoConfigurationSettings(baseModule, maxKotlinVersion)
     }
 
+    private fun Project.scheduleGradleSync() {
+        ExternalSystemProjectTracker.getInstance(this).scheduleProjectRefresh()
+    }
+
     override fun runAutoConfig(settings: AutoConfigurationSettings) {
         val module = settings.module
         val project = module.project
@@ -191,31 +196,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             moduleVersions,
             settings.kotlinVersion,
             jvmTargets,
-            "command.name.configure.kotlin.automatically"
+            "command.name.configure.kotlin.automatically",
+            isAutoConfig = true
         )
-        ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
 
-        showKotlinAutoconfiguredNotification(project, module.name, result.changedFiles.calculateChanges())
-    }
-
-    private fun showKotlinAutoconfiguredNotification(project: Project, moduleName: String, changes: List<Change>) {
-        val notificationText = KotlinProjectConfigurationBundle.message("auto.configure.kotlin.notification", moduleName)
-        val notification = NotificationGroupManager.getInstance()
-            .getNotificationGroup("Configure Kotlin")
-            .createNotification(
-                title = KotlinProjectConfigurationBundle.message("auto.configure.kotlin"),
-                content = notificationText,
-                type = NotificationType.INFORMATION,
-            )
-        notification.addAction(viewAppliedChangesAction(changes))
-        notification.notify(project)
-    }
-
-    private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
-        KotlinProjectConfigurationBundle.message("view.code.differences.action")
-    ) { e, _ ->
-        val project = e.project ?: return@create
-        KotlinConfiguratorChangesDialog(project, changes)
+        KotlinAutoConfigurationNotificationHolder.getInstance()
+            .showAutoConfiguredNotification(project, module.name, result.changedFiles.calculateChanges())
     }
 
     private class ConfigurationResult(
@@ -229,15 +215,29 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         kotlinVersionsAndModules: Map<String, Map<String, Module>>,
         version: IdeKotlinVersion,
         modulesAndJvmTargets: Map<ModuleName, TargetJvm>,
-        commandName: String = "command.name.configure.kotlin"
+        commandKey: String = "command.name.configure.kotlin",
+        isAutoConfig: Boolean = false
     ): ConfigurationResult {
-        return project.executeCommand(KotlinIdeaGradleBundle.message(commandName)) {
+        return project.executeCommand(KotlinIdeaGradleBundle.message(commandKey)) {
             val collector = NotificationMessageCollector.create(project)
             val changedFiles = configureWithVersion(project, modules, version, collector, kotlinVersionsAndModules, modulesAndJvmTargets)
 
-            for (file in changedFiles.getChangedFiles()) {
-                OpenFileAction.openFile(file.virtualFile, project)
+            if (isAutoConfig) {
+                project.scheduleGradleSync()
+                val module = modules.firstOrNull() // Auto-configuration only has a single module
+                UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
+                    override fun undo() {
+                        project.scheduleGradleSync()
+                        KotlinAutoConfigurationNotificationHolder.getInstance().showAutoConfigurationUndoneNotification(project, module)
+                    }
+
+                    override fun redo() {
+                        project.scheduleGradleSync()
+                        KotlinAutoConfigurationNotificationHolder.getInstance().reshowAutoConfiguredNotification(project, module)
+                    }
+                })
             }
+
             ConfigurationResult(collector, changedFiles)
         }
     }
