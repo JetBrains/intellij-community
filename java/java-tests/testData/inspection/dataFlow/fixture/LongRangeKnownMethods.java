@@ -399,4 +399,10 @@ public class LongRangeKnownMethods {
     if (<warning descr="Condition 'val >= 20' is always 'false'">val >= 20</warning>) {}
     if (val >= 19) {}
   }
+  
+  void testParse(String s) {
+    if (!s.equals("1234")) return;
+    int val = Integer.parseInt(s);
+    if (<warning descr="Condition 'val != 1234' is always 'false'">val != 1234</warning>) return;
+  }
 }
