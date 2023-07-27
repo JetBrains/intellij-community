@@ -451,7 +451,6 @@ public class RunAnythingPopupUI extends BigPopupUI {
   private DataContext getDataContext() {
     return SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, getProject())
-      .add(PlatformCoreDataKeys.MODULE, getModule())
       .add(CommonDataKeys.VIRTUAL_FILE, getWorkDirectory())
       .add(RunAnythingAction.EXECUTOR_KEY, getExecutor())
       .add(RunAnythingProvider.EXECUTING_CONTEXT, myChooseContextAction.getSelectedContext())
