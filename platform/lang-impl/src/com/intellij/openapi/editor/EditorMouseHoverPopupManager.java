@@ -10,7 +10,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -495,38 +494,18 @@ public class EditorMouseHoverPopupManager implements Disposable {
       return Math.max(0, EditorSettingsExternalizable.getInstance().getTooltipsDelay() - (System.currentTimeMillis() - startTimestamp));
     }
 
-    private static int getElementStartHostOffset(@NotNull PsiElement element) {
-      int offset = element.getTextRange().getStartOffset();
-      Project project = element.getProject();
-      PsiFile containingFile = element.getContainingFile();
-      if (containingFile != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(containingFile)) {
-        Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
-        if (document instanceof DocumentWindow) {
-          return ((DocumentWindow)document).injectedToHost(offset);
-        }
-      }
-      return offset;
-    }
-
     @NotNull VisualPosition getPopupPosition(Editor editor) {
       HighlightInfo highlightInfo = getHighlightInfo();
       if (highlightInfo == null) {
-        int offset = targetOffset;
-        PsiElement elementForQuickDoc = getElementForQuickDoc();
-        if (elementForQuickDoc != null && elementForQuickDoc.isValid()) {
-          offset = getElementStartHostOffset(elementForQuickDoc);
-        }
-        return editor.offsetToVisualPosition(offset);
+        return HoverDocPopupLocationProvider.Companion.getInstance().getPopupPosition(targetOffset, getElementForQuickDoc(), editor);
       }
-      else {
-        VisualPosition targetPosition = editor.offsetToVisualPosition(targetOffset);
-        VisualPosition endPosition = editor.offsetToVisualPosition(highlightInfo.getEndOffset());
-        if (endPosition.line <= targetPosition.line) return targetPosition;
-        Point targetPoint = editor.visualPositionToXY(targetPosition);
-        Point endPoint = editor.visualPositionToXY(endPosition);
-        Point resultPoint = new Point(targetPoint.x, endPoint.x > targetPoint.x ? endPoint.y : editor.visualLineToY(endPosition.line - 1));
-        return editor.xyToVisualPosition(resultPoint);
-      }
+      VisualPosition targetPosition = editor.offsetToVisualPosition(targetOffset);
+      VisualPosition endPosition = editor.offsetToVisualPosition(highlightInfo.getEndOffset());
+      if (endPosition.line <= targetPosition.line) return targetPosition;
+      Point targetPoint = editor.visualPositionToXY(targetPosition);
+      Point endPoint = editor.visualPositionToXY(endPosition);
+      Point resultPoint = new Point(targetPoint.x, endPoint.x > targetPoint.x ? endPoint.y : editor.visualLineToY(endPosition.line - 1));
+      return editor.xyToVisualPosition(resultPoint);
     }
 
     @Nullable EditorHoverInfo calcInfo(@NotNull Editor editor) {
