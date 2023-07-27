@@ -25,11 +25,10 @@ internal class ExportDiagramAction: AnAction(message("action.Mermaid.ExportDiagr
     val file = event.getRequiredData(CommonDataKeys.VIRTUAL_FILE)
     runBackgroundableTask(title = "Performing conversion", event.project, cancellable = true) {
       runBlockingCancellable {
-        var diagramSource: String? = null
-        readAction {
-          diagramSource = FileDocumentManager.getInstance().getDocument(file)?.text
+        val diagramSource = readAction {
+          FileDocumentManager.getInstance().getDocument(file)?.text.orEmpty()
         }
-        if (diagramSource.isNullOrEmpty()) {
+        if (diagramSource.isEmpty()) {
           MermaidNotifications.showWarning(
             event.project,
             id = "mermaid.empty.file.to.export",
@@ -37,7 +36,7 @@ internal class ExportDiagramAction: AnAction(message("action.Mermaid.ExportDiagr
             message = message("mermaid.notification.empty.file.to.export.message")
           )
         } else {
-          val content = performConversion(diagramSource!!)
+          val content = performConversion(diagramSource)
           val directory = file.parent
           val result = directory.toNioPath().writeChild("${file.nameWithoutExtension}.svg", content)
           val svgFile = VfsUtil.findFile(result, true)
