@@ -12,7 +12,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
-import java.io.File
+import java.nio.file.Path
 import java.time.Duration
 
 private class RdctExportersProvider : OTelExportersProvider {
@@ -21,8 +21,8 @@ private class RdctExportersProvider : OTelExportersProvider {
   }
 
   override fun getMetricsExporters(): List<MetricExporter> {
-    val fileToWrite: File? = try {
-      CsvGzippedMetricsExporter.generatePathForConnectionMetrics().toFile()
+    val fileToWrite: Path? = try {
+      CsvGzippedMetricsExporter.generatePathForConnectionMetrics()
     }
     catch (e: UnsupportedOperationException) {
       logger<RdctExportersProvider>().warn("Failed to create a file for metrics")

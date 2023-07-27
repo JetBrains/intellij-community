@@ -10,7 +10,7 @@ import java.time.Duration
  * By this time, default platform providers will be already added.
  */
 interface OTelExportersProvider {
-  fun getSpanExporters(): List<AsyncSpanExporter>
+  fun getSpanExporters(): List<AsyncSpanExporter> = emptyList()
 
   fun getMetricsExporters(): List<MetricExporter>
 

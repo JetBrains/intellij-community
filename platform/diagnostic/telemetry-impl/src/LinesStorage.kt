@@ -1,18 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
 package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.csvHeadersLines
-import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.zip.GZIPOutputStream
 
-internal class LinesStorage(writeToFile: File) {
-  private var bufferedWriter = GZIPOutputStream(writeToFile.outputStream(), true).bufferedWriter()
+internal class LinesStorage(file: Path) {
+  private var bufferedWriter = GZIPOutputStream(Files.newOutputStream(file), true).bufferedWriter()
   private val lines = ArrayList<String>()
 
-  fun updateDestFile(newFilePath: File) {
+  fun updateDestFile(newFile: Path) {
     closeBufferedWriter()
-    bufferedWriter = GZIPOutputStream(newFilePath.outputStream(), true).bufferedWriter()
+    bufferedWriter = GZIPOutputStream(Files.newOutputStream(newFile), true).bufferedWriter()
   }
 
   fun getLines(): List<String> {

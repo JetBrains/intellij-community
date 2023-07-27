@@ -103,8 +103,7 @@ private class IntelliJTracerImpl(private val scope: Scope, private val otlpServi
 @Suppress("SuspiciousCollectionReassignment")
 private fun createSpanExporters(resource: Resource): List<AsyncSpanExporter> {
   var spanExporters = emptyList<AsyncSpanExporter>()
-  System.getProperty(
-    "idea.diagnostic.opentelemetry.file")?.let { traceFile ->
+  System.getProperty("idea.diagnostic.opentelemetry.file")?.let { traceFile ->
     @Suppress("SuspiciousCollectionReassignment")
     spanExporters += JaegerJsonSpanExporter(
       file = Path.of(traceFile),

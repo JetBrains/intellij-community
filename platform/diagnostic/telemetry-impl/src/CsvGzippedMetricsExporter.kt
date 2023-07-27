@@ -3,7 +3,7 @@ package com.intellij.platform.diagnostic.telemetry.impl
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.util.io.FileSetLimiter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils.toCsvStream
 import com.intellij.util.SystemProperties
@@ -12,12 +12,11 @@ import io.opentelemetry.sdk.metrics.InstrumentType
 import io.opentelemetry.sdk.metrics.data.AggregationTemporality
 import io.opentelemetry.sdk.metrics.data.MetricData
 import io.opentelemetry.sdk.metrics.export.MetricExporter
-import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
-class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter {
-  private var writeToFile: Path = fileToWrite.toPath()
+class CsvGzippedMetricsExporter(private var fileToWrite: Path) : MetricExporter {
+  private var writeToFile: Path = fileToWrite
   private val storage = LinesStorage(fileToWrite)
 
   init {
@@ -31,7 +30,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
         Files.createDirectories(parentDir)
       }
     }
-    logger.runAndLogException {
+    runCatching {
       val tmp = ArrayList<String>()
       val lines = storage.getLines()
       if (lines.isNotEmpty()) {
@@ -44,7 +43,7 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
           storage.appendLine(line)
         }
       }
-    }
+    }.getOrLogException(LOG)
   }
 
   override fun getAggregationTemporality(instrumentType: InstrumentType): AggregationTemporality {
@@ -61,10 +60,10 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
     metrics.forEach { toCsvStream(it).forEach(storage::appendLine) }
 
     try {
-      val fileSize = fileToWrite.length()
+      val fileSize = Files.size(fileToWrite)
       if (fileSize > 10 * 1024 * 1024) {
         val newPath = generatePathForConnectionMetrics()
-        fileToWrite = newPath.toFile()
+        fileToWrite = newPath
         initFileCreating(newPath)
         storage.updateDestFile(fileToWrite)
       }
@@ -72,21 +71,23 @@ class CsvGzippedMetricsExporter(private var fileToWrite: File) : MetricExporter 
       result.succeed()
     }
     catch (e: Exception) {
-      logger.error("Error occurred when writing metrics to file", e)
+      LOG.error("Error occurred when writing metrics to file", e)
       result.fail()
     }
     return result
   }
+
   override fun flush(): CompletableResultCode? {
     return CompletableResultCode.ofSuccess()
   }
+
   override fun shutdown(): CompletableResultCode? {
     storage.closeBufferedWriter()
     return CompletableResultCode.ofSuccess()
   }
 
   companion object {
-    val logger: Logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
+    private val LOG: Logger = Logger.getInstance(CsvGzippedMetricsExporter::class.java)
 
     fun generatePathForConnectionMetrics(): Path {
       val connectionMetricsPath = "open-telemetry-connection-metrics.csv.gz"
