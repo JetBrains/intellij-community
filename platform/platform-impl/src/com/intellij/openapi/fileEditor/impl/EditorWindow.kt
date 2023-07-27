@@ -683,9 +683,9 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     fun dispose()
   }
 
-  internal fun showSplitChooser(showInfoPanel: Boolean): SplitChooser {
+  internal fun showSplitChooser(project: Project, showInfoPanel: Boolean): SplitChooser {
     val disposable = Disposer.newDisposable("GlassPaneListeners")
-    val painter = MySplitPainter(showInfoPanel = showInfoPanel, tabbedPane = tabbedPane, owner = owner)
+    val painter = MySplitPainter(project, showInfoPanel, tabbedPane, owner)
     IdeGlassPaneUtil.find(panel).addPainter(panel, painter, disposable)
     panel.repaint()
     panel.isFocusable = true
@@ -694,7 +694,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
     val focusAdapter = object : FocusAdapter() {
       override fun focusLost(e: FocusEvent) {
         panel.removeFocusListener(this)
-        val splitterService = SplitterService.getInstance()
+        val splitterService = SplitterService.getInstance(project)
         if (splitterService.activeWindow == this@EditorWindow) {
           splitterService.stopSplitChooser(true)
         }
@@ -1091,6 +1091,7 @@ private fun shouldHideTabs(composite: EditorComposite?): Boolean {
 }
 
 private class MySplitPainter(
+  private val project: Project,
   private var showInfoPanel: Boolean,
   private val tabbedPane: EditorTabbedContainer,
   private val owner: EditorsSplitters,
@@ -1123,7 +1124,7 @@ private class MySplitPainter(
     val openShortcuts = IdeBundle.message(
       "split.with.chooser.move.tab",
       getShortcut("SplitChooser.Split"),
-      if (SplitterService.getInstance().initialEditorWindow != null) {
+      if (SplitterService.getInstance(project).initialEditorWindow != null) {
         IdeBundle.message("split.with.chooser.duplicate.tab", getShortcut("SplitChooser.Duplicate"))
       }
       else {

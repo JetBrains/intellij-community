@@ -6,13 +6,14 @@ package com.intellij.openapi.fileEditor.impl
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.impl.EditorWindow.RelativePosition
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import javax.swing.JSplitPane
 
-@Service(Service.Level.APP)
-internal class SplitterService {
+@Service(Service.Level.PROJECT)
+internal class SplitterService(private val project: Project) {
   companion object {
-    fun getInstance(): SplitterService = service()
+    fun getInstance(project: Project): SplitterService = project.service()
   }
 
   private class ActiveState(
@@ -37,7 +38,7 @@ internal class SplitterService {
       stopSplitChooser(interrupted = true, currentState = it)
     }
 
-    state = ActiveState(window = window, file = file, splitChooser = window.showSplitChooser(showInfoPanel = true))
+    state = ActiveState(window, file, window.showSplitChooser(project, showInfoPanel = true))
     if (openedFromEditor) {
       initialEditorWindow = activeWindow
     }
@@ -45,7 +46,7 @@ internal class SplitterService {
 
   private fun switchWindow(window: EditorWindow, currentState: ActiveState) {
     currentState.splitChooser.dispose()
-    state = ActiveState(window = window, splitChooser = window.showSplitChooser(showInfoPanel = false), file = currentState.file)
+    state = ActiveState(window, currentState.file, window.showSplitChooser(project, showInfoPanel = false))
   }
 
   fun stopSplitChooser(interrupted: Boolean) {
