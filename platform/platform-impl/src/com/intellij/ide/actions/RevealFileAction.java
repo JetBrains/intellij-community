@@ -191,7 +191,7 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         openViaShellApi(dir, toSelect);
       }
       else {
-        spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
+        openViaExplorerCall(dir, toSelect);
       }
     }
     else if (SystemInfo.isMac) {
@@ -233,19 +233,20 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
     }
   }
 
-  private static void openViaShellApi(String dir, String toSelect) {
+  private static void openViaShellApi(String dir, @Nullable String toSelect) {
     if (LOG.isDebugEnabled()) LOG.debug("shell open: dir=" + dir + " toSelect=" + toSelect);
 
     ProcessIOExecutorService.INSTANCE.execute(() -> {
       Ole32.INSTANCE.CoInitializeEx(null, Ole32.COINIT_APARTMENTTHREADED);
 
-      Pointer pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
-      Pointer[] apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
-      WinDef.UINT cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
+      var pIdl = Shell32Ex.INSTANCE.ILCreateFromPath(dir);
+      var apIdl = toSelect != null ? new Pointer[]{Shell32Ex.INSTANCE.ILCreateFromPath(toSelect)} : null;
+      var cIdl = new WinDef.UINT(apIdl != null ? apIdl.length : 0);
       try {
-        WinNT.HRESULT result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
+        var result = Shell32Ex.INSTANCE.SHOpenFolderAndSelectItems(pIdl, cIdl, apIdl, new WinDef.DWORD(0));
         if (!WinError.S_OK.equals(result)) {
           LOG.warn("SHOpenFolderAndSelectItems(" + dir + ',' + toSelect + "): 0x" + Integer.toHexString(result.intValue()));
+          openViaExplorerCall(dir, toSelect);
         }
       }
       finally {
@@ -255,6 +256,10 @@ public class RevealFileAction extends DumbAwareAction implements LightEditCompat
         Shell32Ex.INSTANCE.ILFree(pIdl);
       }
     });
+  }
+
+  private static void openViaExplorerCall(String dir, @Nullable String toSelect) {
+    spawn(toSelect != null ? "explorer /select,\"" + toSelect + '"' : "explorer /root,\"" + dir + '"');
   }
 
   private interface Shell32Ex extends StdCallLibrary {
