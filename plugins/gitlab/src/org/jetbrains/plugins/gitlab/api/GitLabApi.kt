@@ -61,10 +61,10 @@ suspend fun GitLabApi.GraphQL.gitLabQuery(serverPath: GitLabServerPath, query: G
     runCatching { rest.getServerMetadata(it).body() }
   }
   val queryLoader = if (serverMeta?.enterprise == false) {
-    GitLabCommunityGQLQueryLoader
+    GitLabGQLQueryLoaders.community
   }
   else {
-    GitLabGQLQueryLoader
+    GitLabGQLQueryLoaders.default
   }
   return query(serverPath.gqlApiUri, { queryLoader.loadQuery(query.filePath) }, variablesObject)
 }
