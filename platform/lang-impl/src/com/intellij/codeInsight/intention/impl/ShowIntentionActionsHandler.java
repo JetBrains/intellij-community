@@ -46,11 +46,10 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
@@ -276,7 +275,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
         Pair<PsiFile, Editor> pair = chooseFileForAction(hostFile, hostEditor, action);
         if (pair == null) return false;
         CommandProcessor.getInstance().executeCommand(project, () ->
-          invokeIntention(action, pair.second, pair.first), commandName, null);
+          invokeIntention(action, pair.second, pair.first, problemOffset), commandName, null);
         checkPsiTextConsistency(hostFile);
       }
     }
@@ -344,18 +343,30 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     }
   }
 
-  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file) {
+  private static void invokeIntention(@NotNull IntentionAction action, @Nullable Editor editor, @NotNull PsiFile file, int problemOffset) {
     IntentionFUSCollector.record(file.getProject(), action, file.getLanguage());
     PsiElement elementToMakeWritable = action.getElementToMakeWritable(file);
     if (elementToMakeWritable != null && !FileModificationService.getInstance().preparePsiElementsForWrite(elementToMakeWritable)) {
       return;
     }
-
-    if (action.startInWriteAction()) {
-      WriteAction.run(() -> action.invoke(file.getProject(), editor, file));
+    SmartPsiFileRange originalOffset = null;
+    if (editor != null && problemOffset >= 0) {
+      originalOffset = SmartPointerManager.getInstance(file.getProject())
+        .createSmartPsiFileRangePointer(file, TextRange.from(editor.getCaretModel().getOffset(), 0));
+      editor.getCaretModel().moveToOffset(problemOffset);
     }
-    else {
-      action.invoke(file.getProject(), editor, file);
+    try {
+      if (action.startInWriteAction()) {
+        WriteAction.run(() -> action.invoke(file.getProject(), editor, file));
+      }
+      else {
+        action.invoke(file.getProject(), editor, file);
+      }
+    }
+    finally {
+      if (originalOffset != null && originalOffset.getRange() != null && editor.getCaretModel().getOffset() == problemOffset) {
+        editor.getCaretModel().moveToOffset(originalOffset.getRange().getStartOffset());
+      }
     }
   }
 
