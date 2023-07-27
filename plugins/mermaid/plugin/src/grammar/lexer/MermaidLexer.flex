@@ -813,7 +813,7 @@ import static com.intellij.mermaid.lang.lexer.MermaidTokens.Pie;
   "HIGHLIGHT" { return GitGraph.HIGHLIGHT; }
 
   "LR" |
-  "BT" { return DIR; }
+  "TB" { return DIR; }
 
   ":" { return COLON; }
   [\"] { yypushstate(double_quoted_string); return DOUBLE_QUOTE; }

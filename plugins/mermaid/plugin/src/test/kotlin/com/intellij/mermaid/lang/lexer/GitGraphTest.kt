@@ -108,4 +108,12 @@ class GitGraphTest : MermaidLexerTestCase() {
     """.trimIndent()
     doTest(content)
   }
+
+  fun `test another dir`() {
+    val content = """
+    gitGraph TB:
+      commit
+    """.trimIndent()
+    doTest(content)
+  }
 }
