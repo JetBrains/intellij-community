@@ -33,7 +33,7 @@ import static com.intellij.codeInsight.daemon.impl.analysis.SwitchBlockHighlight
 
 final class PatternHighlightingModel {
   private static final Logger LOG = Logger.getInstance(PatternHighlightingModel.class);
-  private static final int MAX_ITERATION_COVERAGE = 1_000;
+  private static final int MAX_ITERATION_COVERAGE = 5_000;
   private static final int MAX_GENERATED_PATTERN_NUMBER = 10;
 
   static void createDeconstructionErrors(@Nullable PsiDeconstructionPattern deconstructionPattern, @NotNull HighlightInfoHolder holder) {
@@ -237,18 +237,15 @@ final class PatternHighlightingModel {
         Set<? extends PatternDescription> patterns = cacheContext.currentPatterns;
         PsiType selectorType = cacheContext.selectorType;
         class TestCovered implements BiPredicate<Set<? extends PatternDescription>, PsiType> {
-          boolean covered;
-
           @Override
           public boolean test(Set<? extends PatternDescription> descriptions, PsiType type) {
-            covered = coverSelectorType(descriptions, selectorType);
-            return covered;
+            return coverSelectorType(descriptions, selectorType);
           }
         }
         TestCovered testCovered = new TestCovered();
         HashMap<ReduceResultCacheContext, ReduceResult> cache = new HashMap<>();
-        ReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, cache);
-        if (testCovered.covered) {
+        LoopReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, cache);
+        if (result.stopped()) {
           return RecordExhaustivenessResult.createExhaustiveResult();
         }
         List<? extends PatternDescription> missedRecordPatterns = findMissedRecordPatterns(selectorType, result.patterns, context, cache);
@@ -264,7 +261,7 @@ final class PatternHighlightingModel {
   }
 
   @NotNull
-  static ReduceResult reduceInLoop(@NotNull PsiType selectorType,
+  static LoopReduceResult reduceInLoop(@NotNull PsiType selectorType,
                                    @NotNull PsiElement context,
                                    @NotNull Set<? extends PatternDescription> patterns,
                                    @NotNull BiPredicate<Set<? extends PatternDescription>, PsiType> stopAt,
@@ -275,17 +272,22 @@ final class PatternHighlightingModel {
     while (currentIteration < MAX_ITERATION_COVERAGE) {
       currentIteration++;
       if (stopAt.test(currentPatterns, selectorType)) {
-        return new ReduceResult(currentPatterns, true);
+        return new LoopReduceResult(currentPatterns, true, true);
       }
       ReduceResult reduceResult = reduce(selectorType, context, currentPatterns, cache);
       changed |= reduceResult.changed();
       currentPatterns = reduceResult.patterns();
       if (!reduceResult.changed()) {
-        return new ReduceResult(currentPatterns, changed);
+        return new LoopReduceResult(currentPatterns, changed, false);
       }
     }
-    LOG.error("The number of iteration is exceeded, length of set patterns: " + patterns.size());
-    return new ReduceResult(currentPatterns, changed);
+    LOG.error("The number of iteration is exceeded, length of set patterns: " + patterns.size() +
+              "max length deconstruction: " + patterns.stream()
+                .filter(t->t instanceof PatternDeconstructionDescription)
+                .map(t->((PatternDeconstructionDescription)t).list.size())
+                .max(Comparator.naturalOrder())
+    );
+    return new LoopReduceResult(currentPatterns, changed, false);
   }
 
 
@@ -371,6 +373,7 @@ final class PatternHighlightingModel {
     return result;
   }
 
+  record LoopReduceResult(Set<? extends PatternDescription> patterns, boolean changed, boolean stopped){}
   record ReduceResult(Set<? extends PatternDescription> patterns, boolean changed) {
     /**
      * Reduce i-component for a set of deconstruction patterns.
@@ -392,7 +395,6 @@ final class PatternHighlightingModel {
      * }</pre>
      * because there are no components with equal types.
      * Also, see <a href="https://bugs.openjdk.org/browse/JDK-8311815">bug in OpenJDK</a>
-     * }</pre>
      */
     @NotNull
     private ReduceResult reduceRecordPatterns(@NotNull PsiElement context, @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
@@ -432,7 +434,7 @@ final class PatternHighlightingModel {
             if (componentTypes == null || componentTypes.size() <= i) {
               continue;
             }
-            ReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache);
+            LoopReduceResult result = reduceInLoop(componentTypes.get(i), context, nestedDescriptions, (set, type) -> false, cache);
             if (result.changed()) {
               changed = true;
               toRemove.addAll(setWithOneDifferentElement);
@@ -716,7 +718,7 @@ final class PatternHighlightingModel {
         missingRecordPatterns.addAll(missingRecordPatternsForThisIteration);
       }
       combinedPatterns.addAll(missingRecordPatternsForThisIteration);
-      ReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
+      LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
       //work only with reduced patterns to speed up
       Set<? extends PatternDescription> newPatterns = new HashSet<>(reduceResult.patterns());
       if (reduceResult.changed()) {
@@ -725,7 +727,7 @@ final class PatternHighlightingModel {
         combinedPatterns.addAll(newPatterns);
       }
     }
-    ReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
+    LoopReduceResult reduceResult = reduceInLoop(selectorType, context, combinedPatterns, (set, type) -> false, cache);
     return coverSelectorType(reduceResult.patterns(), selectorType) ? new ArrayList<>(missingRecordPatterns) : null;
   }
 
