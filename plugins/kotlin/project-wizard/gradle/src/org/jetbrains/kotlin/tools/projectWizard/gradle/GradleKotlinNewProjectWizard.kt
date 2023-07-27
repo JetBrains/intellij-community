@@ -57,7 +57,6 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             setupGradleDslUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
-            setupKmpWizardLinkUI(builder)
         }
 
         override fun validateLanguageCompatibility(gradleVersion: GradleVersion): Boolean {

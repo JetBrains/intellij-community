@@ -28,7 +28,6 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupSampleCodeUI(builder)
-            setupKmpWizardLinkUI(builder)
         }
 
         override fun setupAdvancedSettingsUI(builder: Panel) {

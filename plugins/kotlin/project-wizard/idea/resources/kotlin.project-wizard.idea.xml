@@ -27,7 +27,6 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore"/>
     <jbProtocolCommand implementation="org.jetbrains.kotlin.tools.projectWizard.wizard.OpenNewProjectWizardProtocolCommand"/>
     <newProjectWizard.language implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
-    <moduleBuilder builderClass="org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBuilder"/>
 
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizard"/>
   </extensions>

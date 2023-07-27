@@ -20,7 +20,6 @@ import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData
 import org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard
-import org.jetbrains.kotlin.tools.projectWizard.setupKmpWizardLinkUI
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemType
 
 internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
@@ -54,7 +53,6 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
             setupJavaSdkUI(builder)
             setupParentsUI(builder)
             setupSampleCodeUI(builder)
-            setupKmpWizardLinkUI(builder)
         }
 
         override fun setupAdvancedSettingsUI(builder: Panel) {
