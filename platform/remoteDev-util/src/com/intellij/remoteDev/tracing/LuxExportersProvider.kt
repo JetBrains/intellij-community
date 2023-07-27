@@ -6,13 +6,13 @@ import com.intellij.platform.diagnostic.telemetry.FilteredMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.impl.CsvGzippedMetricsExporter
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.nio.file.Path
 import java.time.Duration
 
-private class LuxExportersProvider : OTelExportersProvider {
+private class LuxExportersProvider : OpenTelemetryExporterProvider {
   override fun getMetricsExporters(): List<MetricExporter> {
     val fileToWrite: Path? = try {
       CsvGzippedMetricsExporter.generatePathForLuxMetrics()

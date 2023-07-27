@@ -7,21 +7,20 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.HISTORY_COMP
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.IS_INITIAL_HISTORY_COMPUTING
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.TYPE_HISTORY_COMPUTING
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.indexing.diagnostic.dto.toMillis
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.Companion.FILE_HISTORY_COLLECTING_RENAMES
 import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.Companion.FILE_HISTORY_COMPUTING
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import io.opentelemetry.sdk.trace.data.SpanData
 
-class VcsLogTelemetryExporter : OTelExportersProvider {
+private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
     return listOf(LogHistorySpanExporter)
   }
 
   private object LogHistorySpanExporter : AsyncSpanExporter {
     override suspend fun export(spans: Collection<SpanData>) {
-
         spans.asSequence()
           .filter { span -> span.instrumentationScopeInfo.name == VcsScope.name }
           .forEach { span ->

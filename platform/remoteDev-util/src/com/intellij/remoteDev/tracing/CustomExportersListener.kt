@@ -6,10 +6,10 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.MetricsExporterEntry
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OTelExportersProvider
+import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import kotlinx.coroutines.CoroutineScope
 
-private val EP: ExtensionPointName<OTelExportersProvider> = ExtensionPointName("com.intellij.oTelExportersProvider")
+private val EP: ExtensionPointName<OpenTelemetryExporterProvider> = ExtensionPointName("com.intellij.oTelExportersProvider")
 
 private class CustomExportersListener : ApplicationInitializedListener {
   override suspend fun execute(asyncScope: CoroutineScope) {

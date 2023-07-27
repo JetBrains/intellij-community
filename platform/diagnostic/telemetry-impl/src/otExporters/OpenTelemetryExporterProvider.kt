@@ -9,7 +9,7 @@ import java.time.Duration
  * EP for custom spans and metrics providers. These providers will be loaded after the application startup.
  * By this time, default platform providers will be already added.
  */
-interface OTelExportersProvider {
+interface OpenTelemetryExporterProvider {
   fun getSpanExporters(): List<AsyncSpanExporter> = emptyList()
 
   fun getMetricsExporters(): List<MetricExporter>
