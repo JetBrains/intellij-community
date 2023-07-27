@@ -2671,6 +2671,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
         }
 
+        @TestMetadata("functionLiteralParameters.kt")
+        public void testFunctionLiteralParameters() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionLiteralParameters.kt");
+        }
+
         @TestMetadata("functionWithInlineClass.kt")
         public void testFunctionWithInlineClass() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/functionWithInlineClass.kt");
@@ -2754,6 +2759,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
         @TestMetadata("nestedPrivateObject.kt")
         public void testNestedPrivateObject() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");
+        }
+
+        @TestMetadata("nonPrivateFields.kt")
+        public void testNonPrivateFields() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/nonPrivateFields.kt");
         }
 
         @TestMetadata("overrideProperty.kt")

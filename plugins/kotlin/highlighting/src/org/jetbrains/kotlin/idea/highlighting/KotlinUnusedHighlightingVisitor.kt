@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
@@ -87,10 +88,16 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val ho
                         //parameters are uses implicitly in equals/hashCode/etc
                         continue
                     }
+                    if (declaration.hasValOrVar() && !declaration.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
+                        //can be used outside
+                        continue
+                    }
                 } else if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
                     function.hasModifier(KtTokens.OPEN_KEYWORD) ||
                     function.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
                     //function can be in the hierarchy
+                    continue
+                } else if (function is KtFunctionLiteral) {
                     continue
                 }
             }

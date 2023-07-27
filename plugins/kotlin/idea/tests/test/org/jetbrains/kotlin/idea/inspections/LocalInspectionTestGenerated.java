@@ -16824,6 +16824,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
         }
 
+        @TestMetadata("functionLiteralParameters.kt")
+        public void testFunctionLiteralParameters() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/functionLiteralParameters.kt");
+        }
+
         @TestMetadata("functionWithInlineClass.kt")
         public void testFunctionWithInlineClass() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/functionWithInlineClass.kt");
@@ -16907,6 +16912,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("nestedPrivateObject.kt")
         public void testNestedPrivateObject() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/nestedPrivateObject.kt");
+        }
+
+        @TestMetadata("nonPrivateFields.kt")
+        public void testNonPrivateFields() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/nonPrivateFields.kt");
         }
 
         @TestMetadata("overrideProperty.kt")
