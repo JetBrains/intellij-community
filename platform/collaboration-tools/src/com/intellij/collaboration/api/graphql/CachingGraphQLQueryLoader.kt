@@ -8,14 +8,16 @@ import java.io.InputStream
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 
-abstract class CachingGraphQLQueryLoader(private val fragmentsDirectories: List<String> = listOf("graphql/fragment"),
-                                         private val fragmentsFileExtension: String = "graphql") {
+open class CachingGraphQLQueryLoader(
+  private val fragmentsDirectories: List<String> = listOf("graphql/fragment"),
+  private val fragmentsFileExtension: String = "graphql"
+) {
 
   private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
 
   private val fragmentsCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.of(2, ChronoUnit.MINUTES))
-    .build<String, Fragment>()
+    .build<String, Block>()
 
   private val queriesCache = Caffeine.newBuilder()
     .expireAfterAccess(Duration.of(1, ChronoUnit.MINUTES))
@@ -25,12 +27,12 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectories: List<
   @Throws(IOException::class)
   fun loadQuery(queryPath: String): String {
     return queriesCache.get(queryPath) { path ->
-      val (body, fragmentNames) = readCollectingFragmentNames(path)
+      val (body, fragmentNames) = readBlock(path)
                                   ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
 
       val builder = StringBuilder()
-      val fragments = LinkedHashMap<String, Fragment>()
-      readFragmentsWithDependencies(fragmentNames, fragments)
+      val fragments = LinkedHashMap<String, Block>()
+      readFragmentsInto(fragmentNames, fragments)
       for (fragment in fragments.values.reversed()) {
         builder.append(fragment.body).append("\n")
       }
@@ -40,19 +42,20 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectories: List<
     }
   }
 
-  private fun readFragmentsWithDependencies(names: Set<String>, into: MutableMap<String, Fragment>) {
+  private fun readFragmentsInto(names: Set<String>, into: MutableMap<String, Block>) {
     for (fragmentName in names) {
-      val fragment = fragmentsCache.get(fragmentName) { name ->
-        Fragment(name)
-      }
-      into[fragment.name] = fragment
+      val fragment = fragmentsDirectories.firstNotNullOfOrNull {
+        val path = "$it/${fragmentName}.$fragmentsFileExtension"
+        fragmentsCache.get(path, ::readBlock)
+      } ?: throw GraphQLFileNotFoundException("Couldn't find file for fragment $fragmentName")
+      into[fragmentName] = fragment
 
       val nonProcessedDependencies = fragment.dependencies.filter { !into.contains(it) }.toSet()
-      readFragmentsWithDependencies(nonProcessedDependencies, into)
+      readFragmentsInto(nonProcessedDependencies, into)
     }
   }
 
-  private fun readCollectingFragmentNames(filePath: String): Pair<String, Set<String>>? {
+  private fun readBlock(filePath: String): Block? {
     val bodyBuilder = StringBuilder()
     val fragments = mutableSetOf<String>()
     val innerFragments = mutableSetOf<String>()
@@ -74,38 +77,12 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectories: List<
       }
     }
     fragments.removeAll(innerFragments)
-    return bodyBuilder.toString().removeSuffix("\n") to fragments
+    return Block(bodyBuilder.toString().removeSuffix("\n"), fragments)
   }
 
   // visible to avoid storing test queries with the code
   @VisibleForTesting
   protected open fun getFileStream(relativePath: String): InputStream? = this::class.java.classLoader.getResourceAsStream(relativePath)
 
-  private inner class Fragment(val name: String) {
-
-    val body: String
-    val dependencies: Set<String>
-
-    init {
-      val (body, dependencies) = fragmentsDirectories.firstNotNullOfOrNull {
-        readCollectingFragmentNames("$it/${name}.$fragmentsFileExtension")
-      } ?: throw GraphQLFileNotFoundException("Couldn't find file for fragment $name")
-      this.body = body
-      this.dependencies = dependencies
-    }
-
-
-    override fun equals(other: Any?): Boolean {
-      if (this === other) return true
-      if (other !is Fragment) return false
-
-      if (name != other.name) return false
-
-      return true
-    }
-
-    override fun hashCode(): Int {
-      return name.hashCode()
-    }
-  }
+  private data class Block(val body: String, val dependencies: Set<String>)
 }
