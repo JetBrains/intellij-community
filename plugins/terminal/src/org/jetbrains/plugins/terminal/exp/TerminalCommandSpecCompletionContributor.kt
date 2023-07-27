@@ -5,8 +5,14 @@ import com.intellij.codeInsight.AutoPopupController
 import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.terminal.completion.CommandPartNode
+import com.intellij.terminal.completion.CommandTreeBuilder
+import com.intellij.terminal.completion.CommandTreeSuggestionsProvider
+import com.intellij.terminal.completion.SubcommandNode
 import com.intellij.util.containers.TreeTraversal
-import org.jetbrains.plugins.terminal.exp.completion.*
+import org.jetbrains.plugins.terminal.exp.completion.IJCommandSpecManager
+import org.jetbrains.plugins.terminal.exp.completion.IJShellRuntimeDataProvider
+import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 

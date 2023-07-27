@@ -1,13 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp
+package com.intellij.terminal.completion
 
+import com.intellij.terminal.completion.util.FakeCommandSpecManager
+import com.intellij.terminal.completion.util.FakeShellRuntimeDataProvider
+import com.intellij.terminal.completion.util.commandSpec
 import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import junit.framework.TestCase.assertTrue
-import org.jetbrains.plugins.terminal.exp.completion.*
-import org.jetbrains.plugins.terminal.exp.util.FakeCommandSpecManager
-import org.jetbrains.plugins.terminal.exp.util.FakeShellRuntimeDataProvider
-import org.jetbrains.plugins.terminal.exp.util.commandSpec
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.jetbrains.terminal.completion.ShellSuggestionsGenerator
 import org.junit.Test

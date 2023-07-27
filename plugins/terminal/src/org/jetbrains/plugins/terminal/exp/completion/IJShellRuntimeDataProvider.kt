@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.openapi.application.ex.ApplicationUtil
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.terminal.completion.ShellRuntimeDataProvider
 import org.jetbrains.plugins.terminal.exp.ShellCommandListener
 import org.jetbrains.plugins.terminal.exp.TerminalSession
 import org.jetbrains.plugins.terminal.util.ShellType

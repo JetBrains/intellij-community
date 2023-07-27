@@ -49,27 +49,10 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.terminal.completion" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="caffeine" level="project" />
-    <orderEntry type="module-library">
-      <library name="terminal-completion-spec" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-spec:0.2.0">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.2.0/completion-spec-0.2.0.jar">
-              <sha256sum>90f13cbc2f8080f4324bd23ec2aca4943ea884eaa29fcfb84f27667384f7addd</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.2.0/completion-spec-0.2.0.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/terminal/completion-spec/0.2.0/completion-spec-0.2.0-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="module-library">
       <library name="terminal-completion-db-with-extensions" type="repository">
         <properties include-transitive-deps="false" maven-id="org.jetbrains.terminal:completion-db-with-extensions:0.2.0">

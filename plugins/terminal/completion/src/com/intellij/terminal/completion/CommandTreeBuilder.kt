@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp.completion
+package com.intellij.terminal.completion
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -7,7 +7,7 @@ import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
 
-internal class CommandTreeBuilder private constructor(
+class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
   private val commandSpecManager: CommandSpecManager,
   private val arguments: List<String>

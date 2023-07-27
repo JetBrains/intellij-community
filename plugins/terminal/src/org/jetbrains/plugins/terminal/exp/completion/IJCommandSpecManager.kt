@@ -7,6 +7,7 @@ import com.github.benmanes.caffeine.cache.Scheduler
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.terminal.completion.CommandSpecManager
 import kotlinx.serialization.json.Json
 import org.jetbrains.terminal.completion.ShellCommand
 import java.io.IOException

@@ -1,12 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.plugins.terminal.exp.completion
+package com.intellij.terminal.completion
 
 import org.jetbrains.terminal.completion.ShellArgument
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.jetbrains.terminal.completion.ShellOption
 
-internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
+abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
   val children: MutableList<CommandPartNode<*>> = mutableListOf()
 
   override fun toString(): String {
@@ -14,7 +14,7 @@ internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, 
   }
 }
 
-internal class SubcommandNode(text: String,
+class SubcommandNode(text: String,
                               override val spec: ShellCommand,
                               parent: CommandPartNode<*>?) : CommandPartNode<ShellCommand>(text, spec, parent) {
   fun getMergedParserDirectives(): ShellCommandParserDirectives {
@@ -37,12 +37,12 @@ internal class SubcommandNode(text: String,
   }
 }
 
-internal class OptionNode(text: String,
+class OptionNode(text: String,
                           override val spec: ShellOption,
                           parent: CommandPartNode<*>?) : CommandPartNode<ShellOption>(text, spec, parent)
 
-internal class ArgumentNode(text: String,
+class ArgumentNode(text: String,
                             override val spec: ShellArgument,
                             parent: CommandPartNode<*>?) : CommandPartNode<ShellArgument>(text, spec, parent)
 
-internal class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)
+class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)
