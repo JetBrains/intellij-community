@@ -28,10 +28,10 @@ internal const val SETTINGS_SYNC_SNAPSHOT_ZIP = "$SETTINGS_SYNC_SNAPSHOT.zip"
 private const val CONNECTION_TIMEOUT_MS = 10000
 private const val READ_TIMEOUT_MS = 50000
 
-internal open class CloudConfigServerCommunicator(serverUrl: String = defaultUrl) : SettingsSyncRemoteCommunicator {
+internal open class CloudConfigServerCommunicator(serverUrl: String? = null) : SettingsSyncRemoteCommunicator {
 
   internal open val client get() = _client.value
-  private val _client = lazy { createCloudConfigClient(serverUrl, clientVersionContext) }
+  private val _client = lazy { createCloudConfigClient(serverUrl ?: defaultUrl, clientVersionContext) }
   protected val clientVersionContext = CloudConfigVersionContext()
 
   private val lastRemoteErrorRef = AtomicReference<Throwable>()
