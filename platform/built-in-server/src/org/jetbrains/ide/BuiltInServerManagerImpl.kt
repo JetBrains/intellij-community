@@ -121,6 +121,9 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
       server = BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
     }
+    catch (e: CancellationException) {
+      return
+    }
     catch (e: Throwable) {
       LOG.info(e)
       val message = BuiltInServerBundle.message("notification.content.cannot.start.internal.http.server.and.ask.for.restart.0",

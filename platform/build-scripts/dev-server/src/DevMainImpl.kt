@@ -5,12 +5,14 @@ package org.jetbrains.intellij.build.devServer
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.BatchSpanProcessor
+import com.intellij.util.childScope
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.sdk.trace.SdkTracerProvider
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.intellij.build.ConsoleSpanExporter
 import org.jetbrains.intellij.build.TracerProviderManager
@@ -27,7 +29,8 @@ fun buildDevMain(): Collection<Path> {
   var homePath: String? = null
   var newClassPath: Collection<Path>? = null
   runBlocking(Dispatchers.Default) {
-    val spanProcessor = BatchSpanProcessor(coroutineScope = this, spanExporters = listOf(ConsoleSpanExporter()))
+    val batchSpanProcessorScope = childScope()
+    val spanProcessor = BatchSpanProcessor(coroutineScope = batchSpanProcessorScope, spanExporters = listOf(ConsoleSpanExporter()))
 
     val tracerProvider = SdkTracerProvider.builder()
       .addSpanProcessor(spanProcessor)
@@ -61,6 +64,7 @@ fun buildDevMain(): Collection<Path> {
       ))
     }
     finally {
+      batchSpanProcessorScope.cancel()
       traceManagerInitializer = { throw IllegalStateException("already built") }
     }
   }
