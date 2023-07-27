@@ -28,68 +28,6 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 PsiTreeUtil.getParentOfType(
                     target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
                 )?.takeUnless { it is KtFunction }
-            is KtIfExpression, is KtWhenExpression, is KtBlockExpression -> null
-            is KtExpression -> {
-                var ktFunction: KtFunction? = (parent as? KtNameReferenceExpression)?.asFunctionLiteral()
-                val expressions = hashSetOf<KtExpression>()
-                if (ktFunction == null) {
-                    var node: PsiElement? = parent
-                    while (node != null) {
-                        val nextParent = node.parent
-                        when (node) {
-                            is PsiFile, is KtClassOrObject -> break
-                            //is PsiFile, is KtNamedFunction, is KtClassOrObject -> break
-                            is KtNamedFunction -> {
-                                ktFunction = node
-                                break
-                            }
-
-                            is KtFunctionLiteral -> {
-                                ktFunction = node
-                                break
-                            }
-
-                            is KtExpression -> expressions += node
-                            else -> {
-                                if ((nextParent is KtIfExpression || nextParent is KtWhenExpression || nextParent is KtBlockExpression) &&
-                                    !KtPsiUtil.isStatementContainer(node)
-                                ) {
-                                    break
-                                }
-                            }
-                        }
-                        node = nextParent
-                    }
-                }
-                ktFunction?.let {
-                    val lastStatement =
-                        when(it) {
-                            is KtFunctionLiteral -> it.bodyExpression?.lastStatementOrNull()
-                            is KtNamedFunction -> {
-                                val bodyBlockExpression = it.bodyBlockExpression
-                                if (bodyBlockExpression != null) {
-                                    bodyBlockExpression.lastStatementOrNull()
-                                } else {
-                                    it.bodyExpression
-                                }
-                            }
-                            else -> null
-                        }
-                    if (lastStatement in expressions) {
-                        if (ktFunction is KtFunctionLiteral) {
-                            parent
-                        } else if (ktFunction.bodyBlockExpression != null) {
-                            parent.takeIf { _ ->
-                                expressions.any { e -> e is KtReturnExpression || e is KtThrowExpression }
-                            }
-                        } else {
-                            parent
-                        }
-                    } else {
-                        null
-                    }
-                }
-            }
             else -> null
         } as? KtExpression ?: return null
         return OnExitUsagesHandler(editor, file, expression)

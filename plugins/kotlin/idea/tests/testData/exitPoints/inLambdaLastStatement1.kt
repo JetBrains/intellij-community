@@ -6,6 +6,4 @@ fun test() {
         0<caret>
     }
 }
-//HIGHLIGHTED: return@foo 1
-//HIGHLIGHTED: foo
-//HIGHLIGHTED: 0
+// no exit point highlighting as to KTIJ-26395: we should not highlight exit points on the latest statement as it interferes with variable/call/type highlighting
