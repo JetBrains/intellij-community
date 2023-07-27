@@ -1,14 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.options.JavaClassValidator;
+import com.intellij.codeInspection.AddToInspectionOptionListFix;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.intellij.codeInspection.options.OptPane.pane;
+import static com.intellij.codeInspection.options.OptPane.stringList;
 
 public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
+  public final List<String> exceptions = new ArrayList<>();
 
   @NotNull
   @Override
@@ -18,11 +32,27 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
   }
 
   @Override
+  public @NotNull OptPane getOptionsPane() {
+    return pane(
+      stringList("exceptions", JavaBundle.message("label.ignored.exceptions"),
+                 new JavaClassValidator().withSuperClass(CommonClassNames.JAVA_LANG_EXCEPTION)
+                   .withTitle(InspectionGadgetsBundle.message("choose.exception.class"))));
+  }
+
+  @Override
+  protected @Nullable LocalQuickFix buildFix(Object... infos) {
+    String exceptionName = (String)infos[0];
+    return new AddToInspectionOptionListFix<>(
+      this, JavaAnalysisBundle.message("intention.name.ignore.exception", exceptionName),
+      exceptionName, tool -> tool.exceptions);
+  }
+
+  @Override
   public BaseInspectionVisitor buildVisitor() {
     return new NewExceptionWithoutArgumentsVisitor();
   }
 
-  private static class NewExceptionWithoutArgumentsVisitor extends BaseInspectionVisitor {
+  private class NewExceptionWithoutArgumentsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
@@ -39,11 +69,12 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
       if (!(target instanceof PsiClass aClass)) {
         return;
       }
+      if (exceptions.contains(aClass.getQualifiedName())) return;
       if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_EXCEPTION)) {
         return;
       }
       if (hasAccessibleConstructorWithParameters(aClass, expression)) {
-        registerNewExpressionError(expression);
+        registerNewExpressionError(expression, aClass.getQualifiedName());
       }
     }
 
@@ -72,7 +103,7 @@ public class NewExceptionWithoutArgumentsInspection extends BaseInspection {
       if (qualifier == null) {
         return;
       }
-      registerError(qualifier);
+      registerError(qualifier, aClass.getQualifiedName());
     }
 
     private static boolean hasAccessibleConstructorWithParameters(PsiClass aClass, PsiElement context) {
