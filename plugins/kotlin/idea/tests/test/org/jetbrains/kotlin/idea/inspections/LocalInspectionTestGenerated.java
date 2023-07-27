@@ -17165,6 +17165,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/bigDecimal.kt");
             }
 
+            @TestMetadata("binaryExpression.kt")
+            public void testBinaryExpression() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/binaryExpression.kt");
+            }
+
             @TestMetadata("int.kt")
             public void testInt() throws Exception {
                 runTest("testData/inspectionsLocal/unusedUnaryOperator/moveToPrevLine/int.kt");
@@ -17221,6 +17226,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             @TestMetadata("basic2.kt")
             public void testBasic2() throws Exception {
                 runTest("testData/inspectionsLocal/unusedUnaryOperator/basic2.kt");
+            }
+
+            @TestMetadata("binaryExpression.kt")
+            public void testBinaryExpression() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/binaryExpression.kt");
+            }
+
+            @TestMetadata("binaryExpression2.kt")
+            public void testBinaryExpression2() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/binaryExpression2.kt");
+            }
+
+            @TestMetadata("binaryExpression3.kt")
+            public void testBinaryExpression3() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/binaryExpression3.kt");
+            }
+
+            @TestMetadata("binaryExpression4.kt")
+            public void testBinaryExpression4() throws Exception {
+                runTest("testData/inspectionsLocal/unusedUnaryOperator/binaryExpression4.kt");
             }
 
             @TestMetadata("namedParameter.kt")
