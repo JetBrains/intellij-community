@@ -14,9 +14,5 @@ interface OpenTelemetryExporterProvider {
 
   fun getMetricsExporters(): List<MetricExporter>
 
-  fun isTracingAvailable(): Boolean
-
-  fun areMetricsAvailable(): Boolean
-
   fun getReadInterval(): Duration = Duration.ofMinutes(1)
 }

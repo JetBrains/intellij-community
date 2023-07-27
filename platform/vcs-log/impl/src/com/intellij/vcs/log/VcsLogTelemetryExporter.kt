@@ -41,10 +41,9 @@ private class VcsLogTelemetryExporter : OpenTelemetryExporterProvider {
           }
     }
 
-    private val SpanData.valueInMillis get() = (endEpochNanos - startEpochNanos).toMillis()
+    private val SpanData.valueInMillis
+      get() = (endEpochNanos - startEpochNanos).toMillis()
   }
 
-  override fun isTracingAvailable() = true
-  override fun areMetricsAvailable() = false
   override fun getMetricsExporters() = emptyList<MetricExporter>()
 }

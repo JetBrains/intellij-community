@@ -14,6 +14,10 @@ import java.time.Duration
 
 private class LuxExportersProvider : OpenTelemetryExporterProvider {
   override fun getMetricsExporters(): List<MetricExporter> {
+    if (System.getProperty(OpenTelemetryUtils.RDCT_LUX_METRICS_DIAGNOSTIC_FLAG) == null) {
+      return emptyList()
+    }
+
     val fileToWrite: Path? = try {
       CsvGzippedMetricsExporter.generatePathForLuxMetrics()
     }
@@ -31,15 +35,5 @@ private class LuxExportersProvider : OpenTelemetryExporterProvider {
     return emptyList()
   }
 
-  override fun getReadInterval(): Duration {
-    return Duration.ofSeconds(1)
-  }
-
-  override fun isTracingAvailable(): Boolean {
-    return false
-  }
-
-  override fun areMetricsAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_LUX_METRICS_DIAGNOSTIC_FLAG) != null
-  }
+  override fun getReadInterval(): Duration = Duration.ofSeconds(1)
 }

@@ -22,13 +22,11 @@ private class CustomExportersListener : ApplicationInitializedListener {
     val metricsExporters = mutableListOf<MetricsExporterEntry>()
 
     for (provider in providers) {
-      if (provider.isTracingAvailable()) {
-        spanExporters.addAll(provider.getSpanExporters())
-      }
-      if (provider.areMetricsAvailable()) {
-        val metrics = provider.getMetricsExporters()
-        val duration = provider.getReadInterval()
-        metricsExporters.add(MetricsExporterEntry(metrics, duration))
+      spanExporters.addAll(provider.getSpanExporters())
+
+      val metrics = provider.getMetricsExporters()
+      if (metrics.isNotEmpty()) {
+        metricsExporters.add(MetricsExporterEntry(metrics = metrics, duration = provider.getReadInterval()))
       }
     }
 

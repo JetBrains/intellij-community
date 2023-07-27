@@ -17,10 +17,19 @@ import java.time.Duration
 
 private class RdctExportersProvider : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
-    return listOf(MessageBusSpanExporter())
+    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && getOtlpEndPoint() != null) {
+      return listOf(MessageBusSpanExporter())
+    }
+    else {
+      return emptyList()
+    }
   }
 
   override fun getMetricsExporters(): List<MetricExporter> {
+    if (System.getProperty(OpenTelemetryUtils.RDCT_CONN_METRICS_DIAGNOSTIC_FLAG) == null) {
+      return emptyList()
+    }
+
     val fileToWrite: Path? = try {
       CsvGzippedMetricsExporter.generatePathForConnectionMetrics()
     }
@@ -37,15 +46,5 @@ private class RdctExportersProvider : OpenTelemetryExporterProvider {
     return emptyList()
   }
 
-  override fun isTracingAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && getOtlpEndPoint() != null
-  }
-
-  override fun areMetricsAvailable(): Boolean {
-    return System.getProperty(OpenTelemetryUtils.RDCT_CONN_METRICS_DIAGNOSTIC_FLAG) != null
-  }
-
-  override fun getReadInterval(): Duration {
-    return Duration.ofSeconds(1)
-  }
+  override fun getReadInterval(): Duration = Duration.ofSeconds(1)
 }
