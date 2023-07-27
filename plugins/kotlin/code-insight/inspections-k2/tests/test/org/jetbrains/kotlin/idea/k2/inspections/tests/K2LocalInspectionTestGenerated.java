@@ -2636,6 +2636,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
         }
 
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/callableReference.kt");
+        }
+
         @TestMetadata("classByPrimaryConstructor.kt")
         public void testClassByPrimaryConstructor() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");

@@ -16789,6 +16789,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unusedSymbol/asDefaultConstructorParameter.kt");
         }
 
+        @TestMetadata("callableReference.kt")
+        public void testCallableReference() throws Exception {
+            runTest("testData/inspectionsLocal/unusedSymbol/callableReference.kt");
+        }
+
         @TestMetadata("classByPrimaryConstructor.kt")
         public void testClassByPrimaryConstructor() throws Exception {
             runTest("testData/inspectionsLocal/unusedSymbol/classByPrimaryConstructor.kt");

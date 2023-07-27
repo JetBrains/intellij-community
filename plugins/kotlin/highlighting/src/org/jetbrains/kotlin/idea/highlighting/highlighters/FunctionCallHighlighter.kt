@@ -32,6 +32,7 @@ internal class FunctionCallHighlighter(
         return when (element) {
             is KtBinaryExpression -> highlightBinaryExpression(element)
             is KtCallExpression -> highlightCallExpression(element)
+            is KtCallableReferenceExpression -> rememberCallableReference(element)
             else -> emptyList()
         }
     }
@@ -64,6 +65,13 @@ internal class FunctionCallHighlighter(
             ?: getDefaultHighlightInfoTypeForCall(call)
             ?: return emptyList()
         return listOfNotNull(HighlightingFactory.highlightName(callee, highlightInfoType))
+    }
+
+    context(KtAnalysisSession)
+    private fun rememberCallableReference(expression: KtCallableReferenceExpression): List<HighlightInfo.Builder> {
+        val symbol = expression.callableReference.mainReference.resolveToSymbol() ?: return emptyList()
+        kotlinRefsHolder.registerLocalRef(symbol.psi, expression)
+        return emptyList()
     }
 
     context(KtAnalysisSession)
