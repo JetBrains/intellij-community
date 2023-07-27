@@ -25,12 +25,15 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.*;
+import com.intellij.ui.popup.async.AsyncPopupStep;
+import com.intellij.ui.popup.async.AsyncPopupWaiter;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.ui.popup.util.PopupImplUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +65,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
 
   private ListPopupModel myListModel;
+
+  private @Nullable AsyncPopupWaiter myAsyncPopupWaiter;
 
   private int myIndexForShowingChild = -1;
   private boolean myAutoHandleBeforeShow;
@@ -300,6 +305,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
           if (prevExtendedButton(selected)) return;
         }
 
+        disposeAsyncPopupWaiter();
         if (isClosableByLeftArrow()) {
           goBack();
         }
@@ -317,6 +323,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         if (prevItemIndex == myList.getSelectedIndex()) return;
         prevItemIndex = myList.getSelectedIndex();
         myList.setSelectedButtonIndex(null);
+        disposeAsyncPopupWaiter();
       }
     });
 
@@ -390,7 +397,15 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.removeMouseMotionListener(myMouseMotionListener);
     myList.removeMouseListener(myMouseListener);
     getListStep().removeListener(this);
+    disposeAsyncPopupWaiter();
     super.dispose();
+  }
+
+  private void disposeAsyncPopupWaiter() {
+    if (myAsyncPopupWaiter != null) {
+      myAsyncPopupWaiter.dispose();
+      myAsyncPopupWaiter = null;
+    }
   }
 
   protected int getSelectedIndex() {
@@ -514,13 +529,24 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   public boolean handleNextStep(PopupStep nextStep, Object parentValue, InputEvent e) {
-    if (nextStep != PopupStep.FINAL_CHOICE) {
-      showNextStepPopup(nextStep, parentValue);
+    disposeAsyncPopupWaiter();
+    if (nextStep == PopupStep.FINAL_CHOICE) {
+      disposePopup(e);
+      return true;
+    }
+    else if (nextStep instanceof AsyncPopupStep) {
+      Rectangle bounds = getCellBounds(getSelectedIndex());
+      // TODO: separator size calculation, see IDEA-327566
+      RelativePoint point = new RelativePoint(getList(), new Point(bounds.width, bounds.y + bounds.height / 2));
+      myAsyncPopupWaiter = new AsyncPopupWaiter((AsyncPopupStep<?>)nextStep, point, step -> {
+        handleNextStep(step, parentValue, e);
+        return Unit.INSTANCE;
+      });
       return false;
     }
     else {
-      disposePopup(e);
-      return true;
+      showNextStepPopup(nextStep, parentValue);
+      return false;
     }
   }
 

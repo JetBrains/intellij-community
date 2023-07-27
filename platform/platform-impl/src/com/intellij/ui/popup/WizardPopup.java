@@ -12,8 +12,6 @@ import com.intellij.ui.PopupBorder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.UiInterceptors;
-import com.intellij.ui.popup.async.AsyncPopupImpl;
-import com.intellij.ui.popup.async.AsyncPopupStep;
 import com.intellij.ui.popup.list.ComboBoxPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.tree.TreePopupImpl;
@@ -415,9 +413,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   }
 
   protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
-    if (step instanceof AsyncPopupStep) {
-      return new AsyncPopupImpl(getProject(), parent, (AsyncPopupStep)step, parentValue);
-    }
     if (step instanceof ListPopupStep) {
       return new ListPopupImpl(getProject(), parent, (ListPopupStep)step, parentValue);
     }

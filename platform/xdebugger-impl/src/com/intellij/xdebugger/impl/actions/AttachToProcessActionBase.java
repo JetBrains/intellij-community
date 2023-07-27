@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.AsyncPromise;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -690,13 +691,12 @@ public abstract class AttachToProcessActionBase extends AnAction implements Dumb
       }
 
       if (selectedValue instanceof AttachHostItem attachHostItem) {
-        return new AsyncPopupStep() {
-          @Override
-          public PopupStep call() {
-            List<AttachItem> attachItems = new ArrayList<>(attachHostItem.getSubItems());
-            return new AttachListStep(attachItems, null, myProject);
-          }
-        };
+        AsyncPromise<PopupStep> promise = new AsyncPromise<>();
+        ApplicationManager.getApplication().executeOnPooledThread(() -> {
+          List<AttachItem> attachItems = new ArrayList<>(attachHostItem.getSubItems());
+          ApplicationManager.getApplication().invokeLater(() -> promise.setResult(new AttachListStep(attachItems, null, myProject)));
+        });
+        return new AsyncPopupStep(promise);
       }
       return null;
     }
