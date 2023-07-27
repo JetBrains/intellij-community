@@ -1170,94 +1170,98 @@ public final class HighlightClassUtil {
 
   static void checkPermitsList(@NotNull PsiReferenceList list, @NotNull HighlightInfoHolder holder) {
     PsiElement parent = list.getParent();
-    if (parent instanceof PsiClass aClass && list.equals(aClass.getPermitsList())) {
-      PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
-      if (nameIdentifier == null) return;
-      if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
-        String description = aClass.isEnum() ? JavaErrorBundle.message("permits.after.enum") : null;
-        if (description == null) {
-          description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "annotation.type.permits");
-        }
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(list)
-          .descriptionAndTooltip(description);
-        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
-        builder.registerFix(action, null, null, null, null);
-        holder.add(builder.create());
-        return;
+    if (!(parent instanceof PsiClass aClass) || !list.equals(aClass.getPermitsList())) {
+      return;
+    }
+    HighlightInfo.Builder feature = HighlightUtil.checkFeature(list.getFirstChild(), HighlightingFeature.SEALED_CLASSES,
+                                                               PsiUtil.getLanguageLevel(list), list.getContainingFile());
+    if (feature != null && holder.add(feature.create())) {
+      return;
+    }
+    PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
+    if (nameIdentifier == null) return;
+    if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
+      String description = aClass.isEnum() ? JavaErrorBundle.message("permits.after.enum") : null;
+      if (description == null) {
+        description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "annotation.type.permits");
       }
-      if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
-        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .range(list.getFirstChild())
-          .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause", aClass.getName()));
-        IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.SEALED, true, false);
-        builder.registerFix(action, null, null, null, null);
-        holder.add(builder.create());
-      }
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(list)
+        .descriptionAndTooltip(description);
+      IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(list);
+      builder.registerFix(action, null, null, null, null);
+      holder.add(builder.create());
+      return;
+    }
+    if (!aClass.hasModifierProperty(PsiModifier.SEALED)) {
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(list.getFirstChild())
+        .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause", aClass.getName()));
+      IntentionAction action = QuickFixFactory.getInstance().createModifierListFix(aClass, PsiModifier.SEALED, true, false);
+      builder.registerFix(action, null, null, null, null);
+      holder.add(builder.create());
+    }
 
-      PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
-      JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
-      for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
-        PsiReferenceParameterList parameterList = permitted.getParameterList();
-        if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
-          HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList)
-            .descriptionAndTooltip(JavaErrorBundle.message("permits.list.generics.are.not.allowed"));
-          IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(parameterList);
-          builder.registerFix(action, null, null, null, null);
-          holder.add(builder.create());
-          continue;
+    PsiJavaModule currentModule = JavaModuleGraphUtil.findDescriptorByElement(aClass);
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(aClass.getProject());
+    for (PsiJavaCodeReferenceElement permitted : list.getReferenceElements()) {
+      PsiReferenceParameterList parameterList = permitted.getParameterList();
+      if (parameterList != null && parameterList.getTypeParameterElements().length > 0) {
+        HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameterList)
+          .descriptionAndTooltip(JavaErrorBundle.message("permits.list.generics.are.not.allowed"));
+        IntentionAction action = QuickFixFactory.getInstance().createDeleteFix(parameterList);
+        builder.registerFix(action, null, null, null, null);
+        holder.add(builder.create());
+        continue;
+      }
+      @Nullable PsiElement resolve = permitted.resolve();
+      if (resolve instanceof PsiClass inheritorClass) {
+        PsiManager manager = inheritorClass.getManager();
+        if (!ContainerUtil.exists(inheritorClass.getSuperTypes(), type -> manager.areElementsEquivalent(aClass, type.resolve()))) {
+          HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
+            .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation",
+                                                           inheritorClass.getName(),
+                                                           inheritorClass.isInterface() == aClass.isInterface() ? 1 : 2,
+                                                           aClass.getName()));
+          QuickFixAction.registerQuickFixActions(info, null,
+                                                 QuickFixFactory.getInstance()
+                                                   .createExtendSealedClassFixes(permitted, aClass, inheritorClass));
+          holder.add(info.create());
         }
-        @Nullable PsiElement resolve = permitted.resolve();
-        if (resolve instanceof PsiClass inheritorClass) {
-          PsiManager manager = inheritorClass.getManager();
-          if (!ContainerUtil.exists(inheritorClass.getSuperTypes(), type -> manager.areElementsEquivalent(aClass, type.resolve()))) {
-            HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(permitted)
-              .descriptionAndTooltip(JavaErrorBundle.message("invalid.permits.clause.direct.implementation",
-                                                             inheritorClass.getName(),
-                                                             inheritorClass.isInterface() == aClass.isInterface() ? 1 : 2,
-                                                             aClass.getName()))
-              ;
-            QuickFixAction.registerQuickFixActions(info, null,
-                                                   QuickFixFactory.getInstance()
-                                                     .createExtendSealedClassFixes(permitted, aClass, inheritorClass));
+        else {
+          if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {
+            HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(permitted)
+              .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package"));
+            PsiFile parentFile = aClass.getContainingFile();
+            if (parentFile instanceof PsiClassOwner) {
+              String parentPackage = ((PsiClassOwner)parentFile).getPackageName();
+              IntentionAction action = QuickFixFactory.getInstance().createMoveClassToPackageFix(inheritorClass, parentPackage);
+              info.registerFix(action, null, null, null, null);
+            }
             holder.add(info.create());
           }
-          else {
-            if (currentModule == null && !psiFacade.arePackagesTheSame(aClass, inheritorClass)) {
-              HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(permitted)
-                .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.package"))
-                ;
-              PsiFile parentFile = aClass.getContainingFile();
-              if (parentFile instanceof PsiClassOwner) {
-                String parentPackage = ((PsiClassOwner)parentFile).getPackageName();
-                IntentionAction action = QuickFixFactory.getInstance().createMoveClassToPackageFix(inheritorClass, parentPackage);
-                info.registerFix(action, null, null, null, null);
-              }
-              holder.add(info.create());
+          else if (currentModule != null && !areModulesTheSame(currentModule, JavaModuleGraphUtil.findDescriptorByElement(inheritorClass))) {
+            holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                         .range(permitted)
+                         .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
+                         .create());
+          }
+          else if (!(inheritorClass instanceof PsiCompiledElement) && !hasPermittedSubclassModifier(inheritorClass)) {
+            HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+              .range(permitted)
+              .descriptionAndTooltip(JavaErrorBundle.message("permitted.subclass.must.have.modifier"));
+            IntentionAction markNonSealed = QuickFixFactory.getInstance()
+              .createModifierListFix(inheritorClass, PsiModifier.NON_SEALED, true, false);
+            info.registerFix(markNonSealed, null, null, null, null);
+            boolean hasInheritors = DirectClassInheritorsSearch.search(inheritorClass).findFirst() != null;
+            if (!inheritorClass.isInterface() && !inheritorClass.hasModifierProperty(PsiModifier.ABSTRACT) || hasInheritors) {
+              IntentionAction action = hasInheritors ?
+                                       QuickFixFactory.getInstance().createSealClassFromPermitsListFix(inheritorClass) :
+                                       QuickFixFactory.getInstance().createModifierListFix(inheritorClass, PsiModifier.FINAL, true, false);
+              info.registerFix(action, null, null, null, null);
             }
-            else if (currentModule != null && !areModulesTheSame(currentModule, JavaModuleGraphUtil.findDescriptorByElement(inheritorClass))) {
-              holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                           .range(permitted)
-                           .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
-                           .create());
-            }
-            else if (!(inheritorClass instanceof PsiCompiledElement) && !hasPermittedSubclassModifier(inheritorClass)) {
-              HighlightInfo.Builder info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(permitted)
-                .descriptionAndTooltip(JavaErrorBundle.message("permitted.subclass.must.have.modifier"));
-              IntentionAction markNonSealed = QuickFixFactory.getInstance()
-                .createModifierListFix(inheritorClass, PsiModifier.NON_SEALED, true, false);
-              info.registerFix(markNonSealed, null, null, null, null);
-              boolean hasInheritors = DirectClassInheritorsSearch.search(inheritorClass).findFirst() != null;
-              if (!inheritorClass.isInterface() && !inheritorClass.hasModifierProperty(PsiModifier.ABSTRACT) || hasInheritors) {
-                IntentionAction action = hasInheritors ?
-                                         QuickFixFactory.getInstance().createSealClassFromPermitsListFix(inheritorClass) :
-                                         QuickFixFactory.getInstance().createModifierListFix(inheritorClass, PsiModifier.FINAL, true, false);
-                info.registerFix(action, null, null, null, null);
-              }
-              holder.add(info.create());
-            }
+            holder.add(info.create());
           }
         }
       }

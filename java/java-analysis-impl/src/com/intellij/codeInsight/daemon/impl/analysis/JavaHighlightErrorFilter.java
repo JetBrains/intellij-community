@@ -18,8 +18,8 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiExpressionStatement && !PsiUtil.isStatement(parent)) {
         // unterminated expression statement which is not a statement at all:
-        // let's report it as not-a-statement instead 
-        // (see HighlightUtil.checkNotAStatement); it's more visible and provides 
+        // let's report it as not-a-statement instead
+        // (see HighlightUtil.checkNotAStatement); it's more visible and provides
         // more useful fixes.
         return false;
       }
@@ -41,6 +41,13 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
             }
           }
         }
+      }
+    }
+    else if (description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
+      String text = element.getText();
+      if ((text.equals(PsiKeyword.SEALED) || text.equals(PsiKeyword.NON_SEALED)) &&
+          PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
+        return false;
       }
     }
     return true;
