@@ -8,7 +8,7 @@ import java.io.InputStream
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 
-abstract class CachingGraphQLQueryLoader(private val fragmentsDirectory: String = "graphql/fragment",
+abstract class CachingGraphQLQueryLoader(private val fragmentsDirectories: List<String> = listOf("graphql/fragment"),
                                          private val fragmentsFileExtension: String = "graphql") {
 
   private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
@@ -26,6 +26,7 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectory: String 
   fun loadQuery(queryPath: String): String {
     return queriesCache.get(queryPath) { path ->
       val (body, fragmentNames) = readCollectingFragmentNames(path)
+                                  ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
 
       val builder = StringBuilder()
       val fragments = LinkedHashMap<String, Fragment>()
@@ -51,13 +52,12 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectory: String 
     }
   }
 
-  private fun readCollectingFragmentNames(filePath: String): Pair<String, Set<String>> {
+  private fun readCollectingFragmentNames(filePath: String): Pair<String, Set<String>>? {
     val bodyBuilder = StringBuilder()
     val fragments = mutableSetOf<String>()
     val innerFragments = mutableSetOf<String>()
 
-    val stream = getFileStream(filePath)
-                 ?: throw GraphQLFileNotFoundException("Couldn't find file $filePath")
+    val stream = getFileStream(filePath) ?: return null
     stream.reader().forEachLine {
       val line = it.trim()
       bodyBuilder.append(line).append("\n")
@@ -87,7 +87,9 @@ abstract class CachingGraphQLQueryLoader(private val fragmentsDirectory: String 
     val dependencies: Set<String>
 
     init {
-      val (body, dependencies) = readCollectingFragmentNames("$fragmentsDirectory/${name}.$fragmentsFileExtension")
+      val (body, dependencies) = fragmentsDirectories.firstNotNullOfOrNull {
+        readCollectingFragmentNames("$it/${name}.$fragmentsFileExtension")
+      } ?: throw GraphQLFileNotFoundException("Couldn't find file for fragment $name")
       this.body = body
       this.dependencies = dependencies
     }
