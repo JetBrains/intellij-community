@@ -10,6 +10,14 @@ public class DuplicateCondition {
     } else if (<warning descr="Duplicate condition 'b'">b</warning>) {}
   }
 
+  void eagerOr(boolean isValid) {
+    if (<warning descr="Duplicate condition 'isValid'">isValid</warning> | <warning descr="Duplicate condition 'isValid'">isValid</warning> | <warning descr="Duplicate condition 'isValid'">isValid</warning> ) {
+
+    } else if (<warning descr="Duplicate condition 'isValid'">isValid</warning>) {
+
+    } else if (<warning descr="Duplicate condition 'isValid'">isValid</warning>) {}
+  }
+
   void x2(boolean b, boolean c) {
     if(<warning descr="Duplicate condition 'b'">b</warning> || c) {
       System.out.println("ok");
@@ -72,5 +80,13 @@ public class DuplicateCondition {
     else if (<warning descr="Duplicate condition '(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0'">(((p + o) + (n + m)) + ((l + k) + (j + i))) + (((h + g) + (f + e)) + ((d + c) + (b + a))) > 0</warning>) {
       System.out.println("two");
     }
+  }
+
+  int doNotAnalyseBitwiseAndOperator(int isValid, int isEnabled) {
+    return isValid & isValid & isEnabled;
+  }
+
+  int doNotAnalyseBitwiseOrOperator(int isValid, int isEnabled) {
+    return isValid | isValid | isEnabled;
   }
 }
