@@ -96,12 +96,17 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       }
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final boolean constructorCall = JavaPsiConstructorUtil.isConstructorCall(expression);
+      final boolean superCall = PsiUtil.isJavaToken(methodExpression.getReferenceNameElement(), JavaTokenType.SUPER_KEYWORD);
       final PsiMethod method = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, true);
       if (method == null || !constructorCall && !method.getName().equals(methodExpression.getReferenceName())) {
         return;
       }
       final PsiMethod targetMethod = expression.resolveMethod();
       if (targetMethod == null) {
+        return;
+      }
+      final PsiParameterList parameterList = targetMethod.getParameterList();
+      if (!superCall && parameterList.getParametersCount() <= method.getParameterList().getParametersCount()) {
         return;
       }
       final PsiClass containingClass = targetMethod.getContainingClass();
@@ -112,7 +117,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
       if (m_ignoreOverridesOfLibraryMethods && targetMethod instanceof PsiCompiledElement) {
         return;
       }
-      final PsiParameter[] parameters = targetMethod.getParameterList().getParameters();
+      final PsiParameter[] parameters = parameterList.getParameters();
       final PsiExpression[] arguments = argumentList.getExpressions();
       for (int i = 0, length = Math.min(arguments.length, parameters.length); i < length; i++) {
         final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(arguments[i]);
@@ -135,9 +140,7 @@ public class ParameterNameDiffersFromOverriddenParameterInspection extends BaseI
           continue;
         }
         int type = constructorCall
-                   ? PsiUtil.isJavaToken(methodExpression.getReferenceNameElement(), JavaTokenType.SUPER_KEYWORD)
-                     ? SUPER_CONSTRUCTOR
-                     : OVERLOADED_CONSTRUCTOR
+                   ? superCall ? SUPER_CONSTRUCTOR : OVERLOADED_CONSTRUCTOR
                    : OVERLOADED_METHOD;
         registerVariableError(targetParameter, parameterName, type);
       }

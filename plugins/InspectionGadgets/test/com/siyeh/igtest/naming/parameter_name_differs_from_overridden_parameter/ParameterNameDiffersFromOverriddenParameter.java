@@ -95,6 +95,10 @@ class H extends G {
     super(street.toString(), number);
   }
 
+  H(String <warning descr="Parameter name 'title' is different from parameter 'name' in the super constructor">title</warning>, int age, int number) {
+    super(title, age);
+  }
+
   private void configureMethod(final Iterable<Class<? extends String>> registeredAnnotations, final Integer method) {
     for (final Class<? extends String> registeredAnnotation : registeredAnnotations) {
       configureMethod(registeredAnnotation, method);
@@ -115,4 +119,17 @@ class J { // unrelated to I
   public <T> T getBean(Class<T> requiredType) {
     return null;
   }
+}
+class Test {
+
+  static int method(int a, int b) {
+    return a + b;
+  }
+  static int method(int a, int b, int c) {
+    return method (a, method(b, c));
+  }
+  static int method(int a, int b, int c, int d) {
+    return method(a, method(b, c, d));
+  }
+
 }
