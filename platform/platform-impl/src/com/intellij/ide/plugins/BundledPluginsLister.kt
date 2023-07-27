@@ -3,17 +3,13 @@ package com.intellij.ide.plugins
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.impl.exitAppOrExitProcess
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
 import java.io.Writer
 import java.nio.charset.StandardCharsets
@@ -73,9 +69,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
       exitProcess(1)
     }
 
-    withContext(Dispatchers.EDT) {
-      ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED)
-    }
+    exitAppOrExitProcess()
   }
 }
 
