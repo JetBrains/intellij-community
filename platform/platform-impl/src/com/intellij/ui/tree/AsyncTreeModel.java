@@ -292,9 +292,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * and to accept the resulting value on the foreground thread.
    */
   private void submit(@NotNull Command command) {
-    background.compute(command)
-      .onSuccess(value -> foreground.invoke(() -> command.accept(value)))
-      .onError(error -> foreground.invoke(() -> command.promise.setError(error)));
+    background.compute(command).onSuccess(value -> foreground.invoke(() -> command.accept(value)));
   }
 
   private boolean isValidThread() {
