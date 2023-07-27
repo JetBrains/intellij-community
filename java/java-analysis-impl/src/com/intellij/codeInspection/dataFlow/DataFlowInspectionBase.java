@@ -597,6 +597,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   private void reportAlwaysFailingCalls(ProblemReporter reporter, DataFlowInstructionVisitor visitor) {
     visitor.alwaysFailingCalls().remove(TestUtils::isExceptionExpected).forEach(anchor -> {
       List<? extends MethodContract> contracts = DataFlowInstructionVisitor.getContracts(anchor);
+      if (contracts != null && contracts.isEmpty()) {
+        PsiMethod method = anchor instanceof PsiCallExpression call ? call.resolveMethod() :
+                           anchor instanceof PsiMethodReferenceExpression methodRef ? tryCast(methodRef.resolve(), PsiMethod.class) : null;
+        contracts = DfaUtil.addRangeContracts(method, List.of());
+      }
       if (contracts == null) return;
       String message = getContractMessage(contracts);
       LocalQuickFix causeFix = createExplainFix(anchor, new TrackingRunner.FailingCallDfaProblemType());
@@ -605,6 +610,9 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
   }
 
   private static @NotNull @InspectionMessage String getContractMessage(List<? extends MethodContract> contracts) {
+    if (contracts.isEmpty()) {
+      return JavaAnalysisBundle.message("dataflow.message.fail");
+    }
     if (ContainerUtil.and(contracts, mc -> ContainerUtil.and(mc.getConditions(), ContractValue::isBoundCheckingCondition))) {
       return JavaAnalysisBundle.message("dataflow.message.contract.fail.index");
     }

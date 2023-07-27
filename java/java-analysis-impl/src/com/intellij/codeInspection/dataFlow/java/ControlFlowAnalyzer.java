@@ -1950,7 +1950,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression), contracts));
       anchor = expression;
     }
-    processFailResult(contracts, anchor);
+    processFailResult(method, contracts, anchor);
 
     addMethodThrows(method);
     if (expression != null) {
@@ -1958,8 +1958,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
   }
 
-  private void processFailResult(List<? extends MethodContract> contracts, PsiExpression anchor) {
-    if (ContainerUtil.exists(contracts, c -> c.getReturnValue().isFail())) {
+  private void processFailResult(@Nullable PsiMethod method, @NotNull List<? extends MethodContract> contracts, @NotNull PsiExpression anchor) {
+    if ((CustomMethodHandlers.isConstantCall(method) && !PsiTypes.booleanType().equals(method.getReturnType())) 
+        || ContainerUtil.exists(contracts, c -> c.getReturnValue().isFail())) {
       DfaControlTransferValue transfer = createTransfer(JAVA_LANG_THROWABLE);
       // if a contract resulted in 'fail', handle it
       addInstruction(new EnsureInstruction(new ContractFailureProblem(anchor), RelationType.NE, DfType.FAIL, transfer));
@@ -2042,7 +2043,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
                                                  JavaMethodContractUtil.getMethodCallContracts(constructor, null);
       contracts = DfaUtil.addRangeContracts(constructor, contracts);
       addInstruction(new MethodCallInstruction(expression, precalculatedNewValue, contracts));
-      processFailResult(contracts, expression);
+      processFailResult(constructor, contracts, expression);
 
       addMethodThrows(constructor);
     }

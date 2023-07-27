@@ -45,7 +45,8 @@ public final class CustomMethodHandlers {
     exactInstanceCall(JAVA_LANG_STRING, "contains", "indexOf", "startsWith", "endsWith", "lastIndexOf", "length", "trim",
                  "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterCount(1),
-    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max"),
+    staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max", "addExact", "absExact", "subtractExact", "multiplyExact",
+               "incrementExact", "decrementExact", "toIntExact", "negateExact", "sin", "cos", "tan", "asin", "acos", "atan", "cbrt"),
     staticCall(JAVA_LANG_INTEGER, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("int"),
     staticCall(JAVA_LANG_LONG, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("long"),
     staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
@@ -220,8 +221,12 @@ public final class CustomMethodHandlers {
     return handler == null ? handler2 : handler.compose(handler2);
   }
 
+  /**
+   * @param method method to check
+   * @return true if method will be evaluated to constant when all arguments are constant
+   */
   @Contract("null -> false")
-  private static boolean isConstantCall(PsiMethod method) {
+  public static boolean isConstantCall(PsiMethod method) {
     return CONSTANT_CALLS.methodMatches(method);
   }
 
@@ -251,7 +256,13 @@ public final class CustomMethodHandlers {
     try {
       result = jvmMethod.invoke(qualifierValue, args.toArray());
     }
-    catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+    catch (InvocationTargetException e) {
+      if (e.getCause() instanceof NumberFormatException || e.getCause() instanceof ArithmeticException) {
+        return DfType.FAIL;
+      }
+      return DfType.TOP;
+    }
+    catch (IllegalAccessException | IllegalArgumentException e) {
       return DfType.TOP;
     }
     return constant(result, returnType);
@@ -265,7 +276,7 @@ public final class CustomMethodHandlers {
         return Result.create(reflection, method);
       }
 
-      private Class<?> toJvmType(PsiType type) {
+      private static Class<?> toJvmType(PsiType type) {
         if (TypeUtils.isJavaLangString(type)) {
           return String.class;
         }
@@ -280,6 +291,12 @@ public final class CustomMethodHandlers {
         }
         if (PsiTypes.booleanType().equals(type)) {
           return boolean.class;
+        }
+        if (PsiTypes.byteType().equals(type)) {
+          return byte.class;
+        }
+        if (PsiTypes.shortType().equals(type)) {
+          return short.class;
         }
         if (PsiTypes.charType().equals(type)) {
           return char.class;
