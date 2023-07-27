@@ -36,7 +36,7 @@ import static com.jetbrains.python.sdk.PySdkExtKt.showSdkExecutionException;
  */
 @Deprecated
 public class PyPackageManagerImpl extends PyPackageManagerImplBase {
-  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.16.7.pyz";
+  private static final String VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.24.5.pyz";
   private static final String PY2_VIRTUALENV_ZIPAPP_NAME = "virtualenv-20.13.0.pyz";
 
   private static final Logger LOG = Logger.getInstance(PyPackageManagerImpl.class);
