@@ -24,9 +24,12 @@ class WslNetworkTest {
     val ruleChain: RuleChain = RuleChain(appRule, wslRule)
   }
 
+  // wsl1 uses 127.0.0.1, wsl2 is 172.16.0.0/16
+  private val wslIpPrefix: String get() = if (wslRule.wsl.version == 1) "127" else "172"
+
   @Test
   fun testWslIp() {
-    MatcherAssert.assertThat("Wrong WSL IP", wslRule.wsl.wslIpAddress.hostAddress, Matchers.startsWith("172."))
+    MatcherAssert.assertThat("Wrong WSL IP", wslRule.wsl.wslIpAddress.hostAddress, Matchers.startsWith(wslIpPrefix))
   }
 
   @Test
@@ -40,7 +43,8 @@ class WslNetworkTest {
   fun testWslHostIp() {
     for (alt in arrayOf(true, false)) {
       Registry.get("wsl.obtain.windows.host.ip.alternatively").withValue(alt) {
-        MatcherAssert.assertThat("Wrong host IP: alternative: $alt", wslRule.wsl.hostIpAddress.hostAddress, Matchers.startsWith("172."))
+        MatcherAssert.assertThat("Wrong host IP: alternative: $alt", wslRule.wsl.hostIpAddress.hostAddress,
+                                 Matchers.startsWith(wslIpPrefix))
       }
     }
   }
