@@ -20,6 +20,7 @@ class TextAttributesHighlightingAnnotator : Annotator {
     "bool", "boolean",
     "string",
     "char", "character",
+    "varchar",
     "list",
     "array",
     "BigDecimal"
