@@ -277,14 +277,14 @@ public final class CachedIntentions implements IntentionContainer {
     IntentionActionWithTextCaching cachedAction =
       new IntentionActionWithTextCaching(
         descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), descriptor.getToolId(),
-        (cached, action) -> {
+        descriptor.getProblemOffset(), (cached, action) -> {
           if (QuickFixWrapper.unwrap(action) != null) {
             // remove only inspection fixes after invocation,
             // since intention actions might be still available
             removeActionFromCached(cached);
             markInvoked(action);
           }
-        }, descriptor.getProblemOffset());
+        });
     for (IntentionAction option : descriptor.getOptions(element, containingEditor)) {
       Editor editor = ObjectUtils.chooseNotNull(myEditor, containingEditor);
       if (editor == null) continue;

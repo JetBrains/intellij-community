@@ -47,16 +47,16 @@ public class IntentionActionWithTextCaching
   private final int myProblemOffset;
 
   public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
-    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, (actWithText, act) -> {
-    }, -1);
+    this(action, action.getText(), action instanceof Iconable iconable ? iconable.getIcon(0) : null, null, -1, (actWithText, act) -> {
+    });
   }
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action,
                                  @NlsContexts.PopupTitle String displayName,
                                  @Nullable Icon icon,
                                  @Nullable String toolId,
-                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked,
-                                 int problemOffset) {
+                                 int problemOffset,
+                                 @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myToolId = toolId;
     myIcon = icon;
     myText = action.getText();
