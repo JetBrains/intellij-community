@@ -899,11 +899,20 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   public void selectAndExpandValue(Object value) {
+    selectAndChooseNextStep(value, false);
+  }
+
+  public void selectAndExecuteValue(Object value) {
+    selectAndChooseNextStep(value, true);
+  }
+
+  private void selectAndChooseNextStep(Object value, boolean finalChoice) {
     if (myListModel.isVisible(value) && isSelectable(value)) {
       myList.setSelectedValue(value, true);
       disposeChildren();
-      ListPopupStep<Object> listStep = getListStep();
-      showNextStepPopup(listStep.onChosen(value, false), value);
+      PopupStep<Object> listStep = getListStep();
+      PopupStep<?> nextStep = listStep.onChosen(value, finalChoice);
+      handleNextStep(nextStep, value);
     }
   }
 
