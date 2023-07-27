@@ -61,7 +61,7 @@ class TerminalPromptPanel(private val project: Project,
     }
 
     commandHistoryManager = CommandHistoryManager(session)
-    commandHistoryPresenter = CommandHistoryPresenter(project, editor)
+    commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
 
     editor.putUserData(TerminalSession.KEY, session)
     editor.putUserData(TerminalCompletionManager.KEY, completionManager)

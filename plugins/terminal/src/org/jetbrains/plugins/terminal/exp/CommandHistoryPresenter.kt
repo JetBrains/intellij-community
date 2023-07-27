@@ -14,7 +14,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Pair
 import kotlin.math.max
 
-class CommandHistoryPresenter(private val project: Project, private val editor: Editor) {
+class CommandHistoryPresenter(private val project: Project,
+                              private val editor: Editor,
+                              private val commandExecutor: TerminalCommandExecutor) {
   private var initialCommand: String? = null
 
   fun showCommandHistory(history: List<String>) {
@@ -48,12 +50,15 @@ class CommandHistoryPresenter(private val project: Project, private val editor: 
       }
 
       override fun beforeItemSelected(event: LookupEvent): Boolean {
-        // prevent item inserting, because it was already inserted in a result of 'currentItemChanged'
+        // prevent item inserting because it was already inserted in a result of 'currentItemChanged'
         return false
       }
 
       override fun itemSelected(event: LookupEvent) {
         initialCommand = null
+        if (event.completionChar == '\n') {
+          commandExecutor.startCommandExecution(editor.document.text)
+        }
       }
 
       override fun lookupCanceled(event: LookupEvent) {
