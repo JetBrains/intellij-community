@@ -31,7 +31,9 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.childrenOfType
+import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.util.asSafely
@@ -41,8 +43,14 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
+import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.annotations.KtConstantAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
+import org.jetbrains.kotlin.analysis.api.base.KtConstantValue
 import org.jetbrains.kotlin.analysis.api.calls.successfulFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtFunctionalType
 import org.jetbrains.kotlin.analysis.api.types.KtUsualClassType
 import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
@@ -341,12 +349,72 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             if (innermostContainingLiteral != null) return innermostContainingLiteral
 
             return notInlinedLambdas.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName) ?:
+                   notInlinedLambdas.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName, this) ?:
                    notInlinedLambdas.getAppropriateLiteralBasedOnLambdaName(location, lineNumber)
         }
     }
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnDeclaringClassName(currentLocationClassName: String): KtFunction? {
         return firstOrNull { it.firstChild.calculatedClassNameMatches(currentLocationClassName, true) }
+    }
+
+    /**
+     * Crossinline lambda generated class name contains $$inlined$<CALL METHOD NAME>$N substring
+     * where N is the sequential number of the lambda with the same call method name
+     */
+    private fun List<KtFunction>.getAppropriateLiteralForCrossinlineLambda(currentLocationClassName: String, session: KtAnalysisSession): KtFunction? {
+        if (isEmpty()) return null
+        val crossinlineLambdaPrefix = "\$\$inlined\$"
+        if (crossinlineLambdaPrefix !in currentLocationClassName) return null
+        if (size == 1) return first()
+
+        val fittingCallMethodName = filter {
+            val name = it.getLambdaCallMethod()?.getBytecodeMethodName(session) ?: return@filter false
+            "$crossinlineLambdaPrefix$name\$" in currentLocationClassName
+        }
+        if (fittingCallMethodName.isEmpty()) return null
+        if (fittingCallMethodName.size == 1) return fittingCallMethodName.first()
+
+        // Now we try to guess the exact index of crossinline lambda.
+        // However, we cannot distinguish crossinline lambdas from usual ones with the same method name,
+        // so this works only when a method contains only crossinline lambdas before the target one.
+        val callMethodName = fittingCallMethodName.first().getLambdaCallMethod()?.getBytecodeMethodName(session) ?: return null
+        val containingMethod = fittingCallMethodName.first().getContainingMethod() ?: return null
+
+        val allCallsInMethod = containingMethod
+            .descendantsOfType<KtCallExpression>()
+            .filter { it.getBytecodeMethodName(session) == callMethodName }.toList()
+
+        val candidatesBySequenceNumber = mutableListOf<KtFunction>()
+        for (call in fittingCallMethodName) {
+            val lambdaCall = call.getLambdaCallMethod() ?: continue
+            if (lambdaCall !in allCallsInMethod) continue
+            val indexInOuterMethod = allCallsInMethod.indexOf(lambdaCall)
+            val candidateName = "$crossinlineLambdaPrefix$callMethodName\$${indexInOuterMethod + 1}"
+            if (candidateName in currentLocationClassName) {
+                candidatesBySequenceNumber.add(call)
+            }
+        }
+
+        return candidatesBySequenceNumber.singleOrNull()
+    }
+
+    private fun KtFunction.getLambdaCallMethod(): KtCallExpression? = parentOfType<KtCallExpression>()
+    private fun KtCallExpression.getBytecodeMethodName(session: KtAnalysisSession): String? {
+        val call = this
+        with(session) {
+            val resolvedCall = call.resolveCall()?.successfulFunctionCallOrNull() ?: return null
+            val symbol = resolvedCall.partiallyAppliedSymbol.symbol.asSafely<KtFunctionSymbol>() ?: return null
+            val jvmName = symbol.annotations
+              .filter { it.classId?.asFqNameString() == "kotlin.jvm.JvmName" }
+              .firstNotNullOfOrNull {
+                  it.arguments.singleOrNull { a -> a.name.asString() == "name" }
+                    ?.expression?.asSafely<KtConstantAnnotationValue>()
+                    ?.constantValue?.asSafely<KtConstantValue.KtStringConstantValue>()?.value
+              }
+            if (jvmName != null) return jvmName
+            return symbol.name.identifier
+        }
     }
 
     private fun PsiElement.calculatedClassNameMatches(currentLocationClassName: String, isLambda: Boolean): Boolean {
@@ -615,6 +683,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             }
     }
 }
+
+internal fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
+    PsiTreeUtil.getParentOfType(this, excludingElement,
+                                KtFunction::class.java, KtClassInitializer::class.java, KtPropertyAccessor::class.java)
 
 // Kotlin compiler generates private final static <outer-method>$lambda$0 method
 // per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter

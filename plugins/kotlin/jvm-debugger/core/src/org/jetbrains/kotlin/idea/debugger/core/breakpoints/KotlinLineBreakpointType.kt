@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.debugger.KotlinReentrantSourcePosition
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
+import org.jetbrains.kotlin.idea.debugger.getContainingMethod
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
@@ -191,10 +192,6 @@ class KotlinLineBreakpointType :
 
 private val LineBreakpoint<*>.javaBreakpointProperties
     get() = xBreakpoint?.properties as? JavaBreakpointProperties<*>
-
-private fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
-  PsiTreeUtil.getParentOfType(this, excludingElement,
-                              KtFunction::class.java, KtClassInitializer::class.java, KtPropertyAccessor::class.java)
 
 private fun PsiElement?.isInlineOnlyDeclaration(): Boolean =
     this is KtCallableDeclaration && isInlineOnly()
