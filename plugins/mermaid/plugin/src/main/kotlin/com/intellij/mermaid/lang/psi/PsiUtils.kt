@@ -2,6 +2,7 @@
 package com.intellij.mermaid.lang.psi
 
 import com.intellij.psi.PsiElement
+import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiUtilCore
@@ -43,4 +44,8 @@ internal fun PsiElement.parentOfType(withSelf: Boolean = false, type: IElementTy
 
 internal fun PsiElement.parentOfType(withSelf: Boolean = false, type: TokenSet): PsiElement? {
   return parents(withSelf).find { it.hasType(type) }
+}
+
+internal fun PsiElement.traverse(): Sequence<PsiElement> {
+  return SyntaxTraverser.psiTraverser(this).asSequence()
 }

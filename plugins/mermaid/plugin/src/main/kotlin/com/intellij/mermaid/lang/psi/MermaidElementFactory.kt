@@ -4,7 +4,6 @@ import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
-import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.util.parentOfType
 
 class MermaidElementFactory {
@@ -15,9 +14,7 @@ class MermaidElementFactory {
           class $name
       """.trimIndent()
       val file = createFile(project, text)
-
-      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
-      return elements.filterIsInstance<MermaidClassStatement>().firstOrNull()
+      return file.traverse().filterIsInstance<MermaidClassStatement>().firstOrNull()
     }
 
     fun createGenericElement(project: Project, name: String): MermaidGeneric? {
@@ -36,9 +33,7 @@ class MermaidElementFactory {
           branch $name
       """.trimIndent()
       val file = createFile(project, text)
-
-      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
-      return elements.filterIsInstance<MermaidBranchStatement>().firstOrNull()
+      return file.traverse().filterIsInstance<MermaidBranchStatement>().firstOrNull()
     }
 
     fun createCommitStatement(project: Project, name: String): MermaidCommitStatement? {
@@ -47,9 +42,7 @@ class MermaidElementFactory {
           commit id: "$name"
       """.trimIndent()
       val file = createFile(project, text)
-
-      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
-      return elements.filterIsInstance<MermaidCommitStatement>().firstOrNull()
+      return file.traverse().filterIsInstance<MermaidCommitStatement>().firstOrNull()
     }
 
     fun createSpaceElement(project: Project, length: Int): PsiElement {
@@ -88,8 +81,7 @@ class MermaidElementFactory {
         appendLine("`\"]")
       }
       val file = createFile(project, text)
-      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
-      return elements.filterIsInstance<MermaidMarkdownValue>().firstOrNull()
+      return file.traverse().filterIsInstance<MermaidMarkdownValue>().firstOrNull()
     }
 
     fun createDirectiveValue(project: Project, value: String): MermaidDirectiveValue? {
@@ -101,8 +93,7 @@ class MermaidElementFactory {
       }
 
       val file = createFile(project, text)
-      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
-      return elements.filterIsInstance<MermaidDirectiveValue>().firstOrNull()
+      return file.traverse().filterIsInstance<MermaidDirectiveValue>().firstOrNull()
     }
 
     fun createFrontmatterContent(project: Project, value: String): MermaidFrontmatterContent? {
@@ -114,8 +105,7 @@ class MermaidElementFactory {
       }
 
       val file = createFile(project, text)
-      val elements = SyntaxTraverser.psiTraverser(file).asSequence()
-      return elements.filterIsInstance<MermaidFrontmatterContent>().firstOrNull()
+      return file.traverse().filterIsInstance<MermaidFrontmatterContent>().firstOrNull()
     }
 
     private fun createFile(project: Project?, text: String): MermaidFile {
