@@ -44,6 +44,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
@@ -123,6 +124,7 @@ public final class FSRecordsImpl {
     ExceptionUtil.rethrow(error);
   };
 
+
   public static ErrorHandler getDefaultErrorHandler() {
     if (VfsLog.isVfsTrackingEnabled()) {
       return ON_ERROR_MARK_CORRUPTED_AND_SCHEDULE_REBUILD_AND_SUGGEST_CACHE_RECOVERY_IF_ALLOWED;
@@ -163,6 +165,8 @@ public final class FSRecordsImpl {
 
   /** Keep stacktrace of {@link #dispose()} call -- for better diagnostics of unexpected dispose */
   private volatile Exception disposedStackTrace = null;
+
+  private final CopyOnWriteArraySet<Closeable> closeables = new CopyOnWriteArraySet<>();
 
   private static int nextMask(int value,
                               int bits,
@@ -313,6 +317,9 @@ public final class FSRecordsImpl {
 
   synchronized void dispose() {
     if (!disposed) {
+      disposed = true;
+      Exception stackTraceEx = new Exception("FSRecordsImpl dispose stacktrace");
+
       try {
         //ensure async scanning is finished -- until that records file is still in use,
         // which could cause e.g. problems with its deletion
@@ -320,17 +327,29 @@ public final class FSRecordsImpl {
       }
       catch (Throwable t) {
         LOG.warn("VFS: invertedNameIndex building is not terminated properly", t);
+        stackTraceEx.addSuppressed(t);
+      }
+
+      for (Closeable closeable : closeables) {
+        try {
+          closeable.close();
+        }
+        catch (IOException e) {
+          LOG.warn("Can't close " + closeable, e);
+          stackTraceEx.addSuppressed(e);
+        }
       }
       try {
         PersistentFSConnector.disconnect(connection);
       }
       catch (IOException e) {
-        handleError(e);
+        //handleError(e);
+        stackTraceEx.addSuppressed(e);
       }
 
       invertedNameIndexLazy.getValue().clear();
-      disposed = true;
-      disposedStackTrace = new Exception("FSRecordsImpl dispose stacktrace");
+
+      disposedStackTrace = stackTraceEx;
     }
   }
 
@@ -1243,6 +1262,13 @@ public final class FSRecordsImpl {
     //errorHandler.handleError() _must_ throw some exception:
     throw new AssertionError("Bug: should be unreachable, since ErrorHandle must throw some exception", e);
   }
+
+
+  /** Adds an object which must be closed during VFS close process */
+  public void addCloseable(@NotNull Closeable closeable) {
+    this.closeables.add(closeable);
+  }
+
 
   //========== diagnostic, sanity checks: ========================================
 

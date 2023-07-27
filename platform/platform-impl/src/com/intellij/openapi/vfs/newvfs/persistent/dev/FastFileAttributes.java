@@ -3,17 +3,15 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.function.IntUnaryOperator;
+
+import static com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper.openHelperAndVerifyVersions;
 
 /**
  * Temporary
@@ -25,52 +23,11 @@ public final class FastFileAttributes {
     throw new AssertionError("Not for instantiation");
   }
 
-  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
-                                                            @NotNull String storageName,
-                                                            int bytesPerRow) throws IOException {
-    PersistentFSConnection connection = vfs.connection();
-    Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
-    Files.createDirectories(fastAttributesDir);
-
-    Path storagePath = fastAttributesDir.resolve(storageName);
-    long maxFileSize = MappedFileStorageHelper.HeaderLayout.HEADER_SIZE + bytesPerRow * (long)Integer.MAX_VALUE;
-    MMappedFileStorage storage = new MMappedFileStorage(
-      storagePath,
-      MappedFileStorageHelper.DEFAULT_PAGE_SIZE,
-      maxFileSize
-    );
-    var recordsStorage = connection.getRecords();
-    return new MappedFileStorageHelper(storage, bytesPerRow, recordsStorage::maxAllocatedID);
-  }
-
-  public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
-                                                                             @NotNull String storageName,
-                                                                             int storageFormatVersion,
-                                                                             int bytesPerRow) throws IOException {
-    MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow);
-
-    verifyVFSCreationTag(helper, vfs.getCreationTimestamp(), storageFormatVersion);
-
-    return helper;
-  }
-
-  static void verifyVFSCreationTag(@NotNull MappedFileStorageHelper helper,
-                                   long vfsCreationTag,
-                                   int storageFormatVersion) throws IOException {
-    if (helper.getVFSCreationTag() != vfsCreationTag) {
-      helper.clear();
-    }
-    if(helper.getVersion() != storageFormatVersion){
-      helper.clear();
-    }
-    helper.setVFSCreationTag(vfsCreationTag);
-    helper.setVersion(storageFormatVersion);
-  }
-
   public static IntFileAttribute intFileAttributes(@NotNull FSRecordsImpl vfs,
                                                    @NotNull String storageName,
                                                    int version) throws IOException {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(vfs, storageName, IntFileAttribute.ROW_SIZE, version);
+    vfs.addCloseable(helper);
     return new IntFileAttribute(helper);
   }
 
@@ -78,35 +35,26 @@ public final class FastFileAttributes {
                                                      @NotNull String storageName,
                                                      int version) throws IOException {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(vfs, storageName, Int3FileAttribute.ROW_SIZE, version);
+    vfs.addCloseable(helper);
     return new Int3FileAttribute(helper);
   }
 
 
-  public static class IntFileAttribute implements SpecializedFileAttributes.IntFileAttribute, Closeable {
-    public static final int ROW_SIZE = Integer.BYTES;
-    public static final int FIELD_OFFSET = 0;
+  public static class IntFileAttribute implements SpecializedFileAttributes.IntFileAttributeAccessor, Closeable {
+    private static final int ROW_SIZE = Integer.BYTES;
+    private static final int FIELD_OFFSET = 0;
 
     private final MappedFileStorageHelper storageHelper;
 
     public IntFileAttribute(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
 
     @Override
-    public int read(@NotNull VirtualFile vFile, int defaultValue) throws IOException {
+    public int read(int fileId, int defaultValue) throws IOException {
       if (defaultValue != 0) {
         throw new UnsupportedOperationException(
           "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
       }
-      return storageHelper.readIntField(vFile, FIELD_OFFSET);
-    }
 
-    @Override
-    public void write(@NotNull VirtualFile vFile,
-                      int value) throws IOException {
-      storageHelper.writeIntField(vFile, FIELD_OFFSET, value);
-    }
-
-    @Override
-    public int read(int fileId, int defaultValue) throws IOException {
       return storageHelper.readIntField(fileId, FIELD_OFFSET);
     }
 
@@ -119,6 +67,12 @@ public final class FastFileAttributes {
                        @NotNull IntUnaryOperator updater) throws IOException {
       storageHelper.updateIntField(vFile, FIELD_OFFSET, updater);
     }
+
+    public void update(int fileId,
+                       @NotNull IntUnaryOperator updater) throws IOException {
+      storageHelper.updateIntField(fileId, FIELD_OFFSET, updater);
+    }
+
 
     public void fsync() throws IOException {
       storageHelper.fsync();

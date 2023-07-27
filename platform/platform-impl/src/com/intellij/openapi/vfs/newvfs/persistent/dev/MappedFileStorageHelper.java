@@ -5,15 +5,20 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSConnection;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.function.IntSupplier;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
@@ -25,11 +30,64 @@ import static java.nio.ByteOrder.nativeOrder;
 /**
  * Helper for creating {@link VirtualFileWithId}-associated storages based on memory-mapped file.
  * <p/>
+ * Basic idea is: storage is a header and per-VirtualFile records.
+ * Header is up to 64 bytes, first 4 bytes is a version, next 8 is a VFS tag (creation timestamp),
+ * the remaining 52 bytes could be used as needed.
+ * Record (row) is an arbitrary but fixed size, given in ctor (bytesPerRow).
+ * <p/>
+ * Keep in mind that atomic/volatile access to X-width word is universally supported only
+ * for X-aligned offsets, so if you want to have int64 field in your record, you need to
+ * compose record in such a way this field offset is always 64-aligned -- which means
+ * bytesPerRow must be a factor of 8, and particular field offset in the record must also
+ * be a factor of 8.
+ * <p/>
  * This is 'helper', not full-fledged implementation, nor a good abstraction/encapsulation -- i.e.
  * one still needs to understand the underlying code.
  */
 @ApiStatus.Internal
-public class MappedFileStorageHelper implements AutoCloseable {
+public class MappedFileStorageHelper implements Closeable {
+
+  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
+                                                            @NotNull String storageName,
+                                                            int bytesPerRow) throws IOException {
+    PersistentFSConnection connection = vfs.connection();
+    Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
+    Files.createDirectories(fastAttributesDir);
+
+    Path storagePath = fastAttributesDir.resolve(storageName);
+    long maxFileSize = HeaderLayout.HEADER_SIZE + bytesPerRow * (long)Integer.MAX_VALUE;
+    MMappedFileStorage storage = new MMappedFileStorage(
+      storagePath,
+      DEFAULT_PAGE_SIZE,
+      maxFileSize
+    );
+    var recordsStorage = connection.getRecords();
+    return new MappedFileStorageHelper(storage, bytesPerRow, recordsStorage::maxAllocatedID);
+  }
+
+  public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
+                                                                             @NotNull String storageName,
+                                                                             int storageFormatVersion,
+                                                                             int bytesPerRow) throws IOException {
+    MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow);
+
+    verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
+
+    return helper;
+  }
+
+  public static void verifyTagsAndVersions(@NotNull MappedFileStorageHelper helper,
+                                           long vfsCreationTag,
+                                           int storageFormatVersion) throws IOException {
+    if (helper.getVFSCreationTag() != vfsCreationTag) {
+      helper.clear();
+    }
+    if (helper.getVersion() != storageFormatVersion) {
+      helper.clear();
+    }
+    helper.setVFSCreationTag(vfsCreationTag);
+    helper.setVersion(storageFormatVersion);
+  }
 
   //MAYBE:
   //    1) Versioning: better have 2 versions: INTERNAL_VERSION (i.e. header format version, managed by the class
@@ -80,12 +138,6 @@ public class MappedFileStorageHelper implements AutoCloseable {
   public MappedFileStorageHelper(@NotNull MMappedFileStorage storage,
                                  int bytesPerRow,
                                  @NotNull IntSupplier maxRowsSupplier) throws IOException {
-    //if (bytesPerRow % Integer.BYTES != 0) {
-    //  //nothing really prevents us from support non-32b-aligned rows, but current field accessors are
-    //  // only long/int anyway, and also .clear() method will need adjustment for non-32b-aligned rows:
-    //  throw new IllegalArgumentException(
-    //    "bytesPerRow(=" + bytesPerRow + ") is not int32-aligned: so far only 32b-aligned rows are supported");
-    //}
     if (storage.pageSize() % bytesPerRow != 0) {
       throw new IllegalArgumentException(
         "bytesPerRow(=" + bytesPerRow + ") is not aligned with pageSize(=" + storage.pageSize() + "): rows must be page-aligned");

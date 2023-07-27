@@ -17,9 +17,9 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * Benchmark for VFS attribute read/write.
  * Few different access modes:
- *  1. plain read/write via Input/OutputStream
- *  2. 'raw' read via lambda(ByteBuffer)
- *  3. 'fast attributes' -- experimental feature for int-attributes
+ * 1. plain read/write via Input/OutputStream
+ * 2. 'raw' read via lambda(ByteBuffer)
+ * 3. 'fast attributes' -- experimental feature for int-attributes
  */
 @BenchmarkMode({Mode.AverageTime, Mode.SampleTime})
 @OutputTimeUnit(NANOSECONDS)
@@ -83,21 +83,17 @@ public class VFSAttributeAccessBenchmark {
 
   @State(Scope.Benchmark)
   public static class FastIntAttributeContext {
-    private IntFileAttributesStorage attributeStorage;
+    private SpecializedFileAttributes.IntFileAttributeAccessor fastAttributeAccessor;
 
     @Setup
     public void setup(FSRecordsContext vfsContext,
                       Context mainContext) throws Exception {
       FSRecordsImpl vfs = vfsContext.vfs();
-      attributeStorage = IntFileAttributesStorage.openOrCreate(
-        vfs,
-        "test-attribute"
-      );
+      fastAttributeAccessor = SpecializedFileAttributes.specializeAsFastInt(vfs, TEST_INT_ATTRIBUTE);
     }
 
     @TearDown
     public void tearDown() throws Exception {
-      attributeStorage.close();
     }
   }
 
@@ -159,7 +155,7 @@ public class VFSAttributeAccessBenchmark {
                                   FastIntAttributeContext fastAttributeContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     int fileId = mainContext.generateFileId(rnd);
-    return fastAttributeContext.attributeStorage.readAttribute(fileId);
+    return fastAttributeContext.fastAttributeAccessor.read(fileId, 0);
   }
 
   @Benchmark
@@ -168,7 +164,7 @@ public class VFSAttributeAccessBenchmark {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     int fileId = mainContext.generateFileId(rnd);
     int attributeValue = rnd.nextInt();
-    fastAttributeContext.attributeStorage.writeAttribute(fileId, attributeValue);
+    fastAttributeContext.fastAttributeAccessor.write(fileId, attributeValue);
   }
 
   @Benchmark
@@ -176,7 +172,7 @@ public class VFSAttributeAccessBenchmark {
                                      FastIntAttributeContext fastAttributeContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     int fileId = mainContext.generateFileId(rnd);
-    fastAttributeContext.attributeStorage.updateAttribute(fileId, attributeValue -> attributeValue + 17);
+    fastAttributeContext.fastAttributeAccessor.update(fileId, attributeValue -> attributeValue + 17);
   }
 
   @Benchmark

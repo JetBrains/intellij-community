@@ -2,10 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ByteFileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.LongFileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ShortFileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ByteFileAttributeAccessor;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.LongFileAttributeAccessor;
+import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ShortFileAttributeAccessor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,17 +28,17 @@ public class SpecializedFileAttributesTest {
 
   private FSRecordsImpl vfs;
 
-  private ByteFileAttribute byteAttributeAccessor;
-  private ByteFileAttribute byteFastAttributeAccessor;
+  private ByteFileAttributeAccessor byteAttributeAccessor;
+  private ByteFileAttributeAccessor byteFastAttributeAccessor;
 
-  private ShortFileAttribute shortAttributeAccessor;
-  private ShortFileAttribute shortFastAttributeAccessor;
+  private ShortFileAttributeAccessor shortAttributeAccessor;
+  private ShortFileAttributeAccessor shortFastAttributeAccessor;
 
-  private IntFileAttribute intAttributeAccessor;
-  private IntFileAttribute intFastAttributeAccessor;
+  private IntFileAttributeAccessor intAttributeAccessor;
+  private IntFileAttributeAccessor intFastAttributeAccessor;
 
-  private LongFileAttribute longAttributeAccessor;
-  private LongFileAttribute longFastAttributeAccessor;
+  private LongFileAttributeAccessor longAttributeAccessor;
+  private LongFileAttributeAccessor longFastAttributeAccessor;
 
 
   @BeforeEach
@@ -63,7 +63,7 @@ public class SpecializedFileAttributesTest {
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true, false})
   public void singleIntValueCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    IntFileAttribute accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
+    SpecializedFileAttributes.IntFileAttributeAccessor accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
     int fileId = vfs.createRecord();
     int valueToWrite = 1234;
     accessor.write(fileId, valueToWrite);
@@ -75,7 +75,7 @@ public class SpecializedFileAttributesTest {
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true, false})
   public void manyIntValuesCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    IntFileAttribute accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
+    IntFileAttributeAccessor accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
     int fileId = vfs.createRecord();
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < ENOUGH_VALUES; i++) {
@@ -91,7 +91,7 @@ public class SpecializedFileAttributesTest {
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true})
   public void singleShortValueCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    ShortFileAttribute accessor = testFastAccessor ? shortFastAttributeAccessor : shortAttributeAccessor;
+    ShortFileAttributeAccessor accessor = testFastAccessor ? shortFastAttributeAccessor : shortAttributeAccessor;
     int fileId = vfs.createRecord();
     short valueToWrite = 1234;
     accessor.write(fileId, valueToWrite);
@@ -103,7 +103,7 @@ public class SpecializedFileAttributesTest {
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true})
   public void manyShortValuesCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    ShortFileAttribute accessor = testFastAccessor ? shortFastAttributeAccessor : shortAttributeAccessor;
+    ShortFileAttributeAccessor accessor = testFastAccessor ? shortFastAttributeAccessor : shortAttributeAccessor;
     int fileId = vfs.createRecord();
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < ENOUGH_VALUES; i++) {

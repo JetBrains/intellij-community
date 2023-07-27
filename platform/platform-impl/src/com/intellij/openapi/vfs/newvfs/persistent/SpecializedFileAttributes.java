@@ -4,17 +4,18 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.FastFileAttributes;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.function.IntUnaryOperator;
 
 /**
- * Experimental API for faster access of file attribute if the attribute value is simple byte/int/long.
- * Some optimization could be applied in such scenarios,
+ * Experimental API for faster access of file attribute if the attribute value is simple
+ * byte/short/int/long. Some optimization could be applied in such scenarios,
  */
 @ApiStatus.Internal
 public final class SpecializedFileAttributes {
@@ -23,30 +24,16 @@ public final class SpecializedFileAttributes {
   //         Write test for such consistency
 
 
-  public static IntFileAttribute specializeAsInt(@NotNull FileAttribute attribute) {
+  public static IntFileAttributeAccessor specializeAsInt(@NotNull FileAttribute attribute) {
     return specializeAsInt(FSRecords.getInstance(), attribute);
   }
 
-  public static LongFileAttribute specializeAsLong(@NotNull FSRecordsImpl vfs,
-                                                   @NotNull FileAttribute attribute) {
+  public static LongFileAttributeAccessor specializeAsLong(@NotNull FSRecordsImpl vfs,
+                                                           @NotNull FileAttribute attribute) {
     if (!attribute.isFixedSize()) {
       throw new IllegalArgumentException(attribute + " must be fixedSize");
     }
-    return new LongFileAttribute() {
-      @Override
-      public long read(@NotNull VirtualFile vFile,
-                       long defaultValue) throws IOException {
-        int fileId = extractFileId(vFile);
-        return read(fileId, defaultValue);
-      }
-
-      @Override
-      public void write(@NotNull VirtualFile vFile,
-                        long value) throws IOException {
-        int fileId = extractFileId(vFile);
-        write(fileId, value);
-      }
-
+    return new LongFileAttributeAccessor() {
       @Override
       public long read(int fileId,
                        long defaultValue) throws IOException {
@@ -67,27 +54,13 @@ public final class SpecializedFileAttributes {
     };
   }
 
-  public static IntFileAttribute specializeAsInt(@NotNull FSRecordsImpl vfs,
-                                                 @NotNull FileAttribute attribute) {
-    return new IntFileAttribute() {
-      @Override
-      public int read(@NotNull VirtualFile vFile,
-                      int defaultValue) throws IOException {
-        int fileId = extractFileId(vFile);
-        return read(fileId, defaultValue);
-      }
-
+  public static IntFileAttributeAccessor specializeAsInt(@NotNull FSRecordsImpl vfs,
+                                                         @NotNull FileAttribute attribute) {
+    return new IntFileAttributeAccessor() {
       @Override
       public int read(int fileId, int defaultValue) {
         Integer value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::getInt);
         return value == null ? defaultValue : value.intValue();
-      }
-
-      @Override
-      public void write(@NotNull VirtualFile vFile,
-                        int value) throws IOException {
-        int fileId = extractFileId(vFile);
-        write(fileId, value);
       }
 
       @Override
@@ -103,31 +76,23 @@ public final class SpecializedFileAttributes {
         //  return buffer.putInt(value);
         //});
       }
+
+      @Override
+      public void update(int fileId, @NotNull IntUnaryOperator updater) throws IOException {
+        throw new UnsupportedOperationException("Method not implemented yet");
+      }
     };
   }
 
-  public static ByteFileAttribute specializeAsByte(@NotNull FSRecordsImpl vfs,
-                                                   @NotNull FileAttribute attribute) {
-    return new ByteFileAttribute() {
-      @Override
-      public byte read(@NotNull VirtualFile vFile,
-                       byte defaultValue) throws IOException {
-        int fileId = extractFileId(vFile);
-        return read(fileId, defaultValue);
-      }
+  public static ByteFileAttributeAccessor specializeAsByte(@NotNull FSRecordsImpl vfs,
+                                                           @NotNull FileAttribute attribute) {
+    return new ByteFileAttributeAccessor() {
 
       @Override
       public byte read(int fileId,
                        byte defaultValue) {
         Byte value = vfs.readAttributeRaw(fileId, attribute, ByteBuffer::get);
         return value == null ? defaultValue : value.byteValue();
-      }
-
-      @Override
-      public void write(@NotNull VirtualFile vFile,
-                        byte value) throws IOException {
-        int fileId = extractFileId(vFile);
-        write(fileId, value);
       }
 
       @Override
@@ -144,30 +109,27 @@ public final class SpecializedFileAttributes {
   }
 
 
-  public static IntFileAttribute specializeAsFastInt(@NotNull FileAttribute attribute) throws IOException {
+  public static IntFileAttributeAccessor specializeAsFastInt(@NotNull FileAttribute attribute) throws IOException {
     return specializeAsFastInt(FSRecords.getInstance(), attribute);
   }
 
-  public static IntFileAttribute specializeAsFastInt(@NotNull FSRecordsImpl vfs,
-                                                     @NotNull FileAttribute attribute) throws IOException {
+  public static IntFileAttributeAccessor specializeAsFastInt(@NotNull FSRecordsImpl vfs,
+                                                             @NotNull FileAttribute attribute) throws IOException {
     String attributeId = attribute.getId();
 
     //FIXME RC: who is responsible for closing the storage?
 
-    IntFileAttributesStorage attributesStorage = IntFileAttributesStorage.openAndEnsureMatchVFS(vfs, attributeId);
+    MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
+      vfs,
+      attributeId,
+      attribute.getVersion(),
+      Integer.BYTES
+    );
+    vfs.addCloseable(storageHelper);
 
-    checkStorageVersion(vfs, attribute, attributesStorage);
+    int fieldOffset = 0;
 
-    return new IntFileAttribute() {
-      @Override
-      public int read(@NotNull VirtualFile vFile,
-                      int defaultValue) throws IOException {
-        if (defaultValue != 0) {
-          throw new UnsupportedOperationException(
-            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
-        }
-        return attributesStorage.readAttribute(vFile);
-      }
+    return new IntFileAttributeAccessor() {
 
       @Override
       public int read(int fileId,
@@ -176,41 +138,32 @@ public final class SpecializedFileAttributes {
           throw new UnsupportedOperationException(
             "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
         }
-        return attributesStorage.readAttribute(fileId);
-      }
-
-      @Override
-      public void write(@NotNull VirtualFile vFile, int value) throws IOException {
-        attributesStorage.writeAttribute(vFile, value);
+        return storageHelper.readIntField(fileId, fieldOffset);
       }
 
       @Override
       public void write(int fileId, int value) throws IOException {
-        attributesStorage.writeAttribute(fileId, value);
+        storageHelper.writeIntField(fileId, fieldOffset, value);
+      }
+
+      @Override
+      public void update(int fileId, @NotNull IntUnaryOperator updater) throws IOException {
+
       }
     };
   }
 
-  public static ShortFileAttribute specializeAsFastShort(@NotNull FSRecordsImpl vfs,
-                                                         @NotNull FileAttribute attribute) throws IOException {
+  public static ShortFileAttributeAccessor specializeAsFastShort(@NotNull FSRecordsImpl vfs,
+                                                                 @NotNull FileAttribute attribute) throws IOException {
     String attributeId = attribute.getId();
 
-    //FIXME RC: who is responsible for closing the storage?
+    MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
+      vfs, attributeId, attribute.getVersion(), Short.BYTES
+    );
+    vfs.addCloseable(storageHelper);
 
-    MappedFileStorageHelper storageHelper =
-      FastFileAttributes.openHelperAndVerifyVersions(vfs, attributeId, attribute.getVersion(), Short.BYTES);
-
-    return new ShortFileAttribute() {
-      @Override
-      public short read(@NotNull VirtualFile vFile,
-                        short defaultValue) throws IOException {
-        if (defaultValue != 0) {
-          throw new UnsupportedOperationException(
-            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
-        }
-        return storageHelper.readShortField(extractFileId(vFile), 0);
-      }
-
+    int fieldOffset = 0;
+    return new ShortFileAttributeAccessor() {
       @Override
       public short read(int fileId,
                         short defaultValue) throws IOException {
@@ -218,42 +171,29 @@ public final class SpecializedFileAttributes {
           throw new UnsupportedOperationException(
             "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
         }
-        return storageHelper.readShortField(fileId, 0);
-      }
-
-      @Override
-      public void write(@NotNull VirtualFile vFile,
-                        short value) throws IOException {
-        storageHelper.writeShortField(extractFileId(vFile), 0, value);
+        return storageHelper.readShortField(fileId, fieldOffset);
       }
 
       @Override
       public void write(int fileId,
                         short value) throws IOException {
-        storageHelper.writeShortField(fileId, 0, value);
+        storageHelper.writeShortField(fileId, fieldOffset, value);
       }
     };
   }
 
-  private static void checkStorageVersion(@NotNull FSRecordsImpl vfs,
-                                          @NotNull FileAttribute attribute,
-                                          @NotNull IntFileAttributesStorage attributesStorage) throws IOException {
-    if (attribute.isVersioned()) {
-      if (attributesStorage.getVersion() != attribute.getVersion()) {
-        attributesStorage.clear();
-        attributesStorage.setVFSCreationTag(vfs.getCreationTimestamp());
-        attributesStorage.setVersion(attribute.getVersion());
-      }
+  public interface LongFileAttributeAccessor {
+    default long read(@NotNull VirtualFile vFile) throws IOException {
+      return read(vFile, 0);
     }
-  }
 
-  //MAYBE RC: LongFileAttribute_Accessor_?
-  public interface LongFileAttribute {
-    long read(@NotNull VirtualFile vFile,
-              long defaultValue) throws IOException;
+    default long read(@NotNull VirtualFile vFile, long defaultValue) throws IOException {
+      return read(extractFileId(vFile), defaultValue);
+    }
 
-    void write(@NotNull VirtualFile vFile,
-               long value) throws IOException;
+    default void write(@NotNull VirtualFile vFile, long value) throws IOException {
+      write(extractFileId(vFile), value);
+    }
 
     long read(int fileId,
               long defaultValue) throws IOException;
@@ -262,31 +202,65 @@ public final class SpecializedFileAttributes {
                long value) throws IOException;
   }
 
-  public interface IntFileAttribute {
-    int read(@NotNull VirtualFile vFile, int defaultValue) throws IOException;
+  public interface IntFileAttributeAccessor {
+    default int read(@NotNull VirtualFile vFile) throws IOException {
+      return read(vFile, 0);
+    }
+
+    default int read(@NotNull VirtualFile vFile, int defaultValue) throws IOException {
+      return read(extractFileId(vFile), defaultValue);
+    }
+
+    default void write(@NotNull VirtualFile vFile, int value) throws IOException {
+      write(extractFileId(vFile), value);
+    }
+
+    default void update(@NotNull VirtualFile vFile,
+                        @NotNull IntUnaryOperator updater) throws IOException {
+      update(extractFileId(vFile), updater);
+    }
 
     int read(int fileId, int defaultValue) throws IOException;
 
-    void write(@NotNull VirtualFile vFile, int value) throws IOException;
-
     void write(int fileId, int value) throws IOException;
+
+    void update(int fileId,
+                @NotNull IntUnaryOperator updater) throws IOException;
   }
 
-  public interface ShortFileAttribute {
-    short read(@NotNull VirtualFile vFile, short defaultValue) throws IOException;
+  public interface ShortFileAttributeAccessor {
+    default short read(@NotNull VirtualFile vFile) throws IOException {
+      return read(vFile, (short)0);
+    }
+
+    default short read(@NotNull VirtualFile vFile, short defaultValue) throws IOException {
+      return read(extractFileId(vFile), defaultValue);
+    }
+
+    default void write(@NotNull VirtualFile vFile, short value) throws IOException {
+      write(extractFileId(vFile), value);
+    }
 
     short read(int fileId, short defaultValue) throws IOException;
-
-    void write(@NotNull VirtualFile vFile, short value) throws IOException;
 
     void write(int fileId, short value) throws IOException;
   }
 
-  public interface ByteFileAttribute {
-    byte read(@NotNull VirtualFile vFile,
-              byte defaultValue) throws IOException;
+  public interface ByteFileAttributeAccessor {
 
-    void write(@NotNull VirtualFile vFile, byte value) throws IOException;
+    default byte read(@NotNull VirtualFile vFile) throws IOException {
+      return read(vFile, (byte)0);
+    }
+
+    default byte read(@NotNull VirtualFile vFile,
+                      byte defaultValue) throws IOException {
+      return read(extractFileId(vFile), defaultValue);
+    }
+
+    default void write(@NotNull VirtualFile vFile,
+                       byte value) throws IOException {
+      write(extractFileId(vFile), value);
+    }
 
     byte read(int fileId,
               byte defaultValue) throws IOException;
@@ -309,5 +283,26 @@ public final class SpecializedFileAttributes {
       throw new IllegalArgumentException(vFile + " must be instance of VirtualFileWithId");
     }
     return ((VirtualFileWithId)vFile).getId();
+  }
+
+  private static class FileAttributeAccessorHelper implements FileAttributeExAccessor, Closeable {
+    protected final @NotNull MappedFileStorageHelper storageHelper;
+
+    protected FileAttributeAccessorHelper(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
+
+    @Override
+    public void clear() throws IOException {
+      storageHelper.clear();
+    }
+
+    @Override
+    public void flush() throws IOException {
+      storageHelper.fsync();
+    }
+
+    @Override
+    public void close() throws IOException {
+      storageHelper.close();
+    }
   }
 }

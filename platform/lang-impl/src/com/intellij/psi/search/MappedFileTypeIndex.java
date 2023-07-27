@@ -454,7 +454,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       /*version: */ 1,
       /*fixedSize: */ true
     );
-    private final SpecializedFileAttributes.ShortFileAttribute attributeAccessor;
+    private final SpecializedFileAttributes.ShortFileAttributeAccessor attributeAccessor;
 
     private final AtomicLong modificationsCounter = new AtomicLong(0);
 
