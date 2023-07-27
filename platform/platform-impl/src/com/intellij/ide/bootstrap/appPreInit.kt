@@ -41,7 +41,7 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
   val initServiceContainerJob = launch {
     initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
 
-    subtask("telemetry waiting") {
+    span("telemetry waiting") {
       telemetryInitJob.join()
     }
   }
@@ -103,11 +103,11 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
 }
 
 private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred: Deferred<Deferred<PluginSet>>) {
-  val pluginSet = subtask("plugin descriptor init waiting") {
+  val pluginSet = span("plugin descriptor init waiting") {
     pluginSetDeferred.await().await()
   }
 
-  subtask("app component registration") {
+  span("app component registration") {
     app.registerComponents(modules = pluginSet.getEnabledModules(),
                            app = app,
                            precomputedExtensionModel = null,
@@ -146,7 +146,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
     // LaF must be initialized before app init because icons maybe requested and, as a result,
     // a scale must be already initialized (especially important for Linux)
-    subtask("init laf waiting") {
+    span("init laf waiting") {
       initLafJob.join()
     }
 
@@ -173,7 +173,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
         }
       }
 
-      subtask("laf initialization", RawSwingDispatcher) {
+      span("laf initialization", RawSwingDispatcher) {
         app.serviceAsync<LafManager>()
       }
       if (!app.isHeadlessEnvironment) {
@@ -189,7 +189,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
 suspend fun initConfigurationStore(app: ApplicationImpl) {
   val configPath = PathManager.getConfigDir()
 
-  subtask("beforeApplicationLoaded") {
+  span("beforeApplicationLoaded") {
     for (listener in ApplicationLoadListener.EP_NAME.lazySequence()) {
       launch {
         runCatching {
@@ -199,7 +199,7 @@ suspend fun initConfigurationStore(app: ApplicationImpl) {
     }
   }
 
-  subtask("init app store") {
+  span("init app store") {
     // we set it after beforeApplicationLoaded call, because the app store can depend on a stream provider state
     app.stateStore.setPath(configPath)
     LoadingState.setCurrentState(LoadingState.CONFIGURATION_STORE_INITIALIZED)

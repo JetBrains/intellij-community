@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
@@ -47,7 +47,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       val start = System.currentTimeMillis()
 
       if (workspaceModel.loadedFromCache) {
-        subtask("modules loading with cache") {
+        span("modules loading with cache") {
           if (projectModelSynchronizer.hasNoSerializedJpsModules()) {
             LOG.warn("Loaded from cache, but no serialized modules found. " +
                      "Workspace model cache will be ignored, project structure will be recreated.")
@@ -68,7 +68,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
       }
       else {
         LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
-        val projectEntities = subtask("modules loading without cache") {
+        val projectEntities = span("modules loading without cache") {
           val projectEntities = projectModelSynchronizer.loadProjectToEmptyStorage(project)
           loadModules(project = project,
                       targetBuilder = projectEntities?.builder,
@@ -83,7 +83,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
 
-      subtask("tracked libraries setup") {
+      span("tracked libraries setup") {
         val projectRootManager = coroutineScope {
           // required for setupTrackedLibrariesAndJdks - make sure that it is created to avoid blocking of EDT
           launch { serviceAsync<ProjectJdkTable>() }
@@ -93,7 +93,7 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
           projectRootManager.setupTrackedLibrariesAndJdks()
         }
       }
-      subtask("workspace file index initialization") {
+      span("workspace file index initialization") {
         (project.serviceAsync<WorkspaceFileIndex>() as WorkspaceFileIndexEx).initialize()
       }
 
@@ -127,7 +127,7 @@ private suspend fun loadModules(project: Project,
                                 targetBuilder: MutableEntityStorage?,
                                 targetUnloadedEntitiesBuilder: MutableEntityStorage?,
                                 loadedFromCache: Boolean) {
-  subtask("modules instantiation") {
+  span("modules instantiation") {
     val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
     if (targetBuilder != null && targetUnloadedEntitiesBuilder != null) {
       moduleManager.unloadNewlyAddedModulesIfPossible(targetBuilder, targetUnloadedEntitiesBuilder)
@@ -143,7 +143,7 @@ private suspend fun loadModules(project: Project,
     //childActivity?.setDescription("modules count: ${moduleManager.modules.size}")
   }
 
-  subtask("libraries instantiation") {
+  span("libraries instantiation") {
     (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries(targetBuilder)
   }
 }

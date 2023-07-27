@@ -4,7 +4,7 @@ package com.intellij.ide.bootstrap
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.history.LocalHistory
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ScreenReaderStateManager
@@ -39,7 +39,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
   val managingFsJob = asyncScope.launch {
     // loading is started by StartupUtil, here we just "join" it
-    subtask("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
+    span("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
 
     // PlatformVirtualFileManager also wants ManagingFS
     launch(CoroutineName("VirtualFileManager preloading")) { app.serviceAsync<VirtualFileManager>() }
@@ -82,7 +82,7 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     launch {
       // https://youtrack.jetbrains.com/issue/IDEA-321138/Large-font-size-in-2023.2
       initLafJob.join()
-      subtask("UISettings preloading") { app.serviceAsync<UISettings>() }
+      span("UISettings preloading") { app.serviceAsync<UISettings>() }
     }
     launch(CoroutineName("CustomActionsSchema preloading")) {
       initLafJob.join()
@@ -96,8 +96,8 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     }
 
     // ActionManager uses KeymapManager
-    subtask("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
-    subtask("ActionManager preloading") { app.serviceAsync<ActionManager>() }
+    span("KeymapManager preloading") { app.serviceAsync<KeymapManager>() }
+    span("ActionManager preloading") { app.serviceAsync<ActionManager>() }
 
     app.serviceAsync<ScreenReaderStateManager>()
   }
@@ -113,10 +113,10 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
 
     launch {
       fileTypeManagerJob.join()
-      val fileBasedIndex = subtask("FileBasedIndex preloading") {
+      val fileBasedIndex = span("FileBasedIndex preloading") {
         app.serviceAsync<FileBasedIndex>()
       }
-      subtask("FileBasedIndex.loadIndexes") {
+      span("FileBasedIndex.loadIndexes") {
         fileBasedIndex.loadIndexes()
       }
     }
@@ -125,10 +125,10 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
       // ProjectJdkTable wants FileTypeManager and VirtualFilePointerManager
       fileTypeManagerJob.join()
       // wants ManagingFS
-      subtask("VirtualFilePointerManager preloading") {
+      span("VirtualFilePointerManager preloading") {
         app.serviceAsync<VirtualFilePointerManager>()
       }
-      subtask("ProjectJdkTable preloading") {
+      span("ProjectJdkTable preloading") {
         app.serviceAsync<ProjectJdkTable>()
       }
     }
@@ -142,7 +142,7 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
   }
 
   launch {
-    val loadComponentInEdtTask = subtask("old component init task creating") {
+    val loadComponentInEdtTask = span("old component init task creating") {
       app.createInitOldComponentsTask()
     }
     if (loadComponentInEdtTask != null) {

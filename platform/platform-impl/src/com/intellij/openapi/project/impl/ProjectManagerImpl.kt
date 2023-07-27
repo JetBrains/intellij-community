@@ -556,7 +556,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       return null
     }
 
-    subtask("checkTrustedState") {
+    span("checkTrustedState") {
       if (!checkTrustedState(projectStoreBaseDir)) {
         LOG.info("Project is not trusted, aborting")
         if (options.showWelcomeScreen) {
@@ -571,7 +571,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       throw it
     }
 
-    val continueOpen = subtask("checkChildProcess") {
+    val continueOpen = span("checkChildProcess") {
       if (ApplicationManagerEx.isInIntegrationTest()) {
         // write current PID to file to kill the process if it hangs
         if (IS_CHILD_PROCESS) {
@@ -611,7 +611,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
       }
     }
 
-    return subtask("ProjectManager.openAsync") {
+    return span("ProjectManager.openAsync") {
       doOpenAsync(options, projectStoreBaseDir)
     }
   }
@@ -671,7 +671,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           projectInitObserver.rawProjectDeferred.complete(project)
         }
 
-        subtask("project startup") {
+        span("project startup") {
           runInitProjectActivities(project)
         }
       }
@@ -829,13 +829,13 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
   }
 
   protected open suspend fun instantiateProject(projectStoreBaseDir: Path, options: OpenProjectTask): ProjectImpl {
-    val project = subtask("project instantiation") {
+    val project = span("project instantiation") {
       ProjectImpl(filePath = projectStoreBaseDir,
                   projectName = options.projectName,
                   parent = ApplicationManager.getApplication() as ComponentManagerImpl)
     }
     options.beforeInit?.let { beforeInit ->
-      subtask("options.beforeInit") {
+      span("options.beforeInit") {
         beforeInit(project)
       }
     }
@@ -868,7 +868,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
     if (options.runConversionBeforeOpen) {
       val conversionService = ConversionService.getInstance()
       if (conversionService != null) {
-        conversionResult = subtask("project conversion") {
+        conversionResult = span("project conversion") {
           conversionService.convert(projectStoreBaseDir)
         }
         if (conversionResult.openingIsCanceled()) {

@@ -5,7 +5,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.diagnostic.rootTask
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
@@ -285,7 +285,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
           // https://youtrack.jetbrains.com/issue/IDEA-323474
           val toolbarHolder = helper.toolbarHolder
           if (toolbarHolder == null && ExperimentalUI.isNewUI()) {
-            subtask("toolbar init") {
+            span("toolbar init") {
               (toolbar as MainToolbar).init()
             }
           }

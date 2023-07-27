@@ -4,7 +4,7 @@
 package com.intellij.toolWindow
 
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.actions.ActivateToolWindowAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.ActionManager
@@ -86,7 +86,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       LOG.debug(project) { "create and layout tool windows (project=$it, tasks=${tasks?.joinToString(separator = "\n")}" }
       createAndLayoutToolWindows(manager = manager, tasks = tasks ?: return, reopeningEditorJob = reopeningEditorJob)
       // separate EDT task - ensure that more important tasks like editor restoring maybe executed
-      subtask("toolwindow init pending tasks processing", Dispatchers.EDT) {
+      span("toolwindow init pending tasks processing", Dispatchers.EDT) {
         blockingContext {
           while (true) {
             (pendingTasks.poll() ?: break).run()
@@ -118,7 +118,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
       @Suppress("TestOnlyProblems")
       manager.setLayoutOnInit(layout)
 
-      subtask("toolwindow creating") {
+      span("toolwindow creating") {
         // Register all tool windows for the default tool window pane.
         // If there are any tool windows for other panes, we'll register them after the reopening editors job has created the panes.
         val entries = registerToolWindows(list, manager, layout) { it == WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
@@ -139,7 +139,7 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
     if (list.size != entries.size) {
       reopeningEditorJob.join()
       postEntryProcessing(withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-        subtask("secondary frames toolwindow creation") {
+        span("secondary frames toolwindow creation") {
           registerToolWindows(list, manager, manager.getLayout()) { it != WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID }
         }
       }, suffix = " (secondary)")
@@ -150,11 +150,11 @@ class ToolWindowSetInitializer(private val project: Project, private val manager
 
   private suspend fun postEntryProcessing(entries: List<ToolWindowEntry>, suffix: String = "") {
     // dispatch event not in EDT
-    subtask("toolWindowsRegistered event executing$suffix") {
+    span("toolWindowsRegistered event executing$suffix") {
       manager.project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(entries.map { it.id }, manager)
     }
 
-    subtask("ensureToolWindowActionRegistered executing$suffix") {
+    span("ensureToolWindowActionRegistered executing$suffix") {
       val actionManager = ApplicationManager.getApplication().serviceAsync<ActionManager>()
       for (entry in entries) {
         ActivateToolWindowAction.ensureToolWindowActionRegistered(entry.toolWindow, actionManager)

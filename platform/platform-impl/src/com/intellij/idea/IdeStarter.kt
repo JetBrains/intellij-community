@@ -5,7 +5,7 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PerformanceWatcher
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector
 import com.intellij.ide.*
 import com.intellij.ide.impl.ProjectUtil
@@ -87,15 +87,15 @@ open class IdeStarter : ModernApplicationStarter() {
                                                  lifecyclePublisher: AppLifecycleListener) {
     var willReopenRecentProjectOnStart = false
     lateinit var recentProjectManager: RecentProjectsManager
-    val isOpenProjectNeeded = subtask("isOpenProjectNeeded") {
-      subtask("app frame created callback") {
+    val isOpenProjectNeeded = span("isOpenProjectNeeded") {
+      span("app frame created callback") {
         lifecyclePublisher.appFrameCreated(args)
       }
 
       // must be after `AppLifecycleListener#appFrameCreated`, because some listeners can mutate the state of `RecentProjectsManager`
       if (app.isHeadlessEnvironment) {
         LifecycleUsageTriggerCollector.onIdeStart()
-        return@subtask false
+        return@span false
       }
 
       asyncCoroutineScope.launch {
@@ -110,7 +110,7 @@ open class IdeStarter : ModernApplicationStarter() {
 
       if (uriToOpen != null || args.isNotEmpty() && args.first().contains(SCHEME_SEPARATOR)) {
         processUriParameter(uri = uriToOpen ?: args.first(), lifecyclePublisher = lifecyclePublisher)
-        return@subtask false
+        return@span false
       }
 
       recentProjectManager = serviceAsync<RecentProjectsManager>()
@@ -134,7 +134,7 @@ open class IdeStarter : ModernApplicationStarter() {
     }
 
     val isOpened = willReopenRecentProjectOnStart && try {
-      subtask("reopenLastProjectsOnStart") {
+      span("reopenLastProjectsOnStart") {
         recentProjectManager.reopenLastProjectsOnStart()
       }
     }

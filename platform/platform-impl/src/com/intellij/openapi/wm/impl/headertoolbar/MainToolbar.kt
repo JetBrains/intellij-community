@@ -2,7 +2,7 @@
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.ActionUrl
 import com.intellij.ide.ui.customization.CustomActionsListener
@@ -282,7 +282,7 @@ private fun addWidget(widget: JComponent, parent: JComponent, position: Horizont
 }
 
 internal suspend fun computeMainActionGroups(): List<Pair<ActionGroup, HorizontalLayout.Group>> {
-  return subtask("toolbar action groups computing") {
+  return span("toolbar action groups computing") {
     serviceAsync<ActionManager>()
     val customActionSchema = CustomActionsSchema.getInstanceAsync()
     computeMainActionGroups(customActionSchema)

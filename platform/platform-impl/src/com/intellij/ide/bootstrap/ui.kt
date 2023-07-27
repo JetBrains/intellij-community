@@ -5,7 +5,7 @@ package com.intellij.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
@@ -50,10 +50,10 @@ internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), 
 
 internal suspend fun initUi(isHeadless: Boolean) {
   if (!isHeadless) {
-    val env = subtask("GraphicsEnvironment init") {
+    val env = span("GraphicsEnvironment init") {
       GraphicsEnvironment.getLocalGraphicsEnvironment()
     }
-    subtask("graphics environment checking") {
+    span("graphics environment checking") {
       if (env.isHeadlessInstance) {
         StartupErrorReporter.showMessage(BootstrapBundle.message("bootstrap.error.title.start.failed"),
                                          BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"), true)
@@ -64,8 +64,8 @@ internal suspend fun initUi(isHeadless: Boolean) {
 
   // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
 
-  val baseLaF = subtask("base LaF creation") { DarculaLaf.createBaseLaF() }
-  subtask("base LaF initialization") {
+  val baseLaF = span("base LaF creation") { DarculaLaf.createBaseLaF() }
+  span("base LaF initialization") {
     // LaF is useless until initialized (`getDefaults` "should only be invoked ... after `initialize` has been invoked.")
     baseLaF.initialize()
     DarculaLaf.setPreInitializedBaseLaf(baseLaF)
@@ -79,15 +79,15 @@ internal suspend fun initUi(isHeadless: Boolean) {
     }
   }
 
-  val uiDefaults = subtask("app-specific laf state initialization") { UIManager.getDefaults() }
+  val uiDefaults = span("app-specific laf state initialization") { UIManager.getDefaults() }
 
-  subtask("html style patching") {
+  span("html style patching") {
     // create a separate copy for each case
     val globalStyleSheet = GlobalStyleSheetHolder.getGlobalStyleSheet()
     uiDefaults.put("javax.swing.JLabel.userStyleSheet", globalStyleSheet)
     uiDefaults.put("HTMLEditorKit.jbStyleSheet", globalStyleSheet)
 
-    subtask("global styleSheet updating") {
+    span("global styleSheet updating") {
       GlobalStyleSheetHolder.updateGlobalSwingStyleSheet()
     }
   }
@@ -149,11 +149,11 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
   // mute system Cmd+`/Cmd+Shift+` shortcuts on macOS to avoid a conflict with corresponding platform actions (JBR-specific option)
   System.setProperty("apple.awt.captureNextAppWinKey", "true")
 
-  subtask("awt toolkit creating") {
+  span("awt toolkit creating") {
     Toolkit.getDefaultToolkit()
   }
 
-  subtask("awt auto shutdown configuring") {
+  span("awt auto shutdown configuring") {
     // Make EDT to always persist while the main thread is alive.
     // Otherwise, it's possible to have EDT being terminated by [AWTAutoShutdown], which will break a `ReadMostlyRWLock` instance.
     // [AWTAutoShutdown.notifyThreadBusy(Thread)] will put the main thread into the thread map,
@@ -164,14 +164,14 @@ private suspend fun initAwtToolkit(busyThread: Thread) {
 
 // the method must be called on EDT
 private suspend fun patchSystem(isHeadless: Boolean) {
-  subtask("event queue replacing") {
+  span("event queue replacing") {
     // replace system event queue
     IdeEventQueue.getInstance()
     // do not crash AWT on exceptions
     AWTExceptionHandler.register()
   }
   if (!isHeadless && "true" == System.getProperty("idea.check.swing.threading")) {
-    subtask("repaint manager set") {
+    span("repaint manager set") {
       RepaintManager.setCurrentManager(AssertiveRepaintManager())
     }
   }

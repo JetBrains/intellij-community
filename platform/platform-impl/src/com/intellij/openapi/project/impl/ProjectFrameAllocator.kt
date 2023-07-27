@@ -121,7 +121,7 @@ private class FrameAllocatorProjectInitObserver(
 
       launch {
         rawProjectDeferred.join()
-        subtask("project frame assigning") {
+        span("project frame assigning") {
           frameHelper.setProject(project)
         }
       }
@@ -170,7 +170,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
 
       val reopeningEditorJob = outOfLoadingScope.launch {
         val project = rawProjectDeferred.await()
-        subtask("restoreEditors") {
+        span("restoreEditors") {
           restoreEditors(project = project, deferredProjectFrameHelper = deferredProjectFrameHelper)
         }
 
@@ -237,7 +237,7 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       updateFullScreenState(frameHelper, frameInfo)
 
       completeFrameAndCloseOnCancel(frameHelper, deferredProjectFrameHelper) {
-        subtask("ProjectFrameHelper.init") {
+        span("ProjectFrameHelper.init") {
           frameHelper.init()
         }
       }
@@ -305,7 +305,7 @@ private fun CoroutineScope.scheduleInitFrame(rawProjectDeferred: CompletableDefe
                                              deferredProjectFrameHelper: Deferred<ProjectFrameHelper>) {
   launch {
     val project = rawProjectDeferred.await()
-    subtask("initFrame") {
+    span("initFrame") {
       launch(CoroutineName("tool window pane creation")) {
         val toolWindowManager = async { project.serviceAsync<ToolWindowManager>() as? ToolWindowManagerImpl }
         val taskListDeferred = async(CoroutineName("toolwindow init command creation")) {
@@ -344,11 +344,11 @@ private suspend fun restoreEditors(project: Project, deferredProjectFrameHelper:
       return@coroutineScope
     }
 
-    subtask("editor restoring") {
+    span("editor restoring") {
       editorComponent.createEditors(state = editorState)
     }
 
-    subtask("editor reopening post-processing", Dispatchers.EDT) {
+    span("editor reopening post-processing", Dispatchers.EDT) {
       for (window in editorComponent.getWindows()) {
         // clear empty splitters
         if (window.tabCount == 0) {

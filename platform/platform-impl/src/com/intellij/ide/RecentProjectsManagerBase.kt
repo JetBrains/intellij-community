@@ -4,7 +4,7 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -523,7 +523,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     // ok, no non-existent project paths and every info has a frame
     val activeInfo = (toOpen.maxByOrNull { it.second.activationTimestamp } ?: return false).second
     val taskList = ArrayList<Pair<Path, OpenProjectTask>>(toOpen.size)
-    subtask("project frame initialization", Dispatchers.EDT) {
+    span("project frame initialization", Dispatchers.EDT) {
       var activeTask: Pair<Path, OpenProjectTask>? = null
       for ((path, info) in toOpen) {
         val isActive = info == activeInfo

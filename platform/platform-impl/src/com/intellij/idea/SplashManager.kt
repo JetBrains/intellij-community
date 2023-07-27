@@ -3,7 +3,7 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.getTraceActivity
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -46,12 +46,12 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
       return
     }
 
-    val image = subtask("splash preparation") {
+    val image = span("splash preparation") {
       assert(SPLASH_WINDOW == null)
       loadSplashImage(appInfo = appInfo)
     }
     // by intention out of withContext(RawSwingDispatcher) - measure "schedule" time
-    subtask("splash initialization") {
+    span("splash initialization") {
       withContext(RawSwingDispatcher) {
         SPLASH_WINDOW = Splash(image, getTraceActivity()!!    )
       }
@@ -68,7 +68,7 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
 private suspend fun showLastProjectFrameIfAvailable(): Boolean {
   lateinit var backgroundColor: Color
   var extendedState = 0
-  val savedBounds: Rectangle = subtask("splash as project frame initialization") {
+  val savedBounds: Rectangle = span("splash as project frame initialization") {
     val infoFile = Path.of(PathManager.getSystemPath(), "lastProjectFrameInfo")
     val buffer = try {
       withContext(Dispatchers.IO) {
@@ -85,10 +85,10 @@ private suspend fun showLastProjectFrameIfAvailable(): Boolean {
 
           buffer
         }
-      } ?: return@subtask null
+      } ?: return@span null
     }
     catch (ignore: NoSuchFileException) {
-      return@subtask null
+      return@span null
     }
 
     val savedBounds = Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt())
@@ -101,7 +101,7 @@ private suspend fun showLastProjectFrameIfAvailable(): Boolean {
     extendedState = buffer.getInt()
     savedBounds
   } ?: return false
-  subtask("splash as project frame creation") {
+  span("splash as project frame creation") {
     withContext(RawSwingDispatcher) {
       PROJECT_FRAME = doShowFrame(savedBounds = savedBounds, backgroundColor = backgroundColor, extendedState = extendedState)
     }

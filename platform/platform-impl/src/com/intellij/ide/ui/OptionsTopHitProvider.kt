@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.SearchTopHitProvider
 import com.intellij.ide.ui.OptionsSearchTopHitProvider.ApplicationLevelProvider
@@ -105,7 +105,7 @@ abstract class OptionsTopHitProvider : OptionsSearchTopHitProvider, SearchTopHit
 private class PreloadService(coroutineScope: CoroutineScope) {
   private val appJob = coroutineScope.launch {
     // for application
-    subtask("cache options in application") {
+    span("cache options in application") {
       val topHitCache = TopHitCache.getInstance()
       for (extension in SearchTopHitProvider.EP_NAME.filterableLazySequence()) {
         val aClass = extension.implementationClass ?: continue
@@ -138,7 +138,7 @@ private class OptionsTopHitProviderActivity : ProjectActivity {
     // wait for app-level routine
     ApplicationManager.getApplication().service<PreloadService>().join()
     // for given project
-    subtask("cache options in project") {
+    span("cache options in project") {
       val topHitCache = TopHitCache.getInstance(project)
       for (extension in SearchTopHitProvider.EP_NAME.filterableLazySequence()) {
         val aClass = extension.implementationClass ?: continue

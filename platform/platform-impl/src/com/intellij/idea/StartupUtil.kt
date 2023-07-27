@@ -105,7 +105,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     override fun rootTrace(): CoroutineContext = rootTask()
 
     override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
-      return subtask(name = name, context = context, action = action)
+      return com.intellij.diagnostic.span(name = name, context = context, action = action)
     }
   }
 
@@ -124,7 +124,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val lockSystemDirsJob = launch {
     // the "import-needed" check must be performed strictly before IDE directories are locked
     configImportNeededDeferred.join()
-    subtask("system dirs locking") {
+    span("system dirs locking") {
       lockSystemDirs(args)
     }
   }
@@ -143,7 +143,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   val initLafJob = launch {
     initAwtToolkitAndEventQueueJob.join()
     // SwingDispatcher must be used after Toolkit init
-    subtask("initUi", RawSwingDispatcher) {
+    span("initUi", RawSwingDispatcher) {
       initUi(isHeadless)
     }
   }
@@ -161,7 +161,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   launch {
     initLafJob.join()
     if (isImplicitReadOnEDTDisabled && !isAutomaticIWLOnDirtyUIDisabled) {
-      subtask("Write Intent Lock UI class transformer loading") {
+      span("Write Intent Lock UI class transformer loading") {
         WriteIntentLockInstrumenter.instrument()
       }
     }
@@ -182,7 +182,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   shellEnvDeferred = async {
     // EnvironmentUtil wants logger
     logDeferred.join()
-    subtask("environment loading", Dispatchers.IO) {
+    span("environment loading", Dispatchers.IO) {
       EnvironmentUtil.loadEnvironment(coroutineContext.job)
     }
   }
@@ -192,7 +192,7 @@ fun CoroutineScope.startApplication(args: List<String>,
 
     launch {
       lockSystemDirsJob.join()
-      subtask("SvgCache creation") {
+      span("SvgCache creation") {
         svgCache = createSvgCacheManager(cacheFile = getSvgIconCacheFile())
       }
     }
@@ -248,7 +248,7 @@ fun CoroutineScope.startApplication(args: List<String>,
       runPreAppClass(args, logDeferred)
     }
 
-    subtask("app instantiation") {
+    span("app instantiation") {
       // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
       ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope(ApplicationImpl::class.java.name),
                       isInternal,
@@ -296,7 +296,7 @@ fun CoroutineScope.startApplication(args: List<String>,
     // required for appStarter.prepareStart
     appInfoDeferred.join()
 
-    val appStarter = subtask("main class loading waiting") {
+    val appStarter = span("main class loading waiting") {
       appStarterDeferred.await()
     }
 
@@ -339,14 +339,14 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
     val log = logDeferred.await()
 
     if (SystemInfoRt.isWindows) {
-      subtask("system libs setup") {
+      span("system libs setup") {
         if (System.getProperty("winp.folder.preferred") == null) {
           System.setProperty("winp.folder.preferred", PathManager.getTempPath())
         }
       }
     }
 
-    subtask("system libs loading", Dispatchers.IO) {
+    span("system libs loading", Dispatchers.IO) {
       JnaLoader.load(log)
     }
 
@@ -399,7 +399,7 @@ fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>
 private suspend fun runPreAppClass(args: List<String>, logDeferred: Deferred<Logger>) {
   val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
   logDeferred.join()
-  subtask("pre app class running") {
+  span("pre app class running") {
     try {
       val aClass = AppStarter::class.java.classLoader.loadClass(classBeforeAppProperty)
       MethodHandles.lookup()
@@ -416,13 +416,13 @@ private suspend fun importConfig(args: List<String>,
                                  log: Logger,
                                  appStarter: AppStarter,
                                  euaDocumentDeferred: Deferred<EndUserAgreement.Document?>) {
-  subtask("screen reader checking") {
+  span("screen reader checking") {
     runCatching {
       withContext(RawSwingDispatcher) { AccessibilityUtils.enableScreenReaderSupportIfNecessary() }
     }.getOrLogException(log)
   }
 
-  subtask("config importing") {
+  span("config importing") {
     appStarter.beforeImportConfigs()
     val newConfigDir = customTargetDirectoryToImportConfig ?: PathManager.getConfigDir()
 
@@ -457,7 +457,7 @@ private fun CoroutineScope.checkSystemDirs(lockSystemDirJob: Job): Job {
     lockSystemDirJob.join()
 
     val (configPath, systemPath) = PathManager.getConfigDir() to PathManager.getSystemDir()
-    subtask("system dirs checking") {
+    span("system dirs checking") {
       if (!doCheckSystemDirs(configPath, systemPath)) {
         exitProcess(AppExitCodes.DIR_CHECK_FAILED)
       }
@@ -632,7 +632,7 @@ private fun CoroutineScope.setupLogger(consoleLoggerJob: Job, checkSystemDirJob:
     consoleLoggerJob.join()
     checkSystemDirJob.join()
 
-    subtask("file logger configuration") {
+    span("file logger configuration") {
       try {
         Logger.setFactory(LoggerFactory())
       }

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
@@ -21,8 +21,8 @@ internal suspend fun loadEuaDocument(appInfoDeferred: Deferred<ApplicationInfoEx
     return null
   }
   else {
-    val document = subtask("eua getting") { EndUserAgreement.getLatestDocument() }
-    return if (subtask("eua is accepted checking") { document.isAccepted }) null else document
+    val document = span("eua getting") { EndUserAgreement.getLatestDocument() }
+    return if (span("eua is accepted checking") { document.isAccepted }) null else document
   }
 }
 
@@ -41,10 +41,10 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
     }
   }
 
-  return subtask("eua showing") {
+  return span("eua showing") {
     when {
       document != null -> {
-        return@subtask {
+        return@span {
           prepareAndExecuteInEdt {
             showEndUserAndDataSharingAgreements(document)
           }
@@ -53,7 +53,7 @@ internal suspend fun prepareShowEuaIfNeededTask(document: EndUserAgreement.Docum
       }
       ConsentOptions.needToShowUsageStatsConsent() -> {
         updateCached.join()
-        return@subtask {
+        return@span {
           prepareAndExecuteInEdt {
             showDataSharingAgreement()
           }

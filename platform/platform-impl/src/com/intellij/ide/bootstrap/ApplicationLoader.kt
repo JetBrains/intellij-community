@@ -5,7 +5,7 @@
 
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.*
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector
@@ -54,14 +54,14 @@ internal suspend fun initApplicationImpl(args: List<String>,
                                          asyncScope: CoroutineScope,
                                          preloadCriticalServicesJob: Job,
                                          appInitListeners: Deferred<List<ApplicationInitializedListener>>) {
-  val starter = subtask("app initialization") {
-    val deferredStarter = subtask("app starter creation") {
+  val starter = span("app initialization") {
+    val deferredStarter = span("app starter creation") {
       createAppStarter(args)
     }
 
     launch {
       val appInitializedListeners = appInitListeners.await()
-      subtask("app initialized callback") {
+      span("app initialized callback") {
         // An async scope here is intended for FLOW. FLOW!!! DO NOT USE the surrounding main scope.
         callAppInitialized(listeners = appInitializedListeners, asyncScope = app.coroutineScope)
       }
@@ -83,13 +83,13 @@ internal suspend fun initApplicationImpl(args: List<String>,
     deferredStarter.await()
   }
 
-  subtask("waiting for preloadCriticalServicesJob") {
+  span("waiting for preloadCriticalServicesJob") {
     preloadCriticalServicesJob.join()
   }
 
   if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
     if (starter is ModernApplicationStarter) {
-      subtask("${starter.javaClass.simpleName}.start") {
+      span("${starter.javaClass.simpleName}.start") {
         starter.start(args)
       }
     }

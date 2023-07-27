@@ -336,7 +336,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   }
 
   private suspend fun runPostStartupActivitiesRegisteredDynamically() {
-    subtask("run post-startup dynamically registered activities") {
+    span("run post-startup dynamically registered activities") {
       runActivities(postStartupActivities)
     }
 

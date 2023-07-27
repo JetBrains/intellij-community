@@ -11,7 +11,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.actions.SplitAction
@@ -2074,7 +2074,7 @@ open class FileEditorManagerImpl(
         null
       }
 
-      subtask("file opening in EDT", Dispatchers.EDT) {
+      span("file opening in EDT", Dispatchers.EDT) {
         val splitters = window.owner
         runBulkTabChangeInEdt(splitters) {
           var composite: EditorComposite? = existingComposite
@@ -2082,7 +2082,7 @@ open class FileEditorManagerImpl(
           if (isNewEditor) {
             composite = createComposite(file = file, providers = providerWithBuilderList)
             if (composite != null) {
-              subtask("beforeFileOpened event executing") {
+              span("beforeFileOpened event executing") {
                 beforePublisher!!.beforeFileOpened(this@FileEditorManagerImpl, file)
               }
               openedComposites.add(composite)
@@ -2106,7 +2106,7 @@ open class FileEditorManagerImpl(
             goodPublisher.fileOpenedSync(this@FileEditorManagerImpl, file, editorsWithProviders)
             @Suppress("DEPRECATION")
             deprecatedPublisher.fileOpenedSync(this@FileEditorManagerImpl, file, editorsWithProviders)
-            return@subtask result to true
+            return@span result to true
           }
           result to false
         }
@@ -2118,7 +2118,7 @@ open class FileEditorManagerImpl(
 
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       // must be executed with a current modality — that's why coroutineScope.launch should be not used
-      subtask("fileOpened event executing", Dispatchers.EDT) {
+      span("fileOpened event executing", Dispatchers.EDT) {
         if (isFileOpen(file)) {
           runCatching {
             publisher.fileOpened(this@FileEditorManagerImpl, file)

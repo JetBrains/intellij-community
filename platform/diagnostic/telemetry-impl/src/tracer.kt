@@ -41,11 +41,7 @@ fun rootTask(traceReporter: TraceReporter): CoroutineContext = MeasureCoroutineT
  * See https://github.com/Kotlin/kotlinx.coroutines/issues/3414
  */
 @OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-suspend fun <T> subtask(
-  name: String,
-  context: CoroutineContext = EmptyCoroutineContext,
-  action: suspend CoroutineScope.() -> T,
-): T {
+suspend fun <T> span(name: String, context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> T): T {
   val namedContext = context + CoroutineName(name)
   val measurer = coroutineContext[CoroutineTimeMeasurerKey]
   return if (measurer == null) {
@@ -53,18 +49,6 @@ suspend fun <T> subtask(
   }
   else {
     withContext(namedContext + measurer.copyForChild(), action)
-  }
-}
-
-@Experimental
-@OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
-suspend fun <T> span(context: CoroutineContext = EmptyCoroutineContext, action: suspend CoroutineScope.() -> T): T {
-  val measurer = coroutineContext[CoroutineTimeMeasurerKey]
-  return if (measurer == null) {
-    withContext(context, action)
-  }
-  else {
-    withContext(context + measurer.copyForChild(), action)
   }
 }
 

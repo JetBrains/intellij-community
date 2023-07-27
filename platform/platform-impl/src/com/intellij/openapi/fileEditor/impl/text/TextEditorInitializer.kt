@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl.text
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.editor.Document
@@ -35,7 +35,7 @@ internal class HighlighterTextEditorInitializer : TextEditorInitializer {
     }
 
     val editor = editorSupplier()
-    subtask("editor highlighter set", Dispatchers.EDT) {
+    span("editor highlighter set", Dispatchers.EDT) {
       editor.settings.setLanguageSupplier { TextEditorImpl.getDocumentLanguage(editor) }
       editor.highlighter = highlighter
     }

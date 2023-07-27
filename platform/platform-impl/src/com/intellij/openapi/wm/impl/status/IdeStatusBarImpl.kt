@@ -5,7 +5,7 @@ package com.intellij.openapi.wm.impl.status
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.codeWithMe.ClientId
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
@@ -303,19 +303,19 @@ open class IdeStatusBarImpl internal constructor(
 
   internal suspend fun init(project: Project, frame: IdeFrame, extraItems: List<kotlin.Pair<StatusBarWidget, LoadingOrder>> = emptyList()) {
     val service = project.service<StatusBarWidgetsManager>()
-    val items = subtask("status bar pre-init") {
+    val items = span("status bar pre-init") {
       service.init(frame)
     }
-    subtask("status bar init") {
+    span("status bar init") {
       doInit(widgets = items + extraItems, parentDisposable = service)
     }
   }
 
   private suspend fun doInit(widgets: List<kotlin.Pair<StatusBarWidget, LoadingOrder>>, parentDisposable: Disposable) {
     val anyModality = ModalityState.any().asContextElement()
-    val items: List<WidgetBean> = subtask("status bar widget creating") {
+    val items: List<WidgetBean> = span("status bar widget creating") {
       widgets.map { (widget, anchor) ->
-        val component = subtask(widget.ID(), Dispatchers.EDT + anyModality) {
+        val component = span(widget.ID(), Dispatchers.EDT + anyModality) {
           val component = wrap(widget)
           if (component is StatusBarWidgetWrapper) {
             component.beforeUpdate()

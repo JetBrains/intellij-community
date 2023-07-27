@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -51,12 +51,12 @@ internal class ModuleManagerComponentBridge(private val project: Project, corout
     override suspend fun run(project: Project) {
       val moduleManager = project.serviceAsync<ModuleManager>() as ModuleManagerComponentBridge
       val modules = moduleManager.modules().toList()
-      subtask("firing modules_added event") {
+      span("firing modules_added event") {
         blockingContext {
           fireModulesAdded(project, modules)
         }
       }
-      subtask("deprecated module component moduleAdded calling") {
+      span("deprecated module component moduleAdded calling") {
         @Suppress("removal", "DEPRECATION")
         val deprecatedComponents = mutableListOf<com.intellij.openapi.module.ModuleComponent>()
         for (module in modules) {

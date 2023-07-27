@@ -5,7 +5,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter
 import com.intellij.codeInsight.folding.CodeFoldingManager
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
@@ -72,7 +72,7 @@ open class PsiAwareTextEditorProvider : TextEditorProvider(), AsyncFileEditorPro
 
       val psiManager = project.serviceAsync<PsiManager>()
       val daemonCodeAnalyzer = project.serviceAsync<DaemonCodeAnalyzer>()
-      subtask("DaemonCodeAnalyzer.restart") {
+      span("DaemonCodeAnalyzer.restart") {
         readActionBlocking {
           daemonCodeAnalyzer.restart(psiManager.findFile(file) ?: return@readActionBlocking)
         }

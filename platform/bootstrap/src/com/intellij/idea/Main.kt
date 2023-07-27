@@ -7,7 +7,7 @@ package com.intellij.idea
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.rootTask
-import com.intellij.diagnostic.subtask
+import com.intellij.diagnostic.span
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.BytecodeTransformer
 import com.intellij.ide.plugins.StartupAbortedException
@@ -55,7 +55,7 @@ fun main(rawArgs: Array<String>) {
       withContext(Dispatchers.Default + StartupAbortedExceptionHandler() + rootTask()) {
         addBootstrapTiming("init scope creating", startupTimings)
         StartUpMeasurer.addTimings(startupTimings, "bootstrap", startTimeUnixNano)
-        subtask("startApplication") {
+        span("startApplication") {
           // not IO-, but CPU-bound due to descrambling, don't use here IO dispatcher
           val appStarterDeferred = async(CoroutineName("main class loading")) {
             val aClass = AppStarter::class.java.classLoader.loadClass("com.intellij.idea.MainImpl")
@@ -67,7 +67,7 @@ fun main(rawArgs: Array<String>) {
           }
 
           if (AppMode.isRemoteDevHost()) {
-            subtask("cwm host init") {
+            span("cwm host init") {
               initRemoteDev()
             }
           }
