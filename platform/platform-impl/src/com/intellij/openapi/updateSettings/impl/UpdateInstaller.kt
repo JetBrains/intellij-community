@@ -50,7 +50,12 @@ internal object UpdateInstaller {
     for (i in 1 until chain.size) {
       val from = chain[i - 1].withoutProductCode().asString()
       val to = chain[i].withoutProductCode().asString()
-      val patchName = "${product}-${from}-${to}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
+      // Android Studio (b/293378903): For historical reasons we have a custom patch suffix for aarch64 Mac.
+      val patchName = if (SystemInfo.isMac && CpuArch.isArm64()) {
+        "${product}-${from}-${to}-patch-mac_arm.jar"
+      } else {
+        "${product}-${from}-${to}-patch${runtime}-${PatchInfo.OS_SUFFIX}.jar"
+      }
       val patchFile = File(getTempDir(), patchName)
       val url = URL(patchesUrl, patchName).toString()
       val partIndicator = object : DelegatingProgressIndicator(indicator) {
