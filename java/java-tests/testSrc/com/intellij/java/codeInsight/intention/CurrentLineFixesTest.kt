@@ -6,7 +6,7 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 class CurrentLineFixesTest: LightJavaCodeInsightFixtureTestCase() {
   fun testCursorPosition() {
     myFixture.configureByText("x.java", "class Foo implements Runnable {<caret>}")
-    myFixture.launchIntention("Make 'Foo' abstract")
+    myFixture.launchAction("Make 'Foo' abstract")
     myFixture.checkResult("abstract class Foo implements Runnable {<caret>}")
   }
 }

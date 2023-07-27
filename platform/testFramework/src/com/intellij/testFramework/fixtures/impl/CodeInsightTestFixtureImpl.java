@@ -807,7 +807,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void launchIntention(@NotNull String hint) {
+  public void launchAction(@NotNull String hint) {
     IntentionActionWithTextCaching action = findCachingAction(hint);
     if (action == null) throw new IllegalArgumentException();
     ShowIntentionActionsHandler.chooseActionAndInvoke(getHostFile(), getHostEditor(), action.getAction(), action.getText(), action.getProblemOffset());

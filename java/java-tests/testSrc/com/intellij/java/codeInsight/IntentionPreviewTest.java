@@ -257,7 +257,7 @@ public class IntentionPreviewTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.configureByText("Test.java", "class Test { int foo() { return 1 } }<caret>");
     String expected = "class Test { int foo() { return 1; } }";
     assertEquals(expected, myFixture.getIntentionPreviewText("Insert"));
-    myFixture.launchIntention("Insert");
+    myFixture.launchAction("Insert");
     myFixture.checkResult(expected);
   }
 }

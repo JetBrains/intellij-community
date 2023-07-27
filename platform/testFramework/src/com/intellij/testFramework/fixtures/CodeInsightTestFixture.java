@@ -384,7 +384,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    * @param hint the text that the intention text should begin with.
    * @return the single matching intention/quickfix
    * @throws AssertionError if no intentions are found or if multiple intentions match the hint text.
-   * @see #launchIntention(String)
+   * @see #launchAction(String)
    */
   @NotNull
   IntentionAction findSingleIntention(@NotNull String hint);
@@ -442,7 +442,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    *
    * @param hint the text that the intention text should begin with.
    */
-  void launchIntention(@NotNull String hint);
+  void launchAction(@NotNull String hint);
 
   /**
    * Launches the given intention action and checks that the preview it generates is a diff-preview which
