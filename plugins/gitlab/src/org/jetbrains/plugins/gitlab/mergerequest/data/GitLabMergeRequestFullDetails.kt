@@ -55,7 +55,7 @@ data class GitLabMergeRequestFullDetails(
       approvedBy = dto.approvedBy,
       targetBranch = dto.targetBranch,
       sourceBranch = dto.sourceBranch,
-      isApproved = dto.approved,
+      isApproved = dto.approved ?: true,
       conflicts = dto.conflicts,
       commits = dto.commits,
       diffRefs = dto.diffRefs,

@@ -4,4 +4,5 @@ package com.intellij.collaboration.api.dto
 /**
  * Informational/marker annotation to link classes to fragment files
  */
+@Repeatable
 annotation class GraphQLFragment(val filePath: String)
