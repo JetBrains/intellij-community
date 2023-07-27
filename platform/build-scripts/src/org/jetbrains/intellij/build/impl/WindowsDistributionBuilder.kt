@@ -341,7 +341,7 @@ internal class WindowsDistributionBuilder(
                                                    customizer: WindowsDistributionCustomizer,
                                                    context: BuildContext): Deferred<Path> {
     return async(Dispatchers.IO) {
-      val baseName = context.productProperties.getBaseArtifactName(context) + zipNameSuffix
+      val baseName = context.productProperties.getBaseArtifactName(context)
       val targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
 
       spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
