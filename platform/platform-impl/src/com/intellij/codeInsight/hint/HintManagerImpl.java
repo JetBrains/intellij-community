@@ -483,6 +483,9 @@ public class HintManagerImpl extends HintManager {
 
   @Override
   public void showErrorHint(@NotNull Editor editor, @NotNull @HintText String text, short position) {
+    if (!editor.getComponent().isDisplayable()) {
+      return;
+    }
     JComponent label = HintUtil.createErrorLabel(text);
     LightweightHint hint = new LightweightHint(label);
     Point p = getClientManager(editor).getHintPosition(hint, editor, position);
