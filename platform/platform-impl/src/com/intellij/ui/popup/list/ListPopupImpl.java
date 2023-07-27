@@ -48,7 +48,7 @@ import java.util.Objects;
 import static java.awt.event.InputEvent.CTRL_MASK;
 import static java.awt.event.InputEvent.META_MASK;
 
-public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler {
+public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHandler, ListPopupStep.ListPopupModelListener {
   static final int NEXT_STEP_AREA_WIDTH = 20;
   private static final int DEFAULT_MAX_ROW_COUNT = 30;
 
@@ -86,6 +86,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     super(project, aParent, aStep);
     setParentValue(parentValue);
     replacePasteAction();
+    aStep.addListener(this);
   }
 
   public void setMaxRowCount(int maxRowCount) {
@@ -388,6 +389,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   public void dispose() {
     myList.removeMouseMotionListener(myMouseMotionListener);
     myList.removeMouseListener(myMouseListener);
+    getListStep().removeListener(this);
     super.dispose();
   }
 
@@ -561,6 +563,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   @Override
   public void addListSelectionListener(ListSelectionListener listSelectionListener) {
     myList.addListSelectionListener(listSelectionListener);
+  }
+
+  @Override
+  public void onModelChanged() {
+    myListModel.syncModel();
+    selectFirstSelectableItem();
   }
 
   private enum ExtendMode {
