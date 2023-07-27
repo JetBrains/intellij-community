@@ -94,7 +94,8 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile, private val ho
                     }
                 } else if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) ||
                     function.hasModifier(KtTokens.OPEN_KEYWORD) ||
-                    function.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
+                    function.hasModifier(KtTokens.ABSTRACT_KEYWORD) ||
+                    function.containingClass()?.isInterface() == true) {
                     //function can be in the hierarchy
                     continue
                 } else if (function is KtFunctionLiteral) {

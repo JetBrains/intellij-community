@@ -2781,6 +2781,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/overrideProperty.kt");
         }
 
+        @TestMetadata("parameterOfInterface.kt")
+        public void testParameterOfInterface() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/parameterOfInterface.kt");
+        }
+
         @TestMetadata("primaryConstructorParameter.kt")
         public void testPrimaryConstructorParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/primaryConstructorParameter.kt");
