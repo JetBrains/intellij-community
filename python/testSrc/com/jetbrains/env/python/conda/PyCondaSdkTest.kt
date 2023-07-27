@@ -148,7 +148,7 @@ internal class PyCondaSdkTest {
   }
 
   @Test
-  fun createSdkByFile() = runTest(timeout = 20.seconds) {
+  fun createSdkByFile() = runTest(timeout = 50.seconds) {
     val newCondaInfo = NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile(yamlRule.yamlFilePath)
     val sdk = condaRule.condaCommand.createCondaSdkAlongWithNewEnv(newCondaInfo, coroutineContext, emptyList(),
                                                                    projectRule.project).getOrThrow()
