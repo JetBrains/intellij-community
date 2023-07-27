@@ -26,8 +26,8 @@ import org.intellij.images.editor.ImageEditor;
 import org.intellij.images.editor.ImageZoomModel;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActions;
-import org.intellij.images.vfs.IfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,6 +41,7 @@ public final class ImageEditorImpl implements ImageEditor {
   private final Project project;
   private final VirtualFile file;
   private final ImageEditorUI editorUI;
+  private final @NotNull ImageFileLoader imageFileLoader;
   private boolean disposed;
 
   public ImageEditorImpl(@NotNull Project project, @NotNull VirtualFile file) {
@@ -70,17 +71,18 @@ public final class ImageEditorImpl implements ImageEditor {
       }
     }, this);
 
+    imageFileLoader = project.getService(ImageFileService.class).createImageFileLoader(this);
+    Disposer.register(this, imageFileLoader);
+
     setValue(file);
   }
 
   void setValue(VirtualFile file) {
-    try {
-      editorUI.setImageProvider(IfsUtil.getImageProvider(file), IfsUtil.getFormat(file));
-    }
-    catch (Exception e) {
-      //     Error loading image file
-      editorUI.setImageProvider(null, null);
-    }
+    imageFileLoader.loadFile(file);
+  }
+
+  void setImageProvider(@Nullable ImageDocument.ScaledImageProvider imageProvider, @Nullable String format) {
+    editorUI.setImageProvider(imageProvider, format);
   }
 
   @Override
