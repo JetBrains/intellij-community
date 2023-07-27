@@ -34,6 +34,7 @@ public class DefaultActionGroup extends ActionGroup {
 
   private final List<AnAction> mySortedChildren = new ArrayList<>();
   private final List<Pair<AnAction, Constraints>> myPairs = new ArrayList<>();
+  private final HashMap<AnAction, Constraints> myConstraints = new HashMap<>();
   private int myModificationStamp;
 
   public DefaultActionGroup() {
@@ -208,6 +209,7 @@ public class DefaultActionGroup extends ActionGroup {
     else {
       myPairs.add(Pair.create(action, constraint));
     }
+    myConstraints.put(action, constraint);
     addAllToSortedList(actionManager);
     incrementModificationStamp();
     return new ActionInGroup(this, action);
@@ -284,6 +286,7 @@ public class DefaultActionGroup extends ActionGroup {
       o -> o instanceof ActionStubBase && ((ActionStubBase)o).getId().equals(id));
     removed = removed || myPairs.removeIf(
       o -> o.first.equals(action) || (o.first instanceof ActionStubBase && ((ActionStubBase)o.first).getId().equals(id)));
+    myConstraints.remove(action);
     if (removed) {
       incrementModificationStamp();
     }
@@ -295,6 +298,7 @@ public class DefaultActionGroup extends ActionGroup {
   public final synchronized void removeAll() {
     mySortedChildren.clear();
     myPairs.clear();
+    myConstraints.clear();
     incrementModificationStamp();
   }
 
@@ -305,6 +309,7 @@ public class DefaultActionGroup extends ActionGroup {
     int index = mySortedChildren.indexOf(oldAction);
     if (index >= 0) {
       mySortedChildren.set(index, newAction);
+      replaceConstraint(oldAction, newAction);
       incrementModificationStamp();
       return true;
     }
@@ -313,12 +318,21 @@ public class DefaultActionGroup extends ActionGroup {
         Pair<AnAction, Constraints> pair = myPairs.get(i);
         if (pair.first.equals(oldAction)) {
           myPairs.set(i, Pair.create(newAction, pair.second));
+          replaceConstraint(oldAction, newAction);
           incrementModificationStamp();
           return true;
         }
       }
     }
     return false;
+  }
+
+  private void replaceConstraint(AnAction oldAction, AnAction newAction) {
+    Constraints constraint = myConstraints.get(oldAction);
+    if (constraint != null) {
+      myConstraints.put(newAction, constraint);
+      myConstraints.remove(oldAction);
+    }
   }
 
   /**
@@ -333,6 +347,9 @@ public class DefaultActionGroup extends ActionGroup {
 
     myPairs.clear();
     myPairs.addAll(other.myPairs);
+
+    myConstraints.clear();
+    myConstraints.putAll(other.myConstraints);
     incrementModificationStamp();
   }
 
@@ -401,9 +418,11 @@ public class DefaultActionGroup extends ActionGroup {
         AnAction replacement = stubMap.get((ActionStubBase)action);
         if (replacement != null) {
           it.set(replacement);
+          replaceConstraint(action, replacement);
           replace(action, replacement);
         }
         else {
+          myConstraints.remove(action);
           it.remove();
         }
       }
@@ -419,9 +438,11 @@ public class DefaultActionGroup extends ActionGroup {
         AnAction replacement = stubMap.get((ActionStubBase)action);
         if (replacement != null) {
           it.set(Pair.create(replacement, pair.second));
+          replaceConstraint(action, replacement);
           replace(action, replacement);
         }
         else {
+          myConstraints.remove(action);
           it.remove();
         }
       }
@@ -479,6 +500,16 @@ public class DefaultActionGroup extends ActionGroup {
 
   public void addSeparator(@Nullable @NlsContexts.Separator String separatorText) {
     add(Separator.create(separatorText));
+  }
+
+  @Nullable
+  public synchronized Constraints getConstraints(@NotNull AnAction action) {
+    return myConstraints.get(action);
+  }
+
+  @NotNull
+  public synchronized Map<AnAction, Constraints> getAllConstraints() {
+    return new HashMap<>(myConstraints);
   }
 
   /**
