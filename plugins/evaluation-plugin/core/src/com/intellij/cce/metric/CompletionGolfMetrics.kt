@@ -8,6 +8,8 @@ import com.intellij.cce.metric.util.Sample
 fun createCompletionGolfMetrics(): List<Metric> =
   listOf(
     MatchedRatio(),
+    MatchedRatioAt(showByDefault = false, n = 1),
+    MatchedRatioAt(showByDefault = false, n = 3),
     PrefixSimilarity(),
     EditSimilarity(),
     MovesCount(),
@@ -21,6 +23,8 @@ fun createCompletionGolfMetrics(): List<Metric> =
 fun createBenchmarkMetrics(): List<Metric> =
   listOf(
     MatchedRatio(showByDefault = true),
+    MatchedRatioAt(showByDefault = false, n = 1),
+    MatchedRatioAt(showByDefault = false, n = 3),
     PrefixSimilarity(showByDefault = false),
     EditSimilarity(showByDefault = false),
     PerfectLine(showByDefault = true),

@@ -6,6 +6,8 @@ import com.intellij.cce.core.Session
 import com.intellij.cce.core.SuggestionKind
 import com.intellij.cce.metric.util.Bootstrap
 import org.apache.commons.lang.StringUtils
+import kotlin.math.max
+import kotlin.math.min
 
 abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
   private var totalMatched: Double = 0.0
@@ -54,6 +56,27 @@ class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefa
     if (selected.kind == SuggestionKind.TOKEN)
       return null
     return selected.text.length.toDouble() - lookup.prefix.length
+  }
+}
+
+class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMetric(showByDefault) {
+  override val name = "Matched Ratio At $n"
+  override val description: String = "Length of the longest matching proposal among top-$n normalized by expected text (avg by invocations)"
+
+  override fun computeSimilarity(lookup: Lookup, expectedText: String): Double? {
+    val numConsideredSuggestions = min(n, lookup.suggestions.size)
+    var maxMatchedLen = 0
+    for (i in 0 until numConsideredSuggestions) {
+      if (matches(lookup.suggestions[i].text.drop(lookup.prefix.length), expectedText)) {
+        val selected = lookup.suggestions[i]
+        maxMatchedLen = max(maxMatchedLen, selected.text.length - lookup.prefix.length)
+      }
+    }
+    return maxMatchedLen.toDouble()
+  }
+
+  private fun matches(suggestionTextNormalized: String, expectedTextNormalized: String): Boolean {
+    return !(suggestionTextNormalized.isEmpty() || !expectedTextNormalized.startsWith(suggestionTextNormalized))
   }
 }
 

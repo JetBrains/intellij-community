@@ -24,6 +24,8 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
     RecallAtMetric(5),
     RecallMetric(),
     Precision(),
+    HasMatchAt(1),
+    HasMatchAt(3),
     MeanRankMetric(),
     MeanLatencyMetric(),
     MaxLatencyMetric(),
