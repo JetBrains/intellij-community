@@ -24,8 +24,10 @@ class TerminalModel(private val textBuffer: TerminalTextBuffer, val styleState: 
   val height: Int
     get() = textBuffer.height
 
+  @Volatile
   var cursorX: Int = 0
     private set
+  @Volatile
   var cursorY: Int = 0
     private set
 
