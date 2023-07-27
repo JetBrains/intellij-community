@@ -259,7 +259,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       !myProject.isDisposed
     }
     if (entered) {
-      if (ApplicationManager.getApplication().isInternal) LOG.info("entered dumb mode")
+      LOG.info("entered dumb mode [${project.name}]")
       runCatching(Runnable { myPublisher.enteredDumbMode() })
     }
   }
@@ -277,7 +277,7 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(private
       !myProject.isDisposed
     }
     if (entered) {
-      if (ApplicationManager.getApplication().isInternal) LOG.info("entered smart mode")
+      LOG.info("entered smart mode [${project.name}]")
       runCatching(Runnable { myPublisher.exitDumbMode() })
     }
   }
