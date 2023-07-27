@@ -374,7 +374,7 @@ public final class WelcomeScreenComponentFactory {
       result.setBorder(JBUI.Borders.empty(0, 0, 15, 24 - horizontalGap));
     }
     else {
-      result.setBorder(JBUI.Borders.empty(10, 0, 5, 8));
+      result.setBorder(JBUI.Borders.empty(0, 0, 5, 8));
     }
     return result;
   }
