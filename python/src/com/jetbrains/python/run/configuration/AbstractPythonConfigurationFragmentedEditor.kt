@@ -75,4 +75,8 @@ abstract class AbstractPythonConfigurationFragmentedEditor<T : AbstractPythonRun
     addSourceRoots.actionHint = PyBundle.message("python.run.configuration.fragments.source.roots.hint")
     fragments.add(addSourceRoots)
   }
+
+  companion object {
+    const val MIN_FRAGMENT_WIDTH = 500
+  }
 }

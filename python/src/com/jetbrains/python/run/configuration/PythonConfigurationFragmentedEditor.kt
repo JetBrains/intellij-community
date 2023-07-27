@@ -2,6 +2,7 @@
 package com.jetbrains.python.run.configuration
 
 import com.intellij.execution.ExecutionBundle
+import com.intellij.execution.ui.CommandLinePanel
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.execution.ui.SettingsEditorFragmentType
 import com.intellij.ide.macro.MacrosDialog
@@ -24,6 +25,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
     fragments.add(PyScriptOrModuleFragment())
 
     val parametersEditor = RawCommandLineEditor()
+    CommandLinePanel.setMinimumWidth(parametersEditor, MIN_FRAGMENT_WIDTH)
     val scriptParametersFragment: SettingsEditorFragment<PythonRunConfiguration, RawCommandLineEditor> = SettingsEditorFragment<PythonRunConfiguration, RawCommandLineEditor>(
       "py.script.parameters",
       PyBundle.message("python.run.configuration.fragments.script.parameters"),
@@ -31,7 +33,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
       parametersEditor, SettingsEditorFragmentType.COMMAND_LINE,
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> field.text = config.scriptParameters },
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> config.scriptParameters = field.text.trim() },
-      { config: PythonRunConfiguration -> config.scriptParameters?.trim()?.isEmpty() == false })
+      { true })
     MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
