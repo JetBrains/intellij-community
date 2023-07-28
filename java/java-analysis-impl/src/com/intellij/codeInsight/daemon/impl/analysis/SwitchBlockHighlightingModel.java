@@ -1295,15 +1295,22 @@ public class SwitchBlockHighlightingModel {
 
     @NotNull
     static Collection<PsiClass> getPermittedClasses(@NotNull PsiClass psiClass) {
-      PsiReferenceList permitsList = psiClass.getPermitsList();
-      if (permitsList == null) {
-        return SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
-          .filter(PsiClass.class)
-          .filter(cls -> cls.isInheritor(psiClass, false))
-          .toList();
-      }
-      return Stream.of(permitsList.getReferencedTypes()).map(type -> type.resolve()).filter(Objects::nonNull)
-        .collect(Collectors.toCollection(LinkedHashSet::new));
+      return CachedValuesManager.getCachedValue(psiClass, () -> {
+        PsiReferenceList permitsList = psiClass.getPermitsList();
+        Collection<PsiClass> results;
+        if (permitsList == null) {
+          results = SyntaxTraverser.psiTraverser(psiClass.getContainingFile())
+            .filter(PsiClass.class)
+            .filter(cls -> cls.isInheritor(psiClass, false))
+            .toList();
+        }
+        else {
+          results = Stream.of(permitsList.getReferencedTypes())
+            .map(type -> type.resolve()).filter(Objects::nonNull)
+            .collect(Collectors.toCollection(LinkedHashSet::new));
+        }
+        return CachedValueProvider.Result.create(results, PsiModificationTracker.MODIFICATION_COUNT);
+      });
     }
 
     @Nullable

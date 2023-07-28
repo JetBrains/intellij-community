@@ -238,15 +238,9 @@ final class PatternHighlightingModel {
       Map<ReduceResultCacheContext, RecordExhaustivenessResult> cacheResult = ConcurrentFactoryMap.createMap(cacheContext -> {
         Set<? extends PatternDescription> patterns = cacheContext.currentPatterns;
         PsiType selectorType = cacheContext.selectorType;
-        class TestCovered implements BiPredicate<Set<? extends PatternDescription>, PsiType> {
-          @Override
-          public boolean test(Set<? extends PatternDescription> descriptions, PsiType type) {
-            return coverSelectorType(descriptions, selectorType);
-          }
-        }
-        TestCovered testCovered = new TestCovered();
         HashMap<ReduceResultCacheContext, ReduceResult> cache = new HashMap<>();
-        LoopReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns), testCovered, cache);
+        LoopReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns),
+                                               (descriptionPatterns, type) -> coverSelectorType(descriptionPatterns, selectorType), cache);
         if (result.stopped()) {
           return RecordExhaustivenessResult.createExhaustiveResult();
         }
@@ -629,6 +623,9 @@ final class PatternHighlightingModel {
                                                                              @NotNull Map<ReduceResultCacheContext, ReduceResult> cache) {
     PsiClass selectorClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
     if (selectorClass == null) {
+      return null;
+    }
+    if (patterns.size() > 100) {
       return null;
     }
     List<PsiType> componentTypes = getComponentTypes(context, selectorType);
