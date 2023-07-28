@@ -826,7 +826,10 @@
 
     "TitlePane": {
       "background": "panel",
-      "Button.preferredSize": "47,28",
+      "Button": {
+        "hoverBackground": "#00000019",
+        "preferredSize": "47,28"
+      },
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
       "infoForeground": "grey01"

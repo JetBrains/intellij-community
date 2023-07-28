@@ -506,11 +506,11 @@
         "background": "#000000",
         "hoverBackground": "#3333FF",
         "pressedBackground": "#3333FF",
-        "transparentHoverBackground": "#FFFFFF40"
+        "transparentHoverBackground": "#3333FF"
       }
     },
 
-    "TitlePane.Button.hoverBackground": "#FFFFFF40",
+    "TitlePane.Button.hoverBackground": "#3333FF",
 
     "Window.border" : "1,1,1,1,E6E6E6",
 
