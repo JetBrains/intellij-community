@@ -105,7 +105,8 @@ class KeywordCompletion(private val languageVersionSettingProvider: LanguageVers
             FINALLY_KEYWORD to "fun foo() { try {\n}\nfinally{\ncaret\n}",
             DO_KEYWORD to "fun foo() { do {\ncaret\n}",
             INIT_KEYWORD to "class C { init {\ncaret\n}",
-            CONSTRUCTOR_KEYWORD to "class C { constructor(caret)"
+            CONSTRUCTOR_KEYWORD to "class C { constructor(caret)",
+            CONTEXT_KEYWORD to "context(caret)",
         )
 
         private val NO_SPACE_AFTER = listOf(
