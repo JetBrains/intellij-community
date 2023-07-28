@@ -2,7 +2,6 @@
 package com.intellij.idea
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.getTraceActivity
 import com.intellij.diagnostic.span
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -25,6 +24,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JFrame
 import javax.swing.WindowConstants
 
@@ -34,6 +34,10 @@ private var PROJECT_FRAME: JFrame? = null
 @Volatile
 private var SPLASH_WINDOW: Splash? = null
 
+// if hideSplash requested before we show splash, we should not try to show splash
+@Volatile
+private var splashJob: AtomicReference<Job> = AtomicReference(CompletableDeferred<Unit>())
+
 internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>) {
   // A splash instance must not be created before base LaF is created.
   // It is important on Linux, where GTK LaF must be initialized (to properly set up the scale factor).
@@ -42,23 +46,52 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
 
   val appInfo = appInfoDeferred.await()
   try {
+    if (splashJob.get().isCancelled) {
+      return
+    }
+
     if (showLastProjectFrameIfAvailable()) {
       return
     }
 
-    val image = span("splash preparation") {
-      assert(SPLASH_WINDOW == null)
-      loadSplashImage(appInfo = appInfo)
-    }
-    // by intention out of withContext(RawSwingDispatcher) - measure "schedule" time
-    span("splash initialization") {
-      withContext(RawSwingDispatcher) {
-        SPLASH_WINDOW = Splash(image, getTraceActivity()!!    )
+    coroutineScope {
+      val oldJob = splashJob.getAndSet(launch {
+        val image = span("splash preparation") {
+          assert(SPLASH_WINDOW == null)
+          loadSplashImage(appInfo = appInfo)
+        }
+
+        if (!isActive) {
+          return@launch
+        }
+
+        // by intention out of withContext(RawSwingDispatcher) - measure "schedule" time
+        span("splash initialization") {
+          withContext(RawSwingDispatcher) {
+            val splash = Splash(image)
+            StartUpMeasurer.addInstantEvent("splash shown")
+            SPLASH_WINDOW = splash
+            span("splash set visible") {
+              splash.isVisible = true
+            }
+            splash.toFront()
+          }
+        }
+      })
+      if (oldJob.isCancelled) {
+        splashJob.get().cancel()
       }
     }
   }
-  catch (e: CancellationException) {
-    throw e
+  catch (ignore: CancellationException) {
+    val window = SPLASH_WINDOW
+    if (window != null) {
+      SPLASH_WINDOW = null
+      withContext(NonCancellable + RawSwingDispatcher) {
+        window.isVisible = false
+        window.dispose()
+      }
+    }
   }
   catch (e: Throwable) {
     logger<StartupUiUtil>().warn("Cannot show splash", e)
@@ -116,6 +149,7 @@ internal fun getAndUnsetSplashProjectFrame(): JFrame? {
 }
 
 fun hideSplashBeforeShow(window: Window) {
+  splashJob.get().cancel()
   if (SPLASH_WINDOW != null || PROJECT_FRAME != null) {
     window.addWindowListener(object : WindowAdapter() {
       override fun windowOpened(e: WindowEvent) {
@@ -127,6 +161,8 @@ fun hideSplashBeforeShow(window: Window) {
 }
 
 fun hideSplash() {
+  splashJob.get().cancel()
+
   var window: Window? = SPLASH_WINDOW
   if (window == null) {
     window = PROJECT_FRAME ?: return

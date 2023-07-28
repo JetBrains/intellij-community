@@ -3,8 +3,6 @@
 
 package com.intellij.ui
 
-import com.intellij.diagnostic.Activity
-import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -34,7 +32,7 @@ import java.nio.file.Path
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information, see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
  */
-class Splash(private val image: BufferedImage, parentActivity: Activity?) :
+class Splash(private val image: BufferedImage) :
   Dialog(null as Frame?, "splash" /* not visible, but available through window properties on Linux */) {
   init {
     isUndecorated = true
@@ -46,12 +44,6 @@ class Splash(private val image: BufferedImage, parentActivity: Activity?) :
     val height = image.height
     size = Dimension(width, height)
     setLocationInTheCenterOfScreen(this)
-
-    StartUpMeasurer.addInstantEvent("splash shown")
-    val activity = StartUpMeasurer.startActivity("splash set visible", parentActivity)
-    isVisible = true
-    activity.end()
-    toFront()
   }
 
   override fun paint(g: Graphics) {
