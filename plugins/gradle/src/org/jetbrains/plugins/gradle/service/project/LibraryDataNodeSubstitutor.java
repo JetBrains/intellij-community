@@ -37,7 +37,7 @@ public class LibraryDataNodeSubstitutor {
   private @Nullable final GradleVersion gradleVersion;
   private @NotNull final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap;
   private @NotNull final Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap;
-  private @NotNull final Map<String, String> artifactsMap;
+  private @NotNull final ArtifactMappingService artifactsMap;
 
   public LibraryDataNodeSubstitutor(@NotNull ProjectResolverContext context,
                                     @Nullable File gradleUserHomeDir,
@@ -45,7 +45,7 @@ public class LibraryDataNodeSubstitutor {
                                     @Nullable GradleVersion gradleVersion,
                                     @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
                                     @NotNull Map<String, Pair<String, ExternalSystemSourceType>> moduleOutputsMap,
-                                    @NotNull Map<String, String> artifactsMap) {
+                                    @NotNull ArtifactMappingService artifactsMap) {
     resolverContext = context;
     this.gradleUserHomeDir = gradleUserHomeDir;
     this.gradleHomeDir = gradleHomeDir;
