@@ -270,7 +270,7 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
         int x2 = getWidth() - JBUIScale.scale(16);
         int y = 0;
 
-        g.setColor(new JBColor(0xD0D0D0, 0x717375));
+        g.setColor(JBColor.namedColor("Notification.WelcomeScreen.separatorColor", new JBColor(0xD0D0D0, 0x717375)));
 
         for (int i = 0; i < count; i++) {
           Dimension size = getComponent(i).getPreferredSize();

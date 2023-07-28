@@ -83,7 +83,8 @@
         "background": "Grey13",
         "innerBorderColor": "Grey13",
         "foreground": "Grey6"
-      }
+      },
+      "WelcomeScreen.separatorColor": "#EBECF0"
     },
 
     "RunWidget" : {

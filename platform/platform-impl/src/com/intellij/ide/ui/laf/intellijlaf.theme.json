@@ -467,7 +467,9 @@
         "warningBackground": "#f9f78e",
         "warningBorderColor": "#bab824",
         "warningForeground": "foreground"
-      }
+      },
+
+      "WelcomeScreen.separatorColor": "#d1d1d1"
     },
 
 

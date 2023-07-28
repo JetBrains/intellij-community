@@ -382,7 +382,8 @@
         "warningBorderColor": "Yellow2",
         "informativeBackground": "Green1",
         "informativeBorderColor": "Green2"
-      }
+      },
+      "WelcomeScreen.separatorColor": "#4E5157"
     },
 
     "NotificationsToolwindow": {
