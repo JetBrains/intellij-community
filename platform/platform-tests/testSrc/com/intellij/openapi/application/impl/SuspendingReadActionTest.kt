@@ -355,12 +355,12 @@ class BlockingSuspendingReadActionTest : SuspendingReadActionTest() {
     return constrainedReadActionBlocking(*constraints, action = action)
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @RepeatedTest(REPETITIONS)
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     readActionBlocking {
-      val readLoopJob = coroutineJob.children.single()
-      assertSame(readLoopJob, Cancellation.currentJob())
+      assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
     }
   }
 

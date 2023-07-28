@@ -4,7 +4,9 @@ package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ReadAction.CannotReadException
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.progress.*
+import com.intellij.openapi.progress.CeProcessCanceledException
+import com.intellij.openapi.progress.blockingContextInner
+import com.intellij.openapi.progress.prepareThreadContext
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -19,16 +21,13 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   catch (readCe: ReadCancellationException) {
     throw CannotReadException(readCe)
   }
-  catch (pceCe: PceCancellationException) {
-    throw pceCe.cause
-  }
 }
 
 internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: () -> X): X {
   // A child Job is started to be externally cancellable by a write action without cancelling the current Job.
   val readJob = Job(parent = ctx[Job])
   return try {
-    blockingContext(ctx + readJob) {
+    blockingContextInner(ctx + readJob) {
       var resultRef: Value<X>? = null
       val application = ApplicationManagerEx.getApplicationEx()
       runActionAndCancelBeforeWrite(application, readJob::cancelReadJob) {
@@ -47,17 +46,13 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
       result.value
     }
   }
-  catch (ce: PceCancellationException) {
+  catch (cePce: CeProcessCanceledException) { // may be thrown by ProgressManager.checkCanceled() inside [action]
+    val ce = cePce.cause
     readJob.cancel(ce)
-    val pce = ce.cause
-    if (pce.cause is ReadCancellationException) {
-      throw ReadCancellationException(pce)
+    if (ce is ReadCancellationException) {
+      throw ReadCancellationException(cePce)
     }
-    throw ce
-  }
-  catch (ce: CancellationException) {
-    readJob.cancel(ce)
-    throw ce
+    throw cePce
   }
   catch (e: Throwable) {
     // `job.completeExceptionally(e)` will fail parent Job,

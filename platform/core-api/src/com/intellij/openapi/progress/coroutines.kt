@@ -195,8 +195,14 @@ fun <T> indicatorRunBlockingCancellable(indicator: ProgressIndicator, action: su
  * @see com.intellij.concurrency.currentThreadContext
  */
 suspend fun <T> blockingContext(action: () -> T): T {
-  val coroutineContext = coroutineContext
-  return blockingContext(coroutineContext, action)
+  return try {
+    coroutineScope {
+      blockingContextInner(coroutineContext, action)
+    }
+  }
+  catch (pce: ProcessCanceledException) {
+    throw PceCancellationException(pce)
+  }
 }
 
 /**
@@ -236,20 +242,33 @@ suspend fun <T> blockingContext(action: () -> T): T {
  * @see [blockingContext]
  * @see [coroutineScope]
  */
-suspend fun <T> blockingContextScope(action: () -> T): T = coroutineScope {
-  blockingContext(coroutineContext + BlockingJob(coroutineContext.job), action)
+suspend fun <T> blockingContextScope(action: () -> T): T {
+  return try {
+    coroutineScope {
+      val coroutineContext = coroutineContext
+      blockingContextInner(coroutineContext + BlockingJob(coroutineContext.job), action)
+    }
+  }
+  catch (pce: ProcessCanceledException) {
+    throw PceCancellationException(pce)
+  }
 }
 
 @Internal
 fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
+  try {
+    return blockingContextInner(currentContext, action)
+  }
+  catch (pce: ProcessCanceledException) {
+    throw PceCancellationException(pce)
+  }
+}
+
+@Internal
+fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
   val context = currentContext.minusKey(ContinuationInterceptor)
   return installThreadContext(context).use {
-    try {
-      action()
-    }
-    catch (pce: ProcessCanceledException) {
-      throw PceCancellationException(pce)
-    }
+    action()
   }
 }
 

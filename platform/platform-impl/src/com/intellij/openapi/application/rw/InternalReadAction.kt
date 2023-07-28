@@ -6,6 +6,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.progress.PceCancellationException
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.blockingContext
 import kotlinx.coroutines.*
 import kotlin.coroutines.coroutineContext
@@ -95,6 +97,9 @@ internal class InternalReadAction<T>(
   }
   catch (readCe: ReadCancellationException) {
     ReadResult.WritePending
+  }
+  catch (pce: ProcessCanceledException) {
+    throw PceCancellationException(pce)
   }
 
   private fun insideReadAction(): ReadResult<T> {

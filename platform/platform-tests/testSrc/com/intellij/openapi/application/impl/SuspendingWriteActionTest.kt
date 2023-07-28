@@ -82,12 +82,12 @@ class SuspendingWriteActionTest {
     }
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   @Test
   fun `current job`(): Unit = timeoutRunBlocking {
     val coroutineJob = coroutineContext.job
     writeAction {
-      val writeJob = coroutineJob.children.single()
-      Assertions.assertSame(writeJob, Cancellation.currentJob())
+      Assertions.assertSame(coroutineJob, Cancellation.currentJob()?.parent?.parent)
     }
   }
 }

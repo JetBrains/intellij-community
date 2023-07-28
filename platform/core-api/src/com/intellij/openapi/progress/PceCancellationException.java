@@ -14,7 +14,7 @@ import java.util.concurrent.CancellationException;
 @Internal
 public final class PceCancellationException extends CancellationException {
 
-  PceCancellationException(@NotNull ProcessCanceledException pce) {
+  public PceCancellationException(@NotNull ProcessCanceledException pce) {
     initCause(pce);
   }
 
