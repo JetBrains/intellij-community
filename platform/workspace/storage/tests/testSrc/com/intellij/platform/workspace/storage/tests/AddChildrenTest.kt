@@ -2,8 +2,8 @@
 
 package com.intellij.platform.workspace.storage.tests
 
-import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.testEntities.entities.*
 import junit.framework.TestCase.*
 import org.junit.Test
 
@@ -116,6 +116,8 @@ class AddChildrenTest {
     builder.modifyEntity(right) {
       this.children = listOf(MiddleEntity("prop", MySource))
     }
+    
+    assertEquals(right, builder.entities(MiddleEntity::class.java).single().parentEntity)
   }
 
   @Test

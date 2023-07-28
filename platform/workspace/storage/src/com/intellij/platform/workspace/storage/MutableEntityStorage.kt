@@ -15,6 +15,68 @@ import org.jetbrains.annotations.NonNls
  * 
  * Instances of this interface are not thread safe.
  *
+ * ## Adding, modifying and removing entities
+ * 
+ * In order to add a new entity to the storage, create it by calling the companion object of its interface and then pass it to [addEntity]
+ * function:
+ * ```kotlin
+ * //mandatory properties are passed as parameters
+ * val module = ModuleEntity(moduleName, dependencies, entitySource) { 
+ *   //optional properties can be initialized in the lambda passed as the last parameter
+ *   type = ModuleTypeId.JAVA_MODULE
+ * }
+ * ...
+ * WorkspaceModel.getInstance(project).updateProjectModel("Add module") { builder ->
+ *   builder.addEntity(module)
+ * }  
+ * ```
+ * You may first prepare a whole tree of entities, and then add the root one to the storage, [addEntity] will automatically add all the
+ * children.
+ * 
+ * In order to modify or remove an entity, you first need to find its instance in this instance of [MutableEntityStorage]. You can do this
+ * by [resolving][SymbolicEntityId.resolve] its [SymbolicEntityId], or by [resolving][EntityReference.resolve] an [EntityReference], or
+ * iterating by children of another entity:
+ * ```
+ * WorkspaceModel.getInstance(project).updateProjectModel("Update module") { builder ->
+ *   val module = ModuleId(moduleName).resolve(builder) ?: ...
+ *   val groupPath = module.groupPath ?: ...
+ *   builder.removeEntity(groupPath)
+ *   //a special extension function 'modifyEntity' is generated for each entity type
+ *   builder.modifyEntity(module) {
+ *     name = prefix + name
+ *   }
+ * }
+ * ```
+ *
+ * ## Adding and removing child entities
+ * 
+ * There are two equivalent ways to add a child entity to an existing parent entity:
+ * * specify parent when creating the child, and add the child via [addEntity]: 
+ * ```
+ * val contentRoot = ContentRootEntity(url, emptyList(), entitySource) {
+ *   this.module = module
+ * }
+ * builder.addEntity(contentRoot)
+ * ```
+ * * call [modifyEntity] on the parent entity and modify its property to include the new child:
+ * ```
+ * val contentRoot = ContentRootEntity(url, emptyList(), entitySource)
+ * builder.modifyEntity(module) {
+ *   contentRoots = contentRoots + contentRoot
+ * }
+ * ```
+ * 
+ * In order to remove a child entity, it's enough to call [removeEntity] for it, the reference in its parent will be update automatically.
+ * Also, if the reference to the parent is declared as non-null in the child interface, it's enough to modify reference to the children
+ * in the parent entity:
+ * ```
+ * builder.modifyEntity(module) {
+ *   contentRoots = contentRoots.filter { it.url != contentUrlToRemove }
+ * }
+ * ```
+ * If you do that for a child with nullable reference to the parent, the child will be detached from the parent but won't be removed from
+ * the storage.
+ * 
  * ## Batch operations
  * Besides operation with individual entities, [MutableEntityStorage] supports two batch operations: [addDiff] and [replaceBySource].
  * 
