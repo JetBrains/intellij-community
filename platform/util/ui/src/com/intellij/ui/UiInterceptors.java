@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,18 @@ public final class UiInterceptors {
     ourInterceptors.offer(interceptor);
   }
 
+  /**
+   * Register interceptor to intercept next shown UI component, if the component won't be caught
+   * the interceptor will be removed on parent disposable termination and no error will be produced
+   *
+   * @param parent on disposing, interceptor will be removed from collection
+   * @param interceptor interceptor to register
+   */
+  @TestOnly
+  public static void registerPossible(@NotNull Disposable parent, @NotNull UiInterceptor<?> interceptor) {
+    ourInterceptors.offer(interceptor);
+    Disposer.register(parent, () -> ourInterceptors.remove(interceptor));
+  }
 
   public static void registerPersistent(@NotNull Disposable parent, @NotNull PersistentUiInterceptor<?> interceptor) {
     ContainerUtil.add(interceptor, ourPersistentInterceptors, parent);
