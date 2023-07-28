@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.ExecutionBundle;
@@ -243,7 +243,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
   }
 
   private void addConfiguration(RunnerAndConfigurationSettings configuration) {
-    if (!ProjectStartupRunner.canBeRun(configuration)) {
+    if (!ProjectStartupRunnerKt.canBeRun(configuration)) {
       final String message = ExecutionBundle.message("settings.project.startup.warning", configuration.getName());
       final Balloon balloon = JBPopupFactory.getInstance()
         .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null)
@@ -272,7 +272,7 @@ final class ProjectStartupConfigurable implements SearchableConfigurable, Config
     final Set<RunnerAndConfigurationSettings> existing = new HashSet<>(myModel.getAllConfigurations());
     for (ChooseRunConfigurationPopup.ItemWrapper<?> setting : allSettings) {
       if (setting.getValue() instanceof RunnerAndConfigurationSettings settings) {
-        if (!settings.isTemporary() && ProjectStartupRunner.canBeRun(settings) && !existing.contains(settings)) {
+        if (!settings.isTemporary() && ProjectStartupRunnerKt.canBeRun(settings) && !existing.contains(settings)) {
           wrappers.add(setting);
         }
       }
