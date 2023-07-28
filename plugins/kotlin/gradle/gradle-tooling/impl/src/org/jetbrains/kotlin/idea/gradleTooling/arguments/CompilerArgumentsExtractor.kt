@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import java.io.File
 import java.lang.reflect.Method
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaField
 
 object CompilerArgumentsExtractor {
     private const val ARGUMENT_ANNOTATION_CLASS = "org.jetbrains.kotlin.cli.common.arguments.Argument"
@@ -48,11 +49,16 @@ object CompilerArgumentsExtractor {
         val compilerArgumentsClassName = compilerArguments::class.java.name
         val defaultArgs = compilerArguments::class.java.getConstructor().newInstance()
         val compilerArgumentsPropertiesToProcess = compilerArguments.javaClass.kotlin.memberProperties
-            .filter { prop ->
-                prop.name in EXPLICIT_DEFAULT_OPTIONS || prop.get(compilerArguments) != prop.get(defaultArgs) && prop.annotations.any {
+          .filter { prop ->
+              prop.name in EXPLICIT_DEFAULT_OPTIONS || prop.get(compilerArguments) != prop.get(defaultArgs)
+              && (
+                prop.javaField?.annotations?.any {
                     (it.javaClass.getMethodOrNull("annotationType")?.invoke(it) as? Class<*>)?.name in ARGUMENT_ANNOTATION_CLASSES
-                }
-            }
+                } ?: false
+                || prop.annotations.any {
+                    (it.javaClass.getMethodOrNull("annotationType")?.invoke(it) as? Class<*>)?.name in ARGUMENT_ANNOTATION_CLASSES
+                })
+          }
 
         val singleArguments: Map<String, String?>
         val classpathParts: Array<String>
