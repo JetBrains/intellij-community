@@ -7,7 +7,7 @@ import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellOption
 
-class CommandTreeBuilder private constructor(
+internal class CommandTreeBuilder private constructor(
   private val suggestionsProvider: CommandTreeSuggestionsProvider,
   private val commandSpecManager: CommandSpecManager,
   private val arguments: List<String>

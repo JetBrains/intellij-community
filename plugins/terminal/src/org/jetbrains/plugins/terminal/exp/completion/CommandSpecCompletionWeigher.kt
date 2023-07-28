@@ -4,8 +4,8 @@ package org.jetbrains.plugins.terminal.exp.completion
 import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.CompletionWeigher
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.terminal.completion.CommandTreeSuggestionsProvider.Companion.isFilePath
-import com.intellij.terminal.completion.CommandTreeSuggestionsProvider.Companion.isFolder
+import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
+import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
 import com.intellij.terminal.completion.ShellArgumentSuggestion
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellCommand

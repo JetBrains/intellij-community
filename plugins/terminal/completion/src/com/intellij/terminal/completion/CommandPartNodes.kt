@@ -6,7 +6,7 @@ import org.jetbrains.terminal.completion.ShellCommand
 import org.jetbrains.terminal.completion.ShellCommandParserDirectives
 import org.jetbrains.terminal.completion.ShellOption
 
-abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
+internal abstract class CommandPartNode<T>(val text: String, open val spec: T?, val parent: CommandPartNode<*>?) {
   val children: MutableList<CommandPartNode<*>> = mutableListOf()
 
   override fun toString(): String {
@@ -14,7 +14,7 @@ abstract class CommandPartNode<T>(val text: String, open val spec: T?, val paren
   }
 }
 
-class SubcommandNode(text: String,
+internal class SubcommandNode(text: String,
                               override val spec: ShellCommand,
                               parent: CommandPartNode<*>?) : CommandPartNode<ShellCommand>(text, spec, parent) {
   fun getMergedParserDirectives(): ShellCommandParserDirectives {
@@ -37,12 +37,12 @@ class SubcommandNode(text: String,
   }
 }
 
-class OptionNode(text: String,
+internal class OptionNode(text: String,
                           override val spec: ShellOption,
                           parent: CommandPartNode<*>?) : CommandPartNode<ShellOption>(text, spec, parent)
 
-class ArgumentNode(text: String,
+internal class ArgumentNode(text: String,
                             override val spec: ShellArgument,
                             parent: CommandPartNode<*>?) : CommandPartNode<ShellArgument>(text, spec, parent)
 
-class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)
+internal class UnknownNode(text: String, parent: CommandPartNode<*>?) : CommandPartNode<Any>(text, null, parent)

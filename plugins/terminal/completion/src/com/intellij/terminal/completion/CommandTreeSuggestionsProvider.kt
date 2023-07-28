@@ -1,12 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.terminal.completion
 
+import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFilePath
+import com.intellij.terminal.completion.CommandSpecCompletionUtil.isFolder
 import org.jetbrains.terminal.completion.BaseSuggestion
 import org.jetbrains.terminal.completion.ShellArgument
 import org.jetbrains.terminal.completion.ShellOption
 import org.jetbrains.terminal.completion.ShellSuggestion
 
-class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
+internal class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRuntimeDataProvider) {
   suspend fun getSuggestionsOfNext(node: CommandPartNode<*>, nextNodeText: String): List<BaseSuggestion> {
     return when (node) {
       is SubcommandNode -> getSuggestionsForSubcommand(node, nextNodeText)
@@ -133,15 +135,5 @@ class CommandTreeSuggestionsProvider(private val runtimeDataProvider: ShellRunti
       // add an empty choice to be able to handle the case when the folder is chosen
       .let { if (basePath != ".") it.plus(ShellArgumentSuggestion(ShellSuggestion(names = listOf("")), arg)) else it }
       .toList()
-  }
-
-  companion object {
-    fun ShellArgument.isFilePath(): Boolean = isWithTemplate("filepaths")
-
-    fun ShellArgument.isFolder(): Boolean = isWithTemplate("folders")
-
-    private fun ShellArgument.isWithTemplate(template: String): Boolean {
-      return templates.contains(template) || generators.any { it.templates.contains(template) }
-    }
   }
 }
