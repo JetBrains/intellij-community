@@ -187,7 +187,7 @@ final class PatternHighlightingModel {
     if (type == null) {
       return null;
     }
-    if (pattern instanceof PsiTypeTestPattern) {
+    if (pattern instanceof PsiTypeTestPattern || pattern instanceof PsiUnnamedPattern) {
       return new PatternTypeTestDescription(type);
     }
     else if (pattern instanceof PsiDeconstructionPattern deconstructionPattern) {

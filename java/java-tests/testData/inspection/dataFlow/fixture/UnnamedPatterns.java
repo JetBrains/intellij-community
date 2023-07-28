@@ -11,4 +11,15 @@ class Test {
       return;
     }
   }
+
+  void testExhaustiveness(I a) {
+    boolean r3 = switch (a) {
+      case R1(_) -> true;
+      case R2(_) -> false;
+    };
+  }
+
+  sealed interface I {};
+  record R1(int n1) implements I {};
+  record R2(int n1) implements I {};
 }
