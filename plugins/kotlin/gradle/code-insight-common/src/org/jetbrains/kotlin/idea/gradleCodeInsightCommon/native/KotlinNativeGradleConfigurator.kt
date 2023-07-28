@@ -22,9 +22,6 @@ open class KotlinNativeGradleConfigurator : KotlinWithGradleConfigurator() {
 
         return ConfigureKotlinStatus.NON_APPLICABLE
     }
-
-
-
     override fun isApplicable(module: Module): Boolean {
         if (!super.isApplicable(module)) return false
         return module.toModuleGroup().sourceRootModules.any(::hasKotlinNativeRuntimeInScope)

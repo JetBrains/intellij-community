@@ -54,7 +54,9 @@ interface KotlinProjectConfigurator {
     /**
      * Automatically configures the module specified in the [settings] previously calculated using [calculateAutoConfigSettings]
      */
-    fun runAutoConfig(settings: AutoConfigurationSettings) { }
+    fun runAutoConfig(settings: AutoConfigurationSettings) {
+        throw NotImplementedError("Auto-configuration is not implemented for this configurator")
+    }
 
     /**
      * Returns true if the [module] could be configured by this configurator, or is already configured.

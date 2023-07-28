@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 
-
 @Service(Service.Level.PROJECT)
 internal class KotlinConfiguratorGradleSyncStateHolder {
     @Volatile
@@ -28,7 +27,6 @@ internal class KotlinConfiguratorGradleSyncStateHolder {
 internal fun Project.isGradleSyncInProgress(): Boolean {
     return KotlinConfiguratorGradleSyncStateHolder.getInstance(this).gradleSyncInProgress
 }
-
 
 class KotlinConfiguratorExternalSystemSyncListener : ExternalSystemTaskNotificationListenerAdapter() {
     override fun onStart(id: ExternalSystemTaskId, workingDir: String) {

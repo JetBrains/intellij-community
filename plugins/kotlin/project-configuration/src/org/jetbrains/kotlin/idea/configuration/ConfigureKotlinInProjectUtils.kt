@@ -509,10 +509,15 @@ private fun Project.getTopLevelBuildScriptFile(): PsiFile? {
 typealias ModuleName = String
 typealias TargetJvm = String?
 
-fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
+class ModuleJvmTargetIncompatibilityResults(
+    val modulesByIncompatibleJvmTarget: Map<String, List<String>>,
+    val moduleJvmTargets: Map<ModuleName, TargetJvm>
+)
+
+fun checkModuleJvmTargetCompatibility(
     modulesToConfigure: List<Module>,
     kotlinVersion: IdeKotlinVersion
-): Pair<Map<String, List<String>>, Map<ModuleName, TargetJvm>> {
+): ModuleJvmTargetIncompatibilityResults {
     val modulesAndJvmTargets = mutableMapOf<ModuleName, TargetJvm>()
     val jvmModulesTargetingUnsupportedJvm = mutableMapOf<String, MutableList<String>>()
     for (module in modulesToConfigure) {
@@ -525,7 +530,7 @@ fun getModulesTargetingUnsupportedJvmAndTargetsForAllModules(
             }
         }
     }
-    return Pair(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
+    return ModuleJvmTargetIncompatibilityResults(jvmModulesTargetingUnsupportedJvm, modulesAndJvmTargets)
 }
 
 fun getJvmTargetNumber(jvmTarget: String) = jvmTarget.removePrefix("1.").toIntOrNull()

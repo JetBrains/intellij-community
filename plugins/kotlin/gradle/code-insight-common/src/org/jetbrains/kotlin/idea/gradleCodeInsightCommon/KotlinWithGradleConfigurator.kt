@@ -169,11 +169,9 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             listOf(forcedKotlinVersion)
         } else allConfigurableKotlinVersions
 
-        val remainingKotlinVersions = possibleKotlinVersionsToUse.filter {
-            baseModule.kotlinSupportsJvmTarget(it)
-        }.filter {
-            KotlinGradleCompatibilityStore.kotlinVersionSupportsGradle(it, gradleVersion)
-        }
+        val remainingKotlinVersions = possibleKotlinVersionsToUse
+            .filter { baseModule.kotlinSupportsJvmTarget(it) }
+            .filter { KotlinGradleCompatibilityStore.kotlinVersionSupportsGradle(it, gradleVersion) }
 
         val maxKotlinVersion = remainingKotlinVersions.maxOrNull() ?: return null
 
@@ -188,7 +186,7 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val module = settings.module
         val project = module.project
         val moduleVersions = getKotlinVersionsAndModules(project, this).first
-        val jvmTargets = getModulesTargetingUnsupportedJvmAndTargetsForAllModules(listOf(module), settings.kotlinVersion).second
+        val jvmTargets = checkModuleJvmTargetCompatibility(listOf(module), settings.kotlinVersion).moduleJvmTargets
 
         val result = configureSilently(
             module.project,
@@ -601,8 +599,6 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             )
         }
 
-        fun isAutoConfigurationEnabled(): Boolean {
-            return Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", false)
-        }
+        fun isAutoConfigurationEnabled(): Boolean = Registry.`is`("kotlin.configuration.gradle.autoConfig.enabled", false)
     }
 }

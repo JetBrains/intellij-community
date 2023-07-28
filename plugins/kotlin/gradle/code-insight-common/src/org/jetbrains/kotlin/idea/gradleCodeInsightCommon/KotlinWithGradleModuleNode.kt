@@ -21,23 +21,21 @@ internal class KotlinWithGradleModuleNode(
     internal val definedKotlinVersion: IdeKotlinVersion? = null
 ) {
 
-    private val _children = mutableListOf<KotlinWithGradleModuleNode>()
+    private val _children: MutableList<KotlinWithGradleModuleNode> = mutableListOf()
 
-    val children
+    val children: List<KotlinWithGradleModuleNode>
         get() = _children
 
     // All versions defined anywhere as a submodule below this module, even transitively
-    private fun definedSubmoduleKotlinVersions(kotlinVersions: MutableList<IdeKotlinVersion> = mutableListOf()): List<IdeKotlinVersion> {
+    private fun definedSubmoduleKotlinVersions(kotlinVersions: MutableSet<IdeKotlinVersion> = mutableSetOf()): Set<IdeKotlinVersion> {
         definedKotlinVersion?.let {
-            if (!kotlinVersions.contains(it)) {
-                kotlinVersions.add(it)
-            }
+            kotlinVersions.add(it)
         }
         children.forEach { it.definedSubmoduleKotlinVersions(kotlinVersions) }
         return kotlinVersions
     }
 
-    private data class KotlinVersionResult(val conflict: Boolean, val version: IdeKotlinVersion?)
+    private data class KotlinVersionResult(val conflict: Boolean, val forcedVersion: IdeKotlinVersion?)
 
     private val possibleKotlinVersion: KotlinVersionResult by lazy {
         val inheritedVersion = definedKotlinVersion ?: parent?.getForcedKotlinVersion()
@@ -66,7 +64,7 @@ internal class KotlinWithGradleModuleNode(
      * If there is no restriction, or there is a version conflict (see [hasKotlinVersionConflict]) this function returns null
      */
     fun getForcedKotlinVersion(): IdeKotlinVersion? {
-        return possibleKotlinVersion.version
+        return possibleKotlinVersion.forcedVersion
     }
 
     fun addChildren(children: List<KotlinWithGradleModuleNode>) {

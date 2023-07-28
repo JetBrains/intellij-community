@@ -109,11 +109,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
         chooseModulePanel = new ChooseModulePanel(project, configurator, excludeModules);
         chooseModulesPanelPlace.add(chooseModulePanel.getContentPane(), BorderLayout.CENTER);
 
-        var jvmTargets =
-                getModulesTargetingUnsupportedJvmAndTargetsForAllModules(chooseModulePanel.getModules(),
-                                                                         IdeKotlinVersion.get(DEFAULT_KOTLIN_VERSION));
-        jvmModulesTargetingUnsupportedJvm = jvmTargets.getFirst();
-        modulesAndJvmTargets = jvmTargets.getSecond();
+        var compatibility = checkModuleJvmTargetCompatibility(chooseModulePanel.getModules(), IdeKotlinVersion.get(DEFAULT_KOTLIN_VERSION));
+        jvmModulesTargetingUnsupportedJvm = compatibility.getModulesByIncompatibleJvmTarget();
+        modulesAndJvmTargets = compatibility.getModuleJvmTargets();
 
         rootModule = getRootModule(project);
 

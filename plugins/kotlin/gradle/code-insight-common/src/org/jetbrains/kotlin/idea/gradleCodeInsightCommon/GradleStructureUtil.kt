@@ -24,7 +24,6 @@ internal fun Project.buildGradleModuleHierarchy(rootModule: Module): GradleModul
     val rootModuleRoot = moduleRoots.firstOrNull { it.baseModule == rootModule } ?: return null
 
     val grouper = ModuleGrouper.instanceFor(this)
-    grouper.getAllModules()
 
     val moduleRootGroups = moduleRoots.groupBy { grouper.getGroupPath(it.baseModule) }
     val currentPath = mutableListOf<String>()
@@ -34,7 +33,9 @@ internal fun Project.buildGradleModuleHierarchy(rootModule: Module): GradleModul
         currentPath.add(shortenedName)
 
         val children = moduleRootGroups[currentPath]?.map {
-            buildHierarchyRecursively(it)
+            val hierarchy = buildHierarchyRecursively(it)
+            currentPath.removeLast()
+            hierarchy
         } ?: emptyList()
 
         return GradleModuleTreeNode(currentNode, children)
@@ -42,5 +43,3 @@ internal fun Project.buildGradleModuleHierarchy(rootModule: Module): GradleModul
 
     return buildHierarchyRecursively(rootModuleRoot)
 }
-
-

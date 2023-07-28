@@ -21,7 +21,7 @@
 
     <registryKey
             key="kotlin.configuration.gradle.autoConfig.enabled"
-            description="Whether auto-configuration is enabled for gradle projects when adding a Kotlin file"
+            description="Whether auto-configuration is enabled for Gradle projects when adding a Kotlin file"
             defaultValue="false"
             restartRequired="false"/>
   </extensions>
