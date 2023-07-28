@@ -5,8 +5,19 @@ version = obtainVersion()
 
 fun obtainVersion(): String {
   val base = properties("pluginVersion")
-  val suffix = findProperty("versionSuffix") ?: return base
-  return "$base-$suffix"
+  val suffix = findProperty("versionSuffix")
+  val metadata = findProperty("versionMetadata")
+  return buildString {
+    append(base)
+    if (suffix != null) {
+      append("-")
+      append(suffix)
+    }
+    if (metadata != null) {
+      append("+")
+      append(metadata)
+    }
+  }
 }
 
 subprojects {
