@@ -30,10 +30,12 @@ public class JpsFileLoggerFactory implements Factory {
   @Override
   public Logger getLoggerInstance(@NotNull String category) {
     var logger = java.util.logging.Logger.getLogger(category);
+    var level = isDebugLevel(category) ? Level.FINE : Level.INFO;
     JulLogger.clearHandlers(logger);
+    myAppender.setLevel(level);
     logger.addHandler(myAppender);
     logger.setUseParentHandlers(false);
-    logger.setLevel(isDebugLevel(category) ? Level.FINE : Level.INFO);
+    logger.setLevel(level);
     return new JulLogger(logger);
   }
 

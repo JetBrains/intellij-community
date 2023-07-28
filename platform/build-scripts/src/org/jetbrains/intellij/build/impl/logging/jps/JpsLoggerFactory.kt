@@ -9,6 +9,7 @@ import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.structure.base.utils.createParentDirs
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.jps.builders.BuildTarget
 import org.jetbrains.jps.incremental.MessageHandler
@@ -48,9 +49,10 @@ fun withJpsLogging(context: CompilationContext, action: (JpsMessageHandler) -> U
   }
 }
 
-private class JpsLoggerFactory : Logger.Factory {
+@VisibleForTesting
+class JpsLoggerFactory : Logger.Factory {
   companion object {
-    lateinit var messageHandler: JpsMessageHandler
+    var messageHandler: JpsMessageHandler? = null
     var fileLoggerFactory: JpsFileLoggerFactory? = null
   }
 
@@ -169,25 +171,31 @@ private class JpsLogger(category: String?, val fileLogger: Logger?) : DefaultLog
     const val COMPILER_NAME = "build runner"
   }
 
+  init {
+    require(messageHandler != null || fileLogger != null) {
+      "Jps logging is not initialized"
+    }
+  }
+
   val messageHandler get() = JpsLoggerFactory.messageHandler
 
   override fun error(@Nls message: String?, t: Throwable?, vararg details: String) {
     if (t == null) {
-      messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
+      messageHandler?.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message))
     }
     else {
-      messageHandler.processMessage(CompilerMessage.createInternalBuilderError(COMPILER_NAME, t))
+      messageHandler?.processMessage(CompilerMessage.createInternalBuilderError(COMPILER_NAME, t))
     }
     fileLogger?.error(message, t, *details)
   }
 
   override fun warn(message: String?, t: Throwable?) {
-    messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
+    messageHandler?.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message))
     fileLogger?.warn(message, t)
   }
 
   override fun info(message: String?, t: Throwable?) {
-    messageHandler.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message + (t?.message?.let { ": $it" } ?: "")))
+    messageHandler?.processMessage(CompilerMessage(COMPILER_NAME, BuildMessage.Kind.INFO, message + (t?.message?.let { ": $it" } ?: "")))
     fileLogger?.info(message, t)
   }
 
