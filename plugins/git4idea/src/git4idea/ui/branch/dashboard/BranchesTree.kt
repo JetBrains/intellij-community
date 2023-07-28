@@ -10,7 +10,6 @@ import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.impl.ActionUpdateEdtExecutor.computeOnEdt
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
@@ -500,7 +499,8 @@ private val BRANCH_TREE_TRANSFER_HANDLER = object : TransferHandler() {
   override fun getSourceActions(c: JComponent) = COPY_OR_MOVE
 }
 
-@State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)], reportStatistic = false)
+@State(name = "BranchesTreeState", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)],
+       reportStatistic = false, getStateRequiresEdt = true)
 @Service(Service.Level.PROJECT)
 internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   private var treeStateProvider: BranchesTreeStateProvider? = null
@@ -509,7 +509,7 @@ internal class BranchesTreeStateHolder : PersistentStateComponent<TreeState> {
   fun getInitialTreeState(): TreeState? = state
 
   override fun getState(): TreeState? {
-    return computeOnEdt { treeStateProvider?.getState() ?: _treeState }
+    return treeStateProvider?.getState() ?: _treeState
   }
 
   override fun loadState(state: TreeState) {
