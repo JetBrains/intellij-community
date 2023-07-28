@@ -43,4 +43,8 @@ private class UnscaledGapsYImpl(private val _top: Int, private val _bottom: Int)
   override fun copy(top: Int, bottom: Int): UnscaledGapsY {
     return UnscaledGapsYImpl(top, bottom)
   }
+
+  override fun toString(): String {
+    return "top = $top, bottom = $bottom"
+  }
 }

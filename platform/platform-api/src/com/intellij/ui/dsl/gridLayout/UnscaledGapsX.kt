@@ -34,4 +34,8 @@ private class UnscaledGapsXImpl(private val _left: Int, private val _right: Int)
     checkNonNegative("left", left)
     checkNonNegative("right", right)
   }
+
+  override fun toString(): String {
+    return "left = $left, right = $right"
+  }
 }

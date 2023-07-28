@@ -70,4 +70,8 @@ private class UnscaledGapsImpl(private val _top: Int,
   override fun copy(top: Int, left: Int, bottom: Int, right: Int): UnscaledGaps {
     return UnscaledGapsImpl(top, left, bottom, right)
   }
+
+  override fun toString(): String {
+    return "top = $top, left = $left, bottom = $bottom, right = $right"
+  }
 }
