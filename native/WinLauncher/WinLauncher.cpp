@@ -15,7 +15,6 @@
 #include <ShellAPI.h>
 #include <Shlobj.h>
 #include <Knownfolders.h>
-#include <VersionHelpers.h>
 
 #include <jni.h>
 
@@ -857,13 +856,6 @@ void PrintUsage()
   MessageBoxA(NULL, buf.str().c_str(), "Command-line Options", MB_OK);
 }
 
-bool IsSupportedVersion() {
-  if (IsWindows8OrGreater()) return true;
-  const char *text = "The IDE cannot run on this OS version.\nPlease use Windows 10 1809 or newer.";
-  MessageBoxA(NULL, text, "Startup Error", MB_OK | MB_ICONSTOP);
-  return false;
-}
-
 #ifdef USE_CEF_SANDBOX
 bool isCefSubprocess() {
   return wcsstr(GetCommandLineW(), L"--type=");
@@ -902,8 +894,6 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
       return 0;
     }
   }
-
-  if (!IsSupportedVersion()) return 1;
 
   std::string homeDir = GetHomeDir();
   if (!LocateJVM(homeDir)) return 1;
