@@ -658,15 +658,23 @@ public abstract class AppIcon {
     @Override
     public void requestFocus(@Nullable Window window) {
       if (window != null) {
+        if (window instanceof Frame) {
+          ((Frame)window).setState(Frame.NORMAL);
+        }
         try {
-          // This is required for the focus stealing mechanism to work reliably;
-          // see WinFocusStealer.setFocusStealingEnabled javadoc for details
+          // For SetForegroundWindow WinAPI method to 'steal' focus from other apps more reliably, it shouldn't be called immediately after
+          // other window- or focus-related API methods (e.g. BringWindowToTop, which is invoked by java.awt.Component.requestFocus()).
+          // Required delay is empirically estimated to be around 20 ms.
+          // The hypothesis is that timestamps used for checking foreground lock timeout are determined with a certain inaccuracy, caused by
+          // timer resolution, and functions like BringWindowToTop can be treated as a user input, so SetForegroundWindow call fails to
+          // focus a background window, even with foreground lock timeout is set to 0, if it's preceded by BringWindowToTop call.
+          // See also WinFocusStealer class's javadoc for details.
           Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
         }
         catch (InterruptedException e) {
           LOG.error(e);
         }
-        UIUtil.toFront(window);
+        Win7TaskBar.setForegroundWindow(window);
       }
     }
 

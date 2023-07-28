@@ -8,6 +8,7 @@ import com.sun.jna.platform.win32.WinDef;
 import com.sun.jna.win32.StdCallLibrary;
 import com.sun.jna.win32.W32APIOptions;
 
+@SuppressWarnings("UnusedReturnValue")
 public interface User32Ex extends StdCallLibrary {
   User32Ex INSTANCE = Native.load("user32", User32Ex.class, W32APIOptions.DEFAULT_OPTIONS);
 
@@ -21,10 +22,10 @@ public interface User32Ex extends StdCallLibrary {
                                         int cyDesired,
                                         int Flags);
 
-  @SuppressWarnings("UnusedReturnValue")
   boolean FlashWindow(WinDef.HWND hwnd, boolean bInvert);
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.BOOLByReference pvParam, WinDef.UINT fWinIni);
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINTByReference pvParam, WinDef.UINT fWinIni);
   boolean SystemParametersInfo(WinDef.UINT uiAction, WinDef.UINT uiParam, WinDef.UINT pvParam, WinDef.UINT fWinIni);
   boolean AllowSetForegroundWindow(WinDef.DWORD pid);
+  boolean SetForegroundWindow(WinDef.HWND hwnd);
 }
