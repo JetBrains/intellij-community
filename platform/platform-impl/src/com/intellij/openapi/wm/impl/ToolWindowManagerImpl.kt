@@ -60,6 +60,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MoreButtonUpdated
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.toolWindow.*
@@ -1408,6 +1409,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
         }
       }
     }
+
+    fireStateChanged(MoreButtonUpdated)
   }
 
   override fun invokeLater(runnable: Runnable) {
