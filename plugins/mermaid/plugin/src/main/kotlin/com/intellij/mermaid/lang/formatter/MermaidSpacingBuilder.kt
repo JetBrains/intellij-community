@@ -1,6 +1,5 @@
 package com.intellij.mermaid.lang.formatter
 
-import ai.grazie.utils.applyIf
 import com.intellij.formatting.SpacingBuilder
 import com.intellij.mermaid.lang.MermaidLanguage
 import com.intellij.mermaid.lang.formatter.settings.MermaidCustomCodeStyleSettings
@@ -13,9 +12,9 @@ import com.intellij.mermaid.lang.parser.MermaidElements
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.tree.TokenSet
+import com.intellij.util.applyIf
 
 internal object MermaidSpacingBuilder {
-
   //region Click
   private val CLICK_KEYWORDS_SPACE_AFTER = TokenSet.create(
     MermaidTokens.CLICK,
