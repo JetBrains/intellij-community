@@ -396,7 +396,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
 
-    final Map<String/* artifact path */, String /* module id*/> artifactsMap = resolverCtx.getArtifactsMap();
+    final ArtifactMappingService artifactsMap = resolverCtx.getArtifactsMap();
 
     // import modules data
     for (IdeaModule gradleModule : ContainerUtil.concat(gradleModules, includedModules)) {
@@ -636,7 +636,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       projectDataNode.getUserData(MODULES_OUTPUTS);
     assert moduleOutputsMap != null;
 
-    final Map<String, String> artifactsMap = context.getArtifactsMap();
+    final ArtifactMappingService artifactsMap = context.getArtifactsMap();
     assert artifactsMap != null;
 
     final Collection<DataNode<LibraryDependencyData>> libraryDependencies =

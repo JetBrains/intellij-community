@@ -553,7 +553,7 @@ public final class GradleProjectResolverUtil {
 
   public static void buildDependencies(@NotNull ProjectResolverContext resolverCtx,
                                        @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
-                                       @NotNull final Map<String, String> artifactsMap,
+                                       @NotNull final ArtifactMappingService artifactsMap,
                                        @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
                                        @NotNull Collection<ExternalDependency> dependencies,
                                        @Nullable DataNode<ProjectData> ideProject) throws IllegalStateException {
@@ -616,7 +616,7 @@ public final class GradleProjectResolverUtil {
 
   private static void doBuildDependencies(@NotNull ProjectResolverContext resolverCtx,
                                           @NotNull Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap,
-                                          @NotNull final Map<String, String> artifactsMap,
+                                          @NotNull final ArtifactMappingService artifactsMap,
                                           @NotNull Map<ExternalDependencyId, ExternalDependency> mergedDependencyMap,
                                           @NotNull DataNode<? extends ExternalEntityData> ownerDataNode,
                                           @NotNull Collection<ExternalDependency> dependencies,

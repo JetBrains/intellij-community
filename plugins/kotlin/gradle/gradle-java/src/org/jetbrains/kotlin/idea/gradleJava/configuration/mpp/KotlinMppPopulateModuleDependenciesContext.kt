@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinComponent
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.plugins.gradle.service.project.ArtifactMappingService
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import com.intellij.openapi.util.Pair as IntelliJPair
@@ -32,7 +33,7 @@ data class KotlinMppPopulateModuleDependenciesContext(
     val ideModule: DataNode<ModuleData>,
     val dependenciesPreprocessor: KotlinDependenciesPreprocessor,
     val sourceSetMap: Map<ModuleId, IntelliJPair<DataNode<GradleSourceSetData>, ExternalSourceSet>>,
-    val artifactsMap: Map<ArtifactPath, ModuleId>,
+    val artifactsMap: ArtifactMappingService,
     val processedModuleIds: MutableSet<ModuleId> = mutableSetOf(),
 )
 

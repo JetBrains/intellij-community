@@ -24,7 +24,6 @@ import org.jetbrains.plugins.gradle.model.ProjectImportAction;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  * @author Vladislav.Soroka
@@ -45,7 +44,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable private BuildEnvironment myBuildEnvironment;
   @Nullable private final GradlePartialResolverPolicy myPolicy;
 
-  @NotNull private Map<String, String> myArtifactsMap = CollectionFactory.createFilePathMap();
+  @NotNull private final ArtifactMappingService myArtifactsMap = new MapBasedArtifactMappingService(CollectionFactory.createFilePathMap());
 
   public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
                                        @NotNull final String projectPath,
@@ -242,8 +241,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   }
 
   @Override
-  @NotNull
-  public Map<String, String> getArtifactsMap() {
+  public @NotNull ArtifactMappingService getArtifactsMap() {
     return myArtifactsMap;
   }
 }

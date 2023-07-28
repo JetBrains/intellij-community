@@ -604,7 +604,7 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     if (resolverCtx.isResolveModulePerSourceSet()) {
       final Map<String, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetMap =
         ideProject.getUserData(GradleProjectResolver.RESOLVED_SOURCE_SETS);
-      final Map<String, String> artifactsMap = resolverCtx.getArtifactsMap();
+      final ArtifactMappingService artifactsMap = resolverCtx.getArtifactsMap();
       assert sourceSetMap != null;
       assert artifactsMap != null;
       assert externalProject != null;
