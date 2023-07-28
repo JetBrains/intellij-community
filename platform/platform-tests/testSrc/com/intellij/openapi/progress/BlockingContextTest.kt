@@ -28,7 +28,7 @@ class BlockingContextTest : CancellationTest() {
   fun cancellation(): Unit = timeoutRunBlocking {
     launch {
       val t = object : Throwable() {}
-      val ce = assertThrows<CurrentJobCancellationException> {
+      val ce = assertThrows<PceCancellationException> {
         blockingContext {
           testNoExceptions()
           this@launch.cancel("", t)

@@ -19,9 +19,6 @@ internal fun <X> cancellableReadAction(action: () -> X): X = prepareThreadContex
   catch (readCe: ReadCancellationException) {
     throw CannotReadException(readCe)
   }
-  catch (currentJobCe: CurrentJobCancellationException) {
-    throw currentJobCe.cause
-  }
   catch (pceCe: PceCancellationException) {
     throw pceCe.cause
   }
@@ -49,13 +46,6 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
       readJob.complete()
       result.value
     }
-  }
-  catch (currentJobCe: CurrentJobCancellationException) {
-    val jce: JobCanceledException = currentJobCe.cause
-    if (jce.cause is ReadCancellationException) {
-      throw ReadCancellationException(jce)
-    }
-    throw currentJobCe
   }
   catch (ce: PceCancellationException) {
     readJob.cancel(ce)

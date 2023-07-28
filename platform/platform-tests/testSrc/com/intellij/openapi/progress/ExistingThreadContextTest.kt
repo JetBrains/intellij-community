@@ -41,7 +41,7 @@ class ExistingThreadContextTest : CancellationTest() {
   @Test
   fun cancellation() {
     val t = object : Throwable() {}
-    val ce = assertThrows<CurrentJobCancellationException> {
+    val ce = assertThrows<PceCancellationException> {
       blockingContext(Job()) {
         throw assertThrows<JobCanceledException> {
           prepareThreadContextTest { currentJob ->
@@ -54,7 +54,7 @@ class ExistingThreadContextTest : CancellationTest() {
     }
     //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
     @Suppress("AssertBetweenInconvertibleTypes")
-    assertSame(t, ce.cause.cause.cause)
+    assertSame(t, ce.cause.cause?.cause)
   }
 
   @Test
@@ -68,7 +68,7 @@ class ExistingThreadContextTest : CancellationTest() {
   fun `cancelled by child failure`() {
     val job = Job()
     val t = Throwable()
-    val ce = assertThrows<CurrentJobCancellationException> {
+    val ce = assertThrows<PceCancellationException> {
       blockingContext(job) {
         throw assertThrows<JobCanceledException> {
           prepareThreadContextTest { currentJob ->
@@ -84,7 +84,7 @@ class ExistingThreadContextTest : CancellationTest() {
         }
       }
     }
-    assertSame(t, ce.cause.cause.cause)
+    assertSame(t, ce.cause.cause?.cause)
     assertFalse(job.isActive)
     assertTrue(job.isCancelled)
     assertTrue(job.isCompleted)
