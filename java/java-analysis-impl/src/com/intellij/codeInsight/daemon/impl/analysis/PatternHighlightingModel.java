@@ -237,7 +237,7 @@ final class PatternHighlightingModel {
     return CachedValuesManager.getCachedValue(context, () -> {
       Map<ReduceResultCacheContext, RecordExhaustivenessResult> cacheResult = ConcurrentFactoryMap.createMap(cacheContext -> {
         Set<? extends PatternDescription> patterns = cacheContext.currentPatterns;
-        PsiType selectorType = cacheContext.selectorType;
+        PsiType selectorType = cacheContext.mySelectorType;
         HashMap<ReduceResultCacheContext, ReduceResult> cache = new HashMap<>();
         LoopReduceResult result = reduceInLoop(selectorType, context, new HashSet<>(patterns),
                                                (descriptionPatterns, type) -> coverSelectorType(descriptionPatterns, selectorType), cache);
@@ -326,25 +326,61 @@ final class PatternHighlightingModel {
   }
 
 
-  record ReduceResultCacheContext(@NotNull PsiType selectorType,
-                                  @NotNull Set<? extends PatternDescription> currentPatterns) {
+  static final class ReduceResultCacheContext {
+    private final @NotNull PsiType mySelectorType;
+    private final @Nullable PsiClass myPsiClass;
+    private final @NotNull Set<? extends PatternDescription> currentPatterns;
+
+    ReduceResultCacheContext(@NotNull PsiType selectorType,
+                             @NotNull Set<? extends PatternDescription> currentPatterns) {
+      this.mySelectorType = selectorType;
+      this.currentPatterns = currentPatterns;
+      //almost all operations with patterns take into account classes.
+      //it is supposed to be safe to use it to compare ReduceResultCacheContext, if there are no parameters
+      this.myPsiClass = PsiUtil.resolveClassInClassTypeOnly(selectorType);
+    }
+
     @NotNull
-    private ReduceResult reduceClassesInner(@NotNull PsiElement context) {
-      Set<PatternTypeTestDescription> typeTestDescriptions =
-        StreamEx.of(currentPatterns).select(PatternTypeTestDescription.class).toSet();
-      Set<PatternTypeTestDescription> toAdd = new HashSet<>();
-      Set<PsiType> existedTypes = StreamEx.of(typeTestDescriptions).map(t -> t.type()).toSet();
-      Set<PsiClass> visitedCovered =
-        findMissedClasses(selectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
-      boolean changed = addNewClasses(selectorType, visitedCovered, existedTypes, toAdd);
-      if (!changed) {
-        return new ReduceResult(currentPatterns, false);
+      private ReduceResult reduceClassesInner(@NotNull PsiElement context) {
+        Set<PatternTypeTestDescription> typeTestDescriptions =
+          StreamEx.of(currentPatterns).select(PatternTypeTestDescription.class).toSet();
+        Set<PatternTypeTestDescription> toAdd = new HashSet<>();
+        Set<PsiType> existedTypes = StreamEx.of(typeTestDescriptions).map(t -> t.type()).toSet();
+        Set<PsiClass> visitedCovered =
+          findMissedClasses(mySelectorType, new ArrayList<>(typeTestDescriptions), List.of(), context).coveredClasses();
+        boolean changed = addNewClasses(mySelectorType, visitedCovered, existedTypes, toAdd);
+        if (!changed) {
+          return new ReduceResult(currentPatterns, false);
+        }
+        Set<PatternDescription> newPatterns = combineResult(currentPatterns, Set.of(), toAdd);
+        if (newPatterns.size() == currentPatterns.size()) {
+          return new ReduceResult(currentPatterns, false);
+        }
+        return new ReduceResult(newPatterns, true);
       }
-      Set<PatternDescription> newPatterns = combineResult(currentPatterns, Set.of(), toAdd);
-      if (newPatterns.size() == currentPatterns.size()) {
-        return new ReduceResult(currentPatterns, false);
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      var that = (ReduceResultCacheContext)obj;
+      if (this.myPsiClass != null && that.myPsiClass != null && !this.myPsiClass.hasTypeParameters()) {
+        if (!Objects.equals(this.myPsiClass, that.myPsiClass)) {
+          return false;
+        }
       }
-      return new ReduceResult(newPatterns, true);
+      else {
+        if (!Objects.equals(this.mySelectorType, that.mySelectorType)) {
+          return false;
+        }
+      }
+
+      return Objects.equals(this.currentPatterns, that.currentPatterns);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(mySelectorType, currentPatterns);
     }
   }
 
@@ -814,7 +850,41 @@ final class PatternHighlightingModel {
     PsiType type();
   }
 
-  record PatternTypeTestDescription(@NotNull PsiType type) implements PatternDescription {
+  static final class PatternTypeTestDescription implements PatternDescription {
+    private final @NotNull PsiType type;
+    private final @Nullable PsiClass myPsiClass;
+
+    PatternTypeTestDescription(@NotNull PsiType type) {
+      this.type = type;
+      //almost all operations with patterns take into account classes.
+      //it is supposed to be safe to use it to compare ReduceResultCacheContext, if there are no parameters
+      this.myPsiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    }
+
+    @Override
+    public @NotNull PsiType type() { return type; }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (obj == this) return true;
+      if (obj == null || obj.getClass() != this.getClass()) return false;
+      var that = (PatternTypeTestDescription)obj;
+      if (this.myPsiClass != null && that.myPsiClass != null && !this.myPsiClass.hasTypeParameters()) {
+        return Objects.equals(this.myPsiClass, that.myPsiClass);
+      }
+      return Objects.equals(this.type, that.type);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(type);
+    }
+
+    @Override
+    public String toString() {
+      return "PatternTypeTestDescription[" +
+             "type=" + type + ']';
+    }
   }
 
   record PatternDeconstructionDescription(@NotNull PsiType type,
