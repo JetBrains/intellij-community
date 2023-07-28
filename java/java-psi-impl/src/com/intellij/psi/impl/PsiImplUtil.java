@@ -501,6 +501,9 @@ public final class PsiImplUtil {
    * Checks if the given PSI element is deprecated with annotation or JavaDoc tag.
    * <br>
    * It is suitable for elements other than {@link PsiDocCommentOwner}.
+   * <p>
+   *   Prefer specifying context for more precise check using JavaDeprecationUtils#isDeprecated.
+   * </p>
    */
   public static boolean isDeprecated(@NotNull PsiElement psiElement) {
     if (psiElement instanceof PsiDocCommentOwner) {

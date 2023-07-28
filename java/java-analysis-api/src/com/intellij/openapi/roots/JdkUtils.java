@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
 import com.intellij.openapi.projectRoots.Sdk;
@@ -16,13 +16,12 @@ public final class JdkUtils {
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     if (virtualFile == null) return null;
     final List<OrderEntry> entries = ProjectRootManager.getInstance(element.getProject()).getFileIndex().getOrderEntriesForFile(virtualFile);
-    Sdk jdk = null;
     for (OrderEntry orderEntry : entries) {
-      if (orderEntry instanceof JdkOrderEntry) {
-        jdk = ((JdkOrderEntry)orderEntry).getJdk();
-        if (jdk != null) break;
+      if (orderEntry instanceof JdkOrderEntry entry) {
+        Sdk jdk = entry.getJdk();
+        if (jdk != null) return jdk;
       }
     }
-    return jdk;
+    return null;
   }
 }

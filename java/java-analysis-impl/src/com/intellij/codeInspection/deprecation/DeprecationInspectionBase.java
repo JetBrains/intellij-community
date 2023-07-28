@@ -24,6 +24,7 @@ import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
                                      boolean ignoreInSameOutermostClass,
                                      @NotNull ProblemsHolder holder,
                                      boolean forRemoval) {
-    if (PsiImplUtil.isDeprecated(element)) {
+    if (JavaDeprecationUtils.isDeprecated(element, elementToHighlight)) {
       if (forRemoval != isForRemovalAttributeSet(element)) {
         return;
       }

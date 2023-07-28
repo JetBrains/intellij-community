@@ -52,7 +52,6 @@ import com.intellij.psi.filters.getters.ClassLiteralGetter;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
 import com.intellij.psi.filters.getters.JavaMembersGetter;
 import com.intellij.psi.filters.types.AssignableFromFilter;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaSourceModuleNameIndex;
@@ -63,9 +62,13 @@ import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.JavaDeprecationUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.EntryStream;
@@ -961,10 +964,10 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     return InternalCompletionSettings.getInstance().mayStartClassNameCompletion(result);
   }
 
-  private static void completeAnnotationAttributeName(CompletionResultSet result,
-                                                      PsiElement position,
-                                                      PsiAnnotation anno,
-                                                      PsiClass annoClass) {
+  private static void completeAnnotationAttributeName(@NotNull CompletionResultSet result,
+                                                      @NotNull PsiElement position,
+                                                      @NotNull PsiAnnotation anno,
+                                                      @NotNull PsiClass annoClass) {
     PsiNameValuePair[] existingPairs = anno.getParameterList().getAttributes();
 
     methods: for (PsiMethod method : annoClass.getMethods()) {
@@ -980,10 +983,13 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)method).getDefaultValue();
       String defText = defaultValue == null ? null : defaultValue.getText();
       if (PsiKeyword.TRUE.equals(defText) || PsiKeyword.FALSE.equals(defText)) {
-        result.addElement(createAnnotationAttributeElement(method, PsiKeyword.TRUE.equals(defText) ? PsiKeyword.FALSE : PsiKeyword.TRUE));
-        result.addElement(PrioritizedLookupElement.withPriority(createAnnotationAttributeElement(method, defText).withTailText(" (default)", true), -1));
+        result.addElement(createAnnotationAttributeElement(method, 
+                                                           PsiKeyword.TRUE.equals(defText) ? PsiKeyword.FALSE : PsiKeyword.TRUE,
+                                                           position));
+        result.addElement(PrioritizedLookupElement.withPriority(createAnnotationAttributeElement(method, defText, position)
+                                                                  .withTailText(" (default)", true), -1));
       } else {
-        LookupElementBuilder element = createAnnotationAttributeElement(method, null);
+        LookupElementBuilder element = createAnnotationAttributeElement(method, null, position);
         if (defText != null) {
           element = element.withTailText(" default " + defText, true);
         }
@@ -993,11 +999,13 @@ public final class JavaCompletionContributor extends CompletionContributor imple
   }
 
   @NotNull
-  private static LookupElementBuilder createAnnotationAttributeElement(PsiMethod annoMethod, @Nullable String value) {
+  private static LookupElementBuilder createAnnotationAttributeElement(@NotNull PsiMethod annoMethod,
+                                                                       @Nullable String value,
+                                                                       @NotNull PsiElement position) {
     String space = ReferenceExpressionCompletionContributor.getSpace(CodeStyle.getLanguageSettings(annoMethod.getContainingFile()).SPACE_AROUND_ASSIGNMENT_OPERATORS);
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
     return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
-      .withStrikeoutness(PsiImplUtil.isDeprecated(annoMethod))
+      .withStrikeoutness(JavaDeprecationUtils.isDeprecated(annoMethod, position))
       .withInsertHandler((context, item) -> {
         Editor editor = context.getEditor();
         if (value == null) {
@@ -1300,7 +1308,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
-          if (index.get(name, project, scope).size() > 0 && filter.add(name)) {
+          if (!index.get(name, project, scope).isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
             if (requires) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
             result.addElement(lookup);
@@ -1314,7 +1322,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
             Set<String> shadowedNames = new HashSet<>();
             for (String name : JavaSourceModuleNameIndex.getAllKeys(project)) {
               Collection<VirtualFile> manifests = JavaSourceModuleNameIndex.getFilesByKey(name, scope);
-              if (manifests.size() > 0) {
+              if (!manifests.isEmpty()) {
                 shadowedNames.add(name);
                 for (VirtualFile manifest : manifests) {
                   VirtualFile jarRoot = manifest.getParent().getParent();
@@ -1331,7 +1339,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
               if (shadowedNames.contains(name)) {
                 continue;
               }
-              if (JavaAutoModuleNameIndex.getFilesByKey(name, scope).size() > 0) {
+              if (!JavaAutoModuleNameIndex.getFilesByKey(name, scope).isEmpty()) {
                 addAutoModuleReference(name, parent, filter, result);
               }
             }
