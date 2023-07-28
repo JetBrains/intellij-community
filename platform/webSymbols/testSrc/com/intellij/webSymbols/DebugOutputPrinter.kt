@@ -28,8 +28,7 @@ open class DebugOutputPrinter {
     when (value) {
       is String -> builder.append("\"").append(value.ellipsis(80)).append("\"")
       is PsiElement -> builder.printPsiElement(value)
-      is List<*> -> builder.printList(level, value)
-      is Set<*> -> builder.printSet(level, value)
+      is Collection<*> -> builder.printCollection(level, value)
       is Map<*, *> -> builder.printMap(level, value)
       is Pair<*, *> -> builder.printPair(level, value)
       null -> builder.append("<null>")
@@ -55,7 +54,7 @@ open class DebugOutputPrinter {
       }
     }
 
-  protected open fun StringBuilder.printList(level: Int, list: List<*>): StringBuilder {
+  protected open fun StringBuilder.printCollection(level: Int, list: Collection<*>): StringBuilder {
     append("[")
     if (list.isEmpty()) {
       append("]")
@@ -66,21 +65,6 @@ open class DebugOutputPrinter {
         indent(level + 1).printValue(level + 1, it).append(",\n")
       }
       indent(level).append("]")
-    }
-    return this
-  }
-
-  protected open fun StringBuilder.printSet(level: Int, set: Set<*>): StringBuilder {
-    append("<")
-    if (set.isEmpty()) {
-      append(">")
-    }
-    else {
-      append('\n')
-      set.forEach {
-        indent(level + 1).printValue(level + 1, it).append(",\n")
-      }
-      indent(level).append(">")
     }
     return this
   }
