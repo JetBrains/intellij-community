@@ -942,7 +942,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return chameleonAction.addAction(action, projectType)
     }
     else if (existing != null) {
-      val chameleonAction = ChameleonAction(existing, projectType)
+      val chameleonAction = ChameleonAction(existing, null)
       idToAction = idToAction.put(actionId, chameleonAction)
       return chameleonAction.addAction(action, projectType)
     }
