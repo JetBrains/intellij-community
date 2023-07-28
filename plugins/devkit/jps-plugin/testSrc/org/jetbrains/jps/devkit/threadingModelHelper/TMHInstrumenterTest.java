@@ -74,40 +74,40 @@ public class TMHInstrumenterTest extends UsefulTestCase {
 
   public void testRequiresReadLockAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "softAssertReadAccess"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessAllowed"));
   }
 
   public void testRequiresWriteLockAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccess"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
   }
 
   public void testRequiresReadLockAbsenceAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertNoReadAccess"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessNotAllowed"));
   }
 
   public void testLineNumber() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertEventDispatchThread"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
     assertEquals(Arrays.asList(5, 8, 8), TMHTestUtil.getLineNumbers(testClass.classBytes));
   }
 
   public void testLineNumberWhenBodyHasTwoStatements() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertEventDispatchThread"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
     assertEquals(Arrays.asList(5, 8, 8, 9), TMHTestUtil.getLineNumbers(testClass.classBytes));
   }
 
   public void testLineNumberWhenEmptyBody() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertEventDispatchThread"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
     assertEquals(Arrays.asList(5, 7, 7), TMHTestUtil.getLineNumbers(testClass.classBytes));
   }
 
   public void testLineNumberWhenOtherMethodBefore() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
-    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertEventDispatchThread"));
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
     assertEquals(Arrays.asList(5, 7, 12, 12), TMHTestUtil.getLineNumbers(testClass.classBytes));
   }
 

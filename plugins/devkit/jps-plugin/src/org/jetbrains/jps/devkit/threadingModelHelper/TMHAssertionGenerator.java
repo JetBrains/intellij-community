@@ -1,24 +1,30 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
-
-import java.util.Set;
+import org.jetbrains.org.objectweb.asm.commons.Method;
 
 class TMHAssertionGenerator {
+  private static final String DEFAULT_APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/ApplicationManager";
+  private static final String DEFAULT_APPLICATION_CLASS_NAME = "com/intellij/openapi/application/Application";
 
-  private static final String THREAD_ASSERTIONS_CLASS_NAME = "com/intellij/util/concurrency/ThreadingAssertions";
   private static final String GENERATE_ASSERTION_PARAMETER = "generateAssertion";
 
-  private final String myThreadAssertionsClassName;
-  private final Type myAnnotationClass;
-  private final String myAssertionMethodName;
+  private static final String GET_APPLICATION_METHOD_NAME = "getApplication";
+  private static final Type[] EMPTY = {};
 
-  TMHAssertionGenerator(String threadAssertionsClassName, Type annotationClass, String assertionMethodName) {
-    myThreadAssertionsClassName = threadAssertionsClassName;
+  private final Type myAnnotationClass;
+  private final Type myApplicationManagerClass;
+  private final Type myApplicationClass;
+  private final Method myGetApplicationMethod;
+  private final Method myAssetionMethod;
+
+  TMHAssertionGenerator(Type annotationClass, Type applicationManagerClass, Type applicationClass, Method assetionMethod) {
     myAnnotationClass = annotationClass;
-    myAssertionMethodName = assertionMethodName;
+    myApplicationManagerClass = applicationManagerClass;
+    myApplicationClass = applicationClass;
+    myGetApplicationMethod = new Method(GET_APPLICATION_METHOD_NAME, applicationClass, EMPTY);
+    myAssetionMethod = assetionMethod;
   }
 
   boolean isMyAnnotation(String annotationDescriptor) {
@@ -35,13 +41,10 @@ class TMHAssertionGenerator {
       writer.visitLabel(generatedCodeStart);
       writer.visitLineNumber(methodStartLineNumber, generatedCodeStart);
     }
-    writer.visitMethodInsn(
-      Opcodes.INVOKESTATIC,
-      myThreadAssertionsClassName,
-      myAssertionMethodName,
-      "()V",
-      false
-    );
+    writer.visitMethodInsn(Opcodes.INVOKESTATIC, myApplicationManagerClass.getInternalName(), myGetApplicationMethod.getName(),
+        myGetApplicationMethod.getDescriptor(), false);
+    writer.visitMethodInsn(Opcodes.INVOKEINTERFACE, myApplicationClass.getInternalName(), myAssetionMethod.getName(),
+        myAssetionMethod.getDescriptor(), true);
   }
 
   static class AnnotationChecker extends AnnotationVisitor {
@@ -69,33 +72,97 @@ class TMHAssertionGenerator {
   }
 
   // TODO avoid hardcoding annotation names
-  static @NotNull Set<? extends TMHAssertionGenerator> generators() {
-    return GENERATORS;
+  static class AssertEdt extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresEdt";
+
+    AssertEdt() {
+      this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
+    }
+
+    AssertEdt(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+          Type.getType("L" + applicationManagerClassName + ";"),
+          Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertEdt(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertIsDispatchThread", "()V"));
+    }
   }
 
-  private static final Set<? extends TMHAssertionGenerator> GENERATORS = generators(
-    THREAD_ASSERTIONS_CLASS_NAME,
-    "com/intellij/util/concurrency/annotations"
-  );
+  static class AssertBackgroundThread extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresBackgroundThread";
 
-  static @NotNull Set<? extends TMHAssertionGenerator> generators(
-    @NotNull String threadAssertionsClassName,
-    @NotNull String packageString
-  ) {
-    return Set.of(
-      generator(threadAssertionsClassName, packageString + "/RequiresEdt", "assertEventDispatchThread"),
-      generator(threadAssertionsClassName, packageString + "/RequiresBackgroundThread", "assertBackgroundThread"),
-      generator(threadAssertionsClassName, packageString + "/RequiresReadLock", "softAssertReadAccess"),
-      generator(threadAssertionsClassName, packageString + "/RequiresReadLockAbsence", "assertNoReadAccess"),
-      generator(threadAssertionsClassName, packageString + "/RequiresWriteLock", "assertWriteAccess")
-    );
+    AssertBackgroundThread() {
+      this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
+    }
+
+    AssertBackgroundThread(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertBackgroundThread(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertIsNonDispatchThread", "()V"));
+    }
   }
 
-  private static @NotNull TMHAssertionGenerator generator(
-    @NotNull String threadAssertionsClassName,
-    @NotNull String annotationClassName,
-    @NotNull String assertionMethodName
-  ) {
-    return new TMHAssertionGenerator(threadAssertionsClassName, Type.getType("L" + annotationClassName + ";"), assertionMethodName);
+  static class AssertReadAccess extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLock";
+
+    AssertReadAccess() {
+      this(Type.getType("L" + DEFAULT_ANNOTATION_CLASS_NAME + ";"),
+          Type.getType("L" + DEFAULT_APPLICATION_MANAGER_CLASS_NAME + ";"),
+          Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
+    }
+
+    AssertReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertReadAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertReadAccessAllowed", "()V"));
+    }
+  }
+
+  static class AssertWriteAccess extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresWriteLock";
+
+    AssertWriteAccess() {
+      this(Type.getType("L" + DEFAULT_ANNOTATION_CLASS_NAME + ";"),
+          Type.getType("L" + DEFAULT_APPLICATION_MANAGER_CLASS_NAME + ";"),
+          Type.getType("L" + DEFAULT_APPLICATION_CLASS_NAME + ";"));
+    }
+
+    AssertWriteAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertWriteAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertWriteAccessAllowed", "()V"));
+    }
+  }
+
+  static class AssertNoReadAccess extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresReadLockAbsence";
+
+    AssertNoReadAccess() {
+      this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
+    }
+
+    AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertNoReadAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertReadAccessNotAllowed", "()V"));
+    }
   }
 }
