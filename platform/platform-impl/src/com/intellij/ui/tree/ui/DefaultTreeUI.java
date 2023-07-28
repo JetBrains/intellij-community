@@ -213,7 +213,10 @@ public class DefaultTreeUI extends BasicTreeUI {
   }
 
   private boolean isValid(@Nullable JTree tree) {
-    if (!validator.isValidThread()) return false;
+    if (!validator.isValidThread()) {
+      LOG.error("TreeUI should be accessed only from EDT");
+      return false;
+    }
     if (tree != null && tree == getTree()) return true;
     LOG.warn(new IllegalStateException(tree != null ? "unexpected tree" : "undefined tree"));
     return false;
