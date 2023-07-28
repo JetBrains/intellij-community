@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.configurations;
 
 import com.intellij.diagnostic.LoadingState;
@@ -27,17 +27,15 @@ import java.util.*;
 /**
  * OS-independent way of executing external processes with complex parameters.
  * <p>
- * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
+ * Main idea of the class is to accept parameters as-is, just as they should look to an external process, and quote/escape them
  * as required by the underlying platform - so to run some program with a "parameter with space" all that's needed is
  * {@code new GeneralCommandLine("some program", "parameter with space").createProcess()}.
  * <p>
  * Consider the following things when using this class.
- *
  * <h3>Working directory</h3>
  * By default, a current directory of the IDE process is used (usually a "bin/" directory of IDE installation).
  * If child processes may create files in it, this choice is unwelcome. On the other hand, informational commands (e.g. "git --version")
  * are safe. When unsure, set it to something neutral - like a user's home or a temp directory.
- *
  * <h3>Parent Environment</h3>
  * {@link ParentEnvironmentType Three options here}.
  * For commands designed from the ground up for typing into a terminal, use {@link ParentEnvironmentType#CONSOLE CONSOLE}
@@ -47,7 +45,6 @@ import java.util.*;
  * According to extensive research conducted by British scientists (tm) on a diverse population of both wild and domesticated tools
  * (no one was harmed), most of them are either insensitive to the environment or fall into the first category,
  * thus backing up the choice of CONSOLE as the default value.
- *
  * <h3>Encoding/Charset</h3>
  * The {@link #getCharset()} method is used by classes like {@link com.intellij.execution.process.OSProcessHandler OSProcessHandler}
  * or {@link com.intellij.execution.util.ExecUtil ExecUtil} to decode bytes of a child's output stream. For proper conversion,
@@ -317,7 +314,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
-   * (suitable e.g. for passing in an environment variable).
+   * (suitable, e.g., for passing in an environment variable).
    *
    * @param platform a target platform
    * @return command as a newline-separated list.
