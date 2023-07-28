@@ -513,7 +513,7 @@ fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: Strin
   checkResultByFile(fileAfter)
 }
 
-fun CodeInsightTestFixture.performCopyPaste(sourceFile: String, destinationFile: String) {
+fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destinationFile: String) {
   configureFromTempProjectFile(sourceFile)
   performEditorAction(IdeActions.ACTION_EDITOR_COPY)
   configureFromTempProjectFile(destinationFile)
