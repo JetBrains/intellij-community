@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.ide.plugins.*;
@@ -103,9 +104,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final ReadWriteLock myPendingInitializationLock = new ReentrantReadWriteLock();
 
   // maps pluginId -> duplicates for this plugin
-  private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myNames = new ConcurrentHashMap<>();
-  private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myDescriptions = new ConcurrentHashMap<>();
-  private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> myDisplayNames = new ConcurrentHashMap<>();
+  private final Map<PluginDescriptor, Set<FileTypeWithDescriptor>> myFileTypesPerPlugin = new ConcurrentHashMap<>();
+  private final Alarm myCheckDuplicatedAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   private @Nullable Consumer<? super ConflictingFileTypeMappingTracker.ResolveConflictResult> myConflictResultConsumer;
 
@@ -384,9 +384,9 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void removeFromDuplicates(@NotNull FileType type, @NotNull PluginDescriptor pluginDescriptor) {
-    myNames.computeIfAbsent(pluginDescriptor, __ -> new ConcurrentHashMap<>()).remove(type.getName());
-    myDisplayNames.computeIfAbsent(pluginDescriptor, __ -> new ConcurrentHashMap<>()).remove(type.getDisplayName());
-    myDescriptions.computeIfAbsent(pluginDescriptor, __ -> new ConcurrentHashMap<>()).remove(type.getDescription());
+    myFileTypesPerPlugin
+      .computeIfAbsent(pluginDescriptor, __ -> ConcurrentCollectionFactory.createConcurrentSet())
+      .removeIf(descriptor -> descriptor.fileType.equals(type));
   }
 
   private void loadFileTypeBeans() {
@@ -1381,8 +1381,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileTypeWithDescriptor newFtd = new FileTypeWithDescriptor(newFileType, newPluginDescriptor);
     if (addScheme) {
       FileTypeWithDescriptor oldFileType = mySchemeManager.findSchemeByName(newFileType.getName());
-      if (oldFileType != null && !(oldFileType.fileType instanceof AbstractFileType)) {
-        throw new IllegalArgumentException(newFileType + " already registered");
+      if (oldFileType != null) {
+        if (!(oldFileType.fileType instanceof AbstractFileType)) {
+          throw new IllegalArgumentException(newFileType + " already registered");
+        }
+        removeFromDuplicates(oldFileType.fileType, oldFileType.pluginDescriptor);
       }
       mySchemeManager.addScheme(newFtd);
       myPendingFileTypes.remove(newFileType.getName());
@@ -1437,9 +1440,33 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   private void checkFileTypeNamesUniqueness(@NotNull FileTypeWithDescriptor newFtd) {
-    checkUnique(newFtd, myNames.computeIfAbsent(newFtd.pluginDescriptor, __ -> new ConcurrentHashMap<>()), "getName", FileType::getName);
-    checkUnique(newFtd, myDisplayNames.computeIfAbsent(newFtd.pluginDescriptor, __ -> new ConcurrentHashMap<>()), "getDisplayName", FileType::getDisplayName);
-    checkUnique(newFtd, myDescriptions.computeIfAbsent(newFtd.pluginDescriptor, __ -> new ConcurrentHashMap<>()), "getDescription", FileType::getDescription);
+    myFileTypesPerPlugin.computeIfAbsent(newFtd.pluginDescriptor, __ -> ConcurrentCollectionFactory.createConcurrentSet()).add(newFtd);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      checkUnique();
+    }
+    else {
+      myCheckDuplicatedAlarm.cancelAllRequests();
+      myCheckDuplicatedAlarm.addRequest(() -> {
+        checkUnique();
+      }, 400);
+    }
+  }
+
+  private void checkUnique() {
+    for (Map.Entry<PluginDescriptor, Set<FileTypeWithDescriptor>> entry : myFileTypesPerPlugin.entrySet()) {
+      checkUnique(entry.getValue());
+    }
+  }
+
+  private static void checkUnique(Set<FileTypeWithDescriptor> descriptors) {
+    ConcurrentHashMap<String, FileTypeWithDescriptor> names = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, FileTypeWithDescriptor> displayNames = new ConcurrentHashMap<>();
+    ConcurrentHashMap<String, FileTypeWithDescriptor> descriptions = new ConcurrentHashMap<>();
+    for (FileTypeWithDescriptor descriptor : descriptors) {
+      checkUnique(descriptor, names, "getName", FileType::getName);
+      checkUnique(descriptor, displayNames, "getDisplayName", FileType::getDisplayName);
+      checkUnique(descriptor, descriptions, "getDescription", FileType::getDescription);
+    }
   }
 
   // check that method "getter" returns unique strings across all file types
