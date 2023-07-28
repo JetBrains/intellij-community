@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
+import com.intellij.ui.awt.AnchoredPoint
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.isAncestor
@@ -70,14 +71,15 @@ internal class ShowQuickFixesAction : AnAction() {
     val project = event.project
     val panel = project?.let{ProblemsView.getSelectedPanel(project)}
     val button = mouse.source as? ActionButton
-    if (panel != null && button != null) {
-      point.translate(-mouse.x, -mouse.y)
-      when (panel.isVertical) {
-        true -> point.y += button.height
-        else -> point.x += button.width
+    if (panel == null || button == null) {
+      popup.show(RelativePoint.fromScreen(point))
+    } else {
+      val popupPosition = when (panel.isVertical) {
+        true -> AnchoredPoint.Anchor.BOTTOM_LEFT
+        else -> AnchoredPoint.Anchor.TOP_RIGHT
       }
+      popup.show(AnchoredPoint(popupPosition, button))
     }
-    popup.show(RelativePoint.fromScreen(point))
   }
 
 
