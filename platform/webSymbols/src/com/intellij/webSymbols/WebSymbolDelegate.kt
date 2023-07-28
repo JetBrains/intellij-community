@@ -2,14 +2,12 @@
 package com.intellij.webSymbols
 
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.find.usages.symbol.SearchTargetSymbol
 import com.intellij.navigation.NavigatableSymbol
 import com.intellij.openapi.project.Project
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.util.containers.Stack
 import com.intellij.webSymbols.completion.WebSymbolCodeCompletionItem
 import com.intellij.webSymbols.documentation.WebSymbolDocumentation
@@ -17,11 +15,11 @@ import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
-import com.intellij.webSymbols.search.SearchTargetWebSymbol
+import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import javax.swing.Icon
 
-abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol, SearchTargetWebSymbol {
+abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
 
   override val psiContext: PsiElement?
     get() = delegate.psiContext
@@ -100,17 +98,14 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol, Se
 
   override val searchTarget: WebSymbolSearchTarget?
     get() = when (delegate) {
-      is SearchTargetWebSymbol -> delegate.searchTarget
-      is SearchTargetSymbol -> delegate.searchTarget as? WebSymbolSearchTarget
       is SearchTarget -> WebSymbolSearchTarget.create(delegate)
-      else -> null
+      else -> delegate.searchTarget
     }
 
-  protected fun renameTargetFromDelegate(): RenameTarget =
-    when (delegate) {
-      is RenameableSymbol -> delegate.renameTarget
-      is RenameTarget -> delegate
-      else -> throw IllegalArgumentException(delegate::class.java.toString())
+  override val renameTarget: WebSymbolRenameTarget?
+    get() = when (delegate) {
+      is RenameTarget -> WebSymbolRenameTarget.create(delegate)
+      else -> delegate.renameTarget
     }
 
   companion object {

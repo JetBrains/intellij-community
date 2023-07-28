@@ -4,8 +4,9 @@ package com.intellij.webSymbols.search
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.find.usages.symbol.SymbolSearchTargetFactory
 import com.intellij.openapi.project.Project
+import com.intellij.webSymbols.WebSymbol
 
-class WebSymbolSearchTargetFactory : SymbolSearchTargetFactory<SearchTargetWebSymbol> {
-  override fun searchTarget(project: Project, symbol: SearchTargetWebSymbol): SearchTarget? =
-    symbol.searchTarget
+class WebSymbolSearchTargetFactory : SymbolSearchTargetFactory<WebSymbol> {
+  override fun searchTarget(project: Project, symbol: WebSymbol): SearchTarget? =
+    if (symbol !is SearchTarget) symbol.searchTarget else null
 }

@@ -16,7 +16,7 @@ import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.webSymbols.WebSymbol
 import com.intellij.webSymbols.declarations.WebSymbolDeclaration
 
-interface WebSymbolDeclaredInPsi: WebSymbol, SearchTarget, RenameTarget {
+interface WebSymbolDeclaredInPsi : WebSymbol, SearchTarget, RenameTarget {
 
   val sourceElement: PsiElement?
 
@@ -25,8 +25,9 @@ interface WebSymbolDeclaredInPsi: WebSymbol, SearchTarget, RenameTarget {
   override val psiContext: PsiElement?
     get() = sourceElement
 
-  val declaration: WebSymbolDeclaration? get() =
-    buildDeclaration(this)
+  val declaration: WebSymbolDeclaration?
+    get() =
+      buildDeclaration(this)
 
   override fun createPointer(): Pointer<out WebSymbolDeclaredInPsi>
 
@@ -73,7 +74,7 @@ interface WebSymbolDeclaredInPsi: WebSymbol, SearchTarget, RenameTarget {
 
 private fun buildDeclaration(symbol: WebSymbolDeclaredInPsi): WebSymbolDeclaration? {
   return WebSymbolDeclaredInPsiDeclaration(symbol, symbol.sourceElement ?: return null,
-                                            symbol.textRangeInSourceElement ?: return null)
+                                           symbol.textRangeInSourceElement ?: return null)
 }
 
 private class WebSymbolDeclaredInPsiDeclaration(private val symbol: WebSymbol,

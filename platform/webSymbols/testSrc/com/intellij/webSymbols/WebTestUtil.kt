@@ -36,7 +36,6 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.util.elementsAtOffsetUp
 import com.intellij.refactoring.rename.api.RenameTarget
-import com.intellij.refactoring.rename.symbol.RenameableSymbol
 import com.intellij.refactoring.rename.symbol.SymbolRenameTargetFactory
 import com.intellij.rt.execution.junit.FileComparisonFailure
 import com.intellij.testFramework.PlatformTestUtil
@@ -435,9 +434,11 @@ fun CodeInsightTestFixture.checkGotoDeclaration(fromSignature: String?, declarat
   else {
     assertEquals(actualSignature, targetEditor, editor.topLevelEditor)
   }
-  if (!declarationSignature.contains("<caret>") || targetFile.findOffsetBySignature(declarationSignature) != targetEditor.caretModel.offset) {
+  if (!declarationSignature.contains("<caret>") || targetFile.findOffsetBySignature(
+      declarationSignature) != targetEditor.caretModel.offset) {
     assertEquals("For go to from: $actualSignature",
-                 declarationSignature + if(!declarationSignature.contains("<caret>")) "" else (" [" + file.findOffsetBySignature(declarationSignature) + "]"),
+                 declarationSignature + if (!declarationSignature.contains("<caret>")) ""
+                 else (" [" + file.findOffsetBySignature(declarationSignature) + "]"),
                  targetEditor.currentPositionSignature + "[${targetEditor.caretModel.offset}]")
   }
 }
@@ -477,7 +478,7 @@ fun CodeInsightTestFixture.checkTextByFile(actualContents: String, @TestDataFile
 
 fun CodeInsightTestFixture.canRenameWebSymbolAtCaret() =
   webSymbolAtCaret().let {
-    it is RenameableSymbol || it is RenameTarget || (it is PsiSourcedWebSymbol && it.source != null)
+    it is RenameTarget || it?.renameTarget != null || (it is PsiSourcedWebSymbol && it.source != null)
   }
 
 fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
@@ -490,7 +491,6 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
   }
   if (target == null) {
     target = when (symbol) {
-      is RenameableSymbol -> symbol.renameTarget
       is RenameTarget -> symbol
       is PsiSourcedWebSymbol -> {
         val psiTarget = symbol.source
@@ -498,19 +498,14 @@ fun CodeInsightTestFixture.renameWebSymbol(newName: String) {
         renameElement(psiTarget, newName)
         return
       }
-      else ->
-        throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiSourcedWebSymbol")
+      else -> symbol.renameTarget
+              ?: throw AssertionError("Symbol $symbol does not provide rename target nor is a PsiSourcedWebSymbol")
     }
   }
   if (target.createPointer().dereference() == null) {
     throw AssertionError("Target $target pointer dereferences to null")
   }
   renameTarget(target, newName)
-}
-
-fun CodeInsightTestFixture.testWebSymbolRename(fileAfter: String, newName: String) {
-  renameWebSymbol(newName)
-  checkResultByFile(fileAfter)
 }
 
 fun CodeInsightTestFixture.configureAndCopyPaste(sourceFile: String, destinationFile: String) {
@@ -570,7 +565,7 @@ private val Editor.currentPositionSignature: String
     val caretPos = caretModel.offset
     val text = document.text
     return (text.substring(max(0, caretPos - 15), caretPos) + "<caret>" +
-           text.substring(caretPos, min(caretPos + 15, text.length)))
+            text.substring(caretPos, min(caretPos + 15, text.length)))
       .replace("\n", "\\n")
   }
 
