@@ -41,7 +41,7 @@ var traceManagerInitializer: () -> Tracer = {
 }
 
 object TraceManager {
-  internal val tracer: Tracer = traceManagerInitializer()
+  private val tracer: Tracer = traceManagerInitializer()
 
   @JvmStatic
   fun spanBuilder(spanName: String): SpanBuilder = tracer.spanBuilder(spanName)
