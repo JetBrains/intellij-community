@@ -27,7 +27,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-private val EDU_TOOLS_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
+private val JB_ACADEMY_PLUGIN_ID = PluginId.getId("com.jetbrains.edu")
 private const val BUTTON_ID = "Button"
 private const val PROGRESS_ID = "Progress"
 
@@ -74,7 +74,7 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
   private inner class InstallEduToolsAction : AbstractAction(data.getActionButtonName()) {
 
     override fun actionPerformed(e: ActionEvent?) {
-      if (PluginManager.isPluginInstalled(EDU_TOOLS_PLUGIN_ID) && !PluginManagerCore.isDisabled(EDU_TOOLS_PLUGIN_ID)) {
+      if (PluginManager.isPluginInstalled(JB_ACADEMY_PLUGIN_ID) && !PluginManagerCore.isDisabled(JB_ACADEMY_PLUGIN_ID)) {
         val event = AnActionEvent.createFromDataContext(ActionPlaces.WELCOME_SCREEN, null, DataContext.EMPTY_CONTEXT)
         val action = getBrowseCoursesAction()
         action?.actionPerformed(event)
@@ -102,7 +102,7 @@ class JBAcademyInteractiveCoursePanel(data: InteractiveCourseData) : Interactive
     override fun run(indicator: ProgressIndicator) {
       try {
         progressBarPanel.updateProgressBar(0.0)
-        val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(EDU_TOOLS_PLUGIN_ID))
+        val marketplacePlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(setOf(JB_ACADEMY_PLUGIN_ID))
         val descriptors: MutableList<IdeaPluginDescriptor> = ArrayList(RepositoryHelper.mergePluginsFromRepositories(marketplacePlugins,
                                                                                                                      emptyList(), true))
         PluginManagerCore.plugins.filterTo(descriptors) {
