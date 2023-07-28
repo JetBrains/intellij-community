@@ -17,7 +17,7 @@ import com.jetbrains.performancePlugin.utils.VcsTestUtil
 import io.opentelemetry.context.Context
 
 /**
- * Command to add Java file to project
+ * Command to add Kotlin file to project
  * Example: %createKotlinFile fileName, dstDir, fileType - data, file, enum, interface, sealed, annotation, script, worksheet, object]
  */
 class CreateKotlinFileCommand(text: String, line: Int) : PerformanceCommandCoroutineAdapter(text, line) {
