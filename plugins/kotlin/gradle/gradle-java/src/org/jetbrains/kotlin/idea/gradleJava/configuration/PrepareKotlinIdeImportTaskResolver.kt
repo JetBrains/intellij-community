@@ -2,12 +2,14 @@
 package org.jetbrains.kotlin.idea.gradleJava.configuration
 
 import org.jetbrains.kotlin.idea.gradleTooling.PrepareKotlinIdeImportTaskModel
-import org.jetbrains.plugins.gradle.model.ClassSetProjectImportModelProvider
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 class PrepareKotlinIdeImportTaskResolver : AbstractProjectResolverExtension() {
     override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
-        return ClassSetProjectImportModelProvider(setOf(PrepareKotlinIdeImportTaskModel::class.java))
+        return GradleClassProjectModelProvider(
+            PrepareKotlinIdeImportTaskModel::class.java
+        )
     }
 }

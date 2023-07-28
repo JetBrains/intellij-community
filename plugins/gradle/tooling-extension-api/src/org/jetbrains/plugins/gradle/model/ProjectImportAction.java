@@ -51,16 +51,21 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     myIsPreviewMode = isPreviewMode;
   }
 
-  public void addProjectImportModelProvider(@NotNull ProjectImportModelProvider provider) {
-    addProjectImportModelProvider(provider, false);
+  public void addProjectImportModelProviders(
+    @NotNull Collection<? extends ProjectImportModelProvider> providers
+  ) {
+    addProjectImportModelProviders(providers, false);
   }
 
-  public void addProjectImportModelProvider(@NotNull ProjectImportModelProvider provider, boolean isProjectLoadedProvider) {
+  public void addProjectImportModelProviders(
+    @NotNull Collection<? extends ProjectImportModelProvider> providers,
+    boolean isProjectLoadedProvider
+  ) {
     if (isProjectLoadedProvider) {
-      myProjectsLoadedModelProviders.add(provider);
+      myProjectsLoadedModelProviders.addAll(providers);
     }
     else {
-      myBuildFinishedModelProviders.add(provider);
+      myBuildFinishedModelProviders.addAll(providers);
     }
   }
 

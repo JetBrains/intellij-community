@@ -171,10 +171,11 @@ public class GradleModelFetchAction {
         }
       });
       myAllModels.logPerformance(
-        "Ran extension " + extension.getClass().getName() +
+        "Ran extension " + extension.getName() +
         " for project " + gradleProject.getProjectIdentifier().getProjectPath() +
         " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-        System.currentTimeMillis() - startTime);
+        System.currentTimeMillis() - startTime
+      );
     }
   }
 
@@ -196,11 +197,11 @@ public class GradleModelFetchAction {
         }
       });
       myAllModels.logPerformance(
-        "Ran extension " +
-        extension.getClass().getName() +
+        "Ran extension " + extension.getName() +
         " for build " + gradleBuild.getBuildIdentifier().getRootDir().getPath() +
         " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
-        System.currentTimeMillis() - startTime);
+        System.currentTimeMillis() - startTime
+      );
     }
   }
 

@@ -37,6 +37,10 @@ public interface ProjectImportModelProvider extends Serializable {
     void consumeProjectModel(@NotNull ProjectModel projectModel, @NotNull Object object, @NotNull Class<?> clazz);
   }
 
+  default @NotNull String getName() {
+    return getClass().getName();
+  }
+
   default void populateBuildModels(
     @NotNull BuildController controller,
     @NotNull GradleBuild buildModel,

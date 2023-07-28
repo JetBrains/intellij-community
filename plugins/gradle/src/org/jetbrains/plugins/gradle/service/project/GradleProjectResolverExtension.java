@@ -117,6 +117,12 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   @Nullable
   default ProjectImportModelProvider getModelProvider() { return null; }
 
+  @NotNull
+  default List<ProjectImportModelProvider> getModelProviders() {
+    ProjectImportModelProvider provider = getModelProvider();
+    return provider == null ? Collections.emptyList() : List.of(provider);
+  }
+
   /**
    * Allows to request gradle tooling models after gradle projects are loaded and before "sync" tasks are run.
    * This can be used to setup "sync" tasks for the import
@@ -125,6 +131,12 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    */
   @Nullable
   default ProjectImportModelProvider getProjectsLoadedModelProvider() { return null; }
+
+  @NotNull
+  default List<ProjectImportModelProvider> getProjectsLoadedModelProviders() {
+    ProjectImportModelProvider provider = getProjectsLoadedModelProvider();
+    return provider == null ? Collections.emptyList() : List.of(provider);
+  }
 
   /**
    * add paths containing these classes to classpath of gradle tooling extension
@@ -166,7 +178,7 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * tooling api.
    *
    * @param models obtained after projects loaded phase
-   * @see #getProjectsLoadedModelProvider()
+   * @see #getProjectsLoadedModelProviders()
    */
   default void projectsLoaded(@Nullable ModelsHolder<BuildModel, ProjectModel> models) {}
 

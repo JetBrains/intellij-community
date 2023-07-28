@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinDslScriptModelProvider
 import org.jetbrains.kotlin.idea.gradle.scripting.importing.KotlinDslScriptModelResolverCommon
 import org.jetbrains.kotlin.idea.gradleJava.scripting.kotlinDslScriptsModelImportSupported
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
-import org.jetbrains.plugins.gradle.model.ClassSetImportModelProvider
+import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider
 import org.jetbrains.plugins.gradle.service.project.ModifiableGradleProjectModel
 import org.jetbrains.plugins.gradle.service.project.ProjectModelContributor
@@ -19,9 +19,8 @@ class KotlinDslScriptModelResolver : KotlinDslScriptModelResolverCommon() {
     override fun getModelProvider() = KotlinDslScriptModelProvider()
 
     override fun getProjectsLoadedModelProvider(): ProjectImportModelProvider {
-        return ClassSetImportModelProvider(
-            emptySet(),
-            setOf(KotlinDslScriptAdditionalTask::class.java)
+        return GradleClassBuildModelProvider(
+            KotlinDslScriptAdditionalTask::class.java
         )
     }
 
