@@ -175,7 +175,7 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
 private class EWMHFrameDecorator(frame: IdeFrameImpl, coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
 
   override val isInFullScreen: Boolean
-    get() = X11UiUtil.isInFullScreenMode(frame)
+    get() = ClientProperty.isTrue(frame, FULL_SCREEN)
 
   init {
     if (SystemInfo.isKDE && DialogWrapperPeerImpl.isDisableAutoRequestFocus()) {
