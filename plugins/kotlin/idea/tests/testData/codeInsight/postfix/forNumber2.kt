@@ -1,3 +1,3 @@
-fun foo(i: Int) {
-    i.fori<caret>
+fun foo(int: Int) {
+    int.fori<caret>
 }
