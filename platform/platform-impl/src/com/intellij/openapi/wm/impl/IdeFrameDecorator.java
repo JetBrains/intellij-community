@@ -194,7 +194,7 @@ public abstract class IdeFrameDecorator {
 
     @Override
     public boolean isInFullScreen() {
-      return frame != null && X11UiUtil.isInFullScreenMode(frame);
+      return frame != null && ClientProperty.isTrue(frame, FULL_SCREEN);
     }
 
     @Override
