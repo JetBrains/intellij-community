@@ -16,6 +16,7 @@ import com.intellij.ide.dnd.DnDManager
 import com.intellij.ide.dnd.DnDManagerImpl
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.isImplicitReadOnEDTDisabled
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.TransactionGuard
@@ -487,12 +488,17 @@ class IdeEventQueue private constructor() : EventQueue() {
   }
 
   override fun getNextEvent(): AWTEvent {
-    val applicationEx = ApplicationManagerEx.getApplicationEx()
-    val event = if (applicationEx != null && appIsLoaded()) {
-      applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
+    val event = if (isImplicitReadOnEDTDisabled) {
+      super.getNextEvent()
     }
     else {
-      super.getNextEvent()
+      val applicationEx = ApplicationManagerEx.getApplicationEx()
+      if (applicationEx != null && appIsLoaded()) {
+        applicationEx.runUnlockingIntendedWrite<AWTEvent, InterruptedException> { super.getNextEvent() }
+      }
+      else {
+        super.getNextEvent()
+      }
     }
     if (isKeyboardEvent(event) && keyboardEventDispatched.incrementAndGet() > keyboardEventPosted.get()) {
       throw RuntimeException("$event; posted: $keyboardEventPosted; dispatched: $keyboardEventDispatched")
