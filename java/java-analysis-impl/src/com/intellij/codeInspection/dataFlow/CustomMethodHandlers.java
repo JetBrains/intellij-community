@@ -46,7 +46,11 @@ public final class CustomMethodHandlers {
                  "substring", "equals", "equalsIgnoreCase", "charAt", "codePointAt", "compareTo", "replace"),
     staticCall(JAVA_LANG_STRING, "valueOf").parameterCount(1),
     staticCall(JAVA_LANG_MATH, "abs", "sqrt", "min", "max", "addExact", "absExact", "subtractExact", "multiplyExact",
-               "incrementExact", "decrementExact", "toIntExact", "negateExact", "sin", "cos", "tan", "asin", "acos", "atan", "cbrt"),
+               "incrementExact", "decrementExact", "toIntExact", "negateExact", "sin", "cos", "tan", "asin", "acos", "atan", "cbrt",
+               "hypot", "exp", "pow", "log", "log10"),
+    staticCall(JAVA_LANG_STRICT_MATH, "abs", "sqrt", "min", "max", "addExact", "absExact", "subtractExact", "multiplyExact",
+               "incrementExact", "decrementExact", "toIntExact", "negateExact", "sin", "cos", "tan", "asin", "acos", "atan", "cbrt",
+               "hypot", "exp", "pow", "log", "log10"),
     staticCall(JAVA_LANG_INTEGER, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("int"),
     staticCall(JAVA_LANG_LONG, "toString", "toBinaryString", "toHexString", "toOctalString", "toUnsignedString").parameterTypes("long"),
     staticCall(JAVA_LANG_DOUBLE, "toString", "toHexString").parameterTypes("double"),
@@ -198,6 +202,12 @@ public final class CustomMethodHandlers {
                     instanceCall("java.util.Random", "nextDouble").parameterCount(0),
                     instanceCall("java.util.SplittableRandom", "nextDouble").parameterCount(0)), 
               toValue((arguments, state, factory, method) -> doubleRange(0.0, Math.nextDown(1.0))))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "sin", "cos").parameterCount(1),
+                    staticCall(JAVA_LANG_STRICT_MATH, "sin", "cos").parameterCount(1)), 
+              toValue((arguments, state, factory, method) -> doubleRange(-1.0, 1.0).join(DOUBLE_NAN)))
+    .register(anyOf(staticCall(JAVA_LANG_MATH, "hypot", "sqrt", "exp").parameterCount(1),
+                    staticCall(JAVA_LANG_STRICT_MATH, "hypot", "sqrt", "exp").parameterCount(1)), 
+              toValue((arguments, state, factory, method) -> doubleRange(0.0, Double.POSITIVE_INFINITY).join(DOUBLE_NAN)))
     .register(instanceCall("java.util.Random", "nextFloat").parameterCount(0), 
               toValue((arguments, state, factory, method) -> floatRange(0.0f, Math.nextDown(1.0f))))
     .register(staticCall(JAVA_LANG_DOUBLE, "isNaN").parameterTypes("double"),
