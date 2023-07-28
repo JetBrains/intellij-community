@@ -8,9 +8,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectType;
 import com.intellij.openapi.project.ProjectTypeService;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -69,7 +69,7 @@ public final class ChameleonAction extends AnAction {
     return action != null ? action : myActions.get(null);
   }
 
-  @TestOnly
+  @ApiStatus.Internal
   public Map<ProjectType, AnAction> getActions() {
     return myActions;
   }

@@ -73,6 +73,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.awt.AWTEvent
 import java.awt.Component
@@ -909,7 +910,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
     if (actionToId.containsKey(action)) {
       val module = if (pluginId == null) null else PluginManagerCore.getPluginSet().findEnabledPlugin(pluginId)
-      val message = "ID '${actionToId.get(action)}' is already taken by action '$action' (${action.javaClass})." +
+      val message = "ID '${actionToId.get(action)}' is already taken by action ${actionToString(action)}." +
                     " ID '$actionId' cannot be registered for the same action"
       if (module == null) {
         LOG.error(PluginException("$message $pluginId", null, pluginId))
@@ -958,13 +959,23 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       .map { getPluginInfo(it) }
       .joinToString(separator = ",")
     val oldAction = idToAction.get(actionId)
-    val message = "ID '$actionId' is already taken by action '$oldAction' (${oldAction!!.javaClass}) $oldPluginInfo. " +
-                  "Action '$action' (${action.javaClass}) cannot use the same ID $pluginId"
+    val message = "ID '$actionId' is already taken by action ${actionToString(oldAction)} $oldPluginInfo. " +
+                  "Action ${actionToString(action)} cannot use the same ID $pluginId"
     if (pluginId == null) {
       LOG.error(message)
     }
     else {
       LOG.error(PluginException(message, null, pluginId))
+    }
+  }
+
+  private fun actionToString(action: AnAction?): @NonNls String {
+    if (action == null) return "null"
+    if (action is ChameleonAction) {
+      return "ChameleonAction(" + action.actions.values.joinToString { actionToString(it) } + ")";
+    }
+    else {
+      return "'$action' (${action.javaClass})"
     }
   }
 
