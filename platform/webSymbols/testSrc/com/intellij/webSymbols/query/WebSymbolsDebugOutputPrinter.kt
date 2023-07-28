@@ -20,6 +20,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       is WebSymbolHtmlAttributeValue -> builder.printAttributeValue(level, value)
       is WebSymbolNameSegment -> builder.printSegment(level, value)
       is WebSymbolApiStatus -> builder.printApiStatus(value)
+      is Set<*> -> builder.printSet(value)
       else -> super.printValueImpl(builder, level, value)
     }
 
@@ -42,7 +43,7 @@ open class WebSymbolsDebugOutputPrinter : DebugOutputPrinter() {
       printProperty(level, "source", item.symbol)
     }
 
-  override fun StringBuilder.printSet(level: Int, set: Set<*>): StringBuilder {
+  private fun StringBuilder.printSet(set: Set<*>): StringBuilder {
     return append(set.toString())
   }
 
