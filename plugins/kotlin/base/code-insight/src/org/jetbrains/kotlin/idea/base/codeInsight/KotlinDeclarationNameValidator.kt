@@ -40,17 +40,13 @@ class KotlinDeclarationNameValidator(
 
     context(KtAnalysisSession)
     private fun hasConflict(identifier: Name): Boolean {
-        fun KtVariableLikeSymbol.isVisible(): Boolean {
-            val classSymbol = visibleDeclarationsContext.containingClass()?.getClassOrObjectSymbol() ?: return false
-            return isVisibleInClass(classSymbol)
-        }
-
         return when(target) {
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER -> {
                 val scope =
                     visibleDeclarationsContext.containingKtFile.getScopeContextForPosition(visibleDeclarationsContext).getCompositeScope()
+                val containingClassSymbol = lazy(LazyThreadSafetyMode.NONE) { visibleDeclarationsContext.containingClass()?.getClassOrObjectSymbol() }
                 scope.getCallableSymbols(identifier).filterIsInstance<KtVariableLikeSymbol>().any {
-                    !it.isExtension && it.isVisible()
+                    !it.isExtension && (containingClassSymbol.value?.let { cl -> it.isVisibleInClass(cl) } != false)
                 }
             }
             else -> false
