@@ -8,9 +8,10 @@ import com.intellij.util.EventDispatcher
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+// used by rider
 @ApiStatus.Internal
 @Service
-internal class SettingsSyncEvents : Disposable {
+class SettingsSyncEvents : Disposable {
   private val eventDispatcher = EventDispatcher.create(SettingsSyncEventListener::class.java)
 
   fun addListener(listener: SettingsSyncEventListener) {
@@ -50,14 +51,14 @@ internal class SettingsSyncEvents : Disposable {
   }
 }
 
-internal interface SettingsSyncEventListener : EventListener {
+interface SettingsSyncEventListener : EventListener {
   fun categoriesStateChanged() {}
   fun settingChanged(event: SyncSettingsEvent) {}
   fun enabledStateChanged(syncEnabled: Boolean) {}
   fun restartRequired(reason: RestartReason) {}
 }
 
-internal sealed class RestartReason: Comparable<RestartReason> {
+sealed class RestartReason: Comparable<RestartReason> {
   abstract val sortingPriority: Int
   abstract fun getNotificationSubMessage(): String
 
