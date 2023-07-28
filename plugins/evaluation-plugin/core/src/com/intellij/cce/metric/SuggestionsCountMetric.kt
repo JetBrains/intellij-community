@@ -12,7 +12,7 @@ class SuggestionsCountMetric : Metric {
   override val value: Double
     get() = sample.sum()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+  override fun evaluate(sessions: List<Session>): Double {
     val suggestions = sessions.flatMap { it.lookups }.sumOf { it.suggestions.size }.toDouble()
     sample.add(suggestions)
     return suggestions

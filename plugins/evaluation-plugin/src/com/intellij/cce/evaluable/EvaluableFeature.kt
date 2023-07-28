@@ -5,7 +5,6 @@ import com.intellij.cce.core.Language
 import com.intellij.cce.evaluation.EvaluationStep
 import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.Metric
-import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
@@ -39,8 +38,7 @@ interface EvaluableFeature<T : EvaluationStrategy> {
   /**
    * how to render the results of evaluation
    */
-  fun getFileReportGenerator(suggestionsComparators: List<SuggestionsComparator>,
-                             filterName: String,
+  fun getFileReportGenerator(filterName: String,
                              comparisonFilterName: String,
                              featuresStorages: List<FeaturesStorage>,
                              fullLineStorages: List<FullLineLogsStorage>,
@@ -50,11 +48,6 @@ interface EvaluableFeature<T : EvaluationStrategy> {
    * which metrics to calculate and show in reports
    */
   fun getMetrics(): List<Metric>
-
-  /**
-   * which suggestions accept as relevant in metrics computation
-   */
-  fun getSuggestionsComparator(language: Language): SuggestionsComparator
 
   /**
    * additional steps to set up evaluation

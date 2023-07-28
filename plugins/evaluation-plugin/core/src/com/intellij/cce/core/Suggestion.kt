@@ -6,7 +6,9 @@ data class Suggestion(
   val presentationText: String,
   val source: SuggestionSource,
   val details: Map<String, Any?> = emptyMap(),
-  val kind: SuggestionKind = SuggestionKind.ANY
+  val kind: SuggestionKind = SuggestionKind.ANY,
+  var isSelected: Boolean = false,
+  var isRelevant: Boolean = false
 ) {
   fun withSuggestionKind(kind: SuggestionKind): Suggestion {
     return Suggestion(text, presentationText, source, details, kind)

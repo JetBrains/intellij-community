@@ -11,16 +11,12 @@ class HasMatchAt (private val n: Int) : Metric {
   override val value: Double
     get() = sample.mean()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val listOfCompletions = sessions
-      .flatMap { session -> session.lookups.map { lookup -> Pair(lookup, session.expectedText) } }
+  override fun evaluate(sessions: List<Session>): Double {
+    val lookups = mapSessionsToLookups(sessions)
 
     val fileSample = Sample()
-    for (completion in listOfCompletions) {
-      val lookup = completion.first
-      val indexOfNecessaryCompletion = lookup.suggestions.indexOfFirst {
-        matches(it.text.drop(lookup.prefix.length), completion.second.drop(lookup.offset))
-      }
+    lookups.forEach { lookup ->
+      val indexOfNecessaryCompletion = lookup.suggestions.indexOfFirst { it.isRelevant }
       if (indexOfNecessaryCompletion in 0 until n) {
         fileSample.add(1.0)
         sample.add(1.0)
@@ -34,9 +30,6 @@ class HasMatchAt (private val n: Int) : Metric {
     return fileSample.mean()
   }
 
-  private fun matches(suggestionTextNormalized: String, expectedTextNormalized: String): Boolean {
-    return !(suggestionTextNormalized.isEmpty() || !expectedTextNormalized.startsWith(suggestionTextNormalized))
-  }
   companion object {
     const val NAME_PREFIX = "HasMatchAt"
   }

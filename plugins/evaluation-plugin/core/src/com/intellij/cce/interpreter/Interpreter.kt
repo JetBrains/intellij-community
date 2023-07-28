@@ -3,6 +3,7 @@ package com.intellij.cce.interpreter
 
 import com.intellij.cce.actions.*
 import com.intellij.cce.core.Session
+import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.util.FileTextUtil.computeChecksum
 import com.intellij.cce.util.FileTextUtil.getDiff
 import java.nio.file.Paths
@@ -35,6 +36,7 @@ class Interpreter(private val invokersFactory: InvokersFactory,
         is CallFeature -> {
           if (shouldCompleteToken) {
             val session = featureInvoker.callFeature(action.expectedText, action.offset, action.nodeProperties)
+            findRelevantSuggestions(session, featureInvoker.getSelectSuggestionsComparator(), featureInvoker.getRelevantSuggestionsComparator())
             sessions.add(session)
             sessionHandler(session)
           }
@@ -59,5 +61,16 @@ class Interpreter(private val invokersFactory: InvokersFactory,
     if (needToClose) actionsInvoker.closeFile(filePath)
     handler.onFileProcessed(fileActions.path)
     return sessions
+  }
+
+  companion object {
+    fun findRelevantSuggestions(session: Session, selectedComparator: SuggestionsComparator, relevantComparator: SuggestionsComparator) {
+      session.lookups.forEach { lookup ->
+        lookup.suggestions.forEach { suggestion ->
+          suggestion.isSelected = selectedComparator.accept(suggestion, session.expectedText, lookup)
+          suggestion.isRelevant = relevantComparator.accept(suggestion, session.expectedText, lookup)
+        }
+      }
+    }
   }
 }

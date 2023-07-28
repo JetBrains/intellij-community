@@ -34,12 +34,12 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
 
   private fun registerMetrics(metrics: Collection<Metric>) = this.metrics.addAll(metrics)
 
-  fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator = SuggestionsComparator.DEFAULT): List<MetricInfo> {
+  fun evaluate(sessions: List<Session>): List<MetricInfo> {
     val result = metrics.map {
       MetricInfo(
         name = it.name,
         description = it.description,
-        value = it.evaluate(sessions, comparator).toDouble(),
+        value = it.evaluate(sessions).toDouble(),
         confidenceInterval = null,
         evaluationType = evaluationType,
         valueType = it.valueType,

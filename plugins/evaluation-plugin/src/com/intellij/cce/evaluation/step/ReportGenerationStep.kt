@@ -2,12 +2,10 @@
 package com.intellij.cce.evaluation.step
 
 
-import com.intellij.cce.core.Language
 import com.intellij.cce.evaluable.EvaluableFeature
 import com.intellij.cce.evaluable.EvaluationStrategy
 import com.intellij.cce.evaluation.FilteredSessionsStorage
 import com.intellij.cce.metric.MetricsEvaluator
-import com.intellij.cce.metric.SuggestionsComparator
 import com.intellij.cce.report.*
 import com.intellij.cce.util.Progress
 import com.intellij.cce.workspace.EvaluationWorkspace
@@ -45,7 +43,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     val workspaces = inputWorkspaces ?: listOf(workspace)
     val configs = workspaces.map { it.readConfig(feature.getStrategySerializer()) }
     val evaluationTitles = configs.map { it.reports.evaluationTitle }
-    val suggestionsComparators = configs.map { feature.getSuggestionsComparator(Language.resolve(it.language)) }
     val featuresStorages = workspaces.map { it.featuresStorage }
     val fullLineStorages = workspaces.map { it.fullLineLogsStorage }
     val iterationsCount = sessionsFilters.size * comparisonStorages.size
@@ -68,8 +65,8 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           HtmlReportGenerator(
             dirs,
             defaultMetrics,
-            feature.getFileReportGenerator(suggestionsComparators, filter.name, comparisonStorage.reportName, featuresStorages,
-                                           fullLineStorages, dirs)
+            feature.getFileReportGenerator(filter.name, comparisonStorage.reportName, featuresStorages, fullLineStorages,
+                                           dirs)
           ),
           JsonReportGenerator(
             workspace.reportsDirectory(),
@@ -85,7 +82,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
           sessionStorages,
           workspaces.map { it.errorsStorage },
           evaluationTitles,
-          suggestionsComparators,
           comparisonStorage
         )
         for (report in reports) {
@@ -119,7 +115,6 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     sessionStorages: List<SessionsStorage>,
     errorStorages: List<FileErrorsStorage>,
     evaluationTitles: List<String>,
-    suggestionsComparators: List<SuggestionsComparator>,
     comparisonStorage: CompareSessionsStorage,
   ): List<ReportInfo> {
     val title2evaluator = evaluationTitles.mapIndexed { index, title ->
@@ -135,10 +130,10 @@ class ReportGenerationStep<T : EvaluationStrategy>(
         fileText = sessionsInfo.text
         comparisonStorage.add(file.evaluationType, sessionsInfo.sessions)
       }
-      for ((index, file) in sessionFile.value.withIndex()) {
+      for (file in sessionFile.value) {
         val sessionsEvaluation = FileSessionsInfo(filePath, fileText, comparisonStorage.get(file.evaluationType))
         val metricsEvaluation = title2evaluator.getValue(file.evaluationType).evaluate(
-          sessionsEvaluation.sessions, suggestionsComparators[index])
+          sessionsEvaluation.sessions)
         fileEvaluations.add(FileEvaluationInfo(sessionsEvaluation, metricsEvaluation, file.evaluationType))
       }
       comparisonStorage.clear()

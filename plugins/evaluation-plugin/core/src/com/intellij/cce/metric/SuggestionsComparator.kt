@@ -2,12 +2,13 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Language
+import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Suggestion
 
 interface SuggestionsComparator {
   companion object {
     val DEFAULT = object : SuggestionsComparator {
-      override fun accept(suggestion: Suggestion, expected: String): Boolean = suggestion.text == expected
+      override fun accept(suggestion: Suggestion, expected: String, lookup: Lookup): Boolean = suggestion.text == expected
     }
 
     fun create(language: Language): SuggestionsComparator {
@@ -19,5 +20,5 @@ interface SuggestionsComparator {
     }
   }
 
-  fun accept(suggestion: Suggestion, expected: String): Boolean
+  fun accept(suggestion: Suggestion, expected: String, lookup: Lookup): Boolean
 }

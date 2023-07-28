@@ -37,9 +37,9 @@ internal abstract class CompletionGolfMetric<T : Number> : Metric {
 
   private fun T.alsoAddToSample(): T = also { sample.add(it.toDouble()) }
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): T = compute(sessions, comparator).alsoAddToSample()
+  override fun evaluate(sessions: List<Session>): T = compute(sessions).alsoAddToSample()
 
-  abstract fun compute(sessions: List<Session>, comparator: SuggestionsComparator): T
+  abstract fun compute(sessions: List<Session>): T
 }
 
 internal class MovesCount : CompletionGolfMetric<Int>() {
@@ -55,13 +55,13 @@ internal class MovesCount : CompletionGolfMetric<Int>() {
     CompletionInvocationsCount()
   )
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int {
+  override fun compute(sessions: List<Session>): Int {
     // Add x2 amount of lookups, assuming that before each action we call code completion
     // We summarize 3 types of actions:
     // call code completion (1 point)
     // choice suggestion from completion or symbol (if there is no offer in completion) (1 point)
     // navigation to the suggestion (if it fits) (N points, based on suggestion index, assuming first index is 0)
-    return metrics.sumOf { it.compute(sessions, comparator) }
+    return metrics.sumOf { it.compute(sessions) }
   }
 
   companion object {
@@ -77,7 +77,7 @@ internal class TypingsCount : CompletionGolfMetric<Int>() {
   override val value: Double
     get() = sample.sum()
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
+  override fun compute(sessions: List<Session>): Int =
     sessions.sumOf {
       it.expectedLength() +
       it.lookups.count { it.selectedPosition >= 0 } -
@@ -93,7 +93,7 @@ internal class NavigationsCount : CompletionGolfMetric<Int>() {
   override val value: Double
     get() = sample.sum()
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator) = sessions.sumOf { computeMoves(it) }
+  override fun compute(sessions: List<Session>): Int = sessions.sumOf { computeMoves(it) }
 
   private fun computeMoves(session: Session) = session.lookups.sumOf { if (it.selectedPosition >= 0) it.selectedPosition else 0 }
 }
@@ -107,7 +107,7 @@ internal class CompletionInvocationsCount : CompletionGolfMetric<Int>() {
   override val value: Double
     get() = sample.sum()
 
-  override fun compute(sessions: List<Session>, comparator: SuggestionsComparator): Int =
+  override fun compute(sessions: List<Session>): Int =
     sessions.sumOf { it.lookups.count { lookup -> lookup.isNew } }
 }
 
@@ -121,7 +121,7 @@ internal class MatchedLineLength : Metric {
   override val value: Double
     get() = sample.average()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+  override fun evaluate(sessions: List<Session>): Double {
     val fileSample = Sample()
     for (session in sessions) {
       val value = session.lookups.maxOf { lookup -> lookup.selectedWithoutPrefix()?.length ?: 0 }.toDouble()
@@ -142,7 +142,7 @@ internal class FirstPerfectLineSession : Metric {
   override val value: Double
     get() = sample.average()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Number {
+  override fun evaluate(sessions: List<Session>): Number {
     val fileSample = Sample()
     for (session in sessions) {
       val value = session.lookups.indexOfFirst { lookup -> (lookup.selectedWithoutPrefix()?.length ?: 0) +
@@ -165,8 +165,8 @@ internal class MovesCountNormalised : Metric {
   override val value: Double
     get() = (movesCountTotal - minPossibleMovesTotal).toDouble() / (maxPossibleMovesTotal - minPossibleMovesTotal)
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val movesCount = MovesCount().compute(sessions, comparator)
+  override fun evaluate(sessions: List<Session>): Double {
+    val movesCount = MovesCount().compute(sessions)
     val minPossibleMoves = sessions.count() * 2
     val maxPossibleMoves = sessions.sumOf { it.expectedLength() + it.completableLength }
     movesCountTotal += movesCount

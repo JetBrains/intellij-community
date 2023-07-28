@@ -12,13 +12,12 @@ class RecallAtMetric(private val n: Int) : Metric {
   override val value: Double
     get() = sample.mean()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val listOfCompletions = sessions
-      .flatMap { session -> session.lookups.map { lookup -> Pair(lookup.suggestions, session.expectedText) } }
+  override fun evaluate(sessions: List<Session>): Double {
+    val lookups = mapSessionsToLookups(sessions)
 
     val fileSample = Sample()
-    for (completion in listOfCompletions) {
-      val indexOfNecessaryCompletion = completion.first.indexOfFirst { comparator.accept(it, completion.second) }
+    for (lookup in lookups) {
+      val indexOfNecessaryCompletion = lookup.suggestions.indexOfFirst { it.isSelected }
       if (indexOfNecessaryCompletion in 0 until n) {
         fileSample.add(1.0)
         sample.add(1.0)

@@ -8,7 +8,6 @@ import com.intellij.cce.metric.PrefixSimilarity
 import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
-import jdk.jfr.Threshold
 
 class LineCompletionFileReportGenerator(
   filterName: String,

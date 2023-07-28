@@ -22,7 +22,7 @@ abstract class SimilarityMetric(override val showByDefault: Boolean) : Metric {
     values.sumOf { it.first } / values.sumOf { it.second }
   }
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+  override fun evaluate(sessions: List<Session>): Double {
     var matched = 0.0
     var expected = 0.0
     for (session in sessions) {
@@ -67,16 +67,12 @@ class MatchedRatioAt(showByDefault: Boolean = false, val n: Int) : SimilarityMet
     val numConsideredSuggestions = min(n, lookup.suggestions.size)
     var maxMatchedLen = 0
     for (i in 0 until numConsideredSuggestions) {
-      if (matches(lookup.suggestions[i].text.drop(lookup.prefix.length), expectedText)) {
+      if (lookup.suggestions[i].isRelevant) {
         val selected = lookup.suggestions[i]
         maxMatchedLen = max(maxMatchedLen, selected.text.length - lookup.prefix.length)
       }
     }
     return maxMatchedLen.toDouble()
-  }
-
-  private fun matches(suggestionTextNormalized: String, expectedTextNormalized: String): Boolean {
-    return !(suggestionTextNormalized.isEmpty() || !expectedTextNormalized.startsWith(suggestionTextNormalized))
   }
 }
 

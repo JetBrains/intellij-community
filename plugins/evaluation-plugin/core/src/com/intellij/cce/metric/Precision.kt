@@ -15,23 +15,21 @@ class Precision : Metric {
 
   override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+  override fun evaluate(sessions: List<Session>): Double {
+    val lookupsToExpected = mapSessionsToLookups(sessions)
     val fileSample = Sample()
-    for (session in sessions) {
-      for (lookup in session.lookups) {
-        for (suggestion in lookup.suggestions) {
-          if (comparator.accept(suggestion, session.expectedText)) {
-            fileSample.add(1.0)
-            sample.add(1.0)
-          }
-          else {
-            fileSample.add(0.0)
-            sample.add(0.0)
-          }
+    lookupsToExpected.forEach { lookup ->
+      for (suggestion in lookup.suggestions) {
+        if (suggestion.isRelevant) {
+          fileSample.add(1.0)
+          sample.add(1.0)
+        }
+        else {
+          fileSample.add(0.0)
+          sample.add(0.0)
         }
       }
     }
-
     return fileSample.mean()
   }
 }

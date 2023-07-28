@@ -12,14 +12,13 @@ class RecallMetric : Metric {
   override val value: Double
     get() = sample.mean()
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
-    val listOfCompletions = sessions
-      .flatMap { session -> session.lookups.map { lookup -> Pair(lookup.suggestions, session.expectedText) } }
+  override fun evaluate(sessions: List<Session>): Double {
+    val lookups = mapSessionsToLookups(sessions)
 
     val fileSample = Sample()
-    listOfCompletions
-      .forEach { (suggests, expectedText) ->
-        val value = if (suggests.any { comparator.accept(it, expectedText) }) 1.0 else 0.0
+    lookups
+      .forEach { lookup ->
+        val value = if (lookup.suggestions.any { it.isSelected }) 1.0 else 0.0
         fileSample.add(value)
         sample.add(value)
       }

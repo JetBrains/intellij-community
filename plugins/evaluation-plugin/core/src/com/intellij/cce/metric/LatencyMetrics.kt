@@ -12,7 +12,7 @@ abstract class LatencyMetric(override val name: String) : Metric {
 
   override fun confidenceInterval(): Pair<Double, Double>? = Bootstrap.computeInterval(sample) { compute(it) }
 
-  override fun evaluate(sessions: List<Session>, comparator: SuggestionsComparator): Double {
+  override fun evaluate(sessions: List<Session>): Double {
     val fileSample = mutableListOf<Double>()
     sessions
       .flatMap { session -> session.lookups }
