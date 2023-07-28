@@ -109,6 +109,7 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     myDoCaching = doCaching;
     myCollisionResolutionStorage = valueStorage;
 
+    lockStorageWrite();
     try {
       if (!Files.exists(file)) {
         if (file.getFileSystem().isReadOnly()) {
@@ -123,54 +124,48 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
       }
 
       boolean created = false;
-      lockStorageWrite();
-      try {
-        if (myCollisionResolutionStorage.length() == 0) {
-          try {
-            markDirty(true);
-            putMetaData(0);
-            putMetaData2(0);
-            setupEmptyFile();
-            doFlush();
-            created = true;
+      if (myCollisionResolutionStorage.length() == 0) {
+        try {
+          markDirty(true);
+          putMetaData(0);
+          putMetaData2(0);
+          setupEmptyFile();
+          doFlush();
+          created = true;
+        }
+        catch (RuntimeException e) {
+          LOG.info(e);
+          if (e.getCause() instanceof IOException) {
+            throw (IOException)e.getCause();
           }
-          catch (RuntimeException e) {
-            LOG.info(e);
-            if (e.getCause() instanceof IOException) {
-              throw (IOException)e.getCause();
-            }
-            throw e;
+          throw e;
+        }
+        catch (IOException e) {
+          LOG.info(e);
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.info(e);
+          throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
+        }
+      }
+      else {
+        int sign;
+        try {
+          sign = myCollisionResolutionStorage.getInt(0);
+        }
+        catch (Exception e) {
+          LOG.info(e);
+          sign = myVersion.dirtyMagic;
+        }
+        if (sign != myVersion.correctlyClosedMagic) {
+          if (sign != myVersion.dirtyMagic) {
+            throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
           }
-          catch (IOException e) {
-            LOG.info(e);
-            throw e;
-          }
-          catch (Exception e) {
-            LOG.info(e);
+          else {
             throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
           }
         }
-        else {
-          int sign;
-          try {
-            sign = myCollisionResolutionStorage.getInt(0);
-          }
-          catch (Exception e) {
-            LOG.info(e);
-            sign = myVersion.dirtyMagic;
-          }
-          if (sign != myVersion.correctlyClosedMagic) {
-            if (sign != myVersion.dirtyMagic) {
-              throw new VersionUpdatedException(file, Integer.toHexString(myVersion.correctlyClosedMagic), Integer.toHexString(sign));
-            }
-            else {
-              throw new CorruptedException("PersistentEnumerator storage corrupted " + file);
-            }
-          }
-        }
-      }
-      finally {
-        unlockStorageWrite();
       }
 
       if (dataDescriptor instanceof InlineKeyDescriptor) {
@@ -206,6 +201,8 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
         t.addSuppressed(errorOnClose);
       }
       throw t;
+    } finally {
+      unlockStorageWrite();
     }
   }
 
@@ -285,7 +282,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   protected void putMetaData(long data) throws IOException {
     lockStorageWrite();
     try {
-      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) myCollisionResolutionStorage.putLong(META_DATA_OFFSET, data);
+      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 8 || getMetaData() != data) {
+        myCollisionResolutionStorage.putLong(META_DATA_OFFSET, data);
+      }
     }
     finally {
       unlockStorageWrite();
@@ -305,7 +304,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   void putMetaData2(long data) throws IOException {
     lockStorageWrite();
     try {
-      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) myCollisionResolutionStorage.putLong(META_DATA_OFFSET + 8, data);
+      if (myCollisionResolutionStorage.length() < META_DATA_OFFSET + 16 || getMetaData2() != data) {
+        myCollisionResolutionStorage.putLong(META_DATA_OFFSET + 8, data);
+      }
     }
     finally {
       unlockStorageWrite();
