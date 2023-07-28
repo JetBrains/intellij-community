@@ -128,7 +128,8 @@ internal class ActionUpdater @JvmOverloads constructor(
   private fun updateActionReal(action: AnAction): Presentation? {
     // clone the presentation to avoid partially changing the cached one if the update is interrupted
     val presentation = presentationFactory.getPresentation(action).clone()
-    if (!ActionPlaces.isShortcutPlace(place)) presentation.setEnabledAndVisible(true)
+    // reset enabled/visible flags (actions are encouraged to always set them in `update`)
+    presentation.setEnabledAndVisible(true)
     val success = callAction(action, Op.Update) {
       doUpdate(action, createActionEvent(presentation))
     }
