@@ -36,4 +36,8 @@ class X {
     System.out.println(<error descr="Raw processor type is not allowed: X.MyProcessor">myProcessor</error>."");
     return <error descr="Raw processor type is not allowed: java.lang.StringTemplate.Processor">processor</error>."\{}\{}\{}\{}\{}\{}";
   }
+
+  void nested() {
+    System.out.println(STR."\{STR."\{STR."\{STR."\{STR."\{STR."\{STR.""}"}"}"}"}"}");
+  }
 }
