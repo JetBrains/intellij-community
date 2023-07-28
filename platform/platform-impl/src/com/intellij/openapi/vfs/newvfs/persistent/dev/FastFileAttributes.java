@@ -2,10 +2,13 @@
 package com.intellij.openapi.vfs.newvfs.persistent.dev;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -14,7 +17,9 @@ import java.util.function.IntUnaryOperator;
 import static com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper.openHelperAndVerifyVersions;
 
 /**
- * Temporary
+ * (Temporary) Different non-standard kinds of VirtualFile attributes.
+ * Standard attributes are {@link com.intellij.openapi.vfs.newvfs.FileAttribute} and {@link SpecializedFileAttributes},
+ * and here are some more exotic kinds, which may or may not be useful.
  */
 @ApiStatus.Internal
 public final class FastFileAttributes {
@@ -23,65 +28,37 @@ public final class FastFileAttributes {
     throw new AssertionError("Not for instantiation");
   }
 
-  public static IntFileAttribute intFileAttributes(@NotNull FSRecordsImpl vfs,
-                                                   @NotNull String storageName,
-                                                   int version) throws IOException {
-    MappedFileStorageHelper helper = openHelperAndVerifyVersions(vfs, storageName, IntFileAttribute.ROW_SIZE, version);
-    vfs.addCloseable(helper);
-    return new IntFileAttribute(helper);
-  }
-
   public static Int3FileAttribute int3FileAttributes(@NotNull FSRecordsImpl vfs,
                                                      @NotNull String storageName,
                                                      int version) throws IOException {
-    MappedFileStorageHelper helper = openHelperAndVerifyVersions(vfs, storageName, Int3FileAttribute.ROW_SIZE, version);
+    MappedFileStorageHelper helper = openHelperAndVerifyVersions(
+      vfs,
+      storageName,
+      Int3FileAttribute.ROW_SIZE,
+      version
+    );
+
     vfs.addCloseable(helper);
+
     return new Int3FileAttribute(helper);
   }
 
+  public static TimestampedBooleanAttributeAccessor timestampedBoolean(@NotNull FileAttribute attribute) throws IOException {
+    return timestampedBoolean(FSRecords.getInstance(), attribute);
+  }
 
-  public static class IntFileAttribute implements SpecializedFileAttributes.IntFileAttributeAccessor, Closeable {
-    private static final int ROW_SIZE = Integer.BYTES;
-    private static final int FIELD_OFFSET = 0;
+  public static TimestampedBooleanAttributeAccessor timestampedBoolean(@NotNull FSRecordsImpl vfs,
+                                                                       @NotNull FileAttribute attribute) throws IOException {
+    MappedFileStorageHelper helper = openHelperAndVerifyVersions(
+      vfs,
+      attribute.getId(),
+      TimestampedBooleanAttributeAccessorImpl.ROW_SIZE,
+      attribute.getVersion()
+    );
 
-    private final MappedFileStorageHelper storageHelper;
+    vfs.addCloseable(helper);
 
-    public IntFileAttribute(@NotNull MappedFileStorageHelper helper) { storageHelper = helper; }
-
-    @Override
-    public int read(int fileId, int defaultValue) throws IOException {
-      if (defaultValue != 0) {
-        throw new UnsupportedOperationException(
-          "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
-      }
-
-      return storageHelper.readIntField(fileId, FIELD_OFFSET);
-    }
-
-    @Override
-    public void write(int fileId, int value) throws IOException {
-      storageHelper.writeIntField(fileId, FIELD_OFFSET, value);
-    }
-
-    public void update(@NotNull VirtualFile vFile,
-                       @NotNull IntUnaryOperator updater) throws IOException {
-      storageHelper.updateIntField(vFile, FIELD_OFFSET, updater);
-    }
-
-    public void update(int fileId,
-                       @NotNull IntUnaryOperator updater) throws IOException {
-      storageHelper.updateIntField(fileId, FIELD_OFFSET, updater);
-    }
-
-
-    public void fsync() throws IOException {
-      storageHelper.fsync();
-    }
-
-    @Override
-    public void close() throws IOException {
-      storageHelper.close();
-    }
+    return new TimestampedBooleanAttributeAccessorImpl(helper);
   }
 
   public static class Int3FileAttribute implements Closeable {
@@ -128,5 +105,51 @@ public final class FastFileAttributes {
     public void closeAndRemove() throws IOException {
       storageHelper.closeAndRemove();
     }
+  }
+
+  private static class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
+    public static final int FIELDS = 1;
+    public static final int ROW_SIZE = FIELDS * Long.BYTES;
+
+    private final MappedFileStorageHelper storageHelper;
+
+    private TimestampedBooleanAttributeAccessorImpl(MappedFileStorageHelper helper) { storageHelper = helper; }
+
+    @Override
+    public @Nullable Boolean readIfActual(VirtualFile vFile) throws IOException {
+      long stamp = vFile.getTimeStamp();
+      long fieldValue = storageHelper.readLongField(vFile, 0);
+
+      //use sign bit to store true(1) | false(0)
+      long timestamp = Math.abs(fieldValue);
+      boolean value = fieldValue < 0;
+
+      if (timestamp == stamp) {
+        return value;
+      }
+      else {
+        return null;
+      }
+    }
+
+    @Override
+    public void write(VirtualFile vFile, boolean value) throws IOException {
+      long stamp = vFile.getTimeStamp();
+      //use sign bit to store true(1) | false(0)
+      long fieldValue = value ? -stamp : stamp;
+      storageHelper.writeLongField(vFile, 0, fieldValue);
+    }
+
+    @Override
+    public void close() throws IOException {
+      storageHelper.close();
+    }
+  }
+
+  public interface TimestampedBooleanAttributeAccessor {
+    @Nullable Boolean readIfActual(VirtualFile vFile) throws IOException;
+
+    void write(VirtualFile vFile,
+               boolean value) throws IOException;
   }
 }
