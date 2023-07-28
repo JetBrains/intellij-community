@@ -15,7 +15,6 @@ import com.intellij.webSymbols.documentation.WebSymbolDocumentation
 import com.intellij.webSymbols.documentation.WebSymbolDocumentationTarget
 import com.intellij.webSymbols.html.WebSymbolHtmlAttributeValue
 import com.intellij.webSymbols.query.WebSymbolMatch
-import com.intellij.webSymbols.search.SearchTargetWebSymbol
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
 import com.intellij.webSymbols.utils.coalesceApiStatus
 import com.intellij.webSymbols.utils.merge
@@ -29,7 +28,7 @@ internal open class WebSymbolMatchImpl private constructor(
   override val origin: WebSymbolOrigin,
   private val explicitPriority: Priority?,
   private val explicitProximity: Int?
-) : WebSymbolMatch, SearchTargetWebSymbol {
+) : WebSymbolMatch {
 
   protected fun reversedSegments() = Sequence { ReverseListIterator(nameSegments) }
 
@@ -146,7 +145,7 @@ internal open class WebSymbolMatchImpl private constructor(
         .takeIf { it.size == 1 }
         ?.get(0)
         ?.symbols
-        ?.all { it is SearchTarget || it is SearchTargetWebSymbol || it is SearchTargetSymbol } == true)
+        ?.all { it is SearchTarget || it is SearchTargetSymbol || it.searchTarget != null } == true)
       WebSymbolSearchTarget.create(this)
     else
       null
