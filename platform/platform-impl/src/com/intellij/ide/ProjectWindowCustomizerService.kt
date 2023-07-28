@@ -52,20 +52,6 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
   }
 }
 
-internal enum class MainToolbarCustomizationType {
-  JUST_ICON,
-  LINEAR_GRAD_WITH_ICON,
-  CIRCULAR_GRADIENT_WITH_ICON,
-  DROPDOWN_WITH_ICON,
-  JUST_DROPDOWN;
-
-  private fun isLinearGradient() = this == LINEAR_GRAD_WITH_ICON
-  fun isCircularGradient() = this == CIRCULAR_GRADIENT_WITH_ICON
-  fun isGradient() = isLinearGradient() || isCircularGradient()
-  fun isShowIcon() = this != JUST_DROPDOWN
-  fun isDropdown() = this == JUST_DROPDOWN || this == DROPDOWN_WITH_ICON
-}
-
 private const val TOOLBAR_BACKGROUND_KEY = "PROJECT_TOOLBAR_COLOR"
 private const val LAST_CALCULATED_COLOR_INDEX_KEY = "LAST_CALCULATED_COLOR_INDEX_KEY"
 
@@ -74,7 +60,6 @@ private fun isForceColorfulToolbar() = Registry.`is`("ide.colorful.toolbar.force
 private fun conditionToEnable() = isForceColorfulToolbar() || ProjectManagerEx.getOpenProjects().size > 1
 
 private data class ProjectColors(val gradient: Color,
-                                 val background: Color,
                                  val iconColorStart: Color,
                                  val iconColorEnd: Color,
                                  val index: Int? = null)
@@ -107,8 +92,7 @@ class ProjectWindowCustomizerService : Disposable {
   private var ourSettingsValue = UISettings.getInstance().differentiateProjects
   private val colorCache = mutableMapOf<String, ProjectColors>()
   private val listeners = mutableListOf<(Boolean) -> Unit>()
-  private val defaultColors = ProjectColors(background = backgroundColors[0],
-                                            gradient = gradientColors[0],
+  private val defaultColors = ProjectColors(gradient = gradientColors[0],
                                             iconColorStart = ProjectIconPalette.gradients[0].first,
                                             iconColorEnd = ProjectIconPalette.gradients[0].second,
                                             index = 0)
@@ -127,32 +111,20 @@ class ProjectWindowCustomizerService : Disposable {
       JBColor.namedColor("RecentProject.Color9.MainToolbarGradientStart", JBColor(0xE75371, 0xD75370))
     )
 
-  @Suppress("UnregisteredNamedColor")
-  private val backgroundColors: Array<Color>
-    get() = arrayOf(
-      JBColor.namedColor("RecentProject.Color1.MainToolbarDropdownBackground", JBColor(0x534036, 0x534036)),
-      JBColor.namedColor("RecentProject.Color2.MainToolbarDropdownBackground", JBColor(0x453F2D, 0x453F2D)),
-      JBColor.namedColor("RecentProject.Color3.MainToolbarDropdownBackground", JBColor(0x414130, 0x414130)),
-      JBColor.namedColor("RecentProject.Color4.MainToolbarDropdownBackground", JBColor(0x2B434E, 0x2B434E)),
-      JBColor.namedColor("RecentProject.Color5.MainToolbarDropdownBackground", JBColor(0x2F3F5E, 0x2F3F5E)),
-      JBColor.namedColor("RecentProject.Color6.MainToolbarDropdownBackground", JBColor(0x4B2E3E, 0x4B2E3E)),
-      JBColor.namedColor("RecentProject.Color7.MainToolbarDropdownBackground", JBColor(0x47385A, 0x47385A)),
-      JBColor.namedColor("RecentProject.Color8.MainToolbarDropdownBackground", JBColor(0x1E403E, 0x1E403E)),
-      JBColor.namedColor("RecentProject.Color9.MainToolbarDropdownBackground", JBColor(0x324533, 0x324533))
-    )
-
   fun getProjectIcon(project: Project): Icon {
     return project.service<ProjectWindowCustomizerIconCache>().cachedIcon.get()
   }
 
-  private fun getGradientProjectColor(project: Project): Color {
+  @Internal
+  fun getGradientProjectColor(project: Project): Color {
     return getDeprecatedCustomToolbarColor(project)
            ?: getProjectColor(storageFor(project)).gradient
   }
 
-  fun getBackgroundProjectColor(project: Project): Color {
+  @Internal
+  fun getProjectColorToCustomize(project: Project): Color {
     return getDeprecatedCustomToolbarColor(project)
-           ?: getProjectColor(storageFor(project)).background
+           ?: getProjectColor(storageFor(project)).iconColorStart
   }
 
   fun getRecentProjectIconColor(projectPath: String): Pair<Color, Color> {
@@ -177,7 +149,7 @@ class ProjectWindowCustomizerService : Disposable {
       val customColors = colorStorage.customColor?.takeIf { it.isNotEmpty() }?.let {
         val color = ColorUtil.fromHex(it)
         val toolbarColor = ColorUtil.toAlpha(color, 90)
-        ProjectColors(toolbarColor, toolbarColor, color, color)
+        ProjectColors(toolbarColor, color, color)
       }
 
       if (customColors != null) {
@@ -185,8 +157,7 @@ class ProjectWindowCustomizerService : Disposable {
       }
       else {
         val associatedIndex = getOrGenerateAssociatedColorIndex(colorStorage)
-        ProjectColors(background = backgroundColors[associatedIndex],
-                      gradient = gradientColors[associatedIndex],
+        ProjectColors(gradient = gradientColors[associatedIndex],
                       iconColorStart = ProjectIconPalette.gradients[associatedIndex].first,
                       iconColorEnd = ProjectIconPalette.gradients[associatedIndex].second,
                       index = associatedIndex)
@@ -198,7 +169,7 @@ class ProjectWindowCustomizerService : Disposable {
     getAssociatedColorIndex(colorStorage)?.let { return it }
 
     // Calculate next colors by incrementing (and saving the new value) color index
-    val index = PropertiesComponent.getInstance().nextColorIndex(minOf(backgroundColors.size, gradientColors.size))
+    val index = PropertiesComponent.getInstance().nextColorIndex(gradientColors.size)
 
     // Save calculated colors and clear customized colors for the project
     setAssociatedColorsIndex(colorStorage, index)
@@ -208,7 +179,7 @@ class ProjectWindowCustomizerService : Disposable {
 
   private fun getAssociatedColorIndex(colorStorage: ProjectColorStorage): Int? {
     val index = colorStorage.associatedIndex ?: return null
-    if (index >= 0 && index < backgroundColors.size && index < gradientColors.size) return index
+    if (index >= 0 && index < gradientColors.size) return index
     return null
   }
 
@@ -223,11 +194,11 @@ class ProjectWindowCustomizerService : Disposable {
   }
 
   @Internal
-  fun setProjectCustomColor(project: Project, color: Color?) {
-    setProjectCustomColor(storageFor(project), color)
+  fun setCustomProjectColor(project: Project, color: Color?) {
+    setCustomProjectColor(storageFor(project), color)
   }
 
-  private fun setProjectCustomColor(colorStorage: ProjectColorStorage, color: Color?) {
+  private fun setCustomProjectColor(colorStorage: ProjectColorStorage, color: Color?) {
     clearToolbarColorsAndInMemoryCache(colorStorage)
     colorStorage.customColor = color?.let {
       ColorUtil.toHex(color, true)
@@ -278,17 +249,6 @@ class ProjectWindowCustomizerService : Disposable {
   private fun storageFor(projectPath: String) = RecentProjectColorStorage(projectPath)
   private fun storageFor(project: Project) = WorkspaceProjectColorStorage(project)
 
-  internal fun getPaintingType(): MainToolbarCustomizationType {
-    return when (Registry.get("ide.colorful.toolbar.gradient.type").selectedOption) {
-      "Just Icon"                    -> MainToolbarCustomizationType.JUST_ICON
-      "Linear Gradient and Icon"     -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
-      "Circular Gradient and Icon"   -> MainToolbarCustomizationType.CIRCULAR_GRADIENT_WITH_ICON
-      "Dropdown Background and Icon" -> MainToolbarCustomizationType.DROPDOWN_WITH_ICON
-      "Just Dropdown"                -> MainToolbarCustomizationType.JUST_DROPDOWN
-      else                           -> MainToolbarCustomizationType.LINEAR_GRAD_WITH_ICON
-    }
-  }
-
   internal fun update(newValue: Boolean) {
     if (newValue != ourSettingsValue) {
       ourSettingsValue = newValue
@@ -329,9 +289,7 @@ class ProjectWindowCustomizerService : Disposable {
    * @return true if method painted something
    */
   fun paint(window: Window, parent: JComponent, g: Graphics2D): Boolean {
-    if (!isActive() || !getPaintingType().isGradient()) {
-      return false
-    }
+    if (!isActive()) return false
 
     val project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false
 
@@ -345,23 +303,11 @@ class ProjectWindowCustomizerService : Disposable {
     val length = Registry.intValue("ide.colorful.toolbar.gradient.length", 600)
     val x = parent.x.toFloat()
     val y = parent.y.toFloat()
-    if (getPaintingType().isCircularGradient()) {
-      val offset = 150f
-      g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
-    }
-    else {
-      g.paint = GradientPaint(x, y, color, length.toFloat(), y, parent.background)
-    }
+    val offset = 150f
+    g.paint = RadialGradientPaint(x + offset, y + height / 2, length - offset, floatArrayOf(0.0f, 0.6f), arrayOf(color, parent.background))
     g.fillRect(0, 0, length, height)
 
     return true
-  }
-
-  fun getToolbarBackground(project: Project?):Color? {
-    if (project == null) {
-      return null
-    }
-    return getBackgroundProjectColor(project)
   }
 
   override fun dispose() {}
