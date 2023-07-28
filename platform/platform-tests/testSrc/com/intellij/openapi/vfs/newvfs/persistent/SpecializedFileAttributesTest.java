@@ -6,6 +6,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.Byte
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.IntFileAttributeAccessor;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.LongFileAttributeAccessor;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.ShortFileAttributeAccessor;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,11 +19,15 @@ import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 public class SpecializedFileAttributesTest {
-  private static final FileAttribute TEST_ATTRIBUTE = new FileAttribute("TEST_ATTRIBUTE", 1, true);
+  private static final FileAttribute TEST_LONG_ATTRIBUTE = new FileAttribute("TEST_ATTRIBUTE_LONG", 1, true);
+  private static final FileAttribute TEST_INT_ATTRIBUTE = new FileAttribute("TEST_ATTRIBUTE_INT", 1, true);
+  private static final FileAttribute TEST_SHORT_ATTRIBUTE = new FileAttribute("TEST_ATTRIBUTE_SHORT", 1, true);
+  private static final FileAttribute TEST_BYTE_ATTRIBUTE = new FileAttribute("TEST_ATTRIBUTE_BYTE", 1, true);
 
   private static final int ENOUGH_VALUES = 1 << 20;
 
@@ -45,26 +50,29 @@ public class SpecializedFileAttributesTest {
   public void setup(@TempDir Path tempDir) throws Exception {
     vfs = FSRecordsImpl.connect(tempDir);
 
-    byteAttributeAccessor = SpecializedFileAttributes.specializeAsByte(vfs, TEST_ATTRIBUTE);
-    byteFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastByte(vfs, TEST_ATTRIBUTE);
+    byteAttributeAccessor = specializeAsByte(vfs, TEST_BYTE_ATTRIBUTE);
+    byteFastAttributeAccessor = specializeAsFastByte(vfs, TEST_BYTE_ATTRIBUTE);
 
-    shortFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastShort(vfs, TEST_ATTRIBUTE);
+    shortAttributeAccessor = null;//not implemented yet
+    shortFastAttributeAccessor = specializeAsFastShort(vfs, TEST_SHORT_ATTRIBUTE);
 
-    intAttributeAccessor = SpecializedFileAttributes.specializeAsInt(vfs, TEST_ATTRIBUTE);
-    intFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastInt(vfs, TEST_ATTRIBUTE);
+    intAttributeAccessor = specializeAsInt(vfs, TEST_INT_ATTRIBUTE);
+    intFastAttributeAccessor = specializeAsFastInt(vfs, TEST_INT_ATTRIBUTE);
 
-    longAttributeAccessor = SpecializedFileAttributes.specializeAsLong(vfs, TEST_ATTRIBUTE);
+    longAttributeAccessor = specializeAsLong(vfs, TEST_LONG_ATTRIBUTE);
+    longFastAttributeAccessor = null;//not implemented yet
   }
 
   @AfterEach
   public void tearDown() throws Exception {
     vfs.dispose();
+    assertEquals(0,MappedFileStorageHelper.storagesRegistered());
   }
 
   @ParameterizedTest(name = "fast: {0}")
   @ValueSource(booleans = {true, false})
   public void singleIntValueCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
-    SpecializedFileAttributes.IntFileAttributeAccessor accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
+    IntFileAttributeAccessor accessor = testFastAccessor ? intFastAttributeAccessor : intAttributeAccessor;
     int fileId = vfs.createRecord();
     int valueToWrite = 1234;
     accessor.write(fileId, valueToWrite);
@@ -165,14 +173,4 @@ public class SpecializedFileAttributesTest {
     }
   }
 
-
-  public static class IntAccessors implements ArgumentsProvider {
-    @Override
-    public Stream<? extends Arguments> provideArguments(ExtensionContext ctx) throws Exception {
-      SpecializedFileAttributesTest test = (SpecializedFileAttributesTest)ctx.getTestInstance().get();
-      return Stream.of(
-        Arguments.of(test.intAttributeAccessor)
-      );
-    }
-  }
 }

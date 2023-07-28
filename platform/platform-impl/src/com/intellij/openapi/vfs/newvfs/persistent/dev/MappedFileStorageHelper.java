@@ -19,6 +19,8 @@ import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.IntSupplier;
 import java.util.function.IntUnaryOperator;
 import java.util.function.LongUnaryOperator;
@@ -46,6 +48,11 @@ import static java.nio.ByteOrder.nativeOrder;
  */
 @ApiStatus.Internal
 public class MappedFileStorageHelper implements Closeable {
+  /**
+   * Keeps a registry of all {@link MappedFileStorageHelper} -- prevents creating duplicates, i.e. >1 storage
+   * for the same path.
+   */
+  private static final Map<Path, MappedFileStorageHelper> storagesRegistry = new HashMap<>();
 
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
                                                             @NotNull String storageName,
@@ -54,7 +61,8 @@ public class MappedFileStorageHelper implements Closeable {
     Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
     Files.createDirectories(fastAttributesDir);
 
-    Path storagePath = fastAttributesDir.resolve(storageName);
+    Path storagePath = fastAttributesDir.resolve(storageName).toAbsolutePath();
+
     long maxFileSize = HeaderLayout.HEADER_SIZE + bytesPerRow * (long)Integer.MAX_VALUE;
     MMappedFileStorage storage = new MMappedFileStorage(
       storagePath,
@@ -62,7 +70,23 @@ public class MappedFileStorageHelper implements Closeable {
       maxFileSize
     );
     var recordsStorage = connection.getRecords();
-    return new MappedFileStorageHelper(storage, bytesPerRow, recordsStorage::maxAllocatedID);
+
+    synchronized (storagesRegistry) {
+      MappedFileStorageHelper alreadyExistingHelper = storagesRegistry.get(storagePath);
+      if (alreadyExistingHelper != null && alreadyExistingHelper.storage.isOpen()) {
+        if (alreadyExistingHelper.bytesPerRow != bytesPerRow) {
+          throw new IllegalStateException(
+            "StorageHelper[" + storageName + "] is already registered, " +
+            "but with .bytesPerRow(=" + bytesPerRow + ") != storage.bytesPerRow(=" + alreadyExistingHelper.bytesPerRow + ")"
+          );
+        }
+        return alreadyExistingHelper;
+      }
+
+      MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(storage, bytesPerRow, recordsStorage::maxAllocatedID);
+      storagesRegistry.put(storagePath, storageHelper);
+      return storageHelper;
+    }
   }
 
   public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
@@ -87,6 +111,11 @@ public class MappedFileStorageHelper implements Closeable {
     }
     helper.setVFSCreationTag(vfsCreationTag);
     helper.setVersion(storageFormatVersion);
+  }
+
+  @VisibleForTesting
+  public static int storagesRegistered() {
+    return storagesRegistry.size();
   }
 
   //MAYBE:
@@ -135,9 +164,9 @@ public class MappedFileStorageHelper implements Closeable {
 
   private final @NotNull IntSupplier maxAllocatedFileIdSupplier;
 
-  public MappedFileStorageHelper(@NotNull MMappedFileStorage storage,
-                                 int bytesPerRow,
-                                 @NotNull IntSupplier maxRowsSupplier) throws IOException {
+  private MappedFileStorageHelper(@NotNull MMappedFileStorage storage,
+                                  int bytesPerRow,
+                                  @NotNull IntSupplier maxRowsSupplier) throws IOException {
     if (storage.pageSize() % bytesPerRow != 0) {
       throw new IllegalArgumentException(
         "bytesPerRow(=" + bytesPerRow + ") is not aligned with pageSize(=" + storage.pageSize() + "): rows must be page-aligned");
@@ -228,6 +257,8 @@ public class MappedFileStorageHelper implements Closeable {
     //MAYBE RC: is it better to always fsync here? -- or better state that fsync should be called explicitly, if
     //          needed, otherwise leave it to OS to decide when to flush the pages?
     storage.close();
+
+    storagesRegistry.remove(storage.storagePath());
   }
 
   /**

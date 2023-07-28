@@ -1044,6 +1044,10 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       return pageSize;
     }
 
+    public boolean isOpen() {
+      return channel.isOpen();
+    }
+
     @Override
     public String toString() {
       return "MMappedFileStorage[" + storagePath + "]" +

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 
 public class MappedFileStorageHelperTest {
@@ -35,9 +35,17 @@ public class MappedFileStorageHelperTest {
 
   @AfterEach
   public void tearDown() throws Exception {
-    vfs.dispose();
+    //Ideally, storage file is removed after each test. But if mapped file
+    // can't be removed (a thing for Win) -- at least clear it's content so
+    // next test see it as empty file:
     storageHelper.clear();
     storageHelper.close();
+    vfs.dispose();
+
+    assertEquals(
+      0,
+      MappedFileStorageHelper.storagesRegistered(),
+      "All storages must be closed and de-registered on VFS close");
   }
 
   private static @NotNull MappedFileStorageHelper openAndEnsureVersionsMatch(@NotNull FSRecordsImpl vfs) throws IOException {
@@ -48,8 +56,36 @@ public class MappedFileStorageHelperTest {
     return MappedFileStorageHelper.openHelper(vfs, "testIntAttributeStorage", Integer.BYTES);
   }
 
+
   @Test
-  public void singleValue_CouldBeWrittenToAttributeStorage_AndReadBackAsIs() throws Exception {
+  public void openStorageWithSameName_JustReturnsSameInstance() throws IOException {
+    String storageName = "name1";
+    try (MappedFileStorageHelper storageHelper1 = MappedFileStorageHelper.openHelper(vfs, storageName, Integer.BYTES)) {
+      try (MappedFileStorageHelper storageHelper2 = MappedFileStorageHelper.openHelper(vfs, storageName, Integer.BYTES)) {
+        assertSame(
+          storageHelper1,
+          storageHelper2,
+          "open storage with same name must return same instance");
+      }
+    }
+  }
+
+  @Test
+  public void openStorageWithSameName_ButDifferentRowSize_Fails() throws IOException {
+    String storageName = "name1";
+    try (MappedFileStorageHelper storageHelper1 = MappedFileStorageHelper.openHelper(vfs, storageName, Integer.BYTES)) {
+      try (MappedFileStorageHelper storageHelper2 = MappedFileStorageHelper.openHelper(vfs, storageName, Long.BYTES)) {
+        fail("open storage with same name but different row size must fail");
+      }
+      catch (IllegalStateException e) {
+        assertTrue(e.getMessage().contains("already registered"),
+                   "open storage with same name but different row size must fail with message ~ 'already registered'");
+      }
+    }
+  }
+
+  @Test
+  public void singleValue_CouldBeWrittenToStorage_AndReadBackAsIs() throws Exception {
     int fileId = vfs.createRecord();
     int valueToWrite = 42;
     storageHelper.writeIntField(fileId, FIELD_OFFSET_IN_ROW, valueToWrite);
@@ -59,7 +95,7 @@ public class MappedFileStorageHelperTest {
   }
 
   @Test
-  public void notYetWrittenAttributeValue_ReadsBackAsZero() throws Exception {
+  public void notYetWrittenValue_ReadsBackAsZero() throws Exception {
     int fileId = vfs.createRecord();
     int valueReadBack = storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW);
     assertEquals(DEFAULT_VALUE,
@@ -68,7 +104,7 @@ public class MappedFileStorageHelperTest {
   }
 
   @Test
-  public void manyValues_CouldBeWrittenToAttributeStorage_AndReadBackAsIs() throws Exception {
+  public void manyValues_CouldBeWrittenToStorage_AndReadBackAsIs() throws Exception {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
@@ -101,7 +137,7 @@ public class MappedFileStorageHelperTest {
 
 
   @Test
-  public void manyValues_CouldBeWrittenToAttributeStorage_AndReadBackAsIs_AfterReopen() throws Exception {
+  public void manyValues_CouldBeWrittenToStorage_AndReadBackAsIs_AfterReopen() throws Exception {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
@@ -122,7 +158,7 @@ public class MappedFileStorageHelperTest {
   }
 
   @Test
-  public void headers_CouldBeWrittenToAttributeStorage_AndReadBackAsIs_AfterReopen() throws Exception {
+  public void headers_CouldBeWrittenToStorage_AndReadBackAsIs_AfterReopen() throws Exception {
     long vfsTag = System.currentTimeMillis();
     int version = 42;
     storageHelper.setVersion(version);

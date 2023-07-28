@@ -23,6 +23,10 @@ public final class SpecializedFileAttributes {
   //         so int written via specialized attribute could be read back via 'normal' FileAttribute.readAttribute()
   //         Write test for such consistency
 
+  //TODO RC: using FileAttribute.id as file name of a storage is risky -- there is no guarantee that attribute id
+  //         is a valid file name! Need to apply some character-escaping (risk different attributes names collide
+  //         after escaping) or use enumerated attributeId for a file name instead of attribute.id (safe, but
+  //         files in 'extended-storages' become unrecognizable by human being)
 
   public static IntFileAttributeAccessor specializeAsInt(@NotNull FileAttribute attribute) {
     return specializeAsInt(FSRecords.getInstance(), attribute);
@@ -117,8 +121,6 @@ public final class SpecializedFileAttributes {
                                                              @NotNull FileAttribute attribute) throws IOException {
     String attributeId = attribute.getId();
 
-    //FIXME RC: who is responsible for closing the storage?
-
     MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
       vfs,
       attributeId,
@@ -194,7 +196,7 @@ public final class SpecializedFileAttributes {
                                                                @NotNull FileAttribute attribute) throws IOException {
     String attributeId = attribute.getId();
 
-    //TODO RC: so far byte impl is not available
+    //TODO RC: true int8 implementation is not available so far, use int16
     MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
       vfs, attributeId, attribute.getVersion(), Short.BYTES
     );
