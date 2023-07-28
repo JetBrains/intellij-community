@@ -3,9 +3,4 @@
     <applicationService serviceInterface="org.intellij.plugins.intelliLang.inject.config.XPathSupportProxy"
                         serviceImplementation="org.intellij.plugins.intelliLang.inject.config.XPathSupportProxyImpl"/>
   </extensions>
-
-  <extensions defaultExtensionNs="org.intellij.intelliLang">
-    <languageSupport implementation="org.intellij.plugins.intelliLang.inject.xml.XmlLanguageInjectionSupport"/>
-    <injectionConfig config="resources/xmlInjections-html.xml"/>
-  </extensions>
 </idea-plugin>
