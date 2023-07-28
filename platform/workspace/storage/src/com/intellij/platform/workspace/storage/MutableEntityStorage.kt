@@ -205,19 +205,38 @@ sealed class EntityChange<T : WorkspaceEntity> {
    * Returns the entity which was added or used as a replacement in the change.
    */
   abstract val newEntity: T?
-  
+
+  /**
+   * Describes an entity which was added to the storage, directly (via [MutableEntityStorage.addEntity]) or indirectly (as a child of another
+   * added entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource], 
+   * [addDiff][MutableEntityStorage.addDiff]), or after modification of a reference from a parent entity).
+   */
   data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
     override val oldEntity: T?
       get() = null
     override val newEntity: T
       get() = entity
   }
+
+  /**
+   * Describes an entity which was removed from the storage, directly (via [MutableEntityStorage.removeEntity]) or indirectly (as a child of 
+   * another removed entity, or as a result of a batch operation ([replaceBySource][MutableEntityStorage.replaceBySource],
+   * [addDiff][MutableEntityStorage.addDiff]), or after modification of a reference from a parent entity).
+   */
   data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>() {
     override val oldEntity: T
       get() = entity
     override val newEntity: T?
       get() = null
   }
+
+  /**
+   * Describes changes in properties of an entity. 
+   * Old values of the properties can be obtained via [oldEntity], new values can be obtained via [newEntity].
+   * 
+   * Note that currently changes in references to other entities cause [EntityChange.Replaced] event on for the entity for which 
+   * [MutableEntityStorage.modifyEntity] was called.
+   */
   data class Replaced<T : WorkspaceEntity>(override val oldEntity: T, override val newEntity: T) : EntityChange<T>()
 }
 
