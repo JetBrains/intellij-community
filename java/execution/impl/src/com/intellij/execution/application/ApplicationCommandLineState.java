@@ -3,9 +3,7 @@ package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.execution.CommonJavaRunConfigurationParameters;
-import com.intellij.execution.ConfigurationWithCommandLineShortener;
-import com.intellij.execution.ExecutionException;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -39,6 +37,7 @@ public abstract class ApplicationCommandLineState<T extends
     T configuration = getConfiguration();
 
     params.setMainClass(ReadAction.compute(() -> myConfiguration.getRunClass()));
+    String mainClass = params.getMainClass();
     try {
       JavaParametersUtil.configureConfiguration(params, myConfiguration);
     }
@@ -51,7 +50,10 @@ public abstract class ApplicationCommandLineState<T extends
       final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
       if (module.getModule() != null) {
         DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getRunClass(), false,
+          if (mainClass == null) {
+            throw new CantRunException(ExecutionBundle.message("no.main.class.defined.error.message"));
+          }
+          int classPathType = JavaParametersUtil.getClasspathType(module, mainClass, false,
                                                                   isProvidedScopeIncluded());
           JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
         });
