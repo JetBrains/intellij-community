@@ -20,6 +20,8 @@ internal class JBAcademyInteractiveCourse : InteractiveCourseFactory {
   override val isActive: Boolean
     get() = PlatformUtils.isIntelliJ() ||
             PlatformUtils.isPyCharm() && !PlatformUtils.isDataSpell() ||
+            PlatformUtils.isWebStorm() ||
+            PlatformUtils.isCidr() ||
             PlatformUtils.isGoIde()
 
   override val isEnabled: Boolean = true
