@@ -63,10 +63,6 @@ public class JavaQualifierAsArgumentContributor extends CompletionContributor im
     PrefixMatcher matcher = result.getPrefixMatcher();
     Project project = parameters.getEditor().getProject();
     if (project == null) return;
-    //wait for loading
-    if (project.isDefault() || DumbService.isDumb(project)) {
-      return;
-    }
 
     PsiShortNamesCache shortNamesCache = PsiShortNamesCache.getInstance(project);
     MyStaticMembersProcessor processor = new MyStaticMembersProcessor(parameters, qualifierExpression);

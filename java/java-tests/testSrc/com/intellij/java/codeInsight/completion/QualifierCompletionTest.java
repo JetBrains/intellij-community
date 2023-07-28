@@ -4,6 +4,7 @@ package com.intellij.java.codeInsight.completion;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.NeedsIndex;
 import org.jetbrains.annotations.NotNull;
 
 public class QualifierCompletionTest extends NormalCompletionTestCase {
@@ -14,6 +15,7 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
     return JAVA_21;
   }
 
+  @NeedsIndex.Full
   public void testSimple() {
     Registry.get("java.completion.qualifier.as.argument").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
@@ -45,6 +47,7 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
                             """);
   }
 
+  @NeedsIndex.Full
   public void testSeveralArguments() {
     Registry.get("java.completion.qualifier.as.argument").setValue(true, getTestRootDisposable());
     myFixture.configureByText("Test.java", """
@@ -74,6 +77,8 @@ public class QualifierCompletionTest extends NormalCompletionTestCase {
                             }
                             """);
   }
+
+  @NeedsIndex.Full
   public void testAnotherFile() {
     Registry.get("java.completion.qualifier.as.argument").setValue(true, getTestRootDisposable());
     myFixture.addClass( """
