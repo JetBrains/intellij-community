@@ -3,13 +3,14 @@ package com.intellij.psi.impl.java.stubs.index;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.hints.BinaryFileTypePolicy;
-import com.intellij.util.indexing.hints.ExactFileNameInputFilter;
+import com.intellij.util.indexing.hints.FileTypeInputFilterPredicate;
+import com.intellij.util.indexing.hints.FileTypeSubstitutionStrategy;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,8 @@ public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String
       String name = new Manifest(new ByteArrayInputStream(data.getContent())).getMainAttributes().getValue(PsiJavaModule.AUTO_MODULE_NAME);
       if (name != null) return singletonMap(name, null);
     }
-    catch (IOException ignored) { }
+    catch (IOException ignored) {
+    }
     return emptyMap();
   };
 
@@ -57,7 +59,10 @@ public final class JavaSourceModuleNameIndex extends ScalarIndexExtension<String
 
   @Override
   public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-    return new ExactFileNameInputFilter("MANIFEST.MF", true /* ignore case */, BinaryFileTypePolicy.NON_BINARY);
+    FileType manifestFileType = FileTypeRegistry.getInstance().getFileTypeByFileName("Manifest.mf");
+    return new FileTypeInputFilterPredicate(FileTypeSubstitutionStrategy.BEFORE_SUBSTITUTION, type -> {
+      return type.equals(manifestFileType);
+    });
   }
 
   @Override
