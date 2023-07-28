@@ -134,8 +134,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
       long startTime = System.currentTimeMillis();
       myGradleBuild = controller.getBuildModel();
-      Build mainBuild = DefaultBuild.convertGradleBuild(myGradleBuild);
-      AllModels allModels = new AllModels(mainBuild);
+      AllModels allModels = new AllModels(myGradleBuild);
       allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTime);
       long startTimeBuildEnv = System.currentTimeMillis();
       BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
@@ -232,12 +231,12 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     private final Map<String, Long> performanceTrace = new ConcurrentHashMap<>();
     private transient Map<String, String> myBuildsKeyPrefixesMapping;
 
-    public AllModels(@NotNull Build mainBuild) {
-      super(mainBuild);
+    public AllModels(@NotNull GradleBuild mainBuild) {
+      super(DefaultBuild.convertGradleBuild(mainBuild));
     }
 
     public AllModels(@NotNull IdeaProject ideaProject) {
-      super(new LegacyIdeaProjectModelAdapter(ideaProject));
+      super(DefaultBuild.convertIdeaProject(ideaProject));
       addModel(ideaProject, IdeaProject.class);
     }
 

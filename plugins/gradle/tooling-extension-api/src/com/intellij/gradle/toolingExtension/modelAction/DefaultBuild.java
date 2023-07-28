@@ -3,9 +3,11 @@ package com.intellij.gradle.toolingExtension.modelAction;
 
 import org.gradle.tooling.internal.gradle.DefaultBuildIdentifier;
 import org.gradle.tooling.model.BuildIdentifier;
-import org.gradle.tooling.model.ProjectIdentifier;
+import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
 import org.gradle.tooling.model.gradle.GradleBuild;
+import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.tooling.model.idea.IdeaProject;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.Build;
@@ -18,6 +20,7 @@ import java.util.Collection;
 
 @ApiStatus.Internal
 public final class DefaultBuild implements Build, Serializable {
+
   private final String myName;
   private final DefaultBuildIdentifier myBuildIdentifier;
   private final Collection<Project> myProjects = new ArrayList<>(0);
@@ -53,19 +56,24 @@ public final class DefaultBuild implements Build, Serializable {
     myParentBuildIdentifier = parentBuildIdentifier;
   }
 
-  private void addProject(String name, ProjectIdentifier projectIdentifier) {
-    final String projectPath = projectIdentifier.getProjectPath();
-    File rootDir = myBuildIdentifier.getRootDir();
-    assert rootDir.getPath().equals(projectIdentifier.getBuildIdentifier().getRootDir().getPath());
-    myProjects.add(new DefaultProjectModel(name, rootDir, projectPath));
-  }
-
   public static @NotNull Build convertGradleBuild(@NotNull GradleBuild gradleBuild) {
     String name = gradleBuild.getRootProject().getName();
     File rootDir = gradleBuild.getBuildIdentifier().getRootDir();
     DefaultBuild build = new DefaultBuild(name, rootDir);
-    for (BasicGradleProject project : gradleBuild.getProjects()) {
-      build.addProject(project.getName(), project.getProjectIdentifier());
+    for (BasicGradleProject gradleProject : gradleBuild.getProjects()) {
+      build.myProjects.add(DefaultProject.convertGradleProject(gradleProject));
+    }
+    return build;
+  }
+
+  public static @NotNull Build convertIdeaProject(@NotNull IdeaProject ideaProject) {
+    String name = ideaProject.getName();
+    DomainObjectSet<? extends IdeaModule> ideaModules = ideaProject.getChildren();
+    assert !ideaModules.isEmpty() : "Cannot evaluate build identifier for IdeaProject";
+    File rootDir = ideaModules.getAt(0).getGradleProject().getProjectIdentifier().getBuildIdentifier().getRootDir();
+    DefaultBuild build = new DefaultBuild(name, rootDir);
+    for (IdeaModule ideaModule : ideaModules) {
+      build.myProjects.add(DefaultProject.convertIdeaProject(ideaModule));
     }
     return build;
   }
