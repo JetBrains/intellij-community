@@ -48,7 +48,7 @@ class ShowEvaluateExpressionCommand(text: String, line: Int) : PlaybackCommandCo
     val callback = object : XDebuggerEvaluator.XEvaluationCallback {
       override fun errorOccurred(errorMessage: String) {
         startSpan.end()
-        future.complete("")
+        future.completeExceptionally(IllegalStateException("Error occurred: $errorMessage"))
       }
 
       override fun evaluated(result: XValue) {
