@@ -1,32 +1,35 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.jps.gant;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.intellij.build.impl.logging.jps;
 
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter;
 import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.Logger.Factory;
 import com.intellij.openapi.diagnostic.RollingFileHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
-public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.Logger.Factory {
+@ApiStatus.Internal
+public class JpsFileLoggerFactory implements Factory {
   private final RollingFileHandler myAppender;
   private final List<String> myCategoriesWithDebugLevel;
 
-  public Log4jFileLoggerFactory(File logFile, String categoriesWithDebugLevel) {
+  public JpsFileLoggerFactory(Path logFile, String categoriesWithDebugLevel) {
     myCategoriesWithDebugLevel = categoriesWithDebugLevel.isEmpty() ? Collections.emptyList() : Arrays.asList(categoriesWithDebugLevel.split(","));
-    myAppender = new RollingFileHandler(logFile.toPath(), 20_000_000L, 10, true);
+    myAppender = new RollingFileHandler(logFile, 20_000_000L, 10, true);
     myAppender.setFormatter(new IdeaLogRecordFormatter());
   }
 
   @NotNull
   @Override
-  public com.intellij.openapi.diagnostic.Logger getLoggerInstance(@NotNull String category) {
-    final Logger logger = Logger.getLogger(category);
+  public Logger getLoggerInstance(@NotNull String category) {
+    var logger = java.util.logging.Logger.getLogger(category);
     JulLogger.clearHandlers(logger);
     logger.addHandler(myAppender);
     logger.setUseParentHandlers(false);
