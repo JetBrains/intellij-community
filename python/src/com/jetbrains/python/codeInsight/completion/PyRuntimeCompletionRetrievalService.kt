@@ -1,14 +1,12 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.codeInsight.completion
 
-import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
-import com.intellij.codeInsight.completion.CompletionType
+import com.intellij.codeInsight.completion.*
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.lang.LanguageNamesValidation
 import com.intellij.openapi.application.ex.ApplicationUtil
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -62,6 +60,24 @@ private fun processDataFrameColumns(columns: Set<String>,
       createPrioritizedLookupElement(lookupElement, ignoreML)
     }
   }
+}
+
+/**
+ * @param lookupElement - completion item
+ * @param prefix - prefix for prefix matcher corresponding to lookupElement
+ */
+data class RuntimeLookupElement(val lookupElement: LookupElement, val prefix: PrefixMatcher)
+
+interface RemoteFilePathRetrievalService {
+  /**
+   * This function returns a map where the key is file name and value - RuntimeLookupElement.
+   * @see RuntimeLookupElement
+   */
+  fun retrieveRemoteFileLookupElements(parameters: CompletionParameters): Map<String, RuntimeLookupElement>
+}
+
+class DummyRemoteFilePathRetrievalService : RemoteFilePathRetrievalService {
+  override fun retrieveRemoteFileLookupElements(parameters: CompletionParameters): Map<String, RuntimeLookupElement> = emptyMap()
 }
 
 private fun postProcessingChildren(completionResultData: CompletionResultData,
@@ -156,6 +172,7 @@ interface PyRuntimeCompletionRetrievalService {
   }
 }
 
+
 abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val project = parameters.editor.project ?: return
@@ -169,7 +186,7 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
     val service: PyRuntimeCompletionRetrievalService = getCompletionRetrievalService(project)
     if (!service.canComplete(parameters)) return
 
-    fillCompletionVariantsFromRuntime(project, service, parameters, createCustomMatcher(parameters, result))
+    fillCompletionVariantsFromRuntime(project, service, parameters, result)
   }
 
   private fun fillCompletionVariantsFromRuntime(
@@ -178,29 +195,38 @@ abstract class AbstractRuntimeCompletionContributor : CompletionContributor(), D
     parameters: CompletionParameters,
     result: CompletionResultSet,
   ) {
-    val runtimeResults: MutableMap<String, LookupElement> =
+
+    val runtimeResults: MutableMap<String, RuntimeLookupElement> =
       createCompletionResultSet(service, getRuntimeEnvService(project), parameters)
-        .associateByTo(hashMapOf()) { lookupElement -> lookupElement.lookupString }
+        .associateByTo(hashMapOf(), { it.lookupString },
+                       { RuntimeLookupElement(it, createCustomMatcher(parameters, result)) })
+
+    if (runtimeResults.isEmpty()) {
+      val remoteFileResults = project.service<RemoteFilePathRetrievalService>().retrieveRemoteFileLookupElements(parameters)
+      runtimeResults.putAll(remoteFileResults)
+    }
 
     // In general, [createCompletionResultSet] returns an empty list in two cases:
     // * If there is no runtime. In that case, it's better to return early to not waste CPU on runRemainingContributors and
     //   hash table access, even though these operations are fast.
     // * If there is nothing found. In that case, it's better to return early again, because there is nothing to add to the result.
-    // * Other very improbable cases like absence of the project assigned to the editor, which are handled in a defensive manner.
-    if (runtimeResults.isNotEmpty()) {
-      if (!result.isStopped) {
-        result.runRemainingContributors(parameters) { item ->
-          if (runtimeResults.remove(item.lookupElement.lookupString) != null) {
-            val prioritizedCompletionResult = item.withLookupElement(createPrioritizedLookupElement(item.lookupElement, true))
-            result.passResult(prioritizedCompletionResult)
-          }
-          else {
-            result.passResult(item)
-          }
+    // * Other very improbable cases like the absence of the project assigned to the editor, which are handled in a defensive manner.
+    if (runtimeResults.isEmpty()) return
+
+    if (!result.isStopped) {
+      result.runRemainingContributors(parameters) { item ->
+        if (runtimeResults.remove(item.lookupElement.lookupString) != null) {
+          val prioritizedCompletionResult = item.withLookupElement(createPrioritizedLookupElement(item.lookupElement, true))
+          result.withPrefixMatcher(item.prefixMatcher).passResult(prioritizedCompletionResult)
+        }
+        else {
+          result.passResult(item)
         }
       }
+    }
 
-      result.addAllElements(runtimeResults.values)
+    runtimeResults.values.forEach {
+      result.withPrefixMatcher(it.prefix).addElement(it.lookupElement)
     }
   }
 

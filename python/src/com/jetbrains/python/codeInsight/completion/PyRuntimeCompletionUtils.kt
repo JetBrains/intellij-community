@@ -358,12 +358,12 @@ internal fun getSetOfChildrenByListOfCall(valueNode: XValueNodeImpl?,
   return Pair(currentNode, emptyList())
 }
 
-internal fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): CompletionResultSet {
+internal fun createCustomMatcher(parameters: CompletionParameters, result: CompletionResultSet): PrefixMatcher {
   val currentElement = parameters.position
   if (currentElement is PyStringElement) {
     val newPrefix = TextRange.create(currentElement.contentRange.startOffset,
                                      parameters.offset - currentElement.textRange.startOffset).substring(currentElement.text)
-    return result.withPrefixMatcher(PlainPrefixMatcher(newPrefix))
+    return PlainPrefixMatcher(newPrefix)
   }
-  return result.withPrefixMatcher(PlainPrefixMatcher(result.prefixMatcher.prefix))
+  return PlainPrefixMatcher(result.prefixMatcher.prefix)
 }
