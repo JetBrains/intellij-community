@@ -83,7 +83,7 @@ fun testDoesntThrowWhenAlmostFinished() {
   val result = computeCancellable {
     testNoExceptions()
     waitForPendingWrite().up()
-    assertThrows<JobCanceledException> { // cancelled
+    assertThrows<CeProcessCanceledException> { // cancelled
       testExceptions()
     }
     42 // but returning the result doesn't throw CannotReadException

@@ -141,7 +141,7 @@ internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Cal
             continuation.resume(Unit)
           }
         }
-        catch (e: JobCanceledException) {
+        catch (e: CeProcessCanceledException) {
           continuation.resume(Unit)
           throw e
         }

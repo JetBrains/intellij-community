@@ -247,14 +247,6 @@ fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
     try {
       action()
     }
-    catch (e: JobCanceledException) {
-      // This exception is thrown only from `Cancellation.checkCancelled`.
-      // If it's caught, then the job must've been cancelled.
-      if (!context.job.isCancelled) {
-        throw IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e)
-      }
-      throw PceCancellationException(e)
-    }
     catch (pce: ProcessCanceledException) {
       throw PceCancellationException(pce)
     }

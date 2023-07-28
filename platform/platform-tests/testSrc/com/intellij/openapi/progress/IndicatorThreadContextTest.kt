@@ -39,7 +39,7 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun cancellation() {
     val indicator = EmptyProgressIndicator()
     withIndicator(indicator) {
-      assertThrows<JobCanceledException> {
+      assertThrows<CeProcessCanceledException> {
         prepareThreadContextTest { currentJob ->
           testNoExceptions()
           indicator.cancel()
@@ -92,17 +92,17 @@ class IndicatorThreadContextTest : CancellationTest() {
   fun `cancelled by child failure`() {
     val t = Throwable()
     val indicator = EmptyProgressIndicator()
-    val pce = assertThrows<JobCanceledException> {
+    val pce = assertThrows<CeProcessCanceledException> {
       withIndicator(indicator) {
-        throw assertThrows<JobCanceledException> {
+        throw assertThrows<CeProcessCanceledException> {
           prepareThreadContextTest { currentJob ->
             testNoExceptions()
             Job(parent = currentJob).completeExceptionally(t)
-            assertThrows<JobCanceledException> {
+            assertThrows<CeProcessCanceledException> {
               Cancellation.checkCancelled()
             }
             assertFalse(indicator.isCanceled)
-            throw assertThrows<JobCanceledException> {
+            throw assertThrows<CeProcessCanceledException> {
               ProgressManager.checkCanceled()
             }
           }

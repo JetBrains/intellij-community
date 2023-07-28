@@ -38,7 +38,7 @@ public final class Cancellation {
         ensureActive(currentJob);
       }
       catch (CancellationException e) {
-        throw new JobCanceledException(e);
+        throw new CeProcessCanceledException(e);
       }
     }
   }

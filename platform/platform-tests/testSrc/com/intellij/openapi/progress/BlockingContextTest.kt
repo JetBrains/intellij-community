@@ -49,7 +49,7 @@ class BlockingContextTest : CancellationTest() {
           ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
         }
         this@launch.cancel()
-        assertThrows<JobCanceledException> {
+        assertThrows<CeProcessCanceledException> {
           ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
         }
         Cancellation.computeInNonCancelableSection<Unit, Exception> {
@@ -57,7 +57,7 @@ class BlockingContextTest : CancellationTest() {
             ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
           }
         }
-        assertThrows<JobCanceledException> {
+        assertThrows<CeProcessCanceledException> {
           ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
         }
         ProgressManager.getInstance().computeInNonCancelableSection<Unit, Exception> {
@@ -65,7 +65,7 @@ class BlockingContextTest : CancellationTest() {
             ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
           }
         }
-        assertThrows<JobCanceledException> {
+        assertThrows<CeProcessCanceledException> {
           ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
         }
       }

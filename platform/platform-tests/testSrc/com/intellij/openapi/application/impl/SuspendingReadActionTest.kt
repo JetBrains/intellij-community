@@ -169,7 +169,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       assertFalse(attempt)
       attempt = true
       waitForPendingWrite().up()
-      assertThrows<JobCanceledException> { // assert but not throw
+      assertThrows<CeProcessCanceledException> { // assert but not throw
         ProgressManager.checkCanceled()
       }
     }
@@ -182,7 +182,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
       when (attempts++) {
         0 -> {
           waitForPendingWrite().up()
-          throw assertThrows<JobCanceledException> {
+          throw assertThrows<CeProcessCanceledException> {
             ProgressManager.checkCanceled()
           }
         }
@@ -269,7 +269,7 @@ class NonBlockingSuspendingReadActionTest : SuspendingReadActionTest() {
               }
             }
             pendingWrite.timeoutWaitUp()
-            throw assertThrows<JobCanceledException> {
+            throw assertThrows<CeProcessCanceledException> {
               ProgressManager.checkCanceled()
             }
           }
