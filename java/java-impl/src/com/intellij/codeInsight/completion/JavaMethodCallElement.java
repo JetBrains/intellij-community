@@ -181,15 +181,16 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
     JavaCompletionUtil.insertParentheses(context, this, false, hasParams, false);
 
-    final int startOffset = context.getStartOffset();
-    final OffsetKey refStart = context.trackOffset(startOffset, true);
+    final int offset = context.getStartOffset();
+    final OffsetKey refStart = context.trackOffset(offset, true);
+    beforeHandle(context);
     if (myNeedExplicitTypeParameters) {
-      qualifyMethodCall(file, startOffset, document);
+      qualifyMethodCall(file, context.getOffset(refStart), document);
       insertExplicitTypeParameters(context, refStart);
     }
     else if (myHelper != null) {
       context.commitDocument();
-      importOrQualify(document, file, method, startOffset);
+      importOrQualify(document, file, method, context.getOffset(refStart));
     }
 
     PsiCallExpression methodCall = findCallAtOffset(context, context.getOffset(refStart));
@@ -198,7 +199,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       PsiElement completedElement = methodCall instanceof PsiMethodCallExpression ?
                                     ((PsiMethodCallExpression)methodCall).getMethodExpression().getReferenceNameElement() : null;
       TextRange completedElementRange = completedElement == null ? null : completedElement.getTextRange();
-      if (completedElementRange == null || completedElementRange.getStartOffset() != context.getStartOffset()) {
+      if (completedElementRange == null || completedElementRange.getStartOffset() != context.getOffset(refStart)) {
         methodCall = null;
       }
     }
@@ -207,8 +208,23 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
       handleNegation(context, document, methodCall);
     }
 
-    startArgumentLiveTemplate(context, method);
+    afterHandle(context, methodCall);
+
+    if (canStartArgumentLiveTemplate()) {
+      startArgumentLiveTemplate(context, method);
+    }
     showParameterHints(this, context, method, methodCall);
+  }
+
+  protected boolean canStartArgumentLiveTemplate() {
+    return true;
+  }
+
+  protected void afterHandle(@NotNull InsertionContext context, @Nullable PsiCallExpression call) {
+
+  }
+
+  protected void beforeHandle(@NotNull InsertionContext context) {
   }
 
   static PsiCallExpression findCallAtOffset(InsertionContext context, int offset) {
@@ -225,6 +241,9 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   private void importOrQualify(Document document, PsiFile file, PsiMethod method, int startOffset) {
+    if (!needImportOrQualify()) {
+      return;
+    }
     if (willBeImported()) {
       if (method.isConstructor()) {
         final PsiNewExpression newExpression = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiNewExpression.class, false);
@@ -235,7 +254,8 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
             return;
           }
         }
-      } else {
+      }
+      else {
         final PsiReferenceExpression ref = PsiTreeUtil.findElementOfClassAtOffset(file, startOffset, PsiReferenceExpression.class, false);
         if (ref != null && myContainingClass != null && !ref.isReferenceTo(method)) {
           ref.bindToElementViaStaticImport(myContainingClass);
@@ -245,6 +265,10 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     qualifyMethodCall(file, startOffset, document);
+  }
+
+  protected boolean needImportOrQualify() {
+    return true;
   }
 
   public static final Key<PsiMethod> ARGUMENT_TEMPLATE_ACTIVE = Key.create("ARGUMENT_TEMPLATE_ACTIVE");

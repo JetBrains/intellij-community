@@ -1353,6 +1353,8 @@
                             implementationClass="com.intellij.codeInspection.magicConstant.MagicCompletionContributor"/>
     <completion.contributor language="JAVA" id="javaBasic2ClassName" order="before javaMemberName, before javaLegacy, after liveTemplates"
                             implementationClass="com.intellij.codeInsight.completion.JavaNoVariantsDelegator"/>
+    <completion.contributor language="JAVA" id="javaQualifierAsArgument" order="before javaLegacy, after javaBasic2ClassName, after methodMerger"
+                            implementationClass="com.intellij.codeInsight.completion.JavaQualifierAsArgumentContributor"/>
     <completion.contributor language="JAVA" id="javaRefactoring" order="first"
                             implementationClass="com.intellij.codeInsight.completion.RefactoringCompletionContributor"/>
     <completion.contributor language="JAVA" id="JShell" order="before javaLegacy"
