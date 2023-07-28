@@ -54,7 +54,8 @@ public class DefaultTreeUI extends BasicTreeUI {
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
-  public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER = Key.create("allows to filter single child nodes which should not be auto-expanded");
+  public static final Key<Function<Object, Boolean>> AUTO_EXPAND_FILTER =
+    Key.create("allows to filter single child nodes which should not be auto-expanded");
   private static final Logger LOG = Logger.getInstance(DefaultTreeUI.class);
   private static final Collection<Class<?>> SUSPICIOUS = createWeakSet();
 
@@ -172,6 +173,7 @@ public class DefaultTreeUI extends BasicTreeUI {
 
     return ObjectUtils.chooseNotNull(resolvedControl, myDefaultControl);
   }
+
   private final AtomicBoolean painting = new AtomicBoolean();
   private final DispatchThreadValidator validator = new DispatchThreadValidator();
 
@@ -179,7 +181,8 @@ public class DefaultTreeUI extends BasicTreeUI {
     return super.tree; // TODO: tree ???
   }
 
-  private @Nullable Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean focused) {
+  private @Nullable Component getRenderer(JTree tree, Object value, boolean selected, boolean expanded,
+                                          boolean leaf, int row, boolean focused) {
     if (isSeparator(value) && value instanceof Component) {
       return (Component)value;
     }
@@ -295,7 +298,8 @@ public class DefaultTreeUI extends BasicTreeUI {
 
               if (shouldPaintTop && shouldPaintBottom) {
                 g.fillRect(left, bounds.y, right - left, bounds.height);
-              } else {
+              }
+              else {
                 int arc = JBUI.CurrentTheme.Tree.ARC.get();
                 FILL.paint((Graphics2D)g, left, bounds.y, right - left, bounds.height, arc);
                 if (shouldPaintTop) {
@@ -494,7 +498,8 @@ public class DefaultTreeUI extends BasicTreeUI {
           for (; path != null; path = cache.getPathForRow(++row)) {
             Rectangle bounds = cache.getBounds(path, buffer);
             if (bounds == null) {
-              LOG.warn("The bounds for the row " + row + " of the tree " + tree + " with model " + treeModel + " are null, looks like a bug in " + cache);
+              LOG.warn("The bounds for the row " + row + " of the tree " + tree + " with model " + treeModel +
+                       " are null, looks like a bug in " + cache);
               continue;
             }
             width = Math.max(width, bounds.x + bounds.width);
