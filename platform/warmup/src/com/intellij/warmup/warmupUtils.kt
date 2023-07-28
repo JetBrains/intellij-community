@@ -2,6 +2,7 @@
 package com.intellij.warmup
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.util.indexing.FileBasedIndex
@@ -16,8 +17,10 @@ import kotlinx.coroutines.withContext
 import java.time.Duration
 import kotlin.system.exitProcess
 
-fun waitIndexInitialization() {
-  (FileBasedIndex.getInstance() as FileBasedIndexEx).waitUntilIndicesAreInitialized()
+suspend fun waitIndexInitialization() {
+  val fileBasedIndex = serviceAsync<FileBasedIndex>() as FileBasedIndexEx
+  fileBasedIndex.loadIndexes()
+  fileBasedIndex.waitUntilIndicesAreInitialized()
 }
 
 suspend fun waitUntilProgressTasksAreFinishedOrFail() {

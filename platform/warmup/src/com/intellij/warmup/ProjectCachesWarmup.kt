@@ -5,11 +5,10 @@ import com.intellij.ide.environment.impl.EnvironmentUtil
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.progress.blockingContext
+import com.intellij.openapi.application.impl.exitAppOrExitProcess
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl
 import com.intellij.platform.util.ArgsParser
@@ -17,7 +16,9 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
 import com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener
 import com.intellij.warmup.util.*
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
@@ -94,12 +95,10 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
         totalIndexedFiles.addAndGet(history.totalStatsPerFileType.values.sumOf { it.totalNumberOfFiles })
       }
     }
-    application.messageBus.connect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
+    application.messageBus.simpleConnect().subscribe(ProjectIndexingActivityHistoryListener.TOPIC, handler)
 
     val project = withLoggingProgresses {
-      blockingContext {
-        waitIndexInitialization()
-      }
+      waitIndexInitialization()
       val project = try {
         importOrOpenProject(commandArgs)
       }
@@ -121,11 +120,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     waitForRefreshQueue()
 
     withLoggingProgresses {
-      withContext(Dispatchers.EDT) {
-        blockingContext {
-          ProjectManager.getInstance().closeAndDispose(project)
-        }
-      }
+      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
     }
 
     WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles.get()))
@@ -135,11 +130,8 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
  - Elapsed time: ${Formats.formatDuration(timeEnd - timeStart)}
  - Number of indexed files: $totalIndexedFiles. 
 Exiting the application...""")
-    withContext(Dispatchers.EDT) {
-      blockingContext {
-        application.exit(false, true, false)
-      }
-    }
+
+    exitAppOrExitProcess()
   }
 }
 

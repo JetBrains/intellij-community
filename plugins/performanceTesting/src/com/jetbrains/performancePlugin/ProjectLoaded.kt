@@ -145,8 +145,8 @@ class ProjectLoaded : InitProjectActivityJavaShim(), ApplicationInitializedListe
       Runnable {
         alarm.addRequest(Context.current().wrap(
           Runnable {
-            val hasUserVisibleIndicators = (WindowManager.getInstance().getIdeFrame(project)?.statusBar as StatusBarEx)
-              .backgroundProcesses.isNotEmpty()
+            val statusBar = WindowManager.getInstance().getIdeFrame(project)?.statusBar as? StatusBarEx
+            val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
             if (isDumb(project) || hasUserVisibleIndicators ||
                 !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
               runScriptWhenInitializedAndIndexed(project)
