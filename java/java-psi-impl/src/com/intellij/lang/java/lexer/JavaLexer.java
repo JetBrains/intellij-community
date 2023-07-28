@@ -55,7 +55,8 @@ public final class JavaLexer extends LexerBase {
   private int myTokenEndOffset;  // positioned after the last symbol of the current token
   private IElementType myTokenType;
   private short myState = 0;
-  private short myBraceCount = 0;
+  private short[] myBraceCounts = new short[1];
+  private int myTemplateDepth = -1;
 
   /** The length of the last valid unicode escape (6 or greater), or 1 when no unicode escape was found. */
   private int mySymbolLength = 1;
@@ -76,14 +77,18 @@ public final class JavaLexer extends LexerBase {
     mySymbolLength = 1;
     if (initialState != 0) {
       myState = (short)initialState;
-      myBraceCount = (short)(initialState >> 16);
+      short braceCount = (short)(initialState >> 16);
+      if (braceCount > 0) {
+        myBraceCounts[0] = braceCount;
+        myTemplateDepth = 0;
+      }
     }
     myFlexLexer.reset(myBuffer, startOffset, endOffset, 0);
   }
 
   @Override
   public int getState() {
-    return (myBraceCount == 0) ? 0 : myBraceCount << 16 | myState;
+    return myTemplateDepth < 0 ? 0 : myBraceCounts[myTemplateDepth] << 16 | myState;
   }
 
   @Override
@@ -135,16 +140,16 @@ public final class JavaLexer extends LexerBase {
         break;
 
       case '{':
-        if (myBraceCount > 0) {
-          myBraceCount++;
+        if (myTemplateDepth >= 0) {
+          myBraceCounts[myTemplateDepth]++;
         }
         myTokenType = JavaTokenType.LBRACE;
         myTokenEndOffset = myBufferIndex + mySymbolLength;
         break;
       case '}':
-        if (myBraceCount > 0) {
-          myBraceCount--;
-          if (myBraceCount == 0) {
+        if (myTemplateDepth >= 0) {
+          if (--myBraceCounts[myTemplateDepth] == 0) {
+            myTemplateDepth--;
             if (myState == STATE_TEXT_BLOCK_TEMPLATE) {
               if (locateTextBlockEnd(myBufferIndex + mySymbolLength)) {
                 myTokenType = JavaTokenType.TEXT_BLOCK_TEMPLATE_MID;
@@ -287,7 +292,11 @@ public final class JavaLexer extends LexerBase {
         if (pos < myBufferEndOffset) {
           if (locateCharAt(pos) == '{' && myStringTemplates && quoteChar == '"') {
             pos += mySymbolLength;
-            myBraceCount = 1;
+            myTemplateDepth++;
+            if (myTemplateDepth == myBraceCounts.length) {
+              myBraceCounts = Arrays.copyOf(myBraceCounts, myTemplateDepth * 2);
+            }
+            myBraceCounts[myTemplateDepth] = 1;
             myTokenEndOffset = pos;
             return true;
           }
