@@ -6,7 +6,6 @@ import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
@@ -93,7 +92,7 @@ class MacCustomAppIcon {
     }
 
     private fun getImagePath(appPath: String): String {
-      val customIcon = ApplicationInfoEx.getInstanceEx().applicationCustomIcon ?: "custom.icns"
+      val customIcon = "custom.icns"
       return "$appPath/Contents/Resources/$customIcon"
     }
   }
