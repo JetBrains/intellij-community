@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ## 0.0.14
+- [MERMAID-8](https://youtrack.jetbrains.com/issue/MERMAID-8) Added support for Font Awesome icons in mind map diagrams
 - [MERMAID-15](https://youtrack.jetbrains.com/issue/MERMAID-15) Fixed incorrect diagram scaling after restoring from cache
 - [MERMAID-30](https://youtrack.jetbrains.com/issue/MERMAID-30) Added support for YAML language injections into diagram front matter
 - [MERMAID-33](https://youtrack.jetbrains.com/issue/MERMAID-33) Added JSON schema-based validation for the front matter content
