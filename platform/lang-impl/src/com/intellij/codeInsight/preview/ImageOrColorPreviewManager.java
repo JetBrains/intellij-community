@@ -2,6 +2,10 @@
 package com.intellij.codeInsight.preview;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,193 +37,16 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
-final class ImageOrColorPreviewManager implements Disposable, EditorMouseMotionListener, EditorFactoryListener {
-  private static final Logger LOG = Logger.getInstance(ImageOrColorPreviewManager.class);
-
-  private static final Key<KeyListener> EDITOR_LISTENER_ADDED = Key.create("previewManagerListenerAdded");
-
-  private final Alarm alarm = new Alarm();
-
-  /**
-   * this collection should not keep strong references to the elements
-   * @link getPsiElementsAt()
-   */
-  @Nullable
-  private Collection<PsiElement> myElements;
+final class ImageOrColorPreviewManager implements EditorMouseMotionListener, EditorFactoryListener {
 
   @Override
   public void editorCreated(@NotNull EditorFactoryEvent event) {
-    registerListeners(event.getEditor());
+    ApplicationManager.getApplication().getService(ImageOrColorPreviewService.class).attach(event.getEditor());
   }
 
   @Override
   public void editorReleased(@NotNull EditorFactoryEvent event) {
-    Editor editor = event.getEditor();
-    if (editor.isOneLineMode()) {
-      return;
-    }
-
-    KeyListener keyListener = EDITOR_LISTENER_ADDED.get(editor);
-    if (keyListener != null) {
-      EDITOR_LISTENER_ADDED.set(editor, null);
-      editor.getContentComponent().removeKeyListener(keyListener);
-      editor.removeEditorMouseMotionListener(this);
-    }
+    ApplicationManager.getApplication().getService(ImageOrColorPreviewService.class).detach(event.getEditor());
   }
 
-  private void registerListeners(final Editor editor) {
-    if (editor.isOneLineMode()) {
-      return;
-    }
-
-    Project project = editor.getProject();
-    if (project == null || project.isDisposed()) {
-      return;
-    }
-
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-    if (psiFile == null || psiFile instanceof PsiCompiledElement || !isSupportedFile(psiFile)) {
-      return;
-    }
-
-    editor.addEditorMouseMotionListener(this);
-
-    KeyListener keyListener = new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_SHIFT && !editor.isOneLineMode()) {
-          PointerInfo pointerInfo = MouseInfo.getPointerInfo();
-          if (pointerInfo != null) {
-            Point location = pointerInfo.getLocation();
-            SwingUtilities.convertPointFromScreen(location, editor.getContentComponent());
-            int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(location));
-            alarm.cancelAllRequests();
-            alarm.addRequest(new PreviewRequest(editor, offset, true), 100);
-          }
-        }
-      }
-    };
-    editor.getContentComponent().addKeyListener(keyListener);
-
-    EDITOR_LISTENER_ADDED.set(editor, keyListener);
-  }
-
-  private static boolean isSupportedFile(PsiFile psiFile) {
-    for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
-      for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensionList()) {
-        if (provider.isSupportedFile(file)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  @NotNull
-  private static Collection<PsiElement> getPsiElementsAt(Editor editor, int offset) {
-    if (editor.isDisposed()) {
-      return Collections.emptySet();
-    }
-
-    Project project = editor.getProject();
-    if (project == null || project.isDisposed()) {
-      return Collections.emptySet();
-    }
-
-    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-    final Document document = editor.getDocument();
-    PsiFile psiFile = documentManager.getPsiFile(document);
-    if (psiFile == null || psiFile instanceof PsiCompiledElement || !psiFile.isValid()) {
-      return Collections.emptySet();
-    }
-
-    final Set<PsiElement> elements = ContainerUtil.createWeakSet();
-    if (documentManager.isCommitted(document)) {
-      ContainerUtil.addIfNotNull(elements, InjectedLanguageUtil.findElementAtNoCommit(psiFile, offset));
-    }
-    for (PsiFile file : psiFile.getViewProvider().getAllFiles()) {
-      ContainerUtil.addIfNotNull(elements, file.findElementAt(offset));
-    }
-
-    return elements;
-  }
-
-  @Override
-  public void dispose() {
-    alarm.cancelAllRequests();
-    myElements = null;
-  }
-
-  @Override
-  public void mouseMoved(@NotNull EditorMouseEvent event) {
-    Editor editor = event.getEditor();
-    if (editor.isOneLineMode()) {
-      return;
-    }
-
-    alarm.cancelAllRequests();
-    Collection<PsiElement> elements = myElements;
-    if (elements == null && event.getMouseEvent().isShiftDown()) {
-      alarm.addRequest(new PreviewRequest(editor, event.getOffset(), false), 100);
-    }
-    else if (elements != null && !SlowOperations.allowSlowOperations(() -> getPsiElementsAt(editor, event.getOffset()).equals(elements))) {
-      myElements = null;
-      for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensionList()) {
-        try {
-          for (PsiElement element : elements) {
-            provider.hide(element, editor);
-          }
-        }
-        catch (Exception e) {
-          LOG.error(e);
-        }
-      }
-    }
-  }
-
-  private final class PreviewRequest implements Runnable {
-    private final Editor editor;
-    private final int offset;
-    private final boolean keyTriggered;
-
-    PreviewRequest(Editor editor, int offset, boolean keyTriggered) {
-      this.editor = editor;
-      this.offset = offset;
-      this.keyTriggered = keyTriggered;
-    }
-
-    @Override
-    public void run() {
-      SlowOperations.allowSlowOperations(() -> doRun());
-    }
-
-    private void doRun() {
-      Collection<PsiElement> elements = getPsiElementsAt(editor, offset);
-      if (elements.equals(myElements)) return;
-      for (PsiElement element : elements) {
-        if (element == null || !element.isValid()) {
-          return;
-        }
-        if (PsiDocumentManager.getInstance(element.getProject()).isUncommited(editor.getDocument()) ||
-            DumbService.getInstance(element.getProject()).isDumb()) {
-          return;
-        }
-
-        for (ElementPreviewProvider provider : ElementPreviewProvider.EP_NAME.getExtensions()) {
-          if (!provider.isSupportedFile(element.getContainingFile())) continue;
-
-          try {
-            provider.show(element, editor, editor.offsetToXY(offset), keyTriggered);
-          }
-          catch (ProcessCanceledException e) {
-            throw e;
-          }
-          catch (Exception e) {
-            LOG.error(e);
-          }
-        }
-      }
-      myElements = elements;
-    }
-  }
 }
