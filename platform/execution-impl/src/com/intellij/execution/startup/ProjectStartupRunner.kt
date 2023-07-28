@@ -6,29 +6,41 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder.Companion.create
 import com.intellij.execution.runners.ProgramRunner
-import com.intellij.execution.startup.BeforeRunStartupTasks.Companion.beforeRunAsync
 import com.intellij.ide.impl.isTrusted
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.startup.StartupManager
+import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
-import java.util.function.BiConsumer
 
 private val LOG = logger<ProjectStartupRunner>()
 
-internal class ProjectStartupRunner : StartupActivity.DumbAware {
-  override fun runActivity(project: Project) {
+private val EP_NAME = ProjectExtensionPointName<BeforeRunStartupTasks>("com.intellij.beforeRunStartupTasks")
+
+private suspend fun beforeRunAsync(project: Project) {
+  for (task in EP_NAME.getExtensions(project)) {
+    runCatching {
+      task.beforeRun()
+    }.getOrLogException(LOG)
+  }
+}
+
+internal class ProjectStartupRunner : ProjectActivity {
+  override suspend fun execute(project: Project) {
     val projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project)
     if (projectStartupTaskManager.isEmpty) {
       return
     }
 
-    project.getMessageBus().connect().subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
+    project.getMessageBus().simpleConnect().subscribe(RunManagerListener.TOPIC, object : RunManagerListener {
       override fun runConfigurationRemoved(settings: RunnerAndConfigurationSettings) {
         projectStartupTaskManager.delete(settings.getUniqueID())
       }
@@ -44,9 +56,11 @@ internal class ProjectStartupRunner : StartupActivity.DumbAware {
         projectStartupTaskManager.checkOnChange(settings)
       }
     })
-    beforeRunAsync(project).whenComplete(BiConsumer { _, _ ->
-      StartupManager.getInstance(project).runAfterOpened(Runnable { runActivities(project) })
-    })
+
+    coroutineScope {
+      beforeRunAsync(project)
+      runActivities(project, projectStartupTaskManager)
+    }
   }
 }
 
@@ -88,38 +102,33 @@ private class MyExecutor(executor: Executor, configuration: RunnerAndConfigurati
   }
 }
 
-private fun runActivities(project: Project) {
+private suspend fun runActivities(project: Project, projectStartupTaskManager: ProjectStartupTaskManager) {
   if (!project.isTrusted()) {
     return
   }
 
-  val projectStartupTaskManager = ProjectStartupTaskManager.getInstance(project)
   val configurations = ArrayList<RunnerAndConfigurationSettings>(projectStartupTaskManager.localConfigurations)
   configurations.addAll(projectStartupTaskManager.sharedConfigurations)
-  ApplicationManager.getApplication().invokeLater(
-    {
-      var pause = 0L
-      val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
-      val executor = DefaultRunExecutor.getRunExecutorInstance()
-      for (configuration in configurations) {
-        if (!canBeRun(configuration)) {
-          showNotification(
-            project,
-            ExecutionBundle.message("project.startup.runner.notification.can.not.be.started", configuration.getName()))
-          return@invokeLater
-        }
-
-        try {
-          alarm.addRequest(MyExecutor(executor, configuration, alarm), pause)
-        }
-        catch (e: ExecutionException) {
-          showNotification(project, e.message)
-        }
-        pause = MyExecutor.PAUSE
+  withContext(Dispatchers.EDT) {
+    var pause = 0L
+    val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, project)
+    val executor = DefaultRunExecutor.getRunExecutorInstance()
+    for (configuration in configurations) {
+      if (!canBeRun(configuration)) {
+        showNotification(project,
+                         ExecutionBundle.message("project.startup.runner.notification.can.not.be.started", configuration.getName()))
+        return@withContext
       }
-    },
-    project.getDisposed(),
-  )
+
+      try {
+        alarm.addRequest(MyExecutor(executor, configuration, alarm), pause)
+      }
+      catch (e: ExecutionException) {
+        showNotification(project, e.message)
+      }
+      pause = MyExecutor.PAUSE
+    }
+  }
 }
 
 private fun showNotification(project: Project, text: @Nls String?) {
