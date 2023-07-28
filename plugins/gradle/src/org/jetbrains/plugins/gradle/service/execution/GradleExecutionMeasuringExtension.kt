@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressEvent
@@ -16,13 +15,8 @@ import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtensi
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import java.lang.ref.WeakReference
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
-import java.util.function.Consumer
 
 class GradleExecutionMeasuringExtension : GradleOperationHelperExtension {
-
-  private val myInflightOperations: ConcurrentMap<ExternalSystemTaskId, ExternalSystemListener> = ConcurrentHashMap()
 
   override fun prepareForExecution(id: ExternalSystemTaskId,
                                    operation: LongRunningOperation,
@@ -32,26 +26,16 @@ class GradleExecutionMeasuringExtension : GradleOperationHelperExtension {
     if (gradleVersion == null || gradleVersion.isGradleOlderThan("5.1")) {
       return
     }
-    val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
-    val listener = ExternalSystemListener(id) {
-      val gradleListener = myInflightOperations.remove(it)
-      if (gradleListener != null) {
-        notificationManager.removeNotificationListener(gradleListener)
-      }
-    }
-    myInflightOperations[id] = listener
+    val listener = ExternalSystemListener(id)
     operation.addProgressListener(listener)
-    notificationManager.addNotificationListener(listener)
+    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(id, listener)
   }
 
   override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {}
 
   private fun BuildEnvironment.gradleVersion(): GradleVersion? = gradle?.gradleVersion?.let { GradleVersion.version(it) }
 
-  private class ExternalSystemListener(
-    val taskId: ExternalSystemTaskId,
-    val disposer: Consumer<ExternalSystemTaskId>
-  ) : ExternalSystemTaskNotificationListener, ProgressListener {
+  private class ExternalSystemListener(val taskId: ExternalSystemTaskId) : ExternalSystemTaskNotificationListenerAdapter(), ProgressListener {
 
     private val router: TaskExecutionAggregatedRouter = TaskExecutionAggregatedRouter(GradleExecutionStageFusHandler(
       taskId.id,
@@ -65,15 +49,6 @@ class GradleExecutionMeasuringExtension : GradleOperationHelperExtension {
         return
       }
       router.flush()
-      disposer.accept(taskId)
     }
-
-    override fun onStart(id: ExternalSystemTaskId) {}
-    override fun onStatusChange(event: ExternalSystemTaskNotificationEvent) {}
-    override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {}
-    override fun beforeCancel(id: ExternalSystemTaskId) {}
-    override fun onSuccess(id: ExternalSystemTaskId) {}
-    override fun onFailure(id: ExternalSystemTaskId, e: Exception) {}
-    override fun onCancel(id: ExternalSystemTaskId) {}
   }
 }
