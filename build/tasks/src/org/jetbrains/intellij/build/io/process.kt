@@ -71,9 +71,15 @@ suspend fun runJava(mainClass: String,
             span.setAttribute("processArgs", processArgs.joinToString(separator = " "))
             span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
             val errorOutput = runCatching { Files.readString(errorOutputFile) }.getOrNull()
+            val output = runCatching { Files.readString(outputFile) }.getOrNull()
             span.setAttribute("errorOutput", errorOutput ?: "error output file doesn't exist")
             onError?.invoke()
-            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}\n$errorOutput")
+            throw RuntimeException("Cannot execute $mainClass: $reason\n${processArgs.joinToString(separator = " ")}" +
+                                   "\n--- error output ---\n" +
+                                   "$errorOutput" +
+                                   "\n--- output ---" +
+                                   "$output\n" +
+                                   "\n--- ---")
           }
 
           try {
