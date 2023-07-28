@@ -23,7 +23,6 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJavaExecutable
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJdkHome
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
-import org.jetbrains.jps.incremental.storage.ProjectStamps
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jpsBootstrap.JpsBootstrapUtil.toBooleanChecked
@@ -276,7 +275,7 @@ class JpsBootstrapMain(args: Array<String>?) {
   @Throws(Throwable::class)
   private fun downloadOrBuildClasses(module: JpsModule, model: JpsModel, kotlincHome: Path) {
     val fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME)
-    val runJpsBuild = (fromJpsBuildEnvValue != null && fromJpsBuildEnvValue.toBooleanChecked()) || ProjectStamps.PORTABLE_CACHES
+    val runJpsBuild = fromJpsBuildEnvValue != null && fromJpsBuildEnvValue.toBooleanChecked()
 
     var manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME)
     if (manifestJsonUrl != null && manifestJsonUrl.isBlank()) {
