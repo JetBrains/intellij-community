@@ -21,4 +21,4 @@ class PropertyTypeMarked
 
 class PropertyTypeContainer @OptIn(PropertyTypeMarker::class) constructor(val subject: PropertyTypeMarked)
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixesFactory$HighPriorityUseOptInAnnotationFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.OptInFixes$HighPriorityUseOptInAnnotationFix
