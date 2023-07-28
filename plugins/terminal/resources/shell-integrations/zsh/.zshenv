@@ -53,12 +53,11 @@ if [[ -o 'aliases' ]]; then
 fi
 
 function _jedi_update_environment() {
-  builtin setopt local_options unset # to treat unset JEDITERM_SOURCE as empty
-  if [[ -n "$JEDITERM_SOURCE" ]]; then
+  if [[ -n "${JEDITERM_SOURCE:-}" ]]; then
     # TODO: Is it correct to split JEDITERM_SOURCE_ARGS on IFS and
     # drop empty arguments? Bash integration does it and it looks
     # intentional.
-    builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS}
+    builtin source -- "$JEDITERM_SOURCE" ${=JEDITERM_SOURCE_ARGS:-}
   fi
   builtin unset JEDITERM_SOURCE JEDITERM_SOURCE_ARGS
 
@@ -83,7 +82,7 @@ function _jedi_update_environment() {
 # This function will be called after all rc files are processed
 # and before the first prompt is displayed.
 function _jedi_precmd_hook() {
-  _jedi_update_environment()
+  _jedi_update_environment
 
   # Remove the hook and the functions.
   builtin typeset -ga precmd_functions
