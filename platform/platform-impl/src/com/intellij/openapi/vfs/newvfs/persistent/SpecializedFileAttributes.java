@@ -153,6 +153,10 @@ public final class SpecializedFileAttributes {
     };
   }
 
+  public static ShortFileAttributeAccessor specializeAsFastShort(@NotNull FileAttribute attribute) throws IOException {
+    return specializeAsFastShort(FSRecords.getInstance(), attribute);
+  }
+
   public static ShortFileAttributeAccessor specializeAsFastShort(@NotNull FSRecordsImpl vfs,
                                                                  @NotNull FileAttribute attribute) throws IOException {
     String attributeId = attribute.getId();
@@ -181,6 +185,41 @@ public final class SpecializedFileAttributes {
       }
     };
   }
+
+  public static ByteFileAttributeAccessor specializeAsFastByte(@NotNull FileAttribute attribute) throws IOException {
+    return specializeAsFastByte(FSRecords.getInstance(), attribute);
+  }
+
+  public static ByteFileAttributeAccessor specializeAsFastByte(@NotNull FSRecordsImpl vfs,
+                                                               @NotNull FileAttribute attribute) throws IOException {
+    String attributeId = attribute.getId();
+
+    //TODO RC: so far byte impl is not available
+    MappedFileStorageHelper storageHelper = MappedFileStorageHelper.openHelperAndVerifyVersions(
+      vfs, attributeId, attribute.getVersion(), Short.BYTES
+    );
+    vfs.addCloseable(storageHelper);
+
+    int fieldOffset = 0;
+    return new ByteFileAttributeAccessor() {
+      @Override
+      public byte read(int fileId,
+                       byte defaultValue) throws IOException {
+        if (defaultValue != 0) {
+          throw new UnsupportedOperationException(
+            "defaultValue=" + defaultValue + ": so far only 0 is supported default value for fast-attributes");
+        }
+        return (byte)storageHelper.readShortField(fileId, fieldOffset);
+      }
+
+      @Override
+      public void write(int fileId,
+                        byte value) throws IOException {
+        storageHelper.writeShortField(fileId, fieldOffset, value);
+      }
+    };
+  }
+
 
   public interface LongFileAttributeAccessor {
     default long read(@NotNull VirtualFile vFile) throws IOException {

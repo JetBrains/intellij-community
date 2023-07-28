@@ -121,6 +121,9 @@ public class MappedFileStorageHelper implements Closeable {
 
   public static final int DEFAULT_PAGE_SIZE = 4 * MiB;
 
+  //RC: byte[] view over ByteBuffer is not supported
+  //private static final VarHandle BYTE_HANDLE = byteBufferViewVarHandle(byte[].class, nativeOrder())
+  //  .withInvokeExactBehavior();
   private static final VarHandle SHORT_HANDLE = byteBufferViewVarHandle(short[].class, nativeOrder())
     .withInvokeExactBehavior();
   private static final VarHandle INT_HANDLE = byteBufferViewVarHandle(int[].class, nativeOrder())
@@ -294,6 +297,29 @@ public class MappedFileStorageHelper implements Closeable {
 
     SHORT_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
+
+  //public byte readByteField(int fileId,
+  //                            int fieldOffsetInRow) throws IOException {
+  //  int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //
+  //  Page page = storage.pageByOffset(offsetInFile);
+  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
+  //
+  //  return (byte)BYTE_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
+  //}
+  //
+  //public void writeByteField(int fileId,
+  //                            int fieldOffsetInRow,
+  //                            byte attributeValue) throws IOException {
+  //  int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
+  //  int offsetInPage = storage.toOffsetInPage(offsetInFile);
+  //
+  //  Page page = storage.pageByOffset(offsetInFile);
+  //  ByteBuffer rawPageBuffer = page.rawPageBuffer();
+  //
+  //  BYTE_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
+  //}
 
 
   /* ============== implementation: ====================================================================== */

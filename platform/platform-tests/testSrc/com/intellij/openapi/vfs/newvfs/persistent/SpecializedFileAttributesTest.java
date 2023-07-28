@@ -46,6 +46,7 @@ public class SpecializedFileAttributesTest {
     vfs = FSRecordsImpl.connect(tempDir);
 
     byteAttributeAccessor = SpecializedFileAttributes.specializeAsByte(vfs, TEST_ATTRIBUTE);
+    byteFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastByte(vfs, TEST_ATTRIBUTE);
 
     shortFastAttributeAccessor = SpecializedFileAttributes.specializeAsFastShort(vfs, TEST_ATTRIBUTE);
 
@@ -149,14 +150,16 @@ public class SpecializedFileAttributesTest {
                  "Value written must be read back as is");
   }
 
-  @Test
-  public void manyByteValuesCouldBeWrittenAndReadBackAsIs() throws Exception {
+  @ParameterizedTest(name = "fast: {0}")
+  @ValueSource(booleans = {true, false})
+  public void manyByteValuesCouldBeWrittenAndReadBackAsIs(boolean testFastAccessor) throws Exception {
+    ByteFileAttributeAccessor accessor = testFastAccessor ? byteFastAttributeAccessor : byteAttributeAccessor;
     int fileId = vfs.createRecord();
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       byte valueToWrite = (byte)rnd.nextInt(Byte.MIN_VALUE, Byte.MAX_VALUE);
-      byteAttributeAccessor.write(fileId, valueToWrite);
-      byte readBack = byteAttributeAccessor.read(fileId, (byte)0);
+      accessor.write(fileId, valueToWrite);
+      byte readBack = accessor.read(fileId, (byte)0);
       assertEquals(valueToWrite, readBack,
                    "Value written must be read back as is");
     }
