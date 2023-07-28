@@ -30,8 +30,8 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
                                      arch: JvmArchitecture,
                                      notarize: Boolean) {
   require(Files.isRegularFile(macZip))
-  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir)
-    .resolve(context.productProperties.getBaseArtifactName(context) + suffix + ".sit")
+  val baseName = context.productProperties.getBaseArtifactName(context) + suffix
+  val sitFile = (if (context.publishSitArchive) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.sit")
   Files.move(macZip, sitFile, StandardCopyOption.REPLACE_EXISTING)
 
   if (context.isMacCodeSignEnabled) {
@@ -43,7 +43,7 @@ internal suspend fun signAndBuildDmg(builder: MacDistributionBuilder,
   if (notarize) {
     notarize(sitFile, context)
   }
-  buildDmg(sitFile, builder.artifactName(suffix), customizer, context, staple = notarize)
+  buildDmg(sitFile, "$baseName.dmg", customizer, context, staple = notarize)
   check(Files.exists(sitFile)) {
     "$sitFile wasn't created"
   }

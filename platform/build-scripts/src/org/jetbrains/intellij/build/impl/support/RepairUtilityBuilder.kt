@@ -217,8 +217,11 @@ class RepairUtilityBuilder {
       @JvmField val distributionUrlVariable: String
     ) {
       val distributionSuffix: String
-        get() = OsSpecificDistributionBuilder.suffix(arch) + "." +
-                OsSpecificDistributionBuilder.extension(os)
+        get() = OsSpecificDistributionBuilder.suffix(arch) + "." + when (os) {
+          OsFamily.LINUX -> "tar.gz"
+          OsFamily.MACOS -> "dmg"
+          OsFamily.WINDOWS -> "exe"
+        }
     }
 
     fun executableFilesPatterns(context: BuildContext): List<String> {

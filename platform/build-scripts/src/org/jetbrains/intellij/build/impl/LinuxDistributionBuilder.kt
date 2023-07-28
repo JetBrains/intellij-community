@@ -150,7 +150,7 @@ class LinuxDistributionBuilder(override val context: BuildContext,
 
   private suspend fun buildTarGz(arch: JvmArchitecture, runtimeDir: Path?, unixDistPath: Path, suffix: String): Path = withContext(Dispatchers.IO) {
     val tarRoot = rootDirectoryName
-    val tarName = artifactName(suffix)
+    val tarName = context.productProperties.getBaseArtifactName(context) + suffix + ".tar.gz"
     val tarPath = context.paths.artifactDir.resolve(tarName)
     val dirs = mutableListOf(context.paths.distAllDir, unixDistPath)
 

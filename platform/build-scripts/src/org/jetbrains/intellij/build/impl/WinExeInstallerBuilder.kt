@@ -49,8 +49,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
   }
 
   val communityHome = context.paths.communityHomeDir
-  val installerFile = context.paths.artifactDir.resolve(artifactName(suffix))
-  val outFileName = installerFile.nameWithoutExtension
+  val outFileName = context.productProperties.getBaseArtifactName(context) + suffix
   Span.current().setAttribute(outFileName, outFileName)
 
   val box = context.paths.tempDir.resolve("winInstaller$suffix")
@@ -142,7 +141,7 @@ internal suspend fun WindowsDistributionBuilder.buildNsisInstaller(winDistPath: 
       }
     }
   }
-
+  val installerFile = context.paths.artifactDir.resolve("$outFileName.exe")
   check(Files.exists(installerFile)) {
     "Windows installer wasn't created."
   }
