@@ -2,6 +2,7 @@
 package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.actions.ToggleDistractionFreeModeAction
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
@@ -40,7 +41,9 @@ object NewUiOnboardingUtil {
   private const val DARK_SUFFIX = "_dark"
 
   val isOnboardingEnabled: Boolean
-    get() = Registry.`is`("ide.experimental.ui.onboarding") && NewUiOnboardingBean.isPresent
+    get() = Registry.`is`("ide.experimental.ui.onboarding")
+            && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
+            && NewUiOnboardingBean.isPresent
 
   fun getHelpLink(topic: String): String {
     val ideHelpName = NewUiOnboardingBean.getInstance().ideHelpName
