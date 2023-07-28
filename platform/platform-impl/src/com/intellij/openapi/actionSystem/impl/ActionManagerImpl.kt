@@ -903,7 +903,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       return
     }
 
-    if (addToMap(actionId = actionId, action = action, projectType = projectType) == null) {
+    if (!addToMap(actionId = actionId, action = action, projectType = projectType)) {
       reportActionIdCollision(actionId = actionId, action = action, pluginId = pluginId)
       return
     }
@@ -931,24 +931,30 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     updateHandlers(action)
   }
 
-  // executed under lock
-  private fun addToMap(actionId: String, action: AnAction, projectType: ProjectType?): AnAction? {
+  /**
+   * executed under lock
+   * @return true on success, false on action conflict
+   */
+  private fun addToMap(actionId: String, action: AnAction, projectType: ProjectType?): Boolean {
     val existing = idToAction.get(actionId)
-    val chameleonAction: ChameleonAction
     if (existing is ChameleonAction) {
-      chameleonAction = existing
+      val chameleonAction = existing
+      return chameleonAction.addAction(action, projectType)
     }
     else if (existing != null) {
-      chameleonAction = ChameleonAction(existing, projectType)
+      val chameleonAction = ChameleonAction(existing, projectType)
       idToAction = idToAction.put(actionId, chameleonAction)
+      return chameleonAction.addAction(action, projectType)
+    }
+    else if (projectType != null) {
+      val chameleonAction = ChameleonAction(action, projectType)
+      idToAction = idToAction.put(actionId, chameleonAction)
+      return true
     }
     else {
-      val result = projectType?.let { ChameleonAction(action, it) } ?: action
-      idToAction = idToAction.put(actionId, result)
-      return result
+      idToAction = idToAction.put(actionId, action)
+      return true
     }
-
-    return chameleonAction.addAction(action, projectType)
   }
 
   private fun reportActionIdCollision(actionId: String, action: AnAction, pluginId: PluginId?) {

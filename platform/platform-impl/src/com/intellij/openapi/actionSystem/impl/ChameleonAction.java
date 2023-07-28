@@ -26,16 +26,24 @@ public final class ChameleonAction extends AnAction {
     copyFrom(myActions.values().iterator().next());
   }
 
-  @Nullable ChameleonAction addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
+  /**
+   * @return true on success, false on action conflict
+   */
+  boolean addAction(@NotNull AnAction action, @Nullable ProjectType projectType) {
     if (action instanceof ActionStub actionStub) {
       action = ActionManagerImplKt.convertStub(actionStub);
       if (action == null) {
-        return this;
+        return true;
       }
 
       projectType = actionStub.getProjectType();
     }
-    return myActions.put(projectType, action) == null ? this : null;
+
+    if (myActions.containsKey(projectType)) {
+      return false;
+    }
+    myActions.put(projectType, action);
+    return true;
   }
 
   @Override
