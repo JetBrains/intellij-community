@@ -39,7 +39,7 @@ internal object RootsChangeWatcher {
           //todo indexing should automatically schedule indexing for newly registered WorkspaceFileSet instead of determining entities manually 
           val entitiesToReindex = applier.entitiesToReindex.filter { 
             val entity = it.resolve(snapshot)
-            entity != null && indexingService.shouldCauseRescan(entity, project) 
+            entity != null && indexingService.shouldCauseRescan(null, entity, project)
           }
           val indexingInfo = indexingService.createWorkspaceEntitiesRootsChangedInfo(entitiesToReindex)
           projectRootManager.rootsChanged.rootsChanged(indexingInfo)

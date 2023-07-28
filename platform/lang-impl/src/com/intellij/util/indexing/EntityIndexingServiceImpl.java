@@ -418,8 +418,8 @@ class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   @Override
-  public boolean shouldCauseRescan(@NotNull WorkspaceEntity entity, @NotNull Project project) {
-    return tracker.shouldRescan(entity, project);
+  public boolean shouldCauseRescan(@Nullable WorkspaceEntity oldEntity, @Nullable WorkspaceEntity newEntity, @NotNull Project project) {
+    return tracker.shouldRescan(oldEntity, newEntity, project);
   }
 
   private static class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {

@@ -72,12 +72,7 @@ internal object ModuleRootListenerBridgeImpl : ModuleRootListenerBridge {
   private fun shouldFireRootsChanged(events: VersionedStorageChange, project: Project): Boolean {
     val indexingService = EntityIndexingServiceEx.getInstanceEx()
     return events.getAllChanges().any {
-      val entity = when (it) {
-        is EntityChange.Added -> it.entity
-        is EntityChange.Removed -> it.entity
-        is EntityChange.Replaced -> it.newEntity
-      }
-      indexingService.shouldCauseRescan(entity, project)
+      indexingService.shouldCauseRescan(it.oldEntity, it.newEntity, project)
     }
   }
 }
