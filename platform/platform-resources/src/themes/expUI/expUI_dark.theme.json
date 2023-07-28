@@ -612,7 +612,8 @@
 
     "TitlePane": {
       "Button": {
-        "preferredSize": "44,40"
+        "preferredSize": "44,40",
+        "hoverBackground": "#FFFFFF10"
       }
     },
 

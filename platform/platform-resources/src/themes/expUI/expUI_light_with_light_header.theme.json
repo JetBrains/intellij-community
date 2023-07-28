@@ -47,6 +47,8 @@
       }
     },
 
+    "TitlePane.Button.hoverBackground": "#0000000D",
+
     "MenuBar.borderColor": "Grey12",
 
     "Notification.Shadow": {
