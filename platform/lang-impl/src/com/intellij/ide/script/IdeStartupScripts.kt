@@ -1,119 +1,111 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.script;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.ide.script
 
-import com.intellij.ide.extensionResources.ExtensionsRootType;
-import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.Formats;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.ide.extensionResources.ExtensionsRootType
+import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.ProjectActivity
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.Formats
+import com.intellij.openapi.util.text.StringUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.stream.Collectors
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+private val LOG = logger<IdeStartupScripts>()
+private const val SCRIPT_DIR = "startup"
 
-final class IdeStartupScripts implements StartupActivity.DumbAware {
-  private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
+internal class IdeStartupScripts : ProjectActivity {
+  private val isActive = AtomicBoolean(true)
 
-  private static final String SCRIPT_DIR = "startup";
-
-  private final AtomicBoolean isActive = new AtomicBoolean(true);
-
-  IdeStartupScripts() {
+  init {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      throw ExtensionNotApplicableException.create();
+      throw ExtensionNotApplicableException.create()
     }
   }
 
-  @Override
-  public void runActivity(@NotNull Project project) {
+  override suspend fun execute(project: Project) {
     if (!isActive.compareAndSet(true, false)) {
-      return;
+      return
     }
 
-    List<Path> scripts = getScripts();
-    LOG.info(scripts.size() + " startup script(s) found");
+    val scripts = getScripts()
+    LOG.info("${scripts.size} startup script(s) found")
     if (!scripts.isEmpty()) {
-      runAllScriptsImpl(project, prepareScriptsAndEngines(scripts), LOG);
+      runAllScriptsImpl(project = project, result = prepareScriptsAndEngines(scripts), log = LOG)
     }
   }
+}
 
-  static @NotNull List<Pair<Path, IdeScriptEngine>> prepareScriptsAndEngines(List<? extends Path> scripts) {
-    IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
-    List<Pair<Path, IdeScriptEngine>> result = new ArrayList<>();
-    for (Path script : scripts) {
-      String extension = FileUtilRt.getExtension(script.getFileName().toString());
-      IdeScriptEngine engine = extension.isEmpty() ? null : scriptEngineManager.getEngineByFileExtension(extension, null);
-      if (engine == null) {
-        LOG.warn(script + " not supported (no script engine)");
-        continue;
-      }
-      result.add(new Pair<>(script, engine));
-    }
-    return result;
-  }
-
-  private static @NotNull List<Path> getScripts() {
+internal fun runAllScriptsImpl(project: Project?, result: List<Pair<Path, IdeScriptEngine>>, log: Logger) {
+  for (pair in result) {
     try {
-      Path directory = ExtensionsRootType.getInstance().findResourceDirectory(PluginManagerCore.CORE_ID, SCRIPT_DIR, false);
-      try (Stream<Path> stream = Files.list(directory)) {
-        return stream
-          .filter(ExtensionsRootType.regularFileFilter())
-          .sorted((f1, f2) -> {
-            String f1Name = f1 == null ? null : f1.getFileName().toString();
-            String f2Name = f2 == null ? null : f2.getFileName().toString();
-            return StringUtil.compare(f1Name, f2Name, false);
-          })
-          .collect(Collectors.toList());
-      }
-    }
-    catch (NoSuchFileException ignore) {
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return Collections.emptyList();
-  }
-
-  static void runAllScriptsImpl(@Nullable Project project,
-                                @NotNull List<? extends Pair<Path, IdeScriptEngine>> result,
-                                @NotNull Logger logger) {
-    for (Pair<Path, IdeScriptEngine> pair : result) {
+      log.info(pair.first.toString())
+      val scriptText = Files.readString(pair.first)
+      IdeConsoleScriptBindings.ensureIdeIsBound(project, pair.second)
+      val start = System.currentTimeMillis()
       try {
-        logger.info(pair.first.toString());
-
-        String scriptText = Files.readString(pair.first);
-        IdeConsoleScriptBindings.ensureIdeIsBound(project, pair.second);
-
-        long start = System.currentTimeMillis();
-        try {
-          pair.second.eval(scriptText);
-        }
-        catch (ProcessCanceledException e) {
-          logger.warn("... cancelled");
-        }
-        finally {
-          logger.info("... completed in " + Formats.formatDuration(System.currentTimeMillis() - start));
-        }
+        pair.second.eval(scriptText)
       }
-      catch (Exception e) {
-        logger.warn(e);
+      catch (e: ProcessCanceledException) {
+        log.warn("... cancelled")
+      }
+      finally {
+        log.info("... completed in " + Formats.formatDuration(System.currentTimeMillis() - start))
+      }
+    }
+    catch (e: Exception) {
+      log.warn(e)
+    }
+  }
+}
+
+internal fun prepareScriptsAndEngines(scripts: List<Path>): List<Pair<Path, IdeScriptEngine>> {
+  val scriptEngineManager = IdeScriptEngineManager.getInstance()
+  val result = ArrayList<Pair<Path, IdeScriptEngine>>()
+  for (script in scripts) {
+    val extension = FileUtilRt.getExtension(script.fileName.toString())
+    val engine = if (extension.isEmpty()) null else scriptEngineManager.getEngineByFileExtension(extension, null)
+    if (engine == null) {
+      LOG.warn("$script not supported (no script engine)")
+      continue
+    }
+    result.add(Pair(script, engine))
+  }
+  return result
+}
+
+private suspend fun getScripts(): List<Path> {
+  try {
+    val directory = ExtensionsRootType.getInstance().findResourceDirectory(PluginManagerCore.CORE_ID, SCRIPT_DIR, false)
+    return withContext(Dispatchers.IO) {
+      Files.list(directory).use { stream ->
+        stream
+          .filter(ExtensionsRootType.regularFileFilter())
+          .sorted(Comparator { f1, f2 ->
+            val f1Name = f1?.fileName?.toString()
+            val f2Name = f2?.fileName?.toString()
+            StringUtil.compare(f1Name, f2Name, false)
+          })
+          .collect(Collectors.toList())
       }
     }
   }
+  catch (ignore: NoSuchFileException) {
+  }
+  catch (e: IOException) {
+    LOG.error(e)
+  }
+  return emptyList()
 }

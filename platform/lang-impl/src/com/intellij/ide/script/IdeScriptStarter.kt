@@ -21,7 +21,7 @@ import java.nio.file.Path
 /**
  * @author gregsh
  */
-internal class IdeScriptStarter : ApplicationStarterBase() {
+private class IdeScriptStarter : ApplicationStarterBase() {
   @Suppress("OVERRIDE_DEPRECATION")
   override val commandName: String
     get() = "ideScript"
@@ -37,9 +37,9 @@ internal class IdeScriptStarter : ApplicationStarterBase() {
   override suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult {
     val filePaths = args.subList(1, args.size).map { Path.of(it) }
     val project = guessProject()
-    val result = IdeStartupScripts.prepareScriptsAndEngines(filePaths)
-    IdeStartupScripts.runAllScriptsImpl(project, result,
-                                        if (project == null) redirectStreamsAndGetLogger(result) else logger<IdeScriptStarter>())
+    val result = prepareScriptsAndEngines(filePaths)
+    runAllScriptsImpl(project = project, result = result,
+                      log = if (project == null) redirectStreamsAndGetLogger(result) else logger<IdeScriptStarter>())
     return CliResult.OK
   }
 }
