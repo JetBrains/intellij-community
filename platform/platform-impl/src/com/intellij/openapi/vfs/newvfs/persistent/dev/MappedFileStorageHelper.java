@@ -30,14 +30,14 @@ import static java.nio.ByteOrder.nativeOrder;
 /**
  * Helper for creating {@link VirtualFileWithId}-associated storages based on memory-mapped file.
  * <p/>
- * Basic idea is: storage is a header and per-VirtualFile records.
+ * Basic idea is: storage is a header and a set of records, one record per each VirtualFile existing in VFS.
  * Header is up to 64 bytes, first 4 bytes is a version, next 8 is a VFS tag (creation timestamp),
- * the remaining 52 bytes could be used as needed.
+ * the remaining 52 bytes could be used as needed (see {@link #writeIntHeaderField(int, int)}, {@link #writeLongHeaderField(int, long)}).
  * Record (row) is an arbitrary but fixed size, given in ctor (bytesPerRow).
  * <p/>
  * Keep in mind that atomic/volatile access to X-width word is universally supported only
  * for X-aligned offsets, so if you want to have int64 field in your record, you need to
- * compose record in such a way this field offset is always 64-aligned -- which means
+ * compose record in such a way this field offset is always 8-byte-aligned -- which means
  * bytesPerRow must be a factor of 8, and particular field offset in the record must also
  * be a factor of 8.
  * <p/>

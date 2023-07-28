@@ -1,15 +1,20 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.util.io.ClosedStorageException;
 import com.intellij.util.io.IOUtil;
+import io.opentelemetry.api.metrics.Meter;
+import io.opentelemetry.api.metrics.ObservableLongMeasurement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.VisibleForTesting;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.lang.invoke.VarHandle;
 import java.nio.ByteBuffer;
@@ -17,13 +22,13 @@ import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Date;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.PersistentFSHeaders.*;
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
 import static com.intellij.util.SystemProperties.getIntProperty;
 import static java.lang.invoke.MethodHandles.byteBufferViewVarHandle;
 import static java.nio.ByteOrder.nativeOrder;
@@ -650,7 +655,7 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       //noinspection CallToSystemGC
       System.gc();
     }
-    FileUtil.delete(storage.storagePath);
+    FileUtil.delete(storage.storagePath());
   }
 
   //TODO RC: do we need method like 'unmap', which forcibly unmaps pages, or it is enough to rely
@@ -857,7 +862,44 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
   }
 
   @ApiStatus.Internal
-  public static class MMappedFileStorage implements AutoCloseable {
+  public static class MMappedFileStorage implements Closeable {
+    private static final Logger LOG = Logger.getInstance(MMappedFileStorage.class);
+
+    //Keep track of mapped buffers allocated & their total size, numbers are reported to OTel.Metrics.
+    //Why: mapped buffers are limited resources (~4096 per app by default), so it is worth to monitor
+    //     how we use them, and issue the alarm early on as we start to use too many
+    private static final AtomicInteger storages = new AtomicInteger();
+    private static final AtomicInteger totalPagesMapped = new AtomicInteger();
+    private static final AtomicLong totalBytesMapped = new AtomicLong();
+
+    /** Log warn if > PAGES_TO_WARN_THRESHOLD pages were mapped */
+    private static final int PAGES_TO_WARN_THRESHOLD = getIntProperty("vfs.memory-mapped-storage.pages-to-warn-threshold", 256);
+
+    static {
+      Meter meter = TelemetryManager.getInstance().getMeter(VFS);
+      ObservableLongMeasurement storagesCounter = meter.gaugeBuilder("MappedFileStorage.storages")
+        .setDescription("MappedFileStorage instances in operation at the moment")
+        .ofLongs()
+        .buildObserver();
+      ObservableLongMeasurement pagesCounter = meter.gaugeBuilder("MappedFileStorage.totalPagesMapped")
+        .setDescription("MappedFileStorage.Page instances in operation at the moment")
+        .ofLongs()
+        .buildObserver();
+      ObservableLongMeasurement pagesBytesCounter = meter.gaugeBuilder("MappedFileStorage.totalBytesMapped")
+        .setDescription("Total size of MappedByteBuffers in use by MappedFileStorage at the moment")
+        .setUnit("bytes")
+        .ofLongs()
+        .buildObserver();
+      meter.batchCallback(
+        () -> {
+          storagesCounter.record(storages.get());
+          pagesCounter.record(totalPagesMapped.get());
+          pagesBytesCounter.record(totalBytesMapped.get());
+        },
+        storagesCounter, pagesCounter, pagesBytesCounter
+      );
+    }
+
     private final Path storagePath;
 
     private final int pageSize;
@@ -898,32 +940,40 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
 
       this.storagePath = path;
 
-      final long length = Files.exists(path) ? Files.size(path) : 0;
-
       final int maxPagesCount = Math.toIntExact(maxFileSize / pageSize);
 
-      final int pagesCount = (int)((length % pageSize == 0) ?
-                                   (length / pageSize) :
-                                   ((length / pageSize) + 1));
-      if (pagesCount > maxPagesCount) {
+      final long length = Files.exists(path) ? Files.size(path) : 0;
+
+      final int pagesToMapExistingFileContent = (int)((length % pageSize == 0) ?
+                                                      (length / pageSize) :
+                                                      ((length / pageSize) + 1));
+      if (pagesToMapExistingFileContent > maxPagesCount) {
         throw new IllegalStateException(
           "Storage size(" + length + " b) > maxFileSize(" + maxFileSize + " b): " +
           "file [" + path + "] is corrupted?");
       }
 
       //allocate array(1200+): not so much to worry about
-      this.pages = new AtomicReferenceArray<>(maxPagesCount);
+      pages = new AtomicReferenceArray<>(maxPagesCount);
 
       channel = FileChannel.open(storagePath, READ, WRITE, CREATE);
 
-      //TODO RC: keep track of number of mapped buffers allocated & their total size.
-      //         Report numbers to OTel.Metrics, and log a warn if there are >512 buffers in play.
-      //         Why: mapped buffers is a limited resource (~4096 per app by default), so it is
-      //         worth to monitor how do we use them, and issue the alarm early on as we start to
-      //         use too many
-      for (int i = 0; i < pagesCount; i++) {
-        pages.set(i, new Page(i, channel, pageSize));
+      //map already existing file content right away:
+      for (int i = 0; i < pagesToMapExistingFileContent; i++) {
+        Page page = new Page(i, channel, pageSize);
+        pages.set(i, page);
+
+        totalPagesMapped.incrementAndGet();
+        totalBytesMapped.addAndGet(pageSize);
+
+        long pagesMapped = totalPagesMapped.get();
+        if (pagesMapped > PAGES_TO_WARN_THRESHOLD) {
+          LOG.warn(pagesMapped + " pages were mapped -- too many, > " + PAGES_TO_WARN_THRESHOLD + " threshold. " +
+                   "Total mapped size: " + totalBytesMapped.get() + " bytes, storages: " + storages.get());
+        }
       }
+
+      storages.incrementAndGet();
     }
 
 
@@ -940,6 +990,9 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
           if (page == null) {
             page = new Page(pageIndex, channel, pageSize);
             pages.set(pageIndex, page);
+
+            totalPagesMapped.incrementAndGet();
+            totalBytesMapped.addAndGet(pageSize);
           }
         }
       }
@@ -960,13 +1013,19 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     @Override
     public void close() throws IOException {
       synchronized (pages) {
-        channel.close();
-        for (int i = 0; i < pages.length(); i++) {
-          final Page page = pages.get(i);
-          if (page != null) {
-            page.close();
+        if (channel.isOpen()) {
+          channel.close();
+          for (int i = 0; i < pages.length(); i++) {
+            final Page page = pages.get(i);
+            if (page != null) {
+              page.close();
+              //actual buffer releasing happens later, by GC, but at least we don't keep it
+              totalPagesMapped.decrementAndGet();
+              totalBytesMapped.addAndGet(-pageSize);
+            }
+            pages.set(i, null);//give GC a chance to unmap buffers
           }
-          pages.set(i, null);//give GC a chance to unmap buffers
+          storages.decrementAndGet();
         }
       }
     }
@@ -989,7 +1048,8 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
     public String toString() {
       return "MMappedFileStorage[" + storagePath + "]" +
              "[pageSize: " + pageSize +
-             ", maxFileSize=" + maxFileSize +
+             ", maxFileSize: " + maxFileSize +
+             ", pages: " + pages.length() +
              ']';
     }
 
@@ -1026,46 +1086,6 @@ public class PersistentFSRecordsLockFreeOverMMappedFile implements PersistentFSR
       @Override
       public String toString() {
         return "Page[#" + pageIndex + "][offset: " + offsetInFile + ", length: " + pageBuffer.capacity() + " b)";
-      }
-    }
-  }
-
-  /** Opens records.dat file given as args[0], prints header fields, and first records (up to 1024) */
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void main(String[] args) throws IOException {
-    if (args.length < 1) {
-      System.err.println("Args: <path-to-records.dat>");
-      return;
-    }
-    final Path pathToRecordsDat = Paths.get(args[0]);
-    if (!Files.exists(pathToRecordsDat)) {
-      System.err.println("path: " + pathToRecordsDat + " does not exist");
-      return;
-    }
-
-    System.out.println("storage: " + pathToRecordsDat);
-    try (PersistentFSRecordsLockFreeOverMMappedFile records = new PersistentFSRecordsLockFreeOverMMappedFile(pathToRecordsDat,
-                                                                                                             DEFAULT_MAPPED_CHUNK_SIZE)) {
-
-      final int recordsCount = records.recordsCount();
-      System.out.println("version: " + records.getVersion());
-      System.out.println("timestamp: " + new Date(records.getTimestamp()).toGMTString());
-      System.out.println("connectionStatus: " + Integer.toHexString(records.getConnectionStatus()));
-      System.out.println("recordsCount: " + recordsCount);
-      System.out.println("globalModCount: " + records.getGlobalModCount());
-
-      System.out.println("First records (<=1024)");
-      for (int recordId = FSRecords.ROOT_FILE_ID; recordId <= Math.min(recordsCount, 1024); recordId++) {
-        records.readRecord(recordId, record -> {
-          System.out.printf(
-            "{id:%4d, nameId: %d, parentId: %d, length: %d, flags: %s, timestamp: %d, attributeId: %d, contentId:%d, modCount: %d}\n",
-            record.recordId(), record.getNameId(), record.getParent(),
-            record.getLength(), Integer.toBinaryString(record.getFlags()), record.getTimestamp(),
-            record.getAttributeRecordId(), record.getContentRecordId(),
-            record.getModCount()
-          );
-          return true;
-        });
       }
     }
   }
