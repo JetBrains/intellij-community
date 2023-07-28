@@ -2,6 +2,17 @@
 
 ## [Unreleased]
 
+## 0.0.14
+- [MERMAID-15](https://youtrack.jetbrains.com/issue/MERMAID-15) Fixed incorrect diagram scaling after restoring from cache
+- [MERMAID-30](https://youtrack.jetbrains.com/issue/MERMAID-30) Added support for YAML language injections into diagram front matter
+- [MERMAID-33](https://youtrack.jetbrains.com/issue/MERMAID-33) Added JSON schema-based validation for the front matter content
+- [MERMAID-58](https://youtrack.jetbrains.com/issue/MERMAID-58) Added completion of triple colon syntax for Mermaid code fences
+- [MERMAID-88](https://youtrack.jetbrains.com/issue/MERMAID-88) Added support for JSON language injections into directive blocks
+- [MERMAID-89](https://youtrack.jetbrains.com/issue/MERMAID-89) Fixed incorrect formatter behaviour when the diagram has HTML markup in it
+- [MERMAID-92](https://youtrack.jetbrains.com/issue/MERMAID-92) Added more highlighting for Gantt diagram keywords  
+- [MERMAID-93](https://youtrack.jetbrains.com/issue/MERMAID-93) Added highlighting for the special states in state diagrams 
+- [MERMAID-94](https://youtrack.jetbrains.com/issue/MERMAID-94) Added highlighting for data types in class and ER diagrams
+
 ## 0.0.13
 - [MERMAID-67](https://youtrack.jetbrains.com/issue/MERMAID-67) Fixed parsing of signals surrounded by spaces in sequence diagrams
 - [MERMAID-69](https://youtrack.jetbrains.com/issue/MERMAID-69) Added support for Markdown strings inside flowchart and mindmap labels
