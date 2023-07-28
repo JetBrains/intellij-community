@@ -17,6 +17,7 @@ import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewEditor;
 import com.intellij.codeInsight.intention.impl.preview.IntentionPreviewUnsupportedOperationException;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.codeInspection.SuppressIntentionActionFromFix;
@@ -365,7 +366,8 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
       }
     }
     finally {
-      if (originalOffset != null && originalOffset.getRange() != null && editor.getCaretModel().getOffset() == problemOffset) {
+      if (originalOffset != null && originalOffset.getRange() != null && editor.getCaretModel().getOffset() == problemOffset &&
+          TemplateManager.getInstance(file.getProject()).getActiveTemplate(editor) == null) {
         editor.getCaretModel().moveToOffset(originalOffset.getRange().getStartOffset());
       }
     }
