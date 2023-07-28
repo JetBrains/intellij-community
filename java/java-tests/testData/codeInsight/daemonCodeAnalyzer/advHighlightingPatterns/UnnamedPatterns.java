@@ -27,4 +27,21 @@ public class UnnamedPatterns {
       }
     }
   }
+
+  void testExhaustiveness(I a) {
+    boolean r3 = switch (a) {
+      case R1(_) -> true;
+      case R2(_) -> false;
+    };
+  }
+
+  void testNonExhaustiveness(I a) {
+    boolean r3 = switch (<error descr="'switch' expression does not cover all possible input values">a</error>) {
+      case R1(_) -> true;
+    };
+  }
+
+  sealed interface I {};
+  record R1(int n1) implements I {};
+  record R2(int n1) implements I {};
 }
