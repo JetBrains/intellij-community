@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.service.execution.fus
 
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventId2
-import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.statistics.GradleExecutionPerformanceCollector
@@ -31,28 +30,28 @@ class GradleExecutionStageFusHandler(val taskId: Long, val project: WeakReferenc
 
   private fun TaskGraphExecutionReport.emit(target: VarargEventId) {
     val events = listOf(
-      EventPair(GradleExecutionPerformanceCollector.EXTERNAL_TASK_ID, taskId),
-      EventPair(EventFields.DurationMs, durationMs),
-      EventPair(EventFields.Count, count),
-      EventPair(GradleExecutionPerformanceCollector.UP_TO_DATE_COUNT, upToDateCount),
-      EventPair(GradleExecutionPerformanceCollector.FROM_CACHE_COUNT, fromCacheCount),
-      EventPair(GradleExecutionPerformanceCollector.EXECUTED, executed),
+      GradleExecutionPerformanceCollector.EXTERNAL_TASK_ID.with(taskId),
+      EventFields.DurationMs.with(durationMs),
+      EventFields.Count.with(count),
+      GradleExecutionPerformanceCollector.UP_TO_DATE_COUNT.with(upToDateCount),
+      GradleExecutionPerformanceCollector.FROM_CACHE_COUNT.with(fromCacheCount),
+      GradleExecutionPerformanceCollector.EXECUTED.with(executed),
     )
     target.log(project.get(), events)
   }
 
   private fun AggregatedTaskReport.emit(target: VarargEventId) {
     val events = listOf(
-      EventPair(GradleExecutionPerformanceCollector.EXTERNAL_TASK_ID, taskId),
-      EventPair(GradleExecutionPerformanceCollector.SUM_DURATION_MS, sumDurationMs),
-      EventPair(GradleExecutionPerformanceCollector.NAME, name),
-      EventPair(GradleExecutionPerformanceCollector.GRADLE_PLUGIN, plugin),
-      EventPair(GradleExecutionPerformanceCollector.UP_TO_DATE_COUNT, upToDateCount),
-      EventPair(GradleExecutionPerformanceCollector.FROM_CACHE_COUNT, fromCacheCount),
-      EventPair(EventFields.Count, count),
-      EventPair(GradleExecutionPerformanceCollector.UP_TO_DATE_DURATION_MS, upToDateDuration),
-      EventPair(GradleExecutionPerformanceCollector.FROM_CACHE_DURATION_MS, fromCacheDuration),
-      EventPair(GradleExecutionPerformanceCollector.FAILED_COUNT, failed),
+      GradleExecutionPerformanceCollector.EXTERNAL_TASK_ID.with(taskId),
+      GradleExecutionPerformanceCollector.SUM_DURATION_MS.with(sumDurationMs),
+      GradleExecutionPerformanceCollector.NAME.with(name),
+      GradleExecutionPerformanceCollector.GRADLE_PLUGIN.with(plugin),
+      GradleExecutionPerformanceCollector.UP_TO_DATE_COUNT.with(upToDateCount),
+      GradleExecutionPerformanceCollector.FROM_CACHE_COUNT.with(fromCacheCount),
+      EventFields.Count.with(count),
+      GradleExecutionPerformanceCollector.UP_TO_DATE_DURATION_MS.with(upToDateDuration),
+      GradleExecutionPerformanceCollector.FROM_CACHE_DURATION_MS.with(fromCacheDuration),
+      GradleExecutionPerformanceCollector.FAILED_COUNT.with(failed),
     )
     target.log(project.get(), events)
   }

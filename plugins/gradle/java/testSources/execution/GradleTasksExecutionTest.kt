@@ -27,7 +27,6 @@ import org.junit.Test
 import org.junit.runners.Parameterized
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.function.BiFunction
 import java.util.function.Consumer
 
 class GradleTasksExecutionTest : GradleImportingTestCase() {
@@ -54,22 +53,11 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
     val events: List<LogEvent> = collectGradlePerformanceEvents {
       assertThat(runTaskAndGetErrorOutput(projectPath, "userDefinedTask")).isEmpty()
     }
-    val executedStages = mutableMapOf<String, Int>()
-    val executedGradleTasks = mutableListOf<String>()
-    events.forEach {
-      executedStages.compute(it.event.id, BiFunction { _, count ->
-        if (count == null) {
-          return@BiFunction 1
-        }
-        return@BiFunction count + 1
-      })
-      if (it.event.id == "task.execution") {
-        executedGradleTasks.add(it.event.data["name"].toString())
-      }
-    }
+    val executedGradleTasks = events.filter { it.event.id == "task.execution" }.map { it.event.data["name"].toString() }
     val expectedGradleTasks = listOf("compileJava", "processResources", "classes", "jar", "assemble", "compileTestJava",
                                      "processTestResources", "testClasses", "test", "check", "build", "clean", "other")
     assertCollection(executedGradleTasks, expectedGradleTasks)
+    val executedStages = events.groupingBy { it.event.id }.eachCount()
     val expectedStages = setOf("operation.duration", "build.loading", "settings.evaluation", "project.loading",
                                "task.graph.calculation", "container.callback", "task.execution", "task.graph.execution")
     assertCollection(executedStages.keys, expectedStages)
