@@ -6,15 +6,22 @@ import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.jcef.JBCefJSQuery.create
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.future.asCompletableFuture
 import org.intellij.lang.annotations.Language
-import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.asPromise
 
 private typealias JsExpression = String
 typealias JsExpressionResult = String?
-private typealias JsExpressionResultPromise = AsyncPromise<JsExpressionResult>
+private typealias JsExpressionResultDeferred = CompletableDeferred<JsExpressionResult>
 
 /**
+ * ### Obsolescence notice
+ * Please use [callJavaScriptExpression] instead
+ *
  * Asynchronously runs JavaScript code in the JCEF browser.
  *
  * @param javaScriptExpression
@@ -43,11 +50,15 @@ private typealias JsExpressionResultPromise = AsyncPromise<JsExpressionResult>
  *
  * @return The [Promise] that provides JS execution result or an error.
  */
+@ApiStatus.Obsolete
 fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpression: JsExpression): Promise<JsExpressionResult> {
   return JBCefBrowserJsCall(javaScriptExpression, this)()
 }
 
 /**
+ * ### Obsolescence notice
+ * Please use [callJavaScriptExpression] instead
+ *
  * Encapsulates the [javaScriptExpression] which is executed in the provided [browser] by the [invoke] method.
  * Handles JavaScript errors and submits them to the execution result.
  * @param javaScriptExpression
@@ -57,7 +68,8 @@ fun JBCefBrowser.executeJavaScriptAsync(@Language("JavaScript") javaScriptExpres
  *
  * @see [executeJavaScriptAsync]
  */
-class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, private val browser: JBCefBrowser) {
+@ApiStatus.Obsolete
+class JBCefBrowserJsCall(@Language("JavaScript") private val javaScriptExpression: JsExpression, private val browser: JBCefBrowser) {
 
   // TODO: Ensure the related JBCefClient has a sufficient number of slots in the pool
 
@@ -69,76 +81,122 @@ class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, private
    * @see [com.intellij.ui.jcef.JBCefBrowserBase.isCefBrowserCreated]
    */
   operator fun invoke(): Promise<JsExpressionResult> {
-    if (browser.isCefBrowserCreated.not())
-      throw IllegalStateException("Failed to execute the requested JS expression. The related JCEF browser in not initialized.")
-
-    /**
-     * The root [com.intellij.openapi.Disposable] object that indicates the lifetime of this call.
-     * Remains undisposed until the [javaScriptExpression] gets executed in the [browser] (either successfully or with an error).
-     */
-    val executionLifetime: CheckedDisposable = Disposer.newCheckedDisposable().also { Disposer.register(browser, it) }
-
-    if (executionLifetime.isDisposed)
-      throw IllegalStateException(
-        "Failed to execute the requested JS expression. The related browser is disposed.")
-
-    val resultPromise = JsExpressionResultPromise().apply {
-      onProcessed {
-        Disposer.dispose(executionLifetime)
-      }
-    }
-
-    Disposer.register(executionLifetime) {
-      resultPromise.setError("The related browser is disposed during the call.")
-    }
-
-    val resultHandlerQuery: JBCefJSQuery = createResultHandlerQuery(executionLifetime, resultPromise)
-    val errorHandlerQuery: JBCefJSQuery = createErrorHandlerQuery(executionLifetime, resultPromise)
-
-    val jsToRun = javaScriptExpression.wrapWithErrorHandling(resultQuery = resultHandlerQuery, errorQuery = errorHandlerQuery)
-
-    try {
-      browser.cefBrowser.executeJavaScript(jsToRun, "", 0)
-    }
-    catch (ex: Exception) {
-      // In case something goes wrong with the browser interop
-      resultPromise.setError(ex)
-    }
-
-    return resultPromise
+    return browser.callJavaScriptExpressionImpl(javaScriptExpression).asCompletableFuture().asPromise()
   }
 
-  private fun createResultHandlerQuery(parentDisposable: Disposable, resultPromise: JsExpressionResultPromise) =
-    createQuery(parentDisposable).apply {
-      addHandler { result ->
-        resultPromise.setResult(result)
-        null
-      }
-    }
+}
 
-  private fun createErrorHandlerQuery(parentDisposable: Disposable, resultPromise: JsExpressionResultPromise) =
-    createQuery(parentDisposable).apply {
-      addHandler { errorMessage ->
-        resultPromise.setError(errorMessage ?: "Unknown error")
-        null
-      }
-    }
+/**
+ * Asynchronously runs JavaScript code in the JCEF browser.
+ *
+ * See [Kotlin coroutines](https://youtrack.jetbrains.com/articles/IJPL-A-3/Kotlin-Coroutines)
+ *
+ * @param expression
+ * The passed JavaScript code should be either:
+ * * a valid single-line JavaScript expression
+ * * a valid multi-line function-body with at least one "return" statement
+ *
+ *
+ * Examples:
+ * ```Kotlin
+ *  browser.callJavaScriptExpression("2 + 2")
+ *  .await().let { r -> r /* r is 4 */ }
+ *
+ *  browser.callJavaScriptExpression("return 2 + 2")
+ *  .await().let { r -> r /* r is 4 */ }
+ *
+ *  browser.callJavaScriptExpression("""
+ *        function sum(s1, s2) {
+ *            return s1 + s2;
+ *        };
+ *
+ *        return sum(2,2);
+ *  """.trimIndent())
+ *     .await().let { r -> r /* r is 4 */ }
+ *
+ * ```
+ *
+ * @return The [Deferred] that provides JS execution result or an error.
+ * @throws IllegalStateException if the related [this] is not initialized (displayed).
+ * @throws IllegalStateException if the related [this] is disposed.
+ * @throws IllegalStateException if the execution of [expression] failed
+ **/
+suspend fun JBCefBrowser.callJavaScriptExpression(@Language("JavaScript") expression: JsExpression): JsExpressionResult =
+  callJavaScriptExpressionImpl(expression).await()
 
-  private fun createQuery(parentDisposable: Disposable): JBCefJSQuery {
-    return create(browser as JBCefBrowserBase).also { Disposer.register(parentDisposable, it) }
-  }
+private fun JBCefBrowser.callJavaScriptExpressionImpl(@Language("JavaScript") expression: JsExpression): Deferred<JsExpressionResult> {
+  if (isCefBrowserCreated.not())
+    throw IllegalStateException("Failed to execute the requested JS expression. The related JCEF browser in not initialized.")
 
-  private fun JsExpression.asFunctionBody(): JsExpression = let { expression ->
-    when {
-      StringUtil.containsLineBreak(expression) -> expression
-      StringUtil.startsWith(expression, "return") -> expression
-      else -> "return $expression"
+  /**
+   * The root [com.intellij.openapi.Disposable] object that indicates the lifetime of this call.
+   * Remains undisposed until the [expression] gets executed in [this] browser (either successfully or with an error).
+   */
+  val executionLifetime: CheckedDisposable = Disposer.newCheckedDisposable().also { Disposer.register(this, it) }
+
+  if (executionLifetime.isDisposed)
+    throw IllegalStateException(
+      "Failed to execute the requested JS expression. The related browser is disposed.")
+
+  val resultDeferred: JsExpressionResultDeferred = CompletableDeferred<JsExpressionResult>().apply {
+    invokeOnCompletion {
+      Disposer.dispose(executionLifetime)
     }
   }
 
-  @Suppress("JSVoidFunctionReturnValueUsed")
-  @Language("JavaScript")
-  private fun @receiver:Language("JavaScript") JsExpression.wrapWithErrorHandling(resultQuery: JBCefJSQuery, errorQuery: JBCefJSQuery) = """
+  Disposer.register(executionLifetime) {
+    resultDeferred.completeExceptionally(IllegalStateException("The related browser is disposed during the call."))
+  }
+
+  val resultHandlerQuery: JBCefJSQuery = createResultHandlerQuery(executionLifetime, resultDeferred)
+  val errorHandlerQuery: JBCefJSQuery = createErrorHandlerQuery(executionLifetime, resultDeferred)
+
+  val jsToRun = expression.wrapWithErrorHandling(resultQuery = resultHandlerQuery, errorQuery = errorHandlerQuery)
+
+  try {
+    cefBrowser.executeJavaScript(jsToRun, "", 0)
+  }
+  catch (ex: Exception) {
+    // In case something goes wrong with the browser interop
+    resultDeferred.completeExceptionally(ex)
+  }
+
+  return resultDeferred
+}
+
+private fun JBCefBrowser.createResultHandlerQuery(parentDisposable: Disposable, resultPromise: JsExpressionResultDeferred) =
+  createQuery(parentDisposable).apply {
+    addHandler { result ->
+      resultPromise.complete(result)
+      null
+    }
+  }
+
+private fun JBCefBrowser.createErrorHandlerQuery(parentDisposable: Disposable, resultPromise: JsExpressionResultDeferred) =
+  createQuery(parentDisposable).apply {
+    addHandler { errorMessage ->
+      resultPromise.completeExceptionally(
+        IllegalStateException("Error occurred during execution of JavaScript expression: ${errorMessage ?: "Unknown error"}")
+      )
+      null
+    }
+  }
+
+private fun JBCefBrowser.createQuery(parentDisposable: Disposable): JBCefJSQuery {
+  return create(this as JBCefBrowserBase).also { Disposer.register(parentDisposable, it) }
+}
+
+private fun JsExpression.asFunctionBody(): JsExpression = let { expression ->
+  when {
+    StringUtil.containsLineBreak(expression) -> expression
+    StringUtil.startsWith(expression, "return") -> expression
+    else -> "return $expression"
+  }
+}
+
+@Suppress("JSVoidFunctionReturnValueUsed")
+@Language("JavaScript")
+private fun @receiver:Language("JavaScript") JsExpression.wrapWithErrorHandling(resultQuery: JBCefJSQuery, errorQuery: JBCefJSQuery) = """
       function payload() {
           ${asFunctionBody()}
       }
@@ -167,4 +225,3 @@ class JBCefBrowserJsCall(private val javaScriptExpression: JsExpression, private
           });
       }
     """.trimIndent()
-}
