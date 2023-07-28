@@ -14,8 +14,8 @@ class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
 
   companion object {
     val EXTERNAL_TASK_ID: EventField<Long> = EventFields.Long("task_id")
-    val GRADLE_PLUGIN: StringEventField = EventFields.StringValidatedByCustomRule("gradle_plugin", TaskPluginValidator::class.java)
-    val NAME: StringEventField = EventFields.StringValidatedByCustomRule("name", TaskKindValidator::class.java)
+    val GRADLE_PLUGIN: StringEventField = EventFields.StringValidatedByCustomRule<TaskPluginValidator>("gradle_plugin")
+    val NAME: StringEventField = EventFields.StringValidatedByCustomRule<TaskNameValidator>("name")
     val UP_TO_DATE_COUNT: EventField<Int> = EventFields.Int("up_to_date_count")
     val FROM_CACHE_COUNT: EventField<Int> = EventFields.Int("from_cache_count")
     val EXECUTED: EventField<Int> = EventFields.Int("executed")
@@ -43,16 +43,16 @@ class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
     private fun registerEvent(name: String): EventId2<Long, Long> = GROUP.registerEvent(name, EXTERNAL_TASK_ID, EventFields.DurationMs)
   }
 
-  class TaskKindValidator : CustomValidationRule() {
+  internal class TaskNameValidator : CustomValidationRule() {
 
-    override fun getRuleId(): String = "build_gradle_performance_task_kind"
+    override fun getRuleId(): String = "build_gradle_performance_task_name"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
       return ValidationResultType.ACCEPTED
     }
   }
 
-  class TaskPluginValidator : CustomValidationRule() {
+  internal class TaskPluginValidator : CustomValidationRule() {
 
     override fun getRuleId(): String = "build_gradle_performance_task_plugin"
 
