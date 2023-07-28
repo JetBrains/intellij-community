@@ -11,7 +11,7 @@ import kotlin.random.Random
 
 class ClassToIntConverterTest {
   @Test
-  fun `multy thread initialization`() {
+  fun `multi thread initialization`() {
     val random = Random.Default
     repeat(1_000) {
       val converter = ClassToIntConverter()

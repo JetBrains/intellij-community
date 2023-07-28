@@ -23,7 +23,7 @@ internal fun loadClassByName(name: String, classLoader: ClassLoader): Class<*> {
 
 /**
  * This function checks if we try to add an entity as a child to itself.
- * It can't verify a circular dependency and it's performed via a third entity
+ * It can't verify a circular dependency, and it's performed via a third entity
  */
 internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, parentId: Int, storage: AbstractEntityStorage) {
   if (connectionId.parentClass == connectionId.childClass && childId == parentId) {
@@ -39,7 +39,7 @@ internal fun checkCircularDependency(connectionId: ConnectionId, childId: Int, p
 
 /**
  * This function checks if we try to add an entity as a child to itself.
- * It can't verify a circular dependency and it's performed via a third entity
+ * It can't verify a circular dependency, and it's performed via a third entity
  */
 internal fun checkCircularDependency(childId: EntityId, parentId: EntityId, storage: AbstractEntityStorage) {
   if (childId == parentId) {

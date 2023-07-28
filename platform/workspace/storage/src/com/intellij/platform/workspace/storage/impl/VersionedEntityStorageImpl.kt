@@ -174,7 +174,7 @@ open class VersionedEntityStorageImpl(initialStorage: EntityStorageSnapshot) : V
 
   /**
    * About [changes] parameter:
-   * Here is a bit weird situation that we collect changes and pass them in this fucntion as the parameter.
+   * Here is a bit weird situation that we collect changes and pass them in this function as the parameter.
    *   Moreover, we collect changes even if two storages are equal.
    * Unfortunately, we have to do it because we initialize bridges on the base of the changes.
    * We may calculate the change in this function as we won't need the changes for bridges initialization.

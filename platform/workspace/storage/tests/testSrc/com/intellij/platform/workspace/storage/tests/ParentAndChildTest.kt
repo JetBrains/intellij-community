@@ -27,7 +27,7 @@ import kotlin.test.assertTrue
  * Operation won't succeed:
  * - builder1 and builder2 are independent. If we create a child in builder1 and try to add a parent in builder2
  *     the operation will fail.
- *   But how can we transfer builder1 into builder2? Even if we'll add builde1 into builde2
+ *   But how can we transfer builder1 into builder2? Even if we'll add builder1 into builder2
  *     using addDiff or something, this would mean EntityId change and the verification will fail. At the moment this
  *     is not intuitive.
  */
@@ -40,7 +40,7 @@ class ParentAndChildTest {
     }
 
     assertNotNull(entity.child)
-    assertEquals("ChildData", entity!!.child!!.childData)
+    assertEquals("ChildData", entity.child!!.childData)
   }
 
   @Test
@@ -70,7 +70,7 @@ class ParentAndChildTest {
 
     val builder1 = snapshot.toBuilder()
     builder1.removeEntity(parentSnapshot)
-    builder1.removeEntity(parentSnapshot!!.child!!)
+    builder1.removeEntity(parentSnapshot.child!!)
 
     val newSnapshot = builder1.toSnapshot()
     (newSnapshot as EntityStorageSnapshotImpl).assertConsistency()

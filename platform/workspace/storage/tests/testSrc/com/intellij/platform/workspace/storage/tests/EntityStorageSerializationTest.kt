@@ -7,7 +7,7 @@ import com.intellij.platform.workspace.storage.impl.MutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
-import junit.framework.Assert.*
+import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import java.nio.file.Files

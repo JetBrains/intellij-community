@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class StorageIndexiesTest {
+class StorageIndexesTest {
   @Test
   fun `check entity source index`() {
     val entity = ParentSubEntity("ParentData", MySource) {

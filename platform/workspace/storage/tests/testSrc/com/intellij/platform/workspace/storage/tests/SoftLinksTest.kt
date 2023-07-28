@@ -5,8 +5,8 @@ import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.impl.assertConsistency
-import junit.framework.Assert.assertEquals
-import junit.framework.Assert.assertNotNull
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Test
 import kotlin.test.assertTrue
 
