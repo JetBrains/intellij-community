@@ -188,6 +188,21 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         runTest("testData/exitPoints/notReturnedLabeledExpression.kt");
     }
 
+    @TestMetadata("returnIfStatement.kt")
+    public void testReturnIfStatement() throws Exception {
+        runTest("testData/exitPoints/returnIfStatement.kt");
+    }
+
+    @TestMetadata("returnTryStatement.kt")
+    public void testReturnTryStatement() throws Exception {
+        runTest("testData/exitPoints/returnTryStatement.kt");
+    }
+
+    @TestMetadata("returnWhenStatement.kt")
+    public void testReturnWhenStatement() throws Exception {
+        runTest("testData/exitPoints/returnWhenStatement.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("testData/exitPoints/simple.kt");

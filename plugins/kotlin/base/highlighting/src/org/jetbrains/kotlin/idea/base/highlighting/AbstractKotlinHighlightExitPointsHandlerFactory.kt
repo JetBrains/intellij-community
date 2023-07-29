@@ -130,7 +130,7 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                 if (relevantFunction is KtFunctionLiteral ||
                     (relevantFunction is KtNamedFunction && relevantFunction.bodyBlockExpression == null)
                 ) {
-                    val lastStatementStatements = mutableSetOf<PsiElement>(relevantFunction)
+                    val lastStatements = mutableSetOf<PsiElement>(relevantFunction)
                     relevantFunction.acceptChildren(object : KtVisitorVoid() {
                         override fun visitKtElement(element: KtElement) {
                             ProgressIndicatorProvider.checkCanceled()
@@ -140,29 +140,29 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         override fun visitExpression(expression: KtExpression) {
                             when(expression) {
                                 is KtBinaryExpression -> {
-                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.left)
-                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.right)
+                                    lastStatements.addIfNotNullAndNotBlock(expression.left)
+                                    lastStatements.addIfNotNullAndNotBlock(expression.right)
                                 }
                                 is KtCallExpression -> {
-                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.calleeExpression)
+                                    lastStatements.addIfNotNullAndNotBlock(expression.calleeExpression)
                                 }
-                                is KtBlockExpression -> lastStatementStatements.addIfNotNullAndNotBlock(expression.lastStatementOrNull())
+                                is KtBlockExpression -> lastStatements.addIfNotNullAndNotBlock(expression.lastStatementOrNull())
                                 is KtIfExpression -> {
-                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.then)
-                                    lastStatementStatements.addIfNotNullAndNotBlock(expression.`else`)
+                                    lastStatements.addIfNotNullAndNotBlock(expression.then)
+                                    lastStatements.addIfNotNullAndNotBlock(expression.`else`)
                                 }
                                 is KtWhenExpression ->
                                     expression.entries.map { it.expression }.forEach {
-                                        lastStatementStatements.addIfNotNullAndNotBlock(it)
+                                        lastStatements.addIfNotNullAndNotBlock(it)
                                     }
                             }
                             super.visitExpression(expression)
                         }
                     })
-                    if (target !in lastStatementStatements) {
+                    if (target !in lastStatements) {
                         return
                     }
-                    lastStatementStatements
+                    lastStatements
                 } else {
                     emptySet()
                 }
@@ -214,7 +214,44 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
 
                 private fun visitReturnOrThrow(expression: KtExpression) {
                     if (getRelevantDeclaration(expression) == relevantFunction) {
-                        addOccurrence(expression)
+                        if (expression is KtThrowExpression) {
+                            addOccurrence(expression)
+                        } else {
+                            val returnExpression = expression as KtReturnExpression
+                            when (returnExpression.returnedExpression ) {
+                                is KtIfExpression, is KtWhenExpression, is KtTryExpression -> {
+                                    addOccurrence(expression.returnKeyword)
+                                    returnExpression.acceptChildren(object : KtVisitorVoid() {
+                                        override fun visitKtElement(element: KtElement) {
+                                            ProgressIndicatorProvider.checkCanceled()
+                                            element.acceptChildren(this)
+                                        }
+
+                                        override fun visitExpression(expression: KtExpression) {
+                                            when(expression) {
+                                                is KtBlockExpression -> expression.lastStatementOrNull()?.let { visitExpression(it) }
+                                                is KtIfExpression -> {
+                                                    expression.then?.let { visitExpression(it) }
+                                                    expression.`else`?.let { visitExpression(it) }
+                                                }
+                                                is KtTryExpression -> {
+                                                    expression.tryBlock.lastStatementOrNull()?.let { visitExpression(it) }
+                                                    expression.catchClauses.forEach { catchClause ->
+                                                        catchClause.catchBody?.let { visitExpression(it) }
+                                                    }
+                                                }
+                                                is KtWhenExpression ->
+                                                    expression.entries.forEach { whenEntry ->
+                                                        whenEntry.expression?.let { visitExpression(it) }
+                                                    }
+                                                else -> addOccurrence(expression)
+                                            }
+                                        }
+                                    })
+                                }
+                                else -> addOccurrence(expression)
+                            }
+                        }
                     }
                 }
 
