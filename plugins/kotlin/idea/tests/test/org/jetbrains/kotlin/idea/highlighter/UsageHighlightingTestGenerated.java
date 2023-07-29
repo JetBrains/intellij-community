@@ -43,6 +43,11 @@ public class UsageHighlightingTestGenerated extends AbstractUsageHighlightingTes
         runTest("testData/usageHighlighter/destructingDeclarationLambdaParams.kt");
     }
 
+    @TestMetadata("functionNameIdentifier.kt")
+    public void testFunctionNameIdentifier() throws Exception {
+        runTest("testData/usageHighlighter/functionNameIdentifier.kt");
+    }
+
     @TestMetadata("implicitIt.kt")
     public void testImplicitIt() throws Exception {
         runTest("testData/usageHighlighter/implicitIt.kt");
