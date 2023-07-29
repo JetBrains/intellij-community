@@ -188,6 +188,21 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
         runTest("../idea/tests/testData/exitPoints/notReturnedLabeledExpression.kt");
     }
 
+    @TestMetadata("returnIfStatement.kt")
+    public void testReturnIfStatement() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/returnIfStatement.kt");
+    }
+
+    @TestMetadata("returnTryStatement.kt")
+    public void testReturnTryStatement() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/returnTryStatement.kt");
+    }
+
+    @TestMetadata("returnWhenStatement.kt")
+    public void testReturnWhenStatement() throws Exception {
+        runTest("../idea/tests/testData/exitPoints/returnWhenStatement.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("../idea/tests/testData/exitPoints/simple.kt");
