@@ -321,4 +321,14 @@ mod tests {
             .output().expect(&format!("Failed: '{}'", ext_link.display()));
         assert!(run_result.status.success(), "Failed: '{}':\n{:?}", ext_link.display(), run_result);
     }
+
+    #[test]
+    fn exposing_main_class_name() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(&["main-class"]));
+
+        let expected = "main.class=com.intellij.idea.TestMain";
+        assert!(result.stdout.contains(expected), "'{}' is not in the output:\n{:?}", expected, result)
+    }
 }

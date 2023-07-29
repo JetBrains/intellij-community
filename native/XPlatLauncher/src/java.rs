@@ -11,6 +11,7 @@ use jni::JNIEnv;
 use jni::objects::{JObject, JValue};
 use jni::sys::{jboolean, jint, jsize};
 use log::{debug, error};
+use crate::jvm_property;
 
 #[cfg(target_os = "macos")]
 use {
@@ -79,6 +80,9 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
     debug!("Starting a JVM thread");
     let join_handle = thread::Builder::new().spawn(move || {
         debug!("[JVM] Thread started [{:?}]", thread::current().id());
+
+        let mut vm_options = vm_options.clone();
+        vm_options.push(jvm_property!("sun.java.command", main_class));
 
         let jni_env_result = load_and_start_jvm(&jre_home, vm_options);
         let jni_env = match jni_env_result {
