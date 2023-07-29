@@ -49,10 +49,8 @@ public class FilePageCacheStatistics {
   private volatile long housekeeperTurnSkipped = 0;
 
   private volatile int totalClosedStoragesReclaimed;
+
   //MAYBE RC: totalStorageRegistered?
-  //TODO  RC: totalTimeTakenByLoadUs?
-  //TODO  RC: totalTimeTakenByWriteUs?
-  //TODO  RC: totalTimeTakenByPageGetUs?
 
   public long startTimestampNs() {
     if (MEASURE_TIMESTAMPS) {
@@ -125,14 +123,17 @@ public class FilePageCacheStatistics {
 
 
   public void cacheMaintenanceTurnDone() {
+    //noinspection NonAtomicOperationOnVolatileField
     housekeeperTurnDone++;
   }
 
   public void cacheMaintenanceTurnSkipped() {
+    //noinspection NonAtomicOperationOnVolatileField
     housekeeperTurnSkipped++;
   }
 
   public void closedStoragesReclaimed(final int reclaimed) {
+    //noinspection NonAtomicOperationOnVolatileField
     totalClosedStoragesReclaimed += reclaimed;
   }
 
@@ -149,6 +150,8 @@ public class FilePageCacheStatistics {
   public int totalPagesAllocated() { return totalPagesAllocated.get(); }
 
   public int totalPagesReclaimed() { return totalPagesReclaimed.get(); }
+
+  public int totalPagesHandedOver() { return totalPagesHandedOver.get(); }
 
   public long totalBytesRead() { return totalBytesRead.get(); }
 

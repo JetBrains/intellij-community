@@ -35,7 +35,7 @@ public final class PageCacheUtils {
    * NEW_PAGE_CACHE_MEMORY_FRACTION=0.1 => 10Mb will be allocated for new cache, and 90Mb for
    * the old one.
    */
-  public static final double NEW_PAGE_CACHE_MEMORY_FRACTION = getFloatProperty("vfs.lock-free-impl.fraction-direct-memory-to-utilize", 0.3f);
+  public static final double NEW_PAGE_CACHE_MEMORY_FRACTION = getFloatProperty("vfs.lock-free-impl.fraction-direct-memory-to-utilize", 0.1f);
 
   /**
    * How much direct memory we're ready to use for file page cache(s) -- in total.

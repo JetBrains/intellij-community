@@ -40,7 +40,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   public static final String DEFAULT_HOUSEKEEPER_THREAD_NAME = "FilePageCache housekeeper";
 
-  private static final int MAX_PAGES_TO_RECLAIM_AT_ONCE = 5;
+  /** Max pages to try reclaiming during new page allocation, before fallback to heap-page allocation */
+  private static final int MAX_PAGES_TO_TRY_RECLAIM_AT_ONCE = 10;
+
   /** Initial size of page table hashmap in {@linkplain PagesTable} */
   private static final int INITIAL_PAGES_TABLE_SIZE = 1 << 5;
 
@@ -324,12 +326,12 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     //if <50% of pages collected to reclaim are clean -> try to eagerly flush some dirty pages:
     final int pagesFlushed = pagesForReclaimCollector.ensureEnoughCleanPagesToReclaim(0.5);
 
-    //Usually we reclaim pages from the new page allocation path, so the page is evicted only
+    //Usually we reclaim pages from the 'new page' allocation path, so the page is evicted only
     // if another page needs its space. To make page allocation path faster, though, we limit the
-    // amount of reclamation work to be done there, and allow to allocate 'above the capacity', from
-    // Heap -- if not enough pages to reclaim could be found. Here we compensate for those 'above
-    // the capacity' allocations: if we allocated too much above the capacity, we start to reclaim
-    // pages in housekeeper thread:
+    // amount of reclamation work to be done there, and allocate 'above the capacity', from Heap
+    // -- if not enough pages to reclaim could be found.
+    //Here we compensate for those 'above the capacity' allocations: if we allocated above the
+    // capacity, we start to reclaim heap pages in housekeeper thread:
     int remainsToReclaim = 10;
     while (totalNativeBytesCached.get() + totalHeapBytesCached.get() > cacheCapacityBytes
            && remainsToReclaim > 0) {
@@ -337,7 +339,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       if (candidate == null) {
         break;
       }
-      if (candidate.isUsable() && candidate.usageCount() == 0) {
+      if ((candidate.isUsable() || candidate.isAboutToUnmap())
+          && candidate.usageCount() == 0) {
         final ByteBuffer data = candidate.pageBufferUnchecked();
         if (data != null && !data.isDirect()) {
           final boolean succeed = candidate.tryMoveTowardsPreTombstone(/*entombYoung: */false);
@@ -523,7 +526,7 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
   @NotNull ByteBuffer allocatePageBuffer(final int bufferSize) {
     checkNotClosed();
-    final ByteBuffer reclaimedBuffer = tryReclaimPageOfSize(bufferSize, MAX_PAGES_TO_RECLAIM_AT_ONCE);
+    final ByteBuffer reclaimedBuffer = tryReclaimPageOfSize(bufferSize, MAX_PAGES_TO_TRY_RECLAIM_AT_ONCE);
 
     if (reclaimedBuffer != null) {
       statistics.pageReclaimedByHandover(bufferSize, reclaimedBuffer.isDirect());
@@ -539,8 +542,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
         return buffer;
       }
       else {
-        //RC: instead of forcing existing pages to unload -- allocate heap buffers.
-        //    (We'll get them out progressively, during regular background page scans)
+        //Instead of forcing existing pages to unload -- allocate heap buffers.
+        //  (We'll release them progressively, during regular background page scans)
         totalHeapBytesCached.addAndGet(bufferSize);
         statistics.pageAllocatedHeap(bufferSize);
         return ByteBuffer.allocate(bufferSize);

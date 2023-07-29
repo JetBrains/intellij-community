@@ -20,6 +20,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.text.CharArrayUtil;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
@@ -75,8 +76,12 @@ final class ActivityMonitorAction extends DumbAwareAction {
     "com.intellij.openapi.progress.impl.",
     "com.intellij.ide.IdeEventQueue",
     "com.intellij.openapi.fileTypes.",
+
     "com.intellij.openapi.vfs.newvfs.persistent.PersistentFS",
     "com.intellij.openapi.vfs.newvfs.persistent.FSRecords",
+    "com.intellij.util.io.pagecache",
+    FilePageCacheLockFree.class.getName(),
+
     "com.intellij.openapi.roots.impl",
     "javax."
   };

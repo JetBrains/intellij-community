@@ -9,16 +9,17 @@ as an example
 -->
 <html>
 <head>
+  <meta charset="utf-8">
   <!-- license: MIT (https://github.com/jquery/jquery/blob/main/LICENSE.txt) -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js" charset="utf-8"></script>
 
   <!-- license: MIT (https://github.com/plotly/plotly.js/blob/master/LICENSE) -->
-  <script src="https://cdn.plot.ly/plotly-2.17.0.min.js"></script>
+  <script src="https://cdn.plot.ly/plotly-2.17.0.min.js" charset="utf-8"></script>
 
   <!-- Enhanced select with multi-option selection:
        (https://github.com/HemantNegi/jquery.sumoselect)
        (license: MIT) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/jquery.sumoselect.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/jquery.sumoselect.min.js" charset="utf-8"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.sumoselect/3.4.9/sumoselect.min.css">
 
   <style lang="css">
@@ -341,6 +342,13 @@ as an example
       },
       mulScalar(scalar) {
         return new TimeSeries(this.points.map(p => new Point(p.time, p.value * scalar)))
+      },
+      cumSum(){
+        let sum = 0;
+        return new TimeSeries(this.points.map(p => {
+          sum += p.value
+          return new Point(p.time, sum)
+        }))
       }
     }
 
@@ -587,100 +595,12 @@ as an example
         'JVM CPU Time',
         'jvmBasics_JVM_CPUTime_Chart',
         [{
-          name: 'JVM CPU time, ms',
+          name: 'JVM CPU time, sec',
           color: 'blue',
-          series: totalCpuTimesMs
+          series: totalCpuTimesMs.mulScalar(1.0/1000)
         }],
         /*yaxis:*/ {
-          title: 'ms'
-        }
-      )
-    }
-
-    function plotFilePageCacheCharts() {
-      if (!document.loadedAndParsedData.parsedCSV) {
-        console.log("Error: .loadedAndParsedData is not loaded")
-        return
-      }
-      const pageFastHits = extractTimeSeries("FilePageCache.pageFastCacheHits")
-      const pageHits = extractTimeSeries("FilePageCache.pageHits")
-      const pageLoads = extractTimeSeries("FilePageCache.pageLoads")
-      const pageMisses = extractTimeSeries("FilePageCache.pageLoadsAboveSizeThreshold")
-
-      const pageLoadsTimeUs = extractTimeSeries("FilePageCache.totalPageLoadsUs")
-      const pageDisposalTimeUs = extractTimeSeries("FilePageCache.totalPageDisposalsUs")
-
-      const bufferCacheHits = extractTimeSeries("DirectByteBufferAllocator.hits")
-      const bufferCacheMisses = extractTimeSeries("DirectByteBufferAllocator.misses")
-      const buffersReclaimed = extractTimeSeries("DirectByteBufferAllocator.reclaimed")
-      const buffersDisposed = extractTimeSeries("DirectByteBufferAllocator.disposed")
-      const totalSizeOfBuffersInCacheBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
-      const totalSizeOfBuffersAllocatedBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersAllocatedInBytes")
-
-
-      console.log("FPC fast hits: " + pageFastHits)
-
-      const totalPagesRequested = pageFastHits.plus(pageHits).plus(pageMisses).plus(pageLoads)
-      const pageFastHitsPercent = pageFastHits.div(totalPagesRequested).mulScalar(100)
-      const pageHitsPercent = pageHits.div(totalPagesRequested).mulScalar(100)
-      const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested).mulScalar(100)
-
-      plotTimeSeries(
-        'FilePageCache: hits/misses/loads',
-        $("#filePageCache_HitsMisses_Chart"),
-        [
-          {name: 'Fast hits', color: 'green', series: pageFastHitsPercent},
-          {name: 'Regular hits', color: 'blue', series: pageHitsPercent},
-          {name: 'Misses (loads)', color: 'red', series: pageLoadsPercent},
-        ],
-        /*yaxis: */ {
-          title: '%',
-          autorange: false,
-          range: [0, 100]
-        }
-      )
-
-      plotTimeSeries(
-        'FilePageCache: loads/dispose times',
-        $("#filePageCache_Times_Chart"),
-        [
-          {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
-          {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
-        ],
-        /*yaxis: */ {
-          title: 'ms',
-          autorange: true
-        }
-      )
-
-      //DirectBufferAllocator charts:
-
-      plotTimeSeries(
-        'DirectBufferAllocator: caching stats',
-        $("#directBufferAllocator_Counts_Chart"),
-        [
-          {name: 'Cache hits', color: 'green', series: bufferCacheHits},
-          {name: 'Cache misses', color: 'red', series: bufferCacheMisses},
-          //RC: buffers disposed & re-used are quite niche -- turn them off by default:
-          {name: 'Buffers disposed', color: 'yellow', series: buffersDisposed, visible: 'legendonly'},
-          {name: 'Buffers re-used', color: 'blue', series: buffersReclaimed, visible: 'legendonly'},
-        ],
-        /*yaxis: */ {
-          title: '',
-          autorange: true
-        }
-      )
-
-      plotTimeSeries(
-        'DirectBufferAllocator: native memory usage',
-        $("#directBufferAllocator_Bytes_Chart"),
-        [
-          {name: 'ByteBuffers allocated, Mb', color: 'red', series: totalSizeOfBuffersAllocatedBytes.mulScalar(1/1024/1024)},
-          {name: 'ByteBuffers in cache, Mb', color: 'green', series: totalSizeOfBuffersInCacheBytes.mulScalar(1/1024/1024)}
-        ],
-        /*yaxis: */ {
-          title: 'Mb',
-          autorange: true
+          title: 'sec'
         }
       )
     }
@@ -817,7 +737,7 @@ as an example
 
     }
 
-    function plotNonBlockingReadActionChart() {
+    function plotReadWriteActionsChart() {
       if (!document.loadedAndParsedData.parsedCSV) {
         console.log("Error: .loadedAndParsedData is not loaded")
         return
@@ -953,6 +873,215 @@ as an example
       )
     }
 
+    function plotFilePageCacheCharts() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+      const pageFastHits = extractTimeSeries("FilePageCache.pageFastCacheHits")
+      const pageHits = extractTimeSeries("FilePageCache.pageHits")
+      const pageLoads = extractTimeSeries("FilePageCache.pageLoads")
+      const pageMisses = extractTimeSeries("FilePageCache.pageLoadsAboveSizeThreshold")
+
+      const pageLoadsTimeUs = extractTimeSeries("FilePageCache.totalPageLoadsUs")
+      const pageDisposalTimeUs = extractTimeSeries("FilePageCache.totalPageDisposalsUs")
+
+      const bufferCacheHits = extractTimeSeries("DirectByteBufferAllocator.hits")
+      const bufferCacheMisses = extractTimeSeries("DirectByteBufferAllocator.misses")
+      const buffersReclaimed = extractTimeSeries("DirectByteBufferAllocator.reclaimed")
+      const buffersDisposed = extractTimeSeries("DirectByteBufferAllocator.disposed")
+      const totalSizeOfBuffersInCacheBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersCachedInBytes")
+      const totalSizeOfBuffersAllocatedBytes = extractTimeSeries("DirectByteBufferAllocator.totalSizeOfBuffersAllocatedInBytes")
+
+
+      console.log("FPC fast hits: " + pageFastHits)
+
+      const totalPagesRequested = pageFastHits.plus(pageHits).plus(pageMisses).plus(pageLoads)
+      const pageFastHitsPercent = pageFastHits.div(totalPagesRequested).mulScalar(100)
+      const pageHitsPercent = pageHits.div(totalPagesRequested).mulScalar(100)
+      const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested).mulScalar(100)
+
+      plotTimeSeries(
+        'FilePageCache: hits/misses/loads',
+        $("#filePageCache_HitsMisses_Chart"),
+        [
+          {name: 'Fast hits', color: 'green', series: pageFastHitsPercent},
+          {name: 'Regular hits', color: 'blue', series: pageHitsPercent},
+          {name: 'Misses (loads)', color: 'red', series: pageLoadsPercent},
+        ],
+        /*yaxis: */ {
+          title: '%',
+          autorange: false,
+          range: [0, 100]
+        }
+      )
+
+      plotTimeSeries(
+        'FilePageCache: loads/dispose times',
+        $("#filePageCache_Times_Chart"),
+        [
+          {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
+          {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
+        ],
+        /*yaxis: */ {
+          title: 'ms',
+          autorange: true
+        }
+      )
+
+      //DirectBufferAllocator charts:
+
+      plotTimeSeries(
+        'DirectBufferAllocator: caching stats',
+        $("#directBufferAllocator_Counts_Chart"),
+        [
+          {name: 'Cache hits', color: 'green', series: bufferCacheHits},
+          {name: 'Cache misses', color: 'red', series: bufferCacheMisses},
+          //RC: buffers disposed & re-used are quite niche -- turn them off by default:
+          {name: 'Buffers disposed', color: 'yellow', series: buffersDisposed, visible: 'legendonly'},
+          {name: 'Buffers re-used', color: 'blue', series: buffersReclaimed, visible: 'legendonly'},
+        ],
+        /*yaxis: */ {
+          title: '',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'DirectBufferAllocator: native memory usage',
+        $("#directBufferAllocator_Bytes_Chart"),
+        [
+          {name: 'ByteBuffers allocated, Mb', color: 'red', series: totalSizeOfBuffersAllocatedBytes.mulScalar(1/1024/1024)},
+          {name: 'ByteBuffers in cache, Mb', color: 'green', series: totalSizeOfBuffersInCacheBytes.mulScalar(1/1024/1024)}
+        ],
+        /*yaxis: */ {
+          title: 'Mb',
+          autorange: true
+        }
+      )
+    }
+
+    function plotFilePageCacheLockFreeCharts() {
+      if (!document.loadedAndParsedData.parsedCSV) {
+        console.log("Error: .loadedAndParsedData is not loaded")
+        return
+      }
+      const totalNativeBytesAllocated = extractTimeSeries("FilePageCacheLockFree.totalNativeBytesAllocated")
+      const totalNativeBytesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalNativeBytesReclaimed")
+      const totalHeapBytesAllocated = extractTimeSeries("FilePageCacheLockFree.totalHeapBytesAllocated")
+      const totalHeapBytesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalHeapBytesReclaimed")
+
+      const totalPagesAllocated = extractTimeSeries("FilePageCacheLockFree.totalPagesAllocated")
+      const totalPagesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalPagesReclaimed")
+      const totalPagesHandedOver = extractTimeSeries("FilePageCacheLockFree.totalPagesHandedOver")
+
+      const totalPagesWritten = extractTimeSeries("FilePageCacheLockFree.totalPagesWritten")
+      const totalPagesRequested = extractTimeSeries("FilePageCacheLockFree.totalPagesRequested")
+
+      const totalBytesRequested = extractTimeSeries("FilePageCacheLockFree.totalBytesRequested")
+      const totalBytesRead = extractTimeSeries("FilePageCacheLockFree.totalBytesRead")
+      const totalBytesWritten = extractTimeSeries("FilePageCacheLockFree.totalBytesWritten")
+
+      const totalPagesRequestsNs = extractTimeSeries("FilePageCacheLockFree.totalPagesRequestsNs")
+      const totalPagesReadNs = extractTimeSeries("FilePageCacheLockFree.totalPagesReadNs")
+      const totalPagesWriteNs = extractTimeSeries("FilePageCacheLockFree.totalPagesWriteNs")
+
+      const housekeeperTurnDone = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnDone")
+      const housekeeperTurnSkipped = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnSkipped")
+
+      const totalClosedStoragesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalClosedStoragesReclaimed")
+
+      console.log("FPC native bytes allocated: " + totalNativeBytesAllocated)
+
+      // const pageLoadsPercent = pageLoads.plus(pageMisses).div(totalPagesRequested).mulScalar(100)
+
+      plotTimeSeries(
+        'Page count: requested, allocated, reclaimed...',
+        $("#filePageCacheLockFree_PageCounts"),
+        [
+          {name: 'Pages requested by app', color: 'green', series: totalPagesRequested},
+          {name: 'Pages allocated', color: 'red', series: totalPagesAllocated},
+          {name: 'Pages reclaimed', color: 'blue', series: totalPagesReclaimed},
+          {name: 'Pages reused immediately', color: 'cyan', series: totalPagesHandedOver},
+          {name: 'Pages written on disk', color: 'magenta', series: totalPagesWritten},
+        ],
+        /*yaxis: */ {
+          title: '',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'Page timings',
+        $("#filePageCacheLockFree_PageTimings"),
+        [
+          {name: 'Total time of page requests', color: 'blue', series: totalPagesRequestsNs.mulScalar(1e-9)},
+          {name: 'Total time of page reads', color: 'green', series: totalPagesReadNs.mulScalar(1e-9)},
+          {name: 'Total time of page writes', color: 'red', series: totalPagesWriteNs.mulScalar(1e-9)}
+        ],
+        /*yaxis: */ {
+          title: 'sec',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'Data flows',
+        $("#filePageCacheLockFree_PageBytes"),
+        [
+          {name: 'Total bytes requested by app', color: 'blue', series: totalBytesRequested.mulScalar(1e-6),
+            visible: false},//usually not representative
+          {name: 'Total bytes read', color: 'green', series: totalBytesRead.mulScalar(1e-6)},
+          {name: 'Total bytes written', color: 'red', series: totalBytesWritten.mulScalar(1e-6)}
+        ],
+        /*yaxis: */ {
+          title: 'Mb',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'Pages allocated: Heap vs Off-Heap (Native)',
+        $("#filePageCacheLockFree_HeapVsNativeMemoryUsed"),
+        [
+          {name: 'Pages allocated heap', color: 'green', series: totalHeapBytesAllocated.mulScalar(1e-6)},
+          {name: 'Pages allocated off-heap', color: 'blue', series: totalNativeBytesAllocated.mulScalar(1e-6)}
+        ],
+        /*yaxis: */ {
+          title: 'Mb',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'Housekeeper thread',
+        $("#filePageCacheLockFree_Housekeeper"),
+        [
+          {name: 'Turns done', color: 'green', series: housekeeperTurnDone},
+          {name: 'Turns skipped', color: 'blue', series: housekeeperTurnSkipped}
+        ],
+        /*yaxis: */ {
+          title: '',
+          autorange: true
+        }
+      )
+
+      // plotTimeSeries(
+      //   'FilePageCache: loads/dispose times',
+      //   $("#filePageCache_Times_Chart"),
+      //   [
+      //     {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
+      //     {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
+      //   ],
+      //   /*yaxis: */ {
+      //     title: 'ms',
+      //     autorange: true
+      //   }
+      // )
+
+
+    }
+
     //====== 'Custom' plot: =================
 
     /**namesOfSeriesToPlot: array of strings, names of time series in a document.loadedAndParsedData.parsedCSV */
@@ -1005,9 +1134,10 @@ as an example
       plotBasicJVMCharts,
       plotAWTQueueCharts,
       plotFlushQueueCharts,
-      plotNonBlockingReadActionChart,
+      plotReadWriteActionsChart,
       plotIndexesCharts,
       plotFilePageCacheCharts,
+      plotFilePageCacheLockFreeCharts,
       () => {//Initialize 'custom plot' with something, so it doesn't look empty:
         const names = document.loadedAndParsedData.names
         //TODO check #timeSeriesChooser selected options, and if there are options present in names --
@@ -1344,6 +1474,21 @@ as an example
 
   </div>
 
+  <div id="filePageCacheLockFree" class="blockOfPlots">
+
+    <div class="caption">FilePageCache (New):</div>
+
+    <div id="filePageCacheLockFree_PageCounts" class="plot hideable"></div>
+
+    <div id="filePageCacheLockFree_PageTimings" class="plot hideable"></div>
+    <div id="filePageCacheLockFree_PageBytes" class="plot hideable"></div>
+
+    <div id="filePageCacheLockFree_HeapVsNativeMemoryUsed" class="plot hideable"></div>
+
+    <div id="filePageCacheLockFree_Housekeeper" class="plot hideable"></div>
+
+  </div>
+
   <div id="custom" class="blockOfPlots">
     <div class="caption">
       <label for="timeSeriesChooser">Plot other:</label>
@@ -1407,7 +1552,7 @@ as an example
         event.preventDefault()
         event.stopPropagation()
 
-        console.log(event.originalEvent)
+        //console.log(event.originalEvent)
 
         switch (event.type) {
           case "dragenter":
