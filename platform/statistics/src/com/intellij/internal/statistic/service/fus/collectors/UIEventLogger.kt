@@ -6,156 +6,159 @@ package com.intellij.internal.statistic.service.fus.collectors
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.lang.Language
+import org.jetbrains.annotations.ApiStatus
 
-private val uiEventGroup = EventLogGroup("ui.event", 18)
+@ApiStatus.Internal
+object UIEventLogger : CounterUsagesCollector() {
 
-@JvmField
-val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
+  private val uiEventGroup = EventLogGroup("ui.event", 18)
 
-@JvmField
-val NavBarNavigate: EventId = uiEventGroup.registerEvent("NavBarNavigate")
+  @JvmField
+  val NavBarShowPopup: EventId = uiEventGroup.registerEvent("NavBarShowPopup")
 
-@JvmField
-val LookupShowElementActions: EventId = uiEventGroup.registerEvent("LookupShowElementActions")
+  @JvmField
+  val NavBarNavigate: EventId = uiEventGroup.registerEvent("NavBarNavigate")
 
-@JvmField
-val LookupExecuteElementAction: EventId = uiEventGroup.registerEvent("LookupExecuteElementAction")
+  @JvmField
+  val LookupShowElementActions: EventId = uiEventGroup.registerEvent("LookupShowElementActions")
 
-@JvmField
-val DaemonEditorPopupInvoked: EventId = uiEventGroup.registerEvent("DaemonEditorPopupInvoked")
+  @JvmField
+  val LookupExecuteElementAction: EventId = uiEventGroup.registerEvent("LookupExecuteElementAction")
 
-@JvmField
-val HectorPopupDisplayed: EventId = uiEventGroup.registerEvent("HectorPopupDisplayed")
+  @JvmField
+  val DaemonEditorPopupInvoked: EventId = uiEventGroup.registerEvent("DaemonEditorPopupInvoked")
 
-@JvmField
-val ProgressPaused: EventId = uiEventGroup.registerEvent("ProgressPaused")
+  @JvmField
+  val HectorPopupDisplayed: EventId = uiEventGroup.registerEvent("HectorPopupDisplayed")
 
-@JvmField
-val ProgressResumed: EventId = uiEventGroup.registerEvent("ProgressResumed")
+  @JvmField
+  val ProgressPaused: EventId = uiEventGroup.registerEvent("ProgressPaused")
 
-@JvmField
-val BreadcrumbShowTooltip: EventId1<Language?> = uiEventGroup.registerEvent(
-  "BreadcrumbShowTooltip",
-  EventFields.Language,
-)
+  @JvmField
+  val ProgressResumed: EventId = uiEventGroup.registerEvent("ProgressResumed")
 
-@JvmField
-val BreadcrumbNavigate: EventId2<Language?, Boolean> = uiEventGroup.registerEvent(
-  "BreadcrumbNavigate",
-  EventFields.Language,
-  EventFields.Boolean("with_selection"),
-)
+  @JvmField
+  val BreadcrumbShowTooltip: EventId1<Language?> = uiEventGroup.registerEvent(
+    "BreadcrumbShowTooltip",
+    EventFields.Language,
+  )
 
-@JvmField
-val DumbModeBalloonWasNotNeeded: EventId = uiEventGroup.registerEvent("DumbModeBalloonWasNotNeeded")
+  @JvmField
+  val BreadcrumbNavigate: EventId2<Language?, Boolean> = uiEventGroup.registerEvent(
+    "BreadcrumbNavigate",
+    EventFields.Language,
+    EventFields.Boolean("with_selection"),
+  )
 
-@JvmField
-val DumbModeBalloonRequested: EventId = uiEventGroup.registerEvent("DumbModeBalloonRequested")
+  @JvmField
+  val DumbModeBalloonWasNotNeeded: EventId = uiEventGroup.registerEvent("DumbModeBalloonWasNotNeeded")
 
-@JvmField
-val DumbModeBalloonShown: EventId = uiEventGroup.registerEvent("DumbModeBalloonShown")
+  @JvmField
+  val DumbModeBalloonRequested: EventId = uiEventGroup.registerEvent("DumbModeBalloonRequested")
 
-@JvmField
-val DumbModeBalloonCancelled: EventId = uiEventGroup.registerEvent("DumbModeBalloonCancelled")
+  @JvmField
+  val DumbModeBalloonShown: EventId = uiEventGroup.registerEvent("DumbModeBalloonShown")
 
-@JvmField
-val DumbModeBalloonProceededToActions: EventId1<Long> = uiEventGroup.registerEvent(
-  "DumbModeBalloonProceededToActions",
-  EventFields.Long("duration_ms"),
-)
+  @JvmField
+  val DumbModeBalloonCancelled: EventId = uiEventGroup.registerEvent("DumbModeBalloonCancelled")
 
-@JvmField
-val IncrementalSearchActivated: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "IncrementalSearchActivated",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val DumbModeBalloonProceededToActions: EventId1<Long> = uiEventGroup.registerEvent(
+    "DumbModeBalloonProceededToActions",
+    EventFields.Long("duration_ms"),
+  )
 
-@JvmField
-val IncrementalSearchKeyTyped: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "IncrementalSearchKeyTyped",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val IncrementalSearchActivated: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "IncrementalSearchActivated",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val IncrementalSearchCancelled: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "IncrementalSearchCancelled",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val IncrementalSearchKeyTyped: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "IncrementalSearchKeyTyped",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val IncrementalSearchNextPrevItemSelected: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "IncrementalSearchNextPrevItemSelected",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val IncrementalSearchCancelled: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "IncrementalSearchCancelled",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val ShowUsagesPopupShowSettings: EventId = uiEventGroup.registerEvent("ShowUsagesPopupShowSettings")
+  @JvmField
+  val IncrementalSearchNextPrevItemSelected: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "IncrementalSearchNextPrevItemSelected",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val ToolWindowsWidgetPopupShown: EventId = uiEventGroup.registerEvent("ToolWindowsWidgetPopupShown")
+  @JvmField
+  val ShowUsagesPopupShowSettings: EventId = uiEventGroup.registerEvent("ShowUsagesPopupShowSettings")
 
-@JvmField
-val ToolWindowsWidgetPopupClicked: EventId = uiEventGroup.registerEvent("ToolWindowsWidgetPopupClicked")
+  @JvmField
+  val ToolWindowsWidgetPopupShown: EventId = uiEventGroup.registerEvent("ToolWindowsWidgetPopupShown")
 
-@JvmField
-val ImplementationViewComboBoxSelected: EventId = uiEventGroup.registerEvent("ImplementationViewComboBoxSelected")
+  @JvmField
+  val ToolWindowsWidgetPopupClicked: EventId = uiEventGroup.registerEvent("ToolWindowsWidgetPopupClicked")
 
-@JvmField
-val ImplementationViewToolWindowOpened: EventId = uiEventGroup.registerEvent("ImplementationViewToolWindowOpened")
+  @JvmField
+  val ImplementationViewComboBoxSelected: EventId = uiEventGroup.registerEvent("ImplementationViewComboBoxSelected")
 
-@JvmField
-val EditorFoldingIconClicked: EventId2<Boolean, Boolean> = uiEventGroup.registerEvent(
-  "EditorFoldingIconClicked",
-  EventFields.Boolean("expand"),
-  EventFields.Boolean("recursive"),
-)
+  @JvmField
+  val ImplementationViewToolWindowOpened: EventId = uiEventGroup.registerEvent("ImplementationViewToolWindowOpened")
 
-@JvmField
-val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEvent(
-  "QuickNavigateInfoPopupShown",
-  EventFields.Language,
-)
+  @JvmField
+  val EditorFoldingIconClicked: EventId2<Boolean, Boolean> = uiEventGroup.registerEvent(
+    "EditorFoldingIconClicked",
+    EventFields.Boolean("expand"),
+    EventFields.Boolean("recursive"),
+  )
 
-@JvmField
-val CtrlMouseHintShown: EventId1<Class<*>?> = uiEventGroup.registerEvent(
-  "CtrlMouseHintShown",
-  EventFields.Class("target_class"),
-)
+  @JvmField
+  val QuickNavigateInfoPopupShown: EventId1<Language?> = uiEventGroup.registerEvent(
+    "QuickNavigateInfoPopupShown",
+    EventFields.Language,
+  )
 
-@JvmField
-val EditorAnnotationClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "EditorAnnotationClicked",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val CtrlMouseHintShown: EventId1<Class<*>?> = uiEventGroup.registerEvent(
+    "CtrlMouseHintShown",
+    EventFields.Class("target_class"),
+  )
 
-@JvmField
-val StatusBarWidgetClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "StatusBarWidgetClicked",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val EditorAnnotationClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "EditorAnnotationClicked",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent(
-  "StatusBarPopupShown",
-  EventFields.Class("class"),
-)
+  @JvmField
+  val StatusBarWidgetClicked: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "StatusBarWidgetClicked",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val ThemeAutodetectSelector: EventId1<Boolean> = uiEventGroup.registerEvent("theme.autodetect.selector", EventFields.Boolean("autodetect"))
+  @JvmField
+  val StatusBarPopupShown: EventId1<Class<*>> = uiEventGroup.registerEvent(
+    "StatusBarPopupShown",
+    EventFields.Class("class"),
+  )
 
-@JvmField
-val IdeZoomChanged: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.changed",
-                                                                     IdeZoomEventFields.zoomMode,
-                                                                     IdeZoomEventFields.place,
-                                                                     IdeZoomEventFields.zoomScalePercent,
-                                                                     IdeZoomEventFields.presentationMode)
+  @JvmField
+  val ThemeAutodetectSelector: EventId1<Boolean> = uiEventGroup.registerEvent("theme.autodetect.selector", EventFields.Boolean("autodetect"))
 
-@JvmField
-val IdeZoomSwitcherClosed: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.switcher.closed",
-                                                                            IdeZoomEventFields.applied,
-                                                                            IdeZoomEventFields.finalZoomScalePercent,
-                                                                            IdeZoomEventFields.presentationMode)
+  @JvmField
+  val IdeZoomChanged: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.changed",
+                                                                       IdeZoomEventFields.zoomMode,
+                                                                       IdeZoomEventFields.place,
+                                                                       IdeZoomEventFields.zoomScalePercent,
+                                                                       IdeZoomEventFields.presentationMode)
 
-internal class UIEventLoggerC : CounterUsagesCollector() {
+  @JvmField
+  val IdeZoomSwitcherClosed: VarargEventId = uiEventGroup.registerVarargEvent("ide.zoom.switcher.closed",
+                                                                              IdeZoomEventFields.applied,
+                                                                              IdeZoomEventFields.finalZoomScalePercent,
+                                                                              IdeZoomEventFields.presentationMode)
+
   override fun getGroup(): EventLogGroup = uiEventGroup
 }

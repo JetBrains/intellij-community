@@ -7,7 +7,7 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.injected.editor.EditorWindow
-import com.intellij.internal.statistic.service.fus.collectors.CtrlMouseHintShown
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.CtrlMouseHintShown
 import com.intellij.lang.documentation.ide.impl.DocumentationManager
 import com.intellij.lang.documentation.ide.impl.injectedThenHost
 import com.intellij.lang.injection.InjectedLanguageManager

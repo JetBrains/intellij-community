@@ -78,7 +78,7 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper implemen
     ) {
         super(project);
 
-        KotlinJ2KOnboardingFUSCollector.Companion.logShowConfigureKtWindow(project);
+        KotlinJ2KOnboardingFUSCollector.logShowConfigureKtWindow(project);
 
         var kotlinVersions = getKotlinVersionsAndModules(project, configurator);
         kotlinVersionsAndModules = kotlinVersions.getFirst();

@@ -11,8 +11,8 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.Companion.EXTERNAL_SYSTEM_ID
-import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.Companion.IMPORT_ACTIVITY
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemActionsCollector.EXTERNAL_SYSTEM_ID
+import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector.IMPORT_ACTIVITY
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 

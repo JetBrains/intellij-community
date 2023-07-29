@@ -13,8 +13,8 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettings.Companion.getInstance
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.idea.ActionsBundle
-import com.intellij.internal.statistic.service.fus.collectors.ProgressPaused
-import com.intellij.internal.statistic.service.fus.collectors.ProgressResumed
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressPaused
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ProgressResumed
 import com.intellij.notification.ActionCenter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
@@ -710,7 +710,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
         override fun cancel() {
           super.cancel()
           queueProgressUpdate()
- }
+        }
       })
       @Suppress("LeakingThis")
       runOnProgressRelatedChange(runnable = ::queueProgressUpdate,
@@ -822,7 +822,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     override fun stop() {
       super.stop()
       queueProgressUpdate()
- }
+    }
 
     override fun isFinished(): Boolean {
       val info = info

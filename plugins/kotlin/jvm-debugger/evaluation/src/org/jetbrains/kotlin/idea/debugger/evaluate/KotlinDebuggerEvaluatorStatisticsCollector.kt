@@ -8,41 +8,44 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.CodeFragmentCompilationStats
 
-class KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
+object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    companion object {
-        private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 2)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 2)
 
-        // fields
-        private val evaluatorField = EventFields.Enum<StatisticsEvaluator>("evaluator")
-        private val evaluationResultField = EventFields.Enum<StatisticsEvaluationResult>("evaluation_result")
-        private val analysisTimeMsField = EventFields.Long("analysis_time_ms")
-        private val compilationTimeMsField = EventFields.Long("compilation_time_ms")
-        private val interruptionsField = EventFields.Int("total_interruptions")
+    // fields
+    private val evaluatorField = EventFields.Enum<StatisticsEvaluator>("evaluator")
+    private val evaluationResultField = EventFields.Enum<StatisticsEvaluationResult>("evaluation_result")
+    private val analysisTimeMsField = EventFields.Long("analysis_time_ms")
+    private val compilationTimeMsField = EventFields.Long("compilation_time_ms")
+    private val interruptionsField = EventFields.Int("total_interruptions")
 
-        // events
-        private val evaluationResultEvent = GROUP.registerVarargEvent("evaluation.result", evaluatorField, evaluationResultField,
-                                                                      analysisTimeMsField, compilationTimeMsField, interruptionsField)
-        private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
+    // events
+    private val evaluationResultEvent = GROUP.registerVarargEvent(
+        "evaluation.result", evaluatorField, evaluationResultField,
+        analysisTimeMsField, compilationTimeMsField, interruptionsField
+    )
+    private val fallbackToOldEvaluatorEvent = GROUP.registerEvent("fallback.to.old.evaluator")
 
-        @JvmStatic
-        fun logEvaluationResult(project: Project?, evaluator: StatisticsEvaluator, evaluationResult: StatisticsEvaluationResult,
-                                stats: CodeFragmentCompilationStats) {
-            evaluationResultEvent.log(project,
-                                      EventPair(evaluatorField, evaluator),
-                                      EventPair(evaluationResultField, evaluationResult),
-                                      EventPair(analysisTimeMsField, stats.analysisTimeMs),
-                                      EventPair(compilationTimeMsField, stats.compilationTimeMs),
-                                      EventPair(interruptionsField, stats.interruptions)
-            )
-        }
+    @JvmStatic
+    fun logEvaluationResult(
+        project: Project?, evaluator: StatisticsEvaluator, evaluationResult: StatisticsEvaluationResult,
+        stats: CodeFragmentCompilationStats
+    ) {
+        evaluationResultEvent.log(
+            project,
+            EventPair(evaluatorField, evaluator),
+            EventPair(evaluationResultField, evaluationResult),
+            EventPair(analysisTimeMsField, stats.analysisTimeMs),
+            EventPair(compilationTimeMsField, stats.compilationTimeMs),
+            EventPair(interruptionsField, stats.interruptions)
+        )
+    }
 
-        @JvmStatic
-        fun logFallbackToOldEvaluator(project: Project?) {
-            fallbackToOldEvaluatorEvent.log(project)
-        }
+    @JvmStatic
+    fun logFallbackToOldEvaluator(project: Project?) {
+        fallbackToOldEvaluatorEvent.log(project)
     }
 }
 

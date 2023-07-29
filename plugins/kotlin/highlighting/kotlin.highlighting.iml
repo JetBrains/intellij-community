@@ -51,5 +51,6 @@
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="module" module-name="kotlin.code-insight.utils" />
     <orderEntry type="module" module-name="intellij.java.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

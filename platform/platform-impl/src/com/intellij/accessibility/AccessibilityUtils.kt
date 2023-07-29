@@ -1,7 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.accessibility
 
-import com.intellij.accessibility.AccessibilityUsageTrackerCollector.Companion.featureTriggered
+import com.intellij.accessibility.AccessibilityUsageTrackerCollector.featureTriggered
 import com.intellij.ide.GeneralSettings
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl

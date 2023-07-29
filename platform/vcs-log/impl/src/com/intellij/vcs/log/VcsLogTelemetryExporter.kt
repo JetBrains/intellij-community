@@ -9,8 +9,8 @@ import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpanAttribute.TYPE_HISTORY
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetryExporterProvider
 import com.intellij.util.indexing.diagnostic.dto.toMillis
-import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.Companion.FILE_HISTORY_COLLECTING_RENAMES
-import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.Companion.FILE_HISTORY_COMPUTING
+import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILE_HISTORY_COLLECTING_RENAMES
+import com.intellij.vcs.log.statistics.VcsLogPerformanceStatisticsCollector.FILE_HISTORY_COMPUTING
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import io.opentelemetry.sdk.trace.data.SpanData
 

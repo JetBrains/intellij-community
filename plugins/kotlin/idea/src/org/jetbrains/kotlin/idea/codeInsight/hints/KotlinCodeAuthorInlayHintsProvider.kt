@@ -8,9 +8,9 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.CLASS_LOCATION
-import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.FUNCTION_LOCATION
-import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.Companion.logCodeAuthorClicked
+import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.CLASS_LOCATION
+import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.FUNCTION_LOCATION
+import org.jetbrains.kotlin.idea.codeInsight.codevision.KotlinCodeVisionUsagesCollector.logCodeAuthorClicked
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 

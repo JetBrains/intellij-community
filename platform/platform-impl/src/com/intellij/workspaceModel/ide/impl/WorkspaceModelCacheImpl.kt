@@ -103,7 +103,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     if (!cachesInvalidated.get()) {
       LOG.debug("Saving project model cache to $cacheFile")
       val (time, size) = cacheSerializer.saveCacheToFile(storage, cacheFile, userPreProcessor = true)
-      WorkspaceModelFusLogger.Util.logCacheSave(time, size ?: -1)
+      WorkspaceModelFusLogger.logCacheSave(time, size ?: -1)
       //todo check that where are no entities in the storage instead
       if (unloadedStorage != EntityStorageSnapshot.empty()) {
         LOG.debug("Saving project model cache to $unloadedEntitiesCacheFile")
@@ -127,7 +127,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
     val (cache, time) = measureTimedValue {
       cacheSerializer.loadCacheFromFile(cacheFile, invalidateCachesMarkerFile, invalidateProjectCacheMarkerFile)
     }
-    WorkspaceModelFusLogger.Util.logCacheLoading(if (cache != null) time.inWholeMilliseconds else -1)
+    WorkspaceModelFusLogger.logCacheLoading(if (cache != null) time.inWholeMilliseconds else -1)
     return cache
   }
   override fun loadUnloadedEntitiesCache(): EntityStorage? {

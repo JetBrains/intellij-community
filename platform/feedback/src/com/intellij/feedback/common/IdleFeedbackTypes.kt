@@ -11,9 +11,9 @@ import com.intellij.feedback.aqua.state.AquaOldUserInfoState
 import com.intellij.feedback.common.IdleFeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.common.bundle.CommonFeedbackBundle
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
-import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logDisableNotificationActionInvoked
-import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
-import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
+import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.logDisableNotificationActionInvoked
+import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.logRequestNotificationShown
+import com.intellij.feedback.common.statistics.FeedbackNotificationCountCollector.logRespondNotificationActionInvoked
 import com.intellij.feedback.kafka.bundle.KafkaFeedbackBundle
 import com.intellij.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
 import com.intellij.feedback.kafka.dialog.KafkaProducerFeedbackDialog
@@ -310,7 +310,6 @@ enum class IdleFeedbackTypes {
     private fun checkNotificationNumberNotExceeded(state: AquaOldUserInfoState): Boolean {
       return state.numberNotificationShowed < maxNumberNotificationShowed
     }
-
   },
   KAFKA_CONSUMER_FEEDBACK {
     override val fusFeedbackId: String = "kafka_consumer_feedback"

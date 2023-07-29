@@ -40,7 +40,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.refactoring.util.ConflictsUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.NonNls
-import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector.Companion as IEMC
+import com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector as IEMC
 
 data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 

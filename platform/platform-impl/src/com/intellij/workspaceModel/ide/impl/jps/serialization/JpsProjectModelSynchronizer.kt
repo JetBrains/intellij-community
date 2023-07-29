@@ -317,7 +317,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
 
     jpsLoadProjectToEmptyStorageTimeMs.addElapsedTimeMs(start)
-    WorkspaceModelFusLogger.Util.logLoadingJpsFromIml(System.currentTimeMillis() - start)
+    WorkspaceModelFusLogger.logLoadingJpsFromIml(System.currentTimeMillis() - start)
     return loadedProjectEntities
   }
 

@@ -18,25 +18,23 @@ import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
-import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.Companion.TYPE_FIELD
+import com.intellij.xdebugger.impl.breakpoints.BreakpointsUsageCollector.TYPE_FIELD
 
 class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("debugger.breakpoints", 4)
-    private val SUSPEND_POLICY_FIELD = EventFields.Enum("suspendPolicy", SuspendPolicy::class.java)
-    private val NOT_DEFAULT_SUSPEND = GROUP.registerVarargEvent("not.default.suspend", EventFields.Enabled,
-                                                                SUSPEND_POLICY_FIELD, TYPE_FIELD, EventFields.PluginInfo)
-    private val TOTAL = GROUP.registerEvent("total", EventFields.Count)
-    private val TOTAL_DISABLED = GROUP.registerEvent("total.disabled", EventFields.Count)
-    private val TOTAL_NON_SUSPENDING = GROUP.registerEvent("total.non.suspending", EventFields.Count)
-    private val USING_GROUPS = GROUP.registerEvent("using.groups", EventFields.Enabled)
-    private val USING_CONDITION = GROUP.registerEvent("using.condition", EventFields.Enabled)
-    private val USING_LOG_EXPRESSION = GROUP.registerEvent("using.log.expression", EventFields.Enabled)
-    private val USING_TEMPORARY = GROUP.registerEvent("using.temporary", EventFields.Enabled)
-    private val USING_DEPENDENT = GROUP.registerEvent("using.dependent", EventFields.Enabled)
-    private val USING_LOG_MESSAGE = GROUP.registerEvent("using.log.message", EventFields.Enabled)
-    private val USING_LOG_STACK = GROUP.registerEvent("using.log.stack", EventFields.Enabled)
-  }
+  private val GROUP = EventLogGroup("debugger.breakpoints", 4)
+  private val SUSPEND_POLICY_FIELD = EventFields.Enum("suspendPolicy", SuspendPolicy::class.java)
+  private val NOT_DEFAULT_SUSPEND = GROUP.registerVarargEvent("not.default.suspend", EventFields.Enabled,
+                                                              SUSPEND_POLICY_FIELD, TYPE_FIELD, EventFields.PluginInfo)
+  private val TOTAL = GROUP.registerEvent("total", EventFields.Count)
+  private val TOTAL_DISABLED = GROUP.registerEvent("total.disabled", EventFields.Count)
+  private val TOTAL_NON_SUSPENDING = GROUP.registerEvent("total.non.suspending", EventFields.Count)
+  private val USING_GROUPS = GROUP.registerEvent("using.groups", EventFields.Enabled)
+  private val USING_CONDITION = GROUP.registerEvent("using.condition", EventFields.Enabled)
+  private val USING_LOG_EXPRESSION = GROUP.registerEvent("using.log.expression", EventFields.Enabled)
+  private val USING_TEMPORARY = GROUP.registerEvent("using.temporary", EventFields.Enabled)
+  private val USING_DEPENDENT = GROUP.registerEvent("using.dependent", EventFields.Enabled)
+  private val USING_LOG_MESSAGE = GROUP.registerEvent("using.log.message", EventFields.Enabled)
+  private val USING_LOG_STACK = GROUP.registerEvent("using.log.stack", EventFields.Enabled)
 
   override fun getGroup(): EventLogGroup {
     return GROUP

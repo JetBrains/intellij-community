@@ -4,7 +4,11 @@ package com.intellij.openapi.project
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.lightEdit.LightEdit
-import com.intellij.internal.statistic.service.fus.collectors.*
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonCancelled
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonProceededToActions
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonRequested
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonShown
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.DumbModeBalloonWasNotNeeded
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -24,7 +28,7 @@ class DumbServiceBalloon(private val myProject: Project,
                          private val myService: Service) {
   private var myBalloon: Balloon? = null //used from EDT only
 
-  /// a workaround, it should not depend from DumbServiceImpl/DumbService and be a part of DumbServiceImpl
+  // a workaround, it should not depend on DumbServiceImpl/DumbService and be a part of DumbServiceImpl
   interface Service {
     val isDumb: Boolean
     fun runWhenSmart(runnable: Runnable)

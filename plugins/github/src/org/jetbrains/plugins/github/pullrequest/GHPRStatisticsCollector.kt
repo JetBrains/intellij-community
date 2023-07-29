@@ -24,12 +24,10 @@ import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListSearchValue
 import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 import java.util.*
 
-internal object GHPRStatisticsCollector {
+internal object GHPRStatisticsCollector: CounterUsagesCollector() {
   private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 5)
 
-  class Counters : CounterUsagesCollector() {
-    override fun getGroup() = COUNTERS_GROUP
-  }
+  override fun getGroup() = COUNTERS_GROUP
 
   private val SELECTORS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("selectors.opened")
   private val LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("list.opened")

@@ -17,7 +17,7 @@ import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.messages.MessageBusConnection
-import git4idea.GitBranchesUsageCollector.Companion.branchWidgetClicked
+import git4idea.GitBranchesUsageCollector.branchWidgetClicked
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager

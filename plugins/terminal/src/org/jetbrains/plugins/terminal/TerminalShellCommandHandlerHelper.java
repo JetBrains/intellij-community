@@ -284,11 +284,11 @@ public final class TerminalShellCommandHandlerHelper {
 
     if (executor == null) {
       onShellCommandExecuted();
-      TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
+      TerminalUsageTriggerCollector.triggerSmartCommand(project, workingDirectory, localSession, command, handler, false);
       return false;
     }
 
-    TerminalUsageTriggerCollector.Companion.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
+    TerminalUsageTriggerCollector.triggerSmartCommand(project, workingDirectory, localSession, command, handler, true);
     TerminalShellCommandHandler.Companion.executeShellCommandHandler(myWidget.getProject(), getWorkingDirectory(),
                                                                      !hasRunningCommands(), command, executor);
     clearTypedCommand(command);

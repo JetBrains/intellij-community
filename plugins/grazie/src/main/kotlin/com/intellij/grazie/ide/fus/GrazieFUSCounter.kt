@@ -43,26 +43,23 @@ private val quickFixInvokedEvent = GROUP.registerEvent("quick.fix.invoked",
                                                        ACTION_INFO_FIELD,
                                                        EventFields.PluginInfo)
 
-class GrazieFUSCounter : CounterUsagesCollector() {
+object GrazieFUSCounter : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-
-    fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
-      for (language in languages) {
-        languageSuggestedEvent.log(language.iso, isEnabled)
-      }
+  fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
+    for (language in languages) {
+      languageSuggestedEvent.log(language.iso, isEnabled)
     }
-
-    fun typoFound(problem: TextProblem) = typoFoundEvent.log(problem.text.containingFile.project,
-                                                             problem.rule.globalId,
-                                                             problem.suggestions.size,
-                                                             getPluginInfo(problem.rule.javaClass))
-
-    fun quickFixInvoked(rule: Rule, project: Project, actionInfo: String) = quickFixInvokedEvent.log(project,
-                                                                                                     rule.globalId,
-                                                                                                     actionInfo,
-                                                                                                     getPluginInfo(rule.javaClass))
-
   }
+
+  fun typoFound(problem: TextProblem) = typoFoundEvent.log(problem.text.containingFile.project,
+                                                           problem.rule.globalId,
+                                                           problem.suggestions.size,
+                                                           getPluginInfo(problem.rule.javaClass))
+
+  fun quickFixInvoked(rule: Rule, project: Project, actionInfo: String) = quickFixInvokedEvent.log(project,
+                                                                                                   rule.globalId,
+                                                                                                   actionInfo,
+                                                                                                   getPluginInfo(rule.javaClass))
+
 }

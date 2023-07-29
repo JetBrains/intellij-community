@@ -8,8 +8,8 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.diagnostic.span
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
-import com.intellij.internal.statistic.service.fus.collectors.StatusBarPopupShown
-import com.intellij.internal.statistic.service.fus.collectors.StatusBarWidgetClicked
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarWidgetClicked
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager

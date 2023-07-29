@@ -7,16 +7,14 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-class VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("vcs.log.performance", 1)
+object VcsLogPerformanceStatisticsCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("vcs.log.performance", 1)
 
-    val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computing",
-                                                     EventFields.String("vcs", listOf("Git", "hg4idea", "Perforce")),
-                                                     EventFields.Boolean("withIndex"),
-                                                     EventFields.DurationMs)
-    val FILE_HISTORY_COLLECTING_RENAMES = GROUP.registerEvent("file.history.collecting.renames", EventFields.DurationMs)
-  }
+  val FILE_HISTORY_COMPUTING = GROUP.registerEvent("file.history.computing",
+                                                   EventFields.String("vcs", listOf("Git", "hg4idea", "Perforce")),
+                                                   EventFields.Boolean("withIndex"),
+                                                   EventFields.DurationMs)
+  val FILE_HISTORY_COLLECTING_RENAMES = GROUP.registerEvent("file.history.collecting.renames", EventFields.DurationMs)
 
   override fun getGroup() = GROUP
 }

@@ -47,7 +47,7 @@
     <statistics.applicationUsagesCollector
       implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
     <statistics.counterUsagesCollector
-      implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector$Counters"/>
+      implementationClass="org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector"/>
     <statistics.notificationIdsHolder implementation="org.jetbrains.plugins.github.util.GithubNotificationIdsHolder"/>
     <backgroundPostStartupActivity implementation="org.jetbrains.plugins.github.pullrequest.GHServerVersionsCollector$Initializer"/>
 

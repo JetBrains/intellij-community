@@ -41,19 +41,17 @@ class BookmarkUsagesCollector : ProjectUsagesCollector() {
   }
 }
 
-class BookmarkCounterCollector : CounterUsagesCollector() {
+object BookmarkCounterCollector : CounterUsagesCollector() {
   enum class MnemonicType { Number, Letter, None }
 
-  companion object {
-    private val group: EventLogGroup = EventLogGroup("bookmarks.counters", 2)
+  private val group: EventLogGroup = EventLogGroup("bookmarks.counters", 2)
 
-    @JvmField
-    val favoritesNavigate: EventId1<Class<*>?> = group.registerEvent("favorites.navigate", EventFields.Class("navigatable"))
-    @JvmField
-    val bookmarkNavigate: EventId2<MnemonicType, Boolean> = group.registerEvent("bookmark.navigate",
-                                                                                EventFields.Enum("mnemonicType", MnemonicType::class.java),
-                                                                                EventFields.Boolean("withLine"))
-  }
+  @JvmField
+  val favoritesNavigate: EventId1<Class<*>?> = group.registerEvent("favorites.navigate", EventFields.Class("navigatable"))
+  @JvmField
+  val bookmarkNavigate: EventId2<MnemonicType, Boolean> = group.registerEvent("bookmark.navigate",
+                                                                              EventFields.Enum("mnemonicType", MnemonicType::class.java),
+                                                                              EventFields.Boolean("withLine"))
 
-  override fun getGroup(): EventLogGroup = Companion.group
+  override fun getGroup(): EventLogGroup = group
 }

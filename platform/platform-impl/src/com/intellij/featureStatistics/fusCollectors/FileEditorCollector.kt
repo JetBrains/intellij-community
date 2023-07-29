@@ -8,23 +8,18 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
-internal class FileEditorCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("file.editor", 3)
-    private val FILE_EDITOR_FIELD = EventFields.Class("fileEditor")
-    private val ALTERNATIVE_FILE_EDITOR_SELECTED = GROUP.registerVarargEvent("alternative.file.editor.selected",
-                                                                             FILE_EDITOR_FIELD,
-                                                                             EventFields.AnonymizedPath,
-                                                                             EventFields.PluginInfo)
+internal object FileEditorCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("file.editor", 3)
+  private val FILE_EDITOR_FIELD = EventFields.Class("fileEditor")
+  private val ALTERNATIVE_FILE_EDITOR_SELECTED = GROUP.registerVarargEvent("alternative.file.editor.selected",
+                                                                           FILE_EDITOR_FIELD,
+                                                                           EventFields.AnonymizedPath,
+                                                                           EventFields.PluginInfo)
 
-    @JvmStatic
-    fun logAlternativeFileEditorSelected(project: Project, file: VirtualFile, editor: FileEditor) {
-      ALTERNATIVE_FILE_EDITOR_SELECTED.log(project, FILE_EDITOR_FIELD.with(editor.javaClass), EventFields.AnonymizedPath.with(file.path))
-    }
+  @JvmStatic
+  fun logAlternativeFileEditorSelected(project: Project, file: VirtualFile, editor: FileEditor) {
+    ALTERNATIVE_FILE_EDITOR_SELECTED.log(project, FILE_EDITOR_FIELD.with(editor.javaClass), EventFields.AnonymizedPath.with(file.path))
   }
 
-  override fun getGroup(): EventLogGroup {
-    return GROUP
-  }
-
+  override fun getGroup(): EventLogGroup = GROUP
 }

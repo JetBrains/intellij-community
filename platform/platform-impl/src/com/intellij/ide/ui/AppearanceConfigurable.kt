@@ -11,9 +11,9 @@ import com.intellij.ide.actions.IdeScaleTransformer
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.laf.LafManagerImpl
 import com.intellij.ide.ui.search.OptionDescription
-import com.intellij.internal.statistic.service.fus.collectors.IdeZoomChanged
 import com.intellij.internal.statistic.service.fus.collectors.IdeZoomEventFields
-import com.intellij.internal.statistic.service.fus.collectors.ThemeAutodetectSelector
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.IdeZoomChanged
+import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.ThemeAutodetectSelector
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater

@@ -8,30 +8,28 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.xdebugger.breakpoints.XBreakpoint
 import com.intellij.xdebugger.breakpoints.XBreakpointType
 
-class BreakpointsUsageCollector : CounterUsagesCollector() {
-  companion object {
-    private val GROUP = EventLogGroup("debugger.breakpoints.usage", 4)
-    private val WITHIN_SESSION_FIELD = EventFields.Boolean("within_session")
-    val TYPE_FIELD = EventFields.StringValidatedByCustomRule("type", BreakpointsUtilValidator::class.java)
-    private val BREAKPOINT_ADDED = GROUP.registerVarargEvent("breakpoint.added", WITHIN_SESSION_FIELD,
-                                                             EventFields.PluginInfo, TYPE_FIELD)
-    private val BREAKPOINT_VERIFIED = GROUP.registerEvent("breakpoint.verified", EventFields.Long("time"))
+object BreakpointsUsageCollector : CounterUsagesCollector() {
+  private val GROUP = EventLogGroup("debugger.breakpoints.usage", 4)
+  private val WITHIN_SESSION_FIELD = EventFields.Boolean("within_session")
+  val TYPE_FIELD = EventFields.StringValidatedByCustomRule("type", BreakpointsUtilValidator::class.java)
+  private val BREAKPOINT_ADDED = GROUP.registerVarargEvent("breakpoint.added", WITHIN_SESSION_FIELD,
+                                                           EventFields.PluginInfo, TYPE_FIELD)
+  private val BREAKPOINT_VERIFIED = GROUP.registerEvent("breakpoint.verified", EventFields.Long("time"))
 
-    @JvmStatic
-    fun reportNewBreakpoint(breakpoint: XBreakpoint<*>, type: XBreakpointType<*, *>, withinSession: Boolean) {
-      if (breakpoint is XBreakpointBase<*, *, *>) {
-        val data = mutableListOf<EventPair<*>>()
-        data.addAll(getType(type))
-        data.add(WITHIN_SESSION_FIELD.with(withinSession))
-        BREAKPOINT_ADDED.log(breakpoint.project, data)
-      }
+  @JvmStatic
+  fun reportNewBreakpoint(breakpoint: XBreakpoint<*>, type: XBreakpointType<*, *>, withinSession: Boolean) {
+    if (breakpoint is XBreakpointBase<*, *, *>) {
+      val data = mutableListOf<EventPair<*>>()
+      data.addAll(getType(type))
+      data.add(WITHIN_SESSION_FIELD.with(withinSession))
+      BREAKPOINT_ADDED.log(breakpoint.project, data)
     }
+  }
 
-    @JvmStatic
-    fun reportBreakpointVerified(breakpoint: XBreakpoint<*>, time: Long) {
-      if (breakpoint is XBreakpointBase<*, *, *>) {
-        BREAKPOINT_VERIFIED.log(breakpoint.project, time)
-      }
+  @JvmStatic
+  fun reportBreakpointVerified(breakpoint: XBreakpoint<*>, time: Long) {
+    if (breakpoint is XBreakpointBase<*, *, *>) {
+      BREAKPOINT_VERIFIED.log(breakpoint.project, time)
     }
   }
 

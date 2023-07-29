@@ -16,62 +16,64 @@ import com.intellij.xdebugger.frame.XStackFrame
 
 private const val UNKNOWN_TYPE = "Unknown"
 
-class XDebuggerActionsCollector : CounterUsagesCollector() {
+object XDebuggerActionsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  companion object {
-    private val GROUP = EventLogGroup("xdebugger.actions", 3)
-    const val PLACE_THREADS_VIEW = "threadsView"
-    const val PLACE_FRAMES_VIEW = "framesView"
-    private const val LOCATION = "location"
-    @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
-    const val EVENT_FRAMES_UPDATED = "frames.updated"
-    @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
-    const val TOTAL_FRAMES = "total_frames"
-    @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
-    const val FILE_TYPES = "file_type"
-    @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
-    const val FRAMES_PER_TYPE = "frames_per_file_type"
-    private val durationField = EventFields.DurationMs
-    private val totalFramesField = Int(TOTAL_FRAMES)
-    private val frameTypesField = StringListValidatedByCustomRule<FrameTypeValidator>(FILE_TYPES)
-    private val framesPerTypesField = IntList(FRAMES_PER_TYPE)
-    private val framesUpdated =
-      GROUP.registerVarargEvent(EVENT_FRAMES_UPDATED, durationField, totalFramesField, frameTypesField, framesPerTypesField)
+  private val GROUP = EventLogGroup("xdebugger.actions", 3)
+  const val PLACE_THREADS_VIEW = "threadsView"
+  const val PLACE_FRAMES_VIEW = "framesView"
+  private const val LOCATION = "location"
 
-    @JvmField
-    val threadSelected = GROUP.registerEvent("thread.selected", String(LOCATION, listOf(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)))
+  @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
+  const val EVENT_FRAMES_UPDATED = "frames.updated"
 
-    @JvmField
-    val frameSelected = GROUP.registerEvent("frame.selected", String(LOCATION, listOf(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)))
+  @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
+  const val TOTAL_FRAMES = "total_frames"
 
-    @JvmField
-    val sessionChanged = GROUP.registerEvent("session.selected")
+  @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
+  const val FILE_TYPES = "file_type"
 
-    @JvmStatic
-    fun logFramesUpdated(durationMs: Long, frames: List<XStackFrame>) {
-      val framesByType = frames.groupingBy { it.getFrameType() }.eachCount().entries
-      val fileTypes = framesByType.map { it.key }
-      val counts = framesByType.map { it.value }
+  @Suppress("MemberVisibilityCanBePrivate") // Exposed for consumers of this metric
+  const val FRAMES_PER_TYPE = "frames_per_file_type"
+  private val durationField = EventFields.DurationMs
+  private val totalFramesField = Int(TOTAL_FRAMES)
+  private val frameTypesField = StringListValidatedByCustomRule<FrameTypeValidator>(FILE_TYPES)
+  private val framesPerTypesField = IntList(FRAMES_PER_TYPE)
+  private val framesUpdated =
+    GROUP.registerVarargEvent(EVENT_FRAMES_UPDATED, durationField, totalFramesField, frameTypesField, framesPerTypesField)
 
-      framesUpdated.log(
-        durationField.with(durationMs),
-        totalFramesField.with(frames.size),
-        frameTypesField.with(fileTypes),
-        framesPerTypesField.with(counts)
-      )
-    }
+  @JvmField
+  val threadSelected = GROUP.registerEvent("thread.selected", String(LOCATION, listOf(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)))
+
+  @JvmField
+  val frameSelected = GROUP.registerEvent("frame.selected", String(LOCATION, listOf(PLACE_FRAMES_VIEW, PLACE_THREADS_VIEW)))
+
+  @JvmField
+  val sessionChanged = GROUP.registerEvent("session.selected")
+
+  @JvmStatic
+  fun logFramesUpdated(durationMs: Long, frames: List<XStackFrame>) {
+    val framesByType = frames.groupingBy { it.getFrameType() }.eachCount().entries
+    val fileTypes = framesByType.map { it.key }
+    val counts = framesByType.map { it.value }
+
+    framesUpdated.log(
+      durationField.with(durationMs),
+      totalFramesField.with(frames.size),
+      frameTypesField.with(fileTypes),
+      framesPerTypesField.with(counts)
+    )
   }
+}
 
-  internal class FrameTypeValidator : CustomValidationRule() {
-    private val fileTypeValidator = FileTypeUsagesCollector.ValidationRule()
+internal class FrameTypeValidator : CustomValidationRule() {
+  private val fileTypeValidator = FileTypeUsagesCollector.ValidationRule()
 
-    override fun getRuleId(): String = "frame_type"
+  override fun getRuleId(): String = "frame_type"
 
-    override fun doValidate(data: String, context: EventContext) = when (data) {
-      UNKNOWN_TYPE -> ACCEPTED
-      else -> fileTypeValidator.validate(data, context)
-    }
+  override fun doValidate(data: String, context: EventContext) = when (data) {
+    UNKNOWN_TYPE -> ACCEPTED
+    else -> fileTypeValidator.validate(data, context)
   }
 }
 

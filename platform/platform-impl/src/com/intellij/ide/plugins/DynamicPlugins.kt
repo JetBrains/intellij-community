@@ -52,8 +52,8 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.progress.runWithModalProgressBlocking
+import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -469,7 +469,7 @@ object DynamicPlugins {
     }
     catch (e: Exception) {
       logger<DynamicPlugins>().error(e)
-      logDescriptorUnload(pluginDescriptor, success = false)
+      DynamicPluginsUsagesCollector.logDescriptorUnload(pluginDescriptor, success = false)
       return false
     }
 
@@ -591,7 +591,7 @@ object DynamicPlugins {
           InstalledPluginsState.getInstance().isRestartRequired = true
         }
 
-        logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
+        DynamicPluginsUsagesCollector.logDescriptorUnload(pluginDescriptor, success = classLoaderUnloaded)
       }
     }
 
@@ -866,7 +866,7 @@ object DynamicPlugins {
 
         listenerCallbacks.forEach(Runnable::run)
 
-        logDescriptorLoad(pluginDescriptor)
+        DynamicPluginsUsagesCollector.logDescriptorLoad(pluginDescriptor)
         LOG.info("Plugin ${pluginDescriptor.pluginId} loaded without restart in ${System.currentTimeMillis() - loadStartTime} ms")
       }
       finally {

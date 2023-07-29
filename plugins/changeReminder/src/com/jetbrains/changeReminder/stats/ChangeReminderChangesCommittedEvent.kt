@@ -5,9 +5,9 @@ import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.jetbrains.changeReminder.predict.PredictionData
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.CHANGES_COMMITTED
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.COMMITTED_FILES
-import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.Companion.CUR_MODIFIED_FILES
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.CHANGES_COMMITTED
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.COMMITTED_FILES
+import com.jetbrains.changeReminder.stats.ChangeReminderStatsCollector.CUR_MODIFIED_FILES
 
 internal class ChangeReminderChangesCommittedEvent(
   private val curModifiedFiles: Collection<FilePath>,

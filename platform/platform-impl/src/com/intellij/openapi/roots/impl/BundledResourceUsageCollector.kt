@@ -37,21 +37,17 @@ import kotlin.io.path.exists
  * Reports references to resources bundled with IDE or plugin distribution from users' projects (e.g. libraries which include IDE_HOME/lib/junit.jar). 
  */
 internal class BundledResourceUsageCollector : ProjectUsagesCollector() {
-  companion object {
-    val GROUP: EventLogGroup = EventLogGroup("bundled.resource.reference", 1)
+  private val GROUP: EventLogGroup = EventLogGroup("bundled.resource.reference", 1)
 
-    /**
-     * Records path to a file located under 'lib' subdirectory of IDE installation directory and referenced from a library.
-     */
-    @JvmField
-    val IDE_FILE: EventId1<String?> = GROUP.registerEvent("ide.file", EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
+  /**
+   * Records path to a file located under 'lib' subdirectory of IDE installation directory and referenced from a library.
+   */
+  private val IDE_FILE: EventId1<String?> = GROUP.registerEvent("ide.file", EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
 
-    /**
-     * Records path to a file located in an installation directory for a plugin and referenced from a library.
-     */
-    @JvmField
-    val PLUGIN_FILE: EventId2<PluginInfo?, String?> = GROUP.registerEvent("plugin.file", EventFields.PluginInfo, EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
-  }
+  /**
+   * Records path to a file located in an installation directory for a plugin and referenced from a library.
+   */
+  private val PLUGIN_FILE: EventId2<PluginInfo?, String?> = GROUP.registerEvent("plugin.file", EventFields.PluginInfo, EventFields.StringValidatedByCustomRule<BundledResourcePathValidationRule>("path"))
 
   override fun getGroup(): EventLogGroup = GROUP
 

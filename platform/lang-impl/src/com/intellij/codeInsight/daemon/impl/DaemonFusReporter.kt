@@ -27,12 +27,14 @@ import kotlin.math.pow
 open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
   @Volatile
   private var daemonStartTime: Long = -1L
+
   @Volatile
   private var dirtyRange: TextRange? = null
   private var initialEntireFileHighlightingActivity: Activity? = null
   private var initialEntireFileHighlightingReported: Boolean = false
   private var documentModificationStamp: Long = 0
   private var documentStartedHash: Int = 0 // Document the `daemonStarting` event was received for. Store the hash instead of Document instance to avoid leaks
+
   @Volatile
   protected var canceled: Boolean = false
 
@@ -48,7 +50,7 @@ open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document)
       if (psiFile == null) null else FileStatusMap.getDirtyTextRange(document, psiFile, Pass.UPDATE_ALL)
     }
-    documentModificationStamp = document?.modificationStamp?:0
+    documentModificationStamp = document?.modificationStamp ?: 0
     documentStartedHash = document?.hashCode() ?: 0
 
     if (!initialEntireFileHighlightingReported) {
@@ -117,34 +119,33 @@ private fun Int.roundToOneSignificantDigit(): Int {
   return (this - this % p).coerceAtLeast(10) // 623 -> 623 - (623 % 100) = 600
 }
 
-private class DaemonFusCollector : CounterUsagesCollector() {
-  companion object {
-    @JvmField
-    val GROUP: EventLogGroup = EventLogGroup("daemon", 5)
-    @JvmField
-    val ERRORS: IntEventField = EventFields.Int("errors")
-    @JvmField
-    val WARNINGS: IntEventField = EventFields.Int("warnings")
-    @JvmField
-    val LINES: IntEventField = EventFields.Int("lines")
-    @JvmField
+private object DaemonFusCollector : CounterUsagesCollector() {
+  @JvmField
+  val GROUP: EventLogGroup = EventLogGroup("daemon", 5)
+  @JvmField
+  val ERRORS: IntEventField = EventFields.Int("errors")
+  @JvmField
+  val WARNINGS: IntEventField = EventFields.Int("warnings")
+  @JvmField
+  val LINES: IntEventField = EventFields.Int("lines")
+  @JvmField
     /**
      * `true` if the daemon was started with the entire file range,
      * `false` when the daemon was started with sub-range of the file, for example, after the change inside a code block
      */
-    val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
+  val ENTIRE_FILE_HIGHLIGHTED: BooleanEventField = EventFields.Boolean("entireFileHighlighted")
 
-    @JvmField
+  @JvmField
     /**
      * `true` if the daemon was finished because of some cancellation event (e.g., user tried to type something into the editor).
      * Usually it means the highlighting results are incomplete.
      */
-    val CANCELED: BooleanEventField = EventFields.Boolean("canceled")
+  val CANCELED: BooleanEventField = EventFields.Boolean("canceled")
 
-    @JvmField
-    val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
-         EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType, ENTIRE_FILE_HIGHLIGHTED, CANCELED)
-  }
+  @JvmField
+  val FINISHED: VarargEventId = GROUP.registerVarargEvent("finished",
+                                                          EventFields.DurationMs, ERRORS, WARNINGS, LINES, EventFields.FileType,
+                                                          ENTIRE_FILE_HIGHLIGHTED, CANCELED)
 
   override fun getGroup(): EventLogGroup = GROUP
 }

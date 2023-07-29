@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 import com.intellij.usages.UsageView
-import com.intellij.usages.impl.UsageViewStatisticsCollector.Companion.USAGE_VIEW
+import com.intellij.usages.impl.UsageViewStatisticsCollector.USAGE_VIEW
 import javax.swing.JComponent
 
 class SimilarUsagesCollector : CounterUsagesCollector() {

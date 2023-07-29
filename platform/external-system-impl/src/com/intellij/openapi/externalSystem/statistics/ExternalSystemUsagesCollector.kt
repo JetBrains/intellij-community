@@ -11,9 +11,9 @@ import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.Companion.EXTERNAL_TASK_ACTIVITY
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.Companion.TARGET_FIELD
-import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.Companion.TASK_ID_FIELD
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.EXTERNAL_TASK_ACTIVITY
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.TARGET_FIELD
+import com.intellij.openapi.externalSystem.statistics.ExternalSystemTaskCollector.TASK_ID_FIELD
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
