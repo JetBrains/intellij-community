@@ -12,14 +12,11 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
-import com.intellij.util.SlowOperations
-import com.intellij.util.ThrowableRunnable
 import com.intellij.util.awaitCancellationAndInvoke
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.ContainerUtil.createWeakSet
@@ -57,9 +54,7 @@ internal class ImageOrColorPreviewService(
     coroutineScope.launch(CoroutineName("ImageOrColorPreviewService requests collector")) {
       previewRequests.debounce(100.milliseconds)
         .collectLatest {
-          withContext(Dispatchers.EDT) {
-            it.run()
-          }
+          it.run()
         }
     }
     coroutineScope.awaitCancellationAndInvoke {
@@ -156,23 +151,26 @@ internal class ImageOrColorPreviewService(
       if (elements == null && event.mouseEvent.isShiftDown) {
         previewRequests.tryEmit(ShowPreviewRequest(editor, event.offset, false))
       }
-      else if (elements != null && !SlowOperations.allowSlowOperations(
-          ThrowableComputable<Boolean, RuntimeException> { getPsiElementsAt(editor, event.offset) == elements })) {
-        previewRequests.tryEmit(HidePreviewRequest(editor))
+      else if (elements != null) {
+        previewRequests.tryEmit(HidePreviewRequest(editor, event.offset))
       }
     }
   }
 
-  private abstract inner class PreviewRequest(protected val editor: Editor) : Runnable
+  private abstract inner class PreviewRequest(protected val editor: Editor) {
+    abstract suspend fun run()
+  }
 
   private inner class ShowPreviewRequest(editor: Editor, private val offset: Int, private val keyTriggered: Boolean) : PreviewRequest(editor) {
-    override fun run() {
-      SlowOperations.allowSlowOperations(ThrowableRunnable<RuntimeException> { doRun() })
+    override suspend fun run() {
+      val elements = readAction { getPsiElementsAt(editor, offset) }
+      if (elements == myElements.get()) return
+      withContext(Dispatchers.EDT) {
+        showElements(elements)
+      }
     }
 
-    private fun doRun() {
-      val elements = getPsiElementsAt(editor, offset)
-      if (elements == myElements) return
+    private fun showElements(elements: Collection<PsiElement>) {
       for (element in elements) {
         if (!element.isValid()) {
           return
@@ -202,10 +200,19 @@ internal class ImageOrColorPreviewService(
     }
   }
 
-  private inner class HidePreviewRequest(editor: Editor) : PreviewRequest(editor) {
-    override fun run() {
+  private inner class HidePreviewRequest(editor: Editor, private val offset: Int) : PreviewRequest(editor) {
+    override suspend fun run() {
       val elements = myElements.get() ?: return
+      if (readAction { getPsiElementsAt (editor, offset) == elements }) {
+        return // mouse moved, but not far away enough to make currently shown elements outdated
+      }
       myElements.set(null)
+      withContext(Dispatchers.EDT) {
+        hideElements(elements)
+      }
+    }
+
+    private fun hideElements(elements: Collection<PsiElement?>) {
       for (provider in ElementPreviewProvider.EP_NAME.extensionList) {
         try {
           for (element in elements) {
