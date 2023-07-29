@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.add
 
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.module.Module
@@ -20,6 +19,7 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.InputData
 import com.jetbrains.python.sdk.add.PyAddNewEnvCollector.Companion.RequirementsTxtOrSetupPyData
+import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.sdk.basePath
 import org.jetbrains.annotations.SystemDependent
 import org.jetbrains.annotations.SystemIndependent
@@ -84,7 +84,7 @@ class PyAddNewVirtualEnvFromFilePanel(private val module: Module,
   }
 
   fun validateAll(@NlsContexts.Button defaultButtonName: String): List<ValidationInfo> =
-    listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField, PathInfo.localPathInfoProvider),
+    listOfNotNull(PyAddSdkPanel.validateEnvironmentDirectoryLocation(pathField, PlatformAndRoot.local),
                   PyAddSdkPanel.validateSdkComboBox(baseSdkField, defaultButtonName))
 
   /**

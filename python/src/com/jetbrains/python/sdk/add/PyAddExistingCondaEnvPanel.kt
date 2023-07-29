@@ -85,7 +85,7 @@ open class PyAddExistingCondaEnvPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> {
-    return listOfNotNull(validateSdkComboBox(sdkComboBox, this), CondaEnvSdkFlavor.validateCondaPath(condaPathField.text))
+    return listOfNotNull(validateSdkComboBox(sdkComboBox, this))
   }
 
   override fun getOrCreateSdk(): Sdk? {

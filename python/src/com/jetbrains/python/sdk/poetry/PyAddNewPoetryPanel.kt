@@ -31,7 +31,6 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
 import java.io.File
-import java.nio.file.Files
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 import javax.swing.JComboBox
@@ -130,7 +129,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
   override fun getOrCreateSdk(): Sdk? {
     PropertiesComponent.getInstance().poetryPath = poetryPathField.text.nullize()
     return setupPoetrySdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
-      baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
+                                       baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
       PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
     }
   }
@@ -144,7 +143,7 @@ class PyAddNewPoetryPanel(private val project: Project?,
   }
 
   override fun validateAll(): List<ValidationInfo> =
-    listOfNotNull(validatePoetryExecutable(), validatePoetryIsNotAdded())
+    emptyList() // Pre target validation is not supported
 
   override fun addChangeListener(listener: Runnable) {
     poetryPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
@@ -174,21 +173,6 @@ class PyAddNewPoetryPanel(private val project: Project?,
     catch (e: NullPointerException) {
       null
     } as? Module
-
-  /**
-   * Checks if `poetry` is available on `$PATH`.
-   */
-  private fun validatePoetryExecutable(): ValidationInfo? {
-    val executable = poetryPathField.text.nullize()?.let { File(it) }
-                     ?: detectPoetryExecutable()
-                     ?: return ValidationInfo(PyBundle.message("python.sdk.poetry.executable.not.found"))
-    return when {
-      !executable.exists() -> ValidationInfo(PyBundle.message("python.sdk.file.not.found", executable.absolutePath))
-      !Files.isExecutable(executable.toPath()) || !executable.isFile -> ValidationInfo(
-        PyBundle.message("python.sdk.cannot.execute", executable.absolutePath))
-      else -> null
-    }
-  }
 
   private val isPoetry by lazy { existingSdks.filter { it.isPoetry }.associateBy { it.associatedModulePath } }
   private val homePath by lazy { existingSdks.associateBy { it.homePath } }

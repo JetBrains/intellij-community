@@ -79,4 +79,11 @@ public final class ValidationInfo {
            this.okEnabled == that.okEnabled &&
            this.warning == that.warning;
   }
+
+  @Override
+  public  String toString() {
+    return "ValidationInfo{" +
+           "message='" + message + '\'' +
+           '}';
+  }
 }

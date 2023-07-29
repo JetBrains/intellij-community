@@ -2,7 +2,6 @@
 package com.jetbrains.python.black
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -13,8 +12,9 @@ import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.packaging.PyPackage
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.pyi.PyiFileType
-import com.jetbrains.python.sdk.add.target.ValidationRequest
-import com.jetbrains.python.sdk.add.target.validateExecutableFile
+import com.jetbrains.python.pathValidation.PlatformAndRoot
+import com.jetbrains.python.pathValidation.ValidationRequest
+import com.jetbrains.python.pathValidation.validateExecutableFile
 import org.jetbrains.annotations.SystemDependent
 import java.io.File
 
@@ -56,7 +56,7 @@ class BlackFormatterUtil {
       return validateExecutableFile(ValidationRequest(
         path = path,
         fieldIsEmpty = PyBundle.message("black.executable.not.found", if (SystemInfo.isWindows) 0 else 1),
-        pathInfoProvider = PathInfo.localPathInfoProvider
+        platformAndRoot = PlatformAndRoot.local
       ))
     }
   }

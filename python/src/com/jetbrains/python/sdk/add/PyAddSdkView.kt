@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk.add
 
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.Icon
@@ -74,6 +75,7 @@ interface PyAddSdkView {
    *
    * @see com.intellij.openapi.ui.DialogWrapper.doValidateAll
    */
+  @RequiresEdt
   fun validateAll(): List<ValidationInfo>
 
   fun addStateListener(stateListener: PyAddSdkStateListener)

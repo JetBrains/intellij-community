@@ -4,7 +4,6 @@ package com.jetbrains.python.sdk.add.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.joinTargetPaths
-import com.intellij.execution.target.readableFs.PathInfo
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressIndicator
@@ -33,6 +32,7 @@ import com.jetbrains.python.sdk.add.ExistingPySdkComboBoxItem
 import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import com.jetbrains.python.sdk.add.addBaseInterpretersAsync
 import com.jetbrains.python.sdk.add.addInterpretersAsync
+import com.jetbrains.python.pathValidation.PlatformAndRoot.Companion.getPlatformAndRoot
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -167,8 +167,8 @@ class PyAddVirtualEnvPanel constructor(project: Project?,
 
   override fun validateAll(): List<ValidationInfo> {
     if (newEnvironmentModeSelected()) {
-      val provider = pathInfoProvider ?: if (targetEnvironmentConfiguration.isLocal()) PathInfo.localPathInfoProvider else null
-      return listOfNotNull(validateEnvironmentDirectoryLocation(locationField, provider),
+      val platformAndRoot = targetEnvironmentConfiguration.getPlatformAndRoot()
+      return listOfNotNull(validateEnvironmentDirectoryLocation(locationField, platformAndRoot),
                            validateSdkComboBox(baseInterpreterCombobox, this))
     }
     else {
