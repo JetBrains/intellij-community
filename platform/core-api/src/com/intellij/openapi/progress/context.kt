@@ -29,7 +29,8 @@ fun <X> withCurrentJob(job: Job, action: () -> X): X = blockingContext(job, acti
   replaceWith = ReplaceWith(
     "withCurrentJob(job, action)",
     "com.intellij.openapi.progress.withCurrentJob"
-  )
+  ),
+  level = DeprecationLevel.ERROR,
 )
 fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
 
