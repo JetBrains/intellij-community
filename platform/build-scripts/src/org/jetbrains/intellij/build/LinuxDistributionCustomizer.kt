@@ -44,14 +44,9 @@ abstract class LinuxDistributionCustomizer {
   }
 
   /**
-   * If `true`, a separate *-no-jbr.tar.gz artifact without a runtime will be produced.
+   * If `true`, a separate *[org.jetbrains.intellij.build.impl.LinuxDistributionBuilder.NO_RUNTIME_SUFFIX].tar.gz artifact without a runtime will be produced.
    */
-  var buildTarGzWithoutBundledRuntime = false
-
-  /**
-   * If `true`, only the `*-no-jbr.tar.gz` will be produced, and no other Linux binaries will be built.
-   */
-  var buildOnlyBareTarGz = false
+  var buildArtifactWithoutRuntime = false
 
   /**
    * Set both properties if a .snap package should be produced.

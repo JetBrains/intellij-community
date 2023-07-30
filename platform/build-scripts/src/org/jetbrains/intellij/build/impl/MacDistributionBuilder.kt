@@ -32,6 +32,10 @@ import kotlin.io.path.nameWithoutExtension
 class MacDistributionBuilder(override val context: BuildContext,
                              private val customizer: MacDistributionCustomizer,
                              private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
+  private companion object {
+    const val NO_RUNTIME_SUFFIX = "-no-jdk"
+  }
+
   private val targetIcnsFileName: String = "${context.productProperties.baseFileName}.icns"
 
   override val targetOs: OsFamily
@@ -135,25 +139,23 @@ class MacDistributionBuilder(override val context: BuildContext,
       val publishSit = context.publishSitArchive
       val publishZipOnly = !publishSit && context.isStepSkipped(BuildOptions.MAC_DMG_STEP)
       val macZip = (if (publishZipOnly) context.paths.artifactDir else context.paths.tempDir).resolve("$baseName.mac.${arch.name}.zip")
-      val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + "-no-jdk.zip")
+      val macZipWithoutRuntime = macZip.resolveSibling(macZip.nameWithoutExtension + NO_RUNTIME_SUFFIX + ".zip")
       val zipRoot = getMacZipRoot(customizer, context)
       val compressionLevel = if (publishSit || publishZipOnly) Deflater.DEFAULT_COMPRESSION else Deflater.BEST_SPEED
       val extraFiles = context.getDistFiles(os = OsFamily.MACOS, arch = arch)
       val directories = listOf(context.paths.distAllDir, osAndArchSpecificDistPath, runtimeDist)
-      if (context.options.buildMacArtifactsWithRuntime) {
-        buildMacZip(
-          macDistributionBuilder = this@MacDistributionBuilder,
-          targetFile = macZip,
-          zipRoot = zipRoot,
-          arch = arch,
-          productJson = generateProductJson(context, arch),
-          directories = directories,
-          extraFiles = extraFiles,
-          includeRuntime = true,
-          compressionLevel = compressionLevel
-        )
-      }
-      if (context.options.buildMacArtifactsWithoutRuntime) {
+      buildMacZip(
+        macDistributionBuilder = this@MacDistributionBuilder,
+        targetFile = macZip,
+        zipRoot = zipRoot,
+        arch = arch,
+        productJson = generateProductJson(context, arch),
+        directories = directories,
+        extraFiles = extraFiles,
+        includeRuntime = true,
+        compressionLevel = compressionLevel
+      )
+      if (customizer.buildArtifactWithoutRuntime) {
         buildMacZip(
           macDistributionBuilder = this@MacDistributionBuilder,
           targetFile = macZipWithoutRuntime,
@@ -168,10 +170,8 @@ class MacDistributionBuilder(override val context: BuildContext,
       }
       if (publishZipOnly) {
         Span.current().addEvent("skip .dmg and .sit artifacts producing")
-        if (context.options.buildMacArtifactsWithRuntime) {
-          context.notifyArtifactBuilt(macZip)
-        }
-        if (context.options.buildMacArtifactsWithoutRuntime) {
+        context.notifyArtifactBuilt(macZip)
+        if (customizer.buildArtifactWithoutRuntime) {
           context.notifyArtifactBuilt(macZipWithoutRuntime)
         }
       }
@@ -393,23 +393,21 @@ class MacDistributionBuilder(override val context: BuildContext,
                                    context: BuildContext) {
     val archStr = arch.name
     coroutineScope {
-      if (context.options.buildMacArtifactsWithRuntime) {
-        createSkippableJob(
-          spanBuilder("build DMG with Runtime").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
-          context
-        ) {
-          signAndBuildDmg(builder = this@MacDistributionBuilder,
-                          context = context,
-                          customizer = customizer,
-                          macZip = macZip,
-                          isRuntimeBundled = true,
-                          suffix = suffix(arch),
-                          arch = arch,
-                          notarize = notarize)
-        }
+      createSkippableJob(
+        spanBuilder("build DMG with Runtime").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_jre_$archStr",
+        context
+      ) {
+        signAndBuildDmg(builder = this@MacDistributionBuilder,
+                        context = context,
+                        customizer = customizer,
+                        macZip = macZip,
+                        isRuntimeBundled = true,
+                        suffix = suffix(arch),
+                        arch = arch,
+                        notarize = notarize)
       }
 
-      if (context.options.buildMacArtifactsWithoutRuntime) {
+      if (customizer.buildArtifactWithoutRuntime) {
         requireNotNull(macZipWithoutRuntime)
         createSkippableJob(
           spanBuilder("build DMG without Runtime").setAttribute("arch", archStr), "${BuildOptions.MAC_ARTIFACTS_STEP}_no_jre_$archStr",
@@ -420,7 +418,7 @@ class MacDistributionBuilder(override val context: BuildContext,
                           customizer = customizer,
                           macZip = macZipWithoutRuntime,
                           isRuntimeBundled = false,
-                          suffix = "-no-jdk${suffix(arch)}",
+                          suffix = "$NO_RUNTIME_SUFFIX${suffix(arch)}",
                           arch = arch,
                           notarize = notarize)
         }

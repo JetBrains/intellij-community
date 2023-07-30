@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import com.intellij.util.SystemProperties
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.plus
@@ -9,6 +10,13 @@ import java.nio.file.Path
 import java.util.function.Predicate
 
 abstract class MacDistributionCustomizer {
+  companion object {
+    /**
+     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
+     */
+    const val BUILD_ARTIFACT_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
+  }
+
   /**
    * A path to an .icns file containing product bundle icons for macOS distribution.
    *
@@ -113,6 +121,14 @@ abstract class MacDistributionCustomizer {
    * Path to an image which will be injected into .dmg file for EAP builds (if `null` dmgImagePath will be used).
    */
   var dmgImagePathForEAP: String? = null
+
+  /**
+   * If `true`, a separate *-[org.jetbrains.intellij.build.impl.MacDistributionBuilder.NO_RUNTIME_SUFFIX].dmg artifact without a runtime will be produced.
+   */
+  var buildArtifactWithoutRuntime = SystemProperties.getBooleanProperty(BUILD_ARTIFACT_WITHOUT_RUNTIME,
+                                                                        SystemProperties.getBooleanProperty(
+                                                                          "artifact.mac.no.jdk",
+                                                                          false))
 
   /**
    * Application bundle name (`<name>.app`).

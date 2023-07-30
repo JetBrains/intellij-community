@@ -36,7 +36,7 @@ class BuildOptions(
     const val OS_CURRENT = "current"
 
     /**
-     * If this value is set no distributions of the product will be produced, only [non-bundled plugins][ProductModulesLayout.setPluginModulesToPublish]
+     * If this value is set no distributions of the product will be produced, only [non-bundled plugins][ProductModulesLayout.pluginModulesToPublish]
      * will be built.
      */
     const val OS_NONE = "none"
@@ -125,7 +125,7 @@ class BuildOptions(
     const val TEAMCITY_ARTIFACTS_PUBLICATION_STEP = "teamcity_artifacts_publication"
 
     /**
-     * @see org.jetbrains.intellij.build.fus.StatisticsRecorderBundledMetadataProvider
+     * @see org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
      */
     const val FUS_METADATA_BUNDLE_STEP = "fus_metadata_bundle_step"
 
@@ -135,16 +135,6 @@ class BuildOptions(
     const val REPAIR_UTILITY_BUNDLE_STEP = "repair_utility_bundle_step"
 
     const val DOC_AUTHORING_ASSETS_STEP = "doc_authoring_assets"
-
-    /**
-     * Pass 'true' to this system property to produce an additional .dmg and .sit archives for macOS without Runtime.
-     */
-    const val BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME = "intellij.build.dmg.without.bundled.jre"
-
-    /**
-     * Pass 'false' to this system property to skip building .dmg and .sit with bundled Runtime.
-     */
-    const val BUILD_MAC_ARTIFACTS_WITH_RUNTIME = "intellij.build.dmg.with.bundled.jre"
 
     /**
      * By default, build cleanup output folder before compilation, use this property to change this behaviour.
@@ -273,11 +263,6 @@ class BuildOptions(
       }
     }
 
-  var buildMacArtifactsWithoutRuntime =
-    SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITHOUT_RUNTIME, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
-  var buildMacArtifactsWithRuntime =
-    SystemProperties.getBooleanProperty(BUILD_MAC_ARTIFACTS_WITH_RUNTIME, true)
-
   /**
    * Pass 'true' to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
@@ -358,9 +343,9 @@ class BuildOptions(
   val bundledPluginDirectoriesToSkip: Set<String> = getSetProperty("intellij.build.bundled.plugin.dirs.to.skip")
 
   /**
-   * Specifies list of names of directories of non-bundled plugins (determined by [ProductModulesLayout.pluginsToPublish] and
+   * Specifies list of names of directories of non-bundled plugins (determined by [ProductModulesLayout.pluginModulesToPublish] and
    * [ProductModulesLayout.buildAllCompatiblePlugins]) which should be actually built. This option can be used to speed up updating
-   * the IDE from sources. By default, all plugins determined by [ProductModulesLayout.pluginsToPublish] and
+   * the IDE from sources. By default, all plugins determined by [ProductModulesLayout.pluginModulesToPublish] and
    * [ProductModulesLayout.buildAllCompatiblePlugins] are built. In order to skip building all non-bundled plugins, set the property to
    * `none`.
    */
@@ -397,11 +382,6 @@ class BuildOptions(
    * Enables fastdebug runtime
    */
   var runtimeDebug: Boolean = parseBooleanValue(System.getProperty("intellij.build.bundled.jre.debug", "false"))
-
-  /**
-   * Specifies an algorithm to build distribution checksums.
-   */
-  val hashAlgorithm: String = "SHA-384"
 
   var validateModuleStructure: Boolean = parseBooleanValue(System.getProperty(VALIDATE_MODULES_STRUCTURE_PROPERTY, "false"))
 

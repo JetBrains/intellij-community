@@ -51,8 +51,6 @@ fun customizeBuildOptionsForTest(options: BuildOptions, productProperties: Produ
     BuildOptions.MAC_SIGN_STEP,
     BuildOptions.MAC_NOTARIZE_STEP,
   ))
-  options.buildMacArtifactsWithRuntime = false
-  options.buildMacArtifactsWithoutRuntime = false
   options.buildUnixSnaps = false
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).toPath()
   options.useCompiledClassesFromProjectOutput = true

@@ -28,6 +28,10 @@ import kotlin.time.Duration.Companion.minutes
 class LinuxDistributionBuilder(override val context: BuildContext,
                                private val customizer: LinuxDistributionCustomizer,
                                private val ideaProperties: Path?) : OsSpecificDistributionBuilder {
+  private companion object {
+    const val NO_RUNTIME_SUFFIX = "-no-jbr"
+  }
+
   private val iconPngPath: Path?
 
   override val targetOs: OsFamily
@@ -72,19 +76,16 @@ class LinuxDistributionBuilder(override val context: BuildContext,
     copyFilesForOsDistribution(osAndArchSpecificDistPath, arch)
     setLastModifiedTime(osAndArchSpecificDistPath, context)
     context.executeStep(spanBuilder("build linux .tar.gz").setAttribute("arch", arch.name), BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledRuntime) {
+      if (customizer.buildArtifactWithoutRuntime) {
         launch {
           context.executeStep(spanBuilder("Build Linux .tar.gz without bundled Runtime").setAttribute("arch", arch.name),
                               BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_RUNTIME_STEP) {
             buildTarGz(runtimeDir = null,
                        unixDistPath = osAndArchSpecificDistPath,
-                       suffix = NO_JBR_SUFFIX + suffix(arch),
+                       suffix = NO_RUNTIME_SUFFIX + suffix(arch),
                        arch = arch)
           }
         }
-      }
-      if (customizer.buildOnlyBareTarGz) {
-        return@executeStep
       }
 
       val runtimeDir = context.bundledRuntime.extract(getProductPrefix(context), OsFamily.LINUX, arch)
@@ -332,8 +333,6 @@ class LinuxDistributionBuilder(override val context: BuildContext,
   }
 
 }
-
-private const val NO_JBR_SUFFIX = "-no-jbr"
 
 private fun generateProductJson(targetDir: Path, context: BuildContext, arch: JvmArchitecture, withRuntime: Boolean = true): String {
   val json = generateProductInfoJson(
