@@ -117,7 +117,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
                                     @NotNull Processor<? super FoundItemDescriptor<GotoActionModel.MatchedValue>> consumer) {
 
     if (StringUtil.isEmptyOrSpaces(pattern)) {
-      if (Registry.is("search.everywhere.recents")) {
+      if (isRecentEnabled()) {
         Set<String> actionIDs = ActionHistoryManager.getInstance().getState().getIds();
         Predicate<GotoActionModel.MatchedValue> actionDegreePredicate =
           element -> {
@@ -155,6 +155,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
         return consumer.process(descriptor);
       });
     }, progressIndicator);
+  }
+
+  private static boolean isRecentEnabled() {
+    return Registry.is("search.everywhere.recents") || ApplicationManager.getApplication().isInternal();
   }
 
   @NotNull
@@ -228,7 +232,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       return false;
     }
 
-    if (Registry.is("search.everywhere.recents")) {
+    if (isRecentEnabled()) {
       saveRecentAction(item);
     }
 
