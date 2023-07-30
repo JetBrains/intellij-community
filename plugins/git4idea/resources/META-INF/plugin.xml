@@ -503,6 +503,7 @@
     <advancedSetting id="git.use.schannel.on.windows" default="false" groupKey="advanced.settings.git" os="windows"/>
     <advancedSetting id="git.branch.cleanup.symbol" default="-" groupKey="advanced.settings.git"/>
     <advancedSetting id="git.ai.generated.commits.summary" default="false" groupKey="advanced.settings.git"/>
+    <advancedSetting id="git.ai.generated.commits.summary.paths" default="" groupKey="advanced.settings.git"/>
     <registryKey key="git.execute.with.mediator" defaultValue="true"
                  description="Use wrapper executable on Windows to support soft Git process cancellation."/>
     <registryKey key="git.blocking.read" defaultValue="true"
