@@ -110,7 +110,9 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
         if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
             val resolvedCall = getResolvedCall(bindingContext)
             if (resolvedCall != null) {
-                val parameter = resolvedCall.getParameterForArgument(valueArguments.last()) ?: return false
+                val lastValueArgument = valueArguments.last() ?: return false
+                if (lastValueArgument.isNamed()) return false
+                val parameter = resolvedCall.getParameterForArgument(lastValueArgument) ?: return false
                 val functionDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
                 if (parameter != functionDescriptor.valueParameters.lastOrNull()) return false
                 return parameter.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
