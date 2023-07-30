@@ -6,6 +6,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.ui.content.TabGroupId
@@ -133,7 +134,10 @@ class GitUpdateInfoAsLog(private val project: Project,
     return CommitsAndFiles(updatedFilesCount, updatedCommitsCount)
   }
 
-  private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter, select: Boolean, userFilter: VcsLogUserFilter? = null) {
+  private fun findOrCreateLogUi(rangeFilter: VcsLogRangeFilter,
+                                select: Boolean,
+                                userFilter: VcsLogUserFilter? = null,
+                                pathFilter: VcsLogStructureFilter? = null) {
     val logManager = projectLog.logManager
     if (logManager == null) {
       if (select) {
@@ -145,10 +149,11 @@ class GitUpdateInfoAsLog(private val project: Project,
       isUpdateTabId(it.id)
       && it.filterUi.filters.get(RANGE_FILTER) == rangeFilter
       && (userFilter == null || userFilter.key.let { key -> it.filterUi.filters.matches(key) })
+      && (pathFilter == null || pathFilter.key.let { key -> it.filterUi.filters.matches(key) })
     }
     if (logUi != null) return
 
-    createLogUi(logManager, MyLogUiFactory(logManager.colorManager, rangeFilter, userFilter), select)
+    createLogUi(logManager, MyLogUiFactory(logManager.colorManager, rangeFilter, userFilter, pathFilter), select)
   }
 
   private fun getViewCommitsAction(rangeFilter: VcsLogRangeFilter): Runnable {
@@ -161,13 +166,13 @@ class GitUpdateInfoAsLog(private val project: Project,
     })
   }
 
-  fun viewCommitsInLogUi() = findOrCreateLogUi(createRangeFilter(), true)
-
-  fun viewUserCommitsInLogUi(user: VcsUser) {
-    val userFilter = VcsLogFilterObject.fromUser(user)
-    val rangeFilter = createRangeFilter()
-    findOrCreateLogUi(rangeFilter, true, userFilter)
+  fun viewCommitsInLogUi(user: VcsUser? = null, paths: List<FilePath>? = null) {
+    findOrCreateLogUi(createRangeFilter(), true, createUserFilter(user), createPathFilter(paths))
   }
+
+  private fun createUserFilter(user: VcsUser?)= user?.let { VcsLogFilterObject.fromUser(it) }
+
+  private fun createPathFilter(paths: List<FilePath>?) = paths?.let { VcsLogFilterObject.fromPaths(it) }
 
   private fun createLogUi(logManager: VcsLogManager, logUiFactory: MyLogUiFactory, select: Boolean) {
     val tabName = DateFormatUtil.formatDateTime(System.currentTimeMillis())
@@ -182,10 +187,11 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private open inner class MyLogUiFactory(val colorManager: VcsLogColorManager,
                                           val rangeFilter: VcsLogRangeFilter,
-                                          val userFilter: VcsLogUserFilter? = null) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
+                                          val userFilter: VcsLogUserFilter? = null,
+                                          val pathFilter: VcsLogStructureFilter? = null) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
       val logId = generateUpdateTabId()
-      val properties = MyPropertiesForRangeAndUser(rangeFilter, userFilter, project.service<GitUpdateProjectInfoLogProperties>())
+      val properties = MyPropertiesForRangeAndUser(rangeFilter, userFilter, pathFilter, project.service<GitUpdateProjectInfoLogProperties>())
       val vcsLogFilterer = VcsLogFiltererImpl(logData.logProviders, logData.storage, logData.topCommitsCache, logData.commitDetailsGetter,
                                               logData.index)
       val initialRangeSortType = properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE)
@@ -199,6 +205,7 @@ class GitUpdateInfoAsLog(private val project: Project,
 
   private class MyPropertiesForRangeAndUser(val rangeFilter: VcsLogRangeFilter,
                                             val userFilter: VcsLogUserFilter?,
+                                            val pathFilter: VcsLogStructureFilter?,
                                             val mainProperties: GitUpdateProjectInfoLogProperties) : MainVcsLogUiProperties by mainProperties {
     private val filters = mutableMapOf<String, List<String>>()
     private var explicitlyRemovedPathsFilter = false
@@ -207,12 +214,15 @@ class GitUpdateInfoAsLog(private val project: Project,
       when (filterName) {
         RANGE_FILTER.name -> return ArrayList(rangeFilter.getTextPresentation())
         USER_FILTER.name -> return userFilter?.valuesAsText?.toList()
-        STRUCTURE_FILTER.name, ROOT_FILTER.name -> {
-          if (explicitlyRemovedPathsFilter) return null
-          return filters[filterName] ?: mainProperties.getFilterValues(filterName)
-        }
+        STRUCTURE_FILTER.name -> if (pathFilter != null) return pathFilter.files.map { it.path } else return getPathsFilterValues(filterName)
+        ROOT_FILTER.name -> return getPathsFilterValues(filterName)
         else -> return filters[filterName]
       }
+    }
+
+    private fun getPathsFilterValues(filterName: String): List<String>? {
+      if (explicitlyRemovedPathsFilter) return null
+      return filters[filterName] ?: mainProperties.getFilterValues(filterName)
     }
 
     override fun saveFilterValues(filterName: String, values: List<String>?) {
