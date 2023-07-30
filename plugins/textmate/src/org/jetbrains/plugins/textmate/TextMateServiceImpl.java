@@ -159,7 +159,7 @@ public final class TextMateServiceImpl extends TextMateService {
         builtinBundlesSettings.setBuiltinBundles(bundles);
         return bundles;
       }
-      catch (IOException e) {
+      catch (Throwable e) {
         LOG.warn("Couldn't list builtin textmate bundles at " + builtinBundlesPath, e);
         return Collections.emptyList();
       }
@@ -247,10 +247,11 @@ public final class TextMateServiceImpl extends TextMateService {
             return Files.newInputStream(directory.resolve(relativePath));
           }
           catch (NoSuchFileException e) {
+            TextMateService.LOG.warn("Cannot find referenced file `" + relativePath + "` in bundle `" + directory + "`");
             return null;
           }
-          catch (IOException e) {
-            TextMateService.LOG.warn("Cannot find referenced file `" + relativePath + "`", e);
+          catch (Throwable e) {
+            TextMateService.LOG.warn("Cannot read referenced file `" + relativePath + "` in bundle `" + directory + "`", e);
             return null;
           }
         });

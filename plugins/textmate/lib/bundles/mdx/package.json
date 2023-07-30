@@ -14,8 +14,7 @@
         ],
         "extensions": [
           "mdx"
-        ],
-        "configuration": "./language-configuration.json"
+        ]
       }
     ],
     "grammars": [
