@@ -36,7 +36,5 @@ public interface MutableSyntaxNodeDescriptor extends SyntaxNodeDescriptor {
 
   void appendRepository(int ruleId, SyntaxNodeDescriptor descriptor);
 
-  void setScopeName(@NotNull CharSequence scopeName);
-
   void compact();
 }
