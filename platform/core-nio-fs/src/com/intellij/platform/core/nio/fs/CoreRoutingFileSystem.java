@@ -29,7 +29,7 @@ public class CoreRoutingFileSystem extends FileSystem {
   }
 
   public void initialize(@NotNull String filesystemClassName, @Nullable Class<? extends CoreRoutingFileSystemDelegate> routingFilesystemDelegateClass) {
-    myMountedFS = CoreRoutingFileSystemProvider.createInstanceWithContextClassLoader(
+    myMountedFS = myProvider.createInstance(
       filesystemClassName,
       new Class[]{FileSystemProvider.class},
       myProvider);

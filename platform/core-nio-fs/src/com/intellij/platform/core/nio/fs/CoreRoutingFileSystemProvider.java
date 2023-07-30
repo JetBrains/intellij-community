@@ -34,16 +34,25 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
   private final Object myLock = new Object();
   private final FileSystemProvider    myLocalProvider;
   private final CoreRoutingFileSystem myFileSystem;
+  private final boolean myUseContextClassLoader;
 
   private volatile FileSystemProvider myProvider;
   private volatile String myProviderClassName;
 
   public CoreRoutingFileSystemProvider(FileSystemProvider localFSProvider) {
+    this(localFSProvider, true);
+  }
+
+  /**
+   * @param useContextClassLoader Force {@link #createInstance(String, Class[], Object...)} use system class loader which is required when this class is used as default system provider
+   */
+  public CoreRoutingFileSystemProvider(FileSystemProvider localFSProvider, boolean useContextClassLoader) {
     FileSystem fileSystem = localFSProvider.getFileSystem(URI.create("file:///"));
     myLocalProvider = fileSystem.supportedFileAttributeViews().contains("posix")
                       ? localFSProvider
                       : new CorePosixFilteringFileSystemProvider(localFSProvider);
     myFileSystem = new CoreRoutingFileSystem(this, fileSystem);
+    myUseContextClassLoader = useContextClassLoader;
   }
 
   @Override
@@ -82,9 +91,10 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
 
   /**
    * Initializes the passed {@link CoreRoutingFileSystemProvider} using the current context class loader.
-   * @param provider The {@link CoreRoutingFileSystemProvider}, which may have been loaded by a different class loader.
+   *
+   * @param provider                    The {@link CoreRoutingFileSystemProvider}, which may have been loaded by a different class loader.
    * @param initializeMountedFSProvider Specifies whether to eagerly initialize the mounted FS provider under lock as well,
-   *   e.g., in order to ensure the same class loader is used.
+   *                                    e.g., in order to ensure the same class loader is used.
    * @see CoreRoutingFileSystemProvider#INITIALIZATION_KEY
    * @see CoreRoutingFileSystemProvider#INITIALIZATION_MOUNTED_FS_PROVIDER_KEY
    */
@@ -96,7 +106,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
                                 @Nullable Class<? extends CoreRoutingFileSystemDelegate> routingFilesystemDelegateClass,
                                 boolean initializeMountedFSProvider) throws IOException {
     // Now we can use our provider. Initializing in such a hacky way because of different classloaders.
-    Map<String,Object> map = new HashMap<>();
+    Map<String, Object> map = new HashMap<>();
     map.put(INITIALIZATION_KEY, true);
     map.put(INITIALIZATION_MOUNTED_FS_PROVIDER_KEY, initializeMountedFSProvider);
     map.put(PROVIDER_CLASS_NAME, providerClassName);
@@ -288,7 +298,7 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     if (myProvider == null) {
       synchronized (myLock) {
         if (myProvider == null) {
-          myProvider = createInstanceWithContextClassLoader(
+          myProvider = createInstance(
             myProviderClassName,
             new Class[]{FileSystem.class},
             myFileSystem);
@@ -318,11 +328,12 @@ public class CoreRoutingFileSystemProvider extends FileSystemProvider {
     return path == null ? null : ((CorePath)path).getDelegate();
   }
 
-  public static <T> T createInstanceWithContextClassLoader(String className,
-                                                           Class<?>[] paramClasses,
-                                                           Object... params) {
+  public <T> T createInstance(String className,
+                              Class<?>[] paramClasses,
+                              Object... params) {
     try {
-      ClassLoader loader = Thread.currentThread().getContextClassLoader();
+      ClassLoader loader = (myUseContextClassLoader ? Thread.currentThread().getContextClassLoader()
+                                                    : CoreRoutingFileSystemProvider.class.getClassLoader());
       String loaderName = loader.getClass().getName();
       if (!("com.intellij.util.lang.PathClassLoader").equals(loaderName) &&
           !("com.intellij.util.lang.UrlClassLoader").equals(loaderName) &&
