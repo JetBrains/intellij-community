@@ -57,7 +57,7 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       for (PsiField field : psiClass.getFields()) {
         PsiAnnotation annotation = field.getAnnotation(getAnnotationName());
         if (annotation != null) {
-          if (!annotation.getAttributes().isEmpty()) {
+          if (!annotation.getAttributes().isEmpty() || field.hasModifierProperty(PsiModifier.STATIC)) {
             isLombokAnnotationAtClassLevel = false;
           }
           else {
