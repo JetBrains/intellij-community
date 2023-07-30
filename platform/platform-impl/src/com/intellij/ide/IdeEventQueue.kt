@@ -49,7 +49,6 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -75,7 +74,7 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val lock = Any()
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
-  @ApiStatus.Internal
+  @Internal
   val rwLockHolder: RwLockHolder = RwLockHolder(Thread.currentThread())
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
@@ -304,7 +303,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     val startedAt = System.currentTimeMillis()
     val performanceWatcher = PerformanceWatcher.getInstanceIfCreated()
-    val eventWatcher = EventWatcher.getInstanceOrNull()
+    val eventWatcher = if (LoadingState.COMPONENTS_LOADED.isOccurred) EventWatcher.getInstanceOrNull() else null
     try {
       performanceWatcher?.edtEventStarted()
       eventWatcher?.edtEventStarted(event, startedAt)
