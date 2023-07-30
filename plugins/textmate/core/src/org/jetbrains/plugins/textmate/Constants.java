@@ -78,7 +78,6 @@ public interface Constants {
   }
 
   // VALUES
-  @NonNls String DEFAULT_SCOPE_NAME = "default";
   @NonNls String INCLUDE_SELF_VALUE = "$self";
   @NonNls String INCLUDE_BASE_VALUE = "$base";
   @NonNls String BOLD_FONT_STYLE = "bold";
