@@ -58,15 +58,14 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
       for (PsiField field : psiClass.getFields()) {
         PsiAnnotation annotation = field.getAnnotation(LombokClassNames.GETTER);
         if (annotation != null) {
-          if (!annotation.getAttributes().isEmpty()) {
+          if (!annotation.getAttributes().isEmpty() || field.hasModifierProperty(PsiModifier.STATIC)) {
             isGetterAtClassLevel = false;
           }
           else {
             annotatedFields.add(field);
           }
-          break;
         }
-        if (!field.hasModifierProperty(PsiModifier.STATIC)) {
+        else if (!field.hasModifierProperty(PsiModifier.STATIC)) {
           boolean found = false;
           for (Pair<PsiField, PsiMethod> instanceCandidate : instanceCandidates) {
             if (field.equals(instanceCandidate.getFirst())) {
@@ -74,7 +73,11 @@ public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase im
               break;
             }
           }
-          isGetterAtClassLevel &= found;
+          isGetterAtClassLevel = found;
+        }
+
+        if (!isGetterAtClassLevel) {
+          break;
         }
       }
       List<Pair<PsiField, PsiMethod>> allCandidates = new ArrayList<>(staticCandidates);
