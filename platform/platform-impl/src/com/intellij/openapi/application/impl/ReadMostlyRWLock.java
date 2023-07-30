@@ -62,7 +62,7 @@ final class ReadMostlyRWLock {
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
-  static class Reader {
+  static final class Reader {
     @NotNull private final Thread thread;   // its thread
     volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
     private volatile boolean blocked;       // this reader is blocked waiting for the writer thread to release write lock. Written by reader thread only, read by writer.
@@ -361,7 +361,6 @@ final class ReadMostlyRWLock {
   void setAllowImplicitRead(boolean enable) {
     allowImplicitRead = enable;
   }
-
 
   private boolean isReadGrantedByStrongerLock() {
     // We have read lock, if:
