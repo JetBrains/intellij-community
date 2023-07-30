@@ -43,6 +43,7 @@ class WslRule(private val assume: Boolean = true) : ExternalResource() {
     else {
       vms = emptyList()
     }
+    thisLogger().info("Using following distros${vms}")
   }
 
   private fun fileSystemWorks(distro: WSLDistribution): Boolean {
