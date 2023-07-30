@@ -144,7 +144,7 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
     addDispatcher(EditingCanceller(), null)
     //addDispatcher(new UIMouseTracker(), null);
-    abracadabraDaberBoreh()
+    abracadabraDaberBoreh(this)
     if (java.lang.Boolean.parseBoolean(System.getProperty("skip.move.resize.events", "true"))) {
       postEventListeners.add { skipMoveResizeEvents(it) } // hot path, do not use method reference
     }
@@ -213,24 +213,6 @@ class IdeEventQueue private constructor() : EventQueue() {
       Logs.FOCUS_AWARE_RUNNABLES_LOG.debug { "No focus gained event in the queue runnable is run on EDT if needed : ${no.javaClass.name}" }
       EdtInvocationManager.invokeLaterIfNeeded(no)
     }
-  }
-
-  @Suppress("SpellCheckingInspection")
-  private fun abracadabraDaberBoreh() {
-    // We need to track if there are KeyBoardEvents in IdeEventQueue
-    // So we want to intercept all events posted to IdeEventQueue and increment counters
-    // However, the regular control flow goes like this:
-    //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
-    // Instead, we do following:
-    //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
-    //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
-    // After that the control flow goes like this:
-    //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
-    val aClass = Class.forName("sun.awt.PostEventQueue")
-    val constructor = aClass.getDeclaredConstructor(EventQueue::class.java)
-    constructor.isAccessible = true
-    val postEventQueue = constructor.newInstance(this)
-    AppContext.getAppContext().put("PostEventQueue", postEventQueue)
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -1212,4 +1194,22 @@ private class WindowsAltSuppressor : IdeEventQueue.EventDispatcher {
     }
     return !dispatch
   }
+}
+
+@Suppress("SpellCheckingInspection")
+private fun abracadabraDaberBoreh(eventQueue: IdeEventQueue) {
+  // We need to track if there are KeyBoardEvents in IdeEventQueue
+  // So we want to intercept all events posted to IdeEventQueue and increment counters
+  // However, the regular control flow goes like this:
+  //    PostEventQueue.flush() -> EventQueue.postEvent() -> IdeEventQueue.postEventPrivate() -> AAAA we missed event, because postEventPrivate() can't be overridden.
+  // Instead, we do following:
+  //  - create new PostEventQueue holding our IdeEventQueue instead of old EventQueue
+  //  - replace "PostEventQueue" value in AppContext with this new PostEventQueue
+  // After that the control flow goes like this:
+  //    PostEventQueue.flush() -> IdeEventQueue.postEvent() -> We intercepted event, incremented counters.
+  val aClass = Class.forName("sun.awt.PostEventQueue")
+  val constructor = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+    .findConstructor(aClass, MethodType.methodType(Void.TYPE, EventQueue::class.java))
+  val postEventQueue = constructor.invoke(eventQueue)
+  AppContext.getAppContext().put("PostEventQueue", postEventQueue)
 }
