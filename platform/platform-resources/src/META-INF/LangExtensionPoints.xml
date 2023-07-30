@@ -79,6 +79,10 @@
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.Annotator"/>
     </extensionPoint>
 
+    <extensionPoint name="contributedReferencesAnnotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.lang.annotation.Annotator"/>
+    </extensionPoint>
+
     <extensionPoint name="externalAnnotator" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.annotation.ExternalAnnotator"/>
     </extensionPoint>

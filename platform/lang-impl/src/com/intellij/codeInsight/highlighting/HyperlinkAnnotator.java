@@ -17,6 +17,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -28,8 +29,21 @@ public class HyperlinkAnnotator implements Annotator {
 
   private static final Key<@Nls String> messageKey = Key.create("hyperlink.message");
 
+  private final boolean enabled;
+
+  @SuppressWarnings("unused")
+  public HyperlinkAnnotator() {
+    this(Registry.is("annotate.hyperlinks.in.general.pass"));
+  }
+
+  public HyperlinkAnnotator(boolean enabled) {
+    this.enabled = enabled;
+  }
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (!enabled) return;
+
     if (holder.isBatchMode()) return;
     for (PsiHighlightedReference reference : PsiSymbolReferenceService.getService().getReferences(element, PsiHighlightedReference.class)) {
       TextRange range = reference.getAbsoluteRange();
@@ -89,5 +103,12 @@ public class HyperlinkAnnotator implements Annotator {
       message += " (" + shortcutText + ")";
     }
     return message;
+  }
+}
+
+final class HyperlinkContributedReferenceAnnotator extends HyperlinkAnnotator {
+  @SuppressWarnings("PublicConstructorInNonPublicClass")
+  public HyperlinkContributedReferenceAnnotator() {
+    super(true);
   }
 }

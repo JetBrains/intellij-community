@@ -1109,7 +1109,9 @@
                       level="WARNING" implementationClass="com.intellij.codeInspection.EmptyDirectoryInspection"/>
 
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
+
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>
+    <contributedReferencesAnnotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkContributedReferenceAnnotator" order="first"/>
 
     <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewHighlightingPanelProvider"/>
     <problemsViewPanelProvider implementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewProjectErrorsPanelProvider"/>
@@ -1537,6 +1539,10 @@
       order="before hide-hints"/>
     <editorFactoryListener implementation="com.intellij.codeInsight.inline.completion.listeners.InlineCompletionEditorListener"/>
     <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineActionsPromoter"/>
+
+    <registryKey key="annotate.hyperlinks.in.general.pass"
+                 defaultValue="false"
+                 description="Enables old behavior of HyperlinkAnnotator to run as part of GeneralHighlightingPass"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>
