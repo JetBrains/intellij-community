@@ -100,10 +100,10 @@ class JBCefBrowserJsCall(@Language("JavaScript") private val javaScriptExpressio
  * Examples:
  * ```Kotlin
  *  browser.callJavaScriptExpression("2 + 2")
- *  .await().let { r -> r /* r is 4 */ }
+ *  .let { r -> r /* r is 4 */ }
  *
  *  browser.callJavaScriptExpression("return 2 + 2")
- *  .await().let { r -> r /* r is 4 */ }
+ *  .let { r -> r /* r is 4 */ }
  *
  *  browser.callJavaScriptExpression("""
  *        function sum(s1, s2) {
@@ -112,7 +112,7 @@ class JBCefBrowserJsCall(@Language("JavaScript") private val javaScriptExpressio
  *
  *        return sum(2,2);
  *  """.trimIndent())
- *     .await().let { r -> r /* r is 4 */ }
+ *     ..let { r -> r /* r is 4 */ }
  *
  * ```
  *
