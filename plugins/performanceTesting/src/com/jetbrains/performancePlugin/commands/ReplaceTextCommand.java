@@ -17,17 +17,25 @@ import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.
 
 public class ReplaceTextCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "replaceText";
-  public static final char NEWLINE = '\u32E1';
+  private static final String DEFAULT_POSITION_SYMBOL = "/";
 
   public ReplaceTextCommand(@NotNull String command, int line) {
     super(command, line);
   }
 
+  private static String getArgValue(String arg) {
+    String[] splitArg = arg.split("=");
+    return splitArg.length == 2 ? splitArg[1] : "";
+  }
+
   @Override
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final AsyncPromise<Object> result = new AsyncPromise<>();
+    String[] args = extractCommandArgument(PREFIX).split(" ");
+    String potentialStart = getArgValue(args[0]);
+    String potentialEnd = getArgValue(args[1]);
+    String text = getArgValue(args[2]);
 
-    String text = getText().substring(PREFIX.length() + 1).replace(NEWLINE, '\n');
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
@@ -41,11 +49,13 @@ public class ReplaceTextCommand extends AbstractCommand {
         TypingTarget target = findTarget(context);
         if (target instanceof EditorComponentImpl) {
           DocumentEx document = ((EditorComponentImpl)target).getEditor().getDocument();
-          //noinspection TestOnlyProblems
+          int startPosition = potentialStart.equals(DEFAULT_POSITION_SYMBOL) ? 0 : Integer.parseInt(potentialStart);
+          int endPosition = potentialEnd.equals(DEFAULT_POSITION_SYMBOL) ? document.getTextLength() : Integer.parseInt(potentialEnd);
           WriteCommandAction.runWriteCommandAction(context.getProject(),
-                                                   () -> document.replaceText(text, document.getModificationStamp() + 1));
+                                                   () -> document.replaceString(startPosition, endPosition, text));
           result.setResult(null);
-        } else {
+        }
+        else {
           result.setError("Cannot replace text on non-Editor component");
         }
       });
