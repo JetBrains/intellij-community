@@ -122,7 +122,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
           true);
 
-    myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
+    myLock = IdeEventQueue.getInstance().rwLockHolder.lock;
 
     registerFakeServices(this);
 
@@ -145,7 +145,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                          boolean isCommandLine) {
     super(null, coroutineScope, true);
 
-    myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
+    myLock = IdeEventQueue.getInstance().rwLockHolder.lock;
 
     registerFakeServices(this);
 
@@ -931,12 +931,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean acquireWriteIntentLock(@Nullable String ignored) {
-    return IdeEventQueue.getInstance().getRwLockHolder().acquireWriteIntentLock(ignored);
+    return IdeEventQueue.getInstance().rwLockHolder.acquireWriteIntentLock(ignored);
   }
 
   @Override
   public void releaseWriteIntentLock() {
-    IdeEventQueue.getInstance().getRwLockHolder().releaseWriteIntentLock();
+    IdeEventQueue.getInstance().rwLockHolder.releaseWriteIntentLock();
   }
 
   @Override
@@ -1016,7 +1016,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(computation);
+    return IdeEventQueue.getInstance().rwLockHolder.runWriteIntentReadAction(computation);
   }
 
   @Override
