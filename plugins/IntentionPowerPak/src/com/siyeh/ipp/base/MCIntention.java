@@ -22,9 +22,9 @@ public abstract class MCIntention implements ModCommandAction {
   public final @NotNull ModCommand perform(@NotNull ActionContext context) {
     final PsiElement matchingElement = findMatchingElement(context);
     if (matchingElement == null) {
-      return ModCommands.nop();
+      return ModCommand.nop();
     }
-    return ModCommands.psiUpdate(matchingElement, (e, updater) -> processIntention(e, context, updater));
+    return ModCommand.psiUpdate(matchingElement, (e, updater) -> processIntention(e, context, updater));
   }
 
   protected void processIntention(@NotNull PsiElement element) {

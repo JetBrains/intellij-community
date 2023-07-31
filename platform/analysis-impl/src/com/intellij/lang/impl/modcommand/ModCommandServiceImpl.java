@@ -94,7 +94,7 @@ public class ModCommandServiceImpl implements ModCommandService {
         modifiedOptions.add(new ModUpdateInspectionOptions.ModifiedInspectionOption(control.bindId(), oldValue, newValue));
       }
     }
-    return modifiedOptions.isEmpty() ? ModCommands.nop() : new ModUpdateInspectionOptions(inspection.getShortName(), modifiedOptions);
+    return modifiedOptions.isEmpty() ? ModCommand.nop() : new ModUpdateInspectionOptions(inspection.getShortName(), modifiedOptions);
   }
 
   @ApiStatus.Experimental

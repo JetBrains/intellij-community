@@ -141,10 +141,10 @@ public class AmbiguousFieldAccessInspection extends BaseInspection implements Cl
       if (variable != null) {
         PsiIdentifier identifier = variable.getNameIdentifier();
         if (identifier != null) {
-          return ModCommands.select(identifier);
+          return ModCommand.select(identifier);
         }
       }
-      return ModCommands.nop();
+      return ModCommand.nop();
     }
 
     private static @Nullable PsiVariable getApparentlyAccessedVariable(Project project, PsiElement element) {

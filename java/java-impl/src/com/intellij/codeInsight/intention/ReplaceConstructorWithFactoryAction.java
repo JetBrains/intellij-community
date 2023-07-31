@@ -45,14 +45,14 @@ public class ReplaceConstructorWithFactoryAction implements ModCommandAction {
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
     PsiElement element = context.findLeaf();
     PsiMember constructorOrClass = getConstructorOrClass(element);
-    if (constructorOrClass == null) return ModCommands.nop();
+    if (constructorOrClass == null) return ModCommand.nop();
 
     List<PsiClass> targets = StreamEx.iterate(constructorOrClass, Objects::nonNull, PsiMember::getContainingClass)
       .select(PsiClass.class).filter(cls -> cls.hasModifierProperty(PsiModifier.STATIC) || cls.getContainingClass() == null)
       .toList();
     SmartPsiElementPointer<PsiMember> constructorOrClassPtr = SmartPointerManager.createPointer(constructorOrClass);
     List<ModCommandAction> options =
-      ContainerUtil.map(targets, target -> ModCommands.psiUpdateStep(
+      ContainerUtil.map(targets, target -> ModCommand.psiUpdateStep(
         target, PsiFormatUtil.formatClass(target, PsiFormatUtilBase.SHOW_NAME),
         (cls, updater) -> invoke(cls, updater, constructorOrClassPtr),
         cls -> Objects.requireNonNull(cls.getNameIdentifier()).getTextRange()));

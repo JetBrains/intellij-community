@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +45,7 @@ public class UpdateInspectionOptionFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.updateOption(context.file(), myInspection, tool -> {
+    return ModCommand.updateOption(context.file(), myInspection, tool -> {
       tool.getOptionController().setOption(myProperty, myValue);
     });
   }

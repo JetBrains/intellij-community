@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;
@@ -50,7 +49,7 @@ public class MoveCatchUpFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(context, updater -> {
+    return ModCommand.psiUpdate(context, updater -> {
       PsiCatchSection catchSection = updater.getWritable(myCatchSection);
       PsiCatchSection moveBeforeSection = updater.getWritable(myMoveBeforeSection);
       PsiTryStatement statement = catchSection.getTryStatement();

@@ -33,8 +33,8 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.intellij.modcommand.ModCommands.error;
-import static com.intellij.modcommand.ModCommands.nop;
+import static com.intellij.modcommand.ModCommand.error;
+import static com.intellij.modcommand.ModCommand.nop;
 
 final class PsiUpdateImpl {
   static @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
@@ -516,7 +516,7 @@ final class PsiUpdateImpl {
                    .reduce(nop(), ModCommand::andThen))
         .andThen(getNavigateCommand()).andThen(getHighlightCommand()).andThen(getTemplateCommand())
         .andThen(myRenameSymbol == null ? nop() : myRenameSymbol)
-        .andThen(myInfoMessage == null ? nop() : ModCommands.info(myInfoMessage));
+        .andThen(myInfoMessage == null ? nop() : ModCommand.info(myInfoMessage));
     }
 
     @NotNull

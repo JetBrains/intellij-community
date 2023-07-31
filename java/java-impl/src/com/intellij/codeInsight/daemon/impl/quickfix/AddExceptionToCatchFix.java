@@ -37,14 +37,14 @@ public class AddExceptionToCatchFix implements ModCommandAction {
     int offset = context.offset();
 
     PsiElement element = findElement(context.file(), offset);
-    if (element == null) return ModCommands.nop();
+    if (element == null) return ModCommand.nop();
 
     PsiTryStatement tryStatement = (PsiTryStatement)element.getParent();
     List<PsiClassType> unhandledExceptions = new ArrayList<>(getExceptions(element, null));
-    if (unhandledExceptions.isEmpty()) return ModCommands.nop();
+    if (unhandledExceptions.isEmpty()) return ModCommand.nop();
 
     ExceptionUtil.sortExceptionsByHierarchy(unhandledExceptions);
-    return ModCommands.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
+    return ModCommand.psiUpdate(tryStatement, (ts, updater) -> invoke(ts, unhandledExceptions, updater));
   }
   
   private static void invoke(@NotNull PsiTryStatement tryStatement, @NotNull List<PsiClassType> unhandledExceptions, @NotNull ModPsiUpdater updater) {

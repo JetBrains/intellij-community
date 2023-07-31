@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -110,7 +109,7 @@ public class SurroundWithArrayFix implements ModCommandAction {
     final PsiExpression expression = getExpression(element);
     assert expression != null;
     final PsiExpression toReplace = elementFactory.createExpressionFromText(getArrayCreation(expression, boxing), element);
-    return ModCommands.psiUpdate(expression, e -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(e.replace(toReplace)));
+    return ModCommand.psiUpdate(expression, e -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(e.replace(toReplace)));
   }
 
   @NonNls

@@ -45,13 +45,13 @@ public interface ModCommandService {
   @Nullable ModCommandAction unwrap(@NotNull LocalQuickFix fix);
 
   /**
-   * Implementation of ModCommands.psiUpdate; should not be used directly.
+   * Implementation of ModCommand.psiUpdate; should not be used directly.
    */
   @NotNull ModCommand psiUpdate(@NotNull ActionContext context,
                                 @NotNull Consumer<@NotNull ModPsiUpdater> updater);
 
   /**
-   * Implementation of ModCommands.updateOption; should not be used directly 
+   * Implementation of ModCommand.updateOption; should not be used directly 
    */
   <T extends InspectionProfileEntry> @NotNull ModCommand updateOption(
     @NotNull PsiElement context, @NotNull T inspection, @NotNull Consumer<@NotNull T> updater);

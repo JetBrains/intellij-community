@@ -63,9 +63,9 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
   public @NotNull ModCommand perform(@NotNull ActionContext actionContext) {
     PsiElement element = actionContext.findLeaf();
     List<ExpressionToConstantComparison> comparisons = comparisons(element).toList();
-    if (comparisons.size() < 2) return ModCommands.nop();
+    if (comparisons.size() < 2) return ModCommand.nop();
     PsiClass containingClass = ClassUtils.getContainingStaticClass(element);
-    if (containingClass == null) return ModCommands.nop();
+    if (containingClass == null) return ModCommand.nop();
     List<ExpressionToConstantReplacementContext> copies =
       myProcessDuplicates == ThreeState.NO ? List.of() : findCopies(comparisons, containingClass);
     if (myProcessDuplicates == ThreeState.UNSURE && !copies.isEmpty()) {
@@ -75,7 +75,7 @@ public class ExtractSetFromComparisonChainAction implements ModCommandAction {
     }
     LinkedHashSet<String> suggestions = getSuggestions(comparisons);
 
-    return ModCommands.psiUpdate(containingClass, (cls, updater) -> {
+    return ModCommand.psiUpdate(containingClass, (cls, updater) -> {
       Project project = cls.getProject();
       ExpressionToConstantReplacementContext context = new ExpressionToConstantReplacementContext(comparisons).getWritable(updater);
       List<ExpressionToConstantReplacementContext> writableCopies = ContainerUtil.map(copies, copy -> copy.getWritable(updater));

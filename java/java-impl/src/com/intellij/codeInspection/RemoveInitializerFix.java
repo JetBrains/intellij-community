@@ -29,8 +29,8 @@ public class RemoveInitializerFix extends ModCommandQuickFix {
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!(descriptor.getPsiElement() instanceof PsiExpression initializer)) return ModCommands.nop();
-    if (!(initializer.getParent() instanceof PsiVariable variable)) return ModCommands.nop();
+    if (!(descriptor.getPsiElement() instanceof PsiExpression initializer)) return ModCommand.nop();
+    if (!(initializer.getParent() instanceof PsiVariable variable)) return ModCommand.nop();
     List<ModCommandAction> subActions;
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
     if (!sideEffects.isEmpty() && !ContainerUtil.exists(sideEffects, se -> VariableAccessUtils.variableIsUsed(variable, se))) {

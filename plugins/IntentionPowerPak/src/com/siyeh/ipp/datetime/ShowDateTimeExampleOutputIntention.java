@@ -4,7 +4,6 @@ package com.siyeh.ipp.datetime;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -96,26 +95,26 @@ public class ShowDateTimeExampleOutputIntention extends PsiBasedModCommandAction
     }
     Formatter formatter = getFormatter(expression);
     final Object value = ExpressionUtils.computeConstantExpression(expression);
-    if (!(value instanceof String)) return ModCommands.nop();
+    if (!(value instanceof String)) return ModCommand.nop();
     return switch (formatter) {
-      case NONE -> ModCommands.nop();
+      case NONE -> ModCommand.nop();
       case DATE_TIME_FORMATTER -> {
         try {
           final DateTimeFormatter fmt = DateTimeFormatter.ofPattern((String)value);
           //noinspection HardCodedStringLiteral
-          yield ModCommands.info(LocalDateTime.now().format(fmt));
+          yield ModCommand.info(LocalDateTime.now().format(fmt));
         }
         catch (IllegalArgumentException e) {
-          yield ModCommands.error(IntentionPowerPackBundle.message("invalid.pattern.hint.text"));
+          yield ModCommand.error(IntentionPowerPackBundle.message("invalid.pattern.hint.text"));
         }
       }
       case SIMPLE_DATE_FORMAT -> {
         try {
           final SimpleDateFormat format = new SimpleDateFormat((String)value);
-          yield ModCommands.info(format.format(new Date()));
+          yield ModCommand.info(format.format(new Date()));
         }
         catch (IllegalArgumentException e) {
-          yield ModCommands.error(IntentionPowerPackBundle.message("invalid.pattern.hint.text"));
+          yield ModCommand.error(IntentionPowerPackBundle.message("invalid.pattern.hint.text"));
         }
       }
     };

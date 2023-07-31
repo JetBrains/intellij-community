@@ -20,7 +20,6 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
@@ -98,7 +97,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
 
     @Override
     public final @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return ModCommands.psiUpdate(descriptor.getStartElement(), (element, updater) -> {
+      return ModCommand.psiUpdate(descriptor.getStartElement(), (element, updater) -> {
         final PsiJavaCodeReferenceElement referenceElement;
         if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
           referenceElement = (PsiJavaCodeReferenceElement)element;

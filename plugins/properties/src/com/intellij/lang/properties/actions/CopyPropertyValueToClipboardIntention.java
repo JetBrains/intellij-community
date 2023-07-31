@@ -8,7 +8,6 @@ import com.intellij.lang.properties.psi.Property;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,9 +35,9 @@ public final class CopyPropertyValueToClipboardIntention implements ModCommandAc
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
     final Property property = CopyPropertyValueToClipboardIntention.getProperty(context);
-    if (property == null) return ModCommands.nop();
+    if (property == null) return ModCommand.nop();
     final String value = property.getUnescapedValue();
-    if (value == null) return ModCommands.nop();
-    return ModCommands.copyToClipboard(value);
+    if (value == null) return ModCommand.nop();
+    return ModCommand.copyToClipboard(value);
   }
 }

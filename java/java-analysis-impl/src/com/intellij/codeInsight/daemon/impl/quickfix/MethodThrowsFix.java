@@ -50,12 +50,12 @@ public abstract class MethodThrowsFix extends PsiBasedModCommandAction<PsiMethod
       PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
       boolean alreadyThrows =
         ContainerUtil.exists(referenceElements, referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText));
-      if (alreadyThrows) return ModCommands.nop();
+      if (alreadyThrows) return ModCommand.nop();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
       final PsiClassType type = (PsiClassType)factory.createTypeFromText(myThrowsCanonicalText, myMethod);
       JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(context.project());
       PsiElement ref = manager.shortenClassReferences(factory.createReferenceElementByType(type));
-      return ModCommands.psiUpdate(myMethod, method -> method.getThrowsList().add(ref));
+      return ModCommand.psiUpdate(myMethod, method -> method.getThrowsList().add(ref));
     }
   }
 
@@ -69,8 +69,8 @@ public abstract class MethodThrowsFix extends PsiBasedModCommandAction<PsiMethod
       PsiJavaCodeReferenceElement[] referenceElements = method.getThrowsList().getReferenceElements();
       return Arrays.stream(referenceElements)
         .filter(referenceElement -> referenceElement.getCanonicalText().equals(myThrowsCanonicalText)).findFirst()
-        .map(ref -> ModCommands.psiUpdate(ref, PsiElement::delete))
-        .orElse(ModCommands.nop());
+        .map(ref -> ModCommand.psiUpdate(ref, PsiElement::delete))
+        .orElse(ModCommand.nop());
     }
   }
 
@@ -83,7 +83,7 @@ public abstract class MethodThrowsFix extends PsiBasedModCommandAction<PsiMethod
     protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiMethod method) {
       Project project = context.project();
       PsiClassType exception = JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(myThrowsCanonicalText, method.getResolveScope());
-      ModCommand action = ModCommands.psiUpdate(method, m -> processMethod(project, m));
+      ModCommand action = ModCommand.psiUpdate(method, m -> processMethod(project, m));
       if (!IntentionPreviewUtils.isIntentionPreviewActive() && !ExceptionUtil.isUncheckedException(exception)) {
         JavaMethodFindUsagesOptions ops = new JavaMethodFindUsagesOptions(project);
         ops.isSearchForTextOccurrences = false;

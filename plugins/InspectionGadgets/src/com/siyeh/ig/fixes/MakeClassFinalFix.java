@@ -2,7 +2,6 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInsight.intention.preview.IntentionPreviewUtils;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
@@ -55,7 +54,7 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     final PsiClass containingClass = findClassToFix(element);
     if (containingClass == null) {
-      return ModCommands.nop();
+      return ModCommand.nop();
     }
     final PsiModifierList modifierList = containingClass.getModifierList();
     assert modifierList != null;
@@ -70,7 +69,7 @@ public class MakeClassFinalFix extends ModCommandQuickFix {
       });
     }
     ModShowConflicts.Conflict conflict = new ModShowConflicts.Conflict(conflictMessages);
-    return new ModShowConflicts(Map.of(containingClass, conflict), ModCommands.psiUpdate(modifierList, list -> doMakeFinal(list)));
+    return new ModShowConflicts(Map.of(containingClass, conflict), ModCommand.psiUpdate(modifierList, list -> doMakeFinal(list)));
   }
 
   private static void doMakeFinal(PsiModifierList modifierList) {

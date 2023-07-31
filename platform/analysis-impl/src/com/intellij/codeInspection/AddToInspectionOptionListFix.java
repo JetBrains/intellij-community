@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +50,7 @@ public class AddToInspectionOptionListFix<T extends InspectionProfileEntry> exte
 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return ModCommands.updateOption(descriptor.getStartElement(), myInspection,
+    return ModCommand.updateOption(descriptor.getStartElement(), myInspection,
                                     inspection -> {
                                       List<String> list = myExtractor.apply(inspection);
                                       list.add(myItemToAdd);

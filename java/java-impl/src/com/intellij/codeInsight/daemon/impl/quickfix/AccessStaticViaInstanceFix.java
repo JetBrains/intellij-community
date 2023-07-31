@@ -86,18 +86,18 @@ public class AccessStaticViaInstanceFix extends PsiBasedModCommandAction<PsiRefe
     List<PsiExpression> sideEffects = myKeepSideEffects == ThreeState.NO || qualifierExpression == null ?
                                       List.of() : SideEffectChecker.extractSideEffectExpressions(qualifierExpression);
     if (sideEffects.isEmpty()) {
-      return ModCommands.psiUpdate(ref, r -> invoke(r, List.of()));
+      return ModCommand.psiUpdate(ref, r -> invoke(r, List.of()));
     } else {
       if (myKeepSideEffects == ThreeState.UNSURE) {
         if (!CodeBlockSurrounder.canSurround(ref)) {
-          return ModCommands.psiUpdate(ref, r -> invoke(r, List.of()));
+          return ModCommand.psiUpdate(ref, r -> invoke(r, List.of()));
         }
         return new ModChooseAction(QuickFixBundle.message("access.static.via.class.reference.title"), List.of(
           new AccessStaticViaInstanceFix(ref, true),
           new AccessStaticViaInstanceFix(ref, false)
         ));
       }
-      return ModCommands.psiUpdate(ref, (r, updater) -> invoke(r, ContainerUtil.map(sideEffects, updater::getWritable)));
+      return ModCommand.psiUpdate(ref, (r, updater) -> invoke(r, ContainerUtil.map(sideEffects, updater::getWritable)));
     }
   }
   

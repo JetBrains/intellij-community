@@ -27,15 +27,15 @@ public final class AddExceptionToExistingCatchFix extends PsiBasedModCommandActi
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext ctx, @NotNull PsiElement element) {
     Context context = Context.from(element);
-    if (context == null) return ModCommands.nop();
+    if (context == null) return ModCommand.nop();
 
     List<? extends PsiClassType> unhandledExceptions = context.myExceptions;
     List<? extends PsiCatchSection> catches = context.myCatches;
 
     List<@NotNull ModCommandAction> actions = ContainerUtil.map(
-      catches, c -> ModCommands.psiUpdateStep(c,
-                                              Objects.requireNonNull(c.getCatchType()).getPresentableText(),
-                                              (section, updater) -> addTypeToCatch(unhandledExceptions, section, ctx.project()),
+      catches, c -> ModCommand.psiUpdateStep(c,
+                                             Objects.requireNonNull(c.getCatchType()).getPresentableText(),
+                                             (section, updater) -> addTypeToCatch(unhandledExceptions, section, ctx.project()),
                                               section -> Objects.requireNonNull(section.getParameter()).getTextRange()));
     return new ModChooseAction(QuickFixBundle.message("add.exception.to.existing.catch.chooser.title"), actions);
   }

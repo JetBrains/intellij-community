@@ -4,7 +4,6 @@ package com.siyeh.ig.javadoc;
 import com.intellij.codeInspection.*;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -48,7 +47,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection implements 
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return ModCommands.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
+      return ModCommand.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
     }
 
     protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {

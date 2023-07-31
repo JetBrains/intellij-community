@@ -39,10 +39,10 @@ public final class EliminateParenthesesIntention extends PsiBasedModCommandActio
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiJavaToken leaf) {
     List<PsiParenthesizedExpression> possibleInnerExpressions = getPossibleInnerExpressions(leaf);
-    if (possibleInnerExpressions == null) return ModCommands.nop();
+    if (possibleInnerExpressions == null) return ModCommand.nop();
     List<ModCommandAction> actions = ContainerUtil.map(
       possibleInnerExpressions,
-      expr -> ModCommands.psiUpdateStep(expr, PsiExpressionTrimRenderer.render(expr), (e, u) -> replaceExpression(e)));
+      expr -> ModCommand.psiUpdateStep(expr, PsiExpressionTrimRenderer.render(expr), (e, u) -> replaceExpression(e)));
     return new ModChooseAction(IntentionPowerPackBundle.message("eliminate.parentheses.intention.title"), actions);
   }
 

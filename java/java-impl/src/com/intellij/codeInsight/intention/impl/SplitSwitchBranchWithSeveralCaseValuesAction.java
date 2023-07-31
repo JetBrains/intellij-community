@@ -95,7 +95,7 @@ public class SplitSwitchBranchWithSeveralCaseValuesAction implements ModCommandA
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(context, updater -> invoke(context, updater));
+    return ModCommand.psiUpdate(context, updater -> invoke(context, updater));
   }
   
   private static void invoke(@NotNull ActionContext context, @NotNull ModPsiUpdater updater) {

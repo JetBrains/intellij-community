@@ -95,7 +95,7 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
     HashSet<String> usedNames = new HashSet<>();
     List<PsiParameter> availableParameters = getAvailableParameters(method);
 
-    return selectParameters(method, availableParameters, parameters -> ModCommands.psiUpdate(context, updater -> {
+    return selectParameters(method, availableParameters, parameters -> ModCommand.psiUpdate(context, updater -> {
       MultiMap<PsiType, PsiParameter> types = new MultiMap<>();
       List<PsiParameter> writable = ContainerUtil.map(parameters, updater::getWritable);
       for (PsiParameter parameter : writable) {

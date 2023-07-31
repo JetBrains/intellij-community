@@ -67,7 +67,7 @@ public class DeleteElementFix extends PsiUpdateModCommandAction<PsiElement> {
 
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext context) {
-      return ModCommands.psiUpdate(context, updater -> {
+      return ModCommand.psiUpdate(context, updater -> {
         for (PsiElement element : ContainerUtil.map(myElements, updater::getWritable)) {
           new CommentTracker().deleteAndRestoreComments(element);
         }

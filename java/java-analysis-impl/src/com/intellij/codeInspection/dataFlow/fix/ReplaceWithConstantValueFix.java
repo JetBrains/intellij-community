@@ -66,7 +66,7 @@ public class ReplaceWithConstantValueFix extends PsiBasedModCommandAction<PsiExp
       sideEffects = List.of();
     }
     if (sideEffects.isEmpty()) {
-      return ModCommands.psiUpdate(expression, expr -> applyFix(expr, PsiStatement.EMPTY_ARRAY));
+      return ModCommand.psiUpdate(expression, expr -> applyFix(expr, PsiStatement.EMPTY_ARRAY));
     }
     if (myExtractSideEffects == ThreeState.UNSURE) {
       return new ModChooseAction(JavaAnalysisBundle.message("replace.with.constant.value.title"),
@@ -76,7 +76,7 @@ public class ReplaceWithConstantValueFix extends PsiBasedModCommandAction<PsiExp
                                  ));
     }
     PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
-    return ModCommands.psiUpdate(expression, (expr, updater) -> applyFix(expr, statements));
+    return ModCommand.psiUpdate(expression, (expr, updater) -> applyFix(expr, statements));
   }
   
   private void applyFix(@NotNull PsiExpression expression, @NotNull PsiStatement @NotNull [] sideEffects) {

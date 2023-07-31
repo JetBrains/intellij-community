@@ -65,8 +65,8 @@ public class ConvertInterfaceToClassIntention extends PsiBasedModCommandAction<P
     Map<PsiElement, ModShowConflicts.Conflict> map = EntryStream.of(conflicts.entrySet().spliterator())
       .mapValues(messages -> new ModShowConflicts.Conflict(List.copyOf(messages)))
       .toMap();
-    return new ModShowConflicts(map, ModCommands.psiUpdate(anInterface,
-                                                           (writableInterface, updater) ->
+    return new ModShowConflicts(map, ModCommand.psiUpdate(anInterface,
+                                                          (writableInterface, updater) ->
                                                              convertInterfaceToClass(writableInterface, inheritors, updater)));
   }
 

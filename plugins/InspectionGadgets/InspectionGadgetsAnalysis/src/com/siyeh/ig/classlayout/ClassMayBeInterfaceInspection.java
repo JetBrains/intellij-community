@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -93,7 +92,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
       for (final PsiClass inheritor : ClassInheritorsSearch.search(interfaceClass, searchScope, false)) {
         elements.add(inheritor);
       }
-      return ModCommands.psiUpdate(interfaceClass, (cls, updater) -> {
+      return ModCommand.psiUpdate(interfaceClass, (cls, updater) -> {
         moveSubClassExtendsToImplements(ContainerUtil.map(elements, updater::getWritable));
         changeClassToInterface(cls);
         moveImplementsToExtends(cls);

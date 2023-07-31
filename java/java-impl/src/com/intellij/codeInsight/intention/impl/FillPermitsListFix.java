@@ -6,7 +6,6 @@ import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
@@ -37,9 +36,9 @@ public class FillPermitsListFix extends PsiBasedModCommandAction<PsiIdentifier> 
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiIdentifier startElement) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(startElement, PsiClass.class);
-    if (psiClass == null) return ModCommands.nop();
+    if (psiClass == null) return ModCommand.nop();
     PsiJavaFile psiJavaFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
-    if (psiJavaFile == null) return ModCommands.nop();
+    if (psiJavaFile == null) return ModCommand.nop();
     Set<PsiClass> permittedClasses = ContainerUtil.map2Set(psiClass.getPermitsListTypes(), PsiClassType::resolve);
     return getMissingInheritors(psiJavaFile, psiClass, permittedClasses);
   }
@@ -57,7 +56,7 @@ public class FillPermitsListFix extends PsiBasedModCommandAction<PsiIdentifier> 
     for (PsiClass inheritor : DirectClassInheritorsSearch.search(psiClass)) {
       String errorTitle = SealedUtils.checkInheritor(psiJavaFile, module, inheritor);
       if (errorTitle != null) {
-        return ModCommands.error(JavaBundle.message(errorTitle));
+        return ModCommand.error(JavaBundle.message(errorTitle));
       }
       String qualifiedName = Objects.requireNonNull(inheritor.getQualifiedName());
       if (!ContainerUtil.exists(permittedClasses, cls -> cls.isEquivalentTo(inheritor))) missingInheritors.add(qualifiedName);
@@ -65,8 +64,8 @@ public class FillPermitsListFix extends PsiBasedModCommandAction<PsiIdentifier> 
 
     if (missingInheritors.isEmpty()) {
       String message = JavaBundle.message("inspection.fill.permits.list.no.missing.inheritors");
-      return ModCommands.error(message);
+      return ModCommand.error(message);
     }
-    return ModCommands.psiUpdate(psiClass, cls -> SealedUtils.fillPermitsList(cls, missingInheritors));
+    return ModCommand.psiUpdate(psiClass, cls -> SealedUtils.fillPermitsList(cls, missingInheritors));
   }
 }

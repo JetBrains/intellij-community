@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class PsiUpdateModCommandQuickFix extends ModCommandQuickFix {
   @Override
   public final @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    return ModCommands.psiUpdate(descriptor.getStartElement(), (e, updater) -> applyFix(project, e, updater));
+    return ModCommand.psiUpdate(descriptor.getStartElement(), (e, updater) -> applyFix(project, e, updater));
   }
 
   protected abstract void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater);

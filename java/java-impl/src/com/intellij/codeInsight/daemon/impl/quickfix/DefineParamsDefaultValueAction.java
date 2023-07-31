@@ -6,7 +6,6 @@ import com.intellij.codeInsight.generation.RecordConstructorMember;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.ParameterClassMember;
 import com.intellij.codeInsight.template.impl.TextExpression;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.icons.AllIcons;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -68,8 +67,8 @@ public class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<Psi
     PsiParameterList parameterList = method.getParameterList();
     PsiParameter[] parameters = parameterList.getParameters();
     if (parameters.length == 1) {
-      return ModCommands.psiUpdate(method, (m, updater) -> invoke(context.project(), m, updater,
-                                                                  updater.getWritable(m).getParameterList().getParameters()));
+      return ModCommand.psiUpdate(method, (m, updater) -> invoke(context.project(), m, updater,
+                                                                 updater.getWritable(m).getParameterList().getParameters()));
     }
     List<ParameterClassMember> members = ContainerUtil.map(parameters, ParameterClassMember::new);
     PsiParameter selectedParam = PsiTreeUtil.getParentOfType(element, PsiParameter.class);
@@ -78,7 +77,7 @@ public class DefineParamsDefaultValueAction extends PsiBasedModCommandAction<Psi
     return new ModChooseMember(
       QuickFixBundle.message("choose.default.value.parameters.popup.title"),
       members, defaultSelection, ModChooseMember.SelectionMode.MULTIPLE,
-      sel -> ModCommands.psiUpdate(context, updater -> {
+      sel -> ModCommand.psiUpdate(context, updater -> {
         invoke(context.project(), updater.getWritable(element), updater,
                ContainerUtil.map2Array(sel, PsiParameter.EMPTY_ARRAY,
                                        s -> updater.getWritable(((ParameterClassMember)s).getParameter())));

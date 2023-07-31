@@ -39,10 +39,10 @@ public class ExtendSealedClassFix extends PsiBasedModCommandAction<PsiClass> {
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiClass subclass) {
     PsiClass parentClass = myParentClassPointer.getElement();
-    if (parentClass == null) return ModCommands.nop();
+    if (parentClass == null) return ModCommand.nop();
     boolean parentIsInterface = parentClass.isInterface();
     boolean subclassIsInterface = subclass.isInterface();
-    if (!parentIsInterface && subclassIsInterface) return ModCommands.nop();
+    if (!parentIsInterface && subclassIsInterface) return ModCommand.nop();
     List<ModCommandAction> fixes;
     if (subclassIsInterface) {
       fixes = List.of(new ExtendSealedClassVariantAction(PsiModifier.SEALED, myParentClassPointer, subclass),

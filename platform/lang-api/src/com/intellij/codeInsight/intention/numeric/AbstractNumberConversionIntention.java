@@ -68,9 +68,9 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext actionContext) {
     List<NumberConverter> converters = getConverters(actionContext.file());
-    if (converters.isEmpty()) return ModCommands.nop();
+    if (converters.isEmpty()) return ModCommand.nop();
     NumberConversionContext context = getContext(actionContext);
-    if (context == null) return ModCommands.nop();
+    if (context == null) return ModCommand.nop();
     Number number = context.myNumber;
     String text = context.myText;
     class Conversion implements ModCommandAction {
@@ -85,8 +85,8 @@ public abstract class AbstractNumberConversionIntention implements ModCommandAct
       @Override
       public @NotNull ModCommand perform(@NotNull ActionContext ctx) {
         PsiElement element = context.getElement();
-        if (element == null) return ModCommands.nop();
-        return ModCommands.psiUpdate(element, e -> replace(e, myResult));
+        if (element == null) return ModCommand.nop();
+        return ModCommand.psiUpdate(element, e -> replace(e, myResult));
       }
 
       @Override

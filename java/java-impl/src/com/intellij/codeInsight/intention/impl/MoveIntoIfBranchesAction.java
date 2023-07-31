@@ -8,7 +8,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -88,7 +87,7 @@ public class MoveIntoIfBranchesAction implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(context.file(), f -> invoke(context.withFile(f)));
+    return ModCommand.psiUpdate(context.file(), f -> invoke(context.withFile(f)));
   }
   
   private static void invoke(@NotNull ActionContext context) {

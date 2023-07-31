@@ -10,7 +10,6 @@ import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -220,7 +219,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      return ModCommands.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
+      return ModCommand.psiUpdate(descriptor.getStartElement(), e -> applyFix(e, descriptor.getTextRangeInElement()));
     }
 
     protected void applyFix(@NotNull PsiElement element, @NotNull TextRange range) {

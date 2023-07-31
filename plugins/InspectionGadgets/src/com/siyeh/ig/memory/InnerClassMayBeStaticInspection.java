@@ -91,7 +91,7 @@ public class InnerClassMayBeStaticInspection extends BaseInspection {
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
       final List<Handler> handlers = StreamEx.of(descriptors).map(descriptor -> descriptor.getPsiElement().getParent())
         .select(PsiClass.class).map(Handler::new).toList();
-      return ModCommands.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
+      return ModCommand.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
         ContainerUtil.map(handlers, h -> h.getWritable(updater))
           .forEach(Handler::makeStatic);
       });

@@ -83,7 +83,7 @@ public class AddMethodQualifierFix extends PsiBasedModCommandAction<PsiMethodCal
 
   @NotNull
   private static ModCommandAction createAction(PsiVariable candidate, SmartPsiElementPointer<PsiMethodCallExpression> pointer) {
-    return ModCommands.psiUpdateStep(
+    return ModCommand.psiUpdateStep(
         candidate, requireNonNullElse(candidate.getName(), ""), (var, updater) -> {
           PsiMethodCallExpression call = updater.getWritable(pointer.getElement());
           if (call == null) return;

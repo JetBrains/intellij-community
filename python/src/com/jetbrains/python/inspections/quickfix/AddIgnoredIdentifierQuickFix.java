@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
@@ -45,7 +44,7 @@ public class AddIgnoredIdentifierQuickFix extends ModCommandQuickFix implements 
   @Override
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement context = descriptor.getPsiElement();
-    return ModCommands.updateOption(context, new PyUnresolvedReferencesInspection(), inspection -> {
+    return ModCommand.updateOption(context, new PyUnresolvedReferencesInspection(), inspection -> {
       String name = myIdentifier.toString();
       if (myIgnoreAllAttributes) {
         name += PyNames.END_WILDCARD;

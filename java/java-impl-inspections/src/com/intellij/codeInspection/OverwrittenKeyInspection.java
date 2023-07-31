@@ -8,7 +8,6 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandQuickFix;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -251,8 +250,8 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiExpression element = myPointer.getElement();
-      if (element == null) return ModCommands.nop();
-      return ModCommands.select(element);
+      if (element == null) return ModCommand.nop();
+      return ModCommand.select(element);
     }
   }
 }

@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.java18api.Java8MapApiInspection;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandExecutor;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -30,7 +29,7 @@ public class UpdateInspectionOptionFixTest extends BasePlatformTestCase {
     myFixture.configureByText("Test.java", "class X {}");
     Java8MapApiInspection inspection = new Java8MapApiInspection();
     myFixture.enableInspections(inspection);
-    ModCommand command = ModCommands.updateOption(myFixture.getFile(), inspection, tool -> {
+    ModCommand command = ModCommand.updateOption(myFixture.getFile(), inspection, tool -> {
       tool.mySuggestMapComputeIfAbsent = false;
       tool.mySuggestMapGetOrDefault = false;
     });

@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
@@ -32,9 +31,9 @@ public class NavigateToDuplicateElementFix extends PsiBasedModCommandAction<Navi
     if (element instanceof PsiNameIdentifierOwner owner) {
       PsiElement identifier = owner.getNameIdentifier();
       if (identifier != null) {
-        return ModCommands.select(identifier);
+        return ModCommand.select(identifier);
       }
     }
-    return ModCommands.select(element);
+    return ModCommand.select(element);
   }
 }

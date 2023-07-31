@@ -35,7 +35,7 @@ public abstract class PsiUpdateModCommandAction<E extends PsiElement> extends Ps
 
   @Override
   protected final @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull E element) {
-    return ModCommands.psiUpdate(element, (e, upd) -> invoke(context, e, upd));
+    return ModCommand.psiUpdate(element, (e, upd) -> invoke(context, e, upd));
   }
 
   /**

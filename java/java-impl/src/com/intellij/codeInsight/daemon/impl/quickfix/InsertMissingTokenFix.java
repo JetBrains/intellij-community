@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommands;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +30,6 @@ public class InsertMissingTokenFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(context.file(), f -> f.getViewProvider().getDocument().insertString(context.offset(), myToken));
+    return ModCommand.psiUpdate(context.file(), f -> f.getViewProvider().getDocument().insertString(context.offset(), myToken));
   }
 }

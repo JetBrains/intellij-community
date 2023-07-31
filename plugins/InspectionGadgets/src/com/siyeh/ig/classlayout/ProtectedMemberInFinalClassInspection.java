@@ -63,7 +63,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection implem
 
     @Override
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull List<ProblemDescriptor> descriptors) {
-      return ModCommands.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
+      return ModCommand.psiUpdate(ActionContext.from(descriptors.get(0)), updater -> {
         List<FixData> elements =
           ContainerUtil.map(descriptors, descriptor -> prepareDataForFix(updater, descriptor.getPsiElement()));
         elements.forEach(FixData::apply);

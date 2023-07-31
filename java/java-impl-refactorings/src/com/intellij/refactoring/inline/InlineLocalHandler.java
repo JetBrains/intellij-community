@@ -109,7 +109,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       mode == InlineMode.INLINE_ONE || block == null ? List.of(refExpr) :
       VariableAccessUtils.getVariableReferences(var, block);
     if (allRefs.isEmpty()) {
-      return ModCommands.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
+      return ModCommand.error(RefactoringBundle.message("variable.is.never.used", var.getName()));
     }
     if (var instanceof PsiLocalVariable local) {
       return inlineLocal(context, local, refExpr, allRefs, mode);
@@ -124,7 +124,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
                                                    @NotNull InlineMode mode) {
     String initializerText = JavaPsiPatternUtil.getEffectiveInitializerText(pattern);
     if (initializerText == null) {
-      return ModCommands.error(JavaRefactoringBundle.message("tooltip.cannot.inline.pattern.variable"));
+      return ModCommand.error(JavaRefactoringBundle.message("tooltip.cannot.inline.pattern.variable"));
     }
     Project project = context.project();
     if (mode == InlineMode.CHECK_CONFLICTS || mode == InlineMode.ASK) {
@@ -138,7 +138,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     PsiExpression defToInline = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, pattern);
 
     boolean inlineAll = mode == InlineMode.INLINE_ALL_AND_DELETE;
-    return ModCommands.psiUpdate(context, updater -> {
+    return ModCommand.psiUpdate(context, updater -> {
       PsiPatternVariable writablePattern = updater.getWritable(pattern);
       List<SmartPsiElementPointer<PsiExpression>> pointers =
         inlineOccurrences(project, writablePattern, defToInline,
@@ -181,7 +181,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     InnerClassUsages innerClassUses = InnerClassUsages.getUsages(local, allRefs);
     final PsiCodeBlock containerBlock = PsiTreeUtil.getParentOfType(local, PsiCodeBlock.class);
     if (containerBlock == null) {
-      return ModCommands.error(JavaRefactoringBundle.message("inline.local.variable.declared.outside.cannot.refactor.message"));
+      return ModCommand.error(JavaRefactoringBundle.message("inline.local.variable.declared.outside.cannot.refactor.message"));
     }
 
     final PsiExpression defToInline;
@@ -191,7 +191,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       if (defToInline == null) {
         final String key = refExpr == null ? "variable.has.no.initializer" : "variable.has.no.dominating.definition";
         String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message(key, localName));
-        return ModCommands.error(message);
+        return ModCommand.error(message);
       }
     }
     catch (RuntimeException e) {
@@ -215,7 +215,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
       }
     }
     if (refsToInlineList.isEmpty()) {
-      return ModCommands.error(JavaRefactoringBundle.message("variable.is.never.used.before.modification", localName));
+      return ModCommand.error(JavaRefactoringBundle.message("variable.is.never.used.before.modification", localName));
     }
 
     if (mode == InlineMode.CHECK_CONFLICTS) {
@@ -237,8 +237,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     if (refExpr != null && PsiUtil.isAccessedForReading(refExpr) && ArrayUtil.find(refsToInline, refExpr) < 0) {
       final PsiElement[] defs = DefUseUtil.getDefs(containerBlock, local, refExpr);
       LOG.assertTrue(defs.length > 0);
-      return ModCommands.highlight(defs).andThen(
-        ModCommands.error(
+      return ModCommand.highlight(defs).andThen(
+        ModCommand.error(
           RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName))));
     }
 
@@ -252,10 +252,10 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     for (PsiElement ref : refsToInline) {
       final PsiFile otherFile = ref.getContainingFile();
       if (!otherFile.equals(workingFile)) {
-        return ModCommands.error(RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName));
+        return ModCommand.error(RefactoringBundle.message("variable.is.referenced.in.multiple.files", localName));
       }
       if (tryStatement != null && !PsiTreeUtil.isAncestor(tryStatement, ref, false)) {
-        return ModCommands.error(JavaRefactoringBundle.message("inline.local.unable.try.catch.warning.message"));
+        return ModCommand.error(JavaRefactoringBundle.message("inline.local.unable.try.catch.warning.message"));
       }
     }
 
@@ -269,9 +269,9 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
         String message =
           RefactoringBundle.getCannotRefactorMessage(
             RefactoringBundle.message("variable.is.accessed.for.writing.and.used.with.inlined", localName));
-        return ModCommands.highlight(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, defs)
-          .andThen(ModCommands.highlight(ref))
-          .andThen(ModCommands.error(message));
+        return ModCommand.highlight(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, defs)
+          .andThen(ModCommand.highlight(ref))
+          .andThen(ModCommand.error(message));
       }
     }
 
@@ -279,18 +279,18 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     if (writeAccess != null) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("variable.is.accessed.for.writing", localName));
-      return ModCommands.highlight(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, writeAccess)
-        .andThen(ModCommands.error(message));
+      return ModCommand.highlight(EditorColors.WRITE_SEARCH_RESULT_ATTRIBUTES, writeAccess)
+        .andThen(ModCommand.error(message));
     }
 
     if (ContainerUtil.exists(refsToInline, ref -> ref.getParent() instanceof PsiResourceExpression)) {
-      return ModCommands.error(
+      return ModCommand.error(
         RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("inline.local.used.as.resource.cannot.refactor.message")));
     }
     Project project = context.project();
 
     boolean inlineAll = mode != InlineMode.INLINE_ONE;
-    return ModCommands.psiUpdate(context, updater -> {
+    return ModCommand.psiUpdate(context, updater -> {
       PsiExpression writableDef = updater.getWritable(defToInline);
       PsiLocalVariable writableLocal = updater.getWritable(local);
       PsiElement[] writableRefs = ContainerUtil.map2Array(refsToInline, PsiElement.EMPTY_ARRAY, updater::getWritable);
@@ -381,7 +381,7 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
   private static @NotNull ModCommand processWrappedAnalysisCanceledException(@NotNull RuntimeException e) {
     Throwable cause = e.getCause();
     if (cause instanceof AnalysisCanceledException) {
-      return ModCommands.error(
+      return ModCommand.error(
         RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed")));
     }
     throw e;
@@ -489,8 +489,8 @@ public class InlineLocalHandler extends JavaInlineActionHandler {
     @Override
     public @NotNull ModCommand perform(@NotNull ActionContext context) {
       if (myMode == InlineMode.HIGHLIGHT_CONFLICTS) {
-        return ModCommands.highlight(myAllRefs.toArray(PsiElement.EMPTY_ARRAY)).andThen(
-          myAllRefs.stream().findFirst().map(ModCommands::select).orElse(ModCommands.nop()));
+        return ModCommand.highlight(myAllRefs.toArray(PsiElement.EMPTY_ARRAY)).andThen(
+          myAllRefs.stream().findFirst().map(ModCommand::select).orElse(ModCommand.nop()));
       }
       return doInline(context, myPattern, myRefExpr, myMode);
     }

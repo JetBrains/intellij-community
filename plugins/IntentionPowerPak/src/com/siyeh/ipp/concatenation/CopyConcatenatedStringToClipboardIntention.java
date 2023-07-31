@@ -3,7 +3,6 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,18 +44,18 @@ public class CopyConcatenatedStringToClipboardIntention extends PsiBasedModComma
     final String text;
     if (element instanceof PsiLiteralExpression literalExpression) {
       if (!(literalExpression.getValue() instanceof String string)) {
-        return ModCommands.nop();
+        return ModCommand.nop();
       }
       text = string;
     }
     else {
       PsiPolyadicExpression polyadic = PsiTreeUtil.getNonStrictParentOfType(element, PsiPolyadicExpression.class);
       if (!ExpressionUtils.isStringConcatenation(polyadic)) {
-        return ModCommands.nop();
+        return ModCommand.nop();
       }
       text = buildConcatenationText(polyadic);
     }
-    return ModCommands.copyToClipboard(text);
+    return ModCommand.copyToClipboard(text);
   }
 
   public static String buildConcatenationText(PsiPolyadicExpression polyadicExpression) {

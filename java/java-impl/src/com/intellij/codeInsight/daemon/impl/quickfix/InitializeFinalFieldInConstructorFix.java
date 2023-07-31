@@ -6,7 +6,6 @@ import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.PsiElementResult;
 import com.intellij.codeInsight.template.impl.ConstantNode;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -48,9 +47,9 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiField field) {
     final PsiClass myClass = field.getContainingClass();
-    if (myClass == null) return ModCommands.nop();
+    if (myClass == null) return ModCommand.nop();
     if (myClass.getConstructors().length == 0) {
-      return ModCommands.psiUpdate(context, updater -> {
+      return ModCommand.psiUpdate(context, updater -> {
         PsiClass writableClass = updater.getWritable(myClass);
         PsiField writableField = updater.getWritable(field);
         PsiMethod ctor = AddDefaultConstructorFix.addDefaultConstructor(writableClass);
@@ -73,7 +72,7 @@ public class InitializeFinalFieldInConstructorFix extends PsiBasedModCommandActi
 
   @NotNull
   private static ModCommand getFinalCommand(@NotNull PsiField field, List<? extends @NotNull MemberChooserElement> chosenMembers) {
-    return ModCommands.psiUpdate(field, (writableField, updater) -> {
+    return ModCommand.psiUpdate(field, (writableField, updater) -> {
       List<PsiMethod> writableConstructors =
         ContainerUtil.map(chosenMembers, member -> updater.getWritable(((PsiMethodMember)member).getElement()));
       addFieldInitialization(writableConstructors, writableField, updater);

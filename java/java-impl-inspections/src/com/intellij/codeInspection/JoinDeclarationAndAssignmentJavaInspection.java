@@ -220,7 +220,7 @@ public class JoinDeclarationAndAssignmentJavaInspection extends AbstractBaseJava
     public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       Context context = getContext(element);
-      if (context == null) return ModCommands.nop();
+      if (context == null) return ModCommand.nop();
       PsiLocalVariable variable = context.myVariable;
       PsiExpression initializer = variable.getInitializer();
       List<PsiExpression> sideEffects = initializer == null ||

@@ -50,7 +50,7 @@ public class SurroundWithTryCatchFix implements ModCommandAction {
 
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
-    return ModCommands.psiUpdate(myElement, (element, updater) -> invoke(context.project(), element, updater));
+    return ModCommand.psiUpdate(myElement, (element, updater) -> invoke(context.project(), element, updater));
   }
 
   private static void invoke(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {

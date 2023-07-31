@@ -28,9 +28,9 @@ public class RemoveAssignmentFix extends ModCommandQuickFix {
   public @NotNull ModCommand perform(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     PsiAssignmentExpression parentExpr = getAssignment(descriptor);
-    if (parentExpr == null) return ModCommands.nop();
+    if (parentExpr == null) return ModCommand.nop();
     if (!ExpressionUtils.isVoidContext(parentExpr)) {
-      return ModCommands.psiUpdate(parentExpr, p -> {
+      return ModCommand.psiUpdate(parentExpr, p -> {
         PsiExpression initializer = getInitializer(p);
         if (initializer == null) return;
         PsiElement gp = p.getParent();
@@ -43,9 +43,9 @@ public class RemoveAssignmentFix extends ModCommandQuickFix {
     }
 
     PsiExpression initializer = parentExpr.getRExpression();
-    if (initializer == null) return ModCommands.nop();
+    if (initializer == null) return ModCommand.nop();
     PsiElement resolve = resolveExpression(element, parentExpr);
-    if (!(resolve instanceof PsiVariable)) return ModCommands.nop();
+    if (!(resolve instanceof PsiVariable)) return ModCommand.nop();
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(initializer);
     List<ModCommandAction> subActions;
     if (!sideEffects.isEmpty()) {

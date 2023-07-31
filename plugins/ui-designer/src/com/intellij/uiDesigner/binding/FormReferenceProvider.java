@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.uiDesigner.binding;
 
-import com.intellij.modcommand.ModCommands;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.PropertyReferenceBase;
@@ -106,11 +105,11 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     if (typeRangePair != null) {
       final TextRange range = typeRangePair.getSecond();
       if (range != null) {
-        return ModCommands.psiUpdate(file, f -> f.getViewProvider().getDocument()
+        return ModCommand.psiUpdate(file, f -> f.getViewProvider().getDocument()
           .replaceString(range.getStartOffset(), range.getEndOffset(), typeText));
       }
     }
-    return ModCommands.nop();
+    return ModCommand.nop();
   }
 
   private static void processReferences(final PsiPlainTextFile file, final PsiReferenceProcessor processor) {

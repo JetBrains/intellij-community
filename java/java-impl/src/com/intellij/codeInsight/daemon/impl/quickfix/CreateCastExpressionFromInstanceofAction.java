@@ -41,8 +41,8 @@ public class CreateCastExpressionFromInstanceofAction implements ModCommandActio
   @Override
   public @NotNull ModCommand perform(@NotNull ActionContext context) {
     PsiInstanceOfExpression instanceOfExpression = getInstanceOfExpressionAtCaret(context.file(), context.offset());
-    if (instanceOfExpression == null) return ModCommands.nop();
-    return ModCommands.psiUpdate(instanceOfExpression, (expr, updater) -> invoke(context, expr, updater));
+    if (instanceOfExpression == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(instanceOfExpression, (expr, updater) -> invoke(context, expr, updater));
   }
 
   protected void invoke(@NotNull ActionContext context, @NotNull PsiInstanceOfExpression instanceOfExpression, @NotNull ModPsiUpdater updater) {

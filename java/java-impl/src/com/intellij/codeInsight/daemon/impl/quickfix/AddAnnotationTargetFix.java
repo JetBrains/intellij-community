@@ -5,7 +5,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommands;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,8 +29,8 @@ public class AddAnnotationTargetFix extends PsiBasedModCommandAction<PsiAnnotati
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiAnnotation annotation) {
     PsiClass origAnnoType = annotation.resolveAnnotationType();
-    if (origAnnoType == null) return ModCommands.nop();
-    return ModCommands.psiUpdate(origAnnoType, annotationType -> {
+    if (origAnnoType == null) return ModCommand.nop();
+    return ModCommand.psiUpdate(origAnnoType, annotationType -> {
       PsiModifierList modifierList = annotationType.getModifierList();
       if (modifierList == null) return;
       PsiAnnotation targetAnnotation = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
