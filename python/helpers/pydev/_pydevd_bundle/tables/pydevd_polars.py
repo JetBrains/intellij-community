@@ -57,7 +57,7 @@ def get_column_descriptions(table, max_cols, max_colwidth):
 # Polars compute NaN-s in describe. So, we don't need get_value_counts for Polars
 def get_value_counts(table, max_cols, max_colwidth):
     # type: (Union[pl.DataFrame, pl.Series], int, int) -> str
-    return
+    return ""
 
 
 def __get_describe(table):

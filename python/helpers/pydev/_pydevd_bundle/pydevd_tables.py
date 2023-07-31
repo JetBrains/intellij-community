@@ -12,6 +12,7 @@ MAX_COLWIDTH = 200
 class TableCommandType:
     DF_INFO = "DF_INFO"
     SLICE = "SLICE"
+    DESCRIBE = "DF_DESCRIBE"
 
 
 def is_error_on_eval(val):
@@ -44,6 +45,11 @@ def exec_table_command(init_command, command_type, start_index, end_index, f_glo
         res.append(table_provider.get_head(table, MAX_COLS))
         res.append(NEXT_VALUE_SEPARATOR)
         res.append(table_provider.get_column_types(table))
+
+    elif command_type == TableCommandType.DESCRIBE:
+        res.append(table_provider.get_column_descriptions(table, MAX_COLS, MAX_COLWIDTH))
+        res.append(NEXT_VALUE_SEPARATOR)
+        res.append(table_provider.get_value_counts(table, MAX_COLS, MAX_COLWIDTH))
 
     elif command_type == TableCommandType.SLICE:
         res.append(table_provider.get_data(table, MAX_COLS, MAX_COLWIDTH, start_index, end_index))
