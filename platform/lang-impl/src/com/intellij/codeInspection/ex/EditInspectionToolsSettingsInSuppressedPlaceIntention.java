@@ -17,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements IntentionAction {
-  private String myId;
   private String myDisplayName;
 
   @Override
@@ -61,25 +60,26 @@ public class EditInspectionToolsSettingsInSuppressedPlaceIntention implements In
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    myId = getSuppressedId(editor, file);
-    if (myId != null) {
-      InspectionToolWrapper toolWrapper = getTool(project, file);
+    String suppressedId = getSuppressedId(editor, file);
+    if (suppressedId != null) {
+      InspectionToolWrapper toolWrapper = getTool(project, file, suppressedId);
       if (toolWrapper == null) return false;
       myDisplayName = toolWrapper.getDisplayName();
     }
-    return myId != null;
+    return suppressedId != null;
   }
 
   @Nullable
-  private InspectionToolWrapper getTool(final Project project, final PsiFile file) {
+  private static InspectionToolWrapper getTool(final Project project, final PsiFile file, final String suppressId) {
+    if (suppressId == null) return null;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
-    return inspectionProfile.getToolById(myId, file);
+    return inspectionProfile.getToolById(suppressId, file);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    InspectionToolWrapper toolWrapper = getTool(project, file);
+    InspectionToolWrapper toolWrapper = getTool(project, file, getSuppressedId(editor, file));
     if (toolWrapper == null) return;
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     final InspectionProfileImpl inspectionProfile = projectProfileManager.getCurrentProfile();
