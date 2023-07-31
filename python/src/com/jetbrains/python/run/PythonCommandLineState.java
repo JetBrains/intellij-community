@@ -771,9 +771,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                      @Nullable PyRemotePathMapper pathMapper,
                                      boolean isDebug,
                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    Module module = getModule(project, config);
-    buildPythonPath(project, module, pythonScript, config.getSdkHome(), pathMapper, config.isPassParentEnvs(),
-                    config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug, targetEnvironmentRequest);
+    Sdk sdk = config.getSdk();
+    if (sdk != null) {
+      Module module = getModule(project, config);
+      buildPythonPath(project, module, pythonScript, sdk, pathMapper, config.isPassParentEnvs(),
+                      config.shouldAddContentRoots(), config.shouldAddSourceRoots(), isDebug, targetEnvironmentRequest);
+    }
   }
 
   public static void buildPythonPath(@Nullable Module module,
@@ -795,24 +798,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static void buildPythonPath(@NotNull Project project,
                                      @Nullable Module module,
                                      @NotNull PythonExecution pythonScript,
-                                     @Nullable String sdkHome,
+                                     @NotNull Sdk pythonSdk,
                                      @Nullable PyRemotePathMapper pathMapper,
                                      boolean passParentEnvs,
                                      boolean shouldAddContentRoots,
                                      boolean shouldAddSourceRoots,
                                      boolean isDebug,
                                      @NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
-    Sdk pythonSdk = PythonSdkUtil.findSdkByPath(sdkHome);
-    if (pythonSdk != null) {
-      List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
-      var data = pythonSdk.getSdkAdditionalData();
-      if (data != null) {
-        pathList.addAll(TargetedPythonPaths.getAddedPaths(data));
-      }
-      pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, sdkHome, pathMapper,
-                                                            shouldAddContentRoots, shouldAddSourceRoots, isDebug));
-      initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
+    List<Function<TargetEnvironment, String>> pathList = new ArrayList<>();
+    var data = pythonSdk.getSdkAdditionalData();
+    if (data != null) {
+      pathList.addAll(TargetedPythonPaths.getAddedPaths(data));
     }
+    pathList.addAll(TargetedPythonPaths.collectPythonPath(project, module, pythonSdk, pathMapper,
+                                                          shouldAddContentRoots, shouldAddSourceRoots, isDebug));
+    initPythonPath(pythonScript, passParentEnvs, pathList, targetEnvironmentRequest);
   }
 
   /**
