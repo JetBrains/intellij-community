@@ -64,4 +64,7 @@ interface WebSymbolsQueryExecutor : ModificationTracker {
                              scope: List<WebSymbolsScope> = emptyList()): List<WebSymbolCodeCompletionItem>
 
   fun withNameConversionRules(rules: List<WebSymbolNameConversionRules>): WebSymbolsQueryExecutor
+
+  fun hasExclusiveScopeFor(namespace: SymbolNamespace, kind: SymbolKind, scope: List<WebSymbolsScope> = emptyList()) : Boolean
+
 }
