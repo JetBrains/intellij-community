@@ -45,7 +45,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
                                   project: Project) {
     val accountManager = service<GHAccountManager>()
     val accounts = accountManager.accountsState.value
-    if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || !accounts.isEmpty()) {
+    if (!GitSharedSettings.getInstance(project).isSynchronizeBranchProtectionRules || accounts.isEmpty()) {
       runInEdt {
         project.service<GithubProjectSettings>().branchProtectionPatterns = arrayListOf()
       }
