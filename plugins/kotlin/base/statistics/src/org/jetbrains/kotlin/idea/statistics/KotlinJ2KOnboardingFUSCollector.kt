@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfoById
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
@@ -72,6 +73,10 @@ object KotlinJ2KOnboardingFUSCollector : CounterUsagesCollector() {
     }
 
     private fun Project.runEventLogger(runnable: suspend KotlinOnboardingJ2KSessionService.() -> Unit) {
+        if (!StatisticsUploadAssistant.isCollectAllowedOrForced()) {
+            // No statistic collection allowed -> no point running the event logger
+            return
+        }
         val service = serviceOrNull<KotlinOnboardingJ2KSessionService>() ?: return
         // We are currently only interested in Gradle and Maven projects
         if (service.determineBuildSystem() != KotlinJ2KOnboardingBuildSystem.GRADLE &&
@@ -217,7 +222,7 @@ class KotlinOnboardingJ2KSessionService(private val project: Project) : Disposab
             // This (almost) ensures that we have a FIFO behaviour of events.
             sessionMutex.withLock {
                 // Switch back to main context because we do not want to use the main thread
-                withContext(Dispatchers.Main) {
+                withContext(Dispatchers.Default) {
                     runnable()
                 }
             }
