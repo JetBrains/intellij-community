@@ -4,11 +4,11 @@ package com.intellij.feedback.demo
 import com.intellij.feedback.common.dialog.BlockBasedFeedbackDialog
 import com.intellij.feedback.common.dialog.SystemDataJsonSerializable
 import com.intellij.feedback.common.notification.RequestFeedbackNotification
-import com.intellij.feedback.common.openapi.InIdeFeedbackSurveyConfig
 import com.intellij.feedback.demo.bundle.DemoFeedbackBundle
 import com.intellij.feedback.demo.dialog.DemoFeedbackDialog
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
+import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 
