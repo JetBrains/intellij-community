@@ -1176,6 +1176,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
       if (!myHolder.hasErrorResults()) add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
     }
+    if (!myHolder.hasErrorResults()) {
+      if (HighlightingFeature.UNNAMED_CLASSES.isAvailable(myFile) && JavaUnnamedClassUtil.isFileWithUnnamedClass(myFile)) {
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(
+          JavaErrorBundle.message("text.package.statement.not.allowed.for.unnamed.class")));
+      }
+    }
   }
 
   @Override

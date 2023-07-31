@@ -16,7 +16,7 @@ class UnnamedClassHighlightingTest : LightJavaCodeInsightFixtureTestCase() {
     })
   }
 
-  fun testNoMainMethod() {
+  fun testWithPackageStatement() {
     doTest()
   }
 
