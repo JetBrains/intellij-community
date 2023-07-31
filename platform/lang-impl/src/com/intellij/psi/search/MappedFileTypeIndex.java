@@ -38,7 +38,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 256);
 
   /** Use experimental forward-index implementation over fast (mapped) file attributes? */
-  private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE = getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", false);
+  private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE = getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", true);
 
   private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
 
