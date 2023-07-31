@@ -315,9 +315,7 @@ public class PythonTask {
     // give the hint for Docker Compose process starter that this process should be run with `docker-compose run` command
     // (yep, this is hacky)
     commandLine.putUserData(PyRemoteProcessStarter.RUN_AS_AUXILIARY_PROCESS, true);
-    return PyRemoteProcessStarter.startLegacyRemoteProcess(additionalData, commandLine,
-                                                                 myModule.getProject(),
-                                                                 null);
+    return PyRemoteProcessStarter.startLegacyRemoteProcess(additionalData, commandLine, myModule.getProject(), null);
   }
 
 
