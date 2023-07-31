@@ -36,18 +36,18 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   fun `with current job context`() {
-    currentJobTest { job ->
-      assertNotNull(Cancellation.currentJob())
+    blockingContextTest {
+      val job = checkNotNull(Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
 
       runBlockingCancellable {
-        assertJobIsChildOf(job = coroutineContext.job, parent = job)
+        assertJobIsChildOf(coroutineContext.job, job)
         assertNull(currentThreadContextOrNull())
         assertNull(Cancellation.currentJob())
         assertNull(ProgressManager.getGlobalProgressIndicator())
       }
 
-      assertNotNull(Cancellation.currentJob())
+      assertSame(job, Cancellation.currentJob())
       assertNull(ProgressManager.getGlobalProgressIndicator())
     }
   }
@@ -147,7 +147,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   fun `with current job rethrows exceptions`() {
-    currentJobTest {
+    blockingContextTest {
       testRunBlockingCancellableRethrow()
     }
   }
@@ -185,7 +185,7 @@ class RunBlockingCancellableTest : CancellationTest() {
 
   @Test
   fun `with current job child failure`() {
-    currentJobTest {
+    blockingContextTest {
       testRunBlockingCancellableChildFailure()
     }
   }

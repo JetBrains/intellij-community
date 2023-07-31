@@ -30,8 +30,8 @@ class ContextSwitchTest : CancellationTest() {
   }
 
   @Test
-  fun `current job`() {
-    currentJobTest {
+  fun `blocking context`() {
+    blockingContextTest {
       testBlocking {
         testCoroutine {
           testBlocking {}

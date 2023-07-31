@@ -2,9 +2,12 @@
 package com.intellij.openapi.progress
 
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
-import kotlinx.coroutines.Job
+import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.cancel
-import org.junit.jupiter.api.Assertions.*
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
+import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -12,58 +15,59 @@ import org.junit.jupiter.api.assertThrows
 class BlockingContextTest : CancellationTest() {
 
   @Test
-  fun context() {
-    val job = Job()
+  fun context(): Unit = timeoutRunBlocking {
     assertNull(Cancellation.currentJob())
-    blockingContext(job) {
+    val job = coroutineContext.job
+    blockingContext {
       assertSame(job, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
-    assertFalse(job.isCompleted)
   }
 
   @Test
-  fun cancellation() {
-    val t = object : Throwable() {}
-    val ce = assertThrows<CurrentJobCancellationException> {
-      val job = Job()
-      blockingContext(job) {
-        testNoExceptions()
-        job.cancel("", t)
-        testExceptionsAndNonCancellableSection()
+  fun cancellation(): Unit = timeoutRunBlocking {
+    launch {
+      val t = object : Throwable() {}
+      val ce = assertThrows<CurrentJobCancellationException> {
+        blockingContext {
+          testNoExceptions()
+          this@launch.cancel("", t)
+          testExceptionsAndNonCancellableSection()
+        }
       }
+      //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
+      @Suppress("AssertBetweenInconvertibleTypes")
+      assertSame(t, ce.cause.cause?.cause)
     }
-    //suppressed until this one is fixed: https://youtrack.jetbrains.com/issue/KT-52379
-    @Suppress("AssertBetweenInconvertibleTypes")
-    assertSame(t, ce.cause.cause.cause)
   }
 
   @Test
-  fun `checkCancelledEvenWithPCEDisabled checks job`() {
-    val job = Job()
-    blockingContext(job) {
-      assertDoesNotThrow {
-        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
-      }
-      job.cancel()
-      assertThrows<JobCanceledException> {
-        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
-      }
-      Cancellation.computeInNonCancelableSection<Unit, Exception> {
+  fun `checkCancelledEvenWithPCEDisabled checks job`(): Unit = timeoutRunBlocking {
+    launch {
+      blockingContext {
         assertDoesNotThrow {
           ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
         }
-      }
-      assertThrows<JobCanceledException> {
-        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
-      }
-      ProgressManager.getInstance().computeInNonCancelableSection<Unit, Exception> {
-        assertDoesNotThrow {
+        this@launch.cancel()
+        assertThrows<JobCanceledException> {
           ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
         }
-      }
-      assertThrows<JobCanceledException> {
-        ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+        Cancellation.computeInNonCancelableSection<Unit, Exception> {
+          assertDoesNotThrow {
+            ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+          }
+        }
+        assertThrows<JobCanceledException> {
+          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+        }
+        ProgressManager.getInstance().computeInNonCancelableSection<Unit, Exception> {
+          assertDoesNotThrow {
+            ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+          }
+        }
+        assertThrows<JobCanceledException> {
+          ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(null)
+        }
       }
     }
   }

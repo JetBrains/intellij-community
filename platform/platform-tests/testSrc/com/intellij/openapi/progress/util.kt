@@ -112,16 +112,6 @@ fun loggedError(canThrow: Semaphore): Throwable {
   return throwable
 }
 
-fun currentJobTest(test: (Job) -> Unit) {
-  val job = Job()
-  blockingContext(job) {
-    test(job)
-  }
-  assertTrue(job.isActive)
-  assertFalse(job.isCompleted)
-  assertFalse(job.isCancelled)
-}
-
 fun blockingContextTest(test: () -> Unit) {
   timeoutRunBlocking {
     blockingContext(test)

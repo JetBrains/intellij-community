@@ -59,7 +59,7 @@ class ExistingThreadContextTest : CancellationTest() {
 
   @Test
   fun rethrow() {
-    currentJobTest {
+    blockingContextTest {
       testPrepareThreadContextRethrow()
     }
   }
