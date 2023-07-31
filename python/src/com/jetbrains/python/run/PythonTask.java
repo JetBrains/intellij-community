@@ -107,16 +107,10 @@ public class PythonTask {
   public static PythonTask create(@NotNull final Module module,
                                   @Nls @NotNull final String runTabTitle,
                                   @NotNull final Sdk sdk) {
-    // Ctor throws checked exception which is not good, so this wrapper saves user from dumb code
-    try {
-      return new PythonTask(module, runTabTitle, sdk);
-    }
-    catch (final ExecutionException ignored) {
-      throw new AssertionError("Exception thrown file should not be");
-    }
+    return new PythonTask(module, runTabTitle, sdk);
   }
 
-  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull Sdk sdk) throws ExecutionException {
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull Sdk sdk) {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
