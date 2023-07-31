@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide
@@ -199,7 +199,13 @@ private class ProjectFileIcon(
       delegate = cachedIcon
     }
     else {
-      delegate = iconData.getScaledIcon(sysScale)
+      delegate = try {
+        iconData.getScaledIcon(sysScale)
+      }
+      catch (e: Throwable) {
+        logger<IconData>().warn("Cannot render $iconData", e)
+        EmptyIcon.create(iconData.userScaledSize)
+      }
       this.cachedIcon = delegate
       cachedIconSysScale = sysScale
       cachedIconPixScale = pixScale
@@ -231,7 +237,7 @@ private fun loadIconFile(file: Path): IconData {
   }
 }
 
-private sealed class IconData(protected val userScaledSize: Int) {
+private sealed class IconData(@JvmField val userScaledSize: Int) {
   abstract fun getScaledIcon(sysScale: Float): Icon
 }
 
@@ -239,6 +245,8 @@ private class SvgIconData(private val file: Path, userScaledSize: Int) : IconDat
   override fun getScaledIcon(sysScale: Float): Icon {
     return JBImageIcon(loadWithSizes(sizes = listOf(unscaledProjectIconSize()), data = Files.readAllBytes(file), scale = sysScale).first())
   }
+
+  override fun toString() = "SvgIconData(file=$file)"
 }
 
 private class PngIconData(private val sourceImage: BufferedImage, userScaledSize: Int) : IconData(userScaledSize) {
