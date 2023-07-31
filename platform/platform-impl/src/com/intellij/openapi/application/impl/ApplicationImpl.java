@@ -122,7 +122,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
           CoroutineScopeKt.namedChildScope(GlobalScope.INSTANCE, ApplicationImpl.class.getName(), EmptyCoroutineContext.INSTANCE, true),
           true);
 
-    myLock = IdeEventQueue.getInstance().rwLockHolder.lock;
+    myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
     registerFakeServices(this);
 
@@ -918,12 +918,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean acquireWriteIntentLock(@Nullable String ignored) {
-    return IdeEventQueue.getInstance().rwLockHolder.acquireWriteIntentLock(ignored);
+    return IdeEventQueue.getInstance().getRwLockHolder().acquireWriteIntentLock(ignored);
   }
 
   @Override
   public void releaseWriteIntentLock() {
-    IdeEventQueue.getInstance().rwLockHolder.releaseWriteIntentLock();
+    IdeEventQueue.getInstance().getRwLockHolder().releaseWriteIntentLock();
   }
 
   @Override
@@ -1003,7 +1003,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public <T, E extends Throwable> T runWriteIntentReadAction(@NotNull ThrowableComputable<T, E> computation) throws E {
-    return IdeEventQueue.getInstance().rwLockHolder.runWriteIntentReadAction(computation);
+    return IdeEventQueue.getInstance().getRwLockHolder().runWriteIntentReadAction(computation);
   }
 
   @Override
@@ -1449,7 +1449,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @ApiStatus.Internal
   public static void postInit(@NotNull ApplicationImpl app) {
-    app.myLock = IdeEventQueue.getInstance().rwLockHolder.lock;
+    app.myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
 
     AtomicBoolean reported = new AtomicBoolean();
     IdeEventQueue.getInstance().addPostprocessor(e -> {

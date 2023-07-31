@@ -5,7 +5,7 @@ import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-internal class RwLockHolder(writeThread: Thread) {
+class RwLockHolder(writeThread: Thread) {
   @JvmField
   internal val lock: ReadMostlyRWLock = ReadMostlyRWLock(writeThread)
 

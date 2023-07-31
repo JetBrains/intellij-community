@@ -49,6 +49,7 @@ import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -74,8 +75,8 @@ class IdeEventQueue private constructor() : EventQueue() {
   private val lock = Any()
   private val activityListeners = ContainerUtil.createLockFreeCopyOnWriteList<Runnable>()
 
-  @JvmField
-  internal val rwLockHolder: RwLockHolder = RwLockHolder(Thread.currentThread())
+  @ApiStatus.Internal
+  val rwLockHolder: RwLockHolder = RwLockHolder(Thread.currentThread())
   val keyEventDispatcher: IdeKeyEventDispatcher = IdeKeyEventDispatcher(this)
   val mouseEventDispatcher: IdeMouseEventDispatcher = IdeMouseEventDispatcher()
   val popupManager: IdePopupManager = IdePopupManager()
