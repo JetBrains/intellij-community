@@ -10,6 +10,7 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -175,7 +176,7 @@ enum class ProjectOpenAction {
 
             val checkerService = KotlinConfigurationCheckerService.getInstance(project)
             val writeActionContinuations = mutableListOf<() -> Unit>()
-            for (module in getModulesWithKotlinFiles(project)) {
+            for (module in runBlockingCancellable { getModulesWithKotlinFiles(project) }) {
                 checkerService.getAndCacheLanguageLevelByDependencies(module, writeActionContinuations)
             }
             if (writeActionContinuations.isNotEmpty()) {

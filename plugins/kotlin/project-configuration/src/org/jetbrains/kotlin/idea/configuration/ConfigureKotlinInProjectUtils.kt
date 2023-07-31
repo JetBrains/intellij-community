@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.externalSystem.JavaModuleData
-import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleGrouper
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
@@ -48,7 +49,6 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.base.util.projectScope
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinNotConfiguredSuppressedModulesState
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
@@ -145,20 +145,14 @@ fun isModuleConfigured(moduleSourceRootGroup: ModuleSourceRootGroup): Boolean {
  * DO NOT CALL THIS ON AWT THREAD
  */
 @RequiresBackgroundThread
-fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
+suspend fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Module>? = null): Collection<Module> {
     if (!isUnitTestMode() && isDispatchThread()) {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
-    fun <T> nonBlockingReadActionSync(block: () -> T): T {
-        return ReadAction.nonBlocking(block)
-            .expireWith(KotlinPluginDisposable.getInstance(project))
-            .executeSynchronously()
-    }
-
     val projectScope = project.projectScope()
     // nothing to configure if there is no Kotlin files in entire project
-    val anyKotlinFileInProject = nonBlockingReadActionSync {
+    val anyKotlinFileInProject = readAction {
         FileTypeIndex.containsFileOfType(KotlinFileType.INSTANCE, projectScope)
     }
     if (!anyKotlinFileInProject) {
@@ -169,7 +163,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
     val modules =
         if (modulesWithKotlinFacets.isNullOrEmpty()) {
-            nonBlockingReadActionSync {
+            readAction {
                 val kotlinFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, projectScope)
                 kotlinFiles.mapNotNullTo(mutableSetOf()) { ktFile: VirtualFile ->
                     if (projectFileIndex.isInSourceContent(ktFile)) {
@@ -180,7 +174,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
 
         } else {
             // filter modules with Kotlin facet AND have at least a single Kotlin file in them
-            nonBlockingReadActionSync {
+            readAction {
                 modulesWithKotlinFacets.filterTo(mutableSetOf()) { module ->
                     if (module.isDisposed) return@filterTo false
 
@@ -196,7 +190,7 @@ fun getModulesWithKotlinFiles(project: Project, modulesWithKotlinFacets: List<Mo
  * Note that this method is expensive and should not be called more often than strictly necessary.
  */
 fun getConfigurableModulesWithKotlinFiles(project: Project): List<ModuleSourceRootGroup> {
-    val modules = getModulesWithKotlinFiles(project)
+    val modules = runBlockingMaybeCancellable { getModulesWithKotlinFiles(project) }
     if (modules.isEmpty()) return emptyList()
 
     return ModuleSourceRootMap(project).groupByBaseModules(modules)
