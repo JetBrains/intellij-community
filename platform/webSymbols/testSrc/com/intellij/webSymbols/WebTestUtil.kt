@@ -98,8 +98,7 @@ fun CodeInsightTestFixture.checkLookupItems(
   locations: List<String> = emptyList(),
   fileName: String = InjectedLanguageManager.getInstance(project).getTopLevelFile(file).virtualFile.nameWithoutExtension,
   expectedDataLocation: String = "",
-  renderedItemFilter: (item: String) -> Boolean = { true },
-  lookupItemFilter: (item: LookupElement) -> Boolean = { true },
+  lookupItemFilter: (item: LookupElementInfo) -> Boolean = { true },
 ) {
   val hasDir = expectedDataLocation.isNotEmpty()
 
@@ -125,8 +124,7 @@ fun CodeInsightTestFixture.checkLookupItems(
     if (locations.isEmpty()) {
       completeBasic()
       checkListByFile(
-        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter)
-          .filter(renderedItemFilter),
+        renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter),
         expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".txt",
         containsCheck
       )
@@ -137,8 +135,7 @@ fun CodeInsightTestFixture.checkLookupItems(
         moveToOffsetBySignature(location)
         completeBasic()
         checkListByFile(
-          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter)
-            .filter(renderedItemFilter),
+          renderLookupItems(renderPriority, renderTypeText, renderTailText, renderProximity, renderPresentedText, lookupItemFilter),
           expectedDataLocation + (if (hasDir) "/items" else "$fileName.items") + ".${index + 1}.txt",
           containsCheck
         )
@@ -147,6 +144,21 @@ fun CodeInsightTestFixture.checkLookupItems(
     }
   }
 }
+
+data class LookupElementInfo(
+  val lookupElement: LookupElement,
+  val lookupString: String,
+  val itemText: String?,
+  val tailText: String?,
+  val typeText: String?,
+  val priority: Double,
+  val proximity: Int?,
+  val isStrikeout: Boolean,
+  val isItemTextBold: Boolean,
+  val isItemTextItalic: Boolean,
+  val isItemTextUnderline: Boolean,
+  val isTypeGreyed: Boolean,
+)
 
 private fun CodeInsightTestFixture.checkDocumentation(actualDocumentation: String?,
                                                       fileSuffix: String = ".expected",
@@ -181,45 +193,54 @@ fun CodeInsightTestFixture.renderLookupItems(renderPriority: Boolean,
                                              renderTailText: Boolean = false,
                                              renderProximity: Boolean = false,
                                              renderPresentedText: Boolean = false,
-                                             lookupFilter: (item: LookupElement) -> Boolean = { true }): List<String> =
-  lookupElements?.asSequence()?.filter(lookupFilter)
-    ?.mapNotNull { el ->
+                                             lookupFilter: (item: LookupElementInfo) -> Boolean = { true }): List<String> =
+  lookupElements?.asSequence()
+    ?.map {
+      val presentation = TestLookupElementPresentation.renderReal(it)
+      LookupElementInfo(it, it.lookupString, presentation.itemText, presentation.tailText,
+                        presentation.typeText, (it as? PrioritizedLookupElement<*>)?.priority?: 0.0,
+                        (it as? PrioritizedLookupElement<*>)?.explicitProximity,
+                        presentation.isStrikeout, presentation.isItemTextBold,
+                        presentation.isItemTextItalic, presentation.isItemTextUnderlined,
+                        presentation.isTypeGrayed)
+    }
+    ?.filter(lookupFilter)
+    ?.map { el ->
       val result = StringBuilder()
-      val presentation = TestLookupElementPresentation.renderReal(el)
-      if (renderPriority && presentation.isItemTextBold) {
+      if (renderPriority && el.isItemTextBold) {
         result.append('!')
       }
-      if (renderPriority && presentation.isStrikeout) {
+      if (renderPriority && el.isStrikeout) {
         result.append('~')
       }
       result.append(el.lookupString)
       if (renderPresentedText) {
         result.append('[')
-        result.append(presentation.itemText)
+        result.append(el.itemText)
         result.append(']')
       }
       if (renderTailText) {
         result.append('%')
-        result.append(presentation.tailText)
+        result.append(el.tailText)
       }
       if (renderTypeText) {
         result.append('#')
-        result.append(presentation.typeText)
+        result.append(el.typeText)
       }
       if (renderPriority) {
         result.append('#')
-          .append(((el as? PrioritizedLookupElement<*>)?.priority ?: 0.0).toInt())
+          .append(el.priority.toInt())
       }
       if (renderProximity) {
         result.append("+")
-          .append((el as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0)
+          .append(el.proximity ?: 0)
       }
       Pair(el, result.toString())
     }
     ?.sortedWith(
-      Comparator.comparing { it: Pair<LookupElement, String> -> -((it.first as? PrioritizedLookupElement<*>)?.priority ?: 0.0) }
-        .thenComparingInt { -((it.first as? PrioritizedLookupElement<*>)?.explicitProximity ?: 0) }
-        .thenComparing { it: Pair<LookupElement, String> -> it.first.lookupString })
+      Comparator.comparing { it: Pair<LookupElementInfo, String> -> -(it.first.priority ?: 0.0) }
+        .thenComparingInt { -(it.first.proximity ?: 0) }
+        .thenComparing { it: Pair<LookupElementInfo, String> -> it.first.lookupString })
     ?.map { it.second }
     ?.toList()
   ?: emptyList()
