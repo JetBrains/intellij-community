@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -762,9 +763,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     myTypes.addAll(enableByDefaultTypes);
     if (!myTypes.isEmpty()) {
       loadHiddenConfigurations();
-      syncConfigurations();
-      initServiceContentListeners();
-      updateDashboard(true);
+      initTypes();
     }
   }
 
@@ -784,13 +783,22 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
     }
   }
 
+  private void initTypes() {
+    syncConfigurations();
+    initServiceContentListeners();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      if (!myProject.isDisposed()) {
+        updateDashboard(true);
+      }
+    });
+  }
+
   @Override
   public void noStateLoaded() {
     myTypes.clear();
     myTypes.addAll(getEnableByDefaultTypes());
     if (!myTypes.isEmpty()) {
-      syncConfigurations();
-      initServiceContentListeners();
+      initTypes();
     }
   }
 
