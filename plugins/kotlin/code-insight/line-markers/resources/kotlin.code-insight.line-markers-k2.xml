@@ -17,6 +17,7 @@
     <codeInsight.lineMarkerProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinLineMarkerProvider"/>
+    <gotoTargetPresentationProvider implementation="org.jetbrains.kotlin.idea.codeInsight.lineMarkers.KotlinGotoTargetPresentationProvider"/>
 
     <codeInsight.lineMarkerProvider
             language="kotlin"
