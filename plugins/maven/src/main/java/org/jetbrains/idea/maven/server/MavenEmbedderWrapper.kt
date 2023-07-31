@@ -22,6 +22,7 @@ import java.io.File
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
+import kotlin.collections.ArrayList
 
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>(null) {
@@ -82,7 +83,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
 
   @Throws(MavenProcessCanceledException::class)
   fun evaluateEffectivePom(file: VirtualFile, activeProfiles: Collection<String>, inactiveProfiles: Collection<String>): String? {
-    return evaluateEffectivePom(File(file.getPath()), activeProfiles, inactiveProfiles)
+    return evaluateEffectivePom(File(file.getPath()), ArrayList(activeProfiles), ArrayList(inactiveProfiles))
   }
 
   @Throws(MavenProcessCanceledException::class)
@@ -95,7 +96,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Deprecated("use {@link MavenEmbedderWrapper#resolveArtifacts()}")
   @Throws(MavenProcessCanceledException::class)
   fun resolve(info: MavenArtifactInfo, remoteRepositories: List<MavenRemoteRepository>): MavenArtifact {
-    val requests = listOf(MavenArtifactResolutionRequest(info, remoteRepositories))
+    val requests = listOf(MavenArtifactResolutionRequest(info, ArrayList(remoteRepositories)))
     return resolveArtifacts(requests, null, null, null)[0]
   }
 
@@ -105,7 +106,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                        syncConsole: MavenSyncConsole?,
                        console: MavenConsole?): List<MavenArtifact> {
     return runLongRunningTaskBlocking(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, requests, ourToken) },
+      LongRunningEmbedderTask { embedder, taskId -> embedder.resolveArtifacts(taskId, ArrayList(requests), ourToken) },
       indicator, syncConsole, console)
   }
 
@@ -113,7 +114,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolveTransitively(artifacts: List<MavenArtifactInfo>, remoteRepositories: List<MavenRemoteRepository>): List<MavenArtifact> {
     return performCancelable<MavenArtifactResolveResult, RuntimeException> {
-      getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)
+      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), remoteRepositories, ourToken)
     }.mavenResolvedArtifacts
   }
 
@@ -121,7 +122,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   fun resolveArtifactTransitively(artifacts: List<MavenArtifactInfo>,
                                   remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
     return performCancelable<MavenArtifactResolveResult, RuntimeException> {
-      getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)
+      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), remoteRepositories, ourToken)
     }
   }
 
