@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.ProjectScope
+import com.intellij.testFramework.assertEqualsToFile
 import com.intellij.testFramework.runInEdtAndGet
 import org.jetbrains.kotlin.gradle.multiplatformTests.KotlinMppTestsContext
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
@@ -40,7 +41,9 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
     private const val EXPECTED_TEST_DATA = "expected-doc.txt"
     private const val CARET_PLACEHOLDER = "<caret:doc>"
     private val docCaret = Regex(CARET_PLACEHOLDER)
-    private val carets = mutableListOf<Triple<Path, Int, Int>>() //file - line - offset
+
+    private data class CaretPosition(val file: Path, val line: Int, val offset: Int)
+    private val carets = mutableListOf<CaretPosition>()
 
     override fun createDefaultConfiguration() = DocumentationCheckerConfig()
 
@@ -58,7 +61,7 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
                 .map { it.range }
                 .forEachIndexed { rangeIndex, range ->
                     val offset = range.first - rangeIndex * CARET_PLACEHOLDER.length
-                    carets.add(Triple(origin.toPath(), lineIndex, offset))
+                    carets.add(CaretPosition(origin.toPath(), lineIndex, offset))
                 }
             lineText.replace(CARET_PLACEHOLDER, "")
         }.joinToString("\n")
@@ -70,14 +73,19 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
             val allSourceFiles = FileTypeIndex.getFiles(KotlinFileType.INSTANCE, ProjectScope.getProjectScope(testProject))
             carets.map { (path, line, offset) ->
                 val relativePath = path.relativeTo(testDataDirectory.toPath())
-                val virtualFile = allSourceFiles.single { f -> f.toNioPath().relativeTo(testProjectRoot.toPath()) == relativePath }
+                val virtualFile = allSourceFiles.singleOrNull { f ->
+                    f.toNioPath().relativeTo(testProjectRoot.toPath()) == relativePath
+                } ?: error("expected file '$relativePath' is not found in the imported project")
                 codeInsightTestFixture.configureFromExistingVirtualFile(virtualFile)
                 codeInsightTestFixture.editor.caretModel.moveToLogicalPosition(LogicalPosition(line, offset))
 
-                val caretElement = codeInsightTestFixture.file.findElementAt(codeInsightTestFixture.caretOffset) ?: error("element at caret is not found")
-                val referenceExpression = caretElement.parent as? KtNameReferenceExpression ?: error("caret is expected at reference expression")
+                val caretElement = codeInsightTestFixture.file.findElementAt(codeInsightTestFixture.caretOffset)
+                    ?: error("element at caret is not found in the file '$relativePath'[$line:$offset]")
+                val referenceExpression = caretElement.parent as? KtNameReferenceExpression
+                    ?: error("caret is expected at reference expression")
                 val element = referenceExpression.mainReference.resolve() as KtElement
-                val navigationElement = element.navigationElement as? KtDeclaration ?: error("documentation can be only on KtDeclaration")
+                val navigationElement = element.navigationElement as? KtDeclaration
+                    ?: error("documentation can be only on KtDeclaration")
                 val docText = navigationElement.findKDoc()?.contentTag?.getContent()
                 return@map """
                     |$relativePath:$line:$offset
@@ -85,7 +93,6 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
                 """.trimMargin()
             }.joinToString("\n\n")
         }
-        val expectedResult = testDataDirectory.resolve(EXPECTED_TEST_DATA).takeIf { it.exists() }?.readText().orEmpty()
-        assertEquals(expectedResult, actualResult)
+        assertEqualsToFile("Documentation content", testDataDirectory.resolve(EXPECTED_TEST_DATA), actualResult)
     }
 }
