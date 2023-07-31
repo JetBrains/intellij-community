@@ -43,6 +43,11 @@ public class IrBreakpointHighlightingTestGenerated extends AbstractIrBreakpointH
         runTest("testData/highlighting/inlineOnlyFunctions.kt");
     }
 
+    @TestMetadata("lambdas.kt")
+    public void testLambdas() throws Exception {
+        runTest("testData/highlighting/lambdas.kt");
+    }
+
     @TestMetadata("lambdasOnSameLine.kt")
     public void testLambdasOnSameLine() throws Exception {
         runTest("testData/highlighting/lambdasOnSameLine.kt");
