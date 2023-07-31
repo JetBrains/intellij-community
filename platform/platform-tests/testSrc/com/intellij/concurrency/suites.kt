@@ -15,7 +15,7 @@ import org.junit.platform.suite.api.Suite
 
   // contexts
   ContextSwitchTest::class,
-  CurrentJobTest::class,
+  BlockingContextTest::class,
   ExistingThreadContextTest::class,
   IndicatorThreadContextTest::class,
   RunBlockingCancellableTest::class,
