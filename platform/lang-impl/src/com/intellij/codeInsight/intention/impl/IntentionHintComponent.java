@@ -237,22 +237,32 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       showPopup(findPositionForBulbButton());
       return;
     }
-    CodeFloatingToolbar toolbar = CodeFloatingToolbar.getToolbar(myEditor);
-    if (toolbar != null && myEditor.getSelectionModel().hasSelection()) {
-      if (toolbar.isShown()) {
-        showPopupFromToolbar(toolbar);
-      } else {
-        toolbar.show(() -> showPopupFromToolbar(toolbar));
-      }
+    CodeFloatingToolbar toolbar = getFloatingToolbar();
+    if (toolbar != null) {
+      showPopupFromToolbar(toolbar);
       return;
     }
     showPopup(null);
   }
 
   private void showPopupFromToolbar(CodeFloatingToolbar toolbar) {
+    if (toolbar.isShown()) {
+      showPopupFromVisibleToolbar(toolbar);
+    } else {
+      toolbar.show(() -> showPopupFromVisibleToolbar(toolbar));
+    }
+  }
+
+  private void showPopupFromVisibleToolbar(@NotNull CodeFloatingToolbar toolbar) {
     RelativePoint position = findPositionForToolbarButton(toolbar);
     adjustVerticalOverlapping(position);
     showPopup(position);
+  }
+
+  private @Nullable CodeFloatingToolbar getFloatingToolbar() {
+    if (!Registry.get("floating.codeToolbar.showIntentionsUnderPopup").asBoolean()) return null;
+    if (!myEditor.getSelectionModel().hasSelection()) return null;
+    return CodeFloatingToolbar.getToolbar(myEditor);
   }
 
   private void adjustVerticalOverlapping(@Nullable RelativePoint position) {
