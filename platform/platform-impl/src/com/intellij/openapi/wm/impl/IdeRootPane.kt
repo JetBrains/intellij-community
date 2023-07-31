@@ -266,7 +266,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
     internal val hideNativeLinuxTitle: Boolean
       get() = hideNativeLinuxTitleAvailable
               && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
+              && hideNativeLinuxTitleSupported
+
+    internal val hideNativeLinuxTitleSupported: Boolean
+      get() = SystemInfoRt.isXWindow
+              && ExperimentalUI.isNewUI()
               && jbr5777Workaround() && JBR.isWindowMoveSupported()
+              && !X11UiUtil.isWSL()
+              && !X11UiUtil.isTileWM()
 
     internal val hideNativeLinuxTitleAvailable: Boolean
       get() = SystemInfoRt.isXWindow

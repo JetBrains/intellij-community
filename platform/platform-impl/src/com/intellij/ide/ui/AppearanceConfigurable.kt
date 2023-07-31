@@ -54,7 +54,6 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.JBR
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.RenderingHints
@@ -345,7 +344,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                       checkBox.enabled(false)
                       contextHelp(message("option.is.overridden.by.jvm.property", UISettings.MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY))
                     }
-                    if (SystemInfoRt.isXWindow && !(IdeRootPane.jbr5777Workaround() && JBR.isWindowMoveSupported())) {
+                    if (SystemInfoRt.isXWindow && !IdeRootPane.hideNativeLinuxTitleSupported) {
                       checkBox.enabled(false)
                       checkBox.comment(message("checkbox.merge.main.menu.with.window.not.supported.comment"), 30)
                     } else {

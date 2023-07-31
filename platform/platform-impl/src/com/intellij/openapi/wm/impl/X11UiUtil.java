@@ -19,6 +19,8 @@ import java.awt.peer.ComponentPeer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
@@ -34,6 +36,26 @@ public final class X11UiUtil {
   private static final long EVENT_MASK = (3L << 19);
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
+
+  /**
+   * List of all known tile WM, can be updated later
+   */
+  private static final Set<String> TILE_WM = Set.of(
+    "awesome",
+    "bspwm",
+    "dwm",
+    "frankenwm",
+    "herbstluftwm",
+    "i3",
+    "leftwm",
+    "notion",
+    "qtile",
+    "ratpoison",
+    "snapwm",
+    "spectrwm",
+    "stumpwm",
+    "xmonad"
+  );
 
   @SuppressWarnings("SpellCheckingInspection")
   private static class Xlib {
@@ -241,6 +263,15 @@ public final class X11UiUtil {
 
   public static boolean isInFullScreenMode(JFrame frame) {
     return X11 != null && hasWindowProperty(frame, X11.NET_WM_STATE, X11.NET_WM_STATE_FULLSCREEN);
+  }
+
+  public static boolean isWSL() {
+    return SystemInfoRt.isXWindow && System.getenv("WSL_DISTRO_NAME") != null;
+  }
+
+  public static boolean isTileWM() {
+    String desktop = System.getenv("XDG_CURRENT_DESKTOP");
+    return SystemInfoRt.isXWindow && desktop != null && TILE_WM.contains(desktop.toLowerCase(Locale.ENGLISH));
   }
 
   private static boolean hasWindowProperty(JFrame frame, long name, long expected) {
