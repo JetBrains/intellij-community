@@ -76,7 +76,7 @@ public class PythonTask {
   private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   private static final int TIMEOUT_TO_WAIT_FOR_TASK = 30000;
   protected final @NotNull Module myModule;
-  private final Sdk mySdk;
+  private final @NotNull Sdk mySdk;
   private String myWorkingDirectory;
   private String myRunnerScript;
   private HelperPackage myHelper = null;
@@ -92,7 +92,15 @@ public class PythonTask {
   private Runnable myAfterCompletion;
 
   public PythonTask(@NotNull Module module, @TabTitle String runTabTitle) throws ExecutionException {
-    this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
+    this(module, runTabTitle, requirePythonSdk(module));
+  }
+
+  protected static @NotNull Sdk requirePythonSdk(@Nullable Module module) throws ExecutionException {
+    Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+    if (sdk == null) {
+      throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
+    }
+    return sdk;
   }
 
   @NotNull
@@ -108,13 +116,10 @@ public class PythonTask {
     }
   }
 
-  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull Sdk sdk) throws ExecutionException {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
-    if (mySdk == null) { // TODO: Get rid of such a weird contract
-      throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
-    }
   }
 
   public String getWorkingDirectory() {
@@ -194,10 +199,8 @@ public class PythonTask {
    */
   @NotNull
   private ProcessHandler executeTargetBasedProcess(@NotNull PyTargetAwareAdditionalData data) throws ExecutionException {
-    var sdk = mySdk;
     var helper = myHelper;
     var script = myRunnerScript;
-    assert sdk != null : "No sdk set";
     assert (helper == null) != (script == null) : "Either script or helper must be set but not both";
     PythonScriptExecution execution;
     TargetEnvironmentRequest request;
@@ -205,7 +208,7 @@ public class PythonTask {
     var uploadedPaths = new HashMap<@NotNull Path, @NotNull Function<TargetEnvironment, String>>();
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
-      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, myModule.getProject());
+      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
       assert helpersAwareRequest != null : data.getClass() + " is not supported";
       execution = PythonScripts.prepareHelperScriptExecution(helper, helpersAwareRequest);
       request = helpersAwareRequest.getTargetEnvironmentRequest();
@@ -240,7 +243,7 @@ public class PythonTask {
       execution.setWorkingDir(addDirToUploadList(request, uploadedPaths, workDir));
     }
     TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
-    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, sdk, new ArrayList<>());
+    var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, mySdk, new ArrayList<>());
 
     for (var volume : environment.getUploadVolumes().values()) {
       try {
