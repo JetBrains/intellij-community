@@ -40,4 +40,13 @@ class X {
   void nested() {
     System.out.println(STR."\{STR."\{STR."\{STR."\{STR."\{STR."\{STR.""}"}"}"}"}"}");
   }
+
+  String badEscape() {
+    System.out.println(STR."b<error descr="Illegal escape character in string literal">\a</error>d \{} esc<error descr="Illegal escape character in string literal">\a</error>pe 1");
+    System.out.println(STR. """
+      b<error descr="Illegal escape character in string literal">\a</error>d \{} esc<error descr="Illegal escape character in string literal">\a</error>pe 2
+      """);
+    System.out.println(STR."\{<error descr="Illegal line end in string literal">}unclosed);</error>
+    return STR."\{} <error descr="Illegal Unicode escape sequence">\u</error>X";
+  }
 }
