@@ -122,6 +122,12 @@ fun currentJobTest(test: (Job) -> Unit) {
   assertFalse(job.isCancelled)
 }
 
+fun blockingContextTest(test: () -> Unit) {
+  timeoutRunBlocking {
+    blockingContext(test)
+  }
+}
+
 fun indicatorTest(test: (ProgressIndicator) -> Unit) {
   val indicator = EmptyProgressIndicator()
   withIndicator(indicator) {
