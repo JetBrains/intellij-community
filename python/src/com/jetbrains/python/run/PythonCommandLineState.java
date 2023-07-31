@@ -29,7 +29,6 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -92,8 +91,6 @@ import java.util.function.Function;
  * @author traff, Leonid Shalupov
  */
 public abstract class PythonCommandLineState extends CommandLineState {
-  private final static Logger LOG = Logger.getInstance(PythonCommandLineState.class);
-
   // command line has a number of fixed groups of parameters; patchers should only operate on them and not the raw list.
 
   public static final String GROUP_EXE_OPTIONS = "Exe Options";
