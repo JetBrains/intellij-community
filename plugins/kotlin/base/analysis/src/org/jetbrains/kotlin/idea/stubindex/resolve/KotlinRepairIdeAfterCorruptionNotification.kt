@@ -13,29 +13,29 @@ import org.jetbrains.kotlin.idea.base.analysis.KotlinBaseAnalysisBundle
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class KotlinRepairIdeAfterCorruptionNotification(private val project: Project) : KotlinCorruptedIndexListener {
-  private val pendingNotificationFlag = AtomicBoolean(false)
+    private val pendingNotificationFlag = AtomicBoolean(false)
 
-  override fun corruptionDetected() {
-    if (pendingNotificationFlag.get()) return
+    override fun corruptionDetected() {
+        if (pendingNotificationFlag.get()) return
 
-    val notification = NotificationGroupManager.getInstance()
-      .getNotificationGroup("Recover Kotlin Indices")
-      .createNotification(KotlinBaseAnalysisBundle.message("kotlin.indices.corrupted"), NotificationType.ERROR)
-      .setSuggestionType(true)
-      .setImportantSuggestion(true)
-      .addAction(createSimpleExpiring(ActionsBundle.message("action.CallSaul.text"), KotlinRepairIdeAction(project)))
+        val notification = NotificationGroupManager.getInstance()
+            .getNotificationGroup("Recover Kotlin Indices")
+            .createNotification(KotlinBaseAnalysisBundle.message("kotlin.indices.corrupted"), NotificationType.ERROR)
+            .setSuggestionType(true)
+            .setImportantSuggestion(true)
+            .addAction(createSimpleExpiring(ActionsBundle.message("action.CallSaul.text"), KotlinRepairIdeAction(project)))
 
-    notification.whenExpired {
-      pendingNotificationFlag.set(false)
+        notification.whenExpired {
+            pendingNotificationFlag.set(false)
+        }
+
+        pendingNotificationFlag.set(true)
+        notification.notify(project)
     }
-
-    pendingNotificationFlag.set(true)
-    notification.notify(project)
-  }
 }
 
 private class KotlinRepairIdeAction(private val project: Project) : Runnable {
-  override fun run() {
-    project.service<Saul>().sortThingsOut(ProjectRecoveryScope(project))
-  }
+    override fun run() {
+        project.service<Saul>().sortThingsOut(ProjectRecoveryScope(project))
+    }
 }
