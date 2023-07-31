@@ -298,6 +298,12 @@ class BuildOptions(
     SystemProperties.getBooleanProperty(INCREMENTAL_COMPILATION_FALLBACK_REBUILD_PROPERTY, true)
 
   /**
+   * Full rebuild will be triggered if this timeout is exceeded for incremental compilation
+   */
+  val incrementalCompilationTimeout: Long = SystemProperties.getLongProperty("intellij.build.incremental.compilation.timeoutMin",
+                                                                             Long.MAX_VALUE)
+
+  /**
    * Build number without product code (e.g. '162.500.10'), if `null` '&lt;baseline&gt;.SNAPSHOT' will be used. Use [BuildContext.buildNumber] to
    * get the actual build number in build scripts.
    */
@@ -353,7 +359,7 @@ class BuildOptions(
 
   /**
    * If this option and [ProductProperties.supportModularLoading] are set to `true`, a file containing module descriptors will be added to 
-   * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128). 
+   * the distribution (IJPL-109), and launchers will use it to start the IDE (IJPL-128).
    */
   @ApiStatus.Experimental
   var useModularLoader = SystemProperties.getBooleanProperty("intellij.build.use.modular.loader", false)

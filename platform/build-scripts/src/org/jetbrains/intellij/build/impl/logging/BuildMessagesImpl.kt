@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
@@ -17,7 +16,6 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.function.Consumer
-import jetbrains.buildServer.messages.serviceMessages.ServiceMessageTypes.BUILD_PORBLEM as BUILD_PROBLEM
 
 class BuildMessagesImpl private constructor(private val logger: BuildMessageLogger,
                                             private val debugLogger: DebugLogger) : BuildMessages {
@@ -103,6 +101,10 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
     processMessage(LogMessage(LogMessage.Kind.BUILD_STATUS, message))
   }
 
+  override fun changeBuildStatusToSuccess(message: String) {
+    processMessage(LogMessage(LogMessage.Kind.BUILD_STATUS_CHANGED_TO_SUCCESSFUL, message))
+  }
+
   override fun setParameter(parameterName: String, value: String) {
     processMessage(LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
   }
@@ -134,6 +136,10 @@ class BuildMessagesImpl private constructor(private val logger: BuildMessageLogg
 
   private fun processMessage(message: LogMessage) {
     logger.processMessage(message)
+  }
+
+  override fun reportBuildProblem(description: String, identity: String?) {
+    processMessage(BuildProblemLogMessage(description = description, identity = identity))
   }
 }
 
@@ -208,11 +214,13 @@ private class PrintWriterBuildMessageLogger(
 @Internal
 fun reportBuildProblem(description: String, identity: String? = null) {
   if (isUnderTeamCity) {
-    val attributes = mutableMapOf("description" to description)
-    if (identity != null) {
-      attributes["identity"] = identity
+    val logger = TeamCityBuildMessageLogger()
+    try {
+      logger.processMessage(BuildProblemLogMessage(description, identity))
     }
-    println(ServiceMessage.asString(BUILD_PROBLEM, attributes))
+    finally {
+      logger.dispose()
+    }
   }
   else {
     error("$identity: $description")

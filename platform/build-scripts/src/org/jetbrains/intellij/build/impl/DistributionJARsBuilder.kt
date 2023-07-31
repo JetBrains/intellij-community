@@ -28,7 +28,6 @@ import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.fus.createStatisticsRecorderBundledMetadataProviderTask
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_CLIENT_JAR
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
-import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.jps.model.artifact.JpsArtifact
@@ -385,7 +384,7 @@ private suspend fun validatePlugin(path: Path, context: BuildContext) {
     val result = pluginManager.createPlugin(path, validateDescriptor = true)
     val problems = context.productProperties.validatePlugin(result, context)
     if (problems.isNotEmpty()) {
-      reportBuildProblem(problems.joinToString(
+      context.messages.reportBuildProblem(problems.joinToString(
         prefix = "${id ?: path}: ",
         separator = ". ",
       ), identity = "${id ?: path}")

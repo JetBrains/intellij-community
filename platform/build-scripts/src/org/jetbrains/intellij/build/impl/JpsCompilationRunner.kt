@@ -11,6 +11,7 @@ import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.logging.jps.withJpsLogging
+import org.jetbrains.jps.api.CanceledStatus
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
@@ -71,7 +72,7 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                                  TimeUnit.MINUTES.toMillis(15).toString())
   }
 
-  fun buildModules(modules: List<JpsModule>) {
+  fun buildModules(modules: List<JpsModule>, canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     val names = LinkedHashSet<String>()
     spanBuilder("collect dependencies")
       .setAttribute(AttributeKey.longKey("moduleCount"), modules.size.toLong())
@@ -93,7 +94,11 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           }
         }
       }
-    runBuild(moduleSet = names, allModules = false, artifactNames = emptyList(), includeTests = false, resolveProjectDependencies = false)
+    runBuild(
+      moduleSet = names, allModules = false, artifactNames = emptyList(),
+      includeTests = false, resolveProjectDependencies = false,
+      canceledStatus = canceledStatus
+    )
   }
 
   fun buildModulesWithoutDependencies(modules: Collection<JpsModule>, includeTests: Boolean) {
@@ -121,28 +126,31 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
              generateRuntimeModuleRepository = true)
   }
 
-  fun buildModuleTests(module: JpsModule) {
+  fun buildModuleTests(module: JpsModule, canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     runBuild(getModuleDependencies(module = module, includeTests = true),
              allModules = false,
              artifactNames = emptyList(),
              includeTests = true,
-             resolveProjectDependencies = false)
+             resolveProjectDependencies = false,
+             canceledStatus = canceledStatus)
   }
 
-  fun buildAll() {
+  fun buildAll(canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     runBuild(moduleSet = emptyList(),
              allModules = true,
              artifactNames = emptyList(),
              includeTests = true,
-             resolveProjectDependencies = false)
+             resolveProjectDependencies = false,
+             canceledStatus = canceledStatus)
   }
 
-  fun buildProduction() {
+  fun buildProduction(canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     runBuild(moduleSet = emptyList(),
              allModules = true,
              artifactNames = emptyList(),
              includeTests = false,
-             resolveProjectDependencies = false)
+             resolveProjectDependencies = false,
+             canceledStatus = canceledStatus)
   }
 
   @Deprecated("", ReplaceWith("buildArtifacts(artifactNames = artifactNames, buildIncludedModules = true)"))
@@ -254,13 +262,12 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
                        artifactNames: Collection<String>,
                        includeTests: Boolean,
                        resolveProjectDependencies: Boolean,
-                       generateRuntimeModuleRepository: Boolean = false) {
+                       generateRuntimeModuleRepository: Boolean = false,
+                       canceledStatus: CanceledStatus = CanceledStatus.NULL) {
     synchronized(context.paths.projectHome.toString().intern()) {
       withJpsLogging(context) { messageHandler ->
         val forceBuild = !context.options.incrementalCompilation ||
-                         !context.compilationData.dataStorageRoot.exists() ||
-                         !context.compilationData.dataStorageRoot.isDirectory() ||
-                         Files.newDirectoryStream(context.compilationData.dataStorageRoot).use { it.count() } == 0
+                         !context.compilationData.isIncrementalCompilationDataAvailable()
         val scopes = ArrayList<TargetTypeBuildScope>()
         for (type in JavaModuleBuildTargetType.ALL_TYPES) {
           if (includeTests || !type.isTests) {
@@ -308,13 +315,12 @@ internal class JpsCompilationRunner(private val context: CompilationContext) {
           .setAttribute("generateRuntimeModuleRepository", generateRuntimeModuleRepository)
           .setAttribute("modules", moduleSet.joinToString(separator = ", "))
           .setAttribute("incremental", context.options.incrementalCompilation)
-          .setAttribute("includeTests", includeTests)
           .setAttribute("cacheDir", compilationData.dataStorageRoot.toString())
           .useWithScope {
             Standalone.runBuild(
               { context.projectModel }, compilationData.dataStorageRoot.toFile(),
               mapOf(GlobalOptions.BUILD_DATE_IN_SECONDS to "${context.options.buildDateInSeconds}"),
-              messageHandler, scopes, false
+              messageHandler, scopes, false, canceledStatus
             )
           }
         if (!messageHandler.errorMessagesByCompiler.isEmpty) {

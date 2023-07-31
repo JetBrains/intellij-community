@@ -15,7 +15,6 @@ import org.jetbrains.intellij.build.JvmArchitecture
 import org.jetbrains.intellij.build.OsFamily
 import org.jetbrains.intellij.build.TraceManager
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
-import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import java.io.BufferedInputStream
 import java.nio.file.FileSystems
 import java.nio.file.Files
@@ -72,7 +71,7 @@ interface OsSpecificDistributionBuilder {
       if (unmatchedPatterns.isNotEmpty()) {
         context.messages.warning(matchedFiles.joinToString(prefix = "Matched files ${distribution.name}:\n", separator = "\n"))
         if (TeamCityHelper.isUnderTeamCity) {
-          reportBuildProblem(
+          context.messages.reportBuildProblem(
             unmatchedPatterns.joinToString(prefix = "Unmatched executable permissions patterns in ${distribution.name}: ") {
               patterns.getValue(it)
             }

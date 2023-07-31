@@ -19,7 +19,6 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.CompilationTasks.Companion.create
 import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.causal.CausalProfilingOptions
-import org.jetbrains.intellij.build.impl.logging.reportBuildProblem
 import org.jetbrains.intellij.build.io.runProcess
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType
 import org.jetbrains.jps.incremental.ModuleBuildTarget
@@ -62,7 +61,7 @@ internal class TestingTasksImpl(private val context: CompilationContext, private
     }
     catch (e: Exception) {
       val description = e.message?.lineSequence()?.firstOrNull() ?: ""
-      reportBuildProblem(description, identity = name)
+      context.messages.reportBuildProblem(description, identity = name)
       emptyList()
     }
   }

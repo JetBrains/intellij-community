@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.impl.logging
 
 import org.jetbrains.intellij.build.BuildMessageLogger
+import org.jetbrains.intellij.build.BuildProblemLogMessage
 import org.jetbrains.intellij.build.CompilationErrorsLogMessage
 import org.jetbrains.intellij.build.LogMessage
 import org.jetbrains.intellij.build.LogMessage.Kind.*
@@ -99,6 +100,7 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       ARTIFACT_BUILT -> printTeamCityMessage("publishArtifacts", "'${escape(message.text)}'")
       BUILD_STATUS -> printTeamCityMessage("buildStatus", "text='${escape(message.text)}'")
+      BUILD_STATUS_CHANGED_TO_SUCCESSFUL -> printTeamCityMessage("buildStatus", "status='SUCCESS' text='${escape(message.text)}'")
       STATISTICS -> {
         val index = message.text.indexOf('=')
         val key = escape(message.text.substring(0, index))
@@ -113,14 +115,25 @@ class TeamCityBuildMessageLogger : BuildMessageLogger() {
       }
       COMPILATION_ERRORS -> {
         val compiler = escape((message as CompilationErrorsLogMessage).compilerName)
-        printTeamCityMessage("compilationStarted", "compiler='$compiler']")
+        printTeamCityMessage("compilationStarted", "compiler='$compiler'")
         message.errorMessages.forEach {
           val messageText = escape(it)
-          printTeamCityMessage("message", "text='$messageText' status='ERROR']")
+          printTeamCityMessage("message", "text='$messageText' status='ERROR'")
         }
-        printTeamCityMessage("compilationFinished", "compiler='$compiler']")
+        printTeamCityMessage("compilationFinished", "compiler='$compiler'")
       }
       DEBUG -> {} //debug messages are printed to a separate file available in the build artifacts
+      BUILD_PROBLEM -> {
+        check(message is BuildProblemLogMessage) {
+          "Unexpected build problem message type: ${message::class.java.canonicalName}"
+        }
+        printTeamCityMessage("buildProblem", buildString {
+          append("description='${escape(message.text)}'")
+          if (message.identity != null) {
+            append(" identity='${escape(message.identity)}'")
+          }
+        })
+      }
     }
   }
 
