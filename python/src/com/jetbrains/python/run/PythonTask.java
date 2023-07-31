@@ -75,7 +75,7 @@ public class PythonTask {
    */
   private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   private static final int TIMEOUT_TO_WAIT_FOR_TASK = 30000;
-  protected final Module myModule;
+  protected final @NotNull Module myModule;
   private final Sdk mySdk;
   private String myWorkingDirectory;
   private String myRunnerScript;
@@ -91,7 +91,7 @@ public class PythonTask {
   private String myHelpId;
   private Runnable myAfterCompletion;
 
-  public PythonTask(Module module, @TabTitle String runTabTitle) throws ExecutionException {
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle) throws ExecutionException {
     this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
   }
 
@@ -108,7 +108,7 @@ public class PythonTask {
     }
   }
 
-  public PythonTask(final Module module, @TabTitle String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
+  public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
@@ -197,8 +197,6 @@ public class PythonTask {
     var sdk = mySdk;
     var helper = myHelper;
     var script = myRunnerScript;
-    var module = myModule;
-    assert module != null : "No module set";
     assert sdk != null : "No sdk set";
     assert (helper == null) != (script == null) : "Either script or helper must be set but not both";
     PythonScriptExecution execution;
@@ -207,7 +205,7 @@ public class PythonTask {
     var uploadedPaths = new HashMap<@NotNull Path, @NotNull Function<TargetEnvironment, String>>();
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
-      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, module.getProject());
+      var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(sdk, myModule.getProject());
       assert helpersAwareRequest != null : data.getClass() + " is not supported";
       execution = PythonScripts.prepareHelperScriptExecution(helper, helpersAwareRequest);
       request = helpersAwareRequest.getTargetEnvironmentRequest();
@@ -217,7 +215,7 @@ public class PythonTask {
       var configuration = data.getTargetEnvironmentConfiguration();
       assert configuration != null : data.getClass() + " is not supported";
 
-      request = configuration.createEnvironmentRequest(module.getProject());
+      request = configuration.createEnvironmentRequest(myModule.getProject());
       execution = new PythonScriptExecution();
       // We do not know if script path is local or not, so we only support target script
       execution.setPythonScriptPath(constant(script));
@@ -282,7 +280,7 @@ public class PythonTask {
       @Override
       public void processTerminated(@NotNull ProcessEvent event) {
         ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(downloadVolumesAfterProcess, "...", false, module.getProject());
+          .runProcessWithProgressSynchronously(downloadVolumesAfterProcess, "...", false, myModule.getProject());
       }
     });
     return handler;
