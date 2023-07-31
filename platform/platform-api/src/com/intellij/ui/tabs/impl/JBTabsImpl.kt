@@ -2490,7 +2490,8 @@ open class JBTabsImpl(private var project: Project?,
     }
   }
 
-  private fun updateListeners() {
+  @Internal
+  fun updateListeners() {
     removeListeners()
     addListeners()
   }
