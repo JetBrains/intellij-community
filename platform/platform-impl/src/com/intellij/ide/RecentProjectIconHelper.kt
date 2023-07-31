@@ -198,7 +198,14 @@ private class ProjectFileIcon(
       delegate = cachedIcon
     }
     else {
-      delegate = iconData.getScaledIcon(sysScale, pixScale)
+      delegate = try {
+        iconData.getScaledIcon(sysScale, pixScale)
+      }
+      catch (e: Throwable) {
+        logger<IconData>().warn("Cannot render $iconData", e)
+        createEmptyIcon(iconData.iconSize, pixScale)
+      }
+
       this.cachedIcon = delegate
       cachedIconSysScale = sysScale
       cachedIconPixScale = pixScale
@@ -238,6 +245,8 @@ private class SvgIconData(private val file: Path, iconSize: Int = unscaledProjec
   override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
     return JBImageIcon(loadWithSizes(sizes = listOf(iconSize), data = Files.readAllBytes(file), scale = pixScale).first())
   }
+
+  override fun toString() = file.toString()
 }
 
 private class PngIconData(private val sourceImage: BufferedImage, iconSize: Int = unscaledProjectIconSize()) : IconData(iconSize) {
@@ -250,9 +259,11 @@ private class PngIconData(private val sourceImage: BufferedImage, iconSize: Int 
 
 private class EmptyIconData(iconSize: Int = unscaledProjectIconSize()) : IconData(iconSize) {
   override fun getScaledIcon(sysScale: Float, pixScale: Float): Icon {
-    return EmptyIcon.create(((iconSize * pixScale) + 0.5f).toInt())
+    return createEmptyIcon(iconSize, pixScale)
   }
 }
+
+private fun createEmptyIcon(iconSize: Int, pixScale: Float) = EmptyIcon.create(((iconSize * pixScale) + 0.5f).toInt())
 
 @Internal
 object ProjectIconPalette : ColorPalette {
