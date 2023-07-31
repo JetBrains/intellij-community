@@ -385,21 +385,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitJavaFile(@NotNull PsiJavaFile file) {
     super.visitJavaFile(file);
-    if (!HighlightingFeature.UNNAMED_CLASSES.isAvailable(file)) return;
-    PsiClass[] classes = file.getClasses();
-    if (classes.length != 1) return;
-    PsiClass aClass = classes[0];
-    if (aClass instanceof PsiUnnamedClass unnamedClass) {
-      PsiMethod[] methods = unnamedClass.getMethods();
-      boolean hasMainMethod = ContainerUtil.exists(methods, method -> "main".equals(method.getName()));
-      if (!hasMainMethod) {
-        myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                       .range(file)
-                       .fileLevelAnnotation()
-                       .registerFix(QuickFixFactory.getInstance().createAddMainMethodFix(unnamedClass), null, null, null, null)
-                       .description(JavaErrorBundle.message("error.unnamed.class.contains.no.main.method")).create());
-      }
-    }
+    if (!myHolder.hasErrorResults()) add(HighlightUnnamedClassUtil.checkUnnamedClssHasMainMethod(file));
   }
 
   @Override
@@ -596,12 +582,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       add(HighlightClassUtil.checkThingNotAllowedInInterface(initializer, initializer.getContainingClass()));
     }
-    if (!myHolder.hasErrorResults()) {
-      if (initializer.getContainingClass() instanceof PsiUnnamedClass && HighlightingFeature.UNNAMED_CLASSES.isAvailable(initializer)) {
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(
-          JavaErrorBundle.message("text.initializers.are.not.allowed.in.unnamed.classes")));
-      }
-    }
+    if (!myHolder.hasErrorResults()) add(HighlightUnnamedClassUtil.checkInitializersInUnnamedClass(initializer));
   }
 
   @Override
@@ -1182,12 +1163,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9)) {
       if (!myHolder.hasErrorResults()) add(ModuleHighlightUtil.checkPackageStatement(statement, myFile, myJavaModule));
     }
-    if (!myHolder.hasErrorResults()) {
-      if (HighlightingFeature.UNNAMED_CLASSES.isAvailable(myFile) && JavaUnnamedClassUtil.isFileWithUnnamedClass(myFile)) {
-        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(
-          JavaErrorBundle.message("text.package.statement.not.allowed.for.unnamed.class")));
-      }
-    }
+    if (!myHolder.hasErrorResults()) add(HighlightUnnamedClassUtil.checkPackageNotAllowedInUnnamedClass(statement, myFile));
   }
 
   @Override
