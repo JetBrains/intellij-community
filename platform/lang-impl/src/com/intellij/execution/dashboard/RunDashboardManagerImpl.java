@@ -764,6 +764,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       loadHiddenConfigurations();
       syncConfigurations();
       initServiceContentListeners();
+      updateDashboard(true);
     }
   }
 

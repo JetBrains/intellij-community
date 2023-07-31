@@ -105,8 +105,14 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
 
     ServiceViewItem eventRoot = ContainerUtil.find(myModel.getRoots(), root -> e.contributorClass.isInstance(root.getRootContributor()));
+    ServiceViewContributor<?> notInitializedContributor = findNotIntializedContributor(e.contributorClass, eventRoot);
+    boolean initialized = notInitializedContributor == null;
+    if (!initialized &&
+        (e.type == ServiceEventListener.EventType.RESET || e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET)) {
+      myNotInitializedContributors.remove(notInitializedContributor);
+    }
     if (eventRoot != null) {
-      boolean show = !(eventRoot.getViewDescriptor() instanceof ServiceViewNonActivatingDescriptor);
+      boolean show = !(eventRoot.getViewDescriptor() instanceof ServiceViewNonActivatingDescriptor) && initialized;
       updateToolWindow(toolWindowId, true, show);
     }
     else {
@@ -114,6 +120,18 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
       Collection<ServiceViewContributor<?>> toolWindowContributors = myGroups.get(toolWindowId);
       updateToolWindow(toolWindowId, ContainerUtil.intersects(activeContributors, toolWindowContributors), false);
     }
+  }
+
+  private @Nullable ServiceViewContributor<?> findNotIntializedContributor(Class<?> contributorClass, ServiceViewItem eventRoot) {
+    if (eventRoot != null) {
+      return myNotInitializedContributors.contains(eventRoot.getRootContributor()) ? eventRoot.getRootContributor() : null;
+    }
+    for (ServiceViewContributor<?> contributor : myNotInitializedContributors) {
+      if (contributorClass.isInstance(contributor)) {
+        return contributor;
+      }
+    }
+    return null;
   }
 
   private Set<? extends ServiceViewContributor<?>> getActiveContributors() {
