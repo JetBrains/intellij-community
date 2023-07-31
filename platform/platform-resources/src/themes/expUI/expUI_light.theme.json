@@ -628,7 +628,7 @@
       }
     },
 
-    "Window.undecorated.border" : "1,1,1,1,#A8ADBD",
+    "Window.undecorated.border" : "1,1,1,1,#5A5D6B",
 
     "OnePixelDivider.background": "Grey12",
 
