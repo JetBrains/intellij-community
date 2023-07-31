@@ -1,20 +1,14 @@
 fun yy(): Int = 5
 
-fun f(a: Int): Int {
-    return<caret> try {
+<info descr="null">fun</info> f(a: Int): Int {
+    <info descr="null">return</info>~ try {
         val q = a * a
-        q
+        <info descr="null">q</info>
     } catch (e: Exception) {
-        0
+        <info descr="null">0</info>
     } catch (e: Throwable) {
-        -1
+        <info descr="null">-1</info>
     } finally {
       println()
     }
 }
-
-//HIGHLIGHTED: return
-//HIGHLIGHTED: f
-//HIGHLIGHTED: 0
-//HIGHLIGHTED: q
-//HIGHLIGHTED: -1
