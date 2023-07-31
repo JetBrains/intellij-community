@@ -9,6 +9,7 @@ import org.gradle.tooling.events.task.internal.DefaultTaskFinishEvent
 import org.jetbrains.plugins.gradle.service.execution.fus.AggregatedTaskReport
 import org.jetbrains.plugins.gradle.service.execution.fus.GradleExecutionStageHandler
 import org.jetbrains.plugins.gradle.service.execution.fus.TaskGraphExecutionReport
+import org.jetbrains.plugins.gradle.util.GradleTaskClassifier
 
 class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
 
@@ -109,7 +110,7 @@ class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
     var taskName: String = USER_DEFINED_TASK_NAME_REPLACEMENT
     var taskSource: String = UNKNOWN
     if (isKnownTaskSource(source)) {
-      taskName = event.getPlainTaskName()
+      taskName = event.getClassifiedTaskName()
       taskSource = source
     }
     val accumulatorKey = taskName + taskSource
@@ -134,7 +135,11 @@ class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
       }
   }
 
-  private fun DefaultTaskFinishEvent.getPlainTaskName(): String = descriptor.taskPath.split(":").last().trim()
+  private fun DefaultTaskFinishEvent.getClassifiedTaskName(): String = descriptor.taskPath
+    .split(":")
+    .last()
+    .trim()
+    .let { GradleTaskClassifier.classifyTaskName(it) }
 
   private fun DefaultTaskFinishEvent.getTaskSource(): String = descriptor.originPlugin?.displayName ?: UNKNOWN
 

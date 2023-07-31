@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.plugins.gradle.util.GradleTaskClassifier
 
 class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
 
@@ -48,7 +49,10 @@ class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
     override fun getRuleId(): String = "build_gradle_performance_task_name"
 
     override fun doValidate(data: String, context: EventContext): ValidationResultType {
-      return ValidationResultType.ACCEPTED
+      if (GradleTaskClassifier.isClassified(data)) {
+        return ValidationResultType.ACCEPTED
+      }
+      return ValidationResultType.THIRD_PARTY
     }
   }
 
@@ -60,7 +64,7 @@ class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
       if (data.startsWith("org.jetbrains.") || data.startsWith("org.gradle.")) {
         return ValidationResultType.ACCEPTED
       }
-      return ValidationResultType.REJECTED
+      return ValidationResultType.THIRD_PARTY
     }
   }
 }
