@@ -25,23 +25,11 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
       }
       else {
         // reporting missing semicolons after an unclosed string literal is not useful.
-        PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(element);
-        if (prevLeaf instanceof PsiJavaToken token) {
-          IElementType type = token.getTokenType();
-          if (type == JavaTokenType.STRING_LITERAL) {
-            String text = token.getText();
-            if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
-              return false;
-            }
-          }
-          else if (type == JavaTokenType.CHARACTER_LITERAL) {
-            String text = token.getText();
-            if (text.length() == 1 || !StringUtil.endsWithChar(text, '\'')) {
-              return false;
-            }
-          }
-        }
+        if (isAfterUnclosedStringLiteral(element)) return false;
       }
+    }
+    else if (description.equals(JavaPsiBundle.message("expected.comma.or.rparen"))) {
+      if (isAfterUnclosedStringLiteral(element)) return false;
     }
     else if (description.equals(JavaPsiBundle.message("expected.class.or.interface"))) {
       String text = element.getText();
@@ -51,5 +39,34 @@ public class JavaHighlightErrorFilter extends HighlightErrorFilter {
       }
     }
     return true;
+  }
+
+  private static boolean isAfterUnclosedStringLiteral(@NotNull PsiErrorElement element) {
+    PsiElement prevLeaf = PsiTreeUtil.prevCodeLeaf(element);
+    if (prevLeaf instanceof PsiJavaToken token) {
+      IElementType type = token.getTokenType();
+      if (type == JavaTokenType.STRING_LITERAL) {
+        String text = token.getText();
+        if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
+          return true;
+        }
+      }
+      else if (type == JavaTokenType.CHARACTER_LITERAL) {
+        String text = token.getText();
+        if (text.length() == 1 || !StringUtil.endsWithChar(text, '\'')) {
+          return true;
+        }
+      }
+    }
+    else if (prevLeaf instanceof PsiFragment fragment) {
+      IElementType type = fragment.getTokenType();
+      if (type == JavaTokenType.STRING_TEMPLATE_END) {
+        String text = fragment.getText();
+        if (text.length() == 1 || !StringUtil.endsWithChar(text, '"')) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 }

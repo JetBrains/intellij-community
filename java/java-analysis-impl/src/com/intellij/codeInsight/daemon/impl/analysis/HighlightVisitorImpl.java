@@ -943,9 +943,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     super.visitTemplateExpression(expression);
 
     add(HighlightUtil.checkTemplateExpression(expression));
-    if (!myHolder.hasErrorResults()) {
-      add(HighlightUtil.checkUnhandledExceptions(expression));
-    }
+    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkUnhandledExceptions(expression));
+  }
+
+  @Override
+  public void visitFragment(@NotNull PsiFragment fragment) {
+    super.visitFragment(fragment);
+
+    HighlightUtil.checkIllegalUnicodeEscapes(fragment, myHolder);
+    if (!myHolder.hasErrorResults()) add(HighlightUtil.checkFragmentError(fragment));
   }
 
   @Override

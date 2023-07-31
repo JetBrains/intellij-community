@@ -1400,16 +1400,7 @@ public final class HighlightUtil {
         }
 
         if (!StringUtil.startsWithChar(text, '\"')) return null;
-        if (StringUtil.endsWithChar(text, '\"')) {
-          if (text.length() == 1) {
-            String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
-            if (description != null) {
-              description.set(message);
-            }
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message);
-          }
-        }
-        else {
+        if (!StringUtil.endsWithChar(text, '\"') || text.length() == 1) {
           String message = JavaErrorBundle.message("illegal.line.end.in.string.literal");
           if (description != null) {
             description.set(message);
@@ -1511,6 +1502,32 @@ public final class HighlightUtil {
       }
     }
 
+    return null;
+  }
+
+  public static HighlightInfo.Builder checkFragmentError(PsiFragment fragment) {
+    String text = fragment.getText();
+    int length = text.length();
+    if (fragment.getTokenType() == JavaTokenType.STRING_TEMPLATE_END) {
+      if (!StringUtil.endsWithChar(text, '\"') || length == 1) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(fragment)
+          .descriptionAndTooltip(JavaErrorBundle.message("illegal.line.end.in.string.literal"));
+      }
+    }
+    if (text.endsWith("\\{")) {
+      text = text.substring(0, length - 2);
+      length -= 2;
+    }
+    StringBuilder chars = new StringBuilder(length);
+    int[] offsets = new int[length + 1];
+    boolean success = CodeInsightUtilCore.parseStringCharacters(text, chars, offsets, fragment.isTextBlock());
+    if (!success) {
+      String message = JavaErrorBundle.message("illegal.escape.character.in.string.literal");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .range(fragment, calculateErrorRange(text, offsets[chars.length()]))
+        .descriptionAndTooltip(message);
+    }
     return null;
   }
 
