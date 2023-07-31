@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.gradle.multiplatformTests
 
 import com.intellij.openapi.project.Project
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.runner.Description
@@ -21,6 +22,8 @@ interface KotlinMppTestsContext {
 
     val testProject: Project
 
+    val codeInsightTestFixture: CodeInsightTestFixture
+
     /**
      * Root of the project in the testdata, i.e. file somewhere in `intellij`-repo
      */
@@ -39,6 +42,9 @@ class KotlinMppTestsContextImpl : KotlinMppTestsContext {
     override lateinit var testProjectRoot: File
     override lateinit var testProject: Project
     override lateinit var gradleJdkPath: File
+
+    internal var mutableCodeInsightTestFixture: CodeInsightTestFixture? = null
+    override val codeInsightTestFixture: CodeInsightTestFixture get() = mutableCodeInsightTestFixture!!
 
     override val gradleVersion: GradleVersion
         get() = testProperties.gradleVersion

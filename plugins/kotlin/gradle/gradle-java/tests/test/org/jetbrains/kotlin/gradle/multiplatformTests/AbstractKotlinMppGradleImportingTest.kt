@@ -7,6 +7,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.VfsTestUtil
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.*
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
@@ -25,10 +27,12 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.PluginTargetVersionsRule
 import org.jetbrains.kotlin.idea.codeInsight.gradle.combineMultipleFailures
 import org.jetbrains.kotlin.idea.codeMetaInfo.clearTextFromDiagnosticMarkup
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.junit.Assert
 import org.junit.Assume.assumeTrue
@@ -36,11 +40,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.Description
 import org.junit.runner.RunWith
-import org.junit.runners.model.MultipleFailureException
 import java.io.File
 import java.io.PrintStream
-import java.util.TreeSet
-import kotlin.Comparator
+import java.util.*
 
 /**
  * The base class for Kotlin MPP Import-based tests.
@@ -75,7 +77,7 @@ import kotlin.Comparator
 abstract class AbstractKotlinMppGradleImportingTest :
     GradleImportingTestCase(), WorkspaceChecksDsl, GradleProjectsPublishingDsl, GradleProjectsLinkingDsl, HighlightingCheckDsl,
     TestWithKotlinPluginAndGradleVersions, DevModeTweaksDsl, AllFilesUnderContentRootConfigurationDsl,
-    RunConfigurationChecksDsl, CustomGradlePropertiesDsl {
+    RunConfigurationChecksDsl, CustomGradlePropertiesDsl, DocumentationCheckerDsl {
 
     internal val installedFeatures = listOf<TestFeature<*>>(
         GradleProjectsPublishingTestsFeature,
@@ -92,6 +94,7 @@ abstract class AbstractKotlinMppGradleImportingTest :
         RunConfigurationsChecker,
         ExecuteRunConfigurationsChecker,
         AllFilesAreUnderContentRootChecker,
+        DocumentationChecker,
     )
 
     private val context: KotlinMppTestsContextImpl = KotlinMppTestsContextImpl()
@@ -189,6 +192,20 @@ abstract class AbstractKotlinMppGradleImportingTest :
         // Otherwise Gradle Daemon fails with Metaspace exhausted periodically
         GradleSystemSettings.getInstance().gradleVmOptions =
             "-XX:MaxMetaspaceSize=1024m -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=${System.getProperty("user.dir")}"
+    }
+
+    override fun setUpFixtures() {
+        myTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName()).fixture
+        context.mutableCodeInsightTestFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(myTestFixture)
+        context.codeInsightTestFixture.setUp()
+    }
+
+    override fun tearDownFixtures() {
+        runAll(
+            ThrowableRunnable { context.codeInsightTestFixture.tearDown() },
+            ThrowableRunnable { context.mutableCodeInsightTestFixture = null },
+            ThrowableRunnable { myTestFixture = null },
+        )
     }
 
     private fun KotlinMppTestsContext.configureByFiles(): List<VirtualFile> {
