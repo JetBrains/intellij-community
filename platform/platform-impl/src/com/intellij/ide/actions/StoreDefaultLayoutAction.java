@@ -15,7 +15,9 @@ public final class StoreDefaultLayoutAction extends StoreNamedLayoutAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setDescription(ActionsBundle.message("action.StoreDefaultLayout.named.description", getLayoutNameSupplier().invoke()));
+    String layoutName = getLayoutNameSupplier().invoke();
+    e.getPresentation().setEnabled(!ToolWindowDefaultLayoutManager.FACTORY_DEFAULT_LAYOUT_NAME.equals(layoutName));
+    e.getPresentation().setDescription(ActionsBundle.message("action.StoreDefaultLayout.named.description", layoutName));
   }
 
 }

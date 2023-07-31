@@ -29,6 +29,7 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
     fun getInstance(): ToolWindowDefaultLayoutManager = service()
 
     const val INITIAL_LAYOUT_NAME: String = "Custom"
+    const val FACTORY_DEFAULT_LAYOUT_NAME: String = ""
   }
 
   @Volatile
@@ -53,9 +54,16 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
 
   fun setLayout(name: String, layout: DesktopLayout) {
     tracker.incModificationCount()
+    var layoutName = name
+    if (layoutName == FACTORY_DEFAULT_LAYOUT_NAME) {
+      // Saving over the factory default layout makes it non-default.
+      // This shouldn't normally happen because we validate the name in the platform.
+      // But it could happen if it's an external call, e.g., from Rider.
+      layoutName = INITIAL_LAYOUT_NAME
+    }
     val list = layout.getSortedList().map(::convertWindowStateToDescriptor)
     val weights = convertUnifiedWeightsToDescriptor(layout.unifiedWeights)
-    state = state.withUpdatedLayout(name, list, isNewUi, weights)
+    state = state.withUpdatedLayout(layoutName, list, isNewUi, weights)
   }
 
   fun renameLayout(oldName: String, newName: String) {
@@ -91,10 +99,12 @@ class ToolWindowDefaultLayoutManager(private val isNewUi: Boolean)
       ToolWindowLayoutStorageManagerState(layouts = mapOf(INITIAL_LAYOUT_NAME to LayoutDescriptor(v1 = state.v1, v2 = state.v2)))
     }
     else {
-      state
+      state.withoutLayout(FACTORY_DEFAULT_LAYOUT_NAME) // Just in case the storage is corrupted and actually has an empty name.
     }
     this.state = newState
-    setLayout(newState.activeLayoutName, newState.getActiveLayoutCopy(isNewUi))
+    if (newState.activeLayoutName != FACTORY_DEFAULT_LAYOUT_NAME) {
+      setLayout(newState.activeLayoutName, newState.getActiveLayoutCopy(isNewUi))
+    }
   }
 
   /**
