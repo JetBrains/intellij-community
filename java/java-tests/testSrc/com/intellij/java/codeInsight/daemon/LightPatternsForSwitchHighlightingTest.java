@@ -178,7 +178,7 @@ public class LightPatternsForSwitchHighlightingTest extends LightJavaCodeInsight
   public void testUnusedPatternVariable() {
     myFixture.enableInspections(new UnusedDeclarationInspection());
     doTest();
-    assertNotNull(myFixture.getAvailableIntention("Rename 's' to 'ignored'"));
+    assertNotNull(myFixture.getAvailableIntention("Rename 's' to '_'"));
   }
 
   public void testMalformedReferenceExpression() {

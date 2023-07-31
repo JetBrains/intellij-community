@@ -775,6 +775,14 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     PsiElement parent = identifier.getParent();
     if (parent instanceof PsiVariable variable) {
       add(HighlightUtil.checkVariableAlreadyDefined(variable));
+      if (variable.isUnnamed()) {
+        HighlightInfo.Builder notAvailable = checkFeature(variable, HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES);
+        if (notAvailable != null) {
+          add(notAvailable);
+        } else {
+          add(HighlightUtil.checkAllowedUnnamedLocation(variable));
+        }
+      }
 
       if (variable.getInitializer() == null) {
         PsiElement child = variable.getLastChild();

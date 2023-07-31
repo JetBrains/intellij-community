@@ -3,6 +3,7 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -42,7 +43,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
@@ -92,7 +92,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
       private void checkCatchSection(PsiCatchSection section) {
         final PsiParameter parameter = section.getParameter();
-        if (parameter == null) return;
+        if (parameter == null || parameter.isUnnamed()) return;
         final PsiIdentifier identifier = parameter.getNameIdentifier();
         if (identifier == null) return;
         final String parameterName = parameter.getName();
@@ -116,7 +116,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         if (block == null) return;
         SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(CatchMayIgnoreExceptionInspection.this, section);
         if (ControlFlowUtils.isEmpty(block, m_ignoreCatchBlocksWithComments, true)) {
-          RenameCatchParameterFix renameFix = new RenameCatchParameterFix(generateName(block));
+          var renameFix = QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter, false);
           AddCatchBodyFix addBodyFix = getAddBodyFix(block);
           holder.registerProblem(catchToken, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.empty.message"),
                                  LocalQuickFix.notNullElements(renameFix, addBodyFix, fix));
@@ -125,7 +125,8 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
           if (!m_ignoreNonEmptyCatchBlock &&
               (!m_ignoreCatchBlocksWithComments || PsiTreeUtil.getChildOfType(block, PsiComment.class) == null)) {
             holder.registerProblem(identifier, InspectionGadgetsBundle.message("inspection.catch.ignores.exception.unused.message"),
-                                   LocalQuickFix.notNullElements(new RenameFix(generateName(block), false, false), fix));
+                                   LocalQuickFix.notNullElements(
+                                     QuickFixFactory.getInstance().createRenameToIgnoredFix(parameter, false), fix));
           }
         }
         else {
@@ -305,40 +306,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       catch (Exception e) {
         throw new IncorrectOperationException("Incorrect file template", (Throwable)e);
       }
-    }
-  }
-
-  private static final class RenameCatchParameterFix extends PsiUpdateModCommandQuickFix {
-    private final String myName;
-
-    private RenameCatchParameterFix(String name) {
-      myName = name;
-    }
-
-    @Nls(capitalization = Nls.Capitalization.Sentence)
-    @NotNull
-    @Override
-    public String getName() {
-      return InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored", myName);
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message("rename.catch.parameter.to.ignored", IGNORED_PARAMETER_NAME);
-    }
-
-    @Override
-    protected void applyFix(@NotNull Project project, @NotNull PsiElement element, @NotNull ModPsiUpdater updater) {
-      final PsiElement parent = element.getParent();
-      if (!(parent instanceof PsiCatchSection catchSection)) return;
-      final PsiParameter parameter = catchSection.getParameter();
-      if (parameter == null) return;
-      final PsiIdentifier identifier = parameter.getNameIdentifier();
-      if (identifier == null) return;
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-      final PsiIdentifier newIdentifier = factory.createIdentifier(myName);
-      identifier.replace(newIdentifier);
     }
   }
 }

@@ -224,7 +224,7 @@ public final class UnusedDeclarationInspection extends UnusedDeclarationInspecti
         for (DefUseUtil.Info varDefInfo : unusedDefs) {
           PsiElement parent = varDefInfo.getContext();
           PsiVariable variable = varDefInfo.getVariable();
-          if (PsiUtil.isIgnoredName(variable.getName())) continue;
+          if (variable.isUnnamed() || PsiUtil.isIgnoredName(variable.getName())) continue;
           if (parent instanceof PsiDeclarationStatement || parent instanceof PsiForeachStatement ||
               variable instanceof PsiResourceVariable || variable instanceof PsiPatternVariable) {
             if (!varDefInfo.isRead() && !SuppressionUtil.inspectionResultSuppressed(variable, UnusedDeclarationInspection.this)) {
