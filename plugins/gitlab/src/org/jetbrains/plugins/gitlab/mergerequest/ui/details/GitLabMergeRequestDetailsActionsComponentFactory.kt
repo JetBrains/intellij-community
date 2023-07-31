@@ -18,10 +18,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
 import org.jetbrains.plugins.gitlab.mergerequest.ui.GitLabMergeRequestSubmitReviewPopup
@@ -55,15 +52,10 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     return Wrapper().apply {
       bindContentIn(scope, reviewFlowVm.role) { role ->
         val mainPanel = when (role) {
-          ReviewRole.AUTHOR -> {
-            val requestedReviewers = reviewFlowVm.reviewers.map { reviewers ->
-              reviewers.filter { it.mergeRequestInteraction.toReviewState() == ReviewState.NEED_REVIEW }
-            }
-            createActionsForAuthor(reviewFlowVm.reviewState, requestedReviewers, reviewActions, moreActionsGroup)
-          }
+          ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions, moreActionsGroup)
           ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions, moreActionsGroup)
-          ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory.createActionsForGuest(reviewActions, moreActionsGroup,
-                                                                                             ::createMergeActionGroup)
+          ReviewRole.GUEST -> CodeReviewDetailsActionsComponentFactory
+            .createActionsForGuest(reviewActions, moreActionsGroup, ::createMergeActionGroup)
         }
 
         CodeReviewDetailsActionsComponentFactory.createActionsComponent(
@@ -77,13 +69,16 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
     }
   }
 
-  private fun <Reviewer> CoroutineScope.createActionsForAuthor(
-    reviewState: Flow<ReviewState>,
-    requestedReviewers: Flow<List<Reviewer>>,
+  private fun CoroutineScope.createActionsForAuthor(
+    vm: GitLabMergeRequestReviewFlowViewModel,
     reviewActions: CodeReviewActions,
     moreActionsGroup: DefaultActionGroup
   ): JComponent {
     val cs = this
+    val reviewState = vm.reviewState
+    val requestedReviewers = vm.reviewers.map { reviewers ->
+      reviewers.filter { it.mergeRequestInteraction.toReviewState() == ReviewState.NEED_REVIEW }
+    }
     val requestReviewButton = CodeReviewDetailsActionsComponentFactory.createRequestReviewButton(
       cs, reviewState, requestedReviewers, reviewActions.requestReviewAction
     )
@@ -94,7 +89,7 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       bindVisibilityIn(cs, reviewState.map { it == ReviewState.ACCEPTED })
     }
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
-    cs.launch(start = CoroutineStart.UNDISPATCHED) {
+    cs.launchNow {
       reviewState.collect { reviewState ->
         moreActionsGroup.removeAll()
         when (reviewState) {
@@ -132,23 +127,10 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       GitLabMergeRequestSubmitReviewPopup.show(it, submitButton, true)
     }
 
+    moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
+    moreActionsGroup.add(createMergeActionGroup(reviewActions))
+    moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
     val moreActionsButton = CodeReviewDetailsActionsComponentFactory.createMoreButton(moreActionsGroup)
-    launchNow {
-      reviewFlowVm.reviewState.collect { reviewState ->
-        moreActionsGroup.removeAll()
-        when (reviewState) {
-          ReviewState.NEED_REVIEW, ReviewState.WAIT_FOR_UPDATES -> {
-            moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
-            moreActionsGroup.add(createMergeActionGroup(reviewActions))
-            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
-          }
-          ReviewState.ACCEPTED -> {
-            moreActionsGroup.add(reviewActions.requestReviewAction.toAnAction())
-            moreActionsGroup.add(reviewActions.closeReviewAction.toAnAction())
-          }
-        }
-      }
-    }
 
     return HorizontalListPanel(BUTTONS_GAP).apply {
       add(submitButton)
