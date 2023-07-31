@@ -17,7 +17,54 @@ import org.junit.runner.RunWith;
 @TestRoot("refactorings/kotlin.refactorings.tests.k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
+@TestMetadata("../../idea/tests/testData/refactoring/bindToElement")
 public abstract class K2BindToElementTestGenerated extends AbstractK2BindToElementTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/annotationCall")
+    public static class AnnotationCall extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("FullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationCall/FullyQualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationCall/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationCall/UnQualified.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/annotationReference")
+    public static class AnnotationReference extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("FullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationReference/FullyQualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationReference/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationReference/UnQualified.kt");
+        }
+    }
+
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/callableReference")
     public static class CallableReference extends AbstractK2BindToElementTest {
@@ -38,6 +85,19 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         @TestMetadata("UnQualified.kt")
         public void testUnQualified() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToElement/callableReference/UnQualified.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/changeImport")
+    public static class ChangeImport extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ChangeImport.kt")
+        public void testChangeImport() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/changeImport/ChangeImport.kt");
         }
     }
 
@@ -70,48 +130,48 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/superTypeCall")
-    public static class SuperTypeCall extends AbstractK2BindToElementTest {
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference")
+    public static class DelegatedSuperTypeReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("FullyQualified.kt")
         public void testFullyQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/superTypeCall/FullyQualified.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference/FullyQualified.kt");
         }
 
         @TestMetadata("RootPkg.kt")
         public void testRootPkg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/superTypeCall/RootPkg.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference/RootPkg.kt");
         }
 
-        @TestMetadata("UnQualified.kt")
-        public void testUnQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/superTypeCall/UnQualified.kt");
+        @TestMetadata("Unqualified.kt")
+        public void testUnqualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference/Unqualified.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/annotationCall")
-    public static class AnnotationCall extends AbstractK2BindToElementTest {
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/docReference")
+    public static class DocReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("FullyQualified.kt")
         public void testFullyQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationCall/FullyQualified.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/docReference/FullyQualified.kt");
         }
 
         @TestMetadata("RootPkg.kt")
         public void testRootPkg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationCall/RootPkg.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/docReference/RootPkg.kt");
         }
 
         @TestMetadata("UnQualified.kt")
         public void testUnQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationCall/UnQualified.kt");
+            runTest("../../idea/tests/testData/refactoring/bindToElement/docReference/UnQualified.kt");
         }
     }
 
@@ -162,6 +222,29 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/superTypeCall")
+    public static class SuperTypeCall extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("FullyQualified.kt")
+        public void testFullyQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/superTypeCall/FullyQualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/superTypeCall/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/superTypeCall/UnQualified.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/superTypeReference")
     public static class SuperTypeReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -185,61 +268,28 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference")
-    public static class DelegatedSuperTypeReference extends AbstractK2BindToElementTest {
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall")
+    public static class TopLevelFunctionCall extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("FullyQualified.kt")
-        public void testFullyQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference/FullyQualified.kt");
-        }
-
-        @TestMetadata("RootPkg.kt")
-        public void testRootPkg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference/RootPkg.kt");
-        }
-
-        @TestMetadata("Unqualified.kt")
-        public void testUnqualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/delegatedSuperTypeReference/Unqualified.kt");
+        @TestMetadata("TopLevelFunctionCall.kt")
+        public void testTopLevelFunctionCall() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/TopLevelFunctionCall.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/annotationReference")
-    public static class AnnotationReference extends AbstractK2BindToElementTest {
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/importReference")
+    public static class ImportReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("FullyQualified.kt")
-        public void testFullyQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationReference/FullyQualified.kt");
-        }
-
-        @TestMetadata("RootPkg.kt")
-        public void testRootPkg() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationReference/RootPkg.kt");
-        }
-
-        @TestMetadata("UnQualified.kt")
-        public void testUnQualified() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/annotationReference/UnQualified.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/changeImport")
-    public static class ChangeImport extends AbstractK2BindToElementTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("ChangeImport.kt")
-        public void testChangeImport() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/changeImport/ChangeImport.kt");
+        @TestMetadata("ImportReference.kt")
+        public void testImportReference() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/importReference/ImportReference.kt");
         }
     }
 }
