@@ -6,11 +6,11 @@
  * {@link com.intellij.openapi.roots.ModuleRootManager ModuleRootManager}, {@link com.intellij.openapi.roots.libraries.Library Library} and
  * other interfaces to store data inside the workspace model storage.
  * <p>
- * These interfaces can be used to read and modify data stored in the workspace model directly via  
+ * Entities from this package can be used to read and modify data stored in the workspace model directly via  
  * {@link com.intellij.platform.backend.workspace.WorkspaceModel WorkspaceModel}. This works faster than using the old API, there is no need
  * to take the read lock for reading, and you'll never hit "already disposed" problem. 
  * <p>
- * However, if you want to store data specific for some language, framework or technology, it's better to define a new type of entities by 
+ * However, if you want to store data specific for some language, framework, or technology, it's better to define a new type of entities by 
  * extending {@link com.intellij.platform.workspace.storage.WorkspaceEntity WorkspaceEntity} interface instead of reusing 
  * {@link com.intellij.platform.workspace.jps.entities.ModuleEntity}, {@link com.intellij.platform.workspace.jps.entities.ContentRootEntity}
  * or other entities from this package. This way you can easily represent properties specific for your domain, and won't get problems from
