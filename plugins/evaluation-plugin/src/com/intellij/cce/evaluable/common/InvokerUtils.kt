@@ -12,17 +12,17 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 
-internal fun getEditor(project: Project): Editor? = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.editor
+fun getEditor(project: Project): Editor? = (FileEditorManager.getInstance(project).selectedEditor as? TextEditor)?.editor
 
-internal fun getEditorSafe(project: Project): Editor = getEditor(project) ?: throw IllegalStateException("No active editor")
+fun getEditorSafe(project: Project): Editor = getEditor(project) ?: throw IllegalStateException("No active editor")
 
-internal fun positionToString(editor: Editor): String {
+fun positionToString(editor: Editor): String {
   val offset = editor.caretModel.offset
   val logicalPosition = editor.offsetToLogicalPosition(offset)
   return "Offset: $offset, Line: ${logicalPosition.line}, Column: ${logicalPosition.column}."
 }
 
-internal fun LookupElement.asSuggestion(): Suggestion {
+fun LookupElement.asSuggestion(): Suggestion {
   val presentation = LookupElementPresentation()
   renderElement(presentation)
   val presentationText = "${presentation.itemText}${presentation.tailText ?: ""}" +
@@ -33,7 +33,7 @@ internal fun LookupElement.asSuggestion(): Suggestion {
   return Suggestion(insertedText, presentationText, sourceFromPresentation(presentation))
 }
 
-internal fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionSource {
+fun sourceFromPresentation(presentation: LookupElementPresentation): SuggestionSource {
   val icon = presentation.icon
   val typeText = presentation.typeText
 
@@ -45,7 +45,7 @@ internal fun sourceFromPresentation(presentation: LookupElementPresentation): Su
   }
 }
 
-internal fun <T> readActionInSmartMode(project: Project, runnable: () -> T): T {
+fun <T> readActionInSmartMode(project: Project, runnable: () -> T): T {
   val dumbService = DumbService.getInstance(project)
   var result: T? = null
   ApplicationManager.getApplication().invokeAndWait {

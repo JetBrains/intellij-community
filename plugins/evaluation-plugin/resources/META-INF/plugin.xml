@@ -44,8 +44,6 @@
   <extensions defaultExtensionNs="com.intellij.cce">
     <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
-    <evaluableFeature implementation="com.intellij.cce.evaluable.golf.LineCompletionGolfFeature"/>
-    <evaluableFeature implementation="com.intellij.cce.evaluable.golf.LineCompletionFeature"/>
   </extensions>
 
   <depends>com.intellij.modules.platform</depends>
