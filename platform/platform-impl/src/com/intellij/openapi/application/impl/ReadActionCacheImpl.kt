@@ -5,8 +5,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.util.ReadActionCache
 import com.intellij.util.ProcessingContext
 
-class ReadActionCacheImpl : ReadActionCache {
-
+internal class ReadActionCacheImpl : ReadActionCache {
   private val threadProcessingContext: ThreadLocal<ProcessingContext> = ThreadLocal()
 
   override val processingContext: ProcessingContext?
@@ -39,7 +38,6 @@ class ReadActionCacheImpl : ReadActionCache {
   }
 
   override fun allowInWriteAction(runnable: Runnable) {
-    allowInWriteAction { runnable.run() }
+    allowInWriteAction(runnable::run)
   }
-
 }

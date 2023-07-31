@@ -258,12 +258,15 @@ public class Menu extends MenuItem {
       nativeAddItem(nativePeer, stub.nativePeer, false/*already on AppKit thread*/);
 
       ApplicationManager.getApplication().invokeLater(() -> {
+        beginFill();
         myOnOpen.run();
         endFill(true);
       });
     }
     else {
+      beginFill();
       invokeWithLWCToolkit(myOnOpen, myComponent, true);
+      endFill(false/*already on AppKit thread*/);
     }
   }
 

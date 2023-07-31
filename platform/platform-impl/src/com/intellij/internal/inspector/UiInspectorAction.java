@@ -38,7 +38,6 @@ import java.awt.event.AWTEventListener;
 import java.awt.event.ContainerEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -87,13 +86,14 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
   }
 
   private static void closeAllInspectorWindows() {
-    Arrays.stream(Window.getWindows())
-      .filter(w -> w instanceof InspectorWindow)
-      .forEach(w -> Disposer.dispose(((InspectorWindow)w).getInspector()));
+    for (Window w : Window.getWindows()) {
+      if (w instanceof InspectorWindow) {
+        Disposer.dispose(((InspectorWindow)w).getInspector());
+      }
+    }
   }
 
-  public static class UiInspector implements AWTEventListener, Disposable {
-
+  public static final class UiInspector implements AWTEventListener, Disposable {
     UiInspector(@Nullable Project project) {
       if (project != null) {
         Disposer.register(project, this);
@@ -150,7 +150,6 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
 
     private static DefaultMutableTreeNode getClickInfoNode(MouseEvent me, JComponent component) {
       if (component instanceof UiInspectorPreciseContextProvider contextProvider) {
-        Point targetPoint = SwingUtilities.convertPoint(me.getComponent(), me.getPoint(), component);
         MouseEvent componentEvent = MouseEventAdapter.convert(me, component);
         UiInspectorPreciseContextProvider.UiInspectorInfo inspectorInfo = contextProvider.getUiInspectorContext(componentEvent);
         if (inspectorInfo != null) {

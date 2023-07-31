@@ -36,7 +36,6 @@ import com.intellij.ui.svg.createSvgCacheManager
 import com.intellij.ui.svg.svgCache
 import com.intellij.util.*
 import com.intellij.util.lang.ZipFilePool
-import com.intellij.util.ui.EDT
 import com.jetbrains.JBR
 import io.opentelemetry.sdk.OpenTelemetrySdkBuilder
 import kotlinx.coroutines.*

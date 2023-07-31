@@ -395,22 +395,16 @@ object Utils {
                         useDarkIcons = useDarkIcons)
         }
         else {
-          nativePeer.beginFill()
-          try {
-            fillMenuInnerMacNative(nativePeer = nativePeer,
-                                   list = list,
-                                   checked = checked,
-                                   multiChoice = multiChoice,
-                                   enableMnemonics = enableMnemonics,
-                                   presentationFactory = presentationFactory,
-                                   context = context,
-                                   place = place,
-                                   frame = component as JFrame,
-                                   useDarkIcons = useDarkIcons)
-          }
-          finally {
-            nativePeer.endFill(/* onAppKit = */ true)
-          }
+          fillMenuInnerMacNative(nativePeer = nativePeer,
+                                 list = list,
+                                 checked = checked,
+                                 multiChoice = multiChoice,
+                                 enableMnemonics = enableMnemonics,
+                                 presentationFactory = presentationFactory,
+                                 context = context,
+                                 place = place,
+                                 frame = component as JFrame,
+                                 useDarkIcons = useDarkIcons)
         }
       }
     }

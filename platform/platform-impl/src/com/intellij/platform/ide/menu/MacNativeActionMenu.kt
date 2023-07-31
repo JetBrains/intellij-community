@@ -43,12 +43,13 @@ internal fun createMacNativeActionMenu(context: DataContext?,
                      expire = { !menuPeer.isOpened })
     }
     catch (ignore: ProcessCanceledException) {
+      logger<Menu>().warn("ProcessCanceledException is not expected")
     }
     catch (e: Throwable) {
       logger<Menu>().error(e)
     }
     finally {
-      UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - menuPeer.getOpenTimeMs());
+      UILatencyLogger.MAIN_MENU_LATENCY.log(System.currentTimeMillis() - menuPeer.openTimeMs);
     }
   }
   menuPeer.listenPresentationChanges(presentation)
