@@ -17,7 +17,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.startup.ProjectActivity
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.util.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -90,6 +89,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
   }
 
   internal fun onProjectOpened() {
+    LOG.info("Post-startup activity executed. Current mode: ${getCurrentMode()}")
     projectOpening.set(false)
     onStateChanged()
   }
@@ -160,9 +160,7 @@ class SmartModeScheduler(private val project: Project, sc: CoroutineScope) : Dis
 
   class SmartModeSchedulerStartupActivity : ProjectActivity {
     override suspend fun execute(project: Project) {
-      StartupManager.getInstance(project).runAfterOpened {
-        project.service<SmartModeScheduler>().onProjectOpened()
-      }
+      project.service<SmartModeScheduler>().onProjectOpened()
     }
   }
 
