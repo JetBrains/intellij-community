@@ -41,7 +41,6 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,13 +100,6 @@ public class PythonTask {
       throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
     }
     return sdk;
-  }
-
-  @NotNull
-  public static PythonTask create(@NotNull final Module module,
-                                  @Nls @NotNull final String runTabTitle,
-                                  @NotNull final Sdk sdk) {
-    return new PythonTask(module, runTabTitle, sdk);
   }
 
   public PythonTask(@NotNull Module module, @TabTitle String runTabTitle, @NotNull Sdk sdk) {
