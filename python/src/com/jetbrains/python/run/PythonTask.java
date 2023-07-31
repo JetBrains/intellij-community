@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.execution.target.value.TargetEnvironmentFunctions.constant;
+import static com.intellij.execution.target.value.TargetEnvironmentFunctions.targetPath;
 
 /**
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
@@ -75,7 +76,7 @@ public class PythonTask {
   private static final long TIME_TO_WAIT_PROCESS_STOP = 2000L;
   private static final int TIMEOUT_TO_WAIT_FOR_TASK = 30000;
   protected final @NotNull Module myModule;
-  private final @NotNull Sdk mySdk;
+  protected final @NotNull Sdk mySdk;
   private String myWorkingDirectory;
   private String myRunnerScript;
   private HelperPackage myHelper = null;
@@ -112,6 +113,9 @@ public class PythonTask {
     return myWorkingDirectory;
   }
 
+  /**
+   * @param workingDirectory the optional working directory on the local machine
+   */
   public void setWorkingDirectory(String workingDirectory) {
     myWorkingDirectory = workingDirectory;
   }
@@ -195,6 +199,7 @@ public class PythonTask {
     if (helper != null) {
       // Special shortcut for helper: use it instead of creating environment request manually
       var helpersAwareRequest = PythonInterpreterTargetEnvironmentFactory.findPythonTargetInterpreter(mySdk, myModule.getProject());
+      helpersAwareRequest.preparePyCharmHelpers();
       assert helpersAwareRequest != null : data.getClass() + " is not supported";
       execution = PythonScripts.prepareHelperScriptExecution(helper, helpersAwareRequest);
       request = helpersAwareRequest.getTargetEnvironmentRequest();
@@ -210,6 +215,7 @@ public class PythonTask {
       execution.setPythonScriptPath(constant(script));
     }
 
+    customizePythonExecution(request, execution, myModule);
 
     // All paths params must be uploaded before call
     for (int i = 0; i < myParameters.size(); i++) {
@@ -226,9 +232,12 @@ public class PythonTask {
     // Workdir should also be uploaded
     var workDir = myWorkingDirectory;
     if (workDir != null) {
-      execution.setWorkingDir(addDirToUploadList(request, uploadedPaths, workDir));
+      execution.setWorkingDir(targetPath(Path.of(workDir)));
     }
     TargetEnvironment environment = request.prepareEnvironment(TargetProgressIndicator.EMPTY);
+
+    setupPythonPath(request, execution);
+
     var commandLine = PythonScripts.buildTargetedCommandLine(execution, environment, mySdk, new ArrayList<>());
 
     for (var volume : environment.getUploadVolumes().values()) {
@@ -274,6 +283,19 @@ public class PythonTask {
     });
     return handler;
   }
+
+  protected void setupPythonPath(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution) {
+    setupPythonPath(myModule, mySdk, request, pythonExecution, true, true);
+  }
+
+  protected static void setupPythonPath(@NotNull Module module, @NotNull Sdk sdk, @NotNull TargetEnvironmentRequest request,
+                                        @NotNull PythonExecution pythonExecution, boolean addContent, boolean addSource) {
+    PythonCommandLineState.buildPythonPath(module.getProject(), module, pythonExecution, sdk, null, false, addContent,
+                                           addSource, false, request);
+  }
+
+  protected void customizePythonExecution(@NotNull TargetEnvironmentRequest request, @NotNull PythonExecution pythonExecution,
+                                          @NotNull Module module) { }
 
   /**
    * Utility fun for {@link #executeTargetBasedProcess(PyTargetAwareAdditionalData)}, see usage
