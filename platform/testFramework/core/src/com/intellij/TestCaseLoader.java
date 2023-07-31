@@ -211,9 +211,11 @@ public class TestCaseLoader {
     return null;
   }
 
-  private static @NotNull TestClassesFilter loadTestsFilterFromFile(Path path, boolean linesArePatterns) {
+  private static @Nullable TestClassesFilter loadTestsFilterFromFile(Path path, boolean linesArePatterns) {
     try {
       List<String> lines = Files.readAllLines(path);
+      if (lines.isEmpty()) return null;
+      if (ContainerUtil.and(lines, String::isBlank)) return null;
       return linesArePatterns ? new PatternListTestClassFilter(lines) : new NameListTestClassFilter(lines);
     }
     catch (IOException e) {
