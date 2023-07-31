@@ -9,11 +9,15 @@ import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
 import com.intellij.ide.navbar.ui.showHint
+import com.intellij.ide.navbar.vm.NavBarVm
 import com.intellij.ide.ui.UISettings
 import com.intellij.lang.documentation.ide.ui.DEFAULT_UI_RESPONSE_TIMEOUT
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level.PROJECT
 import com.intellij.openapi.components.service
@@ -27,6 +31,7 @@ import kotlinx.coroutines.channels.BufferOverflow.DROP_OLDEST
 import kotlinx.coroutines.flow.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
+import java.awt.Window
 import javax.swing.JComponent
 
 @Service(PROJECT)
@@ -69,7 +74,19 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
 
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
-    return StaticNavBarPanel(project, cs, updateRequests, ::requestNavigation)
+    val provider: suspend (CoroutineScope, Window, JComponent) -> NavBarVm = { scope, window, component ->
+      NavBarVmImpl(scope, defaultModel(project), contextItems(window, component), ::requestNavigation)
+    }
+    return StaticNavBarPanel(project, cs, provider)
+  }
+
+  private fun contextItems(window: Window, component: JComponent): Flow<List<NavBarVmItem>> {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    return updateRequests.transformLatest {
+      dataContext(window, panel = component)?.let {
+        emit(contextModel(it, project))
+      }
+    }
   }
 
   fun showFloatingNavbar(dataContext: DataContext) {
