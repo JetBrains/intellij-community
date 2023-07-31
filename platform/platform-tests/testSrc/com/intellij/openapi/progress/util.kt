@@ -83,9 +83,8 @@ fun assertCurrentJobIsChildOf(parent: Job): Job {
 }
 
 fun assertJobIsChildOf(job: Job, parent: Job) {
-  val children = parent.children.toSet()
-  job.ensureActive()
-  assertTrue(job in children)
+  @OptIn(ExperimentalCoroutinesApi::class)
+  assertSame(parent, job.parent)
 }
 
 fun loggedError(canThrow: Semaphore): Throwable {
