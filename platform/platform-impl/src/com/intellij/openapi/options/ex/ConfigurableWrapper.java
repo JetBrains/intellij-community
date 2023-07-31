@@ -149,7 +149,7 @@ public class ConfigurableWrapper implements SearchableConfigurable, Weighted, Hi
       if (configurable != null) {
         String name = configurable.getDisplayName();
         if (!loaded) {
-          String message = "No display name is specified for configurable " + configurable.getClass().getName() + " in xml file;\n" +
+          String message = "No display name specified in plugin descriptor XML file for configurable " + configurable.getClass().getName() + ";\n" +
                            "specify it using 'displayName' or 'key' attribute to avoid necessity to load the configurable class when Settings dialog is opened";
           PluginDescriptor pluginDescriptor = myEp.getPluginDescriptor();
           PluginId pluginId = pluginDescriptor != null ? pluginDescriptor.getPluginId() : null;
