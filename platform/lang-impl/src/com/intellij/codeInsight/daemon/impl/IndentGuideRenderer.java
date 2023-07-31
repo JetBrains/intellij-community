@@ -163,10 +163,10 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
     if (ExperimentalUI.isNewUI()) {
       List<RangeHighlighter> highlighters = ContainerUtil.filter(editor.getMarkupModel().getAllHighlighters(),
                                                                  x -> x.getLineMarkerRenderer() instanceof DefaultLineMarkerRenderer);
-      if (!highlighters.isEmpty()) {
-        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighters.get(0).getLineMarkerRenderer();
+      for (RangeHighlighter highlighter: highlighters) {
+        DefaultLineMarkerRenderer renderer = (DefaultLineMarkerRenderer)highlighter.getLineMarkerRenderer();
         assert renderer != null;
-        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighters.get(0).getStartOffset(), false)) {
+        if (editor.offsetToVisualLine(startOffset, false) == editor.offsetToVisualLine(highlighter.getStartOffset(), false)) {
           Color color = renderer.getColor();
           if (color != null) {
             Color matched = scheme.getColor(EditorColors.MATCHED_BRACES_INDENT_GUIDE_COLOR);
