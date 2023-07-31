@@ -5,62 +5,56 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
 import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDelegate
 
 /**
- * A base interface for entities. An entity may have properties of the following types:
- * * primitive types;
- * * String;
- * * enum;
- * * [VirtualFileUrl];
- * * [WorkspaceEntity] or [SymbolicEntityId];
- * * [List] of another allowed type;
- * * [Map] of another allowed types where key is NOT a WorkspaceEntity;
- * * another data class with properties of the allowed types (references to entities must be wrapped into [EntityReference]);
- * * sealed abstract class where all implementations satisfy these requirements.
+ * A base interface for entities in [the storage](psi_element://com.intellij.platform.workspace.storage).
+ * Each entity type has its own interface extending [WorkspaceEntity].
+ * The platform currently provides some predefined types of entities (see [this package](psi_element://com.intellij.platform.workspace.jps.entities)),
+ * but they are supposed to be used only for interoperability with code which uses the old project model API. 
+ * The plugins should define and use their own types of entities if they need to store framework-specific data. 
  *
- * # Equality and identity
+ * Instances of [WorkspaceEntity] obtained from an [EntityStorageSnapshot] are immutable, further modifications will not affect them. This
+ * means that they can be used without any locks. However, references to [WorkspaceEntity] instances must not be saved in long-living data 
+ * structures, because each instance holds a reference to the whole snapshot, and this will create a memory leak. 
+ * If you need to refer to entities from some caches, use [EntityReference] or [ExternalEntityMapping].
+ * 
+ * ## Equality and identity
  *
- * Entities follow the java equality approach where by default objects are compared by identity. So, two different entities are never equal.
- * However, even requesting the same entity multiple times may return different java objects, they are still considered as equal.
- *
- * Entities from independent snapshots are never equal.
- *
- * Requesting the same entity from two different snapshots will return two different java objects.
- * However, they are equal if one snapshot is a modification of another, and this particular entity was not modified.
- *
- * This is the default behaviour of `equals` method that may be changed for any particular inheritor.
+ * There are no guaranties about identity of [WorkspaceEntity] instances: even subsequent calls of [EntityStorage.entities] function for the
+ * same storage may return different instances for the same entity.
+ * 
+ * [equals] function returns `true` for instances which refer to the same entity, and `false` otherwise. It doesn't compare properties of
+ * entities, so two entities of the same type with identical properties won't be considered equal. 
+ * However, instances of the same entity returned by different calls to [EntityStorage.entities] will be equal. Moreover, an instance of the
+ * same entity from a new snapshot of the storage will be equal to the instance from the previous version if that particular entity 
+ * wasn't modified.
  *
  * ### Examples:
  * ```kotlin
- * val entityOne = builderOne.addEntity("data")
- * val entityTwo = builderTwo.addEntity("data")
- * entityOne != entityTwo
+ * val entityOne = builder.addEntity(MyEntity("data"))
+ * val entityTwo = builder.addEntity(MyEntity("data"))
+ * assertNotEquals(entityOne, entityTwo) //different entities
  * ```
  *
  * ```kotlin
- * val entityOne = snapshot.getEntity()
- * val entityTwo = snapshot.getEntity()
- * entityOne !== entityTwo
- * entityOne == entityTwo
+ * val entity = builder.addEntity(MyEntity("data"))
+ * val entityFromBuilder = builder.entities(MyEntity::class.java).single()
+ * assertEquals(entity, entityFromBuilder) //same entity
  * ```
  *
  * ```kotlin
- * val entityA = snapshot.getEntityA()
- * val entityB = snapshot.getEntityB()
- * entityA != entityB
+ * val entityA1 = snapshot1.getEntityA()
+ * val entityB1 = snapshot1.getEntityA()
+ * val builder = snapshot1.toBuilder()
+ * builder.modifyEntity(entityB1) { ... }
+ * val snapshot2 = builder.toSnapshot()
+ * val entityA2 = snapshot2.getEntityA()
+ * val entityB2 = snapshot2.getEntityB()
+ * assertEquals(entityA1, entityA2) //entity "A" wasn't modified
+ * assertNotEquals(entityB1, entityB2) //entity "B" was modified
  * ```
- *
- * ```kotlin
- * val entityAOne = snapshot1.getEntityA()
- * val snapshot2 = snapshot1.toBuilder().modifyEntityB().toSnapshot()
- * val entityATwo = snapshot2.getEntityA()
- * entityAOne == entityATwo
- * ```
- *
- * ```kotlin
- * val entityAOne = snapshot1.getEntityA()
- * val snapshot2 = snapshot1.toBuilder().modifyEntityA().toSnapshot()
- * val entityATwo = snapshot2.getEntityA()
- * entityAOne != entityATwo
- * ```
+ * 
+ * ## Defining new entity types
+ * In order to define a new type of entity, you need to create a new interface extending [WorkspaceEntity], see [this article](https://youtrack.jetbrains.com/articles/IJPL-A-52)
+ * for details.
  */
 
 @Abstract
