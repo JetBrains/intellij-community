@@ -10,6 +10,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtilRt;
+import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,6 +91,10 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   protected void doTest(final String testName, final String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
     IntentionAction action = myFixture.getAvailableIntention(hint);
+    if (action == null) {
+      fail("No action '"+hint+"' found among "+
+           StreamEx.of(myFixture.getAvailableIntentions()).map(IntentionAction::getText).joining(", "));
+    }
     assertNotNull(action);
     Path previewPath = Path.of(myFixture.getTestDataPath(), getRelativePath(), testName + ".preview.java");
     if (Files.exists(previewPath)) {
