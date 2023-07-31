@@ -72,8 +72,7 @@ class CodeFloatingToolbar(
     val selectionEnd = editor.selectionModel.selectionEnd
     val selectionStart = editor.selectionModel.selectionStart
     val isOneLineSelection = isOneLineSelection(editor)
-    val isBelow = !isSelectionEndVisible(editor) &&
-                  (selectionEnd == editor.caretModel.offset || Registry.get("floating.codeToolbar.showBelow").asBoolean())
+    val isBelow = shouldBeUnderSelection(selectionEnd)
     val offsetForHint = when {
       isOneLineSelection -> selectionStart
       isBelow -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, true))
@@ -91,8 +90,14 @@ class CodeFloatingToolbar(
     return hintPoint
   }
 
-  private fun isSelectionEndVisible(editor: Editor): Boolean {
-    return editor.offsetToXY(editor.selectionModel.selectionEnd) in editor.scrollingModel.visibleArea
+  private fun shouldBeUnderSelection(selectionEnd: Int): Boolean {
+    val showUnderSelection = selectionEnd == editor.caretModel.offset || Registry.get("floating.codeToolbar.showBelow").asBoolean()
+    val preferredOffset = if (!showUnderSelection) editor.selectionModel.selectionStart else editor.selectionModel.selectionEnd
+    if (editor.offsetToXY(preferredOffset) in editor.scrollingModel.visibleArea) {
+      return showUnderSelection
+    } else {
+      return !showUnderSelection
+    }
   }
 
   private fun isOneLineSelection(editor: Editor): Boolean {
