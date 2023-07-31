@@ -51,12 +51,37 @@ import com.intellij.platform.workspace.storage.impl.WorkspaceEntityExtensionDele
  * assertEquals(entityA1, entityA2) //entity "A" wasn't modified
  * assertNotEquals(entityB1, entityB2) //entity "B" was modified
  * ```
+ * ## Parent-child relationship between entities
+ * 
+ * Some types of entities may be connected by "parent-child" relationship. It's introduced by a property in the parent entity interface
+ * which refers to the child entity (entities) with [@Child][com.intellij.platform.workspace.storage.annotations.Child] annotation,
+ * and a property in the child entity interface which refers to the parent entity. 
+ * The storage automatically maintains the consistency of this relationship during modifications: 
+ * * if a parent entity is removed, all its child entities are also removed;
+ * * if a child entity is removed, the corresponding property in its parent entity is updated so it no longer refers to the removed entity.
+ *  
+ * The property referring to child entity may have a type
+ * * `@Child ChildEntity?` indicating that there are zero or one child entities of the given type, or
+ * * `List<@Child ChildEntity>` indicating that there are zero, one, or more child entities of the given type.
+ * 
+ * If `ChildEntity` is [@Abstract][Abstract], [addDiff][MutableEntityStorage.addDiff] operation won't try to merge changes in children of
+ * a parent entity, but always replace the whole list of children.
+ * 
+ * The property referring to the parent entity may have a type
+ * * `ParentEntity` indicating that the parent is mandatory, or
+ * * `ParentEntity?` indicating that the parent is optional.
+ * 
+ * If the parent is optional, it's possible to create a child entity without the parent entity and set reference to the parent entity to
+ * `null` for an existing child entity. Also, if reference to a child entity is removed from the corresponding property in the parent entity,
+ * it causes automatic removal of the child entity if it specifies that the parent is mandatory, and just sets parent reference to `null`
+ * if the parent is optional.
+ * 
+ * Entities may be also linked by symbolic references, see [SymbolicEntityId] for details.
  * 
  * ## Defining new entity types
  * In order to define a new type of entity, you need to create a new interface extending [WorkspaceEntity], see [this article](https://youtrack.jetbrains.com/articles/IJPL-A-52)
  * for details.
  */
-
 @Abstract
 interface WorkspaceEntity {
   /**
