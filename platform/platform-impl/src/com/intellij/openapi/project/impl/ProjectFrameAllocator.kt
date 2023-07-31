@@ -23,7 +23,6 @@ import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.TextEditorWithPreview
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
@@ -183,11 +182,6 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask,
       scheduleInitFrame(rawProjectDeferred = rawProjectDeferred,
                         reopeningEditorJob = reopeningEditorJob,
                         deferredProjectFrameHelper = deferredProjectFrameHelper)
-
-      outOfLoadingScope.launch(CoroutineName("fileEditorProvider preloading") + Dispatchers.IO) {
-        FileEditorProvider.EP_FILE_EDITOR_PROVIDER.extensionList
-      }
-
       task(scheduleSaveTemplate(options), projectInitObserver)
       startOfWaitingForReadyFrame.set(System.nanoTime())
     }
