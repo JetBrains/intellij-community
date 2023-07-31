@@ -50,7 +50,7 @@ class CancellableReadActionWithJobTest : CancellableReadActionTests() {
 
   @Test
   fun rethrow() {
-    currentJobTest {
+    blockingContextTest {
       testComputeCancellableRethrow()
     }
   }

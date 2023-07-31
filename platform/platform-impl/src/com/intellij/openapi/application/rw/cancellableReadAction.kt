@@ -58,6 +58,7 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
     throw currentJobCe
   }
   catch (ce: PceCancellationException) {
+    readJob.cancel(ce)
     val pce = ce.cause
     if (pce.cause is ReadCancellationException) {
       throw ReadCancellationException(pce)
