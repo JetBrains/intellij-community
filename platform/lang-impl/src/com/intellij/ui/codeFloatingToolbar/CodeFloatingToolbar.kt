@@ -52,6 +52,10 @@ class CodeFloatingToolbar(
   }
 
   override fun isEnabled(): Boolean {
+    val selection = editor.selectionModel
+    if (!selection.hasSelection()) return false
+    val range = editor.calculateVisibleRange()
+    if (selection.selectionStart !in range && selection.selectionEnd !in range) return false
     return editor.document.isWritable && !AdvancedSettings.getBoolean("floating.codeToolbar.hide")
   }
 
@@ -68,9 +72,8 @@ class CodeFloatingToolbar(
     val selectionEnd = editor.selectionModel.selectionEnd
     val selectionStart = editor.selectionModel.selectionStart
     val isOneLineSelection = isOneLineSelection(editor)
-    val isBelow = isOneLineSelection
-                  || selectionEnd == editor.caretModel.offset
-                  || Registry.get("floating.codeToolbar.showBelow").asBoolean() && isSelectionEndVisible(editor)
+    val isBelow = !isSelectionEndVisible(editor) &&
+                  (selectionEnd == editor.caretModel.offset || Registry.get("floating.codeToolbar.showBelow").asBoolean())
     val offsetForHint = when {
       isOneLineSelection -> selectionStart
       isBelow -> getOffsetForLine(editor, getLineByVisualStart(editor, selectionEnd, true))
