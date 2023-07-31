@@ -236,16 +236,26 @@ public class MappedFileStorageHelper implements Closeable {
   }
 
   public void clear() throws IOException {
-    //MAYBE RC: it could be made much faster
     int maxAllocatedFileId = maxAllocatedFileID();
-    for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedFileId; fileId++) {
-      for (int fieldOffset = 0; fieldOffset < bytesPerRow; fieldOffset += Integer.BYTES) {
-        writeIntField(fileId, fieldOffset, 0);
+    long maxOffset = maxAllocatedFileId * (long)bytesPerRow * HeaderLayout.HEADER_SIZE;
+    int pageSize = storage.pageSize();
+    for (long offset = 0; offset < maxOffset; offset += pageSize) {
+      Page page = storage.pageByOffset(offset);
+      ByteBuffer pageBuffer = page.rawPageBuffer();
+      //MAYBE RC: it could be done much faster -- use putLong(), use preallocated array of zeroes,
+      //          use Unsafe.setMemory() -- but does it worth it?
+      for (int pos = 0; pos < pageSize; pos++) {
+        pageBuffer.put(pos, (byte)0);
       }
     }
-    //clear headers also? or leave it to client?
-    setVersion(0);
-    setVFSCreationTag(0);
+    //TODO RC: which memory semantics .clear() should have? Now it is just 'plain write', while
+    //         all other access methods uses 'volatile read/write'. For current use-case
+    //         (initialization) it is OK, since values are safe-published anyway, but for other
+    //         use-cases it could lead to troubles.
+    //         On the other hand: semantics of .clear() in a concurrent context is anyway tricky:
+    //         we can't clear all content atomically.
+    //         So the best option I see is: prohibit .clear() use in concurrent context at all
+    //         -- state it has undefined behavior in such a context.
   }
 
   public void fsync() throws IOException {
