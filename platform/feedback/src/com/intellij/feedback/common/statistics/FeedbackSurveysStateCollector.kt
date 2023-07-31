@@ -13,26 +13,26 @@ class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
     private val GROUP = EventLogGroup("feedback.surveys.state", 1)
 
     private val NUMBER_FEEDBACK_SURVEY_SHOWS = GROUP.registerEvent(
-      "numberNotificationShows",
-      EventFields.StringValidatedByInlineRegexp("surveyId", ".+"),
-      EventFields.Int("numberOfShows")
+      "number.of.notifications.shown",
+      EventFields.StringValidatedByInlineRegexp("survey_id", ".+"),
+      EventFields.Count
     )
 
     private val NUMBER_RESPOND_ACTION_INVOKED = GROUP.registerEvent(
-      "numberRespondActionInvoked",
-      EventFields.StringValidatedByInlineRegexp("surveyId", ".+"),
-      EventFields.Int("numberOfInvocations")
+      "number.of.respond.actions.invoked",
+      EventFields.StringValidatedByInlineRegexp("survey_id", ".+"),
+      EventFields.Count
     )
 
     private val NUMBER_DISABLE_ACTION_INVOKED = GROUP.registerEvent(
-      "numberDisableActionInvoked",
-      EventFields.StringValidatedByInlineRegexp("surveyId", ".+"),
-      EventFields.Int("numberOfInvocations")
+      "number.of.disable.actions.invoked",
+      EventFields.StringValidatedByInlineRegexp("survey_id", ".+"),
+      EventFields.Count
     )
 
     private val FEEDBACK_SURVEY_ANSWER_SENT = GROUP.registerEvent(
-      "answeredFeedbackSurvey",
-      EventFields.StringValidatedByInlineRegexp("surveyId", ".+")
+      "feedback.survey.answered",
+      EventFields.StringValidatedByInlineRegexp("survey_id", ".+")
     )
 
   }
