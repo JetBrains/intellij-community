@@ -20,6 +20,8 @@ If completion suggest only one token - this option is useless (see checkLine ↑
  *  - INTELLIJ  - <a href="https://jetbrains.team/p/ccrm/code/fl-inference">https://jetbrains.team/p/ccrm/code/fl-inference</a>
  * @param topN Take only N top suggestions, applying after filtering by source
  * @param suggestionsProvider Name of provider of suggestions (use DEFAULT for IDE completion)
+ * @param pathToZipModel Path to zip file with ML ranking model
+ * @param completionType Use ML for enabling ML ranking or BASIC for disabling it
  */
 data class CompletionGolfStrategy(
   val mode: CompletionGolfMode,
@@ -41,7 +43,7 @@ data class CompletionGolfStrategy(
     const val DEFAULT_PROVIDER: String = "DEFAULT"
   }
 
-  class Builder constructor(val mode: CompletionGolfMode) {
+  class Builder(val mode: CompletionGolfMode) {
     var checkLine: Boolean = true
     var invokeOnEachChar: Boolean = false
 
