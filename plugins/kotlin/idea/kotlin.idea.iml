@@ -126,5 +126,6 @@
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" />
     <orderEntry type="module" module-name="intellij.platform.workspace.jps" />
     <orderEntry type="module" module-name="intellij.platform.backend.workspace" />
+    <orderEntry type="module" module-name="intellij.platform.core" />
   </component>
 </module>
