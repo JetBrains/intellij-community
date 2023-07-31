@@ -176,6 +176,19 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/importReference")
+    public static class ImportReference extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("ImportReference.kt")
+        public void testImportReference() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/importReference/ImportReference.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/propertyTypeReference")
     public static class PropertyTypeReference extends AbstractK2BindToElementTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -277,19 +290,6 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
         @TestMetadata("TopLevelFunctionCall.kt")
         public void testTopLevelFunctionCall() throws Exception {
             runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/TopLevelFunctionCall.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/importReference")
-    public static class ImportReference extends AbstractK2BindToElementTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("ImportReference.kt")
-        public void testImportReference() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/importReference/ImportReference.kt");
         }
     }
 }
