@@ -15,7 +15,8 @@
  */
 package com.siyeh.ig.controlflow;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiBreakStatement;
+import com.intellij.psi.PsiSwitchStatement;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
