@@ -316,7 +316,18 @@ public final class VcsLogPersistentIndex implements VcsLogModifiableIndex, Dispo
 
     @Override
     public void heavyActivityStarted() {
-      mySingleTaskController.cancelCurrentTask();
+      if (isPostponeOnHeavyActivity()) {
+        mySingleTaskController.cancelCurrentTask();
+      }
+    }
+
+    @Override
+    protected boolean isHeavy() {
+      return super.isHeavy() && isPostponeOnHeavyActivity();
+    }
+
+    private static boolean isPostponeOnHeavyActivity() {
+      return Registry.is("vcs.log.index.postpone.on.heavy.activity.or.power.save");
     }
   }
 
