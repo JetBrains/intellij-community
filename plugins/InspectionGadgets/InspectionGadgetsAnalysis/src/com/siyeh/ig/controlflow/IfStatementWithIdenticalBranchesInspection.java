@@ -45,6 +45,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 // Not really with identical branches, but also common parts
 public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean myHighlightWhenLastStatementIsCall = false;
+  public boolean myHighlightElseIf = false;
 
   private static final List<IfStatementInspector> ourInspectors = List.of(
     ImplicitElse::inspect,
@@ -57,7 +58,10 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("myHighlightWhenLastStatementIsCall",
-               JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call")));
+               JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.when.tail.call")),
+      checkbox("myHighlightElseIf",
+               JavaAnalysisBundle.message("inspection.common.if.parts.settings.highlight.else.if"))
+      );
   }
 
   @NotNull
@@ -69,7 +73,8 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
         PsiStatement[] thenStatements = unwrap(ifStatement.getThenBranch());
         PsiStatement[] elseStatements = unwrap(ifStatement.getElseBranch());
         for (IfStatementInspector inspector : ourInspectors) {
-          IfInspectionResult result = inspector.inspect(ifStatement, thenStatements, elseStatements, isOnTheFly, myHighlightWhenLastStatementIsCall);
+          IfInspectionResult result = inspector.inspect(ifStatement, thenStatements, elseStatements, isOnTheFly, 
+                                                        IfStatementWithIdenticalBranchesInspection.this);
           if (result != null) {
             ProblemHighlightType highlightType;
             if (result.myIsWarning) {
@@ -108,7 +113,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                          PsiStatement @NotNull [] thenBranch,
                                          PsiStatement @NotNull [] elseBranch,
                                          boolean isOnTheFly,
-                                         boolean highlightWhenLastStatementIsCall);
+                                         IfStatementWithIdenticalBranchesInspection inspection);
   }
 
   private static class IfInspectionResult {
@@ -129,11 +134,18 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
   }
 
   private static class MergeElseIfsFix extends PsiUpdateModCommandQuickFix {
+    private final boolean myInvert;
+
+    private MergeElseIfsFix(boolean invert) {
+      myInvert = invert;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if");
+      return myInvert ? JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if.invert") 
+                      : JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if");
     }
 
     @Nls
@@ -152,13 +164,14 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       PsiExpression condition = ifStatement.getCondition();
       if (condition == null) return;
       CommentTracker ct = new CommentTracker();
-      ct.markUnchanged(elseIf.myElseIfThen);
+      ct.markUnchanged(elseIf.myElseIfBranchToRemove);
       ct.markUnchanged(condition);
-      ct.markUnchanged(elseIf.myElseIfCondition);
-      ct.replace(elseIf.myElseBranch, elseIf.myElseIfElseStatement);
+      ct.replace(elseIf.myElseBranch, elseIf.myElseIfBranchToKeep);
 
       String firstCondition = ParenthesesUtils.getText(condition, ParenthesesUtils.OR_PRECEDENCE);
-      String secondCondition = ParenthesesUtils.getText(elseIf.myElseIfCondition, ParenthesesUtils.OR_PRECEDENCE);
+      String secondCondition = elseIf.myInvert ?
+                               BoolUtils.getNegatedExpressionText(elseIf.myElseIfCondition, ParenthesesUtils.OR_PRECEDENCE, ct) :
+                               ParenthesesUtils.getText(ct.markUnchanged(elseIf.myElseIfCondition), ParenthesesUtils.OR_PRECEDENCE);
 
       String newCondition = firstCondition + "||" + secondCondition;
       ct.replaceAndRestoreComments(condition, newCondition);
@@ -746,7 +759,7 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                          PsiStatement @NotNull [] thenBranch,
                                          PsiStatement @NotNull [] elseBranch,
                                          boolean isOnTheFly,
-                                                boolean highlightWhenLastStatementIsCall) {
+                                         IfStatementWithIdenticalBranchesInspection inspection) {
       ImplicitElse implicitElse = from(thenBranch, elseBranch, ifStatement);
       if (implicitElse == null) return null;
       CommonPartType type = implicitElse.getType();
@@ -952,14 +965,14 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
                                                 PsiStatement @NotNull [] thenBranch,
                                                 PsiStatement @NotNull [] elseBranch,
                                                 boolean isOnTheFly,
-                                                boolean highlightWhenLastStatementIsCall) {
+                                                IfStatementWithIdenticalBranchesInspection inspection) {
       ThenElse thenElse = from(ifStatement, thenBranch, elseBranch, isOnTheFly);
       if (thenElse == null) return null;
       boolean isNotInCodeBlock = !(ifStatement.getParent() instanceof PsiCodeBlock);
       boolean mayChangeSemantics = thenElse.myMayChangeSemantics;
       CommonPartType type = thenElse.myCommonPartType;
       ExtractCommonIfPartsFix fix = new ExtractCommonIfPartsFix(type, mayChangeSemantics, isOnTheFly);
-      boolean tailStatementIsSingleCall = !highlightWhenLastStatementIsCall
+      boolean tailStatementIsSingleCall = !inspection.myHighlightWhenLastStatementIsCall
                                           && isSingleCallTail(thenElse.myTailStatementsOfThen)
                                           && thenElse.myHeadUnitsOfThen.isEmpty();
       boolean isInfoLevel = mayChangeSemantics
@@ -1155,20 +1168,23 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
 
   private static final class ElseIf {
     final @NotNull PsiStatement myElseBranch;
-    final @NotNull PsiStatement myElseIfElseStatement;
-    final @NotNull PsiElement myElseIfThen;
+    final @NotNull PsiStatement myElseIfBranchToKeep;
+    final @NotNull PsiElement myElseIfBranchToRemove;
     final @NotNull PsiExpression myElseIfCondition;
     final @NotNull Map<PsiLocalVariable, String> mySubstitutionTable;
+    final boolean myInvert;
 
     private ElseIf(@NotNull PsiStatement elseBranch,
-                   @NotNull PsiStatement elseIfElseStatement,
-                   @NotNull PsiElement then, @NotNull PsiExpression elseIfCondition,
-                   @NotNull Map<PsiLocalVariable, String> table) {
+                   @NotNull PsiStatement elseIfBranchToKeep,
+                   @NotNull PsiStatement elseIfBranchToRemove, 
+                   @NotNull PsiExpression elseIfCondition,
+                   @NotNull Map<PsiLocalVariable, String> table, boolean needInvert) {
       myElseBranch = elseBranch;
-      myElseIfElseStatement = elseIfElseStatement;
-      myElseIfThen = then;
+      myElseIfBranchToKeep = elseIfBranchToKeep;
+      myElseIfBranchToRemove = elseIfBranchToRemove;
       myElseIfCondition = elseIfCondition;
       mySubstitutionTable = table;
+      myInvert = needInvert;
     }
 
     @Nullable
@@ -1184,21 +1200,31 @@ public class IfStatementWithIdenticalBranchesInspection extends AbstractBaseJava
       PsiStatement[] elseIfThen = ControlFlowUtils.unwrapBlock(elseIfThenBranch);
       PsiStatement elseIfElseBranch = elseIf.getElseBranch();
       if (elseIfElseBranch == null) return null;
-      if (elseIfThen.length != thenStatements.length) return null;
-      LocalEquivalenceChecker equivalence = getChecker(thenStatements, elseIfThen);
-      if (!branchesAreEquivalent(thenStatements, Arrays.asList(elseIfThen), equivalence)) return null;
-      return new ElseIf(elseBranch, elseIfElseBranch, elseIfThenBranch, elseIfCondition, equivalence.mySubstitutionTable);
+      if (elseIfThen.length == thenStatements.length) {
+        LocalEquivalenceChecker equivalence = getChecker(thenStatements, elseIfThen);
+        if (branchesAreEquivalent(thenStatements, Arrays.asList(elseIfThen), equivalence)) {
+          return new ElseIf(elseBranch, elseIfElseBranch, elseIfThenBranch, elseIfCondition, equivalence.mySubstitutionTable, false);
+        }
+      }
+      PsiStatement[] elseIfElse = ControlFlowUtils.unwrapBlock(elseIfElseBranch);
+      if (elseIfElse.length == thenStatements.length) {
+        LocalEquivalenceChecker equivalence = getChecker(thenStatements, elseIfThen);
+        if (branchesAreEquivalent(thenStatements, Arrays.asList(elseIfElse), equivalence)) {
+          return new ElseIf(elseBranch, elseIfThenBranch, elseIfElseBranch, elseIfCondition, equivalence.mySubstitutionTable, true);
+        }
+      }
+      return null;
     }
 
     @Nullable static IfInspectionResult inspect(@NotNull PsiIfStatement ifStatement,
                                                 PsiStatement @NotNull [] thenBranch,
                                                 PsiStatement @NotNull [] elseBranch,
                                                 boolean isOnTheFly,
-                                                boolean highlightWhenLastStatementIsCall) {
+                                                IfStatementWithIdenticalBranchesInspection inspection) {
       ElseIf elseIf = from(ifStatement, thenBranch);
       if (elseIf == null) return null;
       String message = JavaAnalysisBundle.message("inspection.common.if.parts.family.else.if.description");
-      return new IfInspectionResult(ifStatement.getFirstChild(), false, new MergeElseIfsFix(), message);
+      return new IfInspectionResult(ifStatement.getFirstChild(), inspection.myHighlightElseIf, new MergeElseIfsFix(elseIf.myInvert), message);
     }
   }
 
