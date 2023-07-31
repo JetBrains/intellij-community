@@ -69,7 +69,7 @@ private fun highlightType(action: Action, whenExpression: KtWhenExpression, prop
     NOTHING -> error("Illegal action")
 }
 
-private fun KtExpression.isComplex(): Boolean {
+internal fun KtExpression.isComplex(): Boolean {
     if (!isOneLiner()) return true
     return anyDescendantOfType<KtExpression> {
         it is KtThrowExpression || it is KtReturnExpression || it is KtBreakExpression || it is KtContinueExpression ||

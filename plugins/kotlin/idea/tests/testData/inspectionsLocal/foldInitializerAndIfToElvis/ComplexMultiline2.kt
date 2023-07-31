@@ -1,3 +1,5 @@
+// PROBLEM: none
+
 fun foo(vararg args: String): String? = null
 
 fun test(): Int {

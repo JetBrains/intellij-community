@@ -5622,9 +5622,24 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/Comments2.kt");
         }
 
-        @TestMetadata("ComplexExpression.kt")
-        public void testComplexExpression() throws Exception {
-            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexExpression.kt");
+        @TestMetadata("ComplexElvis.kt")
+        public void testComplexElvis() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexElvis.kt");
+        }
+
+        @TestMetadata("ComplexIf.kt")
+        public void testComplexIf() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexIf.kt");
+        }
+
+        @TestMetadata("ComplexMultiline.kt")
+        public void testComplexMultiline() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexMultiline.kt");
+        }
+
+        @TestMetadata("ComplexMultiline2.kt")
+        public void testComplexMultiline2() throws Exception {
+            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ComplexMultiline2.kt");
         }
 
         @TestMetadata("Continue.kt")
@@ -5645,21 +5660,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("IfNotNull.kt")
         public void testIfNotNull() throws Exception {
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/IfNotNull.kt");
-        }
-
-        @TestMetadata("ifStatementPriority.kt")
-        public void testIfStatementPriority() throws Exception {
-            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/ifStatementPriority.kt");
-        }
-
-        @TestMetadata("InitializerWithElvis.kt")
-        public void testInitializerWithElvis() throws Exception {
-            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/InitializerWithElvis.kt");
-        }
-
-        @TestMetadata("InitializerWithElvis2.kt")
-        public void testInitializerWithElvis2() throws Exception {
-            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/InitializerWithElvis2.kt");
         }
 
         @TestMetadata("IsSameType.kt")
@@ -5690,11 +5690,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("LongName2.kt")
         public void testLongName2() throws Exception {
             runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/LongName2.kt");
-        }
-
-        @TestMetadata("MultiLineInitializer.kt")
-        public void testMultiLineInitializer() throws Exception {
-            runTest("testData/inspectionsLocal/foldInitializerAndIfToElvis/MultiLineInitializer.kt");
         }
 
         @TestMetadata("MultiStatementBlock.kt")

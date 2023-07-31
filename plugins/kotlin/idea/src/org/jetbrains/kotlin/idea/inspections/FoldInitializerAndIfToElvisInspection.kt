@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractApplicabilityBasedInspection
 import org.jetbrains.kotlin.idea.core.setType
-import org.jetbrains.kotlin.idea.base.psi.isMultiLine
 import org.jetbrains.kotlin.idea.formatter.rightMarginOrDefault
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.elvisPattern
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.expressionComparedToNull
@@ -61,12 +60,7 @@ class FoldInitializerAndIfToElvisInspection : AbstractApplicabilityBasedInspecti
     companion object {
         private fun applicabilityRange(element: KtIfExpression): TextRange? {
             val data = calcData(element) ?: return null
-
-            if (data.initializer !is KtParenthesizedExpression
-                && data.initializer.isMultiLine()
-                && createElvisExpression(element, data, KtPsiFactory(element.project)).left is KtParenthesizedExpression
-            ) return null
-
+            if (data.initializer.isComplex()) return null
             val type = data.ifNullExpression.analyze().getType(data.ifNullExpression) ?: return null
             if (!type.isNothing()) return null
 
