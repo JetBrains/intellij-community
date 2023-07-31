@@ -959,6 +959,9 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
   @NeedsIndex.ForStandardLibrary
   public void testNoSemicolonAfterExistingParenthesesEspeciallyIfItsACast() { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
+  public void testNoSemicolonInForUpdate() { doTest("\n"); }
+
   public void testReturningTypeVariable() { doTest(); }
 
   public void testReturningTypeVariable2() { doTest(); }
