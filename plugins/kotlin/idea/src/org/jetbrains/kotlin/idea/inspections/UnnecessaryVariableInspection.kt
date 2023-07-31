@@ -45,12 +45,12 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
     }
 
     @JvmField
-    var ignoreImmediatelyReturnedVariables = true
+    var reportImmediatelyReturnedVariables = false
 
     override fun getOptionsPane(): OptPane = pane(
         checkbox(
-            "ignoreImmediatelyReturnedVariables",
-            KotlinBundle.message("inspection.unnecessary.variable.option.ignore.immediately.returned.variables")
+            "reportImmediatelyReturnedVariables",
+            KotlinBundle.message("inspection.unnecessary.variable.option.report.immediately.returned.variables")
         )
     )
 
@@ -130,7 +130,7 @@ class UnnecessaryVariableInspection : AbstractApplicabilityBasedInspection<KtPro
 
         return when {
             isExactCopy() -> Status.EXACT_COPY
-            !ignoreImmediatelyReturnedVariables && isReturnOnly() -> Status.RETURN_ONLY
+            reportImmediatelyReturnedVariables && isReturnOnly() -> Status.RETURN_ONLY
             else -> null
         }
     }

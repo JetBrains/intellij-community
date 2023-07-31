@@ -16323,60 +16323,60 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     @TestMetadata("testData/inspectionsLocal/unnecessaryVariable")
     public abstract static class UnnecessaryVariable extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables")
-        public static class IgnoreImmediatelyReturnedVariables extends AbstractLocalInspectionTest {
+        @TestMetadata("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables")
+        public static class ReportImmediatelyReturnedVariables extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ifElse.kt")
             public void testIfElse() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/ifElse.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse.kt");
             }
 
             @TestMetadata("ifElse2.kt")
             public void testIfElse2() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/ifElse2.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse2.kt");
             }
 
             @TestMetadata("ifElse3.kt")
             public void testIfElse3() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/ifElse3.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse3.kt");
             }
 
             @TestMetadata("ifElse4.kt")
             public void testIfElse4() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/ifElse4.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse4.kt");
             }
 
             @TestMetadata("ifElse5.kt")
             public void testIfElse5() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/ifElse5.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/ifElse5.kt");
             }
 
             @TestMetadata("lambda.kt")
             public void testLambda() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/lambda.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/lambda.kt");
             }
 
             @TestMetadata("lambda2.kt")
             public void testLambda2() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/lambda2.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/lambda2.kt");
             }
 
             @TestMetadata("simpleReturn.kt")
             public void testSimpleReturn() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/simpleReturn.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/simpleReturn.kt");
             }
 
             @TestMetadata("try.kt")
             public void testTry() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/try.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/try.kt");
             }
 
             @TestMetadata("when.kt")
             public void testWhen() throws Exception {
-                runTest("testData/inspectionsLocal/unnecessaryVariable/ignoreImmediatelyReturnedVariables/when.kt");
+                runTest("testData/inspectionsLocal/unnecessaryVariable/reportImmediatelyReturnedVariables/when.kt");
             }
         }
 
