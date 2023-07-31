@@ -17,7 +17,7 @@ interface GitPostUpdateHandler {
       EP_NAME.extensionList.forEach { handler -> handler.execute(project, ranges, consumer) }
     }
 
-    data class PostUpdateData(val text: String)
+    data class PostUpdateData(val text: String?)
 
     @JvmStatic
     val POST_UPDATE_DATA = DataKey.create<PostUpdateData>("POST_UPDATE_DATA")

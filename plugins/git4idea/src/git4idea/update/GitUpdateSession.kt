@@ -88,7 +88,7 @@ class GitUpdateSession(private val project: Project,
     notification.addAction(NotificationAction.createSimple(
       Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") }, notificationData.viewCommitAction))
 
-    if (isAiGeneratedSummaryEnabled()) {
+    if (notificationData.postUpdateData?.text != null) {
       val group = ActionManager.getInstance().getAction("Git.Update.Notification.Group") as ActionGroup
       group.getChildren(null).forEach { notification.addAction(it) }
     }
