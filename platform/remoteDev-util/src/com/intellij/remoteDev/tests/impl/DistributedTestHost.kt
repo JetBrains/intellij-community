@@ -30,6 +30,7 @@ import com.jetbrains.rd.util.lifetime.EternalLifetime
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.measureTimeMillis
 import com.jetbrains.rd.util.reactive.viewNotNull
+import com.jetbrains.rd.util.threading.SynchronousScheduler
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.image.BufferedImage
@@ -128,64 +129,79 @@ open class DistributedTestHost {
           testClassObject.performInit(testMethod)
           testMethod.invoke(testClassObject)
 
-          // Advice for processing events
-          session.runNextAction.set { _, _ ->
-            var actionTitle: String? = null
+          fun runAction(agentAction: AgentAction, expectIsDispatchThread: Boolean): RdTask<String?> {
+            val actionTitle = agentAction.title
             try {
               assert(ClientId.current.isLocal) { "ClientId '${ClientId.current}' should be local when test method starts" }
+              assert(application.isDispatchThread == expectIsDispatchThread) {
+                "Expected to be started on EDT: $expectIsDispatchThread, actual: ${Thread.currentThread()}"
+              }
 
-              val action = queue.remove()
-              actionTitle = action.title
+              if (expectIsDispatchThread) {
+                logger.info("'$actionTitle': preparing to start action")
 
-
-              logger.info("'$actionTitle': preparing to start action")
-
-              val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
-              if (!application.isHeadlessEnvironment && isNotRdHost) {
-                IdeEventQueue.getInstance().flushQueue()
-                requestFocus(actionTitle)
+                val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
+                if (!application.isHeadlessEnvironment && isNotRdHost) {
+                  IdeEventQueue.getInstance().flushQueue()
+                  requestFocus(actionTitle)
+                }
               }
 
               showNotification("${session.agentInfo.id}: $actionTitle")
-              // Flush all events to process pending protocol events and other things
-              //   before actual test method execution
-              IdeEventQueue.getInstance().flushQueue()
+              if (expectIsDispatchThread) {
+                // Flush all events to process pending protocol events and other things
+                //   before actual test method execution
+                IdeEventQueue.getInstance().flushQueue()
+              }
 
-              // Execute test method
-              lateinit var result: RdTask<String?>
-              val context = when (session.agentInfo.agentType) {
+              val agentContext = when (session.agentInfo.agentType) {
                 RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
                 RdAgentType.CLIENT -> ClientAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
                 RdAgentType.GATEWAY -> GatewayAgentContextImpl(session.agentInfo, application, projectOrNull, protocol)
               }
+
+              // Execute test method
+              lateinit var result: RdTask<String?>
               logger.info("'$actionTitle': starting action")
               val elapsedAction = measureTimeMillis {
-                result = action.action.invoke(context)
+                result = agentAction.action.invoke(agentContext)
               }
               logger.info("'$actionTitle': completed action in ${elapsedAction}ms")
 
-              projectOrNull?.let {
-                // Sync state across all IDE agents to maintain proper order in protocol events
-                logger.info("'$actionTitle': Sync protocol events after execution...")
-                val elapsedSync = measureTimeMillis {
-                  DistributedTestBridge.getInstance(it).syncProtocolEvents()
-                  IdeEventQueue.getInstance().flushQueue()
+              if (expectIsDispatchThread) {
+                projectOrNull?.let {
+                  // Sync state across all IDE agents to maintain proper order in protocol events
+                  logger.info("'$actionTitle': Sync protocol events after execution...")
+                  val elapsedSync = measureTimeMillis {
+                    DistributedTestBridge.getInstance(it).syncProtocolEvents()
+                    IdeEventQueue.getInstance().flushQueue()
+                  }
+                  logger.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
                 }
-                logger.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
               }
 
               // Assert state
               assertLoggerFactory()
 
-              return@set result
+              return result
             }
             catch (ex: Throwable) {
-              val msg = "${session.agentInfo.id}: ${actionTitle?.let { "'$it' " }.orEmpty()}hasn't finished successfully"
+              val msg = "${session.agentInfo.id}: ${actionTitle.let { "'$it' " }.orEmpty()}hasn't finished successfully"
               logger.warn(msg, ex)
               if (!application.isHeadlessEnvironment)
-                actionTitle?.let { makeScreenshot("${it}_$screenshotOnFailureFileName") }
-              return@set RdTask.faulted(AssertionError(msg, ex))
+                makeScreenshot("${actionTitle}_$screenshotOnFailureFileName")
+              return RdTask.faulted(AssertionError(msg, ex))
             }
+          }
+
+          // Advice for processing events
+          session.runNextAction.set { _, _ ->
+            runAction(queue.remove(), true)
+          }
+
+          // Special handler to be used in
+          session.runNextActionBackground.set(SynchronousScheduler, SynchronousScheduler) { _, _ ->
+            runAction(queue.remove(), false)
           }
         }
 
@@ -238,9 +254,9 @@ open class DistributedTestHost {
 
         // Initialize loggers
         DebugLogManager.getInstance().applyCategories(
-            session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE)} +
-            session.debugCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.DEBUG) }
-          )
+          session.traceCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.TRACE) } +
+          session.debugCategories.map { DebugLogManager.Category(it, DebugLogManager.DebugLogLevel.DEBUG) }
+        )
         logger.info("Test session ready!")
         session.ready.value = true
       }
