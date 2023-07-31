@@ -77,7 +77,7 @@ public class ExceptionFromCatchWhichDoesntWrapInspection extends BaseInspection 
         return;
       }
       final PsiParameter parameter = catchSection.getParameter();
-      if (parameter == null) {
+      if (parameter == null || parameter.isUnnamed()) {
         return;
       }
       @NonNls final String parameterName = parameter.getName();

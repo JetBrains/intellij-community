@@ -1011,6 +1011,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static boolean checkName(@NotNull PsiElement element, @NotNull String name, @NotNull PsiElement context) {
+    if (element instanceof PsiVariable && ((PsiVariable)element).isUnnamed()) return false;
     if (element instanceof PsiMetaOwner) {
       PsiMetaData data = ((PsiMetaOwner) element).getMetaData();
       if (data != null) {

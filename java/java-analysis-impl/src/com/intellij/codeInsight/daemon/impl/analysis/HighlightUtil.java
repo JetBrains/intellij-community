@@ -699,7 +699,7 @@ public final class HighlightUtil {
   }
 
   public static HighlightInfo.Builder checkVariableAlreadyDefined(@NotNull PsiVariable variable) {
-    if (variable instanceof ExternallyDefinedPsiElement) return null;
+    if (variable instanceof ExternallyDefinedPsiElement || variable.isUnnamed()) return null;
     PsiVariable oldVariable = null;
     PsiElement declarationScope = null;
     if (variable instanceof PsiLocalVariable || variable instanceof PsiPatternVariable ||
@@ -838,12 +838,14 @@ public final class HighlightUtil {
   static HighlightInfo.Builder checkUnderscore(@NotNull PsiIdentifier identifier, @NotNull LanguageLevel languageLevel) {
     if ("_".equals(identifier.getText())) {
       PsiElement parent = identifier.getParent();
-      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern)) {
+      if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) && 
+          !(parent instanceof PsiVariable var && var.isUnnamed())) {
         String text = JavaErrorBundle.message("underscore.identifier.error");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
       }
       else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
-        if (parent instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiLambdaExpression) {
+        if (parent instanceof PsiParameter parameter && parameter.getDeclarationScope() instanceof PsiLambdaExpression &&
+            !parameter.isUnnamed()) {
           String text = JavaErrorBundle.message("underscore.lambda.identifier");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
         }
@@ -851,6 +853,29 @@ public final class HighlightUtil {
     }
 
     return null;
+  }
+
+  static HighlightInfo.Builder checkAllowedUnnamedLocation(@NotNull PsiVariable variable) {
+    if (variable instanceof PsiPatternVariable) return null;
+    if (variable instanceof PsiResourceVariable) return null;
+    String message;
+    if (variable instanceof PsiLocalVariable local) {
+      if (local.getParent() instanceof PsiDeclarationStatement decl && decl.getParent() instanceof PsiCodeBlock) return null;
+      message = JavaAnalysisBundle.message("error.unnamed.local.variable.not.allowed.in.this.context");
+    }
+    else if (variable instanceof PsiParameter parameter) {
+      PsiElement scope = parameter.getDeclarationScope();
+      if (!(scope instanceof PsiMethod)) return null;
+      message = JavaAnalysisBundle.message("error.unnamed.method.parameter.not.allowed");
+    }
+    else if (variable instanceof PsiField) {
+      message = JavaAnalysisBundle.message("error.unnamed.field.not.allowed");
+    }
+    else {
+      message = JavaAnalysisBundle.message("error.unnamed.variable.not.allowed");
+    }
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(Objects.requireNonNull(variable.getNameIdentifier()))
+      .descriptionAndTooltip(message);
   }
 
   @NotNull

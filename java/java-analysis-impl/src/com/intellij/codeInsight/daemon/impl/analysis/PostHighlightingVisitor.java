@@ -222,7 +222,7 @@ class PostHighlightingVisitor {
 
   private HighlightInfo.Builder processLocalVariable(@NotNull PsiLocalVariable variable,
                                                      @NotNull PsiIdentifier identifier) {
-    if (PsiUtil.isIgnoredName(variable.getName())) return null;
+    if (variable.isUnnamed() || PsiUtil.isIgnoredName(variable.getName())) return null;
     if (UnusedSymbolUtil.isImplicitUsage(myProject, variable)) return null;
 
     String message = null;
@@ -366,7 +366,7 @@ class PostHighlightingVisitor {
   private HighlightInfo.Builder processParameter(@NotNull Project project,
                                                  @NotNull PsiParameter parameter,
                                                  @NotNull PsiIdentifier identifier) {
-    if (PsiUtil.isIgnoredName(parameter.getName())) return null;
+    if (parameter.isUnnamed() || PsiUtil.isIgnoredName(parameter.getName())) return null;
     PsiElement declarationScope = parameter.getDeclarationScope();
     QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     if (declarationScope instanceof PsiMethod method) {
@@ -426,7 +426,9 @@ class PostHighlightingVisitor {
         return highlightInfo;
       }
     }
-    else if (myUnusedSymbolInspection.checkParameterExcludingHierarchy() && declarationScope instanceof PsiLambdaExpression) {
+    else if ((myUnusedSymbolInspection.checkParameterExcludingHierarchy() ||
+              HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isAvailable(declarationScope))
+             && declarationScope instanceof PsiLambdaExpression) {
       HighlightInfo.Builder highlightInfo = checkUnusedParameter(parameter, identifier, null);
       if (highlightInfo != null) {
         IntentionAction action1 = quickFixFactory.createRenameToIgnoredFix(parameter, true);

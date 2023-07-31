@@ -2,10 +2,13 @@
 package com.intellij.psi;
 
 import com.intellij.pom.PomRenameableTarget;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * Represents a Java local variable, method parameter or field.
@@ -86,4 +89,16 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
 
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
+
+  /**
+   * @return true if the variable is an unnamed variable, according to the Java specification
+   */
+  @ApiStatus.Experimental
+  default boolean isUnnamed() {
+    return "_".equals(getName()) &&
+           !(this instanceof PsiCompiledElement) &&
+           // Treat _ as unsupported unnamed variable since JDK 1.9, 
+           // so we can get a proper suggestion to update language level
+           PsiUtil.getLanguageLevel(this).isAtLeast(LanguageLevel.JDK_1_9);
+  }
 }
