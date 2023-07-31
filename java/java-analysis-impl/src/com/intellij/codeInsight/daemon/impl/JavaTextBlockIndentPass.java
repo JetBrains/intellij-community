@@ -1,14 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -105,13 +102,18 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       int indent = StringContentIndentUtil.getIndent(highlighter);
       if (indent <= 0) return;
 
-      VisualPosition startPosition = editor.offsetToVisualPosition(highlighter.getStartOffset());
+      int startOffset = highlighter.getStartOffset();
+      int endOffset = highlighter.getEndOffset();
+      FoldingModel foldingModel = editor.getFoldingModel();
+      if (foldingModel.isOffsetCollapsed(startOffset)) return;
+      Document doc = highlighter.getDocument();
+      FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
+      FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
+      if (tailRegion != null && tailRegion == headerRegion) return;
+
+      VisualPosition startPosition = editor.offsetToVisualPosition(startOffset);
+      VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
       Point start = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent - 1));
-
-      Point right = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent));
-      float x = (start.x + right.x) / 2f;
-
-      VisualPosition endPosition = editor.offsetToVisualPosition(highlighter.getEndOffset());
       Point end = editor.visualPositionToXY(new VisualPosition(endPosition.line, indent - 1));
 
       EditorColorsScheme scheme = editor.getColorsScheme();
@@ -126,6 +128,8 @@ public class JavaTextBlockIndentPass extends TextEditorHighlightingPass {
       float startY = start.y + baseline - ascent;
       float endY = end.y + baseline + descent;
 
+      Point right = editor.visualPositionToXY(new VisualPosition(startPosition.line, indent));
+      float x = (start.x + right.x) / 2f;
       LinePainter2D.paint((Graphics2D)g, x, startY, x, endY);
     }
   }
