@@ -596,6 +596,12 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) {
       add(HighlightClassUtil.checkThingNotAllowedInInterface(initializer, initializer.getContainingClass()));
     }
+    if (!myHolder.hasErrorResults()) {
+      if (initializer.getContainingClass() instanceof PsiUnnamedClass && HighlightingFeature.UNNAMED_CLASSES.isAvailable(initializer)) {
+        add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(
+          JavaErrorBundle.message("text.initializers.are.not.allowed.in.unnamed.classes")));
+      }
+    }
   }
 
   @Override
