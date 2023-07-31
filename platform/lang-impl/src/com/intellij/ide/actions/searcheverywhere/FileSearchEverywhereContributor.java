@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -181,7 +181,7 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor {
   public static PersistentSearchEverywhereContributorFilter<FileTypeRef> createFileTypeFilter(@NotNull Project project) {
     List<FileTypeRef> items = new ArrayList<>(FileTypeRef.forAllFileTypes());
     items.add(0, GotoFileModel.DIRECTORY_FILE_TYPE_REF);
-    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getName,
+    return new PersistentSearchEverywhereContributorFilter<>(items, GotoFileConfiguration.getInstance(project), FileTypeRef::getDisplayName,
                                                              FileTypeRef::getIcon);
   }
 }
