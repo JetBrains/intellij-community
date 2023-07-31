@@ -83,6 +83,14 @@ public class UnusedDeclarationInspectionTest extends AbstractUnusedDeclarationTe
     doTest();
   }
 
+  public void testSuppressOverriddenMethod() {
+    doTest();
+  }
+
+  public void testSuppressReachableOverriddenMethod() {
+    doTest();
+  }
+
   public void testReachableFromXml() {
     doTest();
   }

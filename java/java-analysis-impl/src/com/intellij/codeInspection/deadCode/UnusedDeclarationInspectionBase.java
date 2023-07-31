@@ -611,7 +611,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static initializers
         RefClass methodOwnerClass = method.getOwnerClass();
-        if (method.isStatic() || method.isConstructor() || method.isEntry()) {
+        boolean canBeOverridden = !method.isStatic() && !method.isConstructor();
+        if (!canBeOverridden || method.isEntry()) {
           if (method.isStatic()) {
             RefElementImpl owner = (RefElementImpl)method.getOwner();
             if (owner != null) {
@@ -633,7 +634,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
           else {
             addDelayedMethod(method, methodOwnerClass);
           }
-
+        }
+        if (canBeOverridden) {
           for (RefOverridable reference : method.getDerivedReferences()) {
             if (reference instanceof RefMethod) {
               visitMethod(((RefMethod)reference));
