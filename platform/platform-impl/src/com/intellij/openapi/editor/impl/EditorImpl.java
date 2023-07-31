@@ -3009,8 +3009,21 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myView.repaintCarets();
     }
 
+    private boolean isEditorInputFocusOwner() {
+      Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      Component content = getContentComponent();
+      for (Component temp = focusOwner; temp != null; temp = (temp instanceof Window) ? null : temp.getParent()) {
+        if (temp == content)
+          return true;
+        // check if hosted component is an input focus owner, in that case input focus belongs to hosted component instead of the editor
+        else if (temp instanceof EditorHostedComponent hostedComponent && hostedComponent.isInputFocusOwner())
+          return false;
+      }
+      return false;
+    }
+
     CaretRectangle @Nullable [] getCaretLocations(boolean onlyIfShown) {
-      if (onlyIfShown && (!isEnabled() || !isActive() || isRendererMode() || !IJSwingUtilities.hasFocus(getContentComponent()))) {
+      if (onlyIfShown && (!isEnabled() || !isActive() || isRendererMode() || !isEditorInputFocusOwner())) {
         return null;
       }
       return myLocations;
