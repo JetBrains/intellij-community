@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlEntityDecl;
 import com.intellij.psi.xml.XmlFile;
@@ -57,6 +58,12 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       }
 
       @Override
+      public void visitFragment(@NotNull PsiFragment fragment) {
+        super.visitFragment(fragment);
+        handle(fragment);
+      }
+
+      @Override
       public void visitDocComment(@NotNull PsiDocComment comment) {
         super.visitDocComment(comment);
         handle(comment);
@@ -66,7 +73,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
 
   private abstract static class Handler {
     @NotNull
-    PsiElement getSubstitution(@NotNull Project project, @NotNull PsiElement element) {
+    PsiElement buildReplacement(@NotNull Project project, @NotNull PsiElement element) {
       String text = element.getText();
       StringBuilder sb = new StringBuilder();
       for (int i = 0; i < text.length(); i++) {
@@ -79,7 +86,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
         }
       }
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      return getSubstitution(factory, element, sb.toString());
+      return buildReplacement(factory, element, sb.toString());
     }
 
     protected static boolean isBasicLatin(char ch) {
@@ -89,14 +96,14 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     protected abstract void convert(@NotNull StringBuilder sb, char ch);
 
     @NotNull
-    protected abstract PsiElement getSubstitution(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText);
+    protected abstract PsiElement buildReplacement(@NotNull PsiElementFactory factory, @NotNull PsiElement element, @NotNull String newText);
   }
 
   private static class LiteralHandler extends Handler {
     @Override
-    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory,
-                                                  @NotNull PsiElement element,
-                                                  @NotNull String newText) {
+    protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement element,
+                                                   @NotNull String newText) {
       return factory.createExpressionFromText(newText, element.getParent());
     }
 
@@ -106,14 +113,56 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
+  private static class FragmentHandler extends LiteralHandler {
+    @Override
+    protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement element,
+                                                   @NotNull String newText) {
+      PsiFragment fragment = (PsiFragment)element;
+      IElementType tokenType = fragment.getTokenType();
+      int index;
+      if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+        newText += "}\"\"\"";
+        index = 0;
+      }
+      else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
+        newText = "\"\"\"\n\\{" + newText + "}\"\"\"";
+        index = 1;
+      }
+      else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) {
+        newText = "\"\"\"\n\\{" + newText;
+        index = 1;
+      }
+      else if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
+        newText += "}\"";
+        index = 0;
+      }
+      else if (tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
+        newText = "\"\\{" + newText + "}\"";
+        index = 1;
+      }
+      else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+        newText = "\"\\{" + newText;
+        index = 1;
+      }
+      else {
+        throw new AssertionError();
+      }
+      PsiTemplateExpression expression = (PsiTemplateExpression)factory.createExpressionFromText(newText, element);
+      PsiTemplate template = expression.getTemplate();
+      assert template != null;
+      return template.getFragments().get(index);
+    }
+  }
+
   private static class DocCommentHandler extends Handler {
     private static Int2ObjectMap<String> ourEntities;
 
     @Override
     @NotNull
-    PsiElement getSubstitution(@NotNull Project project, @NotNull PsiElement element) {
+    PsiElement buildReplacement(@NotNull Project project, @NotNull PsiElement element) {
       loadEntities(project);
-      return ourEntities != null ? super.getSubstitution(project, element) : element;
+      return ourEntities != null ? super.buildReplacement(project, element) : element;
     }
 
     @Override
@@ -128,9 +177,9 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     }
 
     @Override
-    protected @NotNull PsiElement getSubstitution(@NotNull PsiElementFactory factory,
-                                                  @NotNull PsiElement element,
-                                                  @NotNull String newText) {
+    protected @NotNull PsiElement buildReplacement(@NotNull PsiElementFactory factory,
+                                                   @NotNull PsiElement element,
+                                                   @NotNull String newText) {
       return factory.createCommentFromText(newText, element.getParent());
     }
 
@@ -203,12 +252,13 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
       else if (element instanceof PsiComment) {
         handler = new CommentHandler();
       }
-      else {
-        handler = null;
+      else if (element instanceof PsiFragment) {
+        handler = new FragmentHandler();
       }
-      if (handler == null) return;
-      final PsiElement newElement = handler.getSubstitution(project, element);
-      element.replace(newElement);
+      else {
+        return;
+      }
+      element.replace(handler.buildReplacement(project, element));
     }
   }
 }

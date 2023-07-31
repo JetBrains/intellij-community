@@ -31,8 +31,8 @@ public final class PsiTemplateImpl extends ExpressionPsiElement implements PsiTe
   public @NotNull List<@NotNull PsiFragment> getFragments() {
     final List<PsiFragment> result = new ArrayList<>();
     final PsiElement @NotNull [] children = getChildren();
-    for (int i = 0, length = children.length; i < length; i += 2) {
-      result.add((PsiFragment)children[i]);
+    for (PsiElement child : children) {
+      if (child instanceof PsiFragment) result.add((PsiFragment)child);
     }
     return result;
   }
@@ -41,8 +41,8 @@ public final class PsiTemplateImpl extends ExpressionPsiElement implements PsiTe
   public @NotNull List<@NotNull PsiExpression> getEmbeddedExpressions() {
     final List<PsiExpression> result = new ArrayList<>();
     final PsiElement @NotNull [] children = getChildren();
-    for (int i = 1, length = children.length; i < length; i += 2) {
-      result.add((PsiExpression)children[i]);
+    for (PsiElement child : children) {
+      if (child instanceof PsiExpression) result.add((PsiExpression)child);
     }
     return result;
   }
