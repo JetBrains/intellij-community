@@ -140,11 +140,11 @@ private suspend fun initServiceContainer(app: ApplicationImpl, pluginSetDeferred
 }
 
 private suspend fun preInitApp(app: ApplicationImpl,
-                                asyncScope: CoroutineScope,
-                                log: Logger,
-                                initLafJob: Job,
-                                appRegisteredJob: Job,
-                                euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
+                               asyncScope: CoroutineScope,
+                               log: Logger,
+                               initLafJob: Job,
+                               appRegisteredJob: Job,
+                               euaTaskDeferred: Deferred<(suspend () -> Boolean)?>?) {
   coroutineScope {
     launch(CoroutineName("critical services preloading")) {
       preloadCriticalServices(app = app, asyncScope = asyncScope, appRegistered = appRegisteredJob, initLafJob = initLafJob)
@@ -176,18 +176,8 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
     euaTaskDeferred?.await()?.invoke()
 
-    asyncScope.launch {
-      if (!app.isHeadlessEnvironment) {
-        launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-          AsyncProcessIcon.createBig(this)
-          AsyncProcessIcon(this)
-          AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-          AnimatedIcon.FS()
-        }
-      }
-
+    launch {
       coroutineScope {
-        loadIconMapping?.join()
         launch {
           // used by LafManager
           app.serviceAsync<UISettings>()
@@ -197,14 +187,26 @@ private suspend fun preInitApp(app: ApplicationImpl,
         }
       }
 
+      loadIconMapping?.join()
+
       span("laf initialization", RawSwingDispatcher) {
         app.serviceAsync<LafManager>()
       }
+
       if (!app.isHeadlessEnvironment) {
         // preload only when LafManager is ready
-        launch {
+        asyncScope.launch {
           app.serviceAsync<EditorColorsManager>()
         }
+      }
+    }
+
+    if (!app.isHeadlessEnvironment) {
+      asyncScope.launch(CoroutineName("icons preloading") + Dispatchers.IO) {
+        AsyncProcessIcon.createBig(this)
+        AsyncProcessIcon(this)
+        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+        AnimatedIcon.FS()
       }
     }
   }
