@@ -157,9 +157,9 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
     }
   }
 
-  private record FileMarkupInfo(@NotNull VirtualFile virtualFile, int contentHash, @NotNull List<HighlighterState> highlighters, @NotNull String colorSchemeName) {
+  private record FileMarkupInfo(@NotNull VirtualFile virtualFile, int contentHash, @NotNull List<HighlighterState> highlighters) {
     private FileMarkupInfo(@NotNull Project project, @NotNull VirtualFile virtualFile, @NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
-      this(virtualFile, document.getText().hashCode(), HighlighterState.allHighlightersFromMarkup(project, document, colorsScheme), colorsScheme.getName());
+      this(virtualFile, document.getText().hashCode(), HighlighterState.allHighlightersFromMarkup(project, document, colorsScheme));
     }
 
     static FileMarkupInfo exhume(@NotNull Element element) {
@@ -168,10 +168,9 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       if (virtualFile == null) {
         return null;
       }
-      String colorSchemeName = element.getAttributeValue("colorScheme", "");
       int contentHash = Integer.parseInt(element.getAttributeValue("contentHash", ""));
       List<HighlighterState> highlighters = ContainerUtil.map(element.getChildren("highlighter"), e -> HighlighterState.exhume(e));
-      return new FileMarkupInfo(virtualFile, contentHash, highlighters, colorSchemeName);
+      return new FileMarkupInfo(virtualFile, contentHash, highlighters);
     }
     @NotNull
     Element bury() {
@@ -182,7 +181,8 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
       return element;
     }
   }
-  private record HighlighterState(int start, int end, int layer, @NotNull HighlighterTargetArea target,
+  private record HighlighterState(int start, int end, int layer,
+                                  @NotNull HighlighterTargetArea target,
                                   @Nullable TextAttributesKey textAttributesKey,
                                   @Nullable TextAttributes textAttributes,
                                   @Nullable Icon gutterIcon) {
@@ -257,7 +257,8 @@ final class HighlightingMarkupGrave implements PersistentStateComponent<Element>
 
     @NotNull
     private static List<HighlighterState> allHighlightersFromMarkup(@NotNull Project project,
-                                                                    @NotNull Document document, @NotNull EditorColorsScheme colorsScheme) {
+                                                                    @NotNull Document document,
+                                                                    @NotNull EditorColorsScheme colorsScheme) {
       MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, false);
       if (markupModel == null) {
         return Collections.emptyList();
