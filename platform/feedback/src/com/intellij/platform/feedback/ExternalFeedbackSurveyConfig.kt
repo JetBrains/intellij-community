@@ -3,9 +3,20 @@ package com.intellij.platform.feedback
 
 import com.intellij.openapi.project.Project
 
+/**
+ * Represents the config for external feedback survey.
+ *
+ * @see com.intellij.platform.feedback.FeedbackSurveyConfig
+ */
 interface ExternalFeedbackSurveyConfig : FeedbackSurveyConfig {
 
+  /**
+   * Returns a link to a feedback survey on the web.
+   */
   fun getUrlToSurvey(project: Project): String
 
+  /**
+   * Performs additional custom state updates after a response action is invoked.
+   */
   fun updateStateAfterRespondActionInvoked(project: Project)
 }
