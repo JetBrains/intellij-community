@@ -4,8 +4,8 @@ package com.intellij.codeInsight.daemon.impl.quickfix
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.modcommand.ActionContext
-import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementFactory
@@ -20,8 +20,8 @@ abstract class AddModuleDirectiveFix(module: PsiJavaModule) : PsiUpdateModComman
   @IntentionName
   abstract fun getText(): String
 
-  override fun getPresentation(context: ActionContext, module: PsiJavaModule): ModCommandAction.Presentation? {
-    return if (PsiUtil.isLanguageLevel9OrHigher(module)) ModCommandAction.Presentation.of(getText()) else null
+  override fun getPresentation(context: ActionContext, module: PsiJavaModule): Presentation? {
+    return if (PsiUtil.isLanguageLevel9OrHigher(module)) Presentation.of(getText()) else null
   }
 }
 

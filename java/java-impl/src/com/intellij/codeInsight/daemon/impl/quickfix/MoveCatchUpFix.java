@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.psi.PsiCatchSection;
 import com.intellij.psi.PsiTryStatement;
 import com.intellij.psi.util.PsiUtil;

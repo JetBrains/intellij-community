@@ -7,10 +7,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Iconable;
@@ -26,7 +23,7 @@ import java.util.List;
 public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntentionActionOnPsiElement 
   implements Iconable, PriorityAction, IntentionActionWithFixAllOption {
   private final @NotNull ModCommandAction myAction;
-  private @Nullable ModCommandAction.Presentation myPresentation;
+  private @Nullable Presentation myPresentation;
 
   public ModCommandActionQuickFixUberWrapper(@NotNull ModCommandAction action, @NotNull PsiElement element) {
     super(element);
@@ -40,7 +37,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
 
   @Override
   public @NotNull String getText() {
-    ModCommandAction.Presentation presentation = getPresentation();
+    Presentation presentation = getPresentation();
     if (presentation != null) {
       return presentation.name();
     }
@@ -48,7 +45,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
   }
 
   @Nullable
-  private ModCommandAction.Presentation getPresentation() {
+  private Presentation getPresentation() {
     if (myPresentation != null) return myPresentation;
     PsiElement element = getStartElement();
     if (element == null) return null;
@@ -91,27 +88,27 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
 
   @Override
   public @NotNull PriorityAction.Priority getPriority() {
-    ModCommandAction.Presentation presentation = getPresentation();
+    Presentation presentation = getPresentation();
     return presentation == null ? Priority.NORMAL : presentation.priority();
   }
 
   @Override
   public Icon getIcon(int flags) {
     if (NewUiValue.isEnabled()) return null;
-    ModCommandAction.Presentation presentation = getPresentation();
+    Presentation presentation = getPresentation();
     return presentation == null ? null : presentation.icon();
   }
 
   @Override
   public @NotNull List<IntentionAction> getOptions() {
-    ModCommandAction.Presentation presentation = getPresentation();
+    Presentation presentation = getPresentation();
     return presentation != null && presentation.fixAllOption() != null ?
            IntentionActionWithFixAllOption.super.getOptions() : List.of();
   }
 
   @Override
   public boolean belongsToMyFamily(@NotNull IntentionActionWithFixAllOption action) {
-    ModCommandAction.Presentation presentation = getPresentation();
+    Presentation presentation = getPresentation();
     ModCommandAction unwrapped = action.asModCommandAction();
     if (unwrapped == null || presentation == null || presentation.fixAllOption() == null) return false;
     return presentation.fixAllOption().belongsToMyFamily().test(unwrapped);
@@ -119,7 +116,7 @@ public class ModCommandActionQuickFixUberWrapper extends LocalQuickFixAndIntenti
 
   @Override
   public @NotNull String getFixAllText() {
-    ModCommandAction.Presentation presentation = getPresentation();
+    Presentation presentation = getPresentation();
     return presentation != null && presentation.fixAllOption() != null ?
            presentation.fixAllOption().name() : "";
   }

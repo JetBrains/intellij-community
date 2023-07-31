@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.magicConstant.MagicConstantUtils;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;

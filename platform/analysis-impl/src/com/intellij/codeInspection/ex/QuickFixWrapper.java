@@ -238,8 +238,8 @@ public final class QuickFixWrapper implements IntentionAction, PriorityAction, C
       Presentation presentation = Presentation.of(myFix.getName());
       List<RangeToHighlight> highlight = myFix.getRangesToHighlight(context.project(), myDescriptor);
       if (!highlight.isEmpty()) {
-        HighlightRange[] ranges = ContainerUtil.map2Array(highlight, HighlightRange.class,
-                                                          r -> new HighlightRange(r.getRangeInFile(), r.getHighlightKey()));
+        Presentation.HighlightRange[] ranges = ContainerUtil.map2Array(highlight, Presentation.HighlightRange.class,
+                                                          r -> new Presentation.HighlightRange(r.getRangeInFile(), r.getHighlightKey()));
         presentation = presentation.withHighlighting(ranges);
       }
       if (myFix instanceof Iconable iconable) {

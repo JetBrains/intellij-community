@@ -9,10 +9,7 @@ import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModChooseAction;
-import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.*;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.containers.ContainerUtil;
@@ -177,7 +174,7 @@ public final class ActionHint {
     if (context == null) {
       fail("Context is not specified for ModCommandAction");
     }
-    ModCommandAction.Presentation presentation = action.getPresentation(context);
+    Presentation presentation = action.getPresentation(context);
     return presentation == null ? "(unavailable) " + action.getFamilyName() : presentation.name();
   }
 

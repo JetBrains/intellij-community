@@ -236,7 +236,7 @@ public sealed interface ModCommand
       }
 
       @Override
-      protected @NotNull ModCommandAction.Presentation getPresentation(@NotNull ActionContext context, @NotNull T section) {
+      protected @NotNull Presentation getPresentation(@NotNull ActionContext context, @NotNull T section) {
         return Presentation.of(getFamilyName()).withHighlighting(range.apply(section));
       }
 

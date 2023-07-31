@@ -4,6 +4,7 @@ package com.siyeh.ipp.types;
 import com.intellij.codeInsight.daemon.impl.quickfix.AddMethodBodyFix;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;

@@ -5,6 +5,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
 import com.intellij.psi.PsiExpression;
 import com.siyeh.ig.psiutils.CommentTracker;

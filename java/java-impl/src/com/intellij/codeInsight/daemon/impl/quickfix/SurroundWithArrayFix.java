@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.ModCommandAction;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -39,7 +40,7 @@ public class SurroundWithArrayFix implements ModCommandAction {
 
   @Override
   public @Nullable Presentation getPresentation(@NotNull ActionContext context) {
-    return getExpression(context.findLeaf()) == null ? null : 
+    return getExpression(context.findLeaf()) == null ? null :
            Presentation.of(getFamilyName()).withFixAllOption(this).withPriority(PriorityAction.Priority.HIGH);
   }
 

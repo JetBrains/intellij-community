@@ -6,8 +6,8 @@ import com.intellij.codeInsight.intention.ReplaceConstructorWithFactoryAction;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommand;
-import com.intellij.modcommand.ModCommandAction;
 import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.Presentation;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import org.jetbrains.annotations.NonNls;
@@ -58,7 +58,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     }
     ReplaceConstructorWithFactoryAction action = new ReplaceConstructorWithFactoryAction();
     ActionContext context = ActionContext.from(getEditor(), getFile());
-    ModCommandAction.Presentation presentation = action.getPresentation(context);
+    Presentation presentation = action.getPresentation(context);
     assertNotNull(presentation);
     ModCommand command = action.perform(context);
     ModCommandExecutor.getInstance().executeInteractively(context, command, getEditor());

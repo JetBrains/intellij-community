@@ -499,7 +499,7 @@ public class ModCommandExecutorImpl implements ModCommandExecutor {
   }
 
   private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
-    record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull ModCommandAction.Presentation presentation) {}
+    record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull Presentation presentation) {}
     List<ActionAndPresentation> actions = StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
       .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
     if (actions.isEmpty()) return true;
