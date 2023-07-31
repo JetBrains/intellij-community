@@ -40,6 +40,7 @@ import com.jetbrains.python.sdk.PyRemoteSdkAdditionalDataMarker;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.target.PyTargetAwareAdditionalData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,10 +63,10 @@ import java.util.function.Function;
  * If you still need to use this class for targets api: Use {@link #addPathParameter(Path)} for paths so they would be uploaded before call
  * <p>
  * Redundant uploads/downloads are another reason to use Targets API directly
- *
- * @deprecated This class doesn't provide full support for Targets API but does it best to emulate it in some cases. Use targets API directly.
+ * <p>
+ * <i>NB! This class doesn't provide full support for Targets API but does it best to emulate it in some cases. Use targets API directly.</i>
  */
-@Deprecated
+@ApiStatus.Obsolete
 public class PythonTask {
   /**
    * Mils we wait to process to be stopped when "rerun" called
