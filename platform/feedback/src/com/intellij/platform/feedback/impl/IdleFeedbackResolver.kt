@@ -3,6 +3,7 @@ package com.intellij.platform.feedback.impl
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.feedback.FeedbackSurvey
@@ -14,6 +15,14 @@ class IdleFeedbackResolver {
   companion object {
     @JvmStatic
     fun getInstance(): IdleFeedbackResolver = service()
+
+    private val IDLE_FEEDBACK_SURVEY = ExtensionPointName<FeedbackSurvey>("com.intellij.feedback.idleFeedbackSurvey")
+
+    fun getJbIdleFeedbackSurveyExtensionList(): List<FeedbackSurvey> {
+      return IDLE_FEEDBACK_SURVEY.extensionList.filter {
+        it.getPluginDescriptor()?.vendor?.equals("JetBrains") ?: true
+      }
+    }
   }
 
   fun showFeedbackNotification(project: Project?) {
@@ -24,7 +33,7 @@ class IdleFeedbackResolver {
     }
 
     val suitableFeedbackTypes = IdleFeedbackTypes.values().filter { it.isSuitable() }
-    val suitableIdleFeedbackSurveys = FeedbackSurvey.getJBExtensionList().filter { it.isSuitableToShow(project) }
+    val suitableIdleFeedbackSurveys = getJbIdleFeedbackSurveyExtensionList().filter { it.isSuitableToShow(project) }
 
     if (suitableFeedbackTypes.isEmpty() && suitableIdleFeedbackSurveys.isEmpty()) {
       return
