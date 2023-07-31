@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback
 
-import com.intellij.feedback.common.bundle.CommonFeedbackBundle
-import com.intellij.feedback.common.notification.RequestFeedbackNotification
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
+import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import kotlinx.datetime.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone

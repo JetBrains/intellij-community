@@ -1,12 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui
 
-import com.intellij.feedback.common.FEEDBACK_REPORT_ID_KEY
-import com.intellij.feedback.common.FeedbackRequestType
-import com.intellij.feedback.common.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.feedback.common.dialog.CommonFeedbackSystemData
-import com.intellij.feedback.common.dialog.showFeedbackSystemInfoDialog
-import com.intellij.feedback.common.submitGeneralFeedback
 import com.intellij.icons.AllIcons
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.internal.statistic.local.ActionsLocalSummary
@@ -23,6 +17,12 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
+import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
+import com.intellij.platform.feedback.impl.FeedbackRequestType
+import com.intellij.platform.feedback.impl.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.platform.feedback.impl.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.impl.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.impl.submitGeneralFeedback
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor

@@ -1,0 +1,13 @@
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.feedback.new_ui
+
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.platform.feedback.new_ui.bundle.NewUIFeedbackBundle
+
+class CancelFeedbackNotification : Notification(
+  "Feedback In IDE",
+  "",
+  NewUIFeedbackBundle.message("notification.cancel.feedback.content"),
+  NotificationType.INFORMATION
+)

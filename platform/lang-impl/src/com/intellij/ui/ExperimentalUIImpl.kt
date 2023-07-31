@@ -3,7 +3,6 @@
 
 package com.intellij.ui
 
-import com.intellij.feedback.new_ui.state.NewUIInfoService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.AppLifecycleListener
 import com.intellij.ide.IdeBundle
@@ -22,6 +21,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
+import com.intellij.platform.feedback.new_ui.state.NewUIInfoService
 import com.intellij.util.PlatformUtils
 
 private val LOG: Logger
