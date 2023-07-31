@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.util.PatternUtil
 import git4idea.config.GitSharedSettings
@@ -14,7 +15,6 @@ import git4idea.fetch.GitFetchHandler
 import git4idea.remote.hosting.findKnownRepositories
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.plugins.github.api.GHGQLRequests
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.util.SimpleGHGQLPagesLoader
@@ -86,7 +86,7 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
           } ?: continue
 
 
-        val token = runBlocking { accountManager.findCredentials(account) } ?: continue
+        val token = runBlockingCancellable { accountManager.findCredentials(account) } ?: continue
         val requestExecutor = service<GithubApiRequestExecutor.Factory>().create(token)
 
         SimpleGHGQLPagesLoader(requestExecutor, { GHGQLRequests.Repo.getProtectionRules(repositoryMapping.repository) })
