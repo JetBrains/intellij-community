@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.vfs.newvfs.FileAttribute
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -23,6 +24,7 @@ import org.jetbrains.kotlin.idea.configuration.getModulesWithKotlinFiles
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.facet.getLibraryLanguageLevel
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
+import org.jetbrains.kotlin.konan.file.use
 import org.jetbrains.kotlin.platform.idePlatformKind
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -53,6 +55,8 @@ class KotlinConfigurationCheckerService(private val project: Project) {
     }
 
     private suspend fun doPerformProjectPostOpenActions() {
+        if (project.hasKotlinLanguageVersionConfigured()) return
+
         val kotlinLanguageVersionConfigured = readAction { isKotlinLanguageVersionConfigured(project) }
 
         val ktModules = if (kotlinLanguageVersionConfigured) {
@@ -68,6 +72,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
                 }
 
             if (modulesWithKotlinFacets.isEmpty()) {
+                project.kotlinLanguageVersionIsConfigured()
                 return
             }
 
@@ -77,6 +82,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
         }
 
         if (ktModules.isEmpty()) {
+            project.kotlinLanguageVersionIsConfigured()
             return
         }
         if (!kotlinLanguageVersionConfigured) {
@@ -102,7 +108,7 @@ class KotlinConfigurationCheckerService(private val project: Project) {
                 writeActionContinuations.forEach { it.invoke() }
             }
         }
-        return
+        project.kotlinLanguageVersionIsConfigured()
     }
 
     @IntellijInternalApi
@@ -156,5 +162,19 @@ class KotlinConfigurationCheckerService(private val project: Project) {
 
         fun getInstance(project: Project): KotlinConfigurationCheckerService = project.service()
 
+        private val fileAttribute = FileAttribute("kotlin-language-version-configured", 1, true)
+
+        internal fun Project.hasKotlinLanguageVersionConfigured(): Boolean =
+            this.projectFile?.let {
+                fileAttribute.readFileAttribute(it)?.readBoolean()
+            } ?: false
+
+        internal fun Project.kotlinLanguageVersionIsConfigured() {
+            this.projectFile?.let { projectFile ->
+                fileAttribute.writeFileAttribute(projectFile).use {
+                    it.writeBoolean(true)
+                }
+            }
+        }
     }
 }
