@@ -36,7 +36,12 @@ internal class GHProtectedBranchRulesLoader : GitFetchHandler {
       if (e is ProcessCanceledException) {
         throw e
       }
-      LOG.info("Error occurred while trying to load branch protection rules", e)
+      if (LOG.isDebugEnabled) {
+        LOG.info("Error occurred while trying to load branch protection rules", e)
+      }
+      else {
+        LOG.info("Error occurred while trying to load branch protection rules: ${e.message}")
+      }
     }
   }
 
