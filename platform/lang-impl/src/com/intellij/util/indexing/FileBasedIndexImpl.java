@@ -489,22 +489,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
                                               @NotNull IntSet dirtyFiles)
     throws Exception {
     ID<K, V> name = extension.getName();
-    Set<FileType> addedTypes;
-    InputFilter inputFilter;
+    InputFilter inputFilter = extension.getInputFilter();
     boolean contentHashesEnumeratorOk = true;
 
     try {
-      inputFilter = extension.getInputFilter();
-      if (inputFilter instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
-        addedTypes = new HashSet<>();
-        ((FileBasedIndex.FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(type -> {
-          if (type != null) addedTypes.add(type);
-        });
-      }
-      else {
-        addedTypes = null;
-      }
-
       if (FileBasedIndex.hasSnapshotMapping(extension)) {
         contentHashesEnumeratorOk = SnapshotHashEnumeratorService.getInstance().initialize();
       }
@@ -532,8 +520,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         state.registerIndex(name,
                             index,
                             inputFilter,
-                            version + GlobalIndexFilter.getFiltersVersion(name),
-                            addedTypes);
+                            version + GlobalIndexFilter.getFiltersVersion(name));
         break;
       }
       catch (Exception e) {

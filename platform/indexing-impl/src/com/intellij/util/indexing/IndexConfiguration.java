@@ -11,10 +11,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 final class IndexConfiguration {
   private final Int2ObjectMap<Pair<UpdatableIndex<?, ?, FileContent, ?>, FileBasedIndex.InputFilter>> myIndices =
@@ -64,14 +61,14 @@ final class IndexConfiguration {
   <K, V> void registerIndex(@NotNull ID<K, V> indexId,
                             @NotNull UpdatableIndex<K, V, FileContent, ?> index,
                             @NotNull FileBasedIndex.InputFilter inputFilter,
-                            int version,
-                            @Nullable Collection<? extends FileType> associatedFileTypes) {
+                            int version) {
     assert !myFreezed;
 
     synchronized (myIndices) {
       myIndexIds.add(indexId);
       myIndexIdToVersionMap.put(indexId, version);
 
+      Collection<FileType> associatedFileTypes = getAssociatedFileTypes(inputFilter);
       if (associatedFileTypes != null) {
         for (FileType fileType : associatedFileTypes) {
           List<ID<?, ?>> ids = myFileType2IndicesWithFileTypeInfoMap.computeIfAbsent(fileType, __ -> new ArrayList<>(5));
@@ -88,6 +85,20 @@ final class IndexConfiguration {
         throw new IllegalStateException("Index " + old.first + " already registered for the name '" + indexId + "'");
       }
     }
+  }
+
+  private static @Nullable Collection<FileType> getAssociatedFileTypes(@NotNull FileBasedIndex.InputFilter inputFilter) {
+    Set<FileType> addedTypes;
+    if (inputFilter instanceof FileBasedIndex.FileTypeSpecificInputFilter) {
+      addedTypes = new HashSet<>();
+      ((FileBasedIndex.FileTypeSpecificInputFilter)inputFilter).registerFileTypesUsedForIndexing(type -> {
+        if (type != null) addedTypes.add(type);
+      });
+    }
+    else {
+      addedTypes = null;
+    }
+    return addedTypes;
   }
 
   @NotNull
