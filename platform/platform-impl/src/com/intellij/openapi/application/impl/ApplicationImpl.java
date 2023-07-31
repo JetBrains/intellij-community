@@ -71,7 +71,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return Logger.getInstance(ApplicationImpl.class);
   }
 
-  final ReadMostlyRWLock myLock;
+  private ReadMostlyRWLock myLock;
 
   /**
    * @deprecated see {@link ModalityInvokator} notice
@@ -138,29 +138,22 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
   }
+  private volatile boolean myWriteActionPending;
 
-  public ApplicationImpl(@NotNull CoroutineScope coroutineScope,
-                         boolean isInternal,
-                         boolean isHeadless,
-                         boolean isCommandLine) {
+  public ApplicationImpl(@NotNull CoroutineScope coroutineScope, boolean isInternal) {
     super(null, coroutineScope, true);
-
-    myLock = IdeEventQueue.getInstance().rwLockHolder.lock;
 
     registerFakeServices(this);
 
     myIsInternal = isInternal;
     myTestModeFlag = false;
-    myHeadlessMode = isHeadless;
-    myCommandLineMode = isCommandLine;
-    if (!isHeadless) {
+    myHeadlessMode = AppMode.isHeadless();
+    myCommandLineMode = AppMode.isCommandLine();
+    if (!myHeadlessMode) {
       mySaveAllowed = true;
     }
 
     myLastDisposable = null;
-
-    postInit(this);
-    ApplicationManager.setApplication(this);
   }
 
   private static void registerFakeServices(ApplicationImpl app) {
@@ -171,22 +164,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     app.registerServiceInstance(ReadActionCache.class, app.myReadActionCacheImpl, ComponentManagerImpl.fakeCorePluginDescriptor);
   }
 
-  @ApiStatus.Internal
-  public static void postInit(@NotNull ApplicationImpl app) {
-    AtomicBoolean reported = new AtomicBoolean();
-    IdeEventQueue.getInstance().addPostprocessor(e -> {
-      if (app.isWriteAccessAllowed() && reported.compareAndSet(false, true)) {
-        getLogger().error("AWT events are not allowed inside write action: " + e);
-      }
-      return true;
-    }, app.getCoroutineScope());
-
-    app.addApplicationListener(new ApplicationListener() {
-      @Override
-      public void afterWriteActionFinished(@NotNull Object action) {
-        reported.set(false);
-      }
-    }, app);
+  @TestOnly
+  final ReadMostlyRWLock getRwLock() {
+    return myLock;
   }
 
   /**
@@ -326,7 +306,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public boolean isWriteIntentLockAcquired() {
     // Write lock is good too
-    return myLock.isWriteThread() && (myLock.isWriteIntentLocked() || myLock.isWriteAcquired());
+    ReadMostlyRWLock lock = myLock;
+    return lock.isWriteThread() && (lock.isWriteIntentLocked() || lock.isWriteAcquired());
   }
 
   @Deprecated
@@ -886,14 +867,15 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void runReadAction(@NotNull Runnable action) {
-    ReadMostlyRWLock.Reader status = myLock.startRead();
+    ReadMostlyRWLock lock = myLock;
+    ReadMostlyRWLock.Reader status = lock.startRead();
     try {
       action.run();
     }
     finally {
       myReadActionCacheImpl.clear();
       if (status != null) {
-        myLock.endRead(status);
+        lock.endRead(status);
       }
       otelMonitor.get().readActionExecuted();
     }
@@ -901,14 +883,15 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public <T> T runReadAction(@NotNull Computable<T> computation) {
-    ReadMostlyRWLock.Reader status = myLock.startRead();
+    ReadMostlyRWLock lock = myLock;
+    ReadMostlyRWLock.Reader status = lock.startRead();
     try {
       return computation.compute();
     }
     finally {
       myReadActionCacheImpl.clear();
       if (status != null) {
-        myLock.endRead(status);
+        lock.endRead(status);
       }
       otelMonitor.get().readActionExecuted();
     }
@@ -1077,7 +1060,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public boolean tryRunReadAction(@NotNull Runnable action) {
     //if we are inside read action, do not try to acquire read lock again since it will deadlock if there is a pending writeAction
-    ReadMostlyRWLock.Reader status = myLock.startTryRead();
+    ReadMostlyRWLock lock = myLock;
+    ReadMostlyRWLock.Reader status = lock.startTryRead();
     if (status != null && !status.readRequested) {
       return false;
     }
@@ -1087,11 +1071,50 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     finally {
       myReadActionCacheImpl.clear();
       if (status != null) {
-        myLock.endRead(status);
+        lock.endRead(status);
       }
       otelMonitor.get().readActionExecuted();
     }
     return true;
+  }
+
+  private void startWrite(@NotNull Class<?> clazz) {
+    assertNotInsideListener();
+    myWriteActionPending = true;
+    try {
+      ActivityTracker.getInstance().inc();
+      fireBeforeWriteActionStart(clazz);
+
+      // otherwise (when myLock is locked) there's a nesting write action:
+      // - allow it,
+      // - fire listeners for it (somebody can rely on having listeners fired for each write action)
+      // - but do not re-acquire any locks because it could be deadlock-level dangerous
+      ReadMostlyRWLock lock = myLock;
+      if (!lock.isWriteAcquired()) {
+        int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
+        Future<?> reportSlowWrite = delay <= 0 ? null :
+                                    AppExecutorUtil.getAppScheduledExecutorService()
+                                      .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true, true),
+                                                              delay, delay, TimeUnit.MILLISECONDS);
+        long t = getLogger().isDebugEnabled() ? System.currentTimeMillis() : 0;
+        lock.writeLock();
+        if (getLogger().isDebugEnabled()) {
+          long elapsed = System.currentTimeMillis() - t;
+          if (elapsed != 0) {
+            getLogger().debug("Write action wait time: " + elapsed);
+          }
+        }
+        if (reportSlowWrite != null) {
+          reportSlowWrite.cancel(false);
+        }
+      }
+    }
+    finally {
+      myWriteActionPending = false;
+    }
+
+    myWriteActionsStack.push(clazz);
+    fireWriteActionStarted(clazz);
   }
 
   @Override
@@ -1120,49 +1143,15 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return isWriteIntentLockAcquired() || myLock.isReadLockedByThisThread() ? AccessToken.EMPTY_ACCESS_TOKEN : new ReadAccessToken();
   }
 
-  private volatile boolean myWriteActionPending;
-
   @Override
   public boolean isWriteActionPending() {
     return myWriteActionPending;
   }
 
-  private void startWrite(@NotNull Class<?> clazz) {
-    assertNotInsideListener();
-    myWriteActionPending = true;
-    try {
-      ActivityTracker.getInstance().inc();
-      fireBeforeWriteActionStart(clazz);
-
-      // otherwise (when myLock is locked) there's a nesting write action:
-      // - allow it,
-      // - fire listeners for it (somebody can rely on having listeners fired for each write action)
-      // - but do not re-acquire any locks because it could be deadlock-level dangerous
-      if (!myLock.isWriteAcquired()) {
-        int delay = Holder.ourDumpThreadsOnLongWriteActionWaiting;
-        Future<?> reportSlowWrite = delay <= 0 ? null :
-                                    AppExecutorUtil.getAppScheduledExecutorService()
-                                      .scheduleWithFixedDelay(() -> PerformanceWatcher.getInstance().dumpThreads("waiting", true, true),
-                                                              delay, delay, TimeUnit.MILLISECONDS);
-        long t = getLogger().isDebugEnabled() ? System.currentTimeMillis() : 0;
-        myLock.writeLock();
-        if (getLogger().isDebugEnabled()) {
-          long elapsed = System.currentTimeMillis() - t;
-          if (elapsed != 0) {
-            getLogger().debug("Write action wait time: " + elapsed);
-          }
-        }
-        if (reportSlowWrite != null) {
-          reportSlowWrite.cancel(false);
-        }
-      }
-    }
-    finally {
-      myWriteActionPending = false;
-    }
-
-    myWriteActionsStack.push(clazz);
-    fireWriteActionStarted(clazz);
+  @Override
+  public boolean isWriteAccessAllowed() {
+    ReadMostlyRWLock lock = myLock;
+    return lock.isWriteThread() && lock.isWriteAcquired();
   }
 
   private void assertNotInsideListener() {
@@ -1272,16 +1261,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     ThreadingAssertions.assertWriteAccess();
   }
 
-  @Override
-  public boolean isWriteAccessAllowed() {
-    return myLock.isWriteThread() && myLock.isWriteAcquired();
-  }
-
-  @Override
-  public boolean isWriteActionInProgress() {
-    return myLock.isWriteAcquired();
-  }
-
   /**
    * If called inside a write-action, executes the given code under modal progress with write-lock released (e.g., to allow for read-action parallelization).
    * It's the caller's responsibility to invoke this method only when the model is in an internally consistent state,
@@ -1292,7 +1271,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
                                            @NotNull @NlsContexts.DialogTitle String title,
                                            @NotNull Runnable runnable) {
     assertWriteIntentLockAcquired();
-    if (!myLock.isWriteAcquired()) {
+    ReadMostlyRWLock lock = myLock;
+    if (!lock.isWriteAcquired()) {
       runModalProgress(project, title, runnable);
       return;
     }
@@ -1300,10 +1280,28 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     int prevBase = myWriteStackBase;
     myWriteStackBase = myWriteActionsStack.size();
     try {
-      myLock.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(() -> runModalProgress(project, title, runnable));
+      lock.writeSuspendWhilePumpingIdeEventQueueHopingForTheBest(() -> runModalProgress(project, title, runnable));
     }
     finally {
       myWriteStackBase = prevBase;
+    }
+  }
+
+  @Override
+  public boolean isWriteActionInProgress() {
+    return myLock.isWriteAcquired();
+  }
+
+  private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
+    // This method is used to allow easily finding stack traces which violate disabled ImplicitRead
+    ReadMostlyRWLock lock = myLock;
+    boolean oldVal = lock.isImplicitReadAllowed();
+    try {
+      lock.setAllowImplicitRead(false);
+      runnable.run();
+    }
+    finally {
+      lock.setAllowImplicitRead(oldVal);
     }
   }
 
@@ -1445,15 +1443,23 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     runWithDisabledImplicitRead(runnable);
   }
 
-  private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
-    // This method is used to allow easily finding stack traces which violate disabled ImplicitRead
-    boolean oldVal = myLock.isImplicitReadAllowed();
-    try {
-      myLock.setAllowImplicitRead(false);
-      runnable.run();
-    }
-    finally {
-      myLock.setAllowImplicitRead(oldVal);
-    }
+  @ApiStatus.Internal
+  public static void postInit(@NotNull ApplicationImpl app) {
+    app.myLock = IdeEventQueue.getInstance().rwLockHolder.lock;
+
+    AtomicBoolean reported = new AtomicBoolean();
+    IdeEventQueue.getInstance().addPostprocessor(e -> {
+      if (app.isWriteAccessAllowed() && reported.compareAndSet(false, true)) {
+        getLogger().error("AWT events are not allowed inside write action: " + e);
+      }
+      return true;
+    }, app.getCoroutineScope());
+
+    app.addApplicationListener(new ApplicationListener() {
+      @Override
+      public void afterWriteActionFinished(@NotNull Object action) {
+        reported.set(false);
+      }
+    }, app);
   }
 }

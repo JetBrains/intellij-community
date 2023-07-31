@@ -179,7 +179,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
         while (!aboutToAcquireWrite.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.isWriteRequested()) checkTimeout();
+        while (!application.getRwLock().isWriteRequested()) checkTimeout();
         assertTrue(application.isWriteActionPending());
         //assertFalse(application.tryRunReadAction(EmptyRunnable.getInstance()));
         application.runReadAction(() -> {
@@ -204,7 +204,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
         while (!aboutToAcquireWrite.get()) checkTimeout();
         while (!read1Acquired.get()) checkTimeout();
         // make sure EDT called writelock
-        while (!application.myLock.isWriteRequested()) checkTimeout();
+        while (!application.getRwLock().isWriteRequested()) checkTimeout();
 
         doFor(100, TimeUnit.MILLISECONDS, ()->{
           checkTimeout();
@@ -575,7 +575,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       try {
         // wait for write action attempt to start - i.e. app.myLock.writeLock() started to execute
-        while (!app.myLock.isWriteRequested()) checkTimeout();
+        while (!app.getRwLock().isWriteRequested()) checkTimeout();
         app.executeByImpatientReader(() -> {
           try {
             assertFalse(app.isReadAccessAllowed());
@@ -633,7 +633,7 @@ public class ApplicationImplTest extends LightPlatformTestCase {
 
     Future<?> readAction2 = app.executeOnPooledThread(() -> {
       // wait for write action attempt to start
-      while (!app.myLock.isWriteRequested()) {
+      while (!app.getRwLock().isWriteRequested()) {
         try {
           checkTimeout();
         }

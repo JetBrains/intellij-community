@@ -15,6 +15,7 @@ import com.intellij.idea.AppStarter
 import com.intellij.idea.CommandLineArgs
 import com.intellij.idea.prepareShowEuaIfNeededTask
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -39,9 +40,12 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
                                     initLafJob: Job,
                                     logDeferred: Deferred<Logger>,
                                     appRegisteredJob: CompletableDeferred<Unit>,
-                                    args: List<String>) {
+                                    args: List<String>,
+                                    initAwtToolkitAndEventQueueJob: Job) {
   val initServiceContainerJob = launch {
     initServiceContainer(app = app, pluginSetDeferred = pluginSetDeferred)
+    // ApplicationManager.getApplication may be used in ApplicationInitializedListener constructor
+    ApplicationManager.setApplication(app)
   }
 
   val initTelemetryJob = launch(CoroutineName("opentelemetry configuration")) {
@@ -66,13 +70,19 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
     }
   }
 
-  val initConfigurationStoreJob = launch {
+  val initConfigurationStoreAndSetRwLockJob = launch {
     initServiceContainerJob.join()
+
+    ApplicationImpl.postInit(app)
     initConfigurationStore(app)
+
+    span("waiting for rw lock for app instantiation") {
+      initAwtToolkitAndEventQueueJob.join()
+    }
   }
 
   val preloadCriticalServicesJob = async(CoroutineName("app pre-initialization")) {
-    initConfigurationStoreJob.join()
+    initConfigurationStoreAndSetRwLockJob.join()
     span("telemetry waiting") {
       initTelemetryJob.join()
     }
@@ -105,7 +115,7 @@ internal fun CoroutineScope.loadApp(app: ApplicationImpl,
       }
     }
 
-    initConfigurationStoreJob.join()
+    initConfigurationStoreAndSetRwLockJob.join()
     appRegisteredJob.join()
 
     initApplicationImpl(args = args.filterNot { CommandLineArgs.isKnownArgument(it) },

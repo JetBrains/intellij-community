@@ -237,23 +237,6 @@ fun CoroutineScope.startApplication(args: List<String>,
     }
   }
 
-  val appDeferred = async {
-    initAwtToolkitAndEventQueueJob.join()
-    checkSystemDirJob.join()
-
-    if (!configImportNeededDeferred.await()) {
-      runPreAppClass(args, logDeferred)
-    }
-
-    span("app instantiation") {
-      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
-      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope(ApplicationImpl::class.java.name),
-                      isInternal,
-                      AppMode.isHeadless(),
-                      AppMode.isCommandLine())
-    }
-  }
-
   val appRegisteredJob = CompletableDeferred<Unit>()
 
   launch {
@@ -264,7 +247,21 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   val appLoaded = launch {
-    loadApp(app = appDeferred.await(),
+    checkSystemDirJob.join()
+
+    val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY)
+    if (classBeforeAppProperty != null && !configImportNeededDeferred.await()) {
+      logDeferred.join()
+      runPreAppClass(args = args, classBeforeAppProperty = classBeforeAppProperty)
+    }
+
+    val app = span("app instantiation") {
+      // we don't want to inherit mainScope Dispatcher and CoroutineTimeMeasurer, we only want the job
+      ApplicationImpl(CoroutineScope(mainScope.coroutineContext.job).namedChildScope("Application"), isInternal)
+    }
+
+    loadApp(app = app,
+            initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob,
             pluginSetDeferred = pluginSetDeferred,
             euaDocumentDeferred = euaDocumentDeferred,
             asyncScope = asyncScope,
@@ -378,9 +375,7 @@ fun addExternalInstanceListener(processor: (List<String>) -> Deferred<CliResult>
   commandProcessor.set(processor)
 }
 
-private suspend fun runPreAppClass(args: List<String>, logDeferred: Deferred<Logger>) {
-  val classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY) ?: return
-  logDeferred.join()
+private suspend fun runPreAppClass(args: List<String>, classBeforeAppProperty: String) {
   span("pre app class running") {
     try {
       val aClass = AppStarter::class.java.classLoader.loadClass(classBeforeAppProperty)
