@@ -1,14 +1,9 @@
-fun f(a: Int): Int {
-    return<caret> if (a < 5) {
+<info descr="null">fun</info> f(a: Int): Int {
+    <info descr="null">return</info>~ if (a < 5) {
         val q = 1
-        1
+        <info descr="null">1</info>
     }
     else {
-        2
+        <info descr="null">2</info>
     }
 }
-
-//HIGHLIGHTED: return
-//HIGHLIGHTED: f
-//HIGHLIGHTED: 1
-//HIGHLIGHTED: 2

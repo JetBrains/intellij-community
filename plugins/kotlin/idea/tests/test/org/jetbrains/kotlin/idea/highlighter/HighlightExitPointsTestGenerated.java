@@ -33,24 +33,29 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         runTest("testData/exitPoints/anonymousFunction2.kt");
     }
 
-    @TestMetadata("functionNameIdentifier.kt")
-    public void testFunctionNameIdentifier() throws Exception {
-        runTest("testData/exitPoints/functionNameIdentifier.kt");
+    @TestMetadata("funKeyword.kt")
+    public void testFunKeyword() throws Exception {
+        runTest("testData/exitPoints/funKeyword.kt");
     }
 
-    @TestMetadata("functionNameIdentifier2.kt")
-    public void testFunctionNameIdentifier2() throws Exception {
-        runTest("testData/exitPoints/functionNameIdentifier2.kt");
+    @TestMetadata("funKeyword2.kt")
+    public void testFunKeyword2() throws Exception {
+        runTest("testData/exitPoints/funKeyword2.kt");
     }
 
-    @TestMetadata("functionNameIdentifier3.kt")
-    public void testFunctionNameIdentifier3() throws Exception {
-        runTest("testData/exitPoints/functionNameIdentifier3.kt");
+    @TestMetadata("funKeyword3.kt")
+    public void testFunKeyword3() throws Exception {
+        runTest("testData/exitPoints/funKeyword3.kt");
     }
 
-    @TestMetadata("functionNameIdentifier31.kt")
-    public void testFunctionNameIdentifier31() throws Exception {
-        runTest("testData/exitPoints/functionNameIdentifier31.kt");
+    @TestMetadata("funKeyword31.kt")
+    public void testFunKeyword31() throws Exception {
+        runTest("testData/exitPoints/funKeyword31.kt");
+    }
+
+    @TestMetadata("funName.kt")
+    public void testFunName() throws Exception {
+        runTest("testData/exitPoints/funName.kt");
     }
 
     @TestMetadata("getter.kt")

@@ -1,7 +1,7 @@
 fun f(a: Int): Int {
     if (a < 5) {
-        run {
-            <caret>return@run 1
+        <info descr="null">run</info> {
+            <info descr="null">~return@run 1</info>
         }
     }
     else {
@@ -10,6 +10,3 @@ fun f(a: Int): Int {
 }
 
 inline public fun <T> run(f: () -> T): T { }
-
-//HIGHLIGHTED: run
-//HIGHLIGHTED: return@run 1

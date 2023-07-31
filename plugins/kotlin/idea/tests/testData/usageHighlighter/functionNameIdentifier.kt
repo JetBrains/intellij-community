@@ -1,4 +1,4 @@
-fun <info descr="null">test</info>~(s: String?): Int {
+<info descr="null">fun</info>~ test(s: String?): Int {
     if (s != null) {
         <info descr="null">return@<info descr="null">test</info> 1</info>
     }

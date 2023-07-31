@@ -1,20 +1,14 @@
 fun yy(): Int = 5
 
-fun f(a: Int): Int {
-    return<caret> when {
+<info descr="null">fun</info> f(a: Int): Int {
+    <info descr="null">return</info>~ when {
         a < 0 -> {
             val q = 1
-            2 * 2
+            <info descr="null">2 * 2</info>
         }
         a > 0 -> {
-            2 * (2 + 2)
+            <info descr="null">2 * (2 + 2)</info>
         }
-        else -> yy()
+        else -> <info descr="null">yy()</info>
     }
 }
-
-//HIGHLIGHTED: return
-//HIGHLIGHTED: f
-//HIGHLIGHTED: 2 * (2 + 2)
-//HIGHLIGHTED: 2 * 2
-//HIGHLIGHTED: yy()
