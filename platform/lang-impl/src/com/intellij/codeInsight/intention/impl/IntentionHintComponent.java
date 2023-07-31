@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.toolbar.floating.FloatingToolbar;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -525,6 +526,10 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         add(myIconLabel, BorderLayout.CENTER);
       }
       setBorder(LightBulbUtil.createInactiveBorder(editor));
+      CodeFloatingToolbar floatingToolbar = CodeFloatingToolbar.getToolbar(editor);
+      if (floatingToolbar != null && floatingToolbar.isShown()) {
+        setVisible(false);
+      }
     }
 
     @Override
