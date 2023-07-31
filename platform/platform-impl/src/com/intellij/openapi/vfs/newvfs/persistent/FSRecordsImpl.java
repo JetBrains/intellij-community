@@ -83,6 +83,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 public final class FSRecordsImpl {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
+  //@formatter:off
   static final boolean USE_CONTENT_HASHES = getBooleanProperty("idea.share.contents", true);
   static final boolean INLINE_ATTRIBUTES = getBooleanProperty("idea.inline.vfs.attributes", true);
 
@@ -92,11 +93,12 @@ public final class FSRecordsImpl {
   static final boolean USE_SMALL_ATTR_TABLE = getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
 
   static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-storage", false);
-  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION =
-    getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
-  public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", false);
+  public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
+  public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
 
   private static final FileAttribute SYMLINK_TARGET_ATTRIBUTE = new FileAttribute("FsRecords.SYMLINK_TARGET");
+  //@formatter:on
+
 
   /**
    * Default VFS error handler: marks VFS as corrupted, schedules rebuild on next app startup, and rethrows
