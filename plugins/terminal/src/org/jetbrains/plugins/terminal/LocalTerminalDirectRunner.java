@@ -57,6 +57,7 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   private static final Logger LOG = Logger.getInstance(LocalTerminalDirectRunner.class);
   private static final String JEDITERM_USER_RCFILE = "JEDITERM_USER_RCFILE";
   private static final String ZDOTDIR = "ZDOTDIR";
+  private static final String IJ_ZSH_DIR = "JETBRAINS_INTELLIJ_ZSH_DIR";
   private static final String IJ_COMMAND_HISTORY_FILE_ENV = "__INTELLIJ_COMMAND_HISTFILE__";
   private static final String LOGIN_SHELL = "LOGIN_SHELL";
   private static final String LOGIN_CLI_OPTION = "--login";
@@ -454,7 +455,9 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         if (StringUtil.isNotEmpty(zdotdir)) {
           envs.put("_INTELLIJ_ORIGINAL_ZDOTDIR", zdotdir);
         }
-        envs.put(ZDOTDIR, PathUtil.getParentPath(rcFilePath));
+        String zshDir = PathUtil.getParentPath(rcFilePath);
+        envs.put(ZDOTDIR, zshDir);
+        envs.put(IJ_ZSH_DIR, zshDir);
         shellType = ShellType.ZSH;
         withCommandBlocks = true;
       }
