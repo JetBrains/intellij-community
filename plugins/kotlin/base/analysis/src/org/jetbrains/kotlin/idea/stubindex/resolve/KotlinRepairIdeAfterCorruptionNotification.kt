@@ -24,13 +24,13 @@ internal class KotlinRepairIdeAfterCorruptionNotification(private val project: P
             .setSuggestionType(true)
             .setImportantSuggestion(true)
             .addAction(createSimpleExpiring(ActionsBundle.message("action.CallSaul.text"), KotlinRepairIdeAction(project)))
+            .whenExpired {
+                pendingNotificationFlag.set(false)
+            }
 
-        notification.whenExpired {
-            pendingNotificationFlag.set(false)
+        if (pendingNotificationFlag.compareAndSet(/* expectedValue = */ false, /* newValue = */ true)) {
+            notification.notify(project)
         }
-
-        pendingNotificationFlag.set(true)
-        notification.notify(project)
     }
 }
 
