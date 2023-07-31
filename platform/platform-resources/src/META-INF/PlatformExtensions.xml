@@ -1241,8 +1241,8 @@
     <editorFactoryMouseMotionListener implementation="com.intellij.openapi.editor.EditorMouseHoverPopupManager$MyEditorMouseMotionEventListener"/>
     <applicationService serviceImplementation="com.intellij.openapi.editor.EditorMouseHoverPopupManager" />
     <applicationService
-      serviceInterface="com.intellij.openapi.editor.HoverDocPopupLocationCustomizer"
-      serviceImplementation="com.intellij.openapi.editor.HoverDocPopupLocationCustomizerImpl" />
+      serviceInterface="com.intellij.openapi.editor.HoverDocPopupLocationProvider"
+      serviceImplementation="com.intellij.openapi.editor.HoverDocPopupLocationProviderImpl" />
 
     <editorFactoryListener implementation="com.intellij.codeInsight.preview.ImageOrColorPreviewManager"/>
 
