@@ -13,8 +13,8 @@ interface GitPostUpdateHandler {
   companion object {
     val EP_NAME: ExtensionPointName<GitPostUpdateHandler> = ExtensionPointName.create("Git4Idea.gitPostUpdateHandler")
 
-    fun execute(project: Project, ranges: Map<GitRepository, HashRange>, consumer: (PostUpdateData) -> Unit) {
-      EP_NAME.extensionList.forEach { handler -> handler.execute(project, ranges, consumer) }
+    fun execute(project: Project, ranges: Map<GitRepository, HashRange>, consumer: (PostUpdateData) -> Unit): Boolean {
+      return EP_NAME.extensionList.any { it.execute(project, ranges, consumer) }
     }
 
     data class PostUpdateData(val text: String?)
@@ -26,5 +26,5 @@ interface GitPostUpdateHandler {
   /**
    * #execute is performed after the update session has been finished
    */
-  fun execute(project: Project, ranges: Map<GitRepository, HashRange>, consumer: (PostUpdateData) -> Unit)
+  fun execute(project: Project, ranges: Map<GitRepository, HashRange>, consumer: (PostUpdateData) -> Unit) : Boolean
 }

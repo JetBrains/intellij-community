@@ -69,12 +69,12 @@ class GitUpdateSession(private val project: Project,
   override fun showNotification() {
     if (notificationData == null) return
 
-    if (isAiGeneratedSummaryEnabled()) {
-      GitPostUpdateHandler.execute(project, notificationData.ranges) {
-        notificationData.postUpdateData = it
-        showNotificationImpl(notificationData)
-      }
-    } else {
+    val isHandled = GitPostUpdateHandler.execute(project, notificationData.ranges) {
+      notificationData.postUpdateData = it
+      showNotificationImpl(notificationData)
+    }
+
+    if (!isHandled) {
       showNotificationImpl(notificationData)
     }
   }
