@@ -120,7 +120,7 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
     waitForRefreshQueue()
 
     withLoggingProgresses {
-      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project)
+      ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = true)
     }
 
     WarmupStatus.statusChanged(application, WarmupStatus.Finished(totalIndexedFiles.get()))
