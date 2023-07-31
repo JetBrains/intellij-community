@@ -7,6 +7,8 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.ui.TypingTarget;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.AbstractCommand;
+import com.sampullara.cli.Args;
+import com.sampullara.cli.Argument;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -15,27 +17,25 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
+/**
+ * Command replace text from startPosition (0 by default) to endPosition (end of document by default) by newText ("" by default)
+ * Syntax: %replaceText [-startPosition start] [-endPosition end] [-newText text]
+ * Example: %replaceText -startPosition 0 -endPosition 10 -text "/" - replace text from 0 to 10 position by "/"
+ * Example: %replaceText -newText "newText" - replace all text in document by "newText"
+ * Example: %replaceText -startPosition 0 -endPosition 50 - replace text form 0 to 50 position by ""
+ */
 public class ReplaceTextCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "replaceText";
-  private static final String DEFAULT_POSITION_SYMBOL = "/";
 
   public ReplaceTextCommand(@NotNull String command, int line) {
     super(command, line);
   }
 
-  private static String getArgValue(String arg) {
-    String[] splitArg = arg.split("=");
-    return splitArg.length == 2 ? splitArg[1] : "";
-  }
-
   @Override
   protected @NotNull Promise<Object> _execute(@NotNull PlaybackContext context) {
     final AsyncPromise<Object> result = new AsyncPromise<>();
-    String[] args = extractCommandArgument(PREFIX).split(" ");
-    String potentialStart = getArgValue(args[0]);
-    String potentialEnd = getArgValue(args[1]);
-    String text = getArgValue(args[2]);
-
+    Options options = new Options();
+    Args.parse(options, extractCommandArgument(PREFIX).split(" "));
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
@@ -49,10 +49,10 @@ public class ReplaceTextCommand extends AbstractCommand {
         TypingTarget target = findTarget(context);
         if (target instanceof EditorComponentImpl) {
           DocumentEx document = ((EditorComponentImpl)target).getEditor().getDocument();
-          int startPosition = potentialStart.equals(DEFAULT_POSITION_SYMBOL) ? 0 : Integer.parseInt(potentialStart);
-          int endPosition = potentialEnd.equals(DEFAULT_POSITION_SYMBOL) ? document.getTextLength() : Integer.parseInt(potentialEnd);
+          int startPosition = options.startPosition == null ? 0 : options.startPosition;
+          int endPosition = options.endPosition == null ? document.getTextLength() : options.endPosition;
           WriteCommandAction.runWriteCommandAction(context.getProject(),
-                                                   () -> document.replaceString(startPosition, endPosition, text));
+                                                   () -> document.replaceString(startPosition, endPosition, options.newText));
           result.setResult(null);
         }
         else {
@@ -62,5 +62,16 @@ public class ReplaceTextCommand extends AbstractCommand {
     });
 
     return result;
+  }
+
+  public static class Options {
+    @Argument
+    public Integer startPosition;
+
+    @Argument
+    public Integer endPosition;
+
+    @Argument
+    public String newText = "";
   }
 }
