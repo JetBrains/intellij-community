@@ -55,6 +55,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+import static com.intellij.execution.target.value.TargetEnvironmentFunctions.constant;
+
 /**
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
  * This class was written long before targets API was invented hence it doesn't provide API to mark upload/download volumes.
@@ -218,7 +220,7 @@ public class PythonTask {
       request = configuration.createEnvironmentRequest(module.getProject());
       execution = new PythonScriptExecution();
       // We do not know if script path is local or not, so we only support target script
-      execution.setPythonScriptPath(environment -> script);
+      execution.setPythonScriptPath(constant(script));
     }
 
 
