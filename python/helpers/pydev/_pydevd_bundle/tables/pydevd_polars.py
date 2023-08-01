@@ -48,10 +48,12 @@ def __create_config():
 
 
 def get_column_descriptions(table, max_cols, max_colwidth):
-    # type: (Union[pl.DataFrame, pl.Series], int, int) -> str
+    # type: (Union[pl.DataFrame, pl.Series], int, int) -> Union[str, None]
     described_results = __get_describe(table)
-
-    return get_data(described_results, max_cols, max_colwidth, None, None)
+    if described_results is not None:
+        return get_data(described_results, max_cols, max_colwidth, None, None)
+    else:
+        return ""
 
 
 # Polars compute NaN-s in describe. So, we don't need get_value_counts for Polars
@@ -61,13 +63,18 @@ def get_value_counts(table, max_cols, max_colwidth):
 
 
 def __get_describe(table):
-    # type: (Union[pl.DataFrame, pl.Series]) -> pl.DataFrame
-    if type(table) == pl.DataFrame and 'describe' in table.columns:
-        import random
-        random_suffix = ''.join([chr(random.randint(97, 122)) for _ in range(5)])
-        described_df = table\
-            .rename({'describe': 'describe_original_' + random_suffix})\
-            .describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
-    else:
-        described_df = table.describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
-    return described_df
+    # type: (Union[pl.DataFrame, pl.Series]) -> Union[pl.DataFrame, None]
+    try:
+        if type(table) == pl.DataFrame and 'describe' in table.columns:
+            import random
+            random_suffix = ''.join([chr(random.randint(97, 122)) for _ in range(5)])
+            described_df = table\
+                .rename({'describe': 'describe_original_' + random_suffix})\
+                .describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
+        else:
+            described_df = table.describe(percentiles=(0.05, 0.25, 0.5, 0.75, 0.95))
+        return described_df
+    # If DataFrame/Series have unsupported type for describe
+    # then Polars will raise TypeError exception. We should catch them.
+    except TypeError:
+        return
