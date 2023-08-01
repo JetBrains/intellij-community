@@ -141,26 +141,48 @@ abstract class AbstractKotlinHighlightExitPointsHandlerFactory : HighlightUsages
                         override fun visitExpression(expression: KtExpression) {
                             when(expression) {
                                 is KtBinaryExpression -> {
-                                    lastStatements.addIfNotNullAndNotBlock(expression.left)
-                                    lastStatements.addIfNotNullAndNotBlock(expression.right)
+                                    expression.left?.let {
+                                        lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
+                                    }
+                                    expression.right?.let {
+                                        lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
+                                    }
                                 }
                                 is KtCallExpression -> {
-                                    lastStatements.addIfNotNullAndNotBlock(expression.calleeExpression)
-                                }
-                                is KtBlockExpression -> lastStatements.addIfNotNullAndNotBlock(expression.lastStatementOrNull())
-                                is KtIfExpression -> {
-                                    lastStatements.addIfNotNullAndNotBlock(expression.then)
-                                    lastStatements.addIfNotNullAndNotBlock(expression.`else`)
-                                }
-                                is KtWhenExpression ->
-                                    expression.entries.map { it.expression }.forEach {
+                                    expression.calleeExpression?.let {
                                         lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
                                     }
+                                }
+                                is KtBlockExpression -> {
+                                    expression.lastStatementOrNull()?.let {
+                                        lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
+                                    }
+                                }
+                                is KtIfExpression -> {
+                                    expression.then?.let {
+                                        lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
+                                    }
+                                    expression.`else`?.let{
+                                        lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
+                                    }
+                                }
+                                is KtWhenExpression -> {
+                                    expression.entries.mapNotNull { it.expression }.forEach {
+                                        lastStatements.addIfNotNullAndNotBlock(it)
+                                        visitExpression(it)
+                                    }
+                                }
+                                else -> super.visitExpression(expression)
                             }
-                            super.visitExpression(expression)
                         }
                     })
-                    if (target !in lastStatements) {
+                    if (target !is KtReturnExpression && target !is KtThrowExpression && target !in lastStatements) {
                         return
                     }
                     lastStatements
