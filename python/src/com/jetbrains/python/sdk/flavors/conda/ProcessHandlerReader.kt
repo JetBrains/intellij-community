@@ -4,6 +4,7 @@ package com.jetbrains.python.sdk.flavors.conda
 import com.intellij.execution.process.*
 import com.intellij.openapi.progress.ProgressSink
 import com.intellij.openapi.util.Key
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -51,13 +52,14 @@ class ProcessHandlerReader(processHandler: ProcessHandler) {
   /**
    * Runs process, prints its output to [sink] (if provided) and returns either null or error
    */
+  @Suppress("HardCodedStringLiteral")
   suspend fun runProcessAndGetError(uiContext: CoroutineContext, sink: ProgressSink?): String? {
 
     val jobs = mutableListOf<Job>()
     jobs += withContext(uiContext) {
       launch {
         for (message in stdOut) {
-          sink?.text(message)
+          sink?.text(message.filter { it != UIUtil.MNEMONIC })
         }
       }
     }
