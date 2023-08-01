@@ -420,7 +420,7 @@ open class FileEditorManagerImpl(
   // need to open additional non-dumb-aware editors
   private suspend fun dumbModeFinished(project: Project) {
     val allSplitters = withContext(Dispatchers.EDT) {
-      getAllSplitters() to openedFiles
+      getAllSplitters()
     }
 
     val providerManager = FileEditorProviderManager.getInstance()
@@ -445,7 +445,7 @@ open class FileEditorManagerImpl(
             composite.addEditor(editor = editor, provider = provider)
           }
         }
-        for (each in allSplitters.first) {
+        for (each in allSplitters) {
           each.updateFileBackgroundColorAsync(file)
         }
       }
