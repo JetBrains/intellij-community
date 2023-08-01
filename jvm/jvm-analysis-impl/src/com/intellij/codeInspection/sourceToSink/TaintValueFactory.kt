@@ -54,6 +54,9 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   private fun fromAnnotationOwner(annotationOwner: PsiAnnotationOwner?): TaintValue {
+    if (annotationsIsEmpty()) {
+      return TaintValue.UNKNOWN
+    }
     if (annotationOwner == null) return TaintValue.UNKNOWN
     for (annotation in annotationOwner.annotations) {
       val value = fromAnnotation(annotation)
@@ -123,6 +126,9 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   private fun fromExternalAnnotations(owner: PsiModifierListOwner): TaintValue {
+    if (annotationsIsEmpty()) {
+      return TaintValue.UNKNOWN
+    }
     val annotationsManager = ExternalAnnotationsManager.getInstance(owner.project)
     val annotations = annotationsManager.findExternalAnnotations(owner) ?: return TaintValue.UNKNOWN
     return annotations.asSequence()
@@ -132,6 +138,9 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   private fun of(annotationOwner: PsiModifierListOwner): TaintValue {
+    if (annotationsIsEmpty()) {
+      return TaintValue.UNKNOWN
+    }
     val allNames = java.util.HashSet<String>()
     allNames.addAll(myUnTaintedAnnotations)
     allNames.addAll(myTaintedAnnotations)
@@ -167,6 +176,9 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
   }
 
   private fun fromUAnnotation(annotation: UAnnotation): TaintValue? {
+    if (annotationsIsEmpty()) {
+      return TaintValue.UNKNOWN
+    }
     val annotationQualifiedName = annotation.qualifiedName
     val fromJsr = processUJsr(annotationQualifiedName, annotation)
     if (fromJsr != null) return fromJsr
@@ -177,6 +189,10 @@ class TaintValueFactory(private val myConfiguration: UntaintedConfiguration) {
       TaintValue.UNTAINTED
     }
     else null
+  }
+
+  private fun annotationsIsEmpty(): Boolean {
+    return myTaintedAnnotations.isEmpty() && myUnTaintedAnnotations.isEmpty()
   }
 
   private fun processJsr(qualifiedName: String?, annotation: PsiAnnotation): TaintValue? {

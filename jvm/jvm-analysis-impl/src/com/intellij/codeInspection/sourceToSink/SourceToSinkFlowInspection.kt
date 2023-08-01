@@ -304,8 +304,6 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun processExpression(expression: UExpression?) {
       if (expression == null) return
-      val expressionType: PsiType? = expression.getExpressionType()
-      if (expressionType == null || !expressionType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) return
       val annotationContext = AnnotationContext.fromExpression(expression)
       val contextValue: TaintValue = factory.fromAnnotationContext(annotationContext)
       if (contextValue !== TaintValue.UNTAINTED) return

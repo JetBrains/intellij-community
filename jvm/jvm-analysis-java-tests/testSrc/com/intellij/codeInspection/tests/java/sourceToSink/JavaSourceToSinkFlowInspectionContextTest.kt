@@ -12,7 +12,7 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
   override val inspection: SourceToSinkFlowInspection
     get() = super.inspection.apply {
       untaintedParameterWithPlaceMethodClass.add("java.io.PrintWriter")
-      untaintedParameterWithPlaceMethodName.add("write")
+      untaintedParameterWithPlaceMethodName.add("write|print")
       untaintedParameterWithPlaceIndex.add("0")
       untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
       untaintedParameterWithPlacePlaceMethod.add("getWriter")
@@ -22,7 +22,10 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
     return JavaJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + INSPECTION_PATH
   }
 
-  fun testSimple() {
+  fun `test simple with context`() {
     myFixture.testHighlighting("Simple.java")
+  }
+  fun `test for not string as a parameter`() {
+    myFixture.testHighlighting("SimpleObject.java")
   }
 }
