@@ -6,9 +6,9 @@ import org.gradle.tooling.events.internal.DefaultFinishEvent
 import org.gradle.tooling.events.lifecycle.internal.DefaultBuildPhaseFinishEvent
 import org.gradle.tooling.events.task.internal.DefaultTaskFailureResult
 import org.gradle.tooling.events.task.internal.DefaultTaskFinishEvent
-import org.jetbrains.plugins.gradle.service.execution.fus.AggregatedTaskReport
-import org.jetbrains.plugins.gradle.service.execution.fus.GradleExecutionStageHandler
-import org.jetbrains.plugins.gradle.service.execution.fus.TaskGraphExecutionReport
+import org.jetbrains.plugins.gradle.service.execution.statistics.AggregatedTaskReport
+import org.jetbrains.plugins.gradle.service.execution.statistics.GradleExecutionStageHandler
+import org.jetbrains.plugins.gradle.service.execution.statistics.TaskGraphExecutionReport
 import org.jetbrains.plugins.gradle.util.GradleTaskClassifier
 
 class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {

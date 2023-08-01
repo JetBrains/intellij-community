@@ -10,7 +10,7 @@ import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.isGradleOlderThan
-import org.jetbrains.plugins.gradle.service.execution.fus.GradleExecutionStageFusHandler
+import org.jetbrains.plugins.gradle.service.execution.statistics.GradleExecutionStageFusHandler
 import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
