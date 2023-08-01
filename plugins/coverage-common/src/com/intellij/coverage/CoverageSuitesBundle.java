@@ -23,10 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * Contains array of suites which should have the same {@link CoverageEngine}.
@@ -92,15 +89,25 @@ public class CoverageSuitesBundle {
 
   @Nullable
   public ProjectData getCoverageData() {
-    final ProjectData projectData = myData.get();
+    ProjectData projectData = myData.get();
     if (projectData != null) return projectData;
-    ProjectData data = new ProjectData();
-    for (CoverageSuite suite : mySuites) {
-      final ProjectData coverageData = suite.getCoverageData(null);
-      if (coverageData != null) {
+
+    List<ProjectData> dataList = Arrays.stream(mySuites)
+      .map(suite -> suite.getCoverageData(null))
+      .filter(data -> data != null)
+      .toList();
+
+    ProjectData data;
+    if (dataList.size() == 1) {
+      data = dataList.get(0);
+    }
+    else {
+      data = new ProjectData();
+      for (ProjectData coverageData : dataList) {
         data.merge(coverageData);
       }
     }
+
     myData = new SoftReference<>(data);
     return data;
   }
