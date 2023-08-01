@@ -114,7 +114,7 @@ public class MappedFileStorageHelper implements Closeable {
   }
 
   @VisibleForTesting
-  public static Map<Path, MappedFileStorageHelper> registeredStorages(){
+  public static Map<Path, MappedFileStorageHelper> registeredStorages() {
     return storagesRegistry;
   }
 
@@ -235,11 +235,33 @@ public class MappedFileStorageHelper implements Closeable {
     return updateLongField(fileId, fieldOffset, updateOperator);
   }
 
+  /**
+   * Clears all storage content -- headers and data -- as-if storage was just created from 0.
+   * It means all the fields have their default values (=0)
+   * BEWARE: memory semantics of clear implementation is currently 'plain write', so it doesn't work
+   * reliable with 'volatile' semantics of other fields accessors
+   */
   public void clear() throws IOException {
+    clearImpl(/*clearHeaders: */ true);
+  }
+
+  /**
+   * Clears all storage records, but don't touch headers.
+   * All records fields will have their default values (=0)
+   * BEWARE: memory semantics of clear implementation is currently 'plain write', so it doesn't work
+   * reliable with 'volatile' semantics of other fields accessors
+   */
+  public void clearRecords() throws IOException {
+    clearImpl(/*clearHeaders: */ false);
+  }
+
+  private void clearImpl(boolean clearHeaders) throws IOException {
     int maxAllocatedFileId = maxAllocatedFileID();
     long maxOffset = maxAllocatedFileId * (long)bytesPerRow * HeaderLayout.HEADER_SIZE;
     int pageSize = storage.pageSize();
-    for (long offset = 0; offset < maxOffset; offset += pageSize) {
+    for (long offset = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE;
+         offset < maxOffset;
+         offset += pageSize) {
       Page page = storage.pageByOffset(offset);
       ByteBuffer pageBuffer = page.rawPageBuffer();
       //MAYBE RC: it could be done much faster -- use putLong(), use preallocated array of zeroes,

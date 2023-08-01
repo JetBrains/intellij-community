@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
@@ -38,7 +39,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static final int INVERTED_INDEX_SIZE_THRESHOLD = getIntProperty("mapped.file.type.index.inverse.upgrade.threshold", 256);
 
   /** Use experimental forward-index implementation over fast (mapped) file attributes? */
-  private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE = getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", true);
+  private static final boolean FORWARD_INDEX_OVER_MMAPPED_ATTRIBUTE =
+    getBooleanProperty("mapped-file-type-index.forward-index-over-mapped-attribute", true);
 
   private final @NotNull MappedFileTypeIndex.IndexDataController myDataController;
 
@@ -449,24 +451,23 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
    * that really important here.
    */
   private static class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
-    private static final FileAttribute FILE_ATTRIBUTE = new FileAttribute(
-      "filetype.index",
-      /*version: */ 1,
-      /*fixedSize: */ true
-    );
-    private final SpecializedFileAttributes.ShortFileAttributeAccessor attributeAccessor;
+    private static final String STORAGE_NAME = "filetype.index";
+    private static final int FIELD_OFFSET = 0;
+    private final MappedFileStorageHelper storage;
 
     private final AtomicLong modificationsCounter = new AtomicLong(0);
 
     private ForwardIndexFileControllerOverMappedFile() throws StorageException {
       try {
-        attributeAccessor = SpecializedFileAttributes.specializeAsFastShort(
+        storage = MappedFileStorageHelper.openHelperAndVerifyVersions(
           FSRecords.getInstance(),
-          FILE_ATTRIBUTE
+          STORAGE_NAME,
+          /* formatVersion: */ 1,
+          Short.BYTES
         );
       }
       catch (IOException e) {
-        throw new StorageException("Can't specialize " + FILE_ATTRIBUTE, e);
+        throw new StorageException("Can't open storage [" + STORAGE_NAME + "]", e);
       }
     }
 
@@ -517,10 +518,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     @Override
     public void clear() throws StorageException {
       try {
-        int maxAllocatedID = FSRecords.getInstance().connection().getRecords().maxAllocatedID();
-        for (int fileId = FSRecords.ROOT_FILE_ID; fileId < maxAllocatedID; fileId++) {
-          writeImpl(fileId, (short)0);
-        }
+        storage.clearRecords();
         modificationsCounter.incrementAndGet();
       }
       catch (IOException e) {
@@ -541,15 +539,18 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     @Override
     public void close() {
+      //storage is closed by FSRecordsImpl
     }
 
     private void writeImpl(int inputId,
                            short value) throws IOException {
-      attributeAccessor.write(inputId, value);
+      //attributeAccessor.write(inputId, value);
+      storage.writeShortField(inputId, FIELD_OFFSET, value);
     }
 
     private short readImpl(int inputId) throws IOException {
-      return attributeAccessor.read(inputId, (short)0);
+      return storage.readShortField(inputId, FIELD_OFFSET);
+      //return attributeAccessor.read(inputId, (short)0);
     }
   }
 }
