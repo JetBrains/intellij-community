@@ -22,36 +22,30 @@ import org.jetbrains.annotations.NotNull;
 /**
  * A condition that represents a relation between two DfaValues
  */
-public final class DfaRelation extends DfaCondition {
+public record DfaRelation(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType) implements DfaCondition {
   @NotNull
   @Override
   public DfaRelation negate() {
-    return new DfaRelation(myLeftOperand, myRightOperand, myRelation.getNegated());
-  }
-
-  private @NotNull final DfaValue myLeftOperand;
-  private @NotNull final DfaValue myRightOperand;
-  private @NotNull final RelationType myRelation;
-
-  private DfaRelation(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType) {
-    myLeftOperand = leftOperand;
-    myRightOperand = rightOperand;
-    myRelation = relationType;
-  }
-
-  @NotNull
-  public DfaValue getLeftOperand() {
-    return myLeftOperand;
-  }
-
-  @NotNull
-  public DfaValue getRightOperand() {
-    return myRightOperand;
+    return new DfaRelation(leftOperand, rightOperand, relationType.getNegated());
   }
 
   @Override
+  public DfaCondition correctForRelationResult(boolean result) {
+    DfaValue newLeft = leftOperand;
+    DfaValue newRight = rightOperand;
+    if (newLeft instanceof DfaTypeValue leftTypeValue) {
+      newLeft = newLeft.getFactory().fromDfType(leftTypeValue.getDfType().correctForRelationResult(relationType, result));
+    }
+    if (newRight instanceof DfaTypeValue rightTypeValue) {
+      newRight = newRight.getFactory().fromDfType(rightTypeValue.getDfType().correctForRelationResult(relationType, result));
+    }
+    return newLeft == leftOperand && newRight == rightOperand ? this :
+           DfaCondition.createCondition(newLeft, relationType, newRight);
+  }
+  
+  @Override
   public boolean isUnknown() {
-    return myLeftOperand instanceof DfaTypeValue && myRightOperand instanceof DfaTypeValue;
+    return leftOperand instanceof DfaTypeValue && rightOperand instanceof DfaTypeValue;
   }
 
   public static DfaRelation createRelation(@NotNull DfaValue dfaLeft, @NotNull RelationType relationType, @NotNull DfaValue dfaRight) {
@@ -67,37 +61,10 @@ public final class DfaRelation extends DfaCondition {
   }
 
   public boolean isEquality() {
-    return myRelation == RelationType.EQ;
-  }
-
-  public boolean isNonEquality() {
-    return myRelation == RelationType.NE || myRelation == RelationType.GT || myRelation == RelationType.LT;
-  }
-
-  @NotNull
-  public RelationType getRelation() {
-    return myRelation;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-    DfaRelation relation = (DfaRelation)o;
-    return myLeftOperand == relation.myLeftOperand &&
-           myRightOperand == relation.myRightOperand &&
-           myRelation == relation.myRelation;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = 31 + myLeftOperand.hashCode();
-    result = 31 * result + myRightOperand.hashCode();
-    result = 31 * result + myRelation.hashCode();
-    return result;
+    return relationType == RelationType.EQ;
   }
 
   @NonNls public String toString() {
-    return myLeftOperand + " " + myRelation + " " + myRightOperand;
+    return leftOperand + " " + relationType + " " + rightOperand;
   }
 }

@@ -11,22 +11,23 @@ import org.jetbrains.annotations.Nullable;
  * This interface has only two implementations: {@link Exact} and {@link DfaRelation}.
  * No other implementations allowed.
  */
-public abstract class DfaCondition {
-  // To prevent inheritors outside of the package
-  DfaCondition() {}
-
+public sealed interface DfaCondition permits DfaCondition.Exact, DfaRelation {
   /**
    * @return a condition which is the opposite to this condition
    */
   @NotNull
   @Contract(pure = true)
-  public abstract DfaCondition negate();
+  DfaCondition negate();
+
+  default DfaCondition correctForRelationResult(boolean result) {
+    return this;
+  }
 
   /**
    * @return always true condition; singleton object
    */
   @Contract(pure = true)
-  public static DfaCondition getTrue() {
+  static DfaCondition getTrue() {
     return Exact.TRUE;
   }
 
@@ -34,7 +35,7 @@ public abstract class DfaCondition {
    * @return always false condition; singleton object
    */
   @Contract(pure = true)
-  public static DfaCondition getFalse() {
+  static DfaCondition getFalse() {
     return Exact.FALSE;
   }
 
@@ -42,14 +43,14 @@ public abstract class DfaCondition {
    * @return condition with unknown value; singleton object
    */
   @Contract(pure = true)
-  public static DfaCondition getUnknown() {
+  static DfaCondition getUnknown() {
     return Exact.UNKNOWN;
   }
 
   /**
    * @return true if result of this condition cannot be known exactly in any possible memory state
    */
-  abstract public boolean isUnknown();
+  boolean isUnknown();
 
   /**
    * @see DfaValue#cond(RelationType, DfaValue)
@@ -89,10 +90,14 @@ public abstract class DfaCondition {
     return null;
   }
 
-  static final class Exact extends DfaCondition {
+  enum Exact implements DfaCondition {
+    TRUE("TRUE"),
+    FALSE("FALSE"),
+    UNKNOWN("UNKNOWN");
+    
     private final String myName;
 
-    private Exact(String name) {
+    Exact(String name) {
       myName = name;
     }
 
@@ -101,9 +106,6 @@ public abstract class DfaCondition {
       return myName;
     }
 
-    static final Exact TRUE = new Exact("TRUE");
-    static final Exact FALSE = new Exact("FALSE");
-    static final Exact UNKNOWN = new Exact("UNKNOWN");
 
     @NotNull
     @Override
@@ -134,7 +136,7 @@ public abstract class DfaCondition {
       DfType leftType = dfaLeft.getDfType();
       DfType rightType = dfaRight.getDfType();
 
-      return tryEvaluate(leftType, relationType, rightType);
+      return DfaCondition.tryEvaluate(leftType, relationType, rightType);
     }
   }
 }

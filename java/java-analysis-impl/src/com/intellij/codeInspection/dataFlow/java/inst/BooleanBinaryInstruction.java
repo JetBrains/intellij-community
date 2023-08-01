@@ -65,9 +65,9 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction {
 
     for (int i = 0; i < relations.length; i++) {
       RelationType relation = relations[i];
-      DfaCondition condition = dfaLeft.cond(relation, dfaRight);
-      if (condition == DfaCondition.getFalse()) continue;
       boolean result = myRelation.isSubRelation(relation);
+      DfaCondition condition = dfaLeft.cond(relation, dfaRight).correctForRelationResult(result);
+      if (condition == DfaCondition.getFalse()) continue;
       if (condition == DfaCondition.getTrue()) {
         pushResult(interpreter, stateBefore, booleanValue(result));
         return nextStates(interpreter, stateBefore);
