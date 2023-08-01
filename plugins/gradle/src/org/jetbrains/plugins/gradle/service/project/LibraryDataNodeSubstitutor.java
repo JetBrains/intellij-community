@@ -81,7 +81,8 @@ public class LibraryDataNodeSubstitutor {
       final String moduleId;
       final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
       if (sourceTypePair == null) {
-        moduleId = artifactsMap.get(path);
+        ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
+        moduleId = mapping != null ? mapping.getModuleId() : null;
         if (moduleId != null) {
           targetModuleOutputPaths = Set.of(path);
         }

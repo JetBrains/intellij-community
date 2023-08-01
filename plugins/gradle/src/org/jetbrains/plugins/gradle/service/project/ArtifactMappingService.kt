@@ -2,13 +2,12 @@
 package org.jetbrains.plugins.gradle.service.project
 
 interface ArtifactMappingService {
-  fun getModuleId(artifactPath: String): String?
+  fun getModuleMapping(artifactPath: String): ModuleMappingInfo?
 
   fun storeModuleId(artifactPath: String, moduleId: String)
 
   val keys: Collection<String>
 
-  operator fun get(artifactPath: String?): String? // --> getModuleId
   operator fun set(artifactPath: String, moduleId: String) = put(artifactPath, moduleId) // --> getModuleId
 
   fun put(artifactPath: String, moduleId: String)  // --> storeModuleId
@@ -17,10 +16,16 @@ interface ArtifactMappingService {
   fun putAll(artifactsMap: Map<String, String>)
 }
 
+interface ModuleMappingInfo {
+  val moduleId: String
+}
+
+data class ModuleMappingData(override val moduleId: String): ModuleMappingInfo
+
 class MapBasedArtifactMappingService(private val myMap: MutableMap<String, String>) : ArtifactMappingService {
 
-  override fun getModuleId(artifactPath: String): String? {
-    return myMap[artifactPath]
+  override fun getModuleMapping(artifactPath: String): ModuleMappingInfo? {
+    return myMap[artifactPath]?.let { ModuleMappingData(it) }
   }
 
   override fun storeModuleId(artifactPath: String, moduleId: String) {
@@ -30,10 +35,9 @@ class MapBasedArtifactMappingService(private val myMap: MutableMap<String, Strin
   override val keys: Collection<String>
     get() = myMap.keys
 
-  override fun get(artifactPath: String?): String? = artifactPath?.let{ getModuleId(it) }
   override fun put(artifactPath: String, moduleId: String) = storeModuleId(artifactPath, moduleId)
   override fun putAll(artifactsMap: ArtifactMappingService) {
-    artifactsMap.keys.forEach { key -> artifactsMap.getModuleId(key)?.let { found -> myMap[key] = found } }
+    artifactsMap.keys.forEach { key -> artifactsMap.getModuleMapping(key)?.moduleId?.let { found -> myMap[key] = found } }
   }
 
   override fun putAll(artifactsMap: Map<String, String>) {
