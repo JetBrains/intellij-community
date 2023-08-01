@@ -10,7 +10,7 @@ internal class OnboardingTipsStatistics : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("onboarding.tips.statistics", 3)
+    private val GROUP = EventLogGroup("onboarding.tips.statistics", 4)
 
     private val projectsWithTipsField = EventFields.Int("projects_with_tips")
     private val firstTimeActionUsedField = EventFields.Boolean("first_time_used")
