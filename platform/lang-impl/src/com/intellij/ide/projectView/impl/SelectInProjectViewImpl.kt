@@ -39,7 +39,10 @@ internal class SelectInProjectViewImpl(
   )
 
   init {
-    coroutineScope.launch(CoroutineName("collecting select in project view requests")) {
+    coroutineScope.launch(
+      context = CoroutineName("collecting select in project view requests"),
+      start = CoroutineStart.UNDISPATCHED, // Needed to make sure that when init completes the collection is guaranteed to start.
+    ) {
       selectInRequests.collectLatest { it() }
     }
   }
