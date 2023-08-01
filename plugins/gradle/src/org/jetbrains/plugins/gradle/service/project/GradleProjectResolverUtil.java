@@ -666,7 +666,8 @@ public final class GradleProjectResolverUtil {
             new MultiMap<>(new Reference2ObjectLinkedOpenHashMap<>());
 
           for (File file : projectDependency.getProjectDependencyArtifacts()) {
-            moduleId = artifactsMap.get(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
+            ModuleMappingInfo mapping = artifactsMap.getModuleMapping(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
+            moduleId = mapping != null ? mapping.getModuleId() : null;
             if (moduleId == null) continue;
             projectPair = sourceSetMap.get(moduleId);
 
