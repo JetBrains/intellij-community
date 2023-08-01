@@ -2,7 +2,7 @@
 package com.intellij.platform.ide.newUiOnboarding
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.actions.ToggleDistractionFreeModeAction
+import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
@@ -42,7 +42,7 @@ object NewUiOnboardingUtil {
 
   val isOnboardingEnabled: Boolean
     get() = Registry.`is`("ide.experimental.ui.onboarding")
-            && !ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
+            && !DistractionFreeModeController.shouldMinimizeCustomHeader()
             && NewUiOnboardingBean.isPresent
 
   fun getHelpLink(topic: String): String {
