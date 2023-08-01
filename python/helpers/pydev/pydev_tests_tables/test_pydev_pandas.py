@@ -278,9 +278,6 @@ def test_get_describe_returned_types(setup_dataframe):
     assert type(pandas_tables_helpers.__get_describe(df['A'])) == pd.Series
 
 
-# We skip warning about comparison of complex values.
-# There is no opportunity to exclude this data type from describe call
-@pytest.mark.filterwarnings("ignore: Casting complex values")
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
 def test_describe_series(setup_dataframe):
     _, _, df, _, _ = setup_dataframe
@@ -293,9 +290,11 @@ def test_describe_series(setup_dataframe):
             described_series = pandas_tables_helpers.__get_describe(df[column])
             resulted += str(described_series) + "\n"
 
+    exp_file_python_ver = str(sys.version_info[0]) + '_' + str(sys.version_info[1])
+
     read_expected_from_file_and_compare_with_actual(
         actual=resulted,
-        expected_file='test_data/pandas/series_describe.txt'
+        expected_file='test_data/pandas/series_describe_' + exp_file_python_ver + '.txt'
     )
 
 
@@ -305,4 +304,6 @@ def read_expected_from_file_and_compare_with_actual(actual, expected_file):
 
     # for a more convenient assertion fails messages here we compare string char by char
     for ind, (act, exp) in enumerate(zip(actual, expected)):
-        assert act == exp, "index is %s" % ind
+        assert act == exp, "index is %s, act part = %s, exp part = %s" % (ind,
+            actual[max(0, ind - 20): min(len(actual) - 1, ind + 20)],
+            expected[max(0, ind - 20): min(len(actual) - 1, ind + 20)])

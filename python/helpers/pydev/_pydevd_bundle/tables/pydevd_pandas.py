@@ -80,7 +80,10 @@ def get_column_descriptions(table, max_cols, max_colwidth):
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
     described_result = __get_describe(table)
 
-    return get_data(described_result, max_cols, max_colwidth, None, None)
+    if described_result is not None:
+        return get_data(described_result, max_cols, max_colwidth, None, None)
+    else:
+        return ""
 
 
 def get_value_counts(table, max_cols, max_colwidth):
@@ -91,9 +94,13 @@ def get_value_counts(table, max_cols, max_colwidth):
 
 
 def __get_describe(table):
-    # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series]
-    described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
-                                exclude=[np.complex64, np.complex128])
+    # type: (Union[pd.DataFrame, pd.Series]) -> Union[pd.DataFrame, pd.Series, None]
+    try:
+        described_ = table.describe(percentiles=[.05, .25, .5, .75, .95],
+                                    exclude=[np.complex64, np.complex128])
+    except TypeError:
+        return
+
     if type(table) is pd.Series:
         return described_
     else:
