@@ -45,8 +45,6 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   override fun getProviderList(project: Project, file: VirtualFile): List<FileEditorProvider> {
     // collect all possible editors
     val sharedProviders = mutableListOf<FileEditorProvider>()
-    var hideDefaultEditor = false
-    var hasHighPriorityEditors = false
 
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
     val hasDocument by lazy {
@@ -71,14 +69,9 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
           }
         }) {
         sharedProviders.add(provider)
-        hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
-        hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
-        checkPolicy(provider)
       }
     }
-    return postProcessResult(hideDefaultEditor = hideDefaultEditor,
-                             sharedProviders = sharedProviders,
-                             hasHighPriorityEditors = hasHighPriorityEditors)
+    return postProcessResult(sharedProviders)
 
   }
 
@@ -86,8 +79,6 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
   @Suppress("DuplicatedCode")
   override suspend fun getProvidersAsync(project: Project, file: VirtualFile): List<FileEditorProvider> {
     // collect all possible editors
-    var hideDefaultEditor = false
-    var hasHighPriorityEditors = false
     val suppressors = FileEditorProviderSuppressor.EP_NAME.extensionList
 
     val fileType = lazy { file.fileType }
@@ -97,29 +88,23 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
 
       FileEditorProvider.EP_FILE_EDITOR_PROVIDER.filterableLazySequence().map { item ->
         async {
-          try {
-            if (!isAcceptedByFileType(item = item, fileType = fileType, file = file)) {
+          if (!isAcceptedByFileType(item = item, fileType = fileType, file = file)) {
+            return@async null
+          }
+
+          if (item.isDocumentRequired) {
+            if (hasDocument == null) {
+              hasDocument = readAction { FileDocumentManager.getInstance().getDocument(file) != null }
+            }
+
+            if (hasDocument == false) {
               return@async null
             }
+          }
 
-            if (item.isDocumentRequired) {
-              if (hasDocument == null) {
-                hasDocument = readAction { FileDocumentManager.getInstance().getDocument(file) != null }
-              }
-
-              if (hasDocument == false) {
-                return@async null
-              }
-            }
-
+          try {
             withTimeout(30.seconds) {
-              val provider = getProviderIfApplicable(item = item, project = project, file = file, suppressors = suppressors)
-                             ?: return@withTimeout null
-
-              hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
-              hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
-              checkPolicy(provider)
-              provider
+              getProviderIfApplicable(item = item, project = project, file = file, suppressors = suppressors)
             }
           }
           catch (e: TimeoutCancellationException) {
@@ -129,15 +114,18 @@ class FileEditorProviderManagerImpl : FileEditorProviderManager,
         }
       }.toList()
     }.mapNotNullTo(mutableListOf()) { it.getCompleted() }
-    return postProcessResult(hideDefaultEditor = hideDefaultEditor,
-                             sharedProviders = sharedProviders,
-                             hasHighPriorityEditors = hasHighPriorityEditors)
-
+    return postProcessResult(sharedProviders)
   }
 
-  private fun postProcessResult(hideDefaultEditor: Boolean,
-                                sharedProviders: MutableList<FileEditorProvider>,
-                                hasHighPriorityEditors: Boolean): List<FileEditorProvider> {
+  private fun postProcessResult(sharedProviders: MutableList<FileEditorProvider>): List<FileEditorProvider> {
+    var hideDefaultEditor = false
+    var hasHighPriorityEditors = false
+    for (provider in sharedProviders) {
+      hideDefaultEditor = hideDefaultEditor or (provider.policy == FileEditorPolicy.HIDE_DEFAULT_EDITOR)
+      hasHighPriorityEditors = hasHighPriorityEditors or (provider.policy == FileEditorPolicy.HIDE_OTHER_EDITORS)
+      checkPolicy(provider)
+    }
+
     // throw out default editors provider if necessary
     if (hideDefaultEditor) {
       sharedProviders.removeIf { it is DefaultPlatformFileEditorProvider }
