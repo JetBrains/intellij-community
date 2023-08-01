@@ -62,7 +62,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
         IFernflowerPreferences.BANNER to BANNER,
         IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
-        IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS to 20_000, //approximately 2_000 lines
+        IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS to 150_000, //approximately 9_000 lines
         IFernflowerPreferences.INDENT_STRING to indent,
         IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
