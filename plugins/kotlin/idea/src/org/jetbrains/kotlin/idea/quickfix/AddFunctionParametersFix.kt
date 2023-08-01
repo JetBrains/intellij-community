@@ -31,7 +31,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
 
 class AddFunctionParametersFix(
@@ -50,8 +49,6 @@ class AddFunctionParametersFix(
 
     private val callElement: KtCallElement?
         get() = element as? KtCallElement
-
-    private val typesToShorten = ArrayList<KotlinType>()
 
     override fun getText(): String {
         val callElement = callElement ?: return ""
@@ -153,7 +150,6 @@ class AddFunctionParametersFix(
                             val parameterType = parameters[i].type
                             if (argumentType != null && !KotlinTypeChecker.DEFAULT.isSubtypeOf(argumentType, parameterType)) {
                                 descriptor.parameters[i + receiverCount].currentTypeInfo = KotlinTypeInfo(false, argumentType)
-                                typesToShorten.add(argumentType)
                             }
                         } else {
                             val parameterInfo = getNewParameterInfo(
@@ -187,7 +183,6 @@ class AddFunctionParametersFix(
         }
         return KotlinParameterInfo(functionDescriptor, -1, name, KotlinTypeInfo(false, null)).apply {
             currentTypeInfo = KotlinTypeInfo(false, type)
-            originalTypeInfo.type?.let { typesToShorten.add(it) }
             if (expression != null) defaultValueForCall = expression
         }
     }
