@@ -64,7 +64,11 @@ private inline fun VirtualFile.getResolvedVirtualFile(
   var baseVirtualFile = this
   for (i in normalizedBasePath.nameCount until basePath.nameCount) {
     baseVirtualFile = checkNotNull(baseVirtualFile.parent) {
-      "Cannot resolve base virtual file for: $path/$relativePath"
+      """
+        |Cannot resolve base virtual file for $baseVirtualFile
+        |  basePath = $path
+        |  relativePath = $relativePath
+      """.trimMargin()
     }
   }
   var virtualFile = baseVirtualFile
@@ -72,7 +76,11 @@ private inline fun VirtualFile.getResolvedVirtualFile(
     val names = normalizedRelativePath.map { it.pathString }
     for ((i, name) in names.withIndex()) {
       if (!virtualFile.isDirectory) {
-        throw IOException("Expected directory instead of file: ${virtualFile.path}")
+        throw IOException("""
+          |Expected directory instead of file: $virtualFile
+          |  basePath = $path
+          |  relativePath = $relativePath
+        """.trimMargin())
       }
       virtualFile = virtualFile.getChild(name, i == names.lastIndex)
     }
@@ -91,7 +99,11 @@ fun VirtualFile.findFileOrDirectory(relativePath: @SystemIndependent String): Vi
 fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? {
   val file = findFileOrDirectory(relativePath) ?: return null
   if (!file.isFile) {
-    throw IOException("Expected file instead of directory: $path/$relativePath")
+    throw IOException("""
+      |Expected file instead of directory: $file
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return file
 }
@@ -100,7 +112,11 @@ fun VirtualFile.findFile(relativePath: @SystemIndependent String): VirtualFile? 
 fun VirtualFile.findDirectory(relativePath: @SystemIndependent String): VirtualFile? {
   val directory = findFileOrDirectory(relativePath) ?: return null
   if (!directory.isDirectory) {
-    throw IOException("Expected directory instead of file: $path/$relativePath")
+    throw IOException("""
+      |Expected directory instead of file: $directory
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return directory
 }
@@ -114,7 +130,11 @@ fun VirtualFile.findOrCreateFile(relativePath: @SystemIndependent String): Virtu
     }
   }
   if (!file.isFile) {
-    throw IOException("Expected file instead of directory: $path/$relativePath")
+    throw IOException("""
+      |Expected file instead of directory: $file
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return file
 }
@@ -125,7 +145,11 @@ fun VirtualFile.findOrCreateDirectory(relativePath: @SystemIndependent String): 
     findChild(name) ?: createChildDirectory(fileSystem, name)
   }
   if (!directory.isDirectory) {
-    throw IOException("Expected directory instead of file: $path/$relativePath")
+    throw IOException("""
+      |Expected directory instead of file: $directory
+      |  basePath = $path
+      |  relativePath = $relativePath
+    """.trimMargin())
   }
   return directory
 }

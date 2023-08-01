@@ -109,19 +109,43 @@ class VirtualFileUtilTest : VirtualFileUtilTestCase() {
         .isExistedDirectory()
 
       assertVirtualFile { writeAction { root.createFile("file.txt") } }
-        .isFailedWithException<IOException>("File already exists: .*")
+        .isFailedWithException<IOException>("""
+          |File already exists: .*/file.txt
+          |  basePath = .*
+          |  relativePath = file.txt
+        """.trimMargin())
       assertVirtualFile { writeAction { root.createDirectory("directory") } }
-        .isFailedWithException<IOException>("Directory already exists: .*")
+        .isFailedWithException<IOException>("""
+          |Directory already exists: .*/directory
+          |  basePath = .*
+          |  relativePath = directory
+        """.trimMargin())
 
       assertVirtualFile { writeAction { root.findOrCreateFile("directory") } }
-        .isFailedWithException<IOException>("Expected file instead of directory: .*")
+        .isFailedWithException<IOException>("""
+          |Expected file instead of directory: .*/directory
+          |  basePath = .*
+          |  relativePath = directory
+        """.trimMargin())
       assertVirtualFile { writeAction { root.findOrCreateDirectory("file.txt") } }
-        .isFailedWithException<IOException>("Expected directory instead of file: .*")
+        .isFailedWithException<IOException>("""
+          |Expected directory instead of file: .*/file.txt
+          |  basePath = .*
+          |  relativePath = file.txt
+        """.trimMargin())
 
       assertVirtualFile { writeAction { root.createFile("file.txt/file.txt") } }
-        .isFailedWithException<IOException>("Expected directory instead of file: .*")
+        .isFailedWithException<IOException>("""
+          |Expected directory instead of file: .*/file.txt
+          |  basePath = .*
+          |  relativePath = file.txt/file.txt
+        """.trimMargin())
       assertVirtualFile { writeAction { root.createDirectory("file.txt/directory") } }
-        .isFailedWithException<IOException>("Expected directory instead of file: .*")
+        .isFailedWithException<IOException>("""
+          |Expected directory instead of file: .*/file.txt
+          |  basePath = .*
+          |  relativePath = file.txt/directory
+        """.trimMargin())
     }
   }
 
