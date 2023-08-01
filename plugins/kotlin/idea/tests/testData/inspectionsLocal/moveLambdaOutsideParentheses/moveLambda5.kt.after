@@ -1,4 +1,6 @@
 // IS_APPLICABLE: true
+// HIGHLIGHT: INFORMATION
+
 fun foo() {
     bar(name1 = 3, name2 = 2, name3 = 1) { it }
 }
