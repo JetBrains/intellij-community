@@ -40,7 +40,7 @@ import static java.time.temporal.ChronoUnit.DAYS;
  */
 @ApiStatus.Internal
 public abstract class ExperimentalUI {
-  public static final String KEY = NewUiValue.KEY;
+  @SuppressWarnings("deprecation") public static final String KEY = NewUiValue.KEY;
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
   public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
@@ -137,9 +137,10 @@ public abstract class ExperimentalUI {
   }
 
   @SuppressWarnings("unused")
-  public static class NewUiRegistryListener implements RegistryValueListener {
-    protected boolean isApplicable() {
-      return !PlatformUtils.isJetBrainsClient(); // JetBrains Client has custom listener
+  public static final class NewUiRegistryListener implements RegistryValueListener {
+    private boolean isApplicable() {
+      // JetBrains Client has custom listener
+      return !PlatformUtils.isJetBrainsClient();
     }
 
     @Override

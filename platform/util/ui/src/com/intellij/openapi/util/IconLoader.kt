@@ -31,7 +31,6 @@ import java.awt.image.RGBImageFilter
 import java.net.URL
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
-import java.util.function.Function
 import java.util.function.Supplier
 import javax.swing.Icon
 import javax.swing.ImageIcon
@@ -436,24 +435,27 @@ private fun getScaleContextSupport(icon: Icon): ScaleContextSupport? {
   }
 }
 
-private fun updateTransform(updater: Function<in IconTransform, IconTransform>) {
+private fun updateTransform(updater: (IconTransform) -> IconTransform) {
   var prev: IconTransform
   var next: IconTransform
   do {
     prev = pathTransform.get()
-    next = updater.apply(prev)
+    next = updater(prev)
   }
   while (!pathTransform.compareAndSet(prev, next))
-  pathTransformGlobalModCount.incrementAndGet()
-  if (prev != next) {
-    iconToDisabledIcon.clear()
-    colorPatchCache.clear()
-    iconToStrokeIcon.clear()
 
-    // clear svg cache
-    clearImageCache()
-    // iconCache is not cleared because it contains an original icon (instance that will delegate to)
+  pathTransformGlobalModCount.incrementAndGet()
+  if (prev == next) {
+    return
   }
+
+  iconToDisabledIcon.clear()
+  colorPatchCache.clear()
+  iconToStrokeIcon.clear()
+
+  // clear svg cache
+  clearImageCache()
+  // iconCache is not cleared because it contains an original icon (instance that will delegate to)
 }
 
 private fun findIcon(originalPath: String,
