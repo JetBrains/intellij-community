@@ -101,7 +101,7 @@ public abstract class CoverageEngine {
    * @param lastCoverageTimeStamp    timestamp
    * @param suiteToMerge             Suite to merge this coverage data with
    * @param coverageByTestEnabled    Collect coverage for test option
-   * @param tracingEnabled           Tracing option
+   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
    * @param trackTestFolders         Track test folders option
    * @return Suite
    */
@@ -113,10 +113,10 @@ public abstract class CoverageEngine {
                                            final long lastCoverageTimeStamp,
                                            @Nullable final String suiteToMerge,
                                            final boolean coverageByTestEnabled,
-                                           final boolean tracingEnabled,
+                                           final boolean branchCoverage,
                                            final boolean trackTestFolders) {
     return createCoverageSuite(covRunner, name, coverageDataFileProvider, filters, lastCoverageTimeStamp, suiteToMerge,
-                               coverageByTestEnabled, tracingEnabled, trackTestFolders, null);
+                               coverageByTestEnabled, branchCoverage, trackTestFolders, null);
   }
 
   /**
@@ -129,7 +129,7 @@ public abstract class CoverageEngine {
    * @param lastCoverageTimeStamp    timestamp
    * @param suiteToMerge             Suite to merge this coverage data with
    * @param coverageByTestEnabled    Collect coverage for test option
-   * @param tracingEnabled           Tracing option
+   * @param branchCoverage           Whether the suite includes branch coverage, or only line coverage otherwise
    * @param trackTestFolders         Track test folders option
    * @return Suite
    */
@@ -141,7 +141,7 @@ public abstract class CoverageEngine {
                                                     final long lastCoverageTimeStamp,
                                                     @Nullable final String suiteToMerge,
                                                     final boolean coverageByTestEnabled,
-                                                    final boolean tracingEnabled,
+                                                    final boolean branchCoverage,
                                                     final boolean trackTestFolders, Project project);
 
   /**

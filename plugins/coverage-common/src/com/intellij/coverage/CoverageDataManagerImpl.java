@@ -226,8 +226,8 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                         @Nullable final String suiteToMergeWith,
                                         final CoverageRunner coverageRunner,
                                         final boolean coverageByTestEnabled,
-                                        final boolean tracingEnabled) {
-    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled, tracingEnabled);
+                                        final boolean branchCoverage) {
+    final CoverageSuite suite = createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp, suiteToMergeWith, coverageByTestEnabled, branchCoverage);
     addCoverageSuite(suite, suiteToMergeWith);
     return suite;
   }
@@ -652,13 +652,13 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
                                             final long lastCoverageTimeStamp,
                                             final String suiteToMergeWith,
                                             final boolean coverageByTestEnabled,
-                                            final boolean tracingEnabled) {
+                                            final boolean branchCoverage) {
 
     CoverageSuite suite = null;
     for (CoverageEngine engine : CoverageEngine.EP_NAME.getExtensions()) {
       if (coverageRunner.acceptsCoverageEngine(engine)) {
         suite = engine.createCoverageSuite(coverageRunner, name, fileProvider, filters, lastCoverageTimeStamp,
-                                           suiteToMergeWith, coverageByTestEnabled, tracingEnabled, false, myProject);
+                                           suiteToMergeWith, coverageByTestEnabled, branchCoverage, false, myProject);
         if (suite != null) {
           break;
         }

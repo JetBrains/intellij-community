@@ -289,7 +289,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
       if (!(runnerSettings instanceof CoverageRunnerData)) return true;
       final CoverageEnabledConfiguration coverageEnabledConfiguration = CoverageEnabledConfiguration.getOrCreate(configuration);
       return !(coverageEnabledConfiguration.getCoverageRunner() instanceof IDEACoverageRunner) ||
-             !(coverageEnabledConfiguration.isTrackPerTestCoverage() && coverageEnabledConfiguration.isTracingEnabled());
+             !(coverageEnabledConfiguration.isTrackPerTestCoverage() && coverageEnabledConfiguration.isBranchCoverageEnabled());
     }
     return false;
   }

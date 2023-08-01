@@ -34,7 +34,7 @@ public abstract class CoverageDataManager {
                                                  String[] filters,
                                                  long lastCoverageTimeStamp,
                                                  @Nullable String suiteToMergeWith, final CoverageRunner coverageRunner,
-                                                 final boolean coverageByTestEnabled, final boolean tracingEnabled);
+                                                 final boolean coverageByTestEnabled, final boolean branchCoverage);
 
   public abstract CoverageSuite addExternalCoverageSuite(String selectedFileName,
                                                          long timeStamp,

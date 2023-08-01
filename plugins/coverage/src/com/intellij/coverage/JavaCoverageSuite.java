@@ -51,13 +51,13 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
                            final String[] excludePatterns,
                            final long lastCoverageTimeStamp,
                            final boolean coverageByTestEnabled,
-                           final boolean tracingEnabled,
+                           final boolean branchCoverage,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
                            @NotNull final CoverageEngine coverageEngine,
                            final Project project) {
     super(name, coverageDataFileProvider, lastCoverageTimeStamp, coverageByTestEnabled,
-          tracingEnabled, trackTestFolders,
+          branchCoverage, trackTestFolders,
           coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class), project);
 
     myFilters = filters;
@@ -152,9 +152,9 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   @Override
   @Nullable
   public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
-    final ProjectData data = getCoverageData();
+    ProjectData data = getCoverageData();
     if (data != null) return data;
-    ProjectData map = loadProjectInfo();
+    data = loadProjectInfo();
     if (mySuiteToMerge != null) {
       JavaCoverageSuite toMerge = null;
       final CoverageSuite[] suites = coverageDataManager.getSuites();
@@ -168,15 +168,15 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
       }
       if (toMerge != null) {
         final ProjectData projectInfo = toMerge.getCoverageData(coverageDataManager);
-        if (map != null) {
-          map.merge(projectInfo);
+        if (data != null) {
+          data.merge(projectInfo);
         } else {
-          map = projectInfo;
+          data = projectInfo;
         }
       }
     }
-    setCoverageData(map);
-    return map;
+    setCoverageData(data);
+    return data;
   }
 
   @Override

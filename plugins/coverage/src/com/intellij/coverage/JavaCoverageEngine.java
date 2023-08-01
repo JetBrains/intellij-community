@@ -233,7 +233,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
   @Override
   protected void deleteAssociatedTraces(CoverageSuite suite) {
-    if (suite.isTracingEnabled()) {
+    if (suite.isBranchCoverage()) {
       File tracesDirectory = getTracesDirectory(suite);
       if (tracesDirectory.exists()) {
         FileUtil.delete(tracesDirectory);
@@ -273,8 +273,8 @@ public class JavaCoverageEngine extends CoverageEngine {
                          javaConfig.getPatterns(),
                          javaConfig.getExcludePatterns(),
                          new Date().getTime(),
-                         javaConfig.isTrackPerTestCoverage() && javaConfig.isTracingEnabled(),
-                         javaConfig.isTracingEnabled(),
+                         javaConfig.isTrackPerTestCoverage() && javaConfig.isBranchCoverageEnabled(),
+                         javaConfig.isBranchCoverageEnabled(),
                          javaConfig.isTrackTestFolders(), config.getConfiguration().getProject());
     }
     return null;

@@ -38,7 +38,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
   private String myRunnerId;
   private CoverageRunner myCoverageRunner;
   private boolean myTrackPerTestCoverage = true;
-  private boolean myTracing = false;
+  private boolean myBranchCoverage = false;
   private boolean myTrackTestFolders = false;
 
   @NonNls protected String myCoverageFilePath;
@@ -61,12 +61,12 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myIsCoverageEnabled = isCoverageEnabled;
   }
 
-  public boolean isTracingEnabled() {
-    return myTracing;
+  public boolean isBranchCoverageEnabled() {
+    return myBranchCoverage;
   }
 
-  public void setTracingEnabled(final boolean tracing) {
-    myTracing = tracing;
+  public void setBranchCoverage(final boolean branchCoverage) {
+    myBranchCoverage = branchCoverage;
   }
 
   public String getRunnerId() {
@@ -181,7 +181,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     myTrackPerTestCoverage = testTrackingAttribute == null || Boolean.valueOf(testTrackingAttribute).booleanValue();
 
     // line/branch coverage
-    myTracing = !Boolean.parseBoolean(element.getAttributeValue(COVERAGE_TYPE_ATTRIBUTE_NAME, "true"));
+    myBranchCoverage = !Boolean.parseBoolean(element.getAttributeValue(COVERAGE_TYPE_ATTRIBUTE_NAME, "true"));
 
     // track test folders
     final String trackTestFolders = element.getAttributeValue(TRACK_TEST_FOLDERS);
@@ -214,7 +214,7 @@ public abstract class CoverageEnabledConfiguration implements JDOMExternalizable
     }
 
     // line/branch coverage
-    if (myTracing) {
+    if (myBranchCoverage) {
       element.setAttribute(COVERAGE_TYPE_ATTRIBUTE_NAME, String.valueOf(false));
     }
 

@@ -112,9 +112,9 @@ public class CoverageSuitesBundle {
     return false;
   }
 
-  public boolean isTracingEnabled() {
+  public boolean isBranchCoverage() {
     for (CoverageSuite suite : mySuites) {
-      if (suite.isTracingEnabled()) return true;
+      if (suite.isBranchCoverage()) return true;
     }
     return false;
   }

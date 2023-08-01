@@ -382,7 +382,7 @@ public final class PackageAnnotator {
     catch (IOException e) {
       return null;
     }
-    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isTracingEnabled(), false);
+    UnloadedUtil.appendUnloadedClass(projectData, className, new ClassReader(content), mySuite.isBranchCoverage(), false);
     return projectData.getClassData(className);
   }
 }

@@ -24,7 +24,7 @@ class XMLReportEngine : CoverageEngine() {
                                    lastCoverageTimeStamp: Long,
                                    suiteToMerge: String?,
                                    coverageByTestEnabled: Boolean,
-                                   tracingEnabled: Boolean,
+                                   branchCoverage: Boolean,
                                    trackTestFolders: Boolean,
                                    project: Project?): CoverageSuite? {
     if (covRunner !is XMLReportRunner) return null

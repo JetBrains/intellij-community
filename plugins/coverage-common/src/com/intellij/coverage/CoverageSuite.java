@@ -44,7 +44,7 @@ public interface CoverageSuite extends JDOMExternalizable {
 
   boolean isTrackTestFolders();
 
-  boolean isTracingEnabled();
+  boolean isBranchCoverage();
 
   CoverageRunner getRunner();
 

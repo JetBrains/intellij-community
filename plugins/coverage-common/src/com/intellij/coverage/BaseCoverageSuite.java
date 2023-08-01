@@ -42,7 +42,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   private static final String COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME = "COVERAGE_BY_TEST_ENABLED";
 
   @NonNls
-  private static final String TRACING_ENABLED_ATTRIBUTE_NAME = "COVERAGE_TRACING_ENABLED";
+  private static final String BRANCH_COVERAGE_ATTRIBUTE_NAME = "COVERAGE_TRACING_ENABLED";
 
   private SoftReference<ProjectData> myCoverageData = new SoftReference<>(null);
 
@@ -52,7 +52,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   private CoverageRunner myRunner;
   private CoverageFileProvider myCoverageDataFileProvider;
   private boolean myTrackTestFolders;
-  private boolean myTracingEnabled;
+  private boolean myBranchCoverage;
   private Project myProject;
 
   private RunConfigurationBase myConfiguration;
@@ -64,17 +64,17 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
                            @Nullable final CoverageFileProvider fileProvider,
                            final long lastCoverageTimeStamp,
                            final boolean coverageByTestEnabled,
-                           final boolean tracingEnabled,
+                           final boolean branchCoverage,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner) {
-    this(name, fileProvider, lastCoverageTimeStamp, coverageByTestEnabled, tracingEnabled, trackTestFolders, coverageRunner, null);
+    this(name, fileProvider, lastCoverageTimeStamp, coverageByTestEnabled, branchCoverage, trackTestFolders, coverageRunner, null);
   }
 
   public BaseCoverageSuite(final String name,
                            @Nullable final CoverageFileProvider fileProvider,
                            final long lastCoverageTimeStamp,
                            final boolean coverageByTestEnabled,
-                           final boolean tracingEnabled,
+                           final boolean branchCoverage,
                            final boolean trackTestFolders,
                            final CoverageRunner coverageRunner,
                            Project project) {
@@ -83,7 +83,7 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     myLastCoverageTimeStamp = lastCoverageTimeStamp;
     myCoverageByTestEnabled = coverageByTestEnabled;
     myTrackTestFolders = trackTestFolders;
-    myTracingEnabled = tracingEnabled;
+    myBranchCoverage = branchCoverage;
     myRunner = coverageRunner;
     myProject = project;
   }
@@ -145,8 +145,8 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   }
 
   @Override
-  public boolean isTracingEnabled() {
-    return myTracingEnabled;
+  public boolean isBranchCoverage() {
+    return myBranchCoverage;
   }
 
   @Override
@@ -168,9 +168,9 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     myCoverageByTestEnabled = collectedLineInfo != null && Boolean.valueOf(collectedLineInfo).booleanValue();
 
 
-    // tracing
-    final String tracingEnabled = element.getAttributeValue(TRACING_ENABLED_ATTRIBUTE_NAME);
-    myTracingEnabled = tracingEnabled != null && Boolean.valueOf(tracingEnabled).booleanValue();
+    // line/branch coverage
+    final String branchCoverage = element.getAttributeValue(BRANCH_COVERAGE_ATTRIBUTE_NAME);
+    myBranchCoverage = branchCoverage != null && Boolean.valueOf(branchCoverage).booleanValue();
   }
 
   @Override
@@ -191,8 +191,8 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
     // cover by test
     element.setAttribute(COVERAGE_BY_TEST_ENABLED_ATTRIBUTE_NAME, String.valueOf(myCoverageByTestEnabled));
 
-    // tracing
-    element.setAttribute(TRACING_ENABLED_ATTRIBUTE_NAME, String.valueOf(myTracingEnabled));
+    // line/branch coverage
+    element.setAttribute(BRANCH_COVERAGE_ATTRIBUTE_NAME, String.valueOf(myBranchCoverage));
   }
 
   @Override
@@ -222,13 +222,12 @@ public abstract class BaseCoverageSuite  implements CoverageSuite, JDOMExternali
   @Override
   @Nullable
   public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
-    final ProjectData data = getCoverageData();
-    if (data != null) {
-      return data;
+    ProjectData data = getCoverageData();
+    if (data == null) {
+      data = loadProjectInfo();
+      setCoverageData(data);
     }
-    ProjectData map = loadProjectInfo();
-    setCoverageData(map);
-    return map;
+    return data;
   }
 
   public boolean equals(final Object o) {
