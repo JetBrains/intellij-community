@@ -7,18 +7,15 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,14 +23,11 @@ import java.util.List;
 
 public class JavaCoverageSuite extends BaseCoverageSuite {
   private String[] myFilters;
-  private String mySuiteToMerge;
 
   @NonNls
   private static final String FILTER = "FILTER";
   @NonNls
   private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
-  @NonNls
-  private static final String MERGE_SUITE = "MERGE_SUITE";
   @NonNls
   private static final String COVERAGE_RUNNER = "RUNNER";
   private String[] myExcludePatterns;
@@ -110,9 +104,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     myFilters = readFilters(element, FILTER);
     myExcludePatterns = readFilters(element, EXCLUDED_FILTER);
 
-    // suite to merge
-    mySuiteToMerge = element.getAttributeValue(MERGE_SUITE);
-
     if (getRunner() == null) {
       setRunner(CoverageRunner.getInstance(IDEACoverageRunner.class)); //default
     }
@@ -130,9 +121,6 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   @Override
   public final void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    if (mySuiteToMerge != null) {
-      element.setAttribute(MERGE_SUITE, mySuiteToMerge);
-    }
     writeFilters(element, myFilters, FILTER);
     writeFilters(element, myExcludePatterns, EXCLUDED_FILTER);
     final CoverageRunner coverageRunner = getRunner();
@@ -152,44 +140,9 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   @Override
-  @Nullable
-  public ProjectData getCoverageData(final CoverageDataManager coverageDataManager) {
-    ProjectData data = getCoverageData();
-    if (data != null) return data;
-    data = loadProjectInfo();
-    if (mySuiteToMerge != null) {
-      JavaCoverageSuite toMerge = null;
-      final CoverageSuite[] suites = coverageDataManager.getSuites();
-      for (CoverageSuite suite : suites) {
-        if (Comparing.strEqual(suite.getPresentableName(), mySuiteToMerge)) {
-          if (!Comparing.strEqual(((JavaCoverageSuite)suite).getSuiteToMerge(), getPresentableName())) {
-            toMerge = (JavaCoverageSuite)suite;
-          }
-          break;
-        }
-      }
-      if (toMerge != null) {
-        final ProjectData projectInfo = toMerge.getCoverageData(coverageDataManager);
-        if (data != null) {
-          data.merge(projectInfo);
-        } else {
-          data = projectInfo;
-        }
-      }
-    }
-    setCoverageData(data);
-    return data;
-  }
-
-  @Override
   @NotNull
   public final CoverageEngine getCoverageEngine() {
     return myCoverageEngine;
-  }
-
-  @Nullable
-  public final String getSuiteToMerge() {
-    return mySuiteToMerge;
   }
 
   public final boolean isClassFiltered(final String classFQName) {
