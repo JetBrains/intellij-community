@@ -7,6 +7,7 @@ import com.intellij.json.JsonElementTypes;
 import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -253,5 +254,15 @@ public class JsonOriginalPsiWalker implements JsonLikePsiWalker {
   @Override
   public PsiElement getPropertyNameElement(PsiElement property) {
     return property instanceof JsonProperty ? ((JsonProperty)property).getNameElement() : null;
+  }
+
+  @Override
+  public TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
+    PsiElement parent = element.getParent();
+    if (parent instanceof JsonFile) {
+      PsiElement child = PsiTreeUtil.skipMatching(element.getFirstChild(), e -> e.getNextSibling(), e -> !(e instanceof JsonElement));
+      return child == null ? element.getTextRange() : child.getTextRange();
+    }
+    return element.getTextRange();
   }
 }

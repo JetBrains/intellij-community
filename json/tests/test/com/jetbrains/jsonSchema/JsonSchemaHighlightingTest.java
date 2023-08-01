@@ -1285,4 +1285,9 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
              }
              """);
   }
+
+  public void testReducedTopLevelRangeHighlighting() {
+    doTest("{ \"required\": [\"test3\"]}",
+           "{ <warning descr=\"Missing required property 'test3'\">\"test1\": 123</warning>, \"test2\": 456}");
+  }
 }

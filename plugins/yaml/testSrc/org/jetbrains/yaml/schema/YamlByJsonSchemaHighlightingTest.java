@@ -1010,4 +1010,9 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
         # - "first_rules.yml"
         # - "second_rules.yml\"""");
   }
+
+  public void testReducedTopLevelRangeHighlighting() {
+    doTest("{ \"type\": \"object\",\"required\": [\"test3\"]}",
+           "<warning descr=\"Schema validation: Missing required property 'test3'\">test1: 123</warning>\ntest2: 456\n");
+  }
 }

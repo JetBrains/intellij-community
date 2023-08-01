@@ -165,23 +165,28 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (idx != -1) {
           pos.addPrecedingStep(idx);
         }
-      } else if (current instanceof YAMLSequenceItem) {
+      }
+      else if (current instanceof YAMLSequenceItem) {
         // do nothing - handled by the upper condition
-      } else if (current instanceof YAMLKeyValue) {
+      }
+      else if (current instanceof YAMLKeyValue) {
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)current).getName());
         current = current.getParent();
         if (!(current instanceof YAMLMapping)) return null;//incorrect syntax?
         pos.addPrecedingStep(propertyName);
-      } else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
+      }
+      else if (current instanceof YAMLMapping && position instanceof YAMLKeyValue) {
         // if either value or not first in the chain - needed for completion variant
         final String propertyName = StringUtil.notNullize(((YAMLKeyValue)position).getName());
         if (propertyName.contains(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)) continue;
         if (position != element || forceLastTransition) {
           pos.addPrecedingStep(propertyName);
         }
-      } else if (breakCondition(current)) {
+      }
+      else if (breakCondition(current)) {
         break;
-      } else {
+      }
+      else {
         if (current instanceof YAMLMapping) {
           List<YAMLPsiElement> elements = ((YAMLMapping)current).getYAMLElements();
           if (elements.size() == 0) return null;
@@ -232,10 +237,20 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
   @Override
   public TextRange adjustErrorHighlightingRange(@NotNull PsiElement element) {
     YAMLAnchor[] anchors = PsiTreeUtil.getChildrenOfType(element, YAMLAnchor.class);
-    if (anchors == null || anchors.length == 0) return element.getTextRange();
-    YAMLAnchor lastAnchor = anchors[anchors.length - 1];
-    PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastAnchor);
-    return next == null ? element.getTextRange() : next.getTextRange();
+    if (anchors != null && anchors.length > 0) {
+      YAMLAnchor lastAnchor = anchors[anchors.length - 1];
+      PsiElement next = PsiTreeUtil.skipWhitespacesAndCommentsForward(lastAnchor);
+      return next == null ? element.getTextRange() : next.getTextRange();
+    }
+    PsiElement parent = element.getParent();
+    if (parent instanceof YAMLDocument) {
+      PsiElement firstYamlChild = element.getFirstChild();
+      while (firstYamlChild != null && !(firstYamlChild instanceof YAMLPsiElement)) {
+        firstYamlChild = firstYamlChild.getNextSibling();
+      }
+      return firstYamlChild == null ? element.getTextRange() : firstYamlChild.getTextRange();
+    }
+    return element.getTextRange();
   }
 
   @Override
@@ -302,7 +317,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
         if (forward instanceof LeafPsiElement && ((LeafPsiElement)forward).getElementType() == YAMLTokenTypes.EOL) {
           PsiElement nextSibling;
           while ((nextSibling = forward.getNextSibling()) instanceof LeafPsiElement
-                 && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT){
+                 && ((LeafPsiElement)nextSibling).getElementType() == YAMLTokenTypes.INDENT) {
             nextSibling.delete();
           }
           forward.delete();
@@ -332,7 +347,7 @@ public final class YamlJsonPsiWalker implements JsonLikePsiWalker {
       @Override
       public PsiElement adjustPropertyAnchor(LeafPsiElement element) {
         YAMLKeyValue keyValue = findPrecedingKeyValueWithNoValue(element);
-        assert keyValue != null: "Should come here only for YAMLKeyValue with no value and a following indent";
+        assert keyValue != null : "Should come here only for YAMLKeyValue with no value and a following indent";
         PsiComment nextComment = ObjectUtils.tryCast(skipNonNewlineSpaces(keyValue), PsiComment.class);
         if (nextComment != null) {
           keyValue.addBefore(myGenerator.createSpace(), null);

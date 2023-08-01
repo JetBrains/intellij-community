@@ -90,7 +90,7 @@ public class JsonSchemaComplianceChecker {
     List<TextRange> ranges = new ArrayList<>();
     List<List<Map.Entry<PsiElement, JsonValidationError>>> entries = new ArrayList<>();
     for (Map.Entry<PsiElement, JsonValidationError> entry : checker.getErrors().entrySet()) {
-      TextRange range = entry.getKey().getTextRange();
+      TextRange range = myWalker.adjustErrorHighlightingRange(entry.getKey());
       boolean processed = false;
       for (int i = 0; i < ranges.size(); i++) {
         TextRange currRange = ranges.get(i);
