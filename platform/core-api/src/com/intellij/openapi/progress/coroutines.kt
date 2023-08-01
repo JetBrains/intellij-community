@@ -264,8 +264,8 @@ fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
   }
 }
 
-@Internal
-fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
+@Throws(ProcessCanceledException::class)
+private fun <T> blockingContextInner(currentContext: CoroutineContext, action: () -> T): T {
   val context = currentContext.minusKey(ContinuationInterceptor)
   return installThreadContext(context).use {
     action()
