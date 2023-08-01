@@ -5,8 +5,9 @@ import com.intellij.ide.environment.impl.EnvironmentUtil
 import com.intellij.ide.warmup.WarmupStatus
 import com.intellij.idea.AppExitCodes
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.application.impl.exitAppOrExitProcess
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.text.Formats
@@ -16,9 +17,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistory
 import com.intellij.util.indexing.diagnostic.ProjectIndexingActivityHistoryListener
 import com.intellij.warmup.util.*
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.future.asDeferred
@@ -131,7 +130,11 @@ internal class ProjectCachesWarmup : ModernApplicationStarter() {
  - Number of indexed files: $totalIndexedFiles. 
 Exiting the application...""")
 
-    exitAppOrExitProcess()
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        application.exit(false, true, false)
+      }
+    }
   }
 }
 
