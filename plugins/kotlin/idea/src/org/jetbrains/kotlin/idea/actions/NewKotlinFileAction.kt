@@ -230,19 +230,16 @@ private fun removeKotlinExtensionIfPresent(name: String): String = when {
 
 private fun createKotlinFileFromTemplate(dir: PsiDirectory, fileName: String, template: FileTemplate): PsiFile? {
     val project = dir.project
-    val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties
-
-    val properties = Properties(defaultProperties)
-    val templateWithFixedFileName = object : FileTemplate by template {
-        override fun getFileName(): String = fileName
-    }
     val className = fileName.substringBefore('.')
-
+    val attributesDefaults = AttributesDefaults(className).withFixedName(true)
+    val defaultProperties = FileTemplateManager.getInstance(project).defaultProperties.apply {
+        put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName)
+    }
     val element = try {
         CreateFromTemplateDialog(
-            project, dir, templateWithFixedFileName,
-            AttributesDefaults(className).withFixedName(true),
-            properties
+            project, dir, template,
+            attributesDefaults,
+            defaultProperties
         ).create()
     } catch (e: IncorrectOperationException) {
         throw e
