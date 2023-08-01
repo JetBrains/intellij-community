@@ -207,6 +207,10 @@ class ActionMenu constructor(private val context: DataContext?,
   }
 
   private fun updateIcon() {
+    if (anAction is Toggleable && Toggleable.isSelected(presentation)) {
+      setToggledIcon()
+      return
+    }
     var icon = presentation.icon ?: return
     if (!UISettings.getInstance().showIconsInMenus) {
       return

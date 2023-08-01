@@ -37,6 +37,7 @@ import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import javax.swing.Icon
+import javax.swing.JMenuItem
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
@@ -188,17 +189,7 @@ class ActionMenuItem internal constructor(action: AnAction,
         setIcon(wrapNullIcon(icon)!!)
       }
       else if (isToggled) {
-        var checkmark = getIcon("checkmark")
-        var selectedCheckmark = getSelectedIcon("checkmark")
-        var disabledCheckmark = getDisabledIcon("checkmark")
-        if (shouldConvertIconToDarkVariant()) {
-          checkmark = getDarkIcon(checkmark, true)
-          selectedCheckmark = getDarkIcon(selectedCheckmark, true)
-          disabledCheckmark = getDarkIcon(disabledCheckmark, true)
-        }
-        setIcon(checkmark)
-        setSelectedIcon(selectedCheckmark)
-        setDisabledIcon(disabledCheckmark)
+        setToggledIcon()
       }
       else {
         setIcon(EmptyIcon.ICON_16)
@@ -275,4 +266,18 @@ class ActionMenuItem internal constructor(action: AnAction,
       }
     })
   }
+}
+
+internal fun JMenuItem.setToggledIcon() {
+  var checkmark = getIcon("checkmark")
+  var selectedCheckmark = getSelectedIcon("checkmark")
+  var disabledCheckmark = getDisabledIcon("checkmark")
+  if (shouldConvertIconToDarkVariant()) {
+    checkmark = getDarkIcon(checkmark, true)
+    selectedCheckmark = getDarkIcon(selectedCheckmark, true)
+    disabledCheckmark = getDarkIcon(disabledCheckmark, true)
+  }
+  setIcon(checkmark)
+  setSelectedIcon(selectedCheckmark)
+  setDisabledIcon(disabledCheckmark)
 }
