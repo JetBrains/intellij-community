@@ -231,7 +231,11 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("YAML") final String schema = "{\"type\": \"object\", \"minProperties\": 2, \"maxProperties\": 3}";
     doTestYaml(schema, "<warning descr=\"Schema validation: Number of properties is less than 2\">a: 3</warning>");
     doTestYaml(schema, "a: 1\nb: 5");
-    doTestYaml(schema, "<warning descr=\"Schema validation: Number of properties is greater than 3\">a: 1\nb: 22\nc: 333\nd: 4444</warning>");
+    doTestYaml(schema, """
+      <warning descr="Schema validation: Number of properties is greater than 3" textAttributesKey="WARNING_ATTRIBUTES">a: 1</warning>
+      b: 22
+      c: 333
+      d: 4444""");
   }
 
   public void testOneOf() {
@@ -663,7 +667,7 @@ public class YamlByYamlSchemaHighlightingTest extends JsonSchemaHighlightingTest
       }""";
     doTestYaml(schema, "c: <warning>5</warning>");
     doTestYaml(schema, "c: true");
-    doTestYaml(schema, "<warning>a: a\nc: true</warning>");
+    doTestYaml(schema, "<warning descr=\"Schema validation: Missing required property 'b'\" textAttributesKey=\"WARNING_ATTRIBUTES\">a: a</warning>\nc: true");
     doTestYaml(schema, "a: a\nb: <warning>true</warning>");
     doTestYaml(schema, "a: a\nb: 5");
   }
