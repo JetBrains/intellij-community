@@ -79,14 +79,15 @@ public class DelayTypeCommand extends KeyCodeTypeCommand {
         CountDownLatch allScheduled = new CountDownLatch(1);
         for (int i = 0; i < text.length(); i++) {
           char currentChar = text.charAt(i);
+          boolean nextCharIsTheLast = ((i + 1) < text.length()) && (text.charAt(i + 1) == END_CHAR);
           myExecutor.schedule(() -> ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(
             () -> {
+              if (nextCharIsTheLast && calculateAnalyzesTime) {
+                job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(projectConnection, spanRef, 0, null));
+                var spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span));
+                spanRef.set(spanBuilder.startSpan());
+              }
               if (currentChar == END_CHAR) {
-                if (calculateAnalyzesTime) {
-                  job.set(DaemonCodeAnalyzerListener.INSTANCE.listen(projectConnection, spanRef, 0, null));
-                  var spanBuilder = PerformanceTestSpan.TRACER.spanBuilder(CODE_ANALYSIS_SPAN_NAME).setParent(Context.current().with(span));
-                  spanRef.set(spanBuilder.startSpan());
-                }
                 allScheduled.countDown();
                 myExecutor.shutdown();
               }
