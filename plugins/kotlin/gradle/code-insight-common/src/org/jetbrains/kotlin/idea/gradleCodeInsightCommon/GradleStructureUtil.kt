@@ -30,13 +30,12 @@ internal fun Project.buildGradleModuleHierarchy(rootModule: Module): GradleModul
 
     fun buildHierarchyRecursively(currentNode: ModuleSourceRootGroup): GradleModuleTreeNode {
         val shortenedName = grouper.getShortenedNameByFullModuleName(currentNode.baseModule.name)
-        currentPath.add(shortenedName)
 
+        currentPath.add(shortenedName)
         val children = moduleRootGroups[currentPath]?.map {
-            val hierarchy = buildHierarchyRecursively(it)
-            currentPath.removeLast()
-            hierarchy
+            buildHierarchyRecursively(it)
         } ?: emptyList()
+        currentPath.removeLast()
 
         return GradleModuleTreeNode(currentNode, children)
     }

@@ -98,6 +98,13 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
 
     @Test
     @TargetVersions("7.6")
+    fun testMultipleSubmodulesKotlinDeepConflict2() {
+        importProjectFromTestData()
+        testConfigure("project", null)
+    }
+
+    @Test
+    @TargetVersions("7.6")
     fun testMultipleSubmodulesKotlinConflict() {
         importProjectFromTestData()
         testConfigure("project", null)
