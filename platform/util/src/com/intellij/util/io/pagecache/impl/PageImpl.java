@@ -30,6 +30,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * <code>(NOT_READY_YET | LOADING | USABLE | ABOUT_TO_UNMAP | PRE_TOMBSTONE | TOMBSTONE)x(usageCount)</code>,
  * there usageCount is number of clients using page right now. During its lifecycle, the page goes
  * through those states in the same order:
+ * FIXME RC: ABOUT_TO_UNMAP state changed so it is only with usageCount==0 -- adjust docs below accordingly.
  * <pre>
  *    NOT_READY_YET   (usageCount == 0) page has no buffer and no data
  * -> LOADING         (usageCount == 0) page buffer is allocating and content is loading from disk
@@ -285,7 +286,7 @@ public abstract class PageImpl implements Page, PageUnsafe {
     return unpackState(statePacked) == expectedState;
   }
 
-  protected int state(){
+  protected int state() {
     return unpackState(this.statePacked);
   }
 
@@ -357,6 +358,16 @@ public abstract class PageImpl implements Page, PageUnsafe {
    *                     to try acquiring again)
    */
   public boolean tryAcquireForUse(final Object acquirer) throws IOException {
+    return tryAcquireForUse(acquirer, /*allowAcquireInAboutToUnmapState: */ false);
+  }
+
+  /**
+   * @param allowAcquireInAboutToUnmapState normally it is prohibited to acquire page in ABOUT_TO_UNMAP,
+   *                                        but in some cases it is the lesser evil, so this parameter
+   *                                        allows overwriting default behaviour and acquire the page
+   */
+  public boolean tryAcquireForUse(final Object acquirer,
+                                  final boolean allowAcquireInAboutToUnmapState) throws IOException {
     while (true) {//CAS loop:
       final int packedState = statePacked;
       final int state = unpackState(packedState);
@@ -364,9 +375,14 @@ public abstract class PageImpl implements Page, PageUnsafe {
       if (state < STATE_USABLE) {
         return false;
       }
-      else if (state != STATE_USABLE) {
+      else if (state > STATE_ABOUT_TO_UNMAP) {
         throw new IOException("Page.state[=" + state + "] != USABLE");
       }
+      else if (state == STATE_ABOUT_TO_UNMAP && !allowAcquireInAboutToUnmapState) {
+        throw new IOException("Page.state[=" + state + "] != USABLE");
+      }
+      //else -> try to acquire:
+
       final int newUsageCount = usageCount + 1;
       if (newUsageCount > USAGE_COUNT_MASK) {
         throw new AssertionError("Too many usages: " + newUsageCount
@@ -441,14 +457,19 @@ public abstract class PageImpl implements Page, PageUnsafe {
           return false;
         }
         case STATE_USABLE: {
-          final int newPackedState = packState(STATE_ABOUT_TO_UNMAP, usageCount);
+          if (usageCount > 0) {
+            return false;
+          }
+          final int newPackedState = packState(STATE_ABOUT_TO_UNMAP, 0);
           if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {
             continue;
           }
+          return false;
         }
         case STATE_ABOUT_TO_UNMAP: {
           if (usageCount > 0) {
-            return false;
+            //return false;
+            throw new AssertionError("Page[ABOUT_TO_UNMAP].usageCount=" + usageCount + " -- must be 0. " + this);
           }
           final int newPackedState = packState(STATE_PRE_TOMBSTONE, 0);
           if (STATE_UPDATER.compareAndSet(this, packedState, newPackedState)) {

@@ -47,12 +47,12 @@ public interface PageUnsafe extends Page {
   /**
    * Tries to re-acquire again page what was {@link #release()}-ed/{@link #close()}-ed.<p/>
    * Released page must not be used because it could be reclaimed any moment -- but if reclamation
-   * is not yet started, the page could be acquired again, avoiding the cost of lookup in
+   * is not yet started, the page _could_ be acquired again, avoiding the cost of lookup in
    * {@link PagedStorage#pageByOffset(long, boolean)}.<p/>
    * Use of this API increases the risk of un-paired page acquire/release calls -- which results in
    * either forever acquired page (can't be reclaimed), or use-after-reclaim (NPE, or access the
-   * buffer which is already re-purposed for another page of another file) -- hence constant vigilance
-   * is required.<p/>
+   * buffer which is already re-purposed for another page of another file) -- this is why it is
+   * in {@link PageUnsafe}, and this is why constant vigilance is required to use that API.<p/>
    *
    * @param acquirer who acquires the page -- for debug leaking pages purposes.
    * @return true, if page successfully acquired for use,

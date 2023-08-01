@@ -2,6 +2,7 @@
 package com.intellij.util.io.pagecache.impl;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -9,7 +10,8 @@ import java.nio.ByteBuffer;
 /**
  * For test implementations which usually need to override only 1-2 methods
  */
-public abstract class PageStorageHandleHelper implements PageToStorageHandle {
+@TestOnly
+public abstract class PageToStorageHandleHelper implements PageToStorageHandle {
   @Override
   public void pageBecomeDirty() {
   }

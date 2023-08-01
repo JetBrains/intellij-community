@@ -260,8 +260,8 @@ public final class FilePageCacheLockFree implements AutoCloseable {
 
 
   //================================================================================================
-  //Main idea is following: all else equal, the page already loaded is always worth more than not
-  // loaded. It means that we never unload a page without a reason -- even if the page wasn't used
+  //Main idea is following: all else equal, the page already loaded is always worth more than the one
+  // not loaded. It means that we never unload a page without a reason -- even if the page wasn't used
   // for long. There are 2 reasons for unloading a page: either PagedStorage is closed, or a new page
   // needs to be allocated. But we don't want to look up for page to reclaim through all the cached
   // pages -- this would make new page caching awfully slow. Instead, we scan through the pages
@@ -282,7 +282,9 @@ public final class FilePageCacheLockFree implements AutoCloseable {
     final Map<Path, PagesTable> pagesPerStorage = threadSafeCopyOfPagesPerStorage();
     pagesForReclaimCollector.startCollectingTurn();
     try {
-      //TODO RC: organize all tables pages in Iterable<Page>
+      //TODO RC: it is too costly to process all the pages on each turn -- better to limit pages
+      // processed per turn. E.g. organize all tables pages in CycleIterable<Page>, and scan some amount each
+      // turn. And amount itself could be made dependent on allocation pressure
       final Collection<PagesTable> pagesTables = pagesPerStorage.values();
       for (PagesTable pagesTable : pagesTables) {
         final AtomicReferenceArray<PageImpl> pages = pagesTable.pages();

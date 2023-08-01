@@ -39,7 +39,7 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
 
   public static final ThreadLocal<StorageLockContext> THREAD_LOCAL_STORAGE_LOCK_CONTEXT = new ThreadLocal<>();
 
-  private static final int MAX_ATTEMPTS_TO_ACQUIRE_PAGE = getIntProperty("vfs.lock-free-impl.max-attempts-to-acquire-page", 100_000);
+  private static final int MAX_ATTEMPTS_TO_ACQUIRE_PAGE = getIntProperty("vfs.lock-free-impl.max-attempts-to-acquire-page", 10_000);
 
 
   private final @NotNull StorageLockContext storageLockContext;
@@ -334,37 +334,45 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
         //busy-spin on: (check page is USABLE, and increment useCount)
         while (!page.tryAcquireForUse(this)) {
           if (page.isNotReadyYet()) { //page just created: try to load it
-            page.tryPrepareForUse(this::loadPageData);
-            //MAYBE RC: What could we do to avoid busy-spinning on pages loaded by another thread?
-            //          Page loading could take quite a while. One idea is to have something like
-            //          (optional, lazy) CompletableFuture in Page, which is returned from .tryPrepareForUse()
-            //          instead of 'false', and could be waited on (or used to suspend coroutine).
+            if (page.tryPrepareForUse(this::loadPageData)) {
+              continue;
+            }
+            //MAYBE RC: Page loading could take quite a while. What could we do to avoid busy-spinning
+            //          on the page loading by another thread?
+            //          One idea is to have something like (optional, lazy) CompletableFuture in Page,
+            //          which is returned from .tryPrepareForUse() instead of 'false', and could be
+            //          waited on (or used to suspend coroutine).
+            //          Another approach: FPCache has a shared Condition instance, which it notifies at
+            //          the end of each turn
           }
-          Thread.yield();
-          //MAYBE RC: Thread.onSpinWait(); (java9+)
+          Thread.yield();//MAYBE RC: Thread.onSpinWait(); (java9+)
         }
         statistics.pageRequested(page.pageSize(), startedAtNs);
         return page;
       }
       catch (IOException e) {
+        if (attempt > MAX_ATTEMPTS_TO_ACQUIRE_PAGE) {
+          throw new AssertionError(page + " can't be acquired in " + attempt + " attempts: either we're very unlucky, or it is a bug");
+        }
         LOG.trace("Page " + page + " likely released -> request it again (" + e.getMessage() + ")");
 
-        //Worst case: page is in the middle of unmapping (~ABOUT_TO_UNMAP). We can't interrupt
-        //this process: page unmapping must be finalized, and then on subsequent request page
-        //will be mapped back, anew.
+        //Worst case scenario: page is in the middle of unmapping (>=ABOUT_TO_UNMAP). We can't
+        // interrupt this process: page unmapping must be finalized, and then on subsequent
+        // request page will be mapped back, anew.
 
-        //Try to assist page reclamation. This is not only an optimization, but prevents a pathological
-        // scenario there housekeeper thread skips its turns because there are enough pages ready to
-        // reclaim, but because of that the particular page remains in ABOUT_TO_UNMAP, stalling everybody
-        // who needs it.
-        if (page.isAboutToUnmap() && page.usageCount() == 0) {
+        //But at least we could try to assist page reclamation:
+        if (page.isAboutToUnmap()) {
+          // This branch is not only an optimization: it prevents a pathological scenario (IDEA-323586)
+          // there housekeeper thread skips its turns because there are already enough pages prepared to
+          // reclaim, and because of that the particular page remains in ABOUT_TO_UNMAP forever, stalling
+          // everybody who requesting it.
           final boolean succeed = page.tryMoveTowardsPreTombstone(/*entombYoung: */false);
           if (succeed) {
             pageCache.unmapPageAndReclaimBuffer(page);
           }
         }
-        if (attempt > MAX_ATTEMPTS_TO_ACQUIRE_PAGE) {
-          throw new AssertionError(page + " can't be acquired in " + attempt + " attempts: either we're very unlucky, or it is a bug");
+        else {
+          Thread.yield();
         }
       }
     }

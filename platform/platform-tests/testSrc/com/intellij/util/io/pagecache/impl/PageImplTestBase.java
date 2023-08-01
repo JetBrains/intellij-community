@@ -25,6 +25,10 @@ public abstract class PageImplTestBase<P extends PageImpl> {
 
   public static final int ENOUGH_TRIES = 100_000;
 
+  protected abstract P createPage(int pageIndex,
+                                  int pageSize,
+                                  @NotNull PageToStorageHandle pageToStorageHandle);
+
   @Test
   public void dirtyRegionUpdatesDoesNotMissUpdatesUnderConcurrentExecution() throws Exception {
     final int blockSize = 32;
@@ -36,7 +40,7 @@ public abstract class PageImplTestBase<P extends PageImpl> {
 
     final byte[] block = randomByteArrayOfSize(blockSize);
 
-    final PageToStorageHandle handle = new PageStorageHandleHelper() {
+    final PageToStorageHandle handle = new PageToStorageHandleHelper() {
       @Override
       public void flushBytes(final @NotNull ByteBuffer dataToFlush,
                              final long offsetInFile) {
@@ -99,10 +103,6 @@ public abstract class PageImplTestBase<P extends PageImpl> {
     }
   }
 
-  protected abstract P createPage(int pageIndex,
-                                  int pageSize,
-                                  PageToStorageHandle pageToStorageHandle);
-
   @Test
   public void pageAndStorageDirtyStatusesAreConsistent_EvenWithConcurrentFlushes() throws Exception {
 
@@ -161,6 +161,8 @@ public abstract class PageImplTestBase<P extends PageImpl> {
     }
   }
 
+  //TODO RC: test state-transition diagram for a Page: prepare Page at specific (state, useCount), and
+  //         apply different transition methods
 
   // =================== infrastructure: ============================================================================ //
 
@@ -173,7 +175,7 @@ public abstract class PageImplTestBase<P extends PageImpl> {
     return array;
   }
 
-  private static class DirtyStatusCounter extends PageStorageHandleHelper {
+  private static class DirtyStatusCounter extends PageToStorageHandleHelper {
     private final AtomicInteger dirtyPagesCount = new AtomicInteger(0);
 
     @Override
