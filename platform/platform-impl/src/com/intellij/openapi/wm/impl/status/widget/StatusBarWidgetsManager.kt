@@ -54,6 +54,7 @@ class StatusBarWidgetsManager(private val project: Project,
   private val widgetFactories = LinkedHashMap<StatusBarWidgetFactory, StatusBarWidget>()
   private val widgetIdMap = HashMap<String, StatusBarWidgetFactory>()
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   internal val dataContext: WidgetPresentationDataContext = object : WidgetPresentationDataContext {
     override val project: Project
       get() = this@StatusBarWidgetsManager.project
@@ -64,7 +65,7 @@ class StatusBarWidgetsManager(private val project: Project,
       }
         .take(1)
         .flatMapConcat { it.currentFileEditorFlow }
-        .stateIn(scope = parentScope, started = SharingStarted.WhileSubscribed(), initialValue = null)
+        .stateIn(scope = parentScope, started = SharingStarted.Eagerly, initialValue = null)
     }
   }
 
