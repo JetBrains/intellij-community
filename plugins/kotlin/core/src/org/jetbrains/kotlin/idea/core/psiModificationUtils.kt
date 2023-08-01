@@ -99,46 +99,44 @@ fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
     if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) return false
 
     val callee = calleeExpression
-    if (callee is KtNameReferenceExpression) {
-        val resolutionFacade = getResolutionFacade()
-        val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
-        val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
-        val languageVersionSettings = resolutionFacade.languageVersionSettings
-        val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+    if (callee !is KtNameReferenceExpression) return true
 
-        val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
-        if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
-            val resolvedCall = getResolvedCall(bindingContext)
-            if (resolvedCall != null) {
-                val parameter = resolvedCall.getParameterForArgument(valueArguments.last()) ?: return false
-                val functionDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
-                if (parameter != functionDescriptor.valueParameters.lastOrNull()) return false
-                return parameter.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
-            }
+    val resolutionFacade = getResolutionFacade()
+    val samConversionTransformer = resolutionFacade.frontendService<SamConversionResolver>()
+    val samConversionOracle = resolutionFacade.frontendService<SamConversionOracle>()
+    val languageVersionSettings = resolutionFacade.languageVersionSettings
+    val newInferenceEnabled = languageVersionSettings.supportsFeature(LanguageFeature.NewInference)
+
+    val bindingContext = safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL_WITH_DIAGNOSTICS)
+    if (bindingContext.diagnostics.forElement(lastLambdaExpression).none { it.severity == Severity.ERROR }) {
+        val resolvedCall = getResolvedCall(bindingContext)
+        if (resolvedCall != null) {
+            val parameter = resolvedCall.getParameterForArgument(valueArguments.last()) ?: return false
+            val functionDescriptor = resolvedCall.resultingDescriptor as? FunctionDescriptor ?: return false
+            if (parameter != functionDescriptor.valueParameters.lastOrNull()) return false
+            return parameter.type.allowsMoveOutsideParentheses(samConversionTransformer, samConversionOracle, newInferenceEnabled)
         }
-
-        val targets = bindingContext[BindingContext.REFERENCE_TARGET, callee]?.let { listOf(it) }
-            ?: bindingContext[BindingContext.AMBIGUOUS_REFERENCE_TARGET, callee]
-            ?: listOf()
-        val candidates = targets.filterIsInstance<FunctionDescriptor>()
-
-        val lambdaArgumentCount = valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null }
-        val referenceArgumentCount = valueArguments.count { it.getArgumentExpression() is KtCallableReferenceExpression }
-
-        // if there are functions among candidates but none of them have last function parameter then not show the intention
-        val areAllCandidatesWithoutLastFunctionParameter = candidates.none {
-            it.allowsMoveOfLastParameterOutsideParentheses(
-                lambdaArgumentCount + referenceArgumentCount,
-                samConversionTransformer,
-                samConversionOracle,
-                newInferenceEnabled
-            )
-        }
-
-        if (candidates.isNotEmpty() && areAllCandidatesWithoutLastFunctionParameter) return false
     }
 
-    return true
+    val targets = bindingContext[BindingContext.REFERENCE_TARGET, callee]?.let { listOf(it) }
+        ?: bindingContext[BindingContext.AMBIGUOUS_REFERENCE_TARGET, callee]
+        ?: listOf()
+    val candidates = targets.filterIsInstance<FunctionDescriptor>()
+
+    val lambdaArgumentCount = valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null }
+    val referenceArgumentCount = valueArguments.count { it.getArgumentExpression() is KtCallableReferenceExpression }
+
+    // if there are functions among candidates but none of them have last function parameter then not show the intention
+    val areAllCandidatesWithoutLastFunctionParameter = candidates.none {
+        it.allowsMoveOfLastParameterOutsideParentheses(
+            lambdaArgumentCount + referenceArgumentCount,
+            samConversionTransformer,
+            samConversionOracle,
+            newInferenceEnabled
+        )
+    }
+
+    return candidates.isEmpty() || !areAllCandidatesWithoutLastFunctionParameter
 }
 
 private fun KtExpression.parentLabeledExpression(): KtLabeledExpression? {
