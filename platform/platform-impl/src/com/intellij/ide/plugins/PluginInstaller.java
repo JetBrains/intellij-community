@@ -66,12 +66,12 @@ public final class PluginInstaller {
     synchronized (ourLock) {
       if (PluginManagerCore.isPluginInstalled(pluginDescriptor.getPluginId())) {
         if (pluginDescriptor.isBundled()) {
-          LOG.error("Plugin is bundled: " + pluginDescriptor.getPluginId());
+          throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
         }
         else {
           boolean needRestart = pluginDescriptor.isEnabled() && !DynamicPlugins.allowLoadUnloadWithoutRestart(pluginDescriptor);
           if (needRestart) {
-            uninstallAfterRestart(pluginDescriptor.getPluginPath());
+            uninstallAfterRestart(pluginDescriptor);
           }
 
           PluginStateManager.fireState(pluginDescriptor, false);
@@ -83,29 +83,36 @@ public final class PluginInstaller {
   }
 
   @ApiStatus.Internal
-  public static void uninstallAfterRestart(@NotNull Path pluginPath) throws IOException {
-    addActionCommand(new DeleteCommand(pluginPath));
+  public static void uninstallAfterRestart(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) throws IOException {
+    if (pluginDescriptor.isBundled()) {
+      throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
+    }
+    addActionCommand(new DeleteCommand(pluginDescriptor.getPluginPath()));
   }
 
+  @ApiStatus.Internal
+  public static boolean unloadDynamicPlugin(@Nullable JComponent parentComponent,
+                                            @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
+                                            boolean isUpdate) {
+    var options = new DynamicPlugins.UnloadPluginOptions().withDisable(false).withWaitForClassloaderUnload(true).withUpdate(isUpdate);
+    return parentComponent != null ?
+           DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
+           DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
+  }
+
+  @ApiStatus.Internal
   public static boolean uninstallDynamicPlugin(@Nullable JComponent parentComponent,
                                                @NotNull IdeaPluginDescriptorImpl pluginDescriptor,
                                                boolean isUpdate) {
-    boolean uninstalledWithoutRestart = true;
-    if (pluginDescriptor.isEnabled()) {
-      DynamicPlugins.UnloadPluginOptions options = new DynamicPlugins.UnloadPluginOptions()
-        .withDisable(false)
-        .withUpdate(isUpdate)
-        .withWaitForClassloaderUnload(true);
-
-      uninstalledWithoutRestart = parentComponent != null ?
-                                  DynamicPlugins.INSTANCE.unloadPluginWithProgress(null, parentComponent, pluginDescriptor, options) :
-                                  DynamicPlugins.INSTANCE.unloadPlugin(pluginDescriptor, options);
+    if (pluginDescriptor.isBundled()) {
+      throw new IllegalArgumentException("Plugin is bundled: " + pluginDescriptor.getPluginId());
     }
 
-    Path pluginPath = pluginDescriptor.getPluginPath();
+    boolean uninstalledWithoutRestart = !pluginDescriptor.isEnabled() || unloadDynamicPlugin(parentComponent, pluginDescriptor, isUpdate);
+
     if (uninstalledWithoutRestart) {
       try {
-        FileUtil.delete(pluginPath);
+        FileUtil.delete(pluginDescriptor.getPluginPath());
       }
       catch (IOException e) {
         LOG.info("Failed to delete jar of dynamic plugin", e);
@@ -115,7 +122,7 @@ public final class PluginInstaller {
 
     if (!uninstalledWithoutRestart) {
       try {
-        uninstallAfterRestart(pluginPath);
+        uninstallAfterRestart(pluginDescriptor);
       }
       catch (IOException e) {
         LOG.error(e);

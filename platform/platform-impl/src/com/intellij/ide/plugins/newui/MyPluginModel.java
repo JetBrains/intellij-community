@@ -145,7 +145,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
       if (needRestart) {
         uninstallsRequiringRestart.add(pluginId);
         try {
-          PluginInstaller.uninstallAfterRestart(pluginDescriptor.getPluginPath());
+          PluginInstaller.uninstallAfterRestart(pluginDescriptor);
         }
         catch (IOException e) {
           LOG.error(e);
@@ -358,7 +358,13 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     Ref<Boolean> allowInstallWithoutRestart = Ref.create(true);
     if (isUpdate) {
       IdeaPluginDescriptorImpl installedPluginDescriptor = (IdeaPluginDescriptorImpl)descriptor;
-      if (!DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
+      if (installedPluginDescriptor.isBundled()) {
+        allowInstallWithoutRestart.set(
+          DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor) &&
+          DynamicPlugins.allowLoadUnloadSynchronously(installedPluginDescriptor) &&
+          PluginInstaller.unloadDynamicPlugin(parentComponent, installedPluginDescriptor, true));
+      }
+      else if (!DynamicPlugins.allowLoadUnloadWithoutRestart(installedPluginDescriptor)) {
         allowInstallWithoutRestart.set(false);
       }
       else if (!installedPluginDescriptor.isEnabled()) {
