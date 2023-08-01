@@ -91,6 +91,7 @@ import static java.util.Objects.requireNonNull;
 // open for Rider
 public class ShelvedChangesViewManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(ShelvedChangesViewManager.class);
+  private static final String HELP_ID = "ideaInterface.shelf";
   static final @NonNls String SHELF_CONTEXT_MENU = "Vcs.Shelf.ContextMenu";
   private static final String SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"; //NON-NLS
 
@@ -408,6 +409,7 @@ public class ShelvedChangesViewManager implements Disposable {
     @Override
     public void initTabContent(@NotNull Content content) {
       ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
+      content.setHelpId(HELP_ID);
       content.setComponent(panel);
       content.setDisposer(panel);
       content.setPreferredFocusableComponent(panel.myTree);
@@ -556,6 +558,9 @@ public class ShelvedChangesViewManager implements Disposable {
           }
         }
         return navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
+      }
+      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
+        return HELP_ID;
       }
       return super.getData(dataId);
     }
