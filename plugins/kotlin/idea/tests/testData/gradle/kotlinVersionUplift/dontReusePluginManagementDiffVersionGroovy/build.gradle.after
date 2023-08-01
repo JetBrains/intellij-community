@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id       "org.jetbrains.kotlin.jvm"
+    id 'org.jetbrains.kotlin.jvm' version '1.8.22'
 }
 
 group 'testgroup'
@@ -9,9 +9,11 @@ version '1.0-SNAPSHOT'
 repositories {
     mavenCentral()
 }
+
+java {
+}
+
 dependencies {
-    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.8.1'
-    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.1'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 

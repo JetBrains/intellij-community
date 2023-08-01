@@ -31,6 +31,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrApplicationStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 
@@ -189,23 +192,39 @@ class GroovyBuildScriptManipulator(
     override fun findAndRemoveKotlinVersionFromBuildScript(): Boolean {
         val pluginsBlock = scriptFile.getBlockByName("plugins")
         return pluginsBlock?.let {
-            pluginsBlock.findAndRemoveVersionExpressionInPluginsGroup("id 'org.jetbrains.kotlin.jvm'") ||
-                    pluginsBlock.findAndRemoveVersionExpressionInPluginsGroup("id \"org.jetbrains.kotlin.jvm\"")
+            pluginsBlock.findAndRemoveVersionExpressionInPluginsGroup("org.jetbrains.kotlin.jvm")
         } ?: false
     }
 
-    private fun GrClosableBlock.findAndRemoveVersionExpressionInPluginsGroup(pluginName: String): Boolean {
-        getChildrenOfType<GrStatement>().forEach {
-            val textWithoutWhitespaces = it.text.filter { letter -> !letter.isWhitespace() }
-            val pluginNameWithoutWhitespaces = pluginName.filter { letter -> !letter.isWhitespace() }
-            if (textWithoutWhitespaces.contains(pluginNameWithoutWhitespaces) && textWithoutWhitespaces.contains("version")) {
-                val psiFactory = GroovyPsiElementFactory.getInstance(project)
-                val newStatement = psiFactory.createStatementFromText(pluginName)
-                it.replace(newStatement)
-                return true
+    private class PluginExpression(val entireExpression: GrApplicationStatement, val callExpression: GrCallExpression, val versionExpression: GrExpression?)
+
+    private fun GrClosableBlock.findPluginExpressions(pluginName: String): PluginExpression? {
+        getChildrenOfType<GrApplicationStatement>().forEach { statement ->
+            val outerInvokedExpression = statement.invokedExpression as? GrReferenceExpression ?: return@forEach
+            val outerArgument = statement.expressionArguments.singleOrNull() ?: return@forEach
+
+            if (outerInvokedExpression.referenceName == "id") {
+                if (outerArgument.text.extractTextFromQuotes() != pluginName) return@forEach
+                return PluginExpression(statement, statement, null)
+            } else if (outerInvokedExpression.referenceName != "version") {
+                return@forEach
             }
+
+            val innerExpression = outerInvokedExpression.qualifierExpression as? GrApplicationStatement ?: return@forEach
+            val innerInvokedExpression = innerExpression.invokedExpression as? GrReferenceExpression ?: return@forEach
+            if (innerInvokedExpression.referenceName != "id") return@forEach
+            val innerArgument = innerExpression.expressionArguments.singleOrNull() ?: return@forEach
+            if (innerArgument.text.extractTextFromQuotes() != pluginName) return@forEach
+            return PluginExpression(statement, innerExpression, outerArgument)
         }
-        return false
+        return null
+    }
+
+    private fun GrClosableBlock.findAndRemoveVersionExpressionInPluginsGroup(pluginName: String): Boolean {
+        val pluginExpression = findPluginExpressions(pluginName) ?: return false
+        if (pluginExpression.versionExpression == null) return false
+        pluginExpression.entireExpression.replace(pluginExpression.callExpression)
+        return true
     }
 
     override fun configureSettingsFile(kotlinPluginName: String, version: IdeKotlinVersion): Boolean {
@@ -216,6 +235,11 @@ class GroovyBuildScriptManipulator(
         return originalText != scriptFile.text
     }
 
+    override fun findKotlinPluginManagementVersion(): IdeKotlinVersion? {
+        val block = scriptFile.getBlockByName("pluginManagement")?.getBlockByName("plugins") ?: return null
+        val kotlinVersionExpression = block.findPluginExpressions("org.jetbrains.kotlin.jvm")?.versionExpression ?: return null
+        return IdeKotlinVersion.opt(kotlinVersionExpression.text.extractTextFromQuotes())
+    }
 
     override fun changeLanguageFeatureConfiguration(
         feature: LanguageFeature,
@@ -374,16 +398,14 @@ class GroovyBuildScriptManipulator(
         } ?: addLastExpressionInBlockIfNeeded("$parameterName = $defaultValue")
     }
 
-    private fun String.extractTextFromQuotes(quoteCharacter: Char): String? {
-        val quoteIndex = indexOf(quoteCharacter)
-        if (quoteIndex != -1) {
-            val lastQuoteIndex = lastIndexOf(quoteCharacter)
-            return if (lastQuoteIndex > quoteIndex) substring(quoteIndex + 1, lastQuoteIndex) else null
-        }
-        return null
+    private fun String.extractTextFromQuotes(): String {
+        val withoutParens = trim(' ', '\t', '(', ')')
+        val firstChar = withoutParens.firstOrNull() ?: return this
+        val lastChar = withoutParens.lastOrNull() ?: return this
+        return if (firstChar == lastChar && (firstChar == '"' || firstChar == '\'')) {
+            return withoutParens.removeSurrounding(firstChar.toString())
+        } else withoutParens
     }
-
-    private fun String.extractTextFromQuotes(): String = extractTextFromQuotes('\'') ?: extractTextFromQuotes('"') ?: this
 
     private fun addOrReplaceKotlinTaskParameter(
         gradleFile: GroovyFile,

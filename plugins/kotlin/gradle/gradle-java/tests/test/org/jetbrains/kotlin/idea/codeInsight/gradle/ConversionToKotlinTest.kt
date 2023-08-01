@@ -7,11 +7,10 @@ import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.configuration.NotificationMessageCollector
+import org.jetbrains.kotlin.idea.configuration.getKotlinVersionsAndModules
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
-
-import org.jetbrains.kotlin.idea.configuration.*
 
 class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
 
@@ -428,6 +427,100 @@ class ConversionToKotlinTest : KotlinGradleImportingTestCase() {
 
                 val subModules = listOf("app", "app1")
                 checkFilesInMultimoduleProject(files, subModules)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testReusePluginManagementVersionGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files)
+            }
+        }
+    }
+
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testReusePluginManagementVersionKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.9.0"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files)
+            }
+        }
+    }
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testDontReusePluginManagementDiffVersionGroovy() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.8.22"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files)
+            }
+        }
+    }
+
+
+    @Test
+    @TargetVersions("7.6+")
+    fun testDontReusePluginManagementDiffVersionKts() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                val moduleApp = ModuleManager.getInstance(myProject).findModuleByName("project")!!
+                val configurator = findGradleModuleConfigurator()
+                val collector = NotificationMessageCollector.create(myProject)
+                val (kotlinVersionsAndModules, rootModuleKotlinVersion) = getKotlinVersionsAndModules(myProject, configurator)
+                configurator.configureWithVersion(
+                    myProject,
+                    listOf(moduleApp),
+                    IdeKotlinVersion.get("1.8.22"),
+                    collector,
+                    kotlinVersionsAndModules,
+                )
+                checkFiles(files)
             }
         }
     }

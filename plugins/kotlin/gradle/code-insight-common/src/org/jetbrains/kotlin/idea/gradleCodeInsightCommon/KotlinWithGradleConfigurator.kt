@@ -250,16 +250,23 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
     ): ChangedConfiguratorFiles {
         val changedFiles = ChangedConfiguratorFiles()
         val topLevelBuildScript = project.getTopLevelBuildScriptPsiFile()
-        var addVersionToModuleBuildScript = true
         val modulesWithTheSameKotlin = kotlinVersionsAndModules[kotlinVersion.artifactVersion]
         val modulesToRemoveKotlinVersion = mutableListOf<Module>()
         // Remove version from modules with the same version as the version to configure:
         modulesWithTheSameKotlin?.values?.let { modulesToRemoveKotlinVersion.addAll(it) }
+
         val rootModule = getRootModule(project)
+        val definedVersionInPluginSettings = rootModule?.getBuildScriptSettingsPsiFile()?.let {
+            GradleBuildScriptSupport.getManipulator(it)
+                .findKotlinPluginManagementVersion()
+        }
+        var addVersionToModuleBuildScript = definedVersionInPluginSettings != kotlinVersion
+
         if (rootModule != null) {
+            val hasDefinedVersion = kotlinVersionsAndModules.filter { it.key != kotlinVersion.artifactVersion }.isNotEmpty()
             val addVersionToSettings: Boolean
             // If there are different Kotlin versions in the project, don't add to settings
-            if (kotlinVersionsAndModules.filter { it.key != kotlinVersion.artifactVersion }.isNotEmpty()) {
+            if (hasDefinedVersion || definedVersionInPluginSettings != null) {
                 addVersionToSettings = false
             } else {
                 // If we have any version in the root module, don't need to add the version to the settings file
@@ -347,7 +354,16 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 } else {
                     getTargetBytecodeVersionFromModule(module, kotlinVersion)
                 }
-                configureModule(module, file, false, kotlinVersion, jvmTarget, collector, changedFiles, addVersionToModuleBuildScript)
+                configureModule(
+                    module = module,
+                    file = file,
+                    isTopLevelProjectFile = false,
+                    ideKotlinVersion = kotlinVersion,
+                    jvmTarget = jvmTarget,
+                    collector = collector,
+                    changedFiles = changedFiles,
+                    addVersion = addVersionToModuleBuildScript
+                )
             } else {
                 showErrorMessage(
                     project,
