@@ -388,13 +388,6 @@ internal open class SelectedEditorFilePath(frame: JFrame) {
     label.text = titleString
     HelpTooltip.dispose(label)
 
-    (if (isClipped || basePaths.firstOrNull { !it.active } != null) {
-      components.filter { it.active || basePaths.contains(it) }.joinToString(separator = "", transform = { it.toolTipPart })
-    }
-    else null)?.let {
-      HelpTooltip().setTitle(it).installOn(label)
-    }
-
     coroutineContext.ensureActive()
 
     label.revalidate()
