@@ -55,7 +55,7 @@ final class ReadMostlyRWLock {
 
   // This flag should be set by write thread only, but can be checked by any thread
   // for example in startRead() method. Should be volatile.
-  private volatile boolean allowImplicitRead = true;
+  private volatile boolean allowImplicitRead = !StartupUtil.isImplicitReadOnEDTDisabled();
 
   ReadMostlyRWLock(@NotNull Thread writeThread) {
     this.writeThread = writeThread;

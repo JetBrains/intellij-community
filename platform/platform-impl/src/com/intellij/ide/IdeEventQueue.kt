@@ -566,8 +566,8 @@ class IdeEventQueue private constructor() : EventQueue() {
     }
 
     when {
-      e is MouseEvent -> dispatchMouseEvent(e)
-      e is KeyEvent -> dispatchKeyEvent(e)
+      e is MouseEvent -> rwLockHolder.runWithImplicitRead { dispatchMouseEvent(e) }
+      e is KeyEvent -> rwLockHolder.runWithImplicitRead { dispatchKeyEvent(e) }
       appIsLoaded() -> {
         val app = ApplicationManagerEx.getApplicationEx()
         if (e is ComponentEvent) {
@@ -575,9 +575,9 @@ class IdeEventQueue private constructor() : EventQueue() {
             (app.serviceIfCreated<WindowManager>() as? WindowManagerEx)?.dispatchComponentEvent(e)
           }
         }
-        app.runWithoutImplicitRead { defaultDispatchEvent(e) }
+        rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
       }
-      else -> defaultDispatchEvent(e)
+      else -> rwLockHolder.runWithoutImplicitRead { defaultDispatchEvent(e) }
     }
   }
 

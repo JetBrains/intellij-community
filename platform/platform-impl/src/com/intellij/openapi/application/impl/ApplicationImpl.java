@@ -1431,6 +1431,11 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     IdeEventQueue.getInstance().getRwLockHolder().runWithoutImplicitRead(runnable);
   }
 
+  @Override
+  public void runWithImplicitRead(@NotNull Runnable runnable) {
+    IdeEventQueue.getInstance().getRwLockHolder().runWithImplicitRead(runnable);
+  }
+
   @ApiStatus.Internal
   public static void postInit(@NotNull ApplicationImpl app) {
     app.myLock = IdeEventQueue.getInstance().getRwLockHolder().lock;
