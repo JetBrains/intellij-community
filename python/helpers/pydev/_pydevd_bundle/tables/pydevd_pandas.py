@@ -17,10 +17,9 @@ def get_shape(table):
 
 
 # noinspection PyUnresolvedReferences
-def get_head(table, max_cols):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int) -> str
-    max_cols = __check_max_cols(max_cols)
-    return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=max_cols))
+def get_head(table):
+    # type: (Union[pd.DataFrame, pd.Series, np.ndarray]) -> str
+    return repr(__convert_to_df(table).head().to_html(notebook=True, max_cols=None))
 
 
 # noinspection PyUnresolvedReferences
@@ -33,9 +32,9 @@ def get_column_types(table):
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
-def get_data(table, max_cols, max_colwidth, start_index=None, end_index=None):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int, int, int) -> str
-    max_cols = __check_max_cols(max_cols)
+def get_data(table, start_index=None, end_index=None):
+    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int) -> str
+    max_cols, max_colwidth = None, None
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
 
@@ -59,10 +58,10 @@ def __get_data_slice(table, start, end):
 
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
-def display_data(table, max_cols, max_colwidth, start, end):
-    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int, int, int) -> None
+def display_data(table, start, end):
+    # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int) -> None
     from IPython.display import display
-    max_cols = __check_max_cols(max_cols)
+    max_cols, max_colwidth = None, None
 
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
@@ -76,21 +75,21 @@ def display_data(table, max_cols, max_colwidth, start, end):
     pd.set_option('display.max_colwidth', _jb_max_colwidth)
 
 
-def get_column_descriptions(table, max_cols, max_colwidth):
-    # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
+def get_column_descriptions(table):
+    # type: (Union[pd.DataFrame, pd.Series]) -> str
     described_result = __get_describe(table)
 
     if described_result is not None:
-        return get_data(described_result, max_cols, max_colwidth, None, None)
+        return get_data(described_result, None, None)
     else:
         return ""
 
 
-def get_value_counts(table, max_cols, max_colwidth):
-    # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
+def get_value_counts(table):
+    # type: (Union[pd.DataFrame, pd.Series]) -> str
     counts_result = __get_counts(table)
 
-    return get_data(counts_result, max_cols, max_colwidth, None, None)
+    return get_data(counts_result, None, None)
 
 
 def __get_describe(table):
@@ -148,10 +147,3 @@ def __array_to_df(table):
 def __categorical_to_df(table):
     # type: (pd.Categorical) -> pd.DataFrame
     return pd.DataFrame(table)
-
-
-def __check_max_cols(max_cols):
-    # type ([int, None] -> [int, None])
-    if max_cols is None or max_cols < 0:
-        return None
-    return max_cols

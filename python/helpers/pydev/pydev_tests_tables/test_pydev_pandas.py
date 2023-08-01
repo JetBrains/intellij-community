@@ -18,7 +18,6 @@ def setup_dataframe():
     Also, we create other auxiliary data
     """
     rows_number = 4
-    max_cols = 10
     df = pd.DataFrame(
         {
             "A": 1.0,
@@ -45,10 +44,10 @@ def setup_dataframe():
                                           periods=rows_number, freq="W"),
         }
     )
-    df_html = repr(df.head().to_html(notebook=True, max_cols=max_cols))
+    df_html = repr(df.head().to_html(notebook=True, max_cols=None))
     columns_types = [str(df.index.dtype)] + [str(t) for t in df.dtypes]
 
-    return rows_number, max_cols, df, df_html, columns_types
+    return rows_number, df, df_html, columns_types
 
 
 @pytest.fixture
@@ -73,14 +72,14 @@ def test_info_command(setup_dataframe):
     Here we check the correctness of info command that is invoked via Kotlin.
     :param setup_dataframe: fixture/data for the test
     """
-    rows, max_cols, df, df_html, cols_types_expected = setup_dataframe
+    rows, df, df_html, cols_types_expected = setup_dataframe
 
     cols_types_actual = pandas_tables_helpers.get_column_types(df)
     cols_types_actual = cols_types_actual.split(pandas_tables_helpers.TABLE_TYPE_NEXT_VALUE_SEPARATOR)
 
     assert pandas_tables_helpers.get_type(df) == str(pd.DataFrame)
     assert pandas_tables_helpers.get_shape(df) == str(rows)
-    assert pandas_tables_helpers.get_head(df, max_cols) == df_html
+    assert pandas_tables_helpers.get_head(df) == df_html
     assert cols_types_actual == cols_types_expected
 
 
@@ -89,12 +88,12 @@ def test_get_data_saves_display_options(setup_dataframe):
     We check that we don't ruin a user's display options.
     :param setup_dataframe: fixture/data for the test
     """
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
 
     max_columns_before = pd.get_option('display.max_columns')
     max_colwidth_before = pd.get_option('display.max_colwidth')
 
-    pandas_tables_helpers.get_data(df, max_cols=123, max_colwidth=123)
+    pandas_tables_helpers.get_data(df)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
@@ -108,14 +107,12 @@ def test_display_saves_display_options(setup_dataframe):
     We check that we don't ruin a user's display options.
     :param setup_dataframe: fixture/data for the test
     """
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
 
     max_columns_before = pd.get_option('display.max_columns')
     max_colwidth_before = pd.get_option('display.max_colwidth')
 
-    pandas_tables_helpers.display_data(df,
-                                       max_cols=123, max_colwidth=123,
-                                       start=0, end=2)
+    pandas_tables_helpers.display_data(df, start=0, end=2)
 
     max_columns_after = pd.get_option('display.max_columns')
     max_colwidth_after = pd.get_option('display.max_colwidth')
@@ -142,7 +139,7 @@ def test_convert_to_df_common_series(setup_dataframe):
     For a common pd.Series case.
     :param setup_dataframe: fixture/data for the test
     """
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
     for col in df.columns:
         converted_series = pandas_tables_helpers.__convert_to_df(df[col])
 
@@ -156,7 +153,7 @@ def test_convert_to_df_ndarray(setup_dataframe):
     For a np.ndarray case.
     :param setup_dataframe: fixture/data for the test
     """
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
 
     for col in df.columns:
         converted_series = pandas_tables_helpers.__convert_to_df(df[col].values)
@@ -175,7 +172,7 @@ def test_get_info_format(setup_dataframe):
     print('$NEXT_VALUE_SEPARATOR')
     print(get_shape(initCommandResult))
     print('$NEXT_VALUE_SEPARATOR')
-    print(get_head(initCommandResult, max_cols=$MAX_COLS))
+    print(get_head(initCommandResult))
     print('$NEXT_VALUE_SEPARATOR')
     print(get_column_types(initCommandResult))
 
@@ -185,12 +182,16 @@ def test_get_info_format(setup_dataframe):
     TODO: actually, the format is different: in one case we have \n, in other just ''
     :param setup_dataframe: fixture/data for the test, dataframe
     """
-    _, max_cols, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
+
+    # remove "dates" column from df because it uses "now" timestamp for data generating
+    df = df.drop(columns='dates')
+
     actual = [pandas_tables_helpers.get_type(df),
               NEXT_VALUE_SEPARATOR,
               pandas_tables_helpers.get_shape(df),
               NEXT_VALUE_SEPARATOR,
-              pandas_tables_helpers.get_head(df, max_cols),
+              pandas_tables_helpers.get_head(df),
               NEXT_VALUE_SEPARATOR,
               pandas_tables_helpers.get_column_types(df)]
     actual = '\n'.join(actual)
@@ -204,7 +205,7 @@ def test_get_info_format(setup_dataframe):
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
 def test_describe_many_columns_check_html(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
-    actual = pandas_tables_helpers.get_column_descriptions(df, -1, 1000)
+    actual = pandas_tables_helpers.get_column_descriptions(df)
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -215,7 +216,7 @@ def test_describe_many_columns_check_html(setup_dataframe_many_columns):
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
 def test_counts_many_columns_check_html(setup_dataframe_many_columns):
     df = setup_dataframe_many_columns
-    actual = pandas_tables_helpers.get_value_counts(df, -1, 1000)
+    actual = pandas_tables_helpers.get_value_counts(df)
 
     read_expected_from_file_and_compare_with_actual(
         actual=actual,
@@ -244,7 +245,7 @@ def test_counts_shape(setup_dataframe_many_columns):
 
 
 def test_describe_shape_all_types(setup_dataframe):
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
     describe_df = pandas_tables_helpers.__get_describe(df)
     # for dataframes with different types in columns we have 13/15 statistics
     if sys.version_info < (3, 0):
@@ -259,7 +260,7 @@ def test_describe_shape_all_types(setup_dataframe):
 
 
 def test_get_describe_save_columns(setup_dataframe):
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
     describe_df = pandas_tables_helpers.__get_describe(df)
     original_columns, describe_columns = df.columns.tolist(), describe_df.columns.tolist()
 
@@ -272,7 +273,7 @@ def test_get_describe_save_columns(setup_dataframe):
 
 
 def test_get_describe_returned_types(setup_dataframe):
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
 
     assert type(pandas_tables_helpers.__get_describe(df)) == pd.DataFrame
     assert type(pandas_tables_helpers.__get_describe(df['A'])) == pd.Series
@@ -280,7 +281,7 @@ def test_get_describe_returned_types(setup_dataframe):
 
 @pytest.mark.skipif(sys.version_info < (3, 0), reason="Different format for Python2")
 def test_describe_series(setup_dataframe):
-    _, _, df, _, _ = setup_dataframe
+    _, df, _, _ = setup_dataframe
 
     resulted = ""
 
