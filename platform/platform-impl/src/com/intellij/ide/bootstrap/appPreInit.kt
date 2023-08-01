@@ -176,30 +176,17 @@ private suspend fun preInitApp(app: ApplicationImpl,
 
     euaTaskDeferred?.await()?.invoke()
 
-    launch {
-      coroutineScope {
-        launch {
-          // used by LafManager
-          app.serviceAsync<UISettings>()
-        }
-        launch(CoroutineName("UiThemeProviderListManager preloading")) {
-          app.serviceAsync<UiThemeProviderListManager>()
-        }
+    coroutineScope {
+      launch {
+        // used by LafManager
+        app.serviceAsync<UISettings>()
       }
-
-      loadIconMapping?.join()
-
-      span("laf initialization", RawSwingDispatcher) {
-        app.serviceAsync<LafManager>()
-      }
-
-      if (!app.isHeadlessEnvironment) {
-        // preload only when LafManager is ready
-        asyncScope.launch {
-          app.serviceAsync<EditorColorsManager>()
-        }
+      launch(CoroutineName("UiThemeProviderListManager preloading")) {
+        app.serviceAsync<UiThemeProviderListManager>()
       }
     }
+
+    loadIconMapping?.join()
 
     if (!app.isHeadlessEnvironment) {
       asyncScope.launch(CoroutineName("icons preloading") + Dispatchers.IO) {
@@ -207,6 +194,17 @@ private suspend fun preInitApp(app: ApplicationImpl,
         AsyncProcessIcon(this)
         AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
         AnimatedIcon.FS()
+      }
+    }
+
+    span("laf initialization", RawSwingDispatcher) {
+      app.serviceAsync<LafManager>()
+    }
+
+    if (!app.isHeadlessEnvironment) {
+      // preload only when LafManager is ready
+      asyncScope.launch {
+        app.serviceAsync<EditorColorsManager>()
       }
     }
   }
