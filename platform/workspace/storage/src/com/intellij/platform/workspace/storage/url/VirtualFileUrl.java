@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Represents a reference to a file or directory. 
  * Workspace model entities must use properties of this type to store references to files instead of storing their paths or URLs as 
- * {@link String} properties, because it consumes less memory and provide efficient way to locate a {@link com.intellij.driver.sdk.VirtualFile VirtualFile}.
+ * {@link String} properties, because it consumes less memory and provide efficient way to locate a {@link com.intellij.openapi.vfs.VirtualFile VirtualFile}.
  * <p>
  * Use {@link VirtualFileUrlManager#fromUrl} or {@link com.intellij.platform.backend.workspace.VirtualFileUrls#toVirtualFileUrl toVirtualFileUrl}
  * extension function to get an instance of this interface. 
