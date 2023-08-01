@@ -440,6 +440,8 @@ open class FileEditorManagerImpl(
     for ((file, toOpen) in fileToNewProviders) {
       withContext(Dispatchers.EDT) {
         for ((composite, providers) in toOpen) {
+          if (!openedComposites.contains(composite)) continue
+
           for (provider in providers) {
             val editor = provider.createEditor(project, file)
             composite.addEditor(editor = editor, provider = provider)
