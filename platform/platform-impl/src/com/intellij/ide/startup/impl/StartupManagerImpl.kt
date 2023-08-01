@@ -102,6 +102,8 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
   private val lock = Any()
   private val initProjectStartupActivities = ArrayDeque<Runnable>()
   private val postStartupActivities = ArrayDeque<Runnable>()
+  @Volatile
+  private var freezePostStartupActivities = false
 
   @MagicConstant(intValues = [0, DUMB_AWARE_PASSED.toLong(), ALL_PASSED.toLong()])
   @Volatile
@@ -270,6 +272,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
       }
 
       withContext(tracer.span("run post-startup dynamically registered activities")) {
+        freezePostStartupActivities = true
         runActivities(postStartupActivities)
       }
       postStartupActivitiesPassed = DUMB_AWARE_PASSED
@@ -353,9 +356,9 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
   override fun runAfterOpened(runnable: Runnable) {
     checkNonDefaultProject()
-    if (postStartupActivitiesPassed < DUMB_AWARE_PASSED) {
+    if (!freezePostStartupActivities) {
       synchronized(lock) {
-        if (postStartupActivitiesPassed < DUMB_AWARE_PASSED) {
+        if (!freezePostStartupActivities) {
           postStartupActivities.add(runnable)
           return
         }
@@ -370,6 +373,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
     synchronized(lock) {
       initProjectStartupActivities.clear()
       postStartupActivities.clear()
+      freezePostStartupActivities = false
     }
   }
 
