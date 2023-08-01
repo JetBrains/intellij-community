@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -41,7 +42,8 @@ abstract class AbstractK2BindToElementTest : KotlinMultiFileLightCodeInsightFixt
         val nameToBind = InTextDirectivesUtils.findStringWithPrefixes(file.text, BIND_TO) ?: return null
         val projectScope = GlobalSearchScope.allScope(myFixture.project)
         return JavaPsiFacade.getInstance(myFixture.project).findClass(nameToBind, projectScope)
-            ?: KotlinTopLevelFunctionFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
+               ?: KotlinTopLevelFunctionFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
+               ?: KotlinTopLevelPropertyFqnNameIndex[nameToBind, myFixture.project, projectScope].firstOrNull()
     }
 
     private companion object {

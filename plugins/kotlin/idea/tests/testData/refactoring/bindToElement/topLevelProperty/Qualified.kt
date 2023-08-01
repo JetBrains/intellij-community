@@ -1,19 +1,17 @@
-// FILE: test/TopLevelFunction.kt
+// FILE: test/Qualified.kt
 // BIND_TO test.bar.fooBar
 package test
 
-import test.foo.fooBar
-
 fun foo() {
-    <caret>fooBar()
+    val x = test.foo.<caret>fooBar
 }
 
 // FILE: test/foo/Test.kt
 package test.foo
 
-fun fooBar() { }
+val fooBar = 0
 
 // FILE: test/bar/Test.kt
 package test.bar
 
-fun fooBar() { }
+val fooBar = 0

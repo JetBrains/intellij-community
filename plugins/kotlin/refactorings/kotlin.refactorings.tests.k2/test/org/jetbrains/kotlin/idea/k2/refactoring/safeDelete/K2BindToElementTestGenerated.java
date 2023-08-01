@@ -287,9 +287,42 @@ public abstract class K2BindToElementTestGenerated extends AbstractK2BindToEleme
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("TopLevelFunctionCall.kt")
-        public void testTopLevelFunctionCall() throws Exception {
-            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/TopLevelFunctionCall.kt");
+        @TestMetadata("Qualified.kt")
+        public void testQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/Qualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelFunctionCall/UnQualified.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/refactoring/bindToElement/topLevelProperty")
+    public static class TopLevelProperty extends AbstractK2BindToElementTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Qualified.kt")
+        public void testQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelProperty/Qualified.kt");
+        }
+
+        @TestMetadata("RootPkg.kt")
+        public void testRootPkg() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelProperty/RootPkg.kt");
+        }
+
+        @TestMetadata("UnQualified.kt")
+        public void testUnQualified() throws Exception {
+            runTest("../../idea/tests/testData/refactoring/bindToElement/topLevelProperty/UnQualified.kt");
         }
     }
 }

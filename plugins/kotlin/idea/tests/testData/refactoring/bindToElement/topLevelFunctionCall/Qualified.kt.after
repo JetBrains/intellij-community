@@ -1,7 +1,6 @@
-// FILE: test/TopLevelFunction.kt
+// FILE: test/Qualified.kt
 // BIND_TO test.bar.fooBar
 package test
-
 
 import test.bar.fooBar
 

@@ -101,30 +101,43 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return replaced(newReference)
     }
 
-    private fun KtCallExpression.replaceWith(fqName: FqName): KtExpression {
-        val psiFactory = KtPsiFactory(project)
-        val newName = psiFactory.createSimpleName(fqName.shortName().asString())
-        calleeExpression?.replace(newName)
-        val parentFqName = fqName.parent()
-        if (parentFqName.isRoot) return this
-        val packageName = fqName.parent().asString()
-        val newQualifiedExpression = psiFactory.createExpression("$packageName.${text}")
-        return replaced(newQualifiedExpression)
-    }
-
-    private fun KtSimpleNameExpression.replaceWith(fqName: FqName): KtExpression {
-        val newNameExpression = KtPsiFactory(project).createExpression(fqName.asString())
-        return replaced(newNameExpression)
-    }
-
     private fun KtDotQualifiedExpression.replaceWith(fqName: FqName): KtExpression? {
         val selectorExpression = selectorExpression ?: return null
         val newExpression = when (selectorExpression) {
-            is KtSimpleNameExpression -> selectorExpression.replaceWith(fqName)
-            is KtCallExpression -> selectorExpression.replaceWith(fqName)
-            else -> return null
-        }
-        return replaced(newExpression)
+            is KtSimpleNameExpression -> selectorExpression.replaceShortName(fqName)
+            is KtCallExpression -> selectorExpression.replaceShortName(fqName)
+            else -> null
+        } ?: return null
+        return replaceWithQualified(fqName, newExpression)
+    }
+
+    private fun KtExpression.replaceWithQualified(fqName: FqName, selectorExpression: KtExpression): KtExpression {
+        val parentFqName = fqName.parent()
+        if (parentFqName.isRoot) return selectorExpression
+        val packageName = fqName.parent().asString()
+        val newQualifiedExpression = KtPsiFactory(project).createExpression("$packageName.${selectorExpression.text}")
+        return replaced(newQualifiedExpression)
+    }
+
+    private fun KtCallExpression.replaceWith(fqName: FqName): KtExpression? {
+        val newCall = replaceShortName(fqName) ?: return null
+        return newCall.replaceWithQualified(fqName, newCall)
+    }
+
+    private fun KtCallExpression.replaceShortName(fqName: FqName): KtExpression? {
+        val psiFactory = KtPsiFactory(project)
+        val newName = psiFactory.createSimpleName(fqName.shortName().asString())
+        return calleeExpression?.replace(newName)?.parentOfType<KtCallExpression>()
+    }
+
+    private fun KtSimpleNameExpression.replaceWith(fqName: FqName): KtExpression {
+        val newNameExpr = replaceShortName(fqName)
+        return newNameExpr.replaceWithQualified(fqName, newNameExpr)
+    }
+
+    private fun KtSimpleNameExpression.replaceShortName(fqName: FqName): KtExpression {
+        val newNameExpression = KtPsiFactory(project).createExpression(fqName.shortName().asString())
+        return replaced(newNameExpression)
     }
 
     override fun KtSimpleReference<KtNameReferenceExpression>.suggestVariableName(
