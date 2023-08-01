@@ -38,7 +38,7 @@ import java.util.*;
  * Coverage engine provide coverage support for different languages or coverage runner classes.
  * E.g. engine for JVM languages, Ruby, Python
  * <p/>
- * Each coverage engine may work with several coverage runner. E.g. Java coverage engine supports IDEA/EMMA/Cobertura,
+ * Each coverage engine may work with several coverage runners. E.g. Java coverage engine supports IDEA/Jacoco,
  * Ruby engine works with RCov
  *
  * @author Roman.Chernyatchik

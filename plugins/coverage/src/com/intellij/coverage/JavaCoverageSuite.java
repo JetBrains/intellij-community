@@ -136,7 +136,9 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     writeFilters(element, myFilters, FILTER);
     writeFilters(element, myExcludePatterns, EXCLUDED_FILTER);
     final CoverageRunner coverageRunner = getRunner();
-    element.setAttribute(COVERAGE_RUNNER, coverageRunner != null ? coverageRunner.getId() : "emma");
+    if (coverageRunner != null) {
+      element.setAttribute(COVERAGE_RUNNER, coverageRunner.getId());
+    }
   }
 
   private static void writeFilters(Element element, final String[] filters, final String tagName) {
