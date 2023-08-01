@@ -35,6 +35,10 @@ class RwLockHolder(writeThread: Thread) {
     lock.writeIntentUnlock()
   }
 
+  fun isWriteIntentLocked(): Boolean {
+    return lock.isWriteThread && (lock.isWriteIntentLocked || lock.isWriteAcquired)
+  }
+
   fun runWithoutImplicitRead(runnable: Runnable) {
     if (isImplicitReadOnEDTDisabled) {
       runnable.run()

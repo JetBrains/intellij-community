@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class UpdatingProjectFileIndexOnModuleRootFileModificationsTest {
   @JvmField
   @RegisterExtension

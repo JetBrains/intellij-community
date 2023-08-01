@@ -31,7 +31,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 abstract class LibraryInProjectFileIndexTestCase {
   @JvmField
   @RegisterExtension

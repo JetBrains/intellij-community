@@ -71,7 +71,7 @@ public final class EdtTestUtil {
     }
 
     Ref<T> exception = new Ref<>();
-    Runnable r = writeIntent ?
+    Runnable r = writeIntent && app == null ?
                  () -> {
                    try {
                      setupEventQueue();
@@ -95,7 +95,7 @@ public final class EdtTestUtil {
                    }
                  };
 
-    if (app != null) {
+    if (app != null && writeIntent) {
       app.invokeAndWait(r);
     }
     else {

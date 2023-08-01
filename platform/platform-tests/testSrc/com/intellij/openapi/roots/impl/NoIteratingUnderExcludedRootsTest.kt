@@ -37,7 +37,7 @@ import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class NoIteratingUnderExcludedRootsTest {
   @JvmField
   @RegisterExtension

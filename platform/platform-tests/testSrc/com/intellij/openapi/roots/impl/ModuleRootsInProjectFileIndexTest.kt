@@ -41,7 +41,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import kotlin.test.assertFalse
 
 @TestApplication
-@RunInEdt
+@RunInEdt(writeIntent = true)
 class ModuleRootsInProjectFileIndexTest {
   @JvmField
   @RegisterExtension
