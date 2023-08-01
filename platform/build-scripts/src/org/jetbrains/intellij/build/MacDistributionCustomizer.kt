@@ -22,6 +22,16 @@ abstract class MacDistributionCustomizer {
   var icnsPathForEAP: String? = null
 
   /**
+   * Path to alternative icns file in macOS Big Sur style
+   */
+  var icnsPathForAlternativeIcon: String? = null
+
+  /**
+   * Path to alternative icns file in macOS Big Sur style for EAP
+   */
+  var icnsPathForAlternativeIconForEAP: String? = null
+
+  /**
    * Relative paths to files in macOS distribution which should take 'executable' permissions.
    */
   var extraExecutables: PersistentList<String> = persistentListOf()
