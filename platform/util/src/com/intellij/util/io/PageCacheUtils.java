@@ -27,7 +27,7 @@ public final class PageCacheUtils {
    * Enables new (brand-name: 'lock-free') implementations for various VFS components.
    * So far they co-exist with the legacy implementations
    */
-  public static final boolean LOCK_FREE_VFS_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", true);
+  public static final boolean LOCK_FREE_VFS_ENABLED = getBooleanProperty("vfs.lock-free-impl.enable", false);
 
   /**
    * How much direct memory new (code name 'lock-free') FilePageCache impl allowed to utilize:
