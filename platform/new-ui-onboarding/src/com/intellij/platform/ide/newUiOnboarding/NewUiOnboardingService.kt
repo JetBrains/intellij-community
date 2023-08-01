@@ -16,16 +16,16 @@ import kotlinx.coroutines.launch
 internal class NewUiOnboardingService(private val project: Project, private val cs: CoroutineScope) {
   fun showOnboardingDialog() {
     val dialog = NewUiOnboardingDialog(project)
-    NewUiOnboardingStatistics.logWelcomeDialogShown()
+    NewUiOnboardingStatistics.logWelcomeDialogShown(project)
     val startTour = dialog.showAndGet()
     if (startTour) {
       startOnboarding()
-      NewUiOnboardingStatistics.logOnboardingStarted(OnboardingStartingPlace.WELCOME_DIALOG)
+      NewUiOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.WELCOME_DIALOG)
     }
     else {
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MEET_NEW_UI)
       toolWindow?.activate(null)
-      NewUiOnboardingStatistics.logWelcomeDialogSkipPressed()
+      NewUiOnboardingStatistics.logWelcomeDialogSkipPressed(project)
     }
   }
 

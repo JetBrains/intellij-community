@@ -16,7 +16,7 @@ class MeetNewUiOnboardingCustomization : MeetNewUiCustomization {
       row.link(NewUiOnboardingBundle.message("start.tour")) {
         NewUiOnboardingService.getInstance(project).startOnboarding()
         ToolWindowManagerEx.getInstanceEx(project).hideToolWindow(ToolWindowId.MEET_NEW_UI, true)
-        NewUiOnboardingStatistics.logOnboardingStarted(OnboardingStartingPlace.CONFIGURE_NEW_UI_TOOLWINDOW)
+        NewUiOnboardingStatistics.logOnboardingStarted(project, OnboardingStartingPlace.CONFIGURE_NEW_UI_TOOLWINDOW)
       }.customize(UnscaledGaps(left = 16))
     }
   }
