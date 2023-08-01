@@ -281,7 +281,12 @@ public abstract class GitHandler {
    */
   @NlsSafe
   public String printableCommandLine() {
-    return unescapeCommandLine(myCommandLine.getCommandLineString("git")); //NON-NLS
+    if (getExecutable().isLocal()) {
+      return unescapeCommandLine(myCommandLine.getCommandLineString("git")); //NON-NLS
+    }
+    else {
+      return unescapeCommandLine(myCommandLine.getCommandLineString(null));
+    }
   }
 
   @NotNull
