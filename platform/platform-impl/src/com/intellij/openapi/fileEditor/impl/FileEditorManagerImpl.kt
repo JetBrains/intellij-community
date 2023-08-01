@@ -1164,6 +1164,11 @@ open class FileEditorManagerImpl(
 
   protected open fun createComposite(file: VirtualFile,
                                      providers: List<kotlin.Pair<FileEditorProvider, AsyncFileEditorProvider.Builder?>>): EditorComposite? {
+    if (forbidSplitFor(file) && openedComposites.any { it.file == file }) {
+      LOG.debug("Cancelled 'createComposite' for $file - file is already opened")
+      return null
+    }
+
     val editorsWithProviders = providers.mapNotNull { (provider, builder) ->
       runCatching {
         val editor = builder?.build() ?: provider.createEditor(project, file)
