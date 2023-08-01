@@ -43,6 +43,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
+  
+  private final ThreadLocal<CodeStyleSettings> myLocalSettings = new ThreadLocal<>();
 
   private final static WeakList<CodeStyleSettings> ourReferencedSettings = new WeakList<>();
 
@@ -79,6 +81,18 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
       testSettings.copyFrom(baseSettings);
     }
     return testSettings;
+  }
+
+  public void runWithLocalSettings(@NotNull CodeStyleSettings localSettings,
+                                   @NotNull Runnable runnable) {
+    CodeStyleSettings tempSettingsBefore = myLocalSettings.get();
+    try {
+      myLocalSettings.set(localSettings);
+      runnable.run();
+    }
+    finally {
+      myLocalSettings.set(tempSettingsBefore);
+    }
   }
 
   private @NotNull Collection<CodeStyleSettings> getAllSettings() {
@@ -284,6 +298,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @TestOnly
   public CodeStyleSettings getTemporarySettings() {
     return myTemporarySettings;
+  }
+  
+  @ApiStatus.Internal
+  public @Nullable CodeStyleSettings getLocalSettings() {
+    return myLocalSettings.get();
   }
 
   protected @NotNull MessageBus getMessageBus() {
