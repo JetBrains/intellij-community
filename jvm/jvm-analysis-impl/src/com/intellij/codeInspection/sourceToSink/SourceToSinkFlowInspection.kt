@@ -11,6 +11,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.InheritanceUtil.*
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.psiutils.MethodMatcher
@@ -86,11 +87,12 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
   )
 
   @JvmField
-  var showUnknownString: Boolean = true
+  var showUnknownObject: Boolean = true
 
   @JvmField
-  var showUnsafeString: Boolean = true
+  var showUnsafeObject: Boolean = true
 
+  var checkedTypes: MutableList<String?> = mutableListOf("java.lang.String")
   override fun getOptionsPane(): OptPane {
     return OptPane.pane(
 
@@ -183,11 +185,15 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment")),
 
-      OptPane.checkbox("showUnknownString",
-                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unknown.string")),
+      OptPane.stringList("checkedTypes", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.checked.types"))
+      ,
 
-      OptPane.checkbox("showUnsafeString",
-                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unsafe.string")),
+
+      OptPane.checkbox("showUnknownObject",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unknown.object")),
+
+      OptPane.checkbox("showUnsafeObject",
+                       JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unsafe.object")),
     )
   }
 
@@ -238,7 +244,7 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                                               targetValue = TaintValue.TAINTED))
     }
     return UastHintedVisitorAdapter.create(holder.file.language,
-                                           SourceToSinkFlowVisitor(holder, factory, warnIfComplex, showUnknownString, showUnsafeString),
+                                           SourceToSinkFlowVisitor(holder, factory, warnIfComplex, showUnknownObject, showUnsafeObject, checkedTypes),
                                            arrayOf(UCallExpression::class.java,
                                                    UReturnExpression::class.java,
                                                    UBinaryExpression::class.java,
@@ -255,8 +261,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
     private val holder: ProblemsHolder,
     private val factory: TaintValueFactory,
     private val warnIfComplex: Boolean,
-    private val showUnknownString: Boolean,
-    private val showUnsafeString: Boolean
+    private val showUnknownObject: Boolean,
+    private val showUnsafeObject: Boolean,
+    private val checkedTypes: MutableList<String?>
   ) : AbstractUastNonRecursiveVisitor() {
 
     override fun visitCallExpression(node: UCallExpression): Boolean {
@@ -304,6 +311,11 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
     private fun processExpression(expression: UExpression?) {
       if (expression == null) return
+      val expressionType: PsiType? = expression.getExpressionType()
+
+      if(expressionType==null ||
+        checkedTypes.filterNotNull().all { !(expressionType.equalsToText(it) ||
+                                           (it != "java.lang.String" && isInheritor(expressionType, it))) }) return
       val annotationContext = AnnotationContext.fromExpression(expression)
       val contextValue: TaintValue = factory.fromAnnotationContext(annotationContext)
       if (contextValue !== TaintValue.UNTAINTED) return
@@ -320,8 +332,8 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       }
       taintValue = taintValue.join(contextValue)
       if (taintValue === TaintValue.UNTAINTED) return
-      if (taintValue == TaintValue.UNKNOWN && !showUnknownString) return
-      if (taintValue == TaintValue.TAINTED && !showUnsafeString) return
+      if (taintValue == TaintValue.UNKNOWN && !showUnknownObject) return
+      if (taintValue == TaintValue.TAINTED && !showUnsafeObject) return
       val errorMessage = JvmAnalysisBundle.message(taintValue.getErrorMessage(annotationContext))
       var fixes: Array<LocalQuickFix> = arrayOf()
       val sourcePsi = expression.sourcePsi

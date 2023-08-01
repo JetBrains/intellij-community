@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 
 final class Complete {
-  private void simpleView2(Object message6, final HttpServletResponse resp) throws IOException {
+  private void simpleView2(java.util.List<String> message6, final HttpServletResponse resp) throws IOException {
     PrintWriter writer = resp.getWriter();
     PrintWriter out = writer;
     try {

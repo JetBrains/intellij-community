@@ -16,6 +16,7 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
       untaintedParameterWithPlaceIndex.add("0")
       untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
       untaintedParameterWithPlacePlaceMethod.add("getWriter")
+      checkedTypes.add("java.util.List")
     }
 
   override fun getBasePath(): String {

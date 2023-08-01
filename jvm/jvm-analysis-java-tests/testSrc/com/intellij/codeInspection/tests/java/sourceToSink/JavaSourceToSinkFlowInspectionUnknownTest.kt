@@ -12,7 +12,7 @@ class JavaSourceToSinkFlowInspectionUnknownTest : SourceToSinkFlowInspectionTest
 
   override val inspection: SourceToSinkFlowInspection
     get() = super.inspection.also {
-      it.showUnknownString = false
+      it.showUnknownObject = false
     }
 
   override fun getBasePath(): String {
