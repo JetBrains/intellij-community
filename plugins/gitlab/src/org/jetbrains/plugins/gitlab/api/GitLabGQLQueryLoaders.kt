@@ -2,15 +2,18 @@
 package org.jetbrains.plugins.gitlab.api
 
 import com.intellij.collaboration.api.graphql.CachingGraphQLQueryLoader
+import com.intellij.collaboration.api.graphql.GraphQLQueryLoader
 
 internal object GitLabGQLQueryLoaders {
   private val sharedFragmentsCache = CachingGraphQLQueryLoader.createFragmentCache()
 
-  val default: CachingGraphQLQueryLoader by lazy {
-    CachingGraphQLQueryLoader(sharedFragmentsCache)
+  val default: GraphQLQueryLoader by lazy {
+    CachingGraphQLQueryLoader({ GitLabGQLQueryLoaders::class.java.classLoader.getResourceAsStream(it) },
+                              sharedFragmentsCache)
   }
-  val community: CachingGraphQLQueryLoader by lazy {
-    CachingGraphQLQueryLoader(sharedFragmentsCache,
+  val community: GraphQLQueryLoader by lazy {
+    CachingGraphQLQueryLoader({ GitLabGQLQueryLoaders::class.java.classLoader.getResourceAsStream(it) },
+                              sharedFragmentsCache,
                               fragmentsDirectories = listOf("graphql/fragment/community",
                                                             "graphql/fragment"))
   }
