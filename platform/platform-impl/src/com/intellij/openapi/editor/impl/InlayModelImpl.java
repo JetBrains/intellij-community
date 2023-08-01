@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
@@ -17,13 +17,18 @@ import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.List;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 public final class InlayModelImpl implements InlayModel, PrioritizedDocumentListener, Disposable, Dumpable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
@@ -614,7 +619,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
     @Override
     void fireBeforeRemoved(@NotNull InlineInlayImpl inlay) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         if (myMoveInProgress) {
           // delay notification about invalidated inlay - folding model is not consistent at this point
           // (FoldingModelImpl.moveTextHappened hasn't been called yet at this point)
@@ -634,7 +639,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
     @Override
     void fireBeforeRemoved(@NotNull BlockInlayImpl inlay) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
     }
@@ -647,7 +652,7 @@ public final class InlayModelImpl implements InlayModel, PrioritizedDocumentList
 
     @Override
     void fireBeforeRemoved(@NotNull AfterLineEndInlayImpl inlay) {
-      if (inlay.getUserData(InlayImpl.OFFSET_BEFORE_DISPOSAL) == null) {
+      if (inlay.getUserData(OFFSET_BEFORE_DISPOSAL) == null) {
         notifyRemoved(inlay);
       }
     }

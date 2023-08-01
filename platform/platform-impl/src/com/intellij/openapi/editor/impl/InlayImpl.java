@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.Inlay;
 import com.intellij.openapi.editor.InlayModel;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,8 +14,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
+import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
+
 abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl<?, ?>> extends RangeMarkerImpl implements Inlay<R> {
-  static final Key<Integer> OFFSET_BEFORE_DISPOSAL = Key.create("inlay.offset.before.disposal");
 
   @NotNull
   final EditorImpl myEditor;
