@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.List;
 
+import static com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL;
 import static com.intellij.openapi.editor.impl.InlayKeys.ORDER_BEFORE_DISPOSAL;
 
 final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends InlayImpl<R, InlineInlayImpl<?>> {
@@ -62,6 +63,7 @@ final class InlineInlayImpl<R extends EditorCustomElementRenderer> extends Inlay
       int offset = getOffset();
       List<Inlay<?>> inlays = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
       putUserData(ORDER_BEFORE_DISPOSAL, inlays.indexOf(this));
+      putUserData(ID_BEFORE_DISPOSAL, getId());
     }
     super.dispose();
   }

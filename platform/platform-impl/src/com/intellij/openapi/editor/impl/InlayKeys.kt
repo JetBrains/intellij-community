@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Key
 
 object InlayKeys {
   @JvmField
+  val ID_BEFORE_DISPOSAL = Key.create<Long>("inlay.id.before.disposal")
+  @JvmField
   internal val OFFSET_BEFORE_DISPOSAL = Key.create<Int>("inlay.offset.before.disposal")
   @JvmField
   internal val ORDER_BEFORE_DISPOSAL = Key.create<Int>("inlay.order.before.disposal")

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.Editor;
@@ -14,6 +14,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
+import static com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL;
 import static com.intellij.openapi.editor.impl.InlayKeys.OFFSET_BEFORE_DISPOSAL;
 
 abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayImpl<?, ?>> extends RangeMarkerImpl implements Inlay<R> {
@@ -93,6 +94,7 @@ abstract class InlayImpl<R extends EditorCustomElementRenderer, T extends InlayI
     if (isValid()) {
       int offset = getOffset(); // We want listeners notified after disposal, but want inlay offset to be available at that time
       putUserData(OFFSET_BEFORE_DISPOSAL, offset);
+      putUserData(ID_BEFORE_DISPOSAL, getId());
       //noinspection unchecked
       getTree().removeInterval((T)this);
       myEditor.getInlayModel().notifyRemoved(this);

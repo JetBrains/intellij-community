@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.ex.RangeMarkerEx
 import com.intellij.openapi.editor.ex.SoftWrapChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FoldingModelImpl
+import com.intellij.openapi.editor.impl.InlayKeys.ID_BEFORE_DISPOSAL
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.RangeHighlighter
@@ -382,7 +383,11 @@ class SimpleAlignedDiffModel(private val viewer: SimpleDiffViewer) {
 
   private val Inlay<*>.onLastLine get() = DiffUtil.getLineCount(editor.document) - 1 == logicalLine
   private val Inlay<*>.logicalLine get() = editor.offsetToLogicalPosition(offset).line
-  private val Inlay<*>.id get() = (this as RangeMarkerEx).id
+  private val Inlay<*>.id
+    get() = with(this as RangeMarkerEx) {
+      if (isValid) id
+      else getUserData(ID_BEFORE_DISPOSAL) ?: throw IllegalStateException("Cannot determine inlay id")
+    }
 
   private val editor1 get() = viewer.editor1
   private val editor2 get() = viewer.editor2
