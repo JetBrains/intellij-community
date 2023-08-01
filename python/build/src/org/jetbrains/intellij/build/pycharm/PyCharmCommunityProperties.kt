@@ -109,6 +109,8 @@ private class PyCharmCommunityMacDistributionCustomizer(projectHome: Path) : PyC
   init {
     icnsPath = "$projectHome/python/build/resources/PyCharmCore.icns"
     icnsPathForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP.icns"
+    icnsPathForAlternativeIcon = "$projectHome/python/build/resources/PyCharmCore_bigsur.icns"
+    icnsPathForAlternativeIconForEAP = "$projectHome/python/build/resources/PyCharmCore_EAP_bigsur.icns"
     bundleIdentifier = "com.jetbrains.pycharm.ce"
     dmgImagePath = "$projectHome/python/build/resources/dmg_background.tiff"
   }

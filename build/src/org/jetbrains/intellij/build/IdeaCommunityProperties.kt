@@ -138,12 +138,14 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
   protected open inner class CommunityMacDistributionCustomizer : MacDistributionCustomizer() {
     init {
       icnsPath = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea.icns"
+      icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
+      icnsPathForAlternativeIcon = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea_com_bigsur.icns"
+      icnsPathForAlternativeIconForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/idea_com_EAP_bigsur.icns"
       urlSchemes = listOf("idea")
       associateIpr = true
       fileAssociations = FileAssociation.from("java", "groovy", "kt", "kts")
       bundleIdentifier = "com.jetbrains.intellij.ce"
       dmgImagePath = "${communityHomeDir}/build/conf/ideaCE/mac/images/dmg_background.tiff"
-      icnsPathForEAP = "${communityHomeDir}/build/conf/ideaCE/mac/images/communityEAP.icns"
     }
 
     override fun getRootDirectoryName(appInfo: ApplicationInfoProperties, buildNumber: String): String {
