@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.ScrollingModelImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
@@ -41,13 +40,13 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.Alarm
 import com.intellij.util.EventDispatcher
-import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Point
+import java.awt.Rectangle
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.*
@@ -58,36 +57,26 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class CombinedDiffViewer(
-  private val context: DiffContext
+  private val context: DiffContext,
+  keys: List<CombinedBlockId>,
+  blockToSelect: CombinedBlockId?,
+  blockListener: BlockListener,
 ) : DiffViewer,
     CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
     DataProvider {
   private val project = context.project!! // CombinedDiffContext expected
 
-  private val stubPanelAfterBlock: JPanel = object : JPanel(null) {
-    override fun getPreferredSize(): Dimension {
-      val preferredSize = super.getPreferredSize()
-      preferredSize.width = parent.width
-      preferredSize.height = 0
+  private val blockState = BlockState(keys, blockToSelect ?: keys.first())
 
-      if (parent.componentCount > 1) {
-        val lastBlockHeight = parent.components[getDiffBlocksCount() - 1].height
-        val viewportHeight = scrollPane.viewport.height
-        if (viewportHeight > lastBlockHeight) {
-          preferredSize.height = viewportHeight - lastBlockHeight
-        }
-      }
+  private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
+  private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = hashMapOf()
 
-      return preferredSize
-    }
+  private val blocksPanel: CombinedDiffBlocksPanel = CombinedDiffBlocksPanel(blockState) { pref ->
+    maxOf(pref, scrollPane.viewport.height)
   }
 
-  internal val blocksPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false)).apply {
-    add(stubPanelAfterBlock)
-  }
-
-  internal val scrollPane = JBScrollPane(
+  private val scrollPane: JBScrollPane = JBScrollPane(
     blocksPanel,
     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -114,12 +103,6 @@ class CombinedDiffViewer(
     add(stickyHeaderPanel, JLayeredPane.POPUP_LAYER, 1)
   }
 
-  private val diffBlocks: MutableMap<CombinedBlockId, CombinedDiffBlock<*>> = linkedMapOf()
-
-  private val diffViewers: MutableMap<CombinedBlockId, DiffViewer> = hashMapOf()
-
-  private val diffBlocksPositions: BidirectionalMap<CombinedBlockId, Int> = BidirectionalMap()
-
   private val scrollSupport = CombinedDiffScrollSupport(project, this)
 
   private val focusListener = FocusListener(this)
@@ -128,31 +111,7 @@ class CombinedDiffViewer(
 
   private val diffInfo = object : DiffInfo() {
     override fun getContentTitles(): List<String?> {
-      return getCurrentBlockId()?.let { blockId -> diffViewers[blockId] as? DiffViewerBase }?.request?.contentTitles ?: return emptyList()
-    }
-  }
-
-  private val blockNavigation = object : PrevNextDifferenceIterable {
-    var currentBlockIndex = 0
-      private set
-
-    override fun canGoNext(): Boolean = currentBlockIndex < getDiffBlocksCount() - 1
-
-    override fun canGoPrev(): Boolean = currentBlockIndex > 0
-
-    override fun goNext() {
-      currentBlockIndex++
-      selectDiffBlock(currentBlockIndex)
-    }
-
-    override fun goPrev() {
-      currentBlockIndex--
-      selectDiffBlock(currentBlockIndex)
-    }
-
-    fun setCurrentBlock(index: Int) {
-      if (index >= 0 && index < getDiffBlocksCount())
-        this.currentBlockIndex = index
+      return getCurrentBlockId().let { blockId -> diffViewers[blockId] as? DiffViewerBase }?.request?.contentTitles ?: return emptyList()
     }
   }
 
@@ -160,50 +119,43 @@ class CombinedDiffViewer(
     CombinedEditorSettingsAction(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors)
 
   private val visibleBlocksUpdateQueue =
-    MergingUpdateQueue("CombinedDiffViewer.visibleBlocksUpdateQueue", 500, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD)
+    MergingUpdateQueue("CombinedDiffViewer.visibleBlocksUpdateQueue", 100, true, null, this, null, Alarm.ThreadToUse.SWING_THREAD)
       .also { Disposer.register(this, it) }
 
+  init {
+    blockListeners.listeners.add(blockListener)
+    notifyVisibleBlocksChanged()
+  }
+
   internal fun updateBlockContent(newContent: CombinedDiffBlockContent) {
+    val createDiffBlock = createDiffBlock(newContent)
+    createDiffBlock.updateBlockContent(newContent)
+    val newViewer = newContent.viewer
+    removeAdditionalLines(newViewer)
+
     val blockId = newContent.blockId
-    val block = getBlockForId(blockId)
-
-    if (block == null) {
-      throw IllegalStateException("Block with id $blockId not found in CombinedDiffViewer")
-    }
-
-    runPreservingViewportContent {
-      val newViewer = newContent.viewer
+    diffBlocks[blockId] = createDiffBlock
+    runPreservingViewportContent(scrollPane, blocksPanel) {
       diffViewers.remove(blockId)?.also(Disposer::dispose)
       diffViewers[blockId] = newViewer
-      removeAdditionalLines(newViewer)
-      block.updateBlockContent(newContent)
+      blocksPanel.setContent(blockId, createDiffBlock.component)
+      createDiffBlock.component.validate()
       newViewer.init()
 
       diffInfo.update()
       val requestFocus = DiffUtil.isUserDataFlagSet(COMBINED_DIFF_VIEWER_INITIAL_FOCUS_REQUEST, context)
-      if (requestFocus && blockNavigation.currentBlockIndex == getBlockIndex(blockId)) {
-        requestFocusInDiffViewer(newViewer)
+      if (requestFocus && blockState.currentBlock == blockId) {
+        requestFocusInDiffViewer(blockId)
       }
     }
   }
 
-  private fun removeAdditionalLines(viewer: DiffViewer) {
-    viewer.editors.forEach { editor ->
-      editor.settings.additionalLinesCount = 0
-      (editor as? EditorImpl)?.resetSizes()
+  internal fun replaceBlockWithPlaceholder(blockId: CombinedBlockId) {
+    runPreservingViewportContent(scrollPane, blocksPanel) {
+      val viewer = diffViewers.remove(blockId)?.also(Disposer::dispose)
+      val size = viewer?.component?.size?.height
+      blocksPanel.setPlaceholder(blockId, size)
     }
-  }
-
-  internal fun addBlock(content: CombinedDiffBlockContent) {
-    val blockId = content.blockId
-    val diffBlock = createDiffBlock(content)
-    val viewer = content.viewer
-
-    blocksPanel.add(diffBlock.component, blocksPanel.componentCount - 1)
-    diffBlocks[blockId] = diffBlock
-    diffViewers[blockId] = viewer
-    diffBlocksPositions[blockId] = getDiffBlocksCount() - 1
-    viewer.init()
   }
 
   private fun createDiffBlock(content: CombinedDiffBlockContent): CombinedDiffBlock<*> {
@@ -218,9 +170,7 @@ class CombinedDiffViewer(
     val blockId = diffBlock.id
     Disposer.register(diffBlock, Disposable {
       diffBlocks.remove(blockId)
-      blocksPanel.remove(diffBlock.component)
       diffViewers.remove(blockId)?.also(Disposer::dispose)
-      diffBlocksPositions.remove(blockId)
     })
     Disposer.register(this, diffBlock)
 
@@ -277,7 +227,7 @@ class CombinedDiffViewer(
         currentDiffIterable.goNext()
       }
       canGoNextBlock() -> {
-        blockNavigation.goNext()
+        blockState.goNext()
         currentDiffIterable.goFirst()
       }
     }
@@ -289,26 +239,26 @@ class CombinedDiffViewer(
         currentDiffIterable.goPrev()
       }
       canGoPrevBlock() -> {
-        blockNavigation.goPrev()
+        blockState.goPrev()
         currentDiffIterable.goLast()
       }
     }
   }
 
-  override fun canGoNextBlock(): Boolean = isNavigationEnabled() && blockNavigation.canGoNext()
-  override fun canGoPrevBlock(): Boolean = isNavigationEnabled() && blockNavigation.canGoPrev()
+  override fun canGoNextBlock(): Boolean = blockState.canGoNext()
+  override fun canGoPrevBlock(): Boolean = blockState.canGoPrev()
 
   override fun goNextBlock() {
     if (!canGoNextBlock()) return
-    blockNavigation.goNext()
-    selectDiffBlock(blockNavigation.currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+    blockState.goNext()
+    selectDiffBlock(blockState.currentBlock, ScrollPolicy.SCROLL_TO_BLOCK)
     getCurrentDiffViewer()?.editor?.let { EditorActionUtil.moveCaretToTextStart(it, null) }
   }
 
   override fun goPrevBlock() {
     if (!canGoPrevBlock()) return
-    blockNavigation.goPrev()
-    selectDiffBlock(blockNavigation.currentBlockIndex, ScrollPolicy.SCROLL_TO_BLOCK)
+    blockState.goPrev()
+    selectDiffBlock(blockState.currentBlock, ScrollPolicy.SCROLL_TO_BLOCK)
     getCurrentDiffViewer()?.editor?.let { EditorActionUtil.moveCaretToTextStart(it, null) }
   }
 
@@ -317,14 +267,16 @@ class CombinedDiffViewer(
   private fun notifyVisibleBlocksChanged() {
     val delta = CombinedDiffRegistry.getPreloadedBlocksCount()
     val viewRect = scrollPane.viewport.viewRect
-    val beforeViewport = arrayOfNulls<CombinedDiffBlock<*>>(delta)
-    val afterViewport = arrayOfNulls<CombinedDiffBlock<*>>(delta)
-    val blocksInViewport = arrayListOf<CombinedDiffBlock<*>>()
-    val hiddenBlocks = arrayListOf<CombinedDiffBlock<*>>()
+
+    val beforeViewport = arrayOfNulls<CombinedBlockId>(delta)
+    val afterViewport = arrayOfNulls<CombinedBlockId>(delta)
+    val blocksInViewport = arrayListOf<CombinedBlockId>()
+    val hiddenBlocks = arrayListOf<CombinedBlockId>()
     var intersectionStarted = false
 
-    for ((index, block) in getAllBlocks().withIndex()) {
-      val viewportIntersected = block.component.bounds.intersects(viewRect)
+    for ((index, block) in blocksPanel.getBlockBounds().withIndex()) {
+      val viewportIntersected = viewRect.intersects(block)
+      val id = block.blockId
 
       if (!intersectionStarted && viewportIntersected) {
         intersectionStarted = true
@@ -333,77 +285,48 @@ class CombinedDiffViewer(
       when {
         !intersectionStarted -> {
           beforeViewport[index.mod(delta)]?.let(hiddenBlocks::add)
-          beforeViewport[index.mod(delta)] = block
+          beforeViewport[index.mod(delta)] = id
         }
-        viewportIntersected -> blocksInViewport.add(block)
-        afterViewport.any(Objects::isNull) -> afterViewport[index.mod(delta)] = block
-        else -> hiddenBlocks.add(block)
+        viewportIntersected -> blocksInViewport.add(id)
+        afterViewport.any(Objects::isNull) -> afterViewport[index.mod(delta)] = id
+        else -> hiddenBlocks.add(id)
       }
     }
 
-    if (hiddenBlocks.isNotEmpty()) {
-      blockListeners.multicaster.blocksHidden(hiddenBlocks.map(CombinedDiffBlock<*>::id))
-    }
-
-    val totalVisible = blocksInViewport + afterViewport.filterNotNull() + beforeViewport.filterNotNull()
-
-    if (totalVisible.isNotEmpty()) {
-      blockListeners.multicaster.blocksVisible(totalVisible.map(CombinedDiffBlock<*>::id))
-    }
+    processBlocksState(blocksInViewport, beforeViewport.filterNotNull(), afterViewport.filterNotNull(), hiddenBlocks)
   }
 
-  private fun runPreservingViewportContent(run: () -> Unit) {
-    val viewRect = scrollPane.viewport.viewRect
-
-    var anchorBlock: JComponent? = null
-    var diff = 0
-    var isTopBoundAnchor = false
-
-    for (block in getAllBlocks()) {
-      val blockRect = block.component.bounds
-
-      if (blockRect.maxY < viewRect.minY) {
-        // full block before the viewport
-        continue
-      }
-
-      if (blockRect.minY.toInt() == viewRect.minY.toInt()) {
-        anchorBlock = block.component
-        isTopBoundAnchor = true
-        break
-      }
-
-      if (blockRect.maxY >= viewRect.minY && blockRect.maxY <= viewRect.maxY) {
-        // the bottom of block in the viewport
-        anchorBlock = block.component
-        diff = (blockRect.maxY - viewRect.minY).roundToInt()
-        break
-      }
-
-      if (blockRect.maxY > viewRect.maxY && blockRect.minY < viewRect.minY) {
-        // this block is larger than the viewport
-        anchorBlock = block.component
-        isTopBoundAnchor = true
-        diff = (blockRect.minY - viewRect.minY).toInt()
-        break
-      }
+  private fun processBlocksState(inViewport: ArrayList<CombinedBlockId>,
+                                 beforeViewport: List<CombinedBlockId>,
+                                 afterViewport: List<CombinedBlockId>,
+                                 hidden: ArrayList<CombinedBlockId>) {
+    if (hidden.isNotEmpty()) {
+      blockListeners.multicaster.blocksHidden(hidden)
     }
 
-    run()
+    val totalVisible = inViewport + afterViewport + beforeViewport
+    if (totalVisible.isNotEmpty()) {
+      blockListeners.multicaster.blocksVisible(totalVisible)
 
-    if (anchorBlock == null) return
-
-    val newViewRect = scrollPane.viewport.viewRect
-    val newBlockRect = anchorBlock.bounds
-
-    newViewRect.y = if (isTopBoundAnchor) newBlockRect.minY.toInt() else newBlockRect.maxY.toInt()
-    newViewRect.y -= diff
-    scrollPane.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
+      totalVisible.forEach {
+        if (diffViewers[it] != null) return
+        val height = blocksPanel.getBoundsForBlock(it).height
+        val content = CombinedDiffBlockContent(CombinedDiffLoadingBlock(Dimension(0, height)), it)
+        updateBlockContent(content)
+      }
+    }
   }
 
   private fun updateStickyHeader() {
     val viewRect = scrollPane.viewport.viewRect
-    val block = getAllBlocks().find { it.component.bounds.intersects(viewRect) } ?: return
+    val bounds = blocksPanel.getBlockBounds().firstOrNull { viewRect.intersects(it) } ?: return
+    val block = diffBlocks[bounds.blockId]
+    if (block == null) {
+      stickyHeaderPanel.setContent(null)
+      stickyHeaderPanel.repaint()
+      return
+    }
+
     val stickyHeader = block.stickyHeader
 
     val headerHeight = block.header.height
@@ -418,64 +341,41 @@ class CombinedDiffViewer(
     stickyHeaderPanel.repaint()
   }
 
-  internal fun addBlockListener(listener: BlockListener) {
-    blockListeners.listeners.add(listener)
-  }
+  fun getCurrentBlockId(): CombinedBlockId = blockState.currentBlock
 
-  private fun getBlockId(index: Int) = diffBlocksPositions.getKeysByValue(index)?.singleOrNull()
+  fun getDiffBlocksCount(): Int = blockState.blocksCount
 
-  private fun getAllBlocks(): Sequence<CombinedDiffBlock<*>> = diffBlocks.values.asSequence()
-
-  private fun getBlockForId(id: CombinedBlockId): CombinedDiffBlock<*>? = diffBlocks[id]
-  fun getDiffBlocksCount(): Int = diffBlocks.size
-
-  fun getCurrentBlockId(): CombinedBlockId? {
-    return getBlockId(blockNavigation.currentBlockIndex)
-  }
-
-  fun getBlockIndex(id: CombinedBlockId): Int? {
-    return diffBlocksPositions[id]
-  }
-
-  private fun getCurrentDiffViewer(): DiffViewer? = getDiffViewerForIndex(blockNavigation.currentBlockIndex)
-
-  private fun getDiffViewerForIndex(index: Int): DiffViewer? {
-    return getBlockId(index)?.let { blockId -> getDiffViewerForId(blockId) }
-  }
+  private fun getCurrentDiffViewer(): DiffViewer? = diffViewers[blockState.currentBlock]
 
   internal fun getDiffViewerForId(id: CombinedBlockId): DiffViewer? = diffViewers[id]
 
-  fun selectDiffBlock(blockId: CombinedBlockId?, focusBlock: Boolean, scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK) {
-    blockId ?: return
-    val index = getBlockIndex(blockId)
-    if (index == null || index == -1) return
+  fun selectDiffBlock(blockId: CombinedBlockId,
+                      focusBlock: Boolean,
+                      scrollPolicy: ScrollPolicy? = ScrollPolicy.SCROLL_TO_BLOCK) {
 
-    selectDiffBlock(index, scrollPolicy, focusBlock)
+    selectDiffBlock(blockId, scrollPolicy, focusBlock)
   }
 
-  private fun selectDiffBlock(index: Int,
+  private fun selectDiffBlock(blockId: CombinedBlockId,
                               scrollPolicy: ScrollPolicy? = null,
                               focusBlock: Boolean = true) {
-    val blockId = getBlockId(index) ?: return
-    val block = getBlockForId(blockId) ?: return
-    val viewer = getDiffViewerForId(block.id) ?: return
-
     val doSelect = {
-      blockNavigation.setCurrentBlock(index)
-      scrollSupport.scroll(index, block, scrollPolicy)
+      blockState.currentBlock = blockId
+      scrollSupport.scroll(scrollPolicy, blockId)
     }
 
     if (!focusBlock) {
       doSelect()
       return
     }
-    requestFocusInDiffViewer(viewer)
+    requestFocusInDiffViewer(blockId)
     IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(doSelect)
   }
 
-  private fun requestFocusInDiffViewer(newViewer: DiffViewer) {
+  private fun requestFocusInDiffViewer(blockId: CombinedBlockId) {
+    val viewer = diffViewers[blockId] ?: return
     val componentToFocus =
-      with(newViewer) {
+      with(viewer) {
         when {
           isEditorBased -> editor?.contentComponent
           preferredFocusedComponent != null -> preferredFocusedComponent
@@ -515,16 +415,18 @@ class CombinedDiffViewer(
   }
 
   override fun moveCaretToPrevBlock() {
-    blockNavigation.goPrev()
+    blockState.goPrev()
     val editor = getCurrentDiffViewer()?.editor ?: return
     EditorActionUtil.moveCaretToTextEnd(editor, null)
+    requestFocusInDiffViewer(blockState.currentBlock)
     scrollToCaret()
   }
 
   override fun moveCaretToNextBlock() {
-    blockNavigation.goNext()
+    blockState.goNext()
     val editor = getCurrentDiffViewer()?.editor ?: return
     EditorActionUtil.moveCaretToTextStart(editor, null)
+    requestFocusInDiffViewer(blockState.currentBlock)
     scrollToCaret()
   }
 
@@ -541,7 +443,7 @@ class CombinedDiffViewer(
     val lineHeight = editor.lineHeight
     val pageOffset = (if (pageUp) -pageHeightWithoutStickyHeader else pageHeightWithoutStickyHeader) / lineHeight * lineHeight
 
-    val maxNewY = scrollPane.viewport.view.height - stubPanelAfterBlock.height - 1
+    val maxNewY = scrollPane.viewport.view.height - 1
     viewRect.y = (viewRect.y + pageOffset).coerceAtLeast(0).coerceAtMost(maxNewY)
 
     scrollPane.viewport.viewPosition = Point(viewRect.x, viewRect.y)
@@ -559,6 +461,7 @@ class CombinedDiffViewer(
       val pointInNewEditor = SwingUtilities.convertPoint(scrollPane.viewport.view, newPointInView, newEditor.component)
       val visualPositionInNewEditor = newEditor.xyToVisualPosition(pointInNewEditor)
       newEditor.caretModel.moveToVisualPosition(visualPositionInNewEditor)
+      requestFocusInDiffViewer(blockState.currentBlock)
     }
     scrollToCaret()
   }
@@ -567,11 +470,11 @@ class CombinedDiffViewer(
     scrollSupport.combinedEditorsScrollingModel.scrollToCaret(ScrollType.RELATIVE)
   }
 
+
   private val editors: List<Editor>
     get() = diffViewers.values.flatMap { it.editors }
 
   private inner class FocusListener(disposable: Disposable) : FocusAdapter(), FocusChangeListener {
-
     init {
       (EditorFactory.getInstance().eventMulticaster as? EditorEventMulticasterEx)?.addFocusChangeListener(this, disposable)
     }
@@ -579,10 +482,7 @@ class CombinedDiffViewer(
     override fun focusGained(editor: Editor) {
       val blockId = diffViewers.entries.find { it.value.editors.contains(editor) }?.key ?: return
 
-      val blockIndex = getBlockIndex(blockId) ?: -1
-      if (blockIndex == -1) return
-
-      blockNavigation.setCurrentBlock(blockIndex)
+      blockState.currentBlock = blockId
       diffInfo.update()
     }
 
@@ -592,10 +492,8 @@ class CombinedDiffViewer(
         !diffViewer.isEditorBased && (diffViewer.preferredFocusedComponent == e.component || diffViewer.component == e.component)
       }?.key ?: return
 
-      val blockIndex = getBlockIndex(blockId) ?: -1
-      if (blockIndex == -1) return
+      blockState.currentBlock = blockId
 
-      blockNavigation.setCurrentBlock(blockIndex)
       diffInfo.update()
     }
 
@@ -616,10 +514,10 @@ class CombinedDiffViewer(
 
     val combinedEditorsScrollingModel = ScrollingModelImpl(CombinedEditorsScrollingModelHelper(project, viewer))
 
-    fun scroll(index: Int, block: CombinedDiffBlock<*>, scrollPolicy: ScrollPolicy?) {
-      val isEditorBased = viewer.getDiffViewerForId(block.id)?.isEditorBased ?: false
+    fun scroll(scrollPolicy: ScrollPolicy?, combinedBlockId: CombinedBlockId) {
+      val isEditorBased = viewer.getDiffViewerForId(combinedBlockId)?.isEditorBased ?: false
       if (scrollPolicy == ScrollPolicy.SCROLL_TO_BLOCK || !isEditorBased) {
-        scrollToDiffBlock(index)
+        scrollToDiffBlock(combinedBlockId)
       }
       else if (scrollPolicy == ScrollPolicy.SCROLL_TO_CARET) {
         scrollToDiffChangeWithCaret()
@@ -632,12 +530,9 @@ class CombinedDiffViewer(
       }
     }
 
-    private fun scrollToDiffBlock(index: Int) {
-      if (viewer.getDiffViewerForIndex(index) != null) {
-        val bounds = viewer.blocksPanel.components.getOrNull(index)?.bounds ?: return
-        bounds.height = Int.MAX_VALUE
-        viewer.blocksPanel.scrollRectToVisible(bounds)
-      }
+    private fun scrollToDiffBlock(id: CombinedBlockId) {
+      val bounds = viewer.blocksPanel.getBoundsForBlock(id)
+      viewer.blocksPanel.scrollRectToVisible(Rectangle(0, bounds.minY, viewer.component.width, Int.MAX_VALUE))
     }
 
     inner class CombinedDiffPrevNextDifferenceIterable : PrevNextDifferenceIterable {
@@ -709,6 +604,56 @@ class CombinedDiffViewer(
   }
 }
 
+private fun runPreservingViewportContent(scroll: JBScrollPane, blocksPanel: CombinedDiffBlocksPanel, run: () -> Unit) {
+  val viewRect = scroll.viewport.viewRect
+
+  var anchorBlock: BlockBounds? = null
+  var diff = 0
+  var isTopBoundAnchor = false
+
+  for (block in blocksPanel.getBlockBounds()) {
+    val minY = block.minY
+    val maxY = block.maxY
+
+    if (maxY < viewRect.minY) {
+      // full block before the viewport
+      continue
+    }
+
+    if (minY == viewRect.minY.toInt()) {
+      anchorBlock = block
+      isTopBoundAnchor = true
+      break
+    }
+
+    if (maxY >= viewRect.minY && maxY <= viewRect.maxY) {
+      // the bottom of block in the viewport
+      anchorBlock = block
+      diff = (maxY - viewRect.minY).roundToInt()
+      break
+    }
+
+    if (maxY > viewRect.maxY && minY < viewRect.minY) {
+      // this block is larger than the viewport
+      anchorBlock = block
+      isTopBoundAnchor = true
+      diff = (minY - viewRect.minY).toInt()
+      break
+    }
+  }
+
+  run()
+
+  if (anchorBlock == null) return
+
+  val newViewRect = scroll.viewport.viewRect
+  val newBlockRect = blocksPanel.getBlockBounds().first { it.blockId == anchorBlock.blockId }
+
+  newViewRect.y = if (isTopBoundAnchor) newBlockRect.minY else newBlockRect.maxY
+  newViewRect.y -= diff
+  scroll.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
+}
+
 private val DiffViewer.editor: EditorEx?
   get() = when (this) {
     is OnesideTextDiffViewer -> editor
@@ -733,7 +678,59 @@ private val DiffViewer?.isEditorBased: Boolean
           this !is ThreesideBinaryDiffViewer &&
           this !is TwosideBinaryDiffViewer
 
-internal interface BlockListener : EventListener {
+private fun removeAdditionalLines(viewer: DiffViewer) {
+  viewer.editors.forEach { editor ->
+    editor.settings.additionalLinesCount = 0
+    (editor as? EditorImpl)?.resetSizes()
+  }
+}
+
+private fun Rectangle.intersects(bb: BlockBounds): Boolean = bb.minY >= minY && bb.minY <= maxY || bb.maxY >= minY && bb.maxY <= maxY
+
+interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)
   fun blocksVisible(blockIds: Collection<CombinedBlockId>)
+}
+
+internal interface BlockOrder {
+  fun iterateBlocks(): Iterable<CombinedBlockId>
+
+  val blocksCount: Int
+}
+
+private class BlockState(list: List<CombinedBlockId>, current: CombinedBlockId) : PrevNextDifferenceIterable, BlockOrder {
+  private val blocks: List<CombinedBlockId>
+
+  private val blockByIndex: MutableMap<CombinedBlockId, Int> = mutableMapOf()
+
+  var currentBlock: CombinedBlockId = current
+
+  init {
+    blocks = list.toList()
+    blocks.forEachIndexed { index, block ->
+      blockByIndex[block] = index
+    }
+  }
+
+  fun indexOf(blockId: CombinedBlockId): Int = blockByIndex[blockId]!!
+
+  override val blocksCount: Int
+    get() = blocks.size
+
+  override fun iterateBlocks(): Iterable<CombinedBlockId> = blocks.asIterable()
+
+  override fun canGoPrev(): Boolean = currentIndex > 0
+
+  override fun canGoNext(): Boolean = currentIndex < blocksCount - 1
+
+  override fun goPrev() {
+    currentBlock = blocks[this.currentIndex - 1]
+  }
+
+  override fun goNext() {
+    currentBlock = blocks[this.currentIndex + 1]
+  }
+
+  private val currentIndex: Int
+    get() = indexOf(currentBlock)
 }

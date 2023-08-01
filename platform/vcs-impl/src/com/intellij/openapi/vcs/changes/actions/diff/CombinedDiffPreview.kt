@@ -75,7 +75,7 @@ abstract class CombinedDiffPreview(protected val tree: ChangesTree,
   private fun installCombinedDiffModelListener() {
     tree.addPropertyChangeListener(TREE_MODEL_PROPERTY) {
       if (model.ourDisposable.isDisposed) return@addPropertyChangeListener
-
+      model.context.putUserData(COMBINED_DIFF_VIEWER_KEY, null)
       val changes = model.iterateAllChanges().toList()
       if (changes.isNotEmpty()) {
         model.refresh(true)

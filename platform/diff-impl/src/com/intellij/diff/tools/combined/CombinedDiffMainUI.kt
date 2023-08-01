@@ -298,24 +298,23 @@ class CombinedDiffMainUI(private val model: CombinedDiffModel, goToChangeFactory
   private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
     DifferencesLabel(goToChangeAction, leftToolbar.component) {
 
-    private val loadedDifferences = hashMapOf<Int, Int>()
+    private val loadedDifferences = hashMapOf<CombinedBlockId, Int>()
 
     override fun getFileCount(): Int = combinedViewer?.getDiffBlocksCount() ?: 0
     override fun getTotalDifferences(): Int = calculateTotalDifferences()
 
     fun countDifferences(blockId: CombinedBlockId, childViewer: DiffViewer) {
-      val combinedViewer = combinedViewer ?: return
-      val index = combinedViewer.getBlockIndex(blockId) ?: return
-
-      loadedDifferences[index] = 1
+      loadedDifferences[blockId] = 1
 
       if (childViewer is DiffViewerBase) {
         val listener = object : DiffViewerListener() {
           override fun onAfterRediff() {
-            loadedDifferences[index] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
+            loadedDifferences[blockId] = if (childViewer is DifferencesCounter) childViewer.getTotalDifferences() else 1
           }
         }
         childViewer.addListener(listener)
+
+
         Disposer.register(childViewer, Disposable { childViewer.removeListener(listener) })
       }
     }
