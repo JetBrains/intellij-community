@@ -10,16 +10,16 @@ import com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHelper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Stream;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.SpecializedFileAttributes.*;
+import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
@@ -45,9 +45,13 @@ public class SpecializedFileAttributesTest {
   private LongFileAttributeAccessor longAttributeAccessor;
   private LongFileAttributeAccessor longFastAttributeAccessor;
 
+  private Map<Path, MappedFileStorageHelper> registeredStoragesBefore;
+
 
   @BeforeEach
   public void setup(@TempDir Path tempDir) throws Exception {
+    registeredStoragesBefore = MappedFileStorageHelper.registeredStorages();
+    
     vfs = FSRecordsImpl.connect(tempDir);
 
     byteAttributeAccessor = specializeAsByte(vfs, TEST_BYTE_ATTRIBUTE);
@@ -66,7 +70,19 @@ public class SpecializedFileAttributesTest {
   @AfterEach
   public void tearDown() throws Exception {
     vfs.dispose();
-    assertEquals(0,MappedFileStorageHelper.storagesRegistered());
+
+    //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages
+    //    registered by them
+    Map<Path, MappedFileStorageHelper> registeredStoragesAfter = MappedFileStorageHelper.registeredStorages();
+    assertEquals(
+      registeredStoragesBefore,
+      registeredStoragesAfter,
+      "All storages opened during the test -- must be closed and de-registered during VFS close: \n" +
+      "before:" + registeredStoragesAfter.keySet().stream().map(p -> p.toString())
+        .collect(joining("\n\t", "\n", "\n")) +
+      "\nafter:" + registeredStoragesAfter.keySet().stream().map(p -> p.toString())
+        .collect(joining("\n\t", "\n", "\n"))
+    );
   }
 
   @ParameterizedTest(name = "fast: {0}")
@@ -172,5 +188,4 @@ public class SpecializedFileAttributesTest {
                    "Value written must be read back as is");
     }
   }
-
 }

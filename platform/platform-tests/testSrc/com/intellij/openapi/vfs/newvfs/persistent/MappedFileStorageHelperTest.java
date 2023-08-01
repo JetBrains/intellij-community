@@ -10,7 +10,9 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
+import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -26,8 +28,12 @@ public class MappedFileStorageHelperTest {
   private FSRecordsImpl vfs;
   private MappedFileStorageHelper storageHelper;
 
+  private Map<Path, MappedFileStorageHelper> registeredStoragesBefore;
+
   @BeforeEach
   public void setup(@TempDir Path vfsDir) throws IOException {
+    registeredStoragesBefore = MappedFileStorageHelper.registeredStorages();
+
     vfs = FSRecordsImpl.connect(vfsDir);
 
     storageHelper = openAndEnsureVersionsMatch(vfs);
@@ -42,10 +48,19 @@ public class MappedFileStorageHelperTest {
     storageHelper.close();
     vfs.dispose();
 
+
+    //RC: Can't just check for .isEmpty(): if running in the same process with other tests -- could be storages
+    //    registered by them
+    Map<Path, MappedFileStorageHelper> registeredStoragesAfter = MappedFileStorageHelper.registeredStorages();
     assertEquals(
-      0,
-      MappedFileStorageHelper.storagesRegistered(),
-      "All storages must be closed and de-registered on VFS close");
+      registeredStoragesBefore,
+      registeredStoragesAfter,
+      "All storages opened during the test -- must be closed and de-registered during VFS close: \n" +
+      "before:" + registeredStoragesAfter.keySet().stream().map(p -> p.toString())
+        .collect(joining("\n\t", "\n", "\n")) +
+      "\nafter:" + registeredStoragesAfter.keySet().stream().map(p -> p.toString())
+        .collect(joining("\n\t", "\n", "\n"))
+    );
   }
 
   private static @NotNull MappedFileStorageHelper openAndEnsureVersionsMatch(@NotNull FSRecordsImpl vfs) throws IOException {

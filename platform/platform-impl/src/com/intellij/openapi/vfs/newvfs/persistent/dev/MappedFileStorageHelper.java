@@ -114,8 +114,8 @@ public class MappedFileStorageHelper implements Closeable {
   }
 
   @VisibleForTesting
-  public static int storagesRegistered() {
-    return storagesRegistry.size();
+  public static Map<Path, MappedFileStorageHelper> registeredStorages(){
+    return storagesRegistry;
   }
 
   //MAYBE:
