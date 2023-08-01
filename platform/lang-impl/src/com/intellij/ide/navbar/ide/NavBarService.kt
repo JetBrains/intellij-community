@@ -5,6 +5,7 @@ import com.intellij.codeInsight.navigation.actions.navigateRequest
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.impl.ProjectNavBarItem
 import com.intellij.ide.navbar.impl.PsiNavBarItem
+import com.intellij.ide.navbar.impl.children
 import com.intellij.ide.navbar.impl.pathToItem
 import com.intellij.ide.navbar.ui.NewNavBarPanel
 import com.intellij.ide.navbar.ui.StaticNavBarPanel
@@ -75,7 +76,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
   fun createNavBarPanel(): JComponent {
     EDT.assertIsEdt()
     val provider: suspend (CoroutineScope, Window, JComponent) -> NavBarVm = { scope, window, component ->
-      NavBarVmImpl(scope, defaultModel(project), contextItems(window, component), ::requestNavigation)
+      NavBarVmImpl(scope, defaultModel(project), contextItems(window, component), ::requestNavigation) { it.children() }
     }
     return StaticNavBarPanel(project, cs, provider)
   }
@@ -99,7 +100,7 @@ internal class NavBarService(private val project: Project, cs: CoroutineScope) {
         defaultModel(project)
       }
       val barScope = this@launch
-      val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow(), ::requestNavigation)
+      val vm = NavBarVmImpl(cs = barScope, model, contextItems = emptyFlow(), ::requestNavigation) { it.children() }
       withContext(Dispatchers.EDT) {
         val component = NewNavBarPanel(barScope, vm, project, true)
         while (component.componentCount == 0) {
