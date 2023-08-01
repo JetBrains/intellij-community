@@ -8,7 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoaderKt;
+import com.intellij.openapi.util.IconPathPatcher;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -16,6 +19,7 @@ import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.SystemProperties;
+import kotlin.Pair;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -123,8 +127,8 @@ public abstract class ExperimentalUI {
     public static @NotNull List<IconModel> getData() {
       List<IconModel> result = new ArrayList<>(paths.size());
       for (Pair<String, ClassLoader> p : paths) {
-        String path = p.first;
-        ClassLoader classLoader = p.second != null ? p.second : NotPatchedIconRegistry.class.getClassLoader();
+        String path = p.getFirst();
+        ClassLoader classLoader = p.getSecond() != null ? p.getSecond() : NotPatchedIconRegistry.class.getClassLoader();
         Icon icon = IconLoaderKt.findIconUsingNewImplementation(path, classLoader, null);
         result.add(new IconModel(icon, path));
       }
@@ -138,7 +142,7 @@ public abstract class ExperimentalUI {
 
   @SuppressWarnings("unused")
   public static final class NewUiRegistryListener implements RegistryValueListener {
-    private boolean isApplicable() {
+    private static boolean isApplicable() {
       // JetBrains Client has custom listener
       return !PlatformUtils.isJetBrainsClient();
     }
@@ -185,9 +189,10 @@ public abstract class ExperimentalUI {
   }
 
   private @NotNull IconPathPatcher createPathPatcher() {
-    Map<ClassLoader, Map<String, String>> paths = getIconMappings();
-    boolean dumpNotPatchedIcons = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false);
     return new IconPathPatcher() {
+      private final Map<ClassLoader, Map<String, String>> paths = getIconMappings();
+      private final boolean dumpNotPatchedIcons = SystemProperties.getBooleanProperty("ide.experimental.ui.dump.not.patched.icons", false);
+
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
         Map<String, String> mappings = paths.get(classLoader);

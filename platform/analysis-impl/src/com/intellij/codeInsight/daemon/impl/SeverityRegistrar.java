@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -34,8 +34,6 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
    * Always first {@link HighlightDisplayLevel#DO_NOT_SHOW} must be skipped during navigation, editing settings, etc.
    */
   static final int SHOWN_SEVERITIES_OFFSET = 2;
-
-  private static final Logger LOG = Logger.getInstance(SeverityRegistrar.class);
 
   private static final Topic<Runnable> STANDARD_SEVERITIES_CHANGED_TOPIC = new Topic<>("standard severities changed", Runnable.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
@@ -298,7 +296,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
       map.put(severity, index);
     }
     if (map.size() != orderList.size()) {
-      LOG.error("Severities order list must contain unique severities but got: " + orderList);
+      Logger.getInstance(SeverityRegistrar.class).error("Severities order list must contain unique severities but got: " + orderList);
     }
     return Object2IntMaps.unmodifiable(map);
   }
@@ -388,8 +386,8 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
   Collection<@NotNull SeverityBasedTextAttributes> allRegisteredAttributes() {
     return Collections.unmodifiableCollection(myMap.values());
   }
-  @NotNull
-  public static Collection<HighlightInfoType> standardSeverities() {
+
+  public static @NotNull Collection<HighlightInfoType> standardSeverities() {
     return STANDARD_SEVERITIES.values();
   }
 }

@@ -16,20 +16,20 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.util.PlatformUtils
 
+private val LOG: Logger
+  get() = logger<ExperimentalUI>()
+
 /**
  * @author Konstantin Bulenkov
  */
 private class ExperimentalUIImpl : ExperimentalUI() {
-  companion object {
-    private val logger = logger<ExperimentalUI>()
-  }
-
   private var shouldApplyOnClose: Boolean? = null
 
   override fun getIconMappings(): Map<ClassLoader, Map<String, String>> = service<IconMapLoader>().loadIconMapping()
@@ -49,7 +49,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
    */
   override fun setNewUIInternal(newUI: Boolean, suggestRestart: Boolean) {
     if (newUI == NewUiValue.isEnabled()) {
-      logger.warn("Setting the same value $newUI")
+      LOG.warn("Setting the same value $newUI")
       return
     }
 
@@ -61,7 +61,8 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       if (suggestRestart) {
         shouldApplyOnClose = newUI
         showRestartDialog()
-      } else {
+      }
+      else {
         saveNewValue(newUI)
       }
     }
@@ -77,8 +78,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   fun appStarted() {
     if (isNewUI()) {
-      PropertiesComponent.getInstance()
-        .setValue(NEW_UI_USED_PROPERTY, true)
+      PropertiesComponent.getInstance().setValue(NEW_UI_USED_PROPERTY, true)
     }
   }
 
@@ -90,7 +90,9 @@ private class ExperimentalUIImpl : ExperimentalUI() {
   }
 
   private fun onValueChanged(isEnabled: Boolean) {
-    if (isEnabled) setNewUiUsed()
+    if (isEnabled) {
+      setNewUiUsed()
+    }
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
@@ -108,20 +110,21 @@ private class ExperimentalUIImpl : ExperimentalUI() {
     }
 
     // On the client, onValueChanged will not be called again as there's no real registry value change.
-    // Set the override before calling  resetLafSettingsToDefault to ensure correct LaF is chosen.
-    if (PlatformUtils.isJetBrainsClient())
+    // Set the override before calling resetLafSettingsToDefault to ensure the correct LaF is chosen.
+    if (PlatformUtils.isJetBrainsClient()) {
       NewUiValue.overrideNewUiForOneRemDevSession(isEnabled)
+    }
     resetLafSettingsToDefault()
   }
 
   private fun saveNewValue(enabled: Boolean) {
     try {
-      logger.info("Saving newUi=$enabled to registry")
+      LOG.info("Saving newUi=$enabled to registry")
       EarlyAccessRegistryManager.setBoolean(KEY, enabled)
       EarlyAccessRegistryManager.syncAndFlush()
     }
     catch (e: Throwable) {
-      logger.error(e)
+      LOG.error(e)
     }
   }
 
@@ -177,21 +180,17 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       ApplicationManagerEx.getApplicationEx().restart(true)
     }
   }
+}
 
-  private fun resetLafSettingsToDefault() {
-    val lafManager = LafManager.getInstance()
-    val defaultLightLaf = lafManager.defaultLightLaf
-    val defaultDarkLaf = lafManager.defaultDarkLaf
-    if (defaultLightLaf == null || defaultDarkLaf == null) {
-      return
-    }
-
-    val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
-    lafManager.currentLookAndFeel = laf
-    if (lafManager.autodetect) {
-      lafManager.setPreferredLightLaf(defaultLightLaf)
-      lafManager.setPreferredDarkLaf(defaultDarkLaf)
-    }
+private fun resetLafSettingsToDefault() {
+  val lafManager = LafManager.getInstance()
+  val defaultLightLaf = lafManager.defaultLightLaf ?: return
+  val defaultDarkLaf = lafManager.defaultDarkLaf ?: return
+  val laf = if (JBColor.isBright()) defaultLightLaf else defaultDarkLaf
+  lafManager.currentLookAndFeel = laf
+  if (lafManager.autodetect) {
+    lafManager.setPreferredLightLaf(defaultLightLaf)
+    lafManager.setPreferredDarkLaf(defaultDarkLaf)
   }
 }
 
