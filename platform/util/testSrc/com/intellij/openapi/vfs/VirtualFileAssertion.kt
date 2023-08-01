@@ -2,6 +2,8 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.openapi.util.io.FileAssertion
+import com.intellij.openapi.util.io.NioPathAssertion
+import java.nio.file.Path
 
 class VirtualFileAssertion : FileAssertion<VirtualFile, VirtualFileAssertion>() {
 
@@ -12,6 +14,11 @@ class VirtualFileAssertion : FileAssertion<VirtualFile, VirtualFileAssertion>() 
   override fun exists(file: VirtualFile) = file.exists()
   override fun isFile(file: VirtualFile) = file.isFile
   override fun isDirectory(file: VirtualFile) = file.isDirectory
+
+  suspend fun isNioPathEqualsTo(path: Path) = apply {
+    NioPathAssertion.assertNioPath { getFile()!!.toNioPath() }
+      .isEqualsTo { path }
+  }
 
   companion object {
 
