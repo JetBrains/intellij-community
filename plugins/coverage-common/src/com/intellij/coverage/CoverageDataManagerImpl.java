@@ -35,8 +35,9 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCloseListener;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.DoNotAskOption;
+import com.intellij.openapi.ui.MessageConstants;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.*;
@@ -56,12 +57,14 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Function;
 
 @State(name = "com.intellij.coverage.CoverageDataManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class CoverageDataManagerImpl extends CoverageDataManager implements Disposable, PersistentStateComponent<Element> {
@@ -359,27 +362,49 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   private int askMergeOption(@NotNull CoverageSuite suite, boolean canMergeSuites) {
     final CoverageOptionsProvider coverageOptionsProvider = CoverageOptionsProvider.getInstance(myProject);
-    final int[] options = canMergeSuites
-                          ? new int[]{CoverageOptionsProvider.ADD_SUITE, CoverageOptionsProvider.REPLACE_SUITE, CoverageOptionsProvider.IGNORE_SUITE}
-                          : new int[]{CoverageOptionsProvider.REPLACE_SUITE, CoverageOptionsProvider.IGNORE_SUITE};
-    final DialogWrapper.DoNotAskOption doNotAskOption = new DialogWrapper.DoNotAskOption.Adapter() {
+
+    Function<Integer, Integer> mapCode = (Integer exitCode) -> {
+      if (canMergeSuites) {
+        return switch (exitCode) {
+          case MessageConstants.YES -> CoverageOptionsProvider.REPLACE_SUITE;
+          case MessageConstants.NO -> CoverageOptionsProvider.ADD_SUITE;
+          default -> CoverageOptionsProvider.IGNORE_SUITE;
+        };
+      }
+      else {
+        return exitCode == 0 ? CoverageOptionsProvider.REPLACE_SUITE : CoverageOptionsProvider.IGNORE_SUITE;
+      }
+    };
+
+    var doNotAskOption = new DoNotAskOption.Adapter() {
       @Override
       public void rememberChoice(boolean isSelected, int exitCode) {
         if (isSelected) {
-          coverageOptionsProvider.setOptionsToReplace(options[exitCode]);
+          coverageOptionsProvider.setOptionsToReplace(mapCode.apply(exitCode));
         }
       }
     };
-    final String[] optionNames = Arrays.stream(options).mapToObj(CoverageDataManagerImpl::getSuiteReplaceOption).toArray(String[]::new);
-    final int answer = Messages.showDialog(suite.getProject(),
-                                           CoverageBundle.message("display.coverage.prompt", suite.getPresentableName()),
-                                           CoverageBundle.message("code.coverage"),
-                                           optionNames, 0, Messages.getQuestionIcon(),
-                                           doNotAskOption);
-    if (answer == -1) return CoverageOptionsProvider.IGNORE_SUITE;
-    return options[answer];
+    String title = CoverageBundle.message("code.coverage");
+    String message = CoverageBundle.message("display.coverage.prompt", suite.getPresentableName());
+    if (canMergeSuites) {
+      int result = MessageDialogBuilder.yesNoCancel(title, message)
+        .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
+        .noText(getSuiteReplaceOption(CoverageOptionsProvider.ADD_SUITE))
+        .cancelText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+        .doNotAsk(doNotAskOption)
+        .show(suite.getProject());
+      return mapCode.apply(result);
+    }
+    else {
+      return MessageDialogBuilder.yesNo(title, message)
+               .yesText(getSuiteReplaceOption(CoverageOptionsProvider.REPLACE_SUITE))
+               .noText(getSuiteReplaceOption(CoverageOptionsProvider.IGNORE_SUITE))
+               .doNotAsk(doNotAskOption)
+               .ask(suite.getProject()) ? CoverageOptionsProvider.REPLACE_SUITE : CoverageOptionsProvider.IGNORE_SUITE;
+    }
   }
 
+  @Nls
   private static String getSuiteReplaceOption(int optionCode) {
     return switch (optionCode) {
       case CoverageOptionsProvider.REPLACE_SUITE -> CoverageBundle.message("coverage.replace.active.suites");
@@ -511,7 +536,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
 
   @Override
   public <T> T doInReadActionIfProjectOpen(Computable<T> computation) {
-    synchronized(myLock) {
+    synchronized (myLock) {
       if (myIsProjectClosing) return null;
     }
     return ApplicationManager.getApplication().runReadAction(computation);
@@ -670,6 +695,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   private Alarm myRequestsAlarm = null;
+
   public static class CoverageEditorFactoryListener implements EditorFactoryListener {
     private final Map<Editor, Runnable> myCurrentEditors = new HashMap<>();
 
@@ -749,7 +775,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       return alarm;
     }
   }
-  
+
   public static class CoverageProjectManagerListener implements ProjectCloseListener {
     @Override
     public void projectClosing(@NotNull Project project) {
