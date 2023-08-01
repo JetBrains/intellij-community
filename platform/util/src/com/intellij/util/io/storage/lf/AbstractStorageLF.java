@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.util.io.storage;
+package com.intellij.util.io.storage.lf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -10,10 +10,8 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.io.DataOutputStream;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.StorageLockContext;
-import com.intellij.util.io.UnsyncByteArrayInputStream;
+import com.intellij.util.io.*;
+import com.intellij.util.io.storage.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,19 +25,19 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 
-public abstract class AbstractStorage implements IStorage {
+public abstract class AbstractStorageLF implements IStorage {
   public static final StorageLockContext SHARED = new StorageLockContext(true, true);
   public static final int PAGE_SIZE = SystemProperties.getIntProperty("idea.io.page.size", 8 * 1024);
 
-  protected static final Logger LOG = Logger.getInstance(AbstractStorage.class);
+  protected static final Logger LOG = Logger.getInstance(AbstractStorageLF.class);
 
   public static final @NonNls String INDEX_EXTENSION = ".storageRecordIndex";
   public static final @NonNls String DATA_EXTENSION = ".storageData";
 
-  protected AbstractRecordsTable myRecordsTable;
-  protected DataTable myDataTable;
-  protected StorageLockContext myContext;
-  private final CapacityAllocationPolicy myCapacityAllocationPolicy;
+  protected IRecordsTable recordsTable;
+  protected IDataTable dataTable;
+  protected StorageLockContext context;
+  private final CapacityAllocationPolicy capacityAllocationPolicy;
 
   public static boolean deleteFiles(String storageFilePath) {
     final File recordsFile = new File(storageFilePath + INDEX_EXTENSION);
@@ -71,24 +69,24 @@ public abstract class AbstractStorage implements IStorage {
     return deletedRecordsFile && deletedDataFile;
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath) throws IOException {
+  protected AbstractStorageLF(@NotNull Path storageFilePath) throws IOException {
     this(storageFilePath, SHARED);
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
+  protected AbstractStorageLF(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
     this(storageFilePath, context, CapacityAllocationPolicy.DEFAULT);
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath,
-                            CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+  protected AbstractStorageLF(@NotNull Path storageFilePath,
+                              CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
     this(storageFilePath, SHARED, capacityAllocationPolicy);
   }
 
-  protected AbstractStorage(@NotNull Path storageFilePath,
-                            @NotNull StorageLockContext context,
-                            @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
-    myCapacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
-                                                                  : CapacityAllocationPolicy.DEFAULT;
+  protected AbstractStorageLF(@NotNull Path storageFilePath,
+                              @NotNull StorageLockContext context,
+                              @Nullable CapacityAllocationPolicy capacityAllocationPolicy) throws IOException {
+    this.capacityAllocationPolicy = capacityAllocationPolicy != null ? capacityAllocationPolicy
+                                                                     : CapacityAllocationPolicy.DEFAULT;
     tryInit(storageFilePath, context, 0);
   }
 
@@ -116,11 +114,11 @@ public abstract class AbstractStorage implements IStorage {
       createOrTruncateFile(dataFile);
     }
 
-    AbstractRecordsTable recordsTable = null;
-    DataTable dataTable;
+    IRecordsTable recordsTable = null;
+    IDataTable dataTable;
     try {
       recordsTable = createRecordsTable(context, recordsFile);
-      dataTable = new DataTable(dataFile, context);
+      dataTable = createDataTable(context, dataFile);
     }
     catch (IOException e) {
       LOG.info(e.getMessage());
@@ -140,21 +138,26 @@ public abstract class AbstractStorage implements IStorage {
       return;
     }
 
-    myRecordsTable = recordsTable;
-    myDataTable = dataTable;
-    myContext = context;
+    this.recordsTable = recordsTable;
+    this.dataTable = dataTable;
+    this.context = context;
 
-    if (myDataTable.isCompactNecessary()) {
+    if (this.dataTable.isCompactNecessary()) {
       compact(storageFilePath);
     }
   }
 
-  protected abstract AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile)
-    throws IOException;
+
+  private static @NotNull IDataTable createDataTable(@NotNull StorageLockContext context,
+                                                     @NotNull Path dataFile) throws IOException {
+    return new DataTableLF(dataFile, context);
+  }
+
+  protected abstract IRecordsTable createRecordsTable(@NotNull StorageLockContext context, @NotNull Path recordsFile) throws IOException;
 
   private void compact(@NotNull Path path) {
     withWriteLock(() -> {
-      LOG.info("Space waste in " + path + " is " + myDataTable.getWaste() + " bytes. Compacting now.");
+      LOG.info("Space waste in " + path + " is " + dataTable.getWaste() + " bytes. Compacting now.");
       long start = System.currentTimeMillis();
 
       try {
@@ -164,32 +167,32 @@ public abstract class AbstractStorage implements IStorage {
         createOrTruncateFile(newDataFile);
 
         Path oldDataFile = parentDir.resolve(path.getFileName() + DATA_EXTENSION);
-        DataTable newDataTable = new DataTable(newDataFile, myContext);
+        IDataTable newDataTable = createDataTable(context, newDataFile);
 
-        RecordIdIterator recordIterator = myRecordsTable.createRecordIdIterator();
+        RecordIdIterator recordIterator = recordsTable.createRecordIdIterator();
         while (recordIterator.hasNextId()) {
           final int recordId = recordIterator.nextId();
-          final long addr = myRecordsTable.getAddress(recordId);
-          final int size = myRecordsTable.getSize(recordId);
+          final long addr = recordsTable.getAddress(recordId);
+          final int size = recordsTable.getSize(recordId);
 
           if (size > 0) {
             assert addr > 0;
 
-            final int capacity = myCapacityAllocationPolicy.calculateCapacity(size);
+            final int capacity = capacityAllocationPolicy.calculateCapacity(size);
             final long newaddr = newDataTable.allocateSpace(capacity);
             final byte[] bytes = new byte[size];
-            myDataTable.readBytes(addr, bytes);
+            dataTable.readBytes(addr, bytes);
             newDataTable.writeBytes(newaddr, bytes);
-            myRecordsTable.setAddress(recordId, newaddr);
-            myRecordsTable.setCapacity(recordId, capacity);
+            recordsTable.setAddress(recordId, newaddr);
+            recordsTable.setCapacity(recordId, capacity);
           }
         }
 
-        myDataTable.close();
+        dataTable.close();
         newDataTable.close();
 
         Files.move(newDataFile, oldDataFile, StandardCopyOption.REPLACE_EXISTING);
-        myDataTable = new DataTable(oldDataFile, myContext);
+        dataTable = createDataTable(context, oldDataFile);
       }
       catch (IOException e) {
         LOG.info("Compact failed", e);
@@ -207,46 +210,40 @@ public abstract class AbstractStorage implements IStorage {
   @Override
   public int getVersion() throws IOException {
     return withReadLock(() -> {
-      return myRecordsTable.getVersion();
+      return recordsTable.getVersion();
     });
   }
 
   @Override
   public void setVersion(int expectedVersion) throws IOException {
     withWriteLock(() -> {
-      myRecordsTable.setVersion(expectedVersion);
+      recordsTable.setVersion(expectedVersion);
     });
   }
 
   @Override
   public void force() throws IOException {
     withWriteLock(() -> {
-      myDataTable.force();
-      myRecordsTable.force();
+      dataTable.force();
+      recordsTable.force();
     });
   }
 
   @Override
   public boolean isDirty() {
-    return myDataTable.isDirty() || myRecordsTable.isDirty();
+    return dataTable.isDirty() || recordsTable.isDirty();
   }
 
   @Override
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
-    return withReadLock(() -> myRecordsTable.getLiveRecordsCount());
+    return withReadLock(() -> recordsTable.getLiveRecordsCount());
   }
 
   @Override
   @TestOnly
   public RecordIdIterator createRecordIdIterator() throws IOException {
-    myRecordsTable.myStorage.lockWrite();
-    try {
-      return myRecordsTable.createRecordIdIterator();
-    }
-    finally {
-      myRecordsTable.myStorage.unlockWrite();
-    }
+    return recordsTable.createRecordIdIterator();
   }
 
   @Override
@@ -272,13 +269,13 @@ public abstract class AbstractStorage implements IStorage {
 
   protected byte[] readBytes(int record) throws IOException {
     return withReadLock(() -> {
-      final int length = myRecordsTable.getSize(record);
-      if (length == 0 || AbstractRecordsTable.isSizeOfRemovedRecord(length)) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+      final int length = recordsTable.getSize(record);
+      if (length == 0 || AbstractRecordsTableLF.isSizeOfRemovedRecord(length)) return ArrayUtilRt.EMPTY_BYTE_ARRAY;
       assert length > 0 : length;
 
-      final long address = myRecordsTable.getAddress(record);
+      final long address = recordsTable.getAddress(record);
       byte[] result = new byte[length];
-      myDataTable.readBytes(address, result);
+      dataTable.readBytes(address, result);
       return result;
     });
   }
@@ -287,8 +284,8 @@ public abstract class AbstractStorage implements IStorage {
     final int delta = bytes.getLength();
     if (delta == 0) return;
     withWriteLock(() -> {
-      int capacity = myRecordsTable.getCapacity(record);
-      int oldSize = myRecordsTable.getSize(record);
+      int capacity = recordsTable.getCapacity(record);
+      int oldSize = recordsTable.getSize(record);
       int newSize = oldSize + delta;
       if (newSize > capacity) {
         if (oldSize > 0) {
@@ -302,9 +299,9 @@ public abstract class AbstractStorage implements IStorage {
         }
       }
       else {
-        long address = myRecordsTable.getAddress(record) + oldSize;
-        myDataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
-        myRecordsTable.setSize(record, newSize);
+        long address = recordsTable.getAddress(record) + oldSize;
+        dataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
+        recordsTable.setSize(record, newSize);
       }
     });
   }
@@ -313,52 +310,52 @@ public abstract class AbstractStorage implements IStorage {
   public void writeBytes(int record, @NotNull ByteArraySequence bytes, boolean fixedSize) throws IOException {
     withWriteLock(() -> {
       final int requiredLength = bytes.getLength();
-      final int currentCapacity = myRecordsTable.getCapacity(record);
+      final int currentCapacity = recordsTable.getCapacity(record);
 
-      final int currentSize = myRecordsTable.getSize(record);
+      final int currentSize = recordsTable.getSize(record);
       assert currentSize >= 0;
 
       if (requiredLength == 0 && currentSize == 0) return;
 
       final long address;
       if (currentCapacity >= requiredLength) {
-        address = myRecordsTable.getAddress(record);
+        address = recordsTable.getAddress(record);
       }
       else {
-        myDataTable.reclaimSpace(currentCapacity);
+        dataTable.reclaimSpace(currentCapacity);
 
-        int newCapacity = fixedSize ? requiredLength : myCapacityAllocationPolicy.calculateCapacity(requiredLength);
+        int newCapacity = fixedSize ? requiredLength : capacityAllocationPolicy.calculateCapacity(requiredLength);
         if (newCapacity < requiredLength) newCapacity = requiredLength;
-        address = myDataTable.allocateSpace(newCapacity);
-        myRecordsTable.setAddress(record, address);
-        myRecordsTable.setCapacity(record, newCapacity);
+        address = dataTable.allocateSpace(newCapacity);
+        recordsTable.setAddress(record, address);
+        recordsTable.setCapacity(record, newCapacity);
       }
 
-      myDataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
-      myRecordsTable.setSize(record, requiredLength);
+      dataTable.writeBytes(address, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
+      recordsTable.setSize(record, requiredLength);
     });
   }
 
   protected void doDeleteRecord(int record) throws IOException {
-    myDataTable.reclaimSpace(myRecordsTable.getCapacity(record));
-    myRecordsTable.deleteRecord(record);
+    dataTable.reclaimSpace(recordsTable.getCapacity(record));
+    recordsTable.deleteRecord(record);
   }
 
   @Override
   public void dispose() {
     withWriteLock(() -> {
-      IOUtil.closeSafe(LOG, myRecordsTable);
-      IOUtil.closeSafe(LOG, myDataTable);
+      IOUtil.closeSafe(LOG, recordsTable);
+      IOUtil.closeSafe(LOG, dataTable);
     });
   }
 
   @Override
   public void checkSanity(final int record) throws IOException {
     withReadLock(() -> {
-      final int size = myRecordsTable.getSize(record);
-      final int capacity = myRecordsTable.getCapacity(record);
-      final long address = myRecordsTable.getAddress(record);
-      final long dataFileSize = myDataTable.getFileSize();
+      final int size = recordsTable.getSize(record);
+      final int capacity = recordsTable.getCapacity(record);
+      final long address = recordsTable.getAddress(record);
+      final long dataFileSize = dataTable.getFileSize();
       assert size >= 0 : "[#" + record + "]: size(=" + size + ") must not be negative";
       assert capacity >= 0 : "[#" + record + "]: capacity(=" + capacity + ") -- must NOT be negative";
       assert address >= 0 : "[#" + record + "]: address(=" + address + ") must not be negative";
@@ -373,24 +370,24 @@ public abstract class AbstractStorage implements IStorage {
     withWriteLock(() -> {
       final int changedBytesLength = bytes.getLength();
 
-      final int currentSize = myRecordsTable.getSize(record);
+      final int currentSize = recordsTable.getSize(record);
       assert currentSize >= 0;
       assert offset + bytes.getLength() <= currentSize;
 
       if (changedBytesLength == 0) return;
 
-      final long address = myRecordsTable.getAddress(record);
+      final long address = recordsTable.getAddress(record);
 
-      myDataTable.writeBytes(address + offset, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
+      dataTable.writeBytes(address + offset, bytes.getInternalBuffer(), bytes.getOffset(), bytes.getLength());
     });
   }
 
   public static final class StorageDataOutput extends DataOutputStream implements IStorageDataOutput {
-    private final AbstractStorage myStorage;
+    private final AbstractStorageLF myStorage;
     private final int myRecordId;
     private final boolean myFixedSize;
 
-    private StorageDataOutput(AbstractStorage storage, int recordId, boolean fixedSize) {
+    private StorageDataOutput(AbstractStorageLF storage, int recordId, boolean fixedSize) {
       super(new BufferExposingByteArrayOutputStream());
       myStorage = storage;
       myRecordId = recordId;
@@ -445,18 +442,18 @@ public abstract class AbstractStorage implements IStorage {
   }
 
   protected <T, E extends Throwable> T withReadLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    return ConcurrencyUtil.withLock(myContext.readLock(), runnable);
+    return ConcurrencyUtil.withLock(context.readLock(), runnable);
   }
 
   protected <E extends Throwable> void withReadLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    ConcurrencyUtil.withLock(myContext.readLock(), runnable);
+    ConcurrencyUtil.withLock(context.readLock(), runnable);
   }
 
   protected <T, E extends Throwable> T withWriteLock(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    return ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
+    return ConcurrencyUtil.withLock(context.writeLock(), runnable);
   }
 
   protected <E extends Throwable> void withWriteLock(@NotNull ThrowableRunnable<E> runnable) throws E {
-    ConcurrencyUtil.withLock(myContext.writeLock(), runnable);
+    ConcurrencyUtil.withLock(context.writeLock(), runnable);
   }
 }

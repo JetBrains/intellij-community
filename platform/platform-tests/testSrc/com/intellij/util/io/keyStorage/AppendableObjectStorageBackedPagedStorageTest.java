@@ -4,19 +4,29 @@ package com.intellij.util.io.keyStorage;
 
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.BlobStorageTestBase;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.StorageLockContext;
 import org.jetbrains.annotations.NotNull;
+import org.junit.BeforeClass;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static org.junit.Assume.assumeTrue;
+
 public class AppendableObjectStorageBackedPagedStorageTest extends AppendableObjectStorageTestBase<String> {
 
   public static final int PAGE_SIZE = 1024;
 
   private final StorageLockContext context = new StorageLockContext(true, true, false);
+
+  @BeforeClass
+  public static void checkLockFreeEnabled() {
+    assumeTrue("Can't test lock-free storage if LOCK_FREE_VFS_ENABLED=false",
+               PageCacheUtils.LOCK_FREE_VFS_ENABLED);
+  }
 
   @Override
   protected @NotNull AppendableObjectStorage<String> createStorage(Path path) throws IOException {

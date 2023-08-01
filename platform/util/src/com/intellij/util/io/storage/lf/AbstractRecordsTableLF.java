@@ -1,10 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.util.io.storage;
+package com.intellij.util.io.storage.lf;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.CorruptedException;
-import com.intellij.util.io.PagedFileStorage;
+import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.StorageLockContext;
+import com.intellij.util.io.pagecache.PagedStorage;
+import com.intellij.util.io.pagecache.PagedStorageWithPageUnalignedAccess;
+import com.intellij.util.io.storage.AbstractStorage;
+import com.intellij.util.io.storage.IRecordsTable;
+import com.intellij.util.io.storage.RecordIdIterator;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -16,14 +21,14 @@ import java.nio.file.Path;
 /**
  * Table of indirect addressing, logically contains tuples (id, address, size, capacity), do
  * the mapping id -> (address, size, capacity), and stores tuples as fixed-size records on
- * the top of {@link PagedFileStorage}.
+ * the top of {@link PagedStorage}.
  * <br>
  * Subclasses could add fields to the tuple, and implement more efficient storage formats.
  * <br>
- * Thread safety is unclear: some methods are protected against concurrent access, some are not.
+ * TODO Thread safety is unclear: some methods are protected against concurrent access, some are not.
  */
-public abstract class AbstractRecordsTable implements IRecordsTable {
-  private static final Logger LOG = Logger.getInstance(AbstractRecordsTable.class);
+public abstract class AbstractRecordsTableLF implements IRecordsTable {
+  private static final Logger LOG = Logger.getInstance(AbstractRecordsTableLF.class);
 
   private static final int HEADER_MAGIC_OFFSET = 0;
   private static final int HEADER_VERSION_OFFSET = 4;
@@ -39,29 +44,46 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
 
   protected static final int DEFAULT_RECORD_SIZE = CAPACITY_OFFSET + 4;
 
-  protected final PagedFileStorage myStorage;
-
-  private IntList myFreeRecordsList = null;
-  private boolean myIsDirty = false;
   protected static final int SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD = -1;
 
-  public AbstractRecordsTable(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
-    myStorage = new PagedFileStorage(storageFilePath, context, getPageSize(), areDataAlignedToPage(), false);
-    myStorage.lockWrite();
-    try {
-    if (myStorage.length() == 0) {
-      myStorage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
+
+  protected final PagedStorage storage;
+
+  private IntList freeRecordsList = null;
+  private boolean isDirty = false;
+
+
+  public AbstractRecordsTableLF(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
+    PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
+      storageFilePath,
+      context,
+      getPageSize(),
+      false,
+      context.lockingStrategyWithGlobalLock()
+    );
+    if (areDataAlignedToPage()) {
+      this.storage = storage;
+    }
+    else {
+      this.storage = new PagedStorageWithPageUnalignedAccess(storage);
+    }
+
+    if (this.storage.length() == 0) {
+      this.storage.put(0, new byte[getHeaderSize()], 0, getHeaderSize());
       markDirty();
     }
     else {
-      if (myStorage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
-          myStorage.close();
-          throw new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
+      if (this.storage.getInt(HEADER_MAGIC_OFFSET) != getSafelyClosedMagic()) {
+        final IOException ioError =
+          new IOException("Records table for '" + storageFilePath + "' haven't been closed correctly. Rebuild required.");
+        try {
+          this.storage.close();
         }
+        catch (IOException ioe) {
+          ioError.addSuppressed(ioe);
         }
+        throw ioError;
       }
-    finally {
-      myStorage.unlockWrite();
     }
   }
 
@@ -97,7 +119,7 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
       int result = getRecordsCount() + 1;
       doCleanRecord(result);
       if (getRecordsCount() != result) {
-        LOG.error("Failed to correctly allocate new record in: " + myStorage);
+        LOG.error("Failed to correctly allocate new record in: " + storage);
       }
       return result;
     }
@@ -111,17 +133,17 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
 
   private int reserveFreeRecord() throws IOException {
     ensureFreeRecordsScanned();
-    synchronized (myFreeRecordsList) {
-      return myFreeRecordsList.isEmpty() ? -1 : myFreeRecordsList.removeInt(myFreeRecordsList.size() - 1);
+    synchronized (freeRecordsList) {
+      return freeRecordsList.isEmpty() ? -1 : freeRecordsList.removeInt(freeRecordsList.size() - 1);
     }
   }
 
   @Override
   public int getRecordsCount() throws IOException {
-    int recordsLength = (int)myStorage.length() - getHeaderSize();
+    int recordsLength = (int)storage.length() - getHeaderSize();
     if ((recordsLength % getRecordSize()) != 0) {
       throw new CorruptedException(
-        "Corrupted records: storageLength="+myStorage.length()+" recordsLength="+recordsLength+" recordSize="+getRecordSize()
+        "Corrupted records: storageLength=" + storage.length() + " recordsLength=" + recordsLength + " recordSize=" + getRecordSize()
       );
     }
     return recordsLength / getRecordSize();
@@ -156,12 +178,12 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
   @TestOnly
   public int getLiveRecordsCount() throws IOException {
     ensureFreeRecordsScanned();
-    return getRecordsCount() - myFreeRecordsList.size();
+    return getRecordsCount() - freeRecordsList.size();
   }
 
   private void ensureFreeRecordsScanned() throws IOException {
-    if (myFreeRecordsList == null) {
-      myFreeRecordsList = scanForFreeRecords();
+    if (freeRecordsList == null) {
+      freeRecordsList = scanForFreeRecords();
     }
   }
 
@@ -176,40 +198,40 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
   }
 
   private void doCleanRecord(int record) throws IOException {
-    myStorage.put(getOffset(record, 0), getZeros(), 0, getRecordSize());
+    storage.put(getOffset(record, 0), getZeros(), 0, getRecordSize());
   }
 
   @Override
   public long getAddress(int record) throws IOException {
-    return myStorage.getLong(getOffset(record, ADDRESS_OFFSET));
+    return storage.getLong(getOffset(record, ADDRESS_OFFSET));
   }
 
   @Override
   public void setAddress(int record, long address) throws IOException {
     markDirty();
-    myStorage.putLong(getOffset(record, ADDRESS_OFFSET), address);
+    storage.putLong(getOffset(record, ADDRESS_OFFSET), address);
   }
 
   @Override
   public int getSize(int record) throws IOException {
-    return myStorage.getInt(getOffset(record, SIZE_OFFSET));
+    return storage.getInt(getOffset(record, SIZE_OFFSET));
   }
 
   @Override
   public void setSize(int record, int size) throws IOException {
     markDirty();
-    myStorage.putInt(getOffset(record, SIZE_OFFSET), size);
+    storage.putInt(getOffset(record, SIZE_OFFSET), size);
   }
 
   @Override
   public int getCapacity(int record) throws IOException {
-    return myStorage.getInt(getOffset(record, CAPACITY_OFFSET));
+    return storage.getInt(getOffset(record, CAPACITY_OFFSET));
   }
 
   @Override
   public void setCapacity(int record, int capacity) throws IOException {
     markDirty();
-    myStorage.putInt(getOffset(record, CAPACITY_OFFSET), capacity);
+    storage.putInt(getOffset(record, CAPACITY_OFFSET), capacity);
   }
 
   protected int getOffset(int record, int section) {
@@ -231,49 +253,49 @@ public abstract class AbstractRecordsTable implements IRecordsTable {
     ensureFreeRecordsScanned();
     doCleanRecord(record);
     setSize(record, SPECIAL_NEGATIVE_SIZE_FOR_REMOVED_RECORD);
-    myFreeRecordsList.add(record);
+    freeRecordsList.add(record);
   }
 
   @Override
   public int getVersion() throws IOException {
-    return myStorage.getInt(HEADER_VERSION_OFFSET);
+    return storage.getInt(HEADER_VERSION_OFFSET);
   }
 
   @Override
   public void setVersion(final int expectedVersion) throws IOException {
     markDirty();
-    myStorage.putInt(HEADER_VERSION_OFFSET, expectedVersion);
+    storage.putInt(HEADER_VERSION_OFFSET, expectedVersion);
   }
 
   @Override
   public void close() throws IOException {
     markClean();
-    myStorage.close();
+    storage.close();
   }
 
   @Override
   public void force() throws IOException {
     markClean();
-    myStorage.force();
+    storage.force();
   }
 
   @Override
   public boolean isDirty() {
-    return myIsDirty || myStorage.isDirty();
+    return isDirty || storage.isDirty();
   }
 
   @Override
   public void markDirty() throws IOException {
-    if (!myIsDirty) {
-      myIsDirty = true;
-      myStorage.putInt(HEADER_MAGIC_OFFSET, DIRTY_MAGIC);
+    if (!isDirty) {
+      isDirty = true;
+      storage.putInt(HEADER_MAGIC_OFFSET, DIRTY_MAGIC);
     }
   }
 
   private void markClean() throws IOException {
-    if (myIsDirty) {
-      myIsDirty = false;
-      myStorage.putInt(HEADER_MAGIC_OFFSET, getSafelyClosedMagic());
+    if (isDirty) {
+      isDirty = false;
+      storage.putInt(HEADER_MAGIC_OFFSET, getSafelyClosedMagic());
     }
   }
 

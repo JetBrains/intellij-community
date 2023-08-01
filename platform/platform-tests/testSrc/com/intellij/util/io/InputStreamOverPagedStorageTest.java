@@ -9,6 +9,8 @@ import org.junit.Before;
 import java.io.IOException;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static org.junit.Assume.assumeTrue;
+
 public class InputStreamOverPagedStorageTest extends InputStreamOverPagedStorageTestBase {
 
   private static final StorageLockContext CONTEXT = new StorageLockContext(true, true, false);
@@ -18,6 +20,7 @@ public class InputStreamOverPagedStorageTest extends InputStreamOverPagedStorage
 
   @Before
   public void setUp() throws Exception {
+    assumeTrue("Can't test lock-free storage if LOCK_FREE_VFS_ENABLED=false", PageCacheUtils.LOCK_FREE_VFS_ENABLED);
     storageLock = new ReentrantReadWriteLock();
     storage = new PagedFileStorageWithRWLockedPageContent(
       temporaryFolder.newFile().toPath(),

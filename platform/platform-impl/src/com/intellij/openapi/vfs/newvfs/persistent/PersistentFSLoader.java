@@ -22,6 +22,7 @@ import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.*;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
+import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -659,12 +660,22 @@ public final class PersistentFSLoader {
   private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile,
                                                                                      boolean useContentHashes) throws IOException {
     // sources usually zipped with 4x ratio
-    return new RefCountingContentStorageImpl(
-      contentsFile,
-      CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
-      SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
-      useContentHashes
-    );
+    if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
+      return new RefCountingContentStorageImplLF(
+        contentsFile,
+        CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
+        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
+        useContentHashes
+      );
+    }
+    else {
+      return new RefCountingContentStorageImpl(
+        contentsFile,
+        CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
+        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
+        useContentHashes
+      );
+    }
   }
 
   public static @NotNull ContentHashEnumerator createContentHashStorage(@NotNull Path contentsHashesFile) throws IOException {
