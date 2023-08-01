@@ -46,7 +46,7 @@ public final class TextMateSelectorLexer {
           result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
         }
         else if (c == 'L') {
-          result.add(new PriorityToken(TextMateWeigh.Priority.LOW));
+          result.add(new PriorityToken(TextMateWeigh.Priority.HIGH));
         }
       }
       else {
