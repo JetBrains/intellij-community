@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
 import com.intellij.icons.AllIcons;
@@ -48,6 +48,7 @@ public class DaemonsUi implements Disposable {
   private final ListTableModel<DaemonState> myTableModel;
   private final RefreshAction myRefreshAction;
   private final StopAllAction myStopAllAction;
+  private final StopWhenIdleAllAction myStopWhenIdleAllAction;
   private final StopSelectedAction myStopSelectedAction;
   private final JTextArea myDescriptionLabel;
 
@@ -58,6 +59,7 @@ public class DaemonsUi implements Disposable {
   public DaemonsUi(Project project) {
     myProject = project;
     myRefreshAction = new RefreshAction();
+    myStopWhenIdleAllAction = new StopWhenIdleAllAction();
     myStopAllAction = new StopAllAction();
     myStopSelectedAction = new StopSelectedAction();
     myContent = new JBLoadingPanel(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP), myProject);
@@ -285,6 +287,27 @@ public class DaemonsUi implements Disposable {
     }
   }
 
+  private class StopWhenIdleAllAction extends AbstractAction {
+    StopWhenIdleAllAction() {
+      super(GradleBundle.message("gradle.daemons.stopWhenIdle.all"));
+      setEnabled(false);
+    }
+
+    @Override
+    public boolean isEnabled() {
+      return ContainerUtil.exists(myTableModel.getItems(), state -> state.getToken() != null && !"Stopped".equals(state.getStatus()));
+    }
+
+    @Override
+    public void actionPerformed(@NotNull ActionEvent e) {
+      GradleActionsUsagesCollector.trigger(myProject, GradleActionsUsagesCollector.GRACEFUL_STOP_ALL_DAEMONS);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        GradleDaemonServices.gracefulStopDaemons();
+        updateDaemonsList();
+      });
+    }
+  }
+
   private class MyDialogWrapper extends DialogWrapper {
     {
       setTitle(GradleBundle.message("gradle.daemons.gradle.daemons"));
@@ -340,7 +363,7 @@ public class DaemonsUi implements Disposable {
 
     @Override
     protected Action @NotNull [] createActions() {
-      return new Action[]{myStopAllAction, myStopSelectedAction, myCloseAction};
+      return new Action[]{myStopWhenIdleAllAction, myStopAllAction, myStopSelectedAction, myCloseAction};
     }
 
     @Override
@@ -363,6 +386,7 @@ public class DaemonsUi implements Disposable {
     public void invalidateActions() {
       myStopSelectedAction.setEnabled(myStopSelectedAction.isEnabled());
       myStopAllAction.setEnabled(myStopAllAction.isEnabled());
+      myStopWhenIdleAllAction.setEnabled(myStopWhenIdleAllAction.isEnabled());
     }
   }
 }

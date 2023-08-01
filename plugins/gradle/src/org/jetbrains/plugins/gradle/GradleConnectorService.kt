@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.Service.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
@@ -14,9 +16,11 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.task.RunConfigurationTaskState
+import org.gradle.initialization.BuildCancellationToken
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
+import org.gradle.tooling.internal.consumer.CancellationTokenInternal
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
@@ -36,9 +40,10 @@ import java.util.function.Function
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-@Service
+@Service(Level.PROJECT)
 internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : Disposable {
   private val connectorsMap = ConcurrentHashMap<String, GradleProjectConnection>()
+  private val cancellationTokens = ConcurrentCollectionFactory.createConcurrentSet<BuildCancellationToken>()
 
   @Volatile
   private var shutdownStarted = false
@@ -54,11 +59,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
 
   override fun dispose() {
     if (ApplicationManager.getApplication().isUnitTestMode) return
-    if (!shutdownStarted) {
-      // do not call Gradle connector disconnect API when IDE app exit is called during VM shutdown
-      // otherwise Gradle call might lead to adding a new shutdown hook but it's prohibited when shutdown is already started
-      disconnectGradleConnections()
-    }
+    disconnectGradleConnections()
     stopIdleDaemonsOfOldVersions()
   }
 
@@ -82,7 +83,25 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
   }
 
   private fun disconnectGradleConnections() {
-    connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+    if (!shutdownStarted) {
+      // do not call Gradle connector disconnect API when IDE app exit is called during VM shutdown
+      // otherwise Gradle call might lead to adding a new shutdown hook, but it's prohibited when shutdown is already started
+      connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+    }
+    else {
+      cancellationTokens.forEach {
+        if (!it.isCancellationRequested) {
+          try {
+            it.cancel()
+          }
+          catch (t : Throwable) {
+            LOG.warn("Failed to cancel build", t)
+          }
+        }
+      }
+      GradleDaemonServices.gracefulStopDaemons()
+    }
+    cancellationTokens.clear()
     connectorsMap.clear()
   }
 
@@ -199,12 +218,19 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
       )
       val connectionService = getInstance(projectPath, taskId)
       if (connectionService != null) {
-        val connection = connectionService.getConnection(connectionParams, taskId, listener)
-        return if (connection is NonClosableConnection) {
-          function.apply(connection)
+        val buildCancellationToken = (cancellationToken as? CancellationTokenInternal)?.token
+        buildCancellationToken?.let { connectionService.cancellationTokens.add(it) }
+        try {
+          val connection = connectionService.getConnection(connectionParams, taskId, listener)
+          return if (connection is NonClosableConnection) {
+            function.apply(connection)
+          }
+          else {
+            connection.use(function::apply)
+          }
         }
-        else {
-          connection.use(function::apply)
+        finally {
+          buildCancellationToken?.let { connectionService.cancellationTokens.remove(it) }
         }
       }
       else {
