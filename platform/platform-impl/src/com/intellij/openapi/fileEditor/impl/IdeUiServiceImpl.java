@@ -43,7 +43,7 @@ import java.net.URLConnection;
 import java.nio.file.Path;
 import java.util.List;
 
-public final class IdeUiServiceImpl extends IdeUiService {
+public class IdeUiServiceImpl extends IdeUiService {
   @Override
   public void revealFile(Path file) {
     RevealFileAction.openFile(file);
