@@ -15,8 +15,8 @@ interface GradleExecutionStageHandler {
 
   fun onTaskGraphCalculated(duration: Long)
 
-  fun onTaskFinished(task: AggregatedTaskReport)
+  fun onTaskExecuted(task: AggregatedTaskReport)
 
-  fun onTasksExecuted(report: TaskGraphExecutionReport)
+  fun onTaskGraphExecuted(report: TaskGraphExecutionReport)
 
 }

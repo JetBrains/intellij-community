@@ -21,23 +21,23 @@ class GradleExecutionPerformanceCollector : CounterUsagesCollector() {
     val FROM_CACHE_COUNT: EventField<Int> = EventFields.Int("from_cache_count")
     val EXECUTED: EventField<Int> = EventFields.Int("executed")
     val SUM_DURATION_MS: EventField<Long> = EventFields.Long("sum_duration_ms")
-    val UP_TO_DATE_DURATION_MS: EventField<Long> = EventFields.Long("sum_duration_ms_up_to_date")
-    val FROM_CACHE_DURATION_MS: EventField<Long> = EventFields.Long("sum_duration_ms_from_cache")
+    val UP_TO_DATE_DURATION_MS: EventField<Long> = EventFields.Long("sum_duration_up_to_date_ms")
+    val FROM_CACHE_DURATION_MS: EventField<Long> = EventFields.Long("sum_duration_from_cache_ms")
     val FAILED_COUNT: EventField<Int> = EventFields.Int("failed_count")
 
     val GROUP: EventLogGroup = EventLogGroup("build.gradle.performance", 1)
-    val OPERATION_DURATION: EventId2<Long, Long> = registerEvent("operation.duration")
-    val BUILD_LOAD: EventId2<Long, Long> = registerEvent("build.loading")
-    val SETTINGS_EVALUATION: EventId2<Long, Long> = registerEvent("settings.evaluation")
-    val PROJECT_LOADING: EventId2<Long, Long> = registerEvent("project.loading")
-    val TASK_GRAPH_CALCULATION: EventId2<Long, Long> = registerEvent("task.graph.calculation")
-    val CONTAINER_CALLBACK: EventId2<Long, Long> = registerEvent("container.callback")
-    val TASK_EXECUTION_FINISHED: VarargEventId = GROUP.registerVarargEvent(
-      "task.execution", EXTERNAL_TASK_ID, SUM_DURATION_MS, NAME, GRADLE_PLUGIN, UP_TO_DATE_COUNT, FROM_CACHE_COUNT, EventFields.Count,
+    val EXECUTION_COMPLETED: EventId2<Long, Long> = registerEvent("execution.completed")
+    val BUILD_LOADED: EventId2<Long, Long> = registerEvent("build.loaded")
+    val SETTINGS_EVALUATED: EventId2<Long, Long> = registerEvent("settings.evaluated")
+    val PROJECT_LOADED: EventId2<Long, Long> = registerEvent("project.loaded")
+    val TASK_GRAPH_CALCULATED: EventId2<Long, Long> = registerEvent("task.graph.calculated")
+    val CONTAINER_CALLBACK_EXECUTED: EventId2<Long, Long> = registerEvent("container.callback.executed")
+    val TASK_EXECUTED: VarargEventId = GROUP.registerVarargEvent(
+      "task.executed", EXTERNAL_TASK_ID, SUM_DURATION_MS, NAME, GRADLE_PLUGIN, UP_TO_DATE_COUNT, FROM_CACHE_COUNT, EventFields.Count,
       UP_TO_DATE_DURATION_MS, FROM_CACHE_DURATION_MS, FAILED_COUNT
     )
-    val TASK_GRAPH_EXECUTION: VarargEventId = GROUP.registerVarargEvent(
-      "task.graph.execution", EXTERNAL_TASK_ID, EventFields.DurationMs, EventFields.Count, UP_TO_DATE_COUNT, FROM_CACHE_COUNT, EXECUTED
+    val TASK_GRAPH_EXECUTED: VarargEventId = GROUP.registerVarargEvent(
+      "task.graph.executed", EXTERNAL_TASK_ID, EventFields.DurationMs, EventFields.Count, UP_TO_DATE_COUNT, FROM_CACHE_COUNT, EXECUTED
     )
 
     @JvmStatic

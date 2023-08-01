@@ -10,21 +10,21 @@ import java.lang.ref.WeakReference
 
 class GradleExecutionStageFusHandler(val taskId: Long, val project: WeakReference<Project>) : GradleExecutionStageHandler {
 
-  override fun onGradleExecutionCompleted(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.OPERATION_DURATION)
+  override fun onGradleExecutionCompleted(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.EXECUTION_COMPLETED)
 
-  override fun onGradleBuildLoaded(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.BUILD_LOAD)
+  override fun onGradleBuildLoaded(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.BUILD_LOADED)
 
-  override fun onGradleSettingsEvaluated(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.SETTINGS_EVALUATION)
+  override fun onGradleSettingsEvaluated(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.SETTINGS_EVALUATED)
 
-  override fun onGradleProjectLoaded(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.PROJECT_LOADING)
+  override fun onGradleProjectLoaded(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.PROJECT_LOADED)
 
-  override fun onContainerCallbackExecuted(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.CONTAINER_CALLBACK)
+  override fun onContainerCallbackExecuted(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.CONTAINER_CALLBACK_EXECUTED)
 
-  override fun onTaskGraphCalculated(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.TASK_GRAPH_CALCULATION)
+  override fun onTaskGraphCalculated(duration: Long) = duration.emit(GradleExecutionPerformanceCollector.TASK_GRAPH_CALCULATED)
 
-  override fun onTasksExecuted(report: TaskGraphExecutionReport) = report.emit(GradleExecutionPerformanceCollector.TASK_GRAPH_EXECUTION)
+  override fun onTaskGraphExecuted(report: TaskGraphExecutionReport) = report.emit(GradleExecutionPerformanceCollector.TASK_GRAPH_EXECUTED)
 
-  override fun onTaskFinished(task: AggregatedTaskReport) = task.emit(GradleExecutionPerformanceCollector.TASK_EXECUTION_FINISHED)
+  override fun onTaskExecuted(task: AggregatedTaskReport) = task.emit(GradleExecutionPerformanceCollector.TASK_EXECUTED)
 
   private fun Long.emit(target: EventId2<Long, Long>) = target.log(project.get(), taskId, this)
 
