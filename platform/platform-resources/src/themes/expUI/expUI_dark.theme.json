@@ -589,7 +589,8 @@
     "MainToolbar": {
       "Icon": {
         "background": "Grey2",
-        "pressedBackground": "Grey3"
+        "pressedBackground": "Grey3",
+        "insets": "5,5,5,5"
       },
       "Dropdown": {
         "pressedBackground": "Grey3",
