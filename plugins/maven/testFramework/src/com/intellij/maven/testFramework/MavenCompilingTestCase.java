@@ -23,14 +23,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class MavenCompilingTestCase extends MavenMultiVersionImportingTestCase {
   protected void compileModules(final String... moduleNames) {
     compile(createModulesCompileScope(moduleNames));
+  }
+
+  protected void compileFile(final String moduleName, final VirtualFile file) throws Exception {
+    CompilerTester tester = new CompilerTester(myProject, Collections.singletonList(getModule(moduleName)), null);
+    try {
+      tester.compileFiles(file);
+    }
+    finally {
+      tester.tearDown();
+    }
   }
 
   protected void buildArtifacts(String... artifactNames) {

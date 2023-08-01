@@ -548,7 +548,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     setFileContent(file, createPomXml(xml), true);
   }
 
-  private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
+  protected static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     try {
       WriteAction.runAndWait(() -> {
         if (advanceStamps) {
