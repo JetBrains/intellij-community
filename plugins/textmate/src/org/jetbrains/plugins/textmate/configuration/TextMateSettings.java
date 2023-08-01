@@ -2,37 +2,42 @@ package org.jetbrains.plugins.textmate.configuration;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.textmate.TextMateBundleToLoad;
+import org.jetbrains.plugins.textmate.TextMateServiceImpl;
 
 import java.util.*;
 
 /**
- * @deprecated use {@link TextMateUserBundlesSettings} instead
+ * @deprecated use {@link TextMateUserBundlesSettings} and {@link TextMateBuiltinBundlesSettings} instead
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public final class TextMateSettings implements PersistentStateComponent<TextMateSettings.TextMateSettingsState> {
   public static TextMateSettings getInstance() {
     return new TextMateSettings();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public TextMateSettingsState getState() {
+    TextMateSettingsState state = new TextMateSettingsState();
+    ArrayList<BundleConfigBean> bundles = new ArrayList<>();
     TextMateUserBundlesSettings settings = TextMateUserBundlesSettings.getInstance();
     if (settings != null) {
-      TextMateSettingsState state = new TextMateSettingsState();
-      Collection<BundleConfigBean> bundles = new ArrayList<>();
       for (Map.Entry<String, TextMatePersistentBundle> entry : settings.getBundles().entrySet()) {
         bundles.add(new BundleConfigBean(entry.getValue().getName(),
                                          entry.getKey(),
                                          entry.getValue().getEnabled()));
       }
-      state.setBundles(bundles);
-      return state;
     }
-    else {
-      return null;
+    TextMateBuiltinBundlesSettings builtinBundlesSettings = TextMateBuiltinBundlesSettings.getInstance();
+    if (builtinBundlesSettings != null) {
+      Set<String> turnedOffBundleNames = builtinBundlesSettings.getTurnedOffBundleNames();
+      for (TextMateBundleToLoad bundle : TextMateServiceImpl.discoverBuiltinBundles(builtinBundlesSettings)) {
+        bundles.add(new BundleConfigBean(bundle.getName(), bundle.getPath(), !turnedOffBundleNames.contains(bundle.getName())));
+      }
     }
+    state.setBundles(bundles);
+    return state;
   }
 
   @Override
@@ -48,8 +53,7 @@ public final class TextMateSettings implements PersistentStateComponent<TextMate
   }
 
   public Collection<BundleConfigBean> getBundles() {
-    TextMateSettingsState state = getState();
-    return state != null ? state.getBundles() : Collections.emptyList();
+    return getState().getBundles();
   }
 
   public static final class TextMateSettingsState {
