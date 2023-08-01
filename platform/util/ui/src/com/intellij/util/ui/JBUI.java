@@ -632,7 +632,8 @@ public final class JBUI {
       }
 
       public static Insets verticalTabInsets() {
-        return insets(verticalTabInsetsKey(), JBInsets.create(tabInsets()));
+        // need original tabInsets() here, to be able to get unscaled original values from them
+        return insets(verticalTabInsetsKey(), (JBInsets)tabInsets());
       }
 
       public static String verticalTabInsetsKey() {
