@@ -759,7 +759,7 @@ class CodeInliner<TCallElement : KtElement>(
         })
 
         callExpressions.forEach {
-            if (it.canMoveLambdaOutsideParentheses()) {
+            if (it.canMoveLambdaOutsideParentheses(skipComplexCalls = false)) {
                 it.moveFunctionLiteralOutsideParentheses()
             }
         }

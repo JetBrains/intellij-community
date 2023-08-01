@@ -1039,6 +1039,16 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
             runTest("testData/quickfix/addFunModifier/hasNoArguments.kt");
         }
 
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/quickfix/addFunModifier/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/quickfix/addFunModifier/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
+        }
+
         @TestMetadata("nonSource.kt")
         public void testNonSource() throws Exception {
             runTest("testData/quickfix/addFunModifier/nonSource.kt");

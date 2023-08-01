@@ -2304,6 +2304,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/anonymousFunctionToLambda/moveOut.kt");
         }
 
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/anonymousFunctionToLambda/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
+        }
+
         @TestMetadata("noSpaceAfterFunctionLeftBrace.kt")
         public void testNoSpaceAfterFunctionLeftBrace() throws Exception {
             runTest("testData/intentions/anonymousFunctionToLambda/noSpaceAfterFunctionLeftBrace.kt");
@@ -5666,6 +5676,16 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertFunctionTypeParameterToReceiver/firstParameterWithJavaUsages.kt");
         }
 
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeParameterToReceiver/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/convertFunctionTypeParameterToReceiver/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
+        }
+
         @TestMetadata("nonFirstParameter.kt")
         public void testNonFirstParameter() throws Exception {
             runTest("testData/intentions/convertFunctionTypeParameterToReceiver/nonFirstParameter.kt");
@@ -7767,9 +7787,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertReferenceToLambda/member.kt");
         }
 
+        @TestMetadata("multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/convertReferenceToLambda/multipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
         @TestMetadata("name.kt")
         public void testName() throws Exception {
             runTest("testData/intentions/convertReferenceToLambda/name.kt");
+        }
+
+        @TestMetadata("namedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/convertReferenceToLambda/namedLambdaArgumentIsNotMovedOutsideParentheses.kt");
         }
 
         @TestMetadata("nestedLambdaWithReceiver.kt")
@@ -14752,9 +14782,19 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/objectLiteralToLambda/MultipleBases.kt");
         }
 
+        @TestMetadata("MultipleLambdaArgumentsAreNotMovedOutsideParentheses.kt")
+        public void testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/objectLiteralToLambda/MultipleLambdaArgumentsAreNotMovedOutsideParentheses.kt");
+        }
+
         @TestMetadata("MultipleParameters.kt")
         public void testMultipleParameters() throws Exception {
             runTest("testData/intentions/objectLiteralToLambda/MultipleParameters.kt");
+        }
+
+        @TestMetadata("NamedLambdaArgumentIsNotMovedOutsideParentheses.kt")
+        public void testNamedLambdaArgumentIsNotMovedOutsideParentheses() throws Exception {
+            runTest("testData/intentions/objectLiteralToLambda/NamedLambdaArgumentIsNotMovedOutsideParentheses.kt");
         }
 
         @TestMetadata("NoSamAdapterNeeded.kt")

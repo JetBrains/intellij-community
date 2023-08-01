@@ -92,8 +92,16 @@ fun KtCallExpression.getLastLambdaExpression(): KtLambdaExpression? {
     return valueArguments.lastOrNull()?.getArgumentExpression()?.unpackFunctionLiteral()
 }
 
+fun KtCallExpression.isComplexCallWithLambdaArgument(): Boolean = when {
+    valueArguments.lastOrNull()?.isNamed() == true -> true
+    valueArguments.count { it.getArgumentExpression()?.unpackFunctionLiteral() != null } > 1 -> true
+    else -> false
+}
+
 @OptIn(FrontendInternals::class)
-fun KtCallExpression.canMoveLambdaOutsideParentheses(): Boolean {
+fun KtCallExpression.canMoveLambdaOutsideParentheses(skipComplexCalls: Boolean = true): Boolean {
+    if (skipComplexCalls && isComplexCallWithLambdaArgument()) return false
+
     if (getStrictParentOfType<KtDelegatedSuperTypeEntry>() != null) return false
     val lastLambdaExpression = getLastLambdaExpression() ?: return false
     if (lastLambdaExpression.parentLabeledExpression()?.parentLabeledExpression() != null) return false

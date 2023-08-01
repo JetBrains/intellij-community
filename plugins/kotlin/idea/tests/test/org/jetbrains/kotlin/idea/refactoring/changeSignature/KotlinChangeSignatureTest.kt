@@ -1269,6 +1269,14 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newParameters[0].name = "`x@yz`"
     }
 
+    fun testNamedLambdaArgumentIsNotMovedOutsideParentheses() = doTest {
+        newParameters[0].name = "p11"
+    }
+
+    fun testMultipleLambdaArgumentsAreNotMovedOutsideParentheses() = doTest {
+        newParameters[0].name = "p11"
+    }
+
     fun testParameterPropagation() = doTestAndIgnoreConflicts {
         val psiFactory = KtPsiFactory(project)
 

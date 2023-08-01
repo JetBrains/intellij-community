@@ -1,3 +1,4 @@
+
 fun foo(block: () -> Unit, i: Int) {
 }
 
