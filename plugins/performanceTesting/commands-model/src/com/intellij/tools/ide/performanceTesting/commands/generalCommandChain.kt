@@ -80,7 +80,7 @@ fun <T : CommandChain> T.openFile(relativePath: String,
                                   timeoutInSeconds: Long = 0,
                                   suppressErrors: Boolean = false,
                                   warmup: Boolean = false,
-                                  disableCodeAnalysis:Boolean = false): T {
+                                  disableCodeAnalysis: Boolean = false): T {
   val command = mutableListOf("${CMD_PREFIX}openFile", "-file $relativePath")
   if (timeoutInSeconds != 0L) {
     command.add("-timeout $timeoutInSeconds")
@@ -759,13 +759,18 @@ fun <T : CommandChain> T.collectAllFiles(extension: String): T {
   return this
 }
 
-fun <T : CommandChain> T.build(): T {
-  addCommand("${CMD_PREFIX}buildProject BUILD")
+fun <T : CommandChain> T.recompileFiles(relativeFilePaths: List<String>): T {
+  addCommand("${CMD_PREFIX}buildProject RECOMPILE_FILES ${relativeFilePaths.joinToString(" ")}".trim())
   return this
 }
 
-fun <T : CommandChain> T.rebuild(): T {
-  addCommand("${CMD_PREFIX}buildProject REBUILD")
+fun <T : CommandChain> T.build(moduleNames: List<String> = listOf()): T {
+  addCommand("${CMD_PREFIX}buildProject BUILD ${moduleNames.joinToString(" ")}".trim())
+  return this
+}
+
+fun <T : CommandChain> T.rebuild(moduleNames: List<String> = listOf()): T {
+  addCommand("${CMD_PREFIX}buildProject REBUILD ${moduleNames.joinToString(" ")}".trim())
   return this
 }
 
@@ -962,7 +967,7 @@ fun <T : CommandChain> T.freezeUI(durationOfFreezeInMs: Int): T {
   return this
 }
 
-fun <T: CommandChain> T.moveCaret(text: String): T {
+fun <T : CommandChain> T.moveCaret(text: String): T {
   addCommand("${CMD_PREFIX}moveCaret $text")
   return this
 }
