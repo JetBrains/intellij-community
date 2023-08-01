@@ -42,7 +42,7 @@ object NewUiOnboardingUtil {
 
   val isOnboardingEnabled: Boolean
     get() = Registry.`is`("ide.experimental.ui.onboarding")
-            && !ToggleDistractionFreeModeAction.isDistractionFreeModeEnabled()
+            && !ToggleDistractionFreeModeAction.shouldMinimizeCustomHeader()
             && NewUiOnboardingBean.isPresent
 
   fun getHelpLink(topic: String): String {
