@@ -40,6 +40,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
             runTest("testData/stepping/stepIntoAndSmartStepInto/extFun.kt");
         }
 
+        @TestMetadata("internalInlineMethod.kt")
+        public void testInternalInlineMethod() throws Exception {
+            runTest("testData/stepping/stepIntoAndSmartStepInto/internalInlineMethod.kt");
+        }
+
         @TestMetadata("internalMethod.kt")
         public void testInternalMethod() throws Exception {
             runTest("testData/stepping/stepIntoAndSmartStepInto/internalMethod.kt");
@@ -131,6 +136,11 @@ public abstract class IndyLambdaKotlinSteppingTestGenerated extends AbstractIndy
         @TestMetadata("extFun.kt")
         public void testExtFun() throws Exception {
             runTest("testData/stepping/stepIntoAndSmartStepInto/extFun.kt");
+        }
+
+        @TestMetadata("internalInlineMethod.kt")
+        public void testInternalInlineMethod() throws Exception {
+            runTest("testData/stepping/stepIntoAndSmartStepInto/internalInlineMethod.kt");
         }
 
         @TestMetadata("internalMethod.kt")
