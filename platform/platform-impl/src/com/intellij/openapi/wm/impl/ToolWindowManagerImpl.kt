@@ -555,19 +555,21 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
     @Suppress("DEPRECATION")
     val sideTool = bean.secondary || bean.side
-    val entry = registerToolWindow(RegisterToolWindowTask(
-      id = bean.id,
-      icon = findIconFromBean(bean, factory, plugin),
-      anchor = anchor,
-      sideTool = sideTool,
-      canCloseContent = bean.canCloseContents,
-      canWorkInDumbMode = DumbService.isDumbAware(factory),
-      shouldBeAvailable = factory.shouldBeAvailable(project),
-      contentFactory = factory,
-      stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
-    ).apply {
-      pluginDescriptor = plugin
-    }, toolWindowPane.buttonManager)
+    val entry = withContext(Dispatchers.EDT) {
+      registerToolWindow(RegisterToolWindowTask(
+        id = bean.id,
+        icon = findIconFromBean(bean, factory, plugin),
+        anchor = anchor,
+        sideTool = sideTool,
+        canCloseContent = bean.canCloseContents,
+        canWorkInDumbMode = DumbService.isDumbAware(factory),
+        shouldBeAvailable = factory.shouldBeAvailable(project),
+        contentFactory = factory,
+        stripeTitle = getStripeTitleSupplier(bean.id, project, plugin)
+      ).apply {
+        pluginDescriptor = plugin
+      }, toolWindowPane.buttonManager)
+    }
     project.messageBus.syncPublisher(ToolWindowManagerListener.TOPIC).toolWindowsRegistered(listOf(entry.id), this)
 
     toolWindowPane.buttonManager.getStripeFor(anchor, sideTool).revalidate()
