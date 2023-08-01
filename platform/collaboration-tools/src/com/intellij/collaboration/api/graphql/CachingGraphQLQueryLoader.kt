@@ -2,25 +2,27 @@
 package com.intellij.collaboration.api.graphql
 
 import com.github.benmanes.caffeine.cache.Caffeine
-import org.jetbrains.annotations.VisibleForTesting
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.io.InputStream
 import java.time.Duration
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.ConcurrentMap
 
-open class CachingGraphQLQueryLoader(
+@ApiStatus.Internal
+class CachingGraphQLQueryLoader(
+  private val getFileStream: (relativePath: String) -> InputStream?,
   private val fragmentsCache: ConcurrentMap<String, Block> = createFragmentCache(),
   private val queriesCache: ConcurrentMap<String, String> = createQueryCache(),
   private val fragmentsDirectories: List<String> = listOf("graphql/fragment"),
   private val fragmentsFileExtension: String = "graphql"
-) {
+) : GraphQLQueryLoader {
 
   private val fragmentDefinitionRegex = Regex("fragment (.*) on .*\\{")
 
   // Use path to allow going to the file quickly
   @Throws(IOException::class)
-  fun loadQuery(queryPath: String): String {
+  override fun loadQuery(queryPath: String): String {
     return queriesCache.computeIfAbsent(queryPath) { path ->
       val (body, fragmentNames) = readBlock(path)
                                   ?: throw GraphQLFileNotFoundException("Couldn't find query file at $queryPath")
@@ -74,10 +76,6 @@ open class CachingGraphQLQueryLoader(
     fragments.removeAll(innerFragments)
     return Block(bodyBuilder.toString().removeSuffix("\n"), fragments)
   }
-
-  // visible to avoid storing test queries with the code
-  @VisibleForTesting
-  protected open fun getFileStream(relativePath: String): InputStream? = this::class.java.classLoader.getResourceAsStream(relativePath)
 
   companion object {
     data class Block(val body: String, val dependencies: Set<String>)
