@@ -127,7 +127,7 @@ public final class AppMainV2 {
         }
       } else {
         declaredConstructor.setAccessible(true);
-        Object objInstance = declaredConstructor.newInstance(); // TODO make a check here
+        Object objInstance = declaredConstructor.newInstance();
         if (parameterCount == 0) {
           m.invoke(objInstance);
         } else {
