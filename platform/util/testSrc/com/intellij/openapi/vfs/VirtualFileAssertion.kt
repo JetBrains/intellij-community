@@ -3,7 +3,9 @@ package com.intellij.openapi.vfs
 
 import com.intellij.openapi.util.io.FileAssertion
 
-class VirtualFileAssertion : FileAssertion<VirtualFile>() {
+class VirtualFileAssertion : FileAssertion<VirtualFile, VirtualFileAssertion>() {
+
+  override val self: VirtualFileAssertion get() = this
 
   override fun createAssertion() = VirtualFileAssertion()
   override fun isEmpty(file: VirtualFile) = file.children.isEmpty()
@@ -13,7 +15,7 @@ class VirtualFileAssertion : FileAssertion<VirtualFile>() {
 
   companion object {
 
-    suspend fun assertVirtualFile(init: suspend () -> VirtualFile?): FileAssertion<VirtualFile> {
+    suspend fun assertVirtualFile(init: suspend () -> VirtualFile?): VirtualFileAssertion {
       return VirtualFileAssertion().init { init() }
     }
   }

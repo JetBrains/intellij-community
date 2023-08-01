@@ -7,7 +7,9 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 
-class NioPathAssertion : FileAssertion<Path>() {
+class NioPathAssertion : FileAssertion<Path, NioPathAssertion>() {
+
+  override val self: NioPathAssertion get() = this
 
   override fun createAssertion() = NioPathAssertion()
   override fun isEmpty(file: Path) = file.listDirectoryEntries().isEmpty()
@@ -17,7 +19,7 @@ class NioPathAssertion : FileAssertion<Path>() {
 
   companion object {
 
-    suspend fun assertNioPath(init: suspend () -> Path?): FileAssertion<Path> {
+    suspend fun assertNioPath(init: suspend () -> Path?): NioPathAssertion {
       return NioPathAssertion().init { init() }
     }
   }

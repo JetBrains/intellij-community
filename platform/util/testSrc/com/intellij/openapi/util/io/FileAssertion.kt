@@ -3,12 +3,14 @@ package com.intellij.openapi.util.io
 
 import org.junit.jupiter.api.Assertions
 
-abstract class FileAssertion<T> {
+abstract class FileAssertion<T, Self : FileAssertion<T, Self>> {
 
   private var myValue: T? = null
   private var myException: Exception? = null
 
-  protected abstract fun createAssertion(): FileAssertion<T>
+  protected abstract val self: Self
+
+  protected abstract fun createAssertion(): Self
 
   abstract fun isEmpty(file: T): Boolean
 
@@ -23,11 +25,11 @@ abstract class FileAssertion<T> {
     return myValue
   }
 
-  private inline fun withFile(action: (T?) -> Unit) = apply {
+  private inline fun withFile(action: (T?) -> Unit) = self.apply {
     action(getFile())
   }
 
-  fun <Ex : Exception> isFailedWithException(aClass: Class<Ex>, pattern: Regex) = apply {
+  fun <Ex : Exception> isFailedWithException(aClass: Class<Ex>, pattern: Regex) = self.apply {
     val exception = requireNotNull(myException)
     if (!aClass.isInstance(exception)) {
       throw AssertionError("Exception type isn't matches '$aClass'", exception)
@@ -82,7 +84,7 @@ abstract class FileAssertion<T> {
     }
   }
 
-  suspend fun init(init: suspend () -> T?) = apply {
+  suspend fun init(init: suspend () -> T?) = self.apply {
     try {
       myValue = init()
     }
