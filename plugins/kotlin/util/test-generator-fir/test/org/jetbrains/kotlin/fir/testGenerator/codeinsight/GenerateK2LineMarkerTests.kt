@@ -11,6 +11,10 @@ internal fun MutableTWorkspace.generateK2LineMarkerTests() {
             model("suspend", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
             model("../../../idea/tests/testData/codeInsight/lineMarker/overrideImplement", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
             model("../../../idea/tests/testData/codeInsight/lineMarker/dslMarker", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("../../../idea/tests/testData/codeInsight/lineMarker/main", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("../../../idea/tests/testData/codeInsight/lineMarker/runMarkers", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+            model("../../../idea/tests/testData/codeInsight/lineMarker/methodSeparators", pattern = Patterns.KT_WITHOUT_DOTS, passTestDataPath = false)
+
         }
     }
 }
