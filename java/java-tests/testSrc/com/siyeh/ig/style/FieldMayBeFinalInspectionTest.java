@@ -25,6 +25,6 @@ public class FieldMayBeFinalInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/field_final";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/field_final";
   }
 }

@@ -27,6 +27,6 @@ public class AssignmentToMethodParameterInspectionTest extends LightJavaInspecti
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/assignment/method_parameter";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/assignment/method_parameter";
   }
 }

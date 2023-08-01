@@ -15,13 +15,14 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 
 public class StaticInitializerReferencesSubClassInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igtest/threading/StaticInitializerReferencesSubClass";
+    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/threading/StaticInitializerReferencesSubClass";
   }
 
   public void testStaticInitializer() {

@@ -62,7 +62,7 @@ public class MisorderedAssertEqualsArgumentsInspectionTest extends LightJavaInsp
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/misordered_assert_equals_parameters";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/junit/misordered_assert_equals_parameters";
   }
 
   @NotNull

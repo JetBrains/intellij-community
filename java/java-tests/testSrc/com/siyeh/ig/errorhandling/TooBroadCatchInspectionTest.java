@@ -18,6 +18,6 @@ public class TooBroadCatchInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/errorhandling/toobroadcatch";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/errorhandling/toobroadcatch";
   }
 }

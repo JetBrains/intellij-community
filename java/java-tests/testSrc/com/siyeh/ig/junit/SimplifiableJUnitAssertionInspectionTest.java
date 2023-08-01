@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class SimplifiableJUnitAssertionInspectionTest extends LightJavaInspectionTestCase {
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/simplifiable_junit_assertion";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/junit/simplifiable_junit_assertion";
   }
 
   public void testSimplifiableJUnitAssertion() {

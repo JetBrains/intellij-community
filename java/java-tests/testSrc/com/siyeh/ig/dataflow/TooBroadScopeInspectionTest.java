@@ -20,7 +20,7 @@ public class TooBroadScopeInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/dataflow/scope";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/dataflow/scope";
   }
 
   @Override

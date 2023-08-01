@@ -17,7 +17,7 @@ public class BoundedWildcardInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/bounded_wildcard";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/bounded_wildcard";
   }
 
   @Override

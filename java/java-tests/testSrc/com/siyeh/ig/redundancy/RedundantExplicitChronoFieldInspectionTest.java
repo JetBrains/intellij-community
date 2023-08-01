@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 public class RedundantExplicitChronoFieldInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/redundancy/redundant_explicit_chrono_field/";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/redundancy/redundant_explicit_chrono_field/";
   }
 
   @Override

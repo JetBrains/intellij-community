@@ -42,6 +42,6 @@ public class LoopConditionNotUpdatedInsideLoopInspectionTest extends LightJavaIn
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/controlflow/loop_condition_not_updated";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/controlflow/loop_condition_not_updated";
   }
 }

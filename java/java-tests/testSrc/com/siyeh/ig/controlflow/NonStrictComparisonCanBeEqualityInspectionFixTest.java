@@ -2,6 +2,7 @@
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,6 +21,6 @@ public class NonStrictComparisonCanBeEqualityInspectionFixTest extends LightQuic
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
+    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig";
   }
 }

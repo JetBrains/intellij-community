@@ -33,5 +33,5 @@ abstract class SingleCharacterStartsWithFixTestCase : LightJavaCodeInsightFixtur
     myFixture.checkResultByFile(getTestName(false) + ".after.java")
   }
 
-  override fun getBasePath() = "/plugins/InspectionGadgets/test/com/siyeh/igfixes/j2me/single_character_starts_with"
+  override fun getBasePath() = "/java/java-tests/testData/ig/com/siyeh/igfixes/j2me/single_character_starts_with"
 }

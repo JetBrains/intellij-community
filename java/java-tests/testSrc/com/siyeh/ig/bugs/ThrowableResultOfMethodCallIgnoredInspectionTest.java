@@ -29,6 +29,6 @@ public @interface CanIgnoreReturnValue {}"""
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/throwable_result_of_method_call_ignored";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/bugs/throwable_result_of_method_call_ignored";
   }
 }

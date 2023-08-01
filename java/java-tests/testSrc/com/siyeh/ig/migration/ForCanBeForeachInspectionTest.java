@@ -19,7 +19,7 @@ public class ForCanBeForeachInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/migration/foreach";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/migration/foreach";
   }
 
   @NotNull

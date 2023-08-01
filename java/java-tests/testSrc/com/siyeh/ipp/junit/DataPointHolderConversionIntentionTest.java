@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.modcommand.*;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +82,7 @@ public class DataPointHolderConversionIntentionTest extends LightQuickFixTestCas
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("IntentionPowerPak") + "/test/com/siyeh/ipp/junit/";
+    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ipp/com/siyeh/ipp/junit/";
   }
 
   @Override

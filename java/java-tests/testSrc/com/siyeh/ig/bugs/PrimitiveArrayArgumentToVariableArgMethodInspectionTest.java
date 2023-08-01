@@ -33,6 +33,6 @@ public class PrimitiveArrayArgumentToVariableArgMethodInspectionTest extends Lig
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/var_arg";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/bugs/var_arg";
   }
 }

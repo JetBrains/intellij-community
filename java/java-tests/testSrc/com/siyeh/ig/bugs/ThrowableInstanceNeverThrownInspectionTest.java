@@ -18,6 +18,6 @@ public class ThrowableInstanceNeverThrownInspectionTest extends LightJavaInspect
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/bugs/throwable_instance_never_thrown";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/bugs/throwable_instance_never_thrown";
   }
 }

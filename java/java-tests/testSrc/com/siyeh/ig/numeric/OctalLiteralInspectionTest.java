@@ -33,6 +33,6 @@ public class OctalLiteralInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/numeric/octal_inspection";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/numeric/octal_inspection";
   }
 }

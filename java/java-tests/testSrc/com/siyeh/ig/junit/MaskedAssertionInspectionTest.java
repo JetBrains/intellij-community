@@ -88,6 +88,6 @@ public class AssertionFailedError extends AssertionError {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/masked_assertion";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/junit/masked_assertion";
   }
 }

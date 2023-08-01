@@ -57,7 +57,7 @@ public interface Supplier<T> {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/abstraction/weaken_type";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/abstraction/weaken_type";
   }
 
   @Nullable

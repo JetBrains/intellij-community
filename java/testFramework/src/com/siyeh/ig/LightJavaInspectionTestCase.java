@@ -31,7 +31,7 @@ import java.util.Objects;
  */
 public abstract class LightJavaInspectionTestCase extends LightJavaCodeInsightFixtureTestCase {
 
-  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/plugins/InspectionGadgets/test/";
+  public static final String INSPECTION_GADGETS_TEST_DATA_PATH = "/java/java-tests/testData/ig/";
 
   @Override
   protected void setUp() throws Exception {

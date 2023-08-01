@@ -21,7 +21,7 @@ public class EmptyDirectoryInspectionTest extends InspectionFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/";
+    return "/java/java-tests/testData/ig/";
   }
 
   @Override

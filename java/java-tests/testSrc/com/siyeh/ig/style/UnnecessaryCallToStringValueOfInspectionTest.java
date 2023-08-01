@@ -40,7 +40,7 @@ public class UnnecessaryCallToStringValueOfInspectionTest extends LightJavaInspe
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/unnecessary_valueof";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/unnecessary_valueof";
   }
 
   @Override

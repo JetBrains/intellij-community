@@ -3,6 +3,7 @@ package com.siyeh.ig;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
@@ -56,7 +57,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igfixes/";
+    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igfixes/";
   }
 
   protected void assertQuickfixNotAvailable() {

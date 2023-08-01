@@ -17,7 +17,7 @@ import java.util.Collections;
 public class UnusedImportGlobalInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/InspectionGadgets/test/com/siyeh/igtest/imports/globalInspection";
+    return PathManagerEx.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/imports/globalInspection";
   }
 
   public void testInnerClassImport() {

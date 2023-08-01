@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.JavaInspectionTestCase;
 
@@ -24,7 +25,7 @@ import com.intellij.testFramework.JavaInspectionTestCase;
 public abstract class IGInspectionTestCase extends JavaInspectionTestCase {
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
+    return PathManager.getCommunityHomePath()+"/java/java-tests/testData/ig";
   }
 
  

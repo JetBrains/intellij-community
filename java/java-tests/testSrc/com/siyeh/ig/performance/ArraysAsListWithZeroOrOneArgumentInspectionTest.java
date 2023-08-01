@@ -18,6 +18,6 @@ public class ArraysAsListWithZeroOrOneArgumentInspectionTest extends LightJavaIn
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/performance/arrays_as_list_with_one_argument";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/performance/arrays_as_list_with_one_argument";
   }
 }

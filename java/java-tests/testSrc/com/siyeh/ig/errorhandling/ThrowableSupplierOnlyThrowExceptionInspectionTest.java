@@ -21,7 +21,7 @@ public class ThrowableSupplierOnlyThrowExceptionInspectionTest extends LightJava
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/errorhandling/throwable_supplier_only_throw_exception";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/errorhandling/throwable_supplier_only_throw_exception";
   }
 
   public void testSimple() {

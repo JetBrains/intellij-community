@@ -4,6 +4,7 @@ package com.siyeh.ipp;
 import com.intellij.codeInsight.intention.CommonIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -23,7 +24,7 @@ public abstract class IPPTestCase extends LightJavaCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("IntentionPowerPak") + "/test/com/siyeh/ipp/" + getRelativePath();
+    return "/java/java-tests/testData/ipp/com/siyeh/ipp/" + getRelativePath();
   }
 
   @NonNls

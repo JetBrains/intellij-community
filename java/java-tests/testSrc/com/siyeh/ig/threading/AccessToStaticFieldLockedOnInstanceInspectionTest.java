@@ -24,7 +24,7 @@ public class AccessToStaticFieldLockedOnInstanceInspectionTest extends LightJava
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/threading/access_to_static_field_locked_on_instance_data";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/threading/access_to_static_field_locked_on_instance_data";
   }
 
   @Override

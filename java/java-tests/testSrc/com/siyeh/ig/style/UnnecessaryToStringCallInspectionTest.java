@@ -24,7 +24,7 @@ public class UnnecessaryToStringCallInspectionTest extends LightJavaInspectionTe
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/style/unnecessary_tostring";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/style/unnecessary_tostring";
   }
 
   @Override

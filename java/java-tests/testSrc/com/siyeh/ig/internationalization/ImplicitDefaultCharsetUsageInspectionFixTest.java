@@ -3,6 +3,7 @@ package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -19,7 +20,7 @@ public class ImplicitDefaultCharsetUsageInspectionFixTest extends LightQuickFixP
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
+    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig";
   }
 
   @Override

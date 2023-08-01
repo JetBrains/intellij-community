@@ -72,7 +72,7 @@ public class JUnitAssertsWithoutMessagesInspectionTest extends LightJavaInspecti
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/junit/junit_asserts_without_messages";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/junit/junit_asserts_without_messages";
   }
 
   @Override

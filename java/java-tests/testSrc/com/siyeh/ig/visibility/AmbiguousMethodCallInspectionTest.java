@@ -16,6 +16,6 @@ public class AmbiguousMethodCallInspectionTest extends LightJavaInspectionTestCa
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/visibility/ambiguous";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/visibility/ambiguous";
   }
 }

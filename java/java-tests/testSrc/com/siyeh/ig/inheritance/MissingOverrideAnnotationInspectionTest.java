@@ -4,6 +4,7 @@ package com.siyeh.ig.inheritance;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -72,7 +73,7 @@ public class MissingOverrideAnnotationInspectionTest extends LightJavaInspection
     @NotNull
     @Override
     protected String getTestDataPath() {
-      return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test";
+      return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig";
     }
   }
 }

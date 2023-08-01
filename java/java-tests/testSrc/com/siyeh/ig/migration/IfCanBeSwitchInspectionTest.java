@@ -48,6 +48,6 @@ public class IfCanBeSwitchInspectionTest extends LightJavaInspectionTestCase {
 
   @Override
   protected String getBasePath() {
-    return "/plugins/InspectionGadgets/test/com/siyeh/igtest/migration/if_switch";
+    return "/java/java-tests/testData/ig/com/siyeh/igtest/migration/if_switch";
   }
 }

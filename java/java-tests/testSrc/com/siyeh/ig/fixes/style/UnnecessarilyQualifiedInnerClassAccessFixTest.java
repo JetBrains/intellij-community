@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.fixes.style;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
@@ -59,7 +60,7 @@ public class UnnecessarilyQualifiedInnerClassAccessFixTest extends IGQuickFixesT
 
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("InspectionGadgets") + "/test/com/siyeh/igtest/";
+    return PathManager.getCommunityHomePath() + "/java/java-tests/testData/ig/com/siyeh/igtest/";
   }
 
   @Override
