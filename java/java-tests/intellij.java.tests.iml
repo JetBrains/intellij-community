@@ -7,12 +7,6 @@
       <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData" />
     </content>
-    <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc" isTestSource="true" />
-    </content>
-    <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc">
-      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc" isTestSource="true" />
-    </content>
     <content url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc">
       <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
     </content>
