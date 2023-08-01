@@ -137,7 +137,7 @@ public class TextMateSelectorParser {
     return myIndex >= myTokens.size();
   }
 
-  interface Node {
+  public interface Node {
     TextMateWeigh weigh(@NotNull TextMateScope scope);
   }
 
