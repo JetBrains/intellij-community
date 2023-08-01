@@ -470,7 +470,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
         if (moduleData instanceof GradleSourceSetData) {
           for (File artifactFile : moduleData.getArtifacts()) {
-            artifactsMap.put(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
+            artifactsMap.storeModuleId(toCanonicalPath(artifactFile.getPath()), moduleData.getId());
           }
         }
       }

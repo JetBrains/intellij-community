@@ -8,12 +8,7 @@ interface ArtifactMappingService {
 
   val keys: Collection<String>
 
-  operator fun set(artifactPath: String, moduleId: String) = put(artifactPath, moduleId) // --> getModuleId
-
-  fun put(artifactPath: String, moduleId: String)  // --> storeModuleId
-
   fun putAll(artifactsMap: ArtifactMappingService)
-  fun putAll(artifactsMap: Map<String, String>)
 }
 
 interface ModuleMappingInfo {
@@ -35,12 +30,7 @@ class MapBasedArtifactMappingService(private val myMap: MutableMap<String, Strin
   override val keys: Collection<String>
     get() = myMap.keys
 
-  override fun put(artifactPath: String, moduleId: String) = storeModuleId(artifactPath, moduleId)
   override fun putAll(artifactsMap: ArtifactMappingService) {
     artifactsMap.keys.forEach { key -> artifactsMap.getModuleMapping(key)?.moduleId?.let { found -> myMap[key] = found } }
-  }
-
-  override fun putAll(artifactsMap: Map<String, String>) {
-    myMap.putAll(artifactsMap)
   }
 }

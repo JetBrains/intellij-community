@@ -48,10 +48,10 @@ private fun getOrCreateAffiliatedArtifactsMap(ideProject: DataNode<ProjectData>,
             newMap[filePath] = list2add
             for ((index, module) in moduleIds.withIndex()) {
                 if (index == 0) {
-                    configArtifacts[filePath] = module
+                    configArtifacts.storeModuleId(filePath, module)
                 } else {
                     val affiliatedFileName = "$filePath-MPP-$index"
-                    configArtifacts[affiliatedFileName] = module
+                    configArtifacts.storeModuleId(affiliatedFileName, module)
                     list2add.add(affiliatedFileName)
                 }
             }
