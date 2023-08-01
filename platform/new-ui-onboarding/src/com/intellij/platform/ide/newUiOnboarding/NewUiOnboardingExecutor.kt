@@ -37,7 +37,8 @@ internal class NewUiOnboardingExecutor(private val project: Project,
       override fun projectClosing(project: Project) {
         val stepId = curStepId ?: return
         val stepStartMillis = curStepStartMillis ?: return
-        NewUiOnboardingStatistics.logOnboardingStopped(stepId, OnboardingStopReason.PROJECT_CLOSED, tourStartMillis, stepStartMillis)
+        NewUiOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.PROJECT_CLOSED,
+                                                       tourStartMillis, stepStartMillis)
       }
     })
   }
@@ -54,7 +55,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
     val stepStartMillis = System.currentTimeMillis()
     curStepId = stepId
     curStepStartMillis = stepStartMillis
-    NewUiOnboardingStatistics.logStepStarted(stepId)
+    NewUiOnboardingStatistics.logStepStarted(project, stepId)
 
     val gotItData = step.performStep(project, stepDisposable)
     if (gotItData == null) {
@@ -67,21 +68,23 @@ internal class NewUiOnboardingExecutor(private val project: Project,
     builder.withStepNumber("${ind + 1}/${steps.size}")
       .onEscapePressed {
         finishOnboarding()
-        NewUiOnboardingStatistics.logOnboardingStopped(stepId, OnboardingStopReason.ESCAPE_PRESSED, tourStartMillis, stepStartMillis)
+        NewUiOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.ESCAPE_PRESSED,
+                                                       tourStartMillis, stepStartMillis)
       }
 
     if (ind < steps.lastIndex) {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.next"))
         .onButtonClick {
           Disposer.dispose(stepDisposable)
-          NewUiOnboardingStatistics.logStepFinished(stepId, stepStartMillis)
+          NewUiOnboardingStatistics.logStepFinished(project, stepId, stepStartMillis)
           cs.launch(Dispatchers.EDT) {
             runStep(ind + 1)
           }
         }
         .withSecondaryButton(NewUiOnboardingBundle.message("gotIt.button.skipAll")) {
           finishOnboarding()
-          NewUiOnboardingStatistics.logOnboardingStopped(stepId, OnboardingStopReason.SKIP_ALL, tourStartMillis, stepStartMillis)
+          NewUiOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.SKIP_ALL,
+                                                         tourStartMillis, stepStartMillis)
         }
     }
     else {
@@ -89,7 +92,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
         .withContrastButton(true)
         .onButtonClick {
           finishOnboarding()
-          NewUiOnboardingStatistics.logOnboardingFinished(tourStartMillis)
+          NewUiOnboardingStatistics.logOnboardingFinished(project, tourStartMillis)
         }
     }
 
