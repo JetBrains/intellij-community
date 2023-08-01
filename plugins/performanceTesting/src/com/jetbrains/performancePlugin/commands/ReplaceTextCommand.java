@@ -18,11 +18,11 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.openapi.ui.playback.commands.AlphaNumericTypeCommand.findTarget;
 
 /**
- * Command replace text from startPosition (0 by default) to endPosition (end of document by default) by newText ("" by default)
- * Syntax: %replaceText [-startPosition start] [-endPosition end] [-newText text]
- * Example: %replaceText -startPosition 0 -endPosition 10 -text "/" - replace text from 0 to 10 position by "/"
+ * Command replace text from startOffset (0 by default) to endOffset (end of document by default) by newText ("" by default)
+ * Syntax: %replaceText [-startOffset start] [-endOffset end] [-newText text]
+ * Example: %replaceText -startOffset 0 -endOffset 10 -text "/" - replace text from 0 to 10 offset by "/"
  * Example: %replaceText -newText "newText" - replace all text in document by "newText"
- * Example: %replaceText -startPosition 0 -endPosition 50 - replace text form 0 to 50 position by ""
+ * Example: %replaceText -startOffset 0 -endOffset 50 - replace text form 0 to 50 offset by ""
  */
 public class ReplaceTextCommand extends AbstractCommand {
   public static final String PREFIX = CMD_PREFIX + "replaceText";
@@ -49,10 +49,10 @@ public class ReplaceTextCommand extends AbstractCommand {
         TypingTarget target = findTarget(context);
         if (target instanceof EditorComponentImpl) {
           DocumentEx document = ((EditorComponentImpl)target).getEditor().getDocument();
-          int startPosition = options.startPosition == null ? 0 : options.startPosition;
-          int endPosition = options.endPosition == null ? document.getTextLength() : options.endPosition;
+          int startOffset = options.startOffset == null ? 0 : options.startOffset;
+          int endOffset = options.endOffset == null ? document.getTextLength() : options.endOffset;
           WriteCommandAction.runWriteCommandAction(context.getProject(),
-                                                   () -> document.replaceString(startPosition, endPosition, options.newText));
+                                                   () -> document.replaceString(startOffset, endOffset, options.newText));
           result.setResult(null);
         }
         else {
@@ -66,10 +66,10 @@ public class ReplaceTextCommand extends AbstractCommand {
 
   public static class Options {
     @Argument
-    public Integer startPosition;
+    public Integer startOffset;
 
     @Argument
-    public Integer endPosition;
+    public Integer endOffset;
 
     @Argument
     public String newText = "";
