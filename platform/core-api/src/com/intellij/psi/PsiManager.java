@@ -8,6 +8,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -166,4 +167,7 @@ public abstract class PsiManager extends UserDataHolderBase {
    * @return {@code true} if the element belongs to the sources of the project, {@code false} otherwise.
    */
   public abstract boolean isInProject(@NotNull PsiElement element);
+
+  @ApiStatus.Internal
+  public abstract @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile);
 }

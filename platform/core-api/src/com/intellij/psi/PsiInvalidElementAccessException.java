@@ -221,7 +221,7 @@ public final class PsiInvalidElementAccessException extends RuntimeException imp
       return "File language:" + language + " != Provider base language:" + provider.getBaseLanguage();
     }
 
-    FileViewProvider p = manager.findViewProvider(vFile);
+    FileViewProvider p = manager.findCachedViewProvider(vFile);
     if (provider != p) {
       return "different providers: " + provider + "(" + id(provider) + "); " + p + "(" + id(p) + ")";
     }

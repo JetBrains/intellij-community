@@ -131,6 +131,11 @@ public /* not final for Android Studio tests */ class MockPsiManager extends Psi
   }
 
   @Override
+  public @Nullable FileViewProvider findCachedViewProvider(@NotNull VirtualFile vFile) {
+    return null;
+  }
+
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return false;
   }
