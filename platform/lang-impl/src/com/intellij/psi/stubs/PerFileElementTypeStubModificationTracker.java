@@ -44,7 +44,7 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
         index = ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index).getBaseIndex();
       }
       return (StubUpdatingIndexStorage)index;
-    } catch (IllegalStateException e) { // EA-753513 Index is not created for `Stubs`
+    } catch (Exception e) { // EA-753513 Index is not created for `Stubs`
       LOG.error("Couldn't get stub indexing storage. Mod counts will be incremented without a precise check", e);
       return null;
     }
@@ -70,9 +70,9 @@ final class PerFileElementTypeStubModificationTracker implements StubIndexImpl.F
   private final Set<StubFileElementType<?>> myModificationsInCurrentBatch = new HashSet<>();
 
   private void registerModificationForAllElementTypes() {
-    myModCounts.keySet().forEach((fileElementType) -> {
+    for (StubFileElementType<?> fileElementType : myModCounts.keySet()) {
       myModCounts.merge(fileElementType, 1L, (count, value) -> count + value);
-    });
+    }
   }
 
   private void registerModificationFor(@NotNull StubFileElementType<?> fileElementType) {
