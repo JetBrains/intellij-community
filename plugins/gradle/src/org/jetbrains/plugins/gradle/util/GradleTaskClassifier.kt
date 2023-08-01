@@ -29,6 +29,7 @@ object GradleTaskClassifier {
     "resources",
     "scala",
     "test",
+    "war",
     "wrapper"
   )
 
@@ -48,7 +49,7 @@ object GradleTaskClassifier {
 
   @JvmStatic
   fun isClassified(name: String): Boolean = OTHER.equals(name, ignoreCase = true)
-                                            || name.split(PATTERN).find { !KNOWN_TASK_WORDS.contains(it.lowercase()) } == null
+                                            || name.split(PATTERN).all { KNOWN_TASK_WORDS.contains(it.lowercase()) }
 
   private fun List<String>.joinToConventionalNaming(): String {
     if (size == 1) {
