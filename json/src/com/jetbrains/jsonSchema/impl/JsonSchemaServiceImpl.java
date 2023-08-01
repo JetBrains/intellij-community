@@ -154,6 +154,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
     return getSchemasForFile(file, false, false);
   }
 
+  @Override
   @Nullable
   public VirtualFile getDynamicSchemaForFile(@NotNull PsiFile psiFile) {
     return ContentAwareJsonSchemaFileProvider.EP_NAME.getExtensionList().stream()

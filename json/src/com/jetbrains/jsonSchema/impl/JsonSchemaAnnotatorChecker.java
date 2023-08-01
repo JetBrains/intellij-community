@@ -32,7 +32,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   @NotNull private final JsonComplianceCheckerOptions myOptions;
   private boolean myHadTypeError;
 
-  JsonSchemaAnnotatorChecker(@NotNull Project project, @NotNull JsonComplianceCheckerOptions options) {
+  public JsonSchemaAnnotatorChecker(@NotNull Project project, @NotNull JsonComplianceCheckerOptions options) {
     myProject = project;
     myOptions = options;
     myErrors = new HashMap<>();
