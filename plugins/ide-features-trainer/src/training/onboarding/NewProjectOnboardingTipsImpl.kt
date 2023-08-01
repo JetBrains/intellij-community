@@ -57,7 +57,9 @@ private val RESET_TOOLTIP_SAMPLE_TEXT = Key.create<String>("reset.tooltip.sample
 internal val promotedActions = listOf(IdeActions.ACTION_SEARCH_EVERYWHERE,
                                       IdeActions.ACTION_SHOW_INTENTION_ACTIONS,
                                       IdeActions.ACTION_DEFAULT_RUNNER,
+                                      "RunClass",
                                       IdeActions.ACTION_DEFAULT_DEBUGGER,
+                                      "DebugClass",
                                       IdeActions.ACTION_TOGGLE_LINE_BREAKPOINT)
 
 private class NewProjectOnboardingTipsImpl : NewProjectOnboardingTips {
