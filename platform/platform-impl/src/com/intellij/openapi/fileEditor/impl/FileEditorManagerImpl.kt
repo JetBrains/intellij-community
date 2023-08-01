@@ -128,7 +128,7 @@ open class FileEditorManagerImpl(
   private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) : FileEditorManagerEx(), PersistentStateComponent<Element>, Disposable {
-  private val dumbModeFinishedScope = coroutineScope.childScope()
+  private val dumbModeFinishedFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_LATEST)
 
   enum class OpenMode {
     NEW_WINDOW, RIGHT_SPLIT, DEFAULT
@@ -251,14 +251,19 @@ open class FileEditorManagerImpl(
       .map { it?.fileEditorProvider?.fileEditor }
       .stateIn(coroutineScope, SharingStarted.Eagerly, null)
 
+    val dumbModeFinishedScope = coroutineScope.childScope()
+    dumbModeFinishedScope.launch(start = CoroutineStart.UNDISPATCHED) {
+      dumbModeFinishedFlow.collectLatest {
+        dumbModeFinished(project)
+      }
+    }
     project.messageBus.connect(coroutineScope).subscribe(DumbService.DUMB_MODE, object : DumbService.DumbModeListener {
       override fun exitDumbMode() {
         // can happen under write action, so postpone to avoid deadlock on FileEditorProviderManager.getProviders()
-        dumbModeFinishedScope.launch {
-          dumbModeFinished(project)
-        }
+        dumbModeFinishedFlow.tryEmit(Unit)
       }
     })
+
     closeFilesOnFileEditorRemoval()
 
     if (ApplicationManager.getApplication().isUnitTestMode || forceUseUiInHeadlessMode()) {
@@ -2211,13 +2216,12 @@ open class FileEditorManagerImpl(
   @TestOnly
   fun waitForAsyncUpdateOnDumbModeFinished() {
     runBlockingMaybeCancellable {
-      val job = dumbModeFinishedScope.coroutineContext.job
+      dumbModeFinishedFlow.emit(Unit)
       while (true) {
         UIUtil.dispatchAllInvocationEvents()
         yield()
 
-        val jobs = job.children.toList()
-        if (jobs.isEmpty()) {
+        if (dumbModeFinishedFlow.replayCache.isEmpty()) {
           break
         }
 
