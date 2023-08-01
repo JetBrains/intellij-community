@@ -254,6 +254,64 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
   }
 }
 
+/**
+ * Returns [CoroutineScope] that corresponds to the caller's context.
+ *
+ * This method should be the default choice for initiating coroutines in blocking code.
+ * Its advantage is ensuring the alignment of coroutines' context with the blocking code's cancellation strategy from the spawning point.
+ *
+ * Example:
+ *
+ * ```
+ * suspend fun deepPlatformCode() {
+ *   for (extension in SomeExtensionPoint.EP_NAME.extensionList) {
+ *     // the platform has not yet designed suspending API for `SomeExtensionPoint`
+ *     blockingContextScope {
+ *       extension.legacyApiImplementation()
+ *     }
+ *   }
+ * }
+ *
+ * class MyPluginExtension : SomeExtensionPoint {
+ *   override fun legacyApiImplementation() {
+ *     // We aim to incorporate coroutines here,
+ *     // without waiting for the platform to provide the suspending API
+ *     currentThreadScope().launch {
+ *       // modern coroutine implementation of old API
+ *     }
+ *   }
+ * }
+ *
+ * fun myTestFunction = runBlocking {
+ *   blockingContextScope {
+ *     MyPluginExtension().legacyApiImplementation() // the 'launch' is tracked now
+ *   }
+ * }
+ * ```
+ *
+ * An alternative approach would be to create a service that exposes the injected coroutine scope;
+ * the difference between these two approaches is similar to the difference between [coroutineScope] and [GlobalScope]:
+ * the coroutines spawned on the service scope are not controlled by the code that spawned them.
+ */
+@RequiresBlockingContext
+fun currentThreadScope() : CoroutineScope {
+  val threadContext = currentThreadContext()
+  if (threadContext[Job] == null) {
+    LOG.error(IllegalStateException(
+      """There is no `Job` in this thread, spawned coroutines are not cancellable. 
+        | If the transition from coroutines to blocking code happens in the same stack frame as the call to this function, the transition should use `blockingContext`.
+        | If the transition occurs in the different stack frame, then the transition should use `blockingContextScope` to set up a `Job` on this frame.""".trimMargin()))
+  }
+  val newContext = threadContext
+    // the users should explicitly request structured concurrency on the next transition to blocking code
+    .minusKey(BlockingJob)
+    // blocking context does not carry any dispatcher by itself, so we'll default the dispatcher here to the `Default` one.
+    // anyway, it is easy to change it on `launch`
+    .plus(Dispatchers.Default)
+  return CoroutineScope(newContext)
+}
+
+
 @Internal
 fun <T> blockingContext(currentContext: CoroutineContext, action: () -> T): T {
   try {
