@@ -4,9 +4,10 @@ package com.intellij.platform.impl.toolkit
 
 import java.awt.*
 import java.awt.peer.*
+import javax.swing.JComponent
 
 interface ClientToolkit {
-  fun createPanelWindow(panel: Component, target: Window): WindowPeer
+  fun createPanelWindow(panel: JComponent, target: Window, realParent: JComponent): WindowPeer
   fun createWindow(target: Window): WindowPeer
   fun createDialog(target: Dialog): DialogPeer
   fun createFrame(target: Frame): FramePeer

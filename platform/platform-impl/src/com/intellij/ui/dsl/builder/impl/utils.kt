@@ -20,7 +20,7 @@ import javax.swing.text.JTextComponent
  * Internal component properties for UI DSL
  */
 @ApiStatus.Internal
-internal enum class DslComponentPropertyInternal {
+enum class DslComponentPropertyInternal {
   /**
    * A mark that component is a cell label, see [Cell.label]
    *
@@ -80,7 +80,7 @@ internal fun prepareVisualPaddings(component: JComponent): UnscaledGaps {
   var customVisualPaddings: UnscaledGaps? =
     when (val value = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS)) {
       null -> null
-      is Gaps -> value.toUnscaled()
+      is Gaps -> UnscaledGaps()
       is UnscaledGaps -> value
       else -> throw UiDslException("Invalid VISUAL_PADDINGS")
     }

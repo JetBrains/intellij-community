@@ -17,6 +17,7 @@ import java.awt.im.spi.InputMethodDescriptor
 import java.awt.image.ImageObserver
 import java.awt.peer.*
 import java.util.*
+import javax.swing.JComponent
 
 class IdeToolkit : SunToolkit() {
   companion object {
@@ -33,7 +34,7 @@ class IdeToolkit : SunToolkit() {
     Disposer.register(disposable) { targetDisposedPeer(target, peer) }
   }
 
-  fun createPanelWindow(panel: Component, target: Window): WindowPeer = clientInstance().createPanelWindow(panel, target)
+  fun createPanelWindow(panel: JComponent, target: Window, realParent: JComponent): WindowPeer = clientInstance().createPanelWindow(panel, target, realParent)
   override fun createWindow(target: Window): WindowPeer = clientInstance().createWindow(target)
   override fun createDialog(target: Dialog): DialogPeer = clientInstance().createDialog(target)
   override fun createFrame(target: Frame): FramePeer = clientInstance().createFrame(target)
