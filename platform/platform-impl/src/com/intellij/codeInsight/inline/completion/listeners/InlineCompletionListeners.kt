@@ -33,7 +33,7 @@ class InlineCompletionDocumentListener(private val editor: EditorImpl) : Documen
 }
 
 @ApiStatus.Experimental
-class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
+open class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
   private val usedKeys = listOf(
     KeyEvent.VK_ALT,
     KeyEvent.VK_OPEN_BRACKET,
@@ -45,6 +45,10 @@ class InlineCompletionKeyListener(private val editor: Editor) : KeyAdapter() {
     if (event.keyCode in usedKeys) {
       return
     }
+    hideInlineCompletion()
+  }
+
+  protected open fun hideInlineCompletion() {
     editor.resetInlineCompletionContext()
   }
 }
