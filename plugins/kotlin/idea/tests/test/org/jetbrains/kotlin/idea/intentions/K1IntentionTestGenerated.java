@@ -8302,6 +8302,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/convertToBlockBody/nothingFun.kt");
         }
 
+        @TestMetadata("nullableNothing.kt")
+        public void testNullableNothing() throws Exception {
+            runTest("testData/intentions/convertToBlockBody/nullableNothing.kt");
+        }
+
         @TestMetadata("overrideWithPlatformType.kt")
         public void testOverrideWithPlatformType() throws Exception {
             runTest("testData/intentions/convertToBlockBody/overrideWithPlatformType.kt");

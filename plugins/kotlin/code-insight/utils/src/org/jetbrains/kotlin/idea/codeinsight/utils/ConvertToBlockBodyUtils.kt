@@ -46,10 +46,10 @@ object ConvertToBlockBodyUtils {
 
         return ConvertToBlockBodyContext(
             returnTypeIsUnit = returnType.isUnit,
-            returnTypeIsNothing = returnType.isNothing,
+            returnTypeIsNothing = returnType.isNothing && !returnType.isMarkedNullable,
             returnTypeString = returnType.render(position = Variance.OUT_VARIANCE),
             bodyTypeIsUnit = bodyType.isUnit,
-            bodyTypeIsNothing = bodyType.isNothing,
+            bodyTypeIsNothing = bodyType.isNothing && !bodyType.isMarkedNullable,
             reformat = reformat,
             shortenReferences = shortenReferences
         )
