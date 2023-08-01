@@ -52,7 +52,7 @@ class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
     }
     handler.onContainerCallbackExecuted(inflightContainerCallbackDuration)
     handler.onTaskGraphCalculated(inflightTaskGraphDuration)
-    inflightTasks.values.forEach(handler::onTaskFinished)
+    inflightTasks.values.forEach(handler::onTaskExecuted)
     inflightTasks.clear()
     flushed = true
   }
@@ -101,7 +101,7 @@ class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
       upToDateCount = upToDate,
       executed = executed
     )
-    handler.onTasksExecuted(report)
+    handler.onTaskGraphExecuted(report)
     taskGraphEventEmitted = true
   }
 
