@@ -53,16 +53,16 @@ class GradleTasksExecutionTest : GradleImportingTestCase() {
     val events: List<LogEvent> = collectGradlePerformanceEvents {
       assertThat(runTaskAndGetErrorOutput(projectPath, "userDefinedTask")).isEmpty()
     }
-    val executedGradleTasks = events.filter { it.event.id == "task.execution" }.map { it.event.data["name"].toString() }
+    val executedGradleTasks = events.filter { it.event.id == "task.executed" }.map { it.event.data["name"].toString() }
     val expectedGradleTasks = listOf("compileJava", "processResources", "classes", "jar", "assemble", "compileTestJava",
                                      "processTestResources", "testClasses", "test", "check", "build", "clean", "other")
     assertCollection(executedGradleTasks, expectedGradleTasks)
     val executedStages = events.groupingBy { it.event.id }.eachCount()
-    val expectedStages = setOf("operation.duration", "build.loading", "settings.evaluation", "project.loading",
-                               "task.graph.calculation", "container.callback", "task.execution", "task.graph.execution")
+    val expectedStages = setOf("execution.completed", "build.loaded", "settings.evaluated", "project.loaded",
+                               "task.graph.calculated", "container.callback.executed", "task.executed", "task.graph.executed")
     assertCollection(executedStages.keys, expectedStages)
     executedStages.forEach { (name, count) ->
-      if (name != "task.execution") {
+      if (name != "task.executed") {
         TestCase.assertEquals(1, count)
       }
     }
