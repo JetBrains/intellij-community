@@ -1297,19 +1297,6 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
     return myLock.isWriteAcquired();
   }
 
-  private void runWithDisabledImplicitRead(@NotNull Runnable runnable) {
-    // This method is used to allow easily finding stack traces which violate disabled ImplicitRead
-    ReadMostlyRWLock lock = myLock;
-    boolean oldVal = lock.isImplicitReadAllowed();
-    try {
-      lock.setAllowImplicitRead(false);
-      runnable.run();
-    }
-    finally {
-      lock.setAllowImplicitRead(oldVal);
-    }
-  }
-
   private static void runModalProgress(@Nullable Project project,
                                        @NotNull @NlsContexts.DialogTitle String title,
                                        @NotNull Runnable runnable) {
@@ -1441,11 +1428,7 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
 
   @Override
   public void runWithoutImplicitRead(@NotNull Runnable runnable) {
-    if (!StartupUtil.isImplicitReadOnEDTDisabled()) {
-      runnable.run();
-      return;
-    }
-    runWithDisabledImplicitRead(runnable);
+    IdeEventQueue.getInstance().getRwLockHolder().runWithoutImplicitRead(runnable);
   }
 
   @ApiStatus.Internal
