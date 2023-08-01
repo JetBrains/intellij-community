@@ -202,7 +202,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                         @NotNull PsiType type,
                                                         @NotNull PropertyMemberType targetMember,
                                                         PsiAnnotation @NotNull ... annotations) {
-    return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations);
+    return new CreateFieldOrPropertyFix(aClass, name, type, targetMember, annotations).asIntention();
   }
 
   @NotNull
