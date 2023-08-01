@@ -751,7 +751,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     @Suppress("UNCHECKED_CAST")
     val moduleLibraries = (entities[LibraryEntity::class.java] as List<LibraryEntity>? ?: emptyList()).associateBy { it.name }
     module.dependencies.forEach {
-      rootManagerElement.addContent(saveDependencyItem(it, moduleLibraries))
+      val tag = saveDependencyItem(it, moduleLibraries)
+      if (tag != null) {
+        rootManagerElement.addContent(tag)
+      }
     }
 
     writer.saveComponent(fileUrl.url, MODULE_ROOT_MANAGER_COMPONENT_NAME, rootManagerElement)
@@ -816,9 +819,20 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     is ModuleDependencyItem.Exportable.LibraryDependency -> {
       val library = dependencyItem.library
       if (library.tableId is LibraryTableId.ModuleLibraryTableId) {
-        createOrderEntryTag(MODULE_LIBRARY_TYPE).apply {
-          setExportedAndScopeAttributes(dependencyItem)
-          addContent(saveLibrary(moduleLibraries.getValue(library.name), null, false))
+        val moduleLibrary = moduleLibraries[library.name]
+        if (moduleLibrary != null) {
+          createOrderEntryTag(MODULE_LIBRARY_TYPE).apply {
+            setExportedAndScopeAttributes(dependencyItem)
+            addContent(saveLibrary(moduleLibrary, null, false))
+          }
+        }
+        else {
+          LOG.error("""
+            |Module-level library '${library.name}' from module '${library.tableId.moduleId}' cannot be saved by $this, because its entity
+            |was not among ${moduleLibraries.size} library entities passed to serializer:
+            |${moduleLibraries.keys.joinToString("\n")}
+            |""".trimMargin())
+          null
         }
       }
       else {
