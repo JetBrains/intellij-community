@@ -12,7 +12,7 @@ class HasMatchAt (override val showByDefault: Boolean, private val n: Int) : Met
     get() = sample.mean()
 
   override fun evaluate(sessions: List<Session>): Double {
-    val lookups = mapSessionsToLookups(sessions)
+    val lookups = sessions.flatMap { session -> session.lookups }
 
     val fileSample = Sample()
     lookups.forEach { lookup ->

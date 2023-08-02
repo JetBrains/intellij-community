@@ -2,19 +2,17 @@
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.core.Suggestion
 
 interface ReportColors<T> {
   companion object {
     fun <T> getColor(session: Session?, colors: ReportColors<T>, lookupOrder: Int): T {
       if (session == null || session.lookups.size <= lookupOrder) return colors.absentLookupColor
       val suggestions = session.lookups[lookupOrder].suggestions
-      fun Suggestion.match(): Boolean = this.isSelected
 
       return when {
-        !suggestions.any { it.match() } -> colors.notFoundColor
-        suggestions.first().match() -> colors.perfectSortingColor
-        suggestions.take(colors.goodSortingThreshold).any { it.match() } -> colors.goodSortingColor
+        !suggestions.any { it.isSelected } -> colors.notFoundColor
+        suggestions.first().isSelected -> colors.perfectSortingColor
+        suggestions.take(colors.goodSortingThreshold).any { it.isSelected } -> colors.goodSortingColor
         else -> colors.badSortingColor
       }
     }

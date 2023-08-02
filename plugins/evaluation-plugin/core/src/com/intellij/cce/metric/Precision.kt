@@ -16,9 +16,9 @@ class Precision : Metric {
   override fun confidenceInterval(): Pair<Double, Double> = Bootstrap.computeInterval(sample) { it.average() }
 
   override fun evaluate(sessions: List<Session>): Double {
-    val lookupsToExpected = mapSessionsToLookups(sessions)
+    val lookups = sessions.flatMap { session -> session.lookups }
     val fileSample = Sample()
-    lookupsToExpected.forEach { lookup ->
+    lookups.forEach { lookup ->
       for (suggestion in lookup.suggestions) {
         if (suggestion.isRelevant) {
           fileSample.add(1.0)

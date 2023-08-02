@@ -13,7 +13,7 @@ class RecallAtMetric(private val n: Int) : Metric {
     get() = sample.mean()
 
   override fun evaluate(sessions: List<Session>): Double {
-    val lookups = mapSessionsToLookups(sessions)
+    val lookups = sessions.flatMap { session -> session.lookups }
 
     val fileSample = Sample()
     for (lookup in lookups) {
