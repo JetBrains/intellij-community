@@ -43,6 +43,7 @@ import com.intellij.openapi.util.NlsContexts.HintText
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.backend.documentation.DocumentationTarget
 import com.intellij.psi.PsiFile
+import com.intellij.ui.AppUIUtil
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.ScreenUtil.isMovementTowards
@@ -309,6 +310,7 @@ class CtrlMouseHandler2(
     val component = HintUtil.createInformationLabel(text, hyperlinkListener, null, null).also {
       it.border = JBUI.Borders.empty(6, 6, 5, 6)
     }
+    AppUIUtil.targetToDevice(component, editor.component)
     return showHint(editor, hostOffset, component)
   }
 
