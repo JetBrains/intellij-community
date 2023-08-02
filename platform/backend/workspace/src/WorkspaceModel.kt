@@ -53,7 +53,7 @@ interface WorkspaceModel {
    * This can be used as a direct migration from [WorkspaceModelChangeListener] to the non-blocking and non-write-action
    *   approach. This flow will eventually become obsolete as we'll present more handy listeners for the workspace model.
    *
-   * See the documentation of [MutableEntityStorage.collectChanges] for details about changes collecting.
+   * See the documentation of [WorkspaceModelChangeListener] for details about changes collecting.
    */
   @get:ApiStatus.Experimental
   val changesEventFlow: Flow<VersionedStorageChange>

@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.util.messages.Topic
 import java.util.*
@@ -16,7 +17,32 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
  * 
  * For the asynchronous handling of changes from the workspace model collect them via [WorkspaceModel.changesEventFlow]
  *
- * See the documentation of [MutableEntityStorage.collectChanges] for details about changes collecting.
+ * # Behavior details
+ *
+ * The [EntityChange.Added] and [EntityChange.Removed] events are straightforward and generated in case of added or removed entities.
+ *
+ * The [EntityChange.Replaced] is generated in case if any of the fields of the entity changes the value in the newer
+ *   version of storage.
+ * This means that this event is generated in two cases: "primitive" field change (Int, String, data class, etc.) or
+ *   changes of the references to other entities. The change of references may happen interectly by modifying the referred entity.
+ *   For example, if we remove child entity, we'll generate two events: remove for child and replace for parent.
+ *                if we add a new child entity, we'll also generate two events: add for child and replace for parent.
+ *
+ * # Examples
+ *
+ * Assuming the following structure of entities: A --> B --> C
+ * Where A is the root entity and B and C are the children.
+ *
+ * - If we modify the primitive field of C: [Replace(C)]
+ * - If we remove C: [Replace(B), Remove(C)]
+ * - If we remove reference between B and C: [Replace(B), Replace(C)]
+ * - If we remove B: [Replace(A), Remove(B), Remove(C)] - C is cascade removed
+ *
+ * Another example:
+ * Before: A --> B  C, After A  C --> B
+ * We have an entity `A` that has a child `B` and we move this child from `A` to `C`
+ *
+ * Produced events: [Replace(A), Replace(B), Replace(C)]
  */
 interface WorkspaceModelChangeListener : EventListener {
   /**
