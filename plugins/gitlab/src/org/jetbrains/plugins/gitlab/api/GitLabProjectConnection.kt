@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabLazyProject
-import org.jetbrains.plugins.gitlab.providers.GitLabImageLoader
+import org.jetbrains.plugins.gitlab.data.GitLabImageLoader
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import java.util.*
 
