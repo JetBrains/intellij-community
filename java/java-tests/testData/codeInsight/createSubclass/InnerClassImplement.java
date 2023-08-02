@@ -1,5 +1,5 @@
 public class Test {
-    private abstract class Inner {
+    private abstract class Inner<caret> {
       Inner(String s){}
       abstract void bar();
     }
