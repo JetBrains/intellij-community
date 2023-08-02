@@ -3,3 +3,15 @@ Common documentation for DumbLib
 
 app/src/commonMain/kotlin/Common.kt:3:14
 Common doc for foo
+
+app/src/jvmMain/kotlin/Jvm.kt:3:8
+JVM doc for DumbLib
+
+app/src/jvmMain/kotlin/Jvm.kt:3:14
+JVM doc for foo
+
+app/src/linuxX64Main/kotlin/Linux.kt:3:8
+Common documentation for DumbLib
+
+app/src/linuxX64Main/kotlin/Linux.kt:3:14
+Common doc for foo
