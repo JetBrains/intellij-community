@@ -42,9 +42,13 @@ public final class StatisticsUploadAssistant {
       return isHeadlessStatisticsEnabled();
     }
 
-    UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
-    return !isDisableCollectStatistics() && !isCollectionForceDisabled() &&
-           ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport());
+    if (!isDisableCollectStatistics() && !isCollectionForceDisabled()) {
+      UsageStatisticsPersistenceComponent settings = UsageStatisticsPersistenceComponent.getInstance();
+      if ((settings != null && settings.isAllowed()) || isLocalStatisticsWithoutReport()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isForceCollectEnabled() {

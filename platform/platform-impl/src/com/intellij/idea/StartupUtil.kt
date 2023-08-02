@@ -268,7 +268,7 @@ fun CoroutineScope.startApplication(args: List<String>,
             initLafJob = initLafJob,
             logDeferred = logDeferred,
             appRegisteredJob = appRegisteredJob,
-            args = args)
+            args = args.filterNot { CommandLineArgs.isKnownArgument(it) })
   }
 
   launch {

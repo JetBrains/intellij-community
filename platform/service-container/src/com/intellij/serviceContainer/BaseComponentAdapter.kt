@@ -113,13 +113,15 @@ internal sealed class BaseComponentAdapter(
         }
       }
     }
-    else if (Cancellation.isInNonCancelableSection()) {
+    else if (Cancellation.isInNonCancelableSection() || !LoadingState.COMPONENTS_LOADED.isOccurred) {
       @Suppress("RAW_RUN_BLOCKING")
       runBlocking {
         deferred.join()
       }
     }
     else {
+      // `runBlockingMaybeCancellable` uses `readActionContext` - requires a fully initialized app.
+      // That's why `LoadingState.COMPONENTS_LOADED` is checked above.
       runBlockingMaybeCancellable {
         deferred.join()
       }

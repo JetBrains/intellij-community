@@ -300,14 +300,14 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public boolean isDispatchThread() {
-    return myLock.isWriteThread();
+    return EDT.isCurrentThreadEdt();
   }
 
   @Override
   public boolean isWriteIntentLockAcquired() {
     // Write lock is good too
     ReadMostlyRWLock lock = myLock;
-    return lock.isWriteThread() && (lock.isWriteIntentLocked() || lock.isWriteAcquired());
+    return lock != null && lock.isWriteThread() && (lock.isWriteIntentLocked() || lock.isWriteAcquired());
   }
 
   @Deprecated
@@ -334,6 +334,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
+    if (myLock == null) {
+      getLogger().error("Do not call invokeLater when app is not yet fully initialized");
+    }
+
     if (propagateContextOrCancellation()) {
       Pair<Runnable, Condition<?>> captured = Propagation.capturePropagationAndCancellationContext(runnable, expired);
       runnable = captured.getFirst();

@@ -388,7 +388,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   // from any: bg
   private void runAsynchronously(@NotNull Task.Backgroundable task) {
     if (LOG.isDebugEnabled()) LOG.debug("CoreProgressManager#runAsynchronously, " + task, new Throwable());
-    if (ApplicationManager.getApplication().isDispatchThread()) {
+    if (EDT.isCurrentThreadEdt()) {
       runProcessWithProgressAsynchronously(task);
     }
     else {
@@ -860,8 +860,9 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       return false;
     }
 
-    if (ApplicationManager.getApplication().isDispatchThread()) {
-      return false; // EDT always has high priority
+    if (EDT.isCurrentThreadEdt()) {
+      // EDT always has high priority
+      return false;
     }
 
     if (time > MAX_PRIORITIZATION_NANOS) {

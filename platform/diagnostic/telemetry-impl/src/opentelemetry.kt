@@ -67,7 +67,7 @@ suspend fun writeInProtobufFormat(startTimeUnixNanoDiff: Long, activities: List<
   val appInfo = ApplicationInfo.getInstance()
   val data = createTraceData(resource = createOpenTelemetryResource(appInfo),
                              spans = spans,
-                             instrumentationScope = InstrumentationScope(name = "com.intellij.platform.diagnostic.startUp",
+                             instrumentationScope = InstrumentationScope(name = "startup",
                                                                          version = appInfo.build.asStringWithoutProductCode()))
   httpPost(url = endpoint, contentType = ContentType.XProtobuf, body = ProtoBuf.encodeToByteArray(data))
 }

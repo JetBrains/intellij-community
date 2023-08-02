@@ -81,6 +81,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   abstract override val storageManager: StateStorageManager
 
+  private val featureUsageSettingManager by lazy {
+    val project = project
+    @Suppress("IfThenToElvis")
+    if (project == null) service<FeatureUsageSettingsEvents>() else project.service<FeatureUsageSettingsEvents>()
+  }
+
   internal fun getComponents(): Map<String, ComponentInfo> = components
 
   override fun clearCaches() {
@@ -350,27 +356,11 @@ abstract class ComponentStoreImpl : IComponentStore {
       else {
         if (!stateRequested) {
           stateRequested = true
-          state = when {
-            component is SerializablePersistentStateComponent<*> -> {
-              component.state
-            }
-            stateSpec.getStateRequiresEdt -> {
-              withContext(Dispatchers.EDT) {
-                (component as PersistentStateComponent<*>).state
-              }
-            }
-            else -> {
-              readAction {
-                (component as PersistentStateComponent<*>).state
-              }
-            }
-          }
+          state = getStateForComponent(component = component, stateSpec = stateSpec)
         }
 
         if (modificationCountChanged && state != null && isReportStatisticAllowed(stateSpec, storageSpec)) {
-          runCatching {
-            FeatureUsageSettingsEvents.logConfigurationChanged(effectiveComponentName, state, project)
-          }.getOrLogException(LOG)
+          featureUsageSettingManager.logConfigurationChanged(effectiveComponentName, state)
         }
 
         setStateToSaveSessionProducer(state = state,
@@ -463,8 +453,12 @@ abstract class ComponentStoreImpl : IComponentStore {
 
         // if storage marked as changed,
         // it means that analyzeExternalChangesAndUpdateIfNeeded was called for it and storage is already reloaded
-        val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) isStorageChanged(changedStorages!!, storage)
-        else reloadData.toBoolean()
+        val isReloadDataForStorage = if (reloadData == ThreeState.UNSURE) {
+          isStorageChanged(changedStorages!!, storage)
+        }
+        else {
+          reloadData.toBoolean()
+        }
 
         val stateGetter = doCreateStateGetter(isReloadDataForStorage, storage, info, name, stateClass)
         var state = stateGetter.getState(defaultState)
@@ -476,7 +470,7 @@ abstract class ComponentStoreImpl : IComponentStore {
           }
           else {
             if (isReportStatisticAllowed(stateSpec, storageSpec)) {
-              FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateClass, project)
+              featureUsageSettingManager.logDefaultConfigurationState(name, stateClass)
             }
             continue
           }
@@ -488,9 +482,7 @@ abstract class ComponentStoreImpl : IComponentStore {
         component.loadState(state)
         val stateAfterLoad = stateGetter.archiveState()
         if (isReportStatisticAllowed(stateSpec, storageSpec)) {
-          LOG.runAndLogException {
-            FeatureUsageSettingsEvents.logConfigurationState(name, stateAfterLoad ?: state, project)
-          }
+          featureUsageSettingManager.logConfigurationState(name, stateAfterLoad ?: state)
         }
 
         if (postLoadStateUpdateModificationCount) {
@@ -766,5 +758,24 @@ internal suspend fun ComponentStoreImpl.childlessSaveImplementation(result: Save
 }
 
 private fun getComponentName(component: Any): String {
+  @Suppress("DEPRECATION")
   return if (component is NamedComponent) component.componentName else component.javaClass.name
+}
+
+internal suspend fun getStateForComponent(component: PersistentStateComponent<*>, stateSpec: State): Any? {
+  return when {
+    component is SerializablePersistentStateComponent<*> -> {
+      component.state
+    }
+    stateSpec.getStateRequiresEdt -> {
+      withContext(Dispatchers.EDT) {
+        component.state
+      }
+    }
+    else -> {
+      readAction {
+        component.state
+      }
+    }
+  }
 }

@@ -53,7 +53,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.coroutineContext
 
 private val LOG = logger<StartupManagerImpl>()
-private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("startupManager")) }
+private val tracer by lazy { TelemetryManager.getSimpleTracer(Scope("startup")) }
 
 /**
  * Acts as [StartupActivity.POST_STARTUP_ACTIVITY], but executed with 5-seconds delay after project opening.

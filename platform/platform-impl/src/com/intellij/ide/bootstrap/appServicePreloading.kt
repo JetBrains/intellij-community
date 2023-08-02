@@ -27,11 +27,16 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.util.childScope
 import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.*
 import java.util.concurrent.CancellationException
 
-fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: CoroutineScope, appRegistered: Job, initLafJob: Job) {
+fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl,
+                                           asyncScope: CoroutineScope,
+                                           appRegistered: Job,
+                                           initLafJob: Job,
+                                           initAwtToolkitAndEventQueueJob: Job?) {
   val pathMacroJob = launch(CoroutineName("PathMacros preloading")) {
     // required for any persistence state component (pathMacroSubstitutor.expandPaths), so, preload
     app.serviceAsync<PathMacros>()
@@ -39,7 +44,11 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
 
   val managingFsJob = asyncScope.launch {
     // loading is started by StartupUtil, here we just "join" it
-    span("ManagingFS preloading") { app.serviceAsync<ManagingFS>() }
+    span("ManagingFS preloading") {
+      app.serviceAsync<ManagingFS>()
+      // cache it to field
+      ManagingFS.getInstance()
+    }
 
     // PlatformVirtualFileManager also wants ManagingFS
     launch(CoroutineName("VirtualFileManager preloading")) { app.serviceAsync<VirtualFileManager>() }
@@ -59,7 +68,10 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
     // FileTypeManager requires appStarter execution
     launch {
       appRegistered.join()
-      postAppRegistered(app = app, asyncScope = asyncScope, managingFsJob = managingFsJob)
+      postAppRegistered(app = app,
+                        asyncScope = asyncScope,
+                        managingFsJob = managingFsJob,
+                        initAwtToolkitAndEventQueueJob = initAwtToolkitAndEventQueueJob)
     }
 
     asyncScope.launch {
@@ -103,7 +115,10 @@ fun CoroutineScope.preloadCriticalServices(app: ApplicationImpl, asyncScope: Cor
   }
 }
 
-private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: CoroutineScope, managingFsJob: Job) {
+private fun CoroutineScope.postAppRegistered(app: ApplicationImpl,
+                                             asyncScope: CoroutineScope,
+                                             managingFsJob: Job,
+                                             initAwtToolkitAndEventQueueJob: Job?) {
   asyncScope.launch {
     val fileTypeManagerJob = launch(CoroutineName("FileTypeManager preloading")) {
       app.serviceAsync<FileTypeManager>()
@@ -134,11 +149,21 @@ private fun CoroutineScope.postAppRegistered(app: ApplicationImpl, asyncScope: C
     }
   }
 
-  launch(CoroutineName("app service preloading (sync)")) {
-    app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
-                        activityPrefix = "",
-                        syncScope = this,
-                        asyncScope = asyncScope)
+  launch {
+    if (initAwtToolkitAndEventQueueJob != null) {
+      span("waiting for rw lock for app instantiation") {
+        initAwtToolkitAndEventQueueJob.join()
+      }
+
+      ApplicationImpl.postInit(app)
+    }
+
+    launch(CoroutineName("app service preloading (sync)")) {
+      app.preloadServices(modules = PluginManagerCore.getPluginSet().getEnabledModules(),
+                          activityPrefix = "",
+                          syncScope = this,
+                          asyncScope = app.coroutineScope.childScope(supervisor = false))
+    }
   }
 
   launch {

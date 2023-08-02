@@ -1,9 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages
 
 import com.intellij.openapi.Disposable
 import kotlinx.coroutines.CoroutineScope
-import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -92,13 +91,12 @@ interface MessageBus : Disposable {
    * like `'messageBus.syncPublisher(targetTopic).targetMethod()'`.
    *
    * @param topic target topic
-   * @param <L>   [business interface][Topic.getListenerClass] of the target topic
+   * @param <L> [business interface][Topic.getListenerClass] of the target topic
    * @return publisher for a target topic
    */
   fun <L : Any> syncPublisher(topic: Topic<L>): L
 
   @Internal
-  @Experimental
   fun <L : Any> syncAndPreloadPublisher(topic: Topic<L>): L
 
   /**

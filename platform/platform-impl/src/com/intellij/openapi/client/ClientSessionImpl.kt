@@ -41,9 +41,8 @@ abstract class ClientSessionImpl(
   coroutineScope = GlobalScope.namedChildScope("ClientSessionImpl", clientId.asContextElement2()),
   setExtensionsRootArea = false,
 ), ClientSession {
-
-  override val isLightServiceSupported: Boolean = false
-  override val isMessageBusSupported: Boolean = false
+  final override val isLightServiceSupported: Boolean = false
+  final override val isMessageBusSupported: Boolean = false
 
   init {
     @Suppress("LeakingThis")
@@ -73,23 +72,23 @@ abstract class ClientSessionImpl(
     assert(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
-  override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
+  final override suspend fun preloadService(service: ServiceDescriptor, serviceInterface: String) {
     return ClientId.withClientId(clientId) {
       super.preloadService(service, serviceInterface)
     }
   }
 
-  override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
+  final override fun isServiceSuitable(descriptor: ServiceDescriptor): Boolean {
     return descriptor.client?.let { type.matches(it) } ?: false
   }
 
   /**
    * only per-client services are supported (no components, extensions, listeners)
    */
-  override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
-                                  app: Application?,
-                                  precomputedExtensionModel: PrecomputedExtensionModel?,
-                                  listenerCallbacks: MutableList<in Runnable>?) {
+  final override fun registerComponents(modules: List<IdeaPluginDescriptorImpl>,
+                                        app: Application?,
+                                        precomputedExtensionModel: PrecomputedExtensionModel?,
+                                        listenerCallbacks: MutableList<in Runnable>?) {
     for (rootModule in modules) {
       registerServices(getContainerDescriptor(rootModule).services, rootModule)
       executeRegisterTaskForOldContent(rootModule) { module ->
@@ -98,12 +97,12 @@ abstract class ClientSessionImpl(
     }
   }
 
-  override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
+  final override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
     LOG.error("components aren't supported")
     return false
   }
 
-  override fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
+  final override fun <T : Any> doGetService(serviceClass: Class<T>, createIfNeeded: Boolean): T? {
     return doGetService(serviceClass, createIfNeeded, true)
   }
 
@@ -136,7 +135,7 @@ abstract class ClientSessionImpl(
     }
   }
 
-  override fun getApplication(): Application? {
+  final override fun getApplication(): Application? {
     return sharedComponentManager.getApplication()
   }
 
@@ -144,11 +143,11 @@ abstract class ClientSessionImpl(
     get() = sharedComponentManager.componentStore
 
   @Deprecated("sessions don't have their own message bus", level = DeprecationLevel.ERROR)
-  override fun getMessageBus(): MessageBus {
+  final override fun getMessageBus(): MessageBus {
     error("Not supported")
   }
 
-  override fun toString(): String {
+  final override fun toString(): String {
     return clientId.toString()
   }
 }

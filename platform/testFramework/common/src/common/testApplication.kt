@@ -15,7 +15,6 @@ import com.intellij.ide.bootstrap.getAppInitializedListeners
 import com.intellij.ide.bootstrap.initConfigurationStore
 import com.intellij.ide.bootstrap.preloadCriticalServices
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginSet
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
@@ -155,7 +154,7 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
       addKeysFromPlugins()
       Registry.markAsLoaded()
 
-      preloadServicesAndCallAppInitializedListeners(app, pluginSet)
+      preloadServicesAndCallAppInitializedListeners(app)
     }
 
     if (EDT.isCurrentThreadEdt()) {
@@ -177,21 +176,21 @@ private fun loadAppInUnitTestMode(isHeadless: Boolean) {
   }
 }
 
-private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl, pluginSet: PluginSet) {
+private suspend fun preloadServicesAndCallAppInitializedListeners(app: ApplicationImpl) {
   coroutineScope {
     TelemetryManager.setNoopTelemetryManager()
     withTimeout(Duration.ofSeconds(40).toMillis()) {
       preloadCriticalServices(app = app,
                               asyncScope = app.coroutineScope,
                               appRegistered = CompletableDeferred(value = null),
-                              initLafJob = CompletableDeferred(value = null))
+                              initLafJob = CompletableDeferred(value = null),
+                              initAwtToolkitAndEventQueueJob = null)
     }
-    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
-  }
 
-  coroutineScope {
     @Suppress("TestOnlyProblems")
     callAppInitialized(getAppInitializedListeners(app), app.coroutineScope)
+
+    LoadingState.setCurrentState(LoadingState.COMPONENTS_LOADED)
   }
 }
 

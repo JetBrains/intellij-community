@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
+import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.span
 import com.intellij.openapi.application.PathManager
@@ -61,13 +62,21 @@ internal suspend fun showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: De
           loadSplashImage(appInfo = appInfo)
         }
 
-        if (!isActive) {
+        if (!isActive || LoadingState.COMPONENTS_LOADED.isOccurred) {
           return@launch
         }
 
         // by intention out of withContext(RawSwingDispatcher) - measure "schedule" time
         span("splash initialization") {
+          if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+            return@span
+          }
+
           withContext(RawSwingDispatcher) {
+            if (LoadingState.COMPONENTS_LOADED.isOccurred) {
+              return@withContext
+            }
+
             val splash = Splash(image)
             StartUpMeasurer.addInstantEvent("splash shown")
             SPLASH_WINDOW = splash

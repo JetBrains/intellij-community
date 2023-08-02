@@ -30,6 +30,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.attachAsChildTo
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
@@ -48,7 +49,6 @@ import java.lang.invoke.MethodType
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Modifier
 import java.util.*
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
@@ -1039,8 +1039,23 @@ abstract class ComponentManagerImpl(
       asyncScope.launch(CoroutineName("${activityPrefix}service preloading (async)")) {
         for (service in asyncServices) {
           val serviceInterface = getServiceInterface(service, this@ComponentManagerImpl)
-          launch(CoroutineName("$serviceInterface preloading")) {
-            preloadService(service, serviceInterface)
+          launch(CoroutineName("$serviceInterface preloading")) a@{
+            if (isServicePreloadingCancelled || isDisposed) {
+              return@a
+            }
+
+            try {
+              preloadService(service, serviceInterface)
+            }
+            catch (e: CancellationException) {
+              throw e
+            }
+            catch (e: Throwable) {
+              if (!isServicePreloadingCancelled && !isDisposed) {
+                val adapter = componentKeyToAdapter.get(serviceInterface) as ServiceComponentAdapter?
+                LOG.error(PluginException(e, adapter?.pluginId))
+              }
+            }
           }
         }
       }
@@ -1067,7 +1082,7 @@ abstract class ComponentManagerImpl(
   final override fun beforeTreeDispose() {
     stopServicePreloading()
 
-    ApplicationManager.getApplication().assertWriteIntentLockAcquired()
+    ThreadingAssertions.assertWriteIntentReadAccess()
 
     if (!(containerState.compareAndSet(ContainerState.COMPONENT_CREATED, ContainerState.DISPOSE_IN_PROGRESS) ||
           containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.DISPOSE_IN_PROGRESS))) {

@@ -4,10 +4,9 @@ package com.intellij.ide.ui.html
 import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -59,11 +58,10 @@ object GlobalStyleSheetHolder {
   /**
    * Populate global stylesheet with LAF-based overrides
    */
-  internal fun updateGlobalStyleSheet() {
+  private fun updateGlobalStyleSheet() {
     runActivity("global styleSheet updating") {
-      val currentSheet = currentLafStyleSheet
-      if (currentSheet != null) {
-        globalStyleSheet.removeStyleSheet(currentSheet)
+      currentLafStyleSheet?.let {
+        globalStyleSheet.removeStyleSheet(it)
       }
 
       val newStyle = StyleSheet()
@@ -76,20 +74,19 @@ object GlobalStyleSheetHolder {
 
   @Service(Service.Level.APP)
   @OptIn(FlowPreview::class)
-  private class UpdateService(cs: CoroutineScope) {
+  private class UpdateService(coroutineScope: CoroutineScope) {
     private val updateRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
-      cs.launch {
+      coroutineScope.launch {
         updateRequests
           .debounce(5.milliseconds)
           .collectLatest {
-            val app = ApplicationManager.getApplication()
             coroutineScope {
-              launch { app.serviceAsync<EditorColorsManager>() }
-              launch { app.serviceAsync<FontFamilyService>() }
+              launch { serviceAsync<EditorColorsManager>() }
+              launch { serviceAsync<FontFamilyService>() }
             }
-            withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+            withContext(RawSwingDispatcher + ModalityState.any().asContextElement()) {
               updateGlobalStyleSheet()
             }
           }
@@ -102,13 +99,12 @@ object GlobalStyleSheetHolder {
   }
 
   internal class UpdateListener : EditorColorsListener, LafManagerListener {
-
     override fun lookAndFeelChanged(source: LafManager) {
-      ApplicationManager.getApplication().service<UpdateService>().requestUpdate()
+      service<UpdateService>().requestUpdate()
     }
 
     override fun globalSchemeChange(scheme: EditorColorsScheme?) {
-      ApplicationManager.getApplication().service<UpdateService>().requestUpdate()
+      service<UpdateService>().requestUpdate()
     }
   }
 }

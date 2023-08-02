@@ -14,6 +14,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.util.concurrency.BlockingJob
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -469,10 +470,15 @@ fun <T> jobToIndicator(job: Job, indicator: ProgressIndicator, action: () -> T):
 }
 
 private fun assertBackgroundThreadOrWriteAction() {
-  val application = ApplicationManager.getApplication()
-  if (!application.isDispatchThread || application.isWriteAccessAllowed || application.isUnitTestMode) {
+  if (!EDT.isCurrentThreadEdt()) {
+    return
+  }
+
+  val app = ApplicationManager.getApplication()
+  if (!app.isDispatchThread || app.isWriteAccessAllowed || app.isUnitTestMode) {
     return // OK
   }
+
   LOG.error(IllegalStateException(
     "This method is forbidden on EDT because it does not pump the event queue. " +
     "Switch to a BGT, or use com.intellij.openapi.progress.TasksKt.runWithModalProgressBlocking. "
