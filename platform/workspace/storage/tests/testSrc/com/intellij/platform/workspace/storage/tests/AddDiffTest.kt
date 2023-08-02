@@ -19,7 +19,7 @@ import java.util.*
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
-class DiffBuilderTest {
+class AddDiffTest {
   private lateinit var target: MutableEntityStorageImpl
   private var shaker = -1L
 
