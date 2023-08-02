@@ -12,6 +12,8 @@ import java.awt.Font
 @Service(Service.Level.APP)
 @State(name = "NotRoamableUiSettings", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUiOptions>(NotRoamableUiOptions()) {
+  private var initialConfigurationLoaded = false
+  
   companion object {
     fun getInstance(): NotRoamableUiSettings = ApplicationManager.getApplication().service<NotRoamableUiSettings>()
   }
@@ -86,6 +88,14 @@ class NotRoamableUiSettings : SerializablePersistentStateComponent<NotRoamableUi
     ))
 
     fixFontSettings()
+    if (initialConfigurationLoaded) {
+      UISettings.getInstance().fireUISettingsChanged()
+    }
+    initialConfigurationLoaded = true
+  }
+
+  override fun noStateLoaded() {
+    initialConfigurationLoaded = true
   }
 
   internal fun fixFontSettings() {
