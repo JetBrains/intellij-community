@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
@@ -32,8 +33,14 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
     Disposer.register(parent, this)
   }
 
-  @RequiresBackgroundThread
   private fun runDiagnostic(rootsToCheck: Collection<VirtualFile>) {
+    BackgroundTaskUtil.executeOnPooledThread(this) {
+      doRunDiagnostic(rootsToCheck)
+    }
+  }
+
+  @RequiresBackgroundThread
+  private fun doRunDiagnostic(rootsToCheck: Collection<VirtualFile>) {
     val dataGetter = index.dataGetter ?: return
 
     val dataPack = dataPackGetter()
