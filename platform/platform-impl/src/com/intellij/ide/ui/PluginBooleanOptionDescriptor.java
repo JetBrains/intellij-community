@@ -30,8 +30,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Konstantin Bulenkov
  */
 public final class PluginBooleanOptionDescriptor extends BooleanOptionDescription
-  implements BooleanOptionDescription.RequiresRebuild,
-             NotABooleanOptionDescription {
+  implements BooleanOptionDescription.RequiresRebuild, NotABooleanOptionDescription {
 
   private static final AtomicReference<Notification> ourPreviousNotification = new AtomicReference<>();
 
@@ -106,7 +105,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
 
     Set<PluginId> pluginIds = IdeaPluginDescriptorImplKt.toPluginIdSet(descriptors);
 
-    DisabledPluginsState.addDisablePluginListener(new Runnable() {
+    DisabledPluginsState.Companion.addDisablePluginListener(new Runnable() {
       @Override
       public void run() {
         Condition<? super PluginId> condition = pluginEnabler::isDisabled;
@@ -120,7 +119,7 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
         Balloon balloon = switchNotification.getBalloon();
         if (balloon == null || balloon.isDisposed()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            DisabledPluginsState.removeDisablePluginListener(this);
+            DisabledPluginsState.Companion.removeDisablePluginListener(this);
           });
         }
       }

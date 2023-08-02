@@ -95,7 +95,7 @@ public final class PluginManager {
   @Deprecated
   @ApiStatus.ScheduledForRemoval
   public static @NotNull List<String> getDisabledPlugins() {
-    Set<PluginId> list = DisabledPluginsState.getDisabledIds();
+    Set<PluginId> list = DisabledPluginsState.Companion.getDisabledIds();
     return new AbstractList<String>() {
       //<editor-fold desc="Just a list-like immutable wrapper over a set; move along.">
       @Override

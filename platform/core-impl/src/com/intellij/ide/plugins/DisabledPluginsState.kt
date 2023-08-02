@@ -17,9 +17,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 @ApiStatus.Internal
 class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
-
   companion object {
-
     const val DISABLED_PLUGINS_FILENAME: @NonNls String = "disabled_plugins.txt"
 
     @Volatile
@@ -37,22 +35,18 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     private val logger: Logger
       get() = Logger.getInstance("#com.intellij.ide.plugins.DisabledPluginsState")
 
-    @JvmStatic
     fun addDisablePluginListener(listener: Runnable) {
       ourDisabledPluginListeners.add(listener)
     }
 
-    @JvmStatic
     fun removeDisablePluginListener(listener: Runnable) {
       ourDisabledPluginListeners.remove(listener)
     }
 
-    @JvmStatic
     fun getRequiredPlugins(): Set<PluginId> {
       return splitByComma(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
     }
 
-    @JvmStatic
     fun loadDisabledPlugins(): Set<PluginId> {
       val disabledPlugins = LinkedHashSet<PluginId>()
       val path = defaultFilePath
@@ -90,7 +84,6 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       }
     }
 
-    @JvmStatic
     fun getDisabledIds(): Set<PluginId> {
       disabledPlugins?.let { return it }
 
@@ -123,7 +116,6 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
       return changed && saveDisabledPluginsAndInvalidate(disabled)
     }
 
-    @JvmStatic
     fun saveDisabledPluginsAndInvalidate(pluginIds: Set<PluginId>): Boolean {
       return trySaveDisabledPlugins(pluginIds = pluginIds, invalidate = true)
     }
