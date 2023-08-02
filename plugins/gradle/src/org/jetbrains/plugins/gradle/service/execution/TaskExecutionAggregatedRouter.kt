@@ -62,7 +62,10 @@ class TaskExecutionAggregatedRouter(val handler: GradleExecutionStageHandler) {
     val duration = event.duration()
     when (stage) {
       LOAD_BUILD_DESCRIPTOR_NAME -> handler.onGradleBuildLoaded(duration)
-      RUN_BUILD_DESCRIPTOR_NAME -> handler.onGradleExecutionCompleted(duration)
+      RUN_BUILD_DESCRIPTOR_NAME -> {
+        handler.onGradleExecutionCompleted(duration)
+        flush()
+      }
       EVALUATE_SETTINGS_DESCRIPTOR_NAME -> handler.onGradleSettingsEvaluated(duration)
       LOAD_PROJECTS_DESCRIPTOR_NAME -> handler.onGradleProjectLoaded(duration)
       CONTAINER_CALLBACK_ACTION_DESCRIPTOR_NAME -> inflightContainerCallbackDuration += duration

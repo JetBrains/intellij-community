@@ -2,10 +2,8 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import org.gradle.tooling.LongRunningOperation
-import org.gradle.tooling.events.ProgressEvent
+import org.gradle.tooling.events.OperationType
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.tooling.model.build.BuildEnvironment
 import org.gradle.util.GradleVersion
@@ -26,29 +24,17 @@ class GradleExecutionMeasuringExtension : GradleOperationHelperExtension {
     if (gradleVersion == null || gradleVersion.isGradleOlderThan("5.1")) {
       return
     }
-    val listener = ExternalSystemListener(id)
-    operation.addProgressListener(listener)
-    ExternalSystemProgressNotificationManager.getInstance().addNotificationListener(id, listener)
+    val handler = GradleExecutionStageFusHandler(id.id, WeakReference(id.findProject()))
+    val router = TaskExecutionAggregatedRouter(handler)
+    operation.addProgressListener(
+      ProgressListener {
+        router.route(it)
+      },
+      OperationType.TASK, OperationType.GENERIC
+    )
   }
 
-  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) {}
+  override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
 
   private fun BuildEnvironment.gradleVersion(): GradleVersion? = gradle?.gradleVersion?.let { GradleVersion.version(it) }
-
-  private class ExternalSystemListener(val taskId: ExternalSystemTaskId) : ExternalSystemTaskNotificationListenerAdapter(), ProgressListener {
-
-    private val router: TaskExecutionAggregatedRouter = TaskExecutionAggregatedRouter(GradleExecutionStageFusHandler(
-      taskId.id,
-      WeakReference(taskId.findProject())
-    ))
-
-    override fun statusChanged(event: ProgressEvent) = router.route(event)
-
-    override fun onEnd(id: ExternalSystemTaskId) {
-      if (taskId != id) {
-        return
-      }
-      router.flush()
-    }
-  }
 }
