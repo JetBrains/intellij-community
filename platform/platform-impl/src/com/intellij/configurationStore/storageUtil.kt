@@ -52,8 +52,7 @@ fun doNotify(macros: MutableSet<String>, project: Project, substitutorToStore: M
                                       ApplicationNamesInfo.getInstance().productName)
   val message = HtmlBuilder().appendRaw(mainMessage).br().br().appendRaw(description).toString()
   val title = IdeBundle.message("notification.title.unknown.macros.error")
-  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR,
-                                                                              null, macros).apply {
+  UnknownMacroNotification(NOTIFICATION_GROUP_ID, title, message, NotificationType.ERROR, null, macros).apply {
     addAction(NotificationAction.createSimple(IdeBundle.message("notification.action.unknown.macros.error.fix")) {
       checkUnknownMacros(project, true, macros, substitutorToStore)
     })

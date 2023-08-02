@@ -313,7 +313,7 @@ public final class SeverityRegistrar implements Comparator<HighlightSeverity>, M
     return order;
   }
 
-  public void setOrder(@NotNull List<? extends HighlightSeverity> orderList) {
+  public void setOrder(@NotNull List<HighlightSeverity> orderList) {
     orderMap.set(ensureAllStandardIncluded(orderList, getDefaultOrder()));
     myReadOrder = null;
     severitiesChanged();
