@@ -195,7 +195,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
           }
         }
         val options = (configuration as? YamlInspectionConfig)?.options
-        if (options != null) {
+        if (!options.isNullOrEmpty()) {
           val element = Element("tool")
           YamlProfileUtils.writeXmlOptions(element, options)
           inspectionTools.defaultState.tool.tool.readSettings(element)
