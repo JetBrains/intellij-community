@@ -12,8 +12,7 @@ import java.util.List;
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
   private static final List<String> DISABLED_INSPECTIONS =
-    List.of("PluginXmlDynamicPlugin",
-            "StatisticsCollectorNotRegistered",
+    List.of("StatisticsCollectorNotRegistered",
             "UseCouple",
             "HighlightVisitorInternal",
             "PluginXmlI18n",
