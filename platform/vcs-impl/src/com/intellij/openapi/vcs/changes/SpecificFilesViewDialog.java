@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
@@ -158,7 +159,11 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
     @Override
     public void resetTreeState() {
-      // do not expand tree by default
+      ChangesBrowserNode<?> root = getRoot();
+      if (root.getChildCount() == 1) {
+        TreeNode child = root.getChildAt(0);
+        expandPath(TreeUtil.getPathFromRoot(child));
+      }
     }
 
     @Nullable
