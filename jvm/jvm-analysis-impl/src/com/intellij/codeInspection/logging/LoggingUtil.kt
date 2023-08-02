@@ -1,9 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.*
+import org.jetbrains.uast.visitor.AbstractUastVisitor
 
 internal class LoggingUtil {
   companion object {
@@ -129,7 +133,15 @@ internal class LoggingUtil {
     internal fun getGuardedCondition(call: UCallExpression?): UExpression? {
       if (call == null) return null
       val loggerSource = getLoggerQualifier(call) ?: return null
-      val ifExpression = call.getParentOfType<UIfExpression>() ?: return null
+      var ifExpression: UIfExpression? = call.getParentOfType<UIfExpression>() ?: return null
+      while (ifExpression != null) {
+        if (getReferencesForVariable(loggerSource, ifExpression.condition).isEmpty()) {
+          ifExpression = ifExpression.getParentOfType<UIfExpression>() ?: return null
+          continue
+        }
+        break
+      }
+      if (ifExpression == null) return null
       var condition = ifExpression.condition.skipParenthesizedExprDown()
       if (condition is UPrefixExpression) {
         if (condition.operator != UastPrefixOperator.LOGICAL_NOT) return null
@@ -201,7 +213,7 @@ internal class LoggingUtil {
           }
         }
         if (resolvedReceiver is UMethod) {
-          if(!resolvedReceiver.uastParameters.isEmpty()) return null
+          if (!resolvedReceiver.uastParameters.isEmpty()) return null
           val methodType = resolvedReceiver.returnType?.canonicalText ?: return null
           if (LOGGER_CLASSES.contains(methodType) || LEGACY_LOGGER_CLASSES.contains(methodType)) {
             return resolvedReceiver
@@ -324,6 +336,38 @@ internal class LoggingUtil {
       return count
     }
 
+    fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
+      val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
+      return CachedValuesManager.getManager(sourcePsi.project).getCachedValue(sourcePsi, CachedValueProvider {
+        val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
+          is UQualifiedReferenceExpression -> {
+            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+          }
+          is UCallExpression -> {
+            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
+          }
+          else -> {
+            null
+          }
+        }
+        if (qualifier == null) {
+          return@CachedValueProvider CachedValueProvider.Result.create(emptyList<UCallExpression>(),
+                                                                       PsiModificationTracker.MODIFICATION_COUNT)
+        }
+        val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
+        if (uIfExpression == null) {
+          return@CachedValueProvider CachedValueProvider.Result.create(emptyList<UCallExpression>(),
+                                                                       PsiModificationTracker.MODIFICATION_COUNT)
+        }
+        val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
+        return@CachedValueProvider CachedValueProvider.Result.create(
+          referencesForVariable.mapNotNull { it.selector as? UCallExpression }
+            .filter { it.sourcePsi?.containingFile != null }
+            .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) },
+          PsiModificationTracker.MODIFICATION_COUNT)
+      })
+    }
+
     enum class LoggerType {
       SLF4J_LOGGER_TYPE, SLF4J_BUILDER_TYPE, LOG4J_LOGGER_TYPE, LOG4J_BUILDER_TYPE
     }
@@ -337,4 +381,21 @@ internal class LoggingUtil {
       FATAL, ERROR, SEVERE, WARN, WARNING, INFO, DEBUG, TRACE, CONFIG, FINE, FINER, FINEST
     }
   }
+}
+
+internal fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
+  val sourcePsi = variable.sourcePsi ?: return emptyList()
+  val result: MutableList<UQualifiedReferenceExpression> = mutableListOf()
+  val visitor: AbstractUastVisitor = object : AbstractUastVisitor() {
+    override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
+      val selector = node.receiver
+      val resolveToUElement = (selector as? UResolvable)?.resolveToUElement() ?: return true
+      if (sourcePsi.isEquivalentTo(resolveToUElement.sourcePsi)) {
+        result.add(node)
+      }
+      return true
+    }
+  }
+  context.accept(visitor)
+  return result
 }
