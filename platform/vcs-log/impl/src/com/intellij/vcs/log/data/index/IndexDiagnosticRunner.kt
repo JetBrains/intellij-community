@@ -50,10 +50,14 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
     val uncheckedRoots = rootsToCheck - checkedRoots
     if (uncheckedRoots.isEmpty()) return
 
-    thisLogger().info("Running index diagnostic for $uncheckedRoots")
     checkedRoots.addAll(uncheckedRoots)
 
     val commits = dataPack.getFirstCommits(storage, uncheckedRoots)
+    if (commits.isEmpty()) {
+      thisLogger().info("Index diagnostic for $uncheckedRoots is skipped as no commits were selected")
+      return
+    }
+
     try {
       val commitDetails = commitDetailsGetter.getCommitDetails(commits)
       val diffReport = dataGetter.getDiffFor(commits, commitDetails)
@@ -62,6 +66,9 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
         thisLogger().error(exception.message, exception, Attachment("VcsLogIndexDiagnosticReport.txt", diffReport))
         index.markCorrupted()
         errorHandler.handleError(VcsLogErrorHandler.Source.Index, exception)
+      }
+      else {
+        thisLogger().info("Index diagnostic for ${commits.size} commits in $uncheckedRoots is completed")
       }
     }
     catch (e: VcsException) {
