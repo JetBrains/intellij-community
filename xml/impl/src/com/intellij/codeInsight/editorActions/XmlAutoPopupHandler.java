@@ -28,6 +28,8 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.psi.codeInsight.XmlAutoPopupEnabler;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +37,10 @@ import org.jetbrains.annotations.NotNull;
 public class XmlAutoPopupHandler extends TypedHandlerDelegate {
   @NotNull
   @Override
-  public Result checkAutoPopup(final char charTyped, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
+  public Result checkAutoPopup(final char charTyped,
+                               @NotNull final Project project,
+                               @NotNull final Editor editor,
+                               @NotNull final PsiFile file) {
     final boolean isXmlLikeFile = XmlGtTypedHandler.fileContainsXmlLanguage(file);
     boolean spaceInTag = isXmlLikeFile && charTyped == ' ';
 
@@ -58,7 +63,7 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  public static void autoPopupXmlLookup(final Project project, final Editor editor){
+  public static void autoPopupXmlLookup(final Project project, final Editor editor) {
     AutoPopupController.getInstance(project).autoPopupMemberLookup(editor, file -> {
       int offset = editor.getCaretModel().getOffset();
 
@@ -98,7 +103,8 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
         text.equals(" ") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
         text.endsWith("${") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
         text.endsWith("@{") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) && isAnt.get().booleanValue() ||
-        text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt)) {
+        text.endsWith("</") && isLanguageRelevant(lastElement, file, isRelevantLanguage, isAnt) ||
+        ContainerUtil.exists(XmlAutoPopupEnabler.EP_NAME.getExtensionList(), p -> p.shouldShowPopup(file, offset))) {
       return true;
     }
 
@@ -126,6 +132,4 @@ public class XmlAutoPopupHandler extends TypedHandlerDelegate {
     }
     return result.booleanValue();
   }
-
-
 }
