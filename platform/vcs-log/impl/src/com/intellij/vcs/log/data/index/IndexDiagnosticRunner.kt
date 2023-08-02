@@ -26,11 +26,13 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
                                      private val commitDetailsGetter: CommitDetailsGetter,
                                      private val errorHandler: VcsLogErrorHandler,
                                      parent: Disposable) : Disposable {
+  private val bigRepositoriesList = VcsLogBigRepositoriesList.getInstance()
   private val indexingListener = VcsLogIndex.IndexingFinishedListener { root -> runDiagnostic(listOf(root)) }
   private val checkedRoots = ConcurrentCollectionFactory.createConcurrentSet<VirtualFile>()
 
   init {
     index.addListener(indexingListener)
+    bigRepositoriesList.addListener(MyBigRepositoriesListListener(), this)
     Disposer.register(parent, this)
   }
 
@@ -52,7 +54,7 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
 
     checkedRoots.addAll(uncheckedRoots)
 
-    val commits = dataPack.getFirstCommits(storage, uncheckedRoots)
+    val commits = dataPack.getFirstCommits(storage, uncheckedRoots).filter { index.isIndexed(it) }
     if (commits.isEmpty()) {
       thisLogger().info("Index diagnostic for $uncheckedRoots is skipped as no commits were selected")
       return
@@ -77,10 +79,14 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
   }
 
   fun onDataPackChange() {
-    runDiagnostic(roots.filter(index::isIndexed))
+    runDiagnostic(roots.filter { root -> index.isIndexed(root) || bigRepositoriesList.isBig(root) })
   }
 
   override fun dispose() {
     index.removeListener(indexingListener)
+  }
+
+  private inner class MyBigRepositoriesListListener : VcsLogBigRepositoriesList.Listener {
+    override fun onRepositoryAdded(root: VirtualFile) = runDiagnostic(listOf(root))
   }
 }
