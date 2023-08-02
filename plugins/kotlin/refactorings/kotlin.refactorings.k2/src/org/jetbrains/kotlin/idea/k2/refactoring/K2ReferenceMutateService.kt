@@ -119,15 +119,16 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
         return replaced(newQualifiedExpression)
     }
 
-    private fun KtCallExpression.replaceWith(fqName: FqName): KtExpression? {
-        val newCall = replaceShortName(fqName) ?: return null
+    private fun KtCallExpression.replaceWith(fqName: FqName): KtExpression {
+        val newCall = replaceShortName(fqName)
         return newCall.replaceWithQualified(fqName, newCall)
     }
 
-    private fun KtCallExpression.replaceShortName(fqName: FqName): KtExpression? {
+    private fun KtCallExpression.replaceShortName(fqName: FqName): KtExpression {
         val psiFactory = KtPsiFactory(project)
         val newName = psiFactory.createSimpleName(fqName.shortName().asString())
-        return calleeExpression?.replace(newName)?.parentOfType<KtCallExpression>()
+        calleeExpression?.replace(newName)
+        return this
     }
 
     private fun KtSimpleNameExpression.replaceWith(fqName: FqName): KtExpression {
