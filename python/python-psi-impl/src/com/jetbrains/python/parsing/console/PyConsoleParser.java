@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.parsing.console;
 
-import com.google.common.collect.ImmutableSet;
 import com.intellij.lang.SyntaxTreeBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.PyParser;
@@ -25,7 +25,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 
 public class PyConsoleParser extends PyParser {
 
-  private static final ImmutableSet<IElementType> IPYTHON_START_SYMBOLS = new ImmutableSet.Builder<IElementType>().add(
+  private static final TokenSet IPYTHON_START_SYMBOLS = TokenSet.create(
     PyConsoleTokenTypes.PLING,
     PyConsoleTokenTypes.QUESTION_MARK,
     PyConsoleTokenTypes.SHELL_COMMAND,
@@ -33,7 +33,7 @@ public class PyConsoleParser extends PyParser {
     PyTokenTypes.DIV,
     PyTokenTypes.PERC,
     PyTokenTypes.SEMICOLON
-  ).build();
+  );
 
   private final PythonConsoleData myPythonConsoleData;
 
