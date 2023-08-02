@@ -20,11 +20,9 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -114,18 +112,10 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
           holder.registerProblem(context, JavaBundle.message("inspection.unused.assignment.problem.descriptor4"));
         }
         else if (REPORT_PATTERN_VARIABLE && psiVariable instanceof PsiPatternVariable) {
-          //case is covered with `Java | Declaration redundancy | Unused declaration`
-          if (!VariableAccessUtils.variableIsUsed(psiVariable, context)) {
-            continue;
-          }
           holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor5"));
         }
         else if (REPORT_FOR_EACH_PARAMETER && context instanceof PsiForeachStatement foreachStatement &&
-                 foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null) {
-          //case is covered with `Java | Declaration redundancy | Unused declaration`
-          if (!VariableAccessUtils.variableIsUsed(psiVariable, context)) {
-            continue;
-          }
+                  foreachStatement.getIterationParameter() == psiVariable && psiVariable.getNameIdentifier() != null) {
           holder.registerProblem(psiVariable.getNameIdentifier(), JavaBundle.message("inspection.unused.assignment.problem.descriptor6"));
         }
       }

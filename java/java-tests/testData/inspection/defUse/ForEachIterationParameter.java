@@ -4,8 +4,6 @@ class Test {
       arg = "test";
       System.out.println(arg);
     }
-    for (String ignored : args) {
-    }
 
     for (String arg : args) {
       if (args.length == 1) {
