@@ -5,7 +5,6 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.navbar.NavBarItem
 import com.intellij.ide.navbar.NavBarItemProvider
 import com.intellij.ide.navigationToolbar.NavBarModelExtension
-import com.intellij.ide.util.treeView.WeighedItem
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -144,7 +143,6 @@ class DefaultNavBarItemProvider : NavBarItemProvider {
             }
           }
           is OrderEntry -> OrderEntryNavBarItem(child)
-          is WeighedItem -> WeightedNavBarItem(child)
           else -> DefaultNavBarItem(child)
         }
       }
