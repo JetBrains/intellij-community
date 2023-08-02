@@ -27,7 +27,6 @@ import com.intellij.psi.compiled.ClassFileDecompilers
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
-import com.intellij.util.ui.EDT
 import org.jetbrains.java.decompiler.main.CancellationManager
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException
@@ -62,7 +61,6 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         IFernflowerPreferences.NEW_LINE_SEPARATOR to "1",
         IFernflowerPreferences.BANNER to BANNER,
         IFernflowerPreferences.MAX_PROCESSING_METHOD to 60,
-        IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS to 150_000, //approximately 9_000 lines
         IFernflowerPreferences.INDENT_STRING to indent,
         IFernflowerPreferences.IGNORE_INVALID_BYTECODE to "1",
         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES to "1",
@@ -131,15 +129,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
         return previous
       }
       else {
-        val maxBytesNotUnderProgress = myOptions.value[IFernflowerPreferences.MAX_BYTES_CLASS_NOT_UNDER_PROGRESS]?.toString()?.toIntOrNull() ?: 0
-        return if (!ApplicationManager.getApplication().isUnitTestMode &&
-                   (maxBytesNotUnderProgress > 0 && EDT.isCurrentThreadEdt() &&
-                    file.length > maxBytesNotUnderProgress)) {
-          ClsFileImpl.decompile(file)
-        }
-        else {
-          decompile(file)
-        }
+        return decompile(file)
       }
     }
     else {
