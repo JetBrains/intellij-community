@@ -222,6 +222,21 @@ public class NormalPatternsCompletionTest extends NormalCompletionTestCase {
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "StrIncompatible", "String", "StrictMath", "StringBuffer", "StringBuilder");
   }
+  
+  public void testUnnamedVariableAndWhen() {
+    String text = """
+        class X {
+          void test(Object obj) {
+            switch (obj) {
+              case String _ when _.isE<caret>
+            }
+          }
+        }
+      """;
+    myFixture.configureByText("a.java", text);
+    myFixture.completeBasic();
+    myFixture.checkResult(text);
+  }
 
   private void selectItem(int index) {
     LookupElement[] elements = myFixture.getLookupElements();
