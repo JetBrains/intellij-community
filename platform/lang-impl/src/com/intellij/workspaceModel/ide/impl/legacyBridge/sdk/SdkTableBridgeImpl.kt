@@ -31,11 +31,13 @@ import org.jdom.Element
 //TODO::
 // [] Different tag name for library root and SDK roots e.g sources, classes
 // [] Old version `2` constantly serialized for SDK
+// [] `SdkConfigurationUtil.createSdk` broken API
 // [] Strange to have type `SDK` but methods - `updateJDK`
 // [] One more implementation of `ProjectJdkTable` => `JavaAwareProjectJdkTableImpl`
 // [] SdkType.EP_NAME.addExtensionPointListener
 // [] Additional data loading/saving
 // [] The same problem as with FacetConfiguration we have 7 types of additional data for SDK so 7 entities
+
 internal val rootTypes = ConcurrentFactoryMap.createMap<String, SdkRootTypeId> { SdkRootTypeId(it) }
 class SdkTableBridgeImpl: GlobalSdkTableBridge() {
 

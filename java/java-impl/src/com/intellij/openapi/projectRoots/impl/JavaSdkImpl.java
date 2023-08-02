@@ -458,7 +458,8 @@ public final class JavaSdkImpl extends JavaSdk {
     if (!Files.exists(jdkHomePath)) {
       throw new IllegalArgumentException(jdkHomePath.toAbsolutePath() + " doesn't exist");
     }
-    ProjectJdkImpl jdk = new ProjectJdkImpl(jdkName, this);
+
+    Sdk jdk = ProjectJdkTable.getInstance().createSdk(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
 
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));

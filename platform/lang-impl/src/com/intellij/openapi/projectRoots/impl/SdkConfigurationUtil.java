@@ -11,10 +11,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.SdkType;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -127,7 +124,7 @@ public final class SdkConfigurationUtil {
                              final boolean silent,
                              @Nullable final SdkAdditionalData additionalData,
                              @Nullable final String customSdkSuggestedName) {
-    ProjectJdkImpl sdk = null;
+    Sdk sdk = null;
     try {
       sdk = createSdk(Arrays.asList(allSdks), homeDir, sdkType, additionalData, customSdkSuggestedName);
 
@@ -158,7 +155,7 @@ public final class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static ProjectJdkImpl createSdk(@NotNull Collection<? extends Sdk> allSdks,
+  public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
                                          @NotNull VirtualFile homeDir,
                                          @NotNull SdkType sdkType,
                                          @Nullable SdkAdditionalData additionalData,
@@ -167,7 +164,7 @@ public final class SdkConfigurationUtil {
   }
 
   @NotNull
-  public static ProjectJdkImpl createSdk(@NotNull Collection<? extends Sdk> allSdks,
+  public static Sdk createSdk(@NotNull Collection<? extends Sdk> allSdks,
                                          @NotNull String homePath,
                                          @NotNull SdkType sdkType,
                                          @Nullable SdkAdditionalData additionalData,
@@ -176,16 +173,19 @@ public final class SdkConfigurationUtil {
                            ? createUniqueSdkName(sdkType, homePath, allSdks)
                            : createUniqueSdkName(customSdkSuggestedName, allSdks);
 
-    final ProjectJdkImpl sdk = new ProjectJdkImpl(sdkName, sdkType);
-
+    Sdk sdk = ProjectJdkTable.getInstance().createSdk(sdkName, sdkType);
+    SdkModificator sdkModificator = sdk.getSdkModificator();
     if (additionalData != null) {
       // additional initialization.
       // E.g. some ruby sdks must be initialized before
       // setupSdkPaths() method invocation
-      sdk.setSdkAdditionalData(additionalData);
+      sdkModificator.setSdkAdditionalData(additionalData);
     }
 
-    sdk.setHomePath(homePath);
+    sdkModificator.setHomePath(homePath);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return sdk;
   }
 

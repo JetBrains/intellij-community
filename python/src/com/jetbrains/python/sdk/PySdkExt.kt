@@ -218,10 +218,15 @@ fun PyDetectedSdk.setupAssociated(existingSdks: List<Sdk>, associatedModulePath:
 
   targetEnvConfiguration?.let { targetConfig ->
     // Target-based sdk, not local one
-    sdk.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
-      .also {
-        it.targetEnvironmentConfiguration = targetConfig
+    sdk.sdkModificator.let { modificator ->
+      modificator.sdkAdditionalData = PyTargetAwareAdditionalData(PyFlavorAndData.UNKNOWN_FLAVOR_DATA)
+        .also {
+          it.targetEnvironmentConfiguration = targetConfig
+        }
+      ApplicationManager.getApplication().runWriteAction {
+        modificator.commitChanges()
       }
+    }
   }
   PythonSdkType.getInstance().setupSdkPaths(sdk)
   return sdk
