@@ -132,13 +132,15 @@ public class CreateFromTemplateDialog extends DialogWrapper {
         createFile(child.getFileName(), child, properties);
       }
 
-      String mainFileName = fileName;
+      String mainFileName;
       String templateFileName = myTemplate.getFileName();
       String propertiesFileName = properties.getProperty(FileTemplate.ATTRIBUTE_FILE_NAME);
       if (!StringUtil.isEmpty(templateFileName)) {
         mainFileName = templateFileName;
       } else if (!StringUtil.isEmpty(propertiesFileName)) {
         mainFileName = propertiesFileName;
+      } else {
+        mainFileName = fileName;
       }
 
       myCreatedElement = createFile(mainFileName, myTemplate, properties);
