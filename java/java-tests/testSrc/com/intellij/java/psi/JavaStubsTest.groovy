@@ -8,11 +8,9 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.psi.*
-import com.intellij.psi.impl.java.stubs.PsiClassStub
 import com.intellij.psi.impl.source.PsiClassImpl
 import com.intellij.psi.impl.source.PsiFieldImpl
 import com.intellij.psi.impl.source.PsiFileImpl
-import com.intellij.psi.impl.source.PsiUnnamedClassImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.search.searches.AnnotatedElementsSearch
@@ -388,7 +386,9 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
   void "test remove extends reference before dot"() {
     def file = myFixture.addFileToProject("a.java", "class A extends B. { int a; }")
     WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.findClass("A").extendsList.referenceElements[0].delete()
+      def javaFile = file as PsiJavaFile
+      def clazz = (javaFile.classes[0] as PsiUnnamedClass).innerClasses[0]
+      clazz.extendsList.referenceElements[0].delete()
     }
     PsiTestUtil.checkStubsMatchText(file)
   }
@@ -417,7 +417,9 @@ class JavaStubsTest extends LightJavaCodeInsightFixtureTestCase {
   void "test add reference into broken extends list"() {
     def file = myFixture.addFileToProject("a.java", "class A extends.ends Foo { int a; }")
     WriteCommandAction.runWriteCommandAction(project) {
-      myFixture.findClass("A").extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
+      def javaFile = file as PsiJavaFile
+      def clazz = (javaFile.classes[0] as PsiUnnamedClass).innerClasses[0]
+      clazz.extendsList.add(JavaPsiFacade.getElementFactory(project).createReferenceElementByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, file.resolveScope))
     }
     PsiTestUtil.checkStubsMatchText(file)
   }
