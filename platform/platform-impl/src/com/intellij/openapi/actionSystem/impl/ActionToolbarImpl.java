@@ -228,7 +228,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myActionGroup = actionGroup;
     myVisibleActions = new ArrayList<>();
     myDecorateButtons = decorateButtons;
-    myUpdater = new ToolbarUpdater(this) {
+    myUpdater = new ToolbarUpdater(this, place) {
       @Override
       protected void updateActionsImpl(boolean forced) {
         if (!ApplicationManager.getApplication().isDisposed()) {

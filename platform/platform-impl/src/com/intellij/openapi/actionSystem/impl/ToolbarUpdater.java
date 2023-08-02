@@ -14,10 +14,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
 /**
@@ -27,12 +30,20 @@ public abstract class ToolbarUpdater implements Activatable {
   private final JComponent myComponent;
 
   private final KeymapManagerListener myKeymapManagerListener = new MyKeymapManagerListener();
-  private final TimerListener myTimerListener = new MyTimerListener();
+  private final TimerListener myTimerListener;
 
   private boolean myListenersArmed;
 
   public ToolbarUpdater(@NotNull JComponent component) {
+    this(component, null);
+  }
+
+  /**
+   * @param internalDescription used for debugging
+   */
+  public ToolbarUpdater(@NotNull JComponent component, @Nullable @NonNls String internalDescription) {
     myComponent = component;
+    myTimerListener = new MyTimerListener(this, internalDescription);
     UiNotifyConnector.installOn(component, this);
   }
 
@@ -93,16 +104,29 @@ public abstract class ToolbarUpdater implements Activatable {
     }
   }
 
-  private final class MyTimerListener implements TimerListener {
+  private static final class MyTimerListener implements TimerListener {
+    private final Reference<ToolbarUpdater> myReference;
+    @SuppressWarnings({"unused", "FieldCanBeLocal"}) private final @Nullable @NonNls String myDescription; // input for curiosity
+
+    private MyTimerListener(@NotNull ToolbarUpdater updater,
+                            @Nullable @NonNls String internalDescription) {
+      myReference = new WeakReference<>(updater);
+      myDescription = internalDescription;
+    }
 
     @Override
     public ModalityState getModalityState() {
-      return ModalityState.stateForComponent(myComponent);
+      ToolbarUpdater updater = myReference.get();
+      if (updater == null) return null;
+      return ModalityState.stateForComponent(updater.myComponent);
     }
 
     @Override
     public void run() {
-      if (!myComponent.isShowing()) {
+      ToolbarUpdater updater = myReference.get();
+      if (updater == null) return;
+
+      if (!updater.myComponent.isShowing()) {
         return;
       }
 
@@ -115,11 +139,11 @@ public abstract class ToolbarUpdater implements Activatable {
 
       // don't update toolbar if there is currently active modal dialog
       Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(myComponent, window)) {
+      if (window instanceof Dialog && ((Dialog)window).isModal() && !SwingUtilities.isDescendingFrom(updater.myComponent, window)) {
         return;
       }
 
-      updateActions(false, false, false);
+      updater.updateActions(false, false, false);
     }
   }
 
