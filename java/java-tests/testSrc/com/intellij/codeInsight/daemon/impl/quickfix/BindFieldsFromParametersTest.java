@@ -10,6 +10,7 @@ public class BindFieldsFromParametersTest extends LightIntentionActionTestCase {
     super.setUp();
     JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.FIELD_NAME_PREFIX = "my";
+    assertTrue(settings.PREFER_LONGER_NAMES);
     if (getTestName(false).contains("SameParam")) {
       settings.PREFER_LONGER_NAMES = false;
     }

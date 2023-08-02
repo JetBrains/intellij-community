@@ -225,6 +225,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   @Deprecated
   @NotNull
   public CodeStyleSettings getCurrentSettings() {
+    CodeStyleSettings localSettings = getLocalSettings();
+    if (localSettings != null) return localSettings;
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
     CodeStyleSettings projectSettings = getMainProjectCodeStyle();

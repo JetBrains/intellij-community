@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -8,10 +9,7 @@ import com.intellij.modcommand.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.JavaElementKind;
@@ -101,16 +99,15 @@ public class BindFieldsFromParametersAction implements ModCommandAction {
       for (PsiParameter parameter : writable) {
         types.putValue(parameter.getType(), parameter);
       }
-      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(updater.getWritable(context.file()));
+      CodeStyleSettings allSettings = CodeStyleSettingsManager.getInstance(context.project())
+        .cloneSettings(CodeStyle.getSettings(context.file()));
+      JavaCodeStyleSettings settings = allSettings.getCustomSettings(JavaCodeStyleSettings.class);
+
       boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
       for (PsiParameter selected : writable) {
-        try {
-          settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
-          processParameter(context.project(), selected, usedNames);
-        }
-        finally {
-          settings.PREFER_LONGER_NAMES = preferLongerNames;
-        }
+        settings.PREFER_LONGER_NAMES = preferLongerNames || types.get(selected.getType()).size() > 1;
+        CodeStyle.runWithLocalSettings(context.project(), allSettings,
+                                       () -> processParameter(context.project(), selected, usedNames));
       }
     }));
   }

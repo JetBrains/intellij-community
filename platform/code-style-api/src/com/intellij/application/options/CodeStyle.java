@@ -93,17 +93,17 @@ public final class CodeStyle {
   public static CodeStyleSettings getSettings(@NotNull PsiFile file) {
     final Project project = file.getProject();
     CodeStyleSettingsManager settingsManager = CodeStyleSettingsManager.getInstance(project);
+    CodeStyleSettings localSettings = settingsManager.getLocalSettings();
+    if (localSettings != null) {
+      return localSettings;
+    }
+
     @SuppressWarnings("TestOnlyProblems")
     CodeStyleSettings tempSettings = settingsManager.getTemporarySettings();
     if (tempSettings != null) {
       return tempSettings;
     }
     
-    CodeStyleSettings localSettings = settingsManager.getLocalSettings();
-    if (localSettings != null) {
-      return localSettings;
-    }
-
     PsiFile settingsFile = getSettingsPsi(file);
     if (settingsFile == null) {
       return getSettings(project);
