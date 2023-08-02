@@ -148,6 +148,8 @@
                        displayType="BALLOON"
                        key="notification.group.mermaid"/>
 
+    <statistics.counterUsagesCollector implementationClass="com.intellij.mermaid.fus.MermaidCollector"/>
+    <editorFactoryListener implementation="com.intellij.mermaid.fus.DiagramReportingFactoryListener"/>
   </extensions>
   <extensions defaultExtensionNs="JavaScript.JsonSchema">
     <ProviderFactory implementation="com.intellij.mermaid.lang.injection.DirectiveJsonSchemaProviderFactory"/>
