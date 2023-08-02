@@ -97,7 +97,7 @@ internal object IndexDiagnostic {
       if (!rootsToCheck.remove(root)) continue
 
       // bfs walk from the node in order to get commits in the same root
-      BfsWalk(node, graph, IntHashSetFlags(COMMITS_TO_CHECK), false).walk { nextNode ->
+      BfsWalk(node, graph, IntHashSetFlags(graph.nodesCount()), false).walk { nextNode ->
         // skipping merge commits or initial commits
         // merge commits tend to have more changes
         // for shallow clones, initial commits have a lot of changes as well
