@@ -3,7 +3,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-class HasMatchAt (private val n: Int) : Metric {
+class HasMatchAt (override val showByDefault: Boolean, private val n: Int) : Metric {
   private val sample = Sample()
   override val name = NAME_PREFIX + n
   override val description: String = "Ratio of invocations with matching proposal in top-$n"

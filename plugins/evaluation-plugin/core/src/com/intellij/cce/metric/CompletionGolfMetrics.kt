@@ -12,6 +12,8 @@ fun createCompletionGolfMetrics(): List<Metric> =
     MatchedRatioAt(showByDefault = false, n = 3),
     PrefixSimilarity(),
     EditSimilarity(),
+    HasMatchAt(showByDefault = false, n = 1),
+    HasMatchAt(showByDefault = false, n = 3),
     MovesCount(),
     TypingsCount(),
     NavigationsCount(),
@@ -28,6 +30,8 @@ fun createBenchmarkMetrics(): List<Metric> =
     PrefixSimilarity(showByDefault = false),
     EditSimilarity(showByDefault = false),
     PerfectLine(showByDefault = true),
+    HasMatchAt(showByDefault = false, n = 1),
+    HasMatchAt(showByDefault = false, n = 3),
     MatchedLineLength(),
     FirstPerfectLineSession()
   )
