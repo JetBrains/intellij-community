@@ -113,6 +113,15 @@ val mermaidExtensionBuildResults by tasks.registering {
   dependsOn(mermaidExtensionBinariesSourceMaps)
 }
 
+val generateEventScheme by tasks.registering(RunIdeTask::class) {
+  val outputFile = buildDir.resolve("mermaid-event-scheme.json")
+  args(
+    "buildEventsScheme",
+    "--outputFile=$outputFile",
+    "--pluginId=com.intellij.mermaid"
+  )
+}
+
 val jcefLogPath by lazy { buildDir.toPath().resolve("log").resolve("jcef-log-${Date().time}.txt") }
 
 tasks {
