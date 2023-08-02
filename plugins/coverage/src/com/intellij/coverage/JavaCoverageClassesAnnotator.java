@@ -221,8 +221,8 @@ public class JavaCoverageClassesAnnotator extends JavaCoverageClassesEnumerator 
       }
     }
     for (CoverageSuite suite : bundle.getSuites()) {
-      if (suite instanceof JavaCoverageSuite &&
-          ((JavaCoverageSuite)suite).isClassFiltered(toplevelClassSrcFQName, ((JavaCoverageSuite)suite).getExcludedClassNames())) {
+      if (suite instanceof JavaCoverageSuite javaSuite &&
+          JavaCoverageSuite.isClassFiltered(toplevelClassSrcFQName, javaSuite.getExcludedClassNames())) {
         return true;
       }
     }

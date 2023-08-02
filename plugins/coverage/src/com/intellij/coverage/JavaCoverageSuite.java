@@ -16,22 +16,22 @@ import com.intellij.util.ArrayUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public class JavaCoverageSuite extends BaseCoverageSuite {
-  private String[] myFilters;
-
   @NonNls
   private static final String FILTER = "FILTER";
   @NonNls
   private static final String EXCLUDED_FILTER = "EXCLUDED_FILTER";
   @NonNls
   private static final String COVERAGE_RUNNER = "RUNNER";
-  private String[] myExcludePatterns;
   private final CoverageEngine myCoverageEngine;
+  private String @Nullable [] myIncludeFilters;
+  private String @Nullable [] myExcludePatterns;
 
   //read external only
   public JavaCoverageSuite(@NotNull final CoverageEngine coverageEngine) {
@@ -41,8 +41,8 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
 
   public JavaCoverageSuite(final String name,
                            final CoverageFileProvider coverageDataFileProvider,
-                           final String[] filters,
-                           final String[] excludePatterns,
+                           final String @Nullable [] includeFilters,
+                           final String @Nullable [] excludePatterns,
                            final long lastCoverageTimeStamp,
                            final boolean coverageByTestEnabled,
                            final boolean branchCoverage,
@@ -54,17 +54,33 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
           branchCoverage, trackTestFolders,
           coverageRunner != null ? coverageRunner : CoverageRunner.getInstance(IDEACoverageRunner.class), project);
 
-    myFilters = filters;
-    myExcludePatterns = excludePatterns;
     myCoverageEngine = coverageEngine;
+    myIncludeFilters = includeFilters;
+    myExcludePatterns = excludePatterns;
   }
 
   public final String @NotNull [] getFilteredPackageNames() {
-    return getPackageNames(myFilters);
+    return getPackageNames(myIncludeFilters);
   }
 
   public final String @NotNull [] getExcludedPackageNames() {
     return getPackageNames(myExcludePatterns);
+  }
+
+  final String @Nullable [] getIncludeFilters() {
+    return myIncludeFilters;
+  }
+
+  final void setIncludeFilters(String @Nullable [] filters) {
+    myIncludeFilters = filters;
+  }
+
+  final String @Nullable [] getExcludePatterns() {
+    return myExcludePatterns;
+  }
+
+  final void setExcludePatterns(String @Nullable [] patterns) {
+    myExcludePatterns = patterns;
   }
 
   private static String[] getPackageNames(String[] filters) {
@@ -80,7 +96,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   }
 
   public final String @NotNull [] getFilteredClassNames() {
-    return getClassNames(myFilters);
+    return getClassNames(myIncludeFilters);
   }
 
   public final String @NotNull [] getExcludedClassNames() {
@@ -101,7 +117,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     super.readExternal(element);
 
     // filters
-    myFilters = readFilters(element, FILTER);
+    myIncludeFilters = readFilters(element, FILTER);
     myExcludePatterns = readFilters(element, EXCLUDED_FILTER);
 
     if (getRunner() == null) {
@@ -121,7 +137,7 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
   @Override
   public final void writeExternal(final Element element) throws WriteExternalException {
     super.writeExternal(element);
-    writeFilters(element, myFilters, FILTER);
+    writeFilters(element, myIncludeFilters, FILTER);
     writeFilters(element, myExcludePatterns, EXCLUDED_FILTER);
     final CoverageRunner coverageRunner = getRunner();
     if (coverageRunner != null) {
@@ -149,9 +165,8 @@ public class JavaCoverageSuite extends BaseCoverageSuite {
     return isClassFiltered(classFQName, getFilteredClassNames());
   }
 
-  public final boolean isClassFiltered(final String classFQName,
-                                 final String[] classPatterns) {
-    for (final String className : classPatterns) {
+  public static boolean isClassFiltered(String classFQName, String[] classPatterns) {
+    for (String className : classPatterns) {
       if (className.equals(classFQName) || classFQName.startsWith(className) && classFQName.charAt(className.length()) == '$') {
         return true;
       }
