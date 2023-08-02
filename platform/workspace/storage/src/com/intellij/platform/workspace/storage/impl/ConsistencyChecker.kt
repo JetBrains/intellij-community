@@ -98,14 +98,14 @@ internal fun AbstractEntityStorage.assertConsistency() {
 }
 
 private fun assertCorrectEntityClass(connectionClass: Int, entityId: EntityId) {
-  assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
-    "Entity storage with connection class ${connectionClass.findEntityClass<WorkspaceEntity>()} contains entity data of wrong type $entityId"
+  assert(connectionClass.findWorkspaceEntity().isAssignableFrom(entityId.clazz.findWorkspaceEntity())) {
+    "Entity storage with connection class ${connectionClass.findWorkspaceEntity()} contains entity data of wrong type $entityId"
   }
 }
 
 private fun assertResolvable(storage: AbstractEntityStorage, clazz: Int, id: Int) {
   assert(storage.entitiesByType[clazz]?.get(id) != null) {
-    "Reference to ${clazz.findEntityClass<WorkspaceEntity>()}-:-$id cannot be resolved"
+    "Reference to ${clazz.findWorkspaceEntity()}-:-$id cannot be resolved"
   }
 }
 

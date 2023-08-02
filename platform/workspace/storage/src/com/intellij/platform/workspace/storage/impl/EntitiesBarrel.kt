@@ -121,7 +121,7 @@ internal sealed class EntitiesBarrel {
     val symbolicIds = HashSet<SymbolicEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->
       if (family == null) return@forEachIndexed
-      val clazz = i.findEntityClass<WorkspaceEntity>()
+      val clazz = i.findWorkspaceEntity()
       val hasSymbolicId = WorkspaceEntityWithSymbolicId::class.java.isAssignableFrom(clazz)
       family.assertConsistency { entityData ->
         // Assert correctness of the class

@@ -277,8 +277,8 @@ abstract class ModifiableWorkspaceEntityBase<T : WorkspaceEntity, E: WorkspaceEn
 
   private fun isCorrectConnection(it: ConnectionId, parentClass: Class<out WorkspaceEntity>, childClass: Class<out WorkspaceEntity>): Boolean {
     return it.parentClass == parentClass.toClassId() && it.childClass == childClass.toClassId() ||
-           it.parentClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(parentClass) &&
-           it.childClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(childClass)
+           it.parentClass.findWorkspaceEntity().isAssignableFrom(parentClass) &&
+           it.childClass.findWorkspaceEntity().isAssignableFrom(childClass)
   }
 
   override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>): Sequence<R> {

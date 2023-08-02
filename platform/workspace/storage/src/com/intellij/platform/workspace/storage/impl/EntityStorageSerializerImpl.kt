@@ -663,7 +663,7 @@ class EntityStorageSerializerImpl(
       val res = HashMap<TypeInfo, EntityFamily<*>>()
       `object`.entityFamilies.forEachIndexed { i, v ->
         if (v == null) return@forEachIndexed
-        val clazz = i.findEntityClass<WorkspaceEntity>()
+        val clazz = i.findWorkspaceEntity()
         val typeInfo = clazz.typeInfo
         res[typeInfo] = v
       }
@@ -685,8 +685,8 @@ class EntityStorageSerializerImpl(
 
   private inner class ConnectionIdSerializer(private val classCache: Object2IntMap<TypeInfo>) : Serializer<ConnectionId>(false, true) {
     override fun write(kryo: Kryo, output: Output, `object`: ConnectionId) {
-      val parentClassType = `object`.parentClass.findEntityClass<WorkspaceEntity>()
-      val childClassType = `object`.childClass.findEntityClass<WorkspaceEntity>()
+      val parentClassType = `object`.parentClass.findWorkspaceEntity()
+      val childClassType = `object`.childClass.findWorkspaceEntity()
       val parentTypeInfo = parentClassType.typeInfo
       val childTypeInfo = childClassType.typeInfo
 
@@ -737,7 +737,7 @@ class EntityStorageSerializerImpl(
   private inner class EntityIdSerializer(val classCache: Object2IntMap<TypeInfo>) : Serializer<EntityId>(false, true) {
     override fun write(kryo: Kryo, output: Output, `object`: EntityId) {
       output.writeInt(`object`.arrayId)
-      val typeClass = `object`.clazz.findEntityClass<WorkspaceEntity>()
+      val typeClass = `object`.clazz.findWorkspaceEntity()
       val typeInfo = typeClass.typeInfo
       kryo.writeClassAndObject(output, typeInfo)
     }
@@ -919,7 +919,7 @@ class EntityStorageSerializerImpl(
 
   private fun EntityId.toSerializableEntityId(): SerializableEntityId {
     val arrayId = this.arrayId
-    val clazz = this.clazz.findEntityClass<WorkspaceEntity>()
+    val clazz = this.clazz.findWorkspaceEntity()
     return interner.intern(SerializableEntityId(arrayId, clazz.typeInfo))
   }
 

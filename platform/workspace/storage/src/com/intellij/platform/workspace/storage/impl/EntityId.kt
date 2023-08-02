@@ -13,7 +13,7 @@ internal data class EntityId(val arrayId: Int, val clazz: Int) {
     if (arrayId < 0) error("ArrayId cannot be negative: $arrayId")
   }
 
-  override fun toString(): String = clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString()
+  override fun toString(): String = clazz.findWorkspaceEntity().simpleName + "-:-" + arrayId.toString()
 }
 */
 
@@ -37,7 +37,7 @@ val EntityId.clazz: Int
     return this.toInt()
   }
 
-fun EntityId.asString() = if (this >= 0) clazz.findEntityClass<WorkspaceEntity>().simpleName + "-:-" + arrayId.toString() else "UNINITIALIZED"
+fun EntityId.asString() = if (this >= 0) clazz.findWorkspaceEntity().simpleName + "-:-" + arrayId.toString() else "UNINITIALIZED"
 
 fun EntityId.copy(arrayId: Int = this.arrayId, clazz: Int = this.clazz): EntityId {
   return createEntityId(arrayId, clazz)

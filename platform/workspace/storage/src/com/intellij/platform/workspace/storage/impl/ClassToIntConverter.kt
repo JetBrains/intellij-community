@@ -67,7 +67,5 @@ internal class ClassToIntConverter {
 
 internal fun Class<*>.toClassId(): Int = ClassToIntConverter.INSTANCE.getInt(this)
 @Suppress("UNCHECKED_CAST")
-internal inline fun <reified E> Int.findEntityClass(): Class<E> = ClassToIntConverter.INSTANCE.getClassOrDie(this) as Class<E>
-@Suppress("UNCHECKED_CAST")
 internal fun Int.findWorkspaceEntity(): Class<WorkspaceEntity> = ClassToIntConverter.INSTANCE.getClassOrDie(this) as Class<WorkspaceEntity>
 
