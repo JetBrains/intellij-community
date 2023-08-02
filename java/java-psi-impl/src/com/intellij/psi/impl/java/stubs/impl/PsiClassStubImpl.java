@@ -197,6 +197,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
     if (localClassInner) flags |= LOCAL_CLASS_INNER;
     if (hasDocComment) flags |= HAS_DOC_COMMENT;
     if (isRecord) flags |= RECORD;
+    if (isUnnamed) flags |= UNNAMED;
     return flags;
   }
 
