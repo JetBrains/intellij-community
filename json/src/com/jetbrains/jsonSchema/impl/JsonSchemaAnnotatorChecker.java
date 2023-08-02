@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.impl;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.pointer.JsonPointerPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -228,7 +229,11 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
   @Override
   public void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object) {
-    final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, object, new JsonSchemaResolver(myProject, schema).detailedResolve(), myOptions);
+    checkObjectBySchemaRecordErrors(schema, object, new JsonPointerPosition());
+  }
+
+  public void checkObjectBySchemaRecordErrors(@NotNull JsonSchemaObject schema, @NotNull JsonValueAdapter object, @NotNull JsonPointerPosition position) {
+    final JsonSchemaAnnotatorChecker checker = checkByMatchResult(myProject, object, new JsonSchemaResolver(myProject, schema, position).detailedResolve(), myOptions);
     if (checker != null) {
       myHadTypeError = checker.isHadTypeError();
       myErrors.putAll(checker.getErrors());
