@@ -41,7 +41,9 @@ import org.jetbrains.idea.devkit.util.DevKitDomUtil;
 final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInspectionBase {
 
   @Override
-  protected void checkDomElement(@NotNull DomElement element, @NotNull DomElementAnnotationHolder holder, @NotNull DomHighlightingHelper helper) {
+  protected void checkDomElement(@NotNull DomElement element,
+                                 @NotNull DomElementAnnotationHolder holder,
+                                 @NotNull DomHighlightingHelper helper) {
     if (!(element instanceof Extension extension)) {
       return;
     }
@@ -49,8 +51,19 @@ final class PluginXmlExtensionRegistrationInspection extends DevKitPluginXmlInsp
     if (!isAllowed(holder)) return;
 
     ExtensionPoint extensionPoint = extension.getExtensionPoint();
-    if (extensionPoint == null ||
-        !DomUtil.hasXml(extensionPoint.getBeanClass())) {
+    if (extensionPoint == null) {
+      return;
+    }
+
+    if ("com.intellij.statusBarWidgetFactory".equals(extensionPoint.getEffectiveQualifiedName())) {
+      if (hasMissingAttribute(extension, "id")) {
+        holder.createProblem(extension, DevKitBundle.message("inspection.plugin.xml.extension.registration.should.define.id.attribute"),
+                             new DefineAttributeQuickFix("id"));
+      }
+      return;
+    }
+
+    if (!DomUtil.hasXml(extensionPoint.getBeanClass())) {
       return;
     }
 
