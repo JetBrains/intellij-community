@@ -77,6 +77,26 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
+    fun `test malformed nested abstract class no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class A {
+        abstract class B {
+          @org.junit.jupiter.api.Test
+          fun testFoo() { }
+        }
+      }
+    """.trimIndent())
+    }
+    fun `test malformed nested interface no highlighting`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class A {
+        interface B {
+          @org.junit.jupiter.api.Test
+          fun testFoo()
+        }
+      }
+    """.trimIndent())
+    }
     fun `test malformed nested class highlighting`() {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class A {
