@@ -62,7 +62,7 @@ import org.jetbrains.annotations.NonNls
  * ```
  * val contentRoot = ContentRootEntity(url, emptyList(), entitySource)
  * builder.modifyEntity(module) {
- *   contentRoots = contentRoots + contentRoot
+ *   this.contentRoots = this.contentRoots + contentRoot
  * }
  * ```
  * 
