@@ -55,7 +55,9 @@ public class CreateFromTemplateDialog extends DialogWrapper {
 
     myDefaultProperties = FileTemplateManager.getInstance(project).getDefaultProperties();
     FileTemplateUtil.fillDefaultProperties(myDefaultProperties, directory);
-    myDefaultProperties.putAll(defaultProperties);
+    if (defaultProperties != null) {
+      myDefaultProperties.putAll(defaultProperties);
+    }
     boolean mustEnterName = FileTemplateUtil.findHandler(template).isNameRequired();
     if (attributesDefaults != null && attributesDefaults.isFixedName()) {
       myDefaultProperties.setProperty(FileTemplate.ATTRIBUTE_NAME, attributesDefaults.getDefaultFileName());
