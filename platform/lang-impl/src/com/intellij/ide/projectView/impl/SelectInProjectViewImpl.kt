@@ -21,34 +21,45 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.util.OverflowSemaphore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.collectLatest
 import java.util.function.Supplier
 
 @Service
 internal class SelectInProjectViewImpl(
   private val project: Project,
-  coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
 ) {
 
-  private val selectInRequests = MutableSharedFlow<suspend SelectInProjectViewImpl.() -> Unit>(
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST,
-  )
+  private val semaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
 
-  init {
+  // Overload instead of a default value to allow for the last-lambda-outside syntax.
+  private fun invokeWithSemaphore(taskName: String, task: suspend () -> Unit) {
+    invokeWithSemaphore(taskName, task, null)
+  }
+
+  private fun invokeWithSemaphore(taskName: String, task: suspend () -> Unit, onDone: (() -> Unit)?) {
     coroutineScope.launch(
-      context = CoroutineName("collecting select in project view requests"),
-      start = CoroutineStart.UNDISPATCHED, // Needed to make sure that when init completes the collection is guaranteed to start.
+      CoroutineName(taskName),
+      start = CoroutineStart.UNDISPATCHED
     ) {
-      selectInRequests.collectLatest { it() }
+      try {
+        semaphore.withPermit {
+          yield() // Ensure the coroutine is redispatched, even if withPermit() didn't suspend, to free the EDT.
+          task()
+        }
+      }
+      finally {
+        onDone?.invoke()
+      }
     }
   }
 
   fun selectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
-    selectInRequests.tryEmit { doSelectInCurrentTarget(fileEditor, invokedManually) }
+    invokeWithSemaphore("SelectInProjectViewImpl.selectInCurrentTarget") {
+      doSelectInCurrentTarget(fileEditor, invokedManually)
+    }
   }
 
   private suspend fun doSelectInCurrentTarget(fileEditor: FileEditor?, invokedManually: Boolean) {
@@ -123,16 +134,17 @@ internal class SelectInProjectViewImpl(
     allowSubIdChange: Boolean,
     result: ActionCallback?,
   ) {
-    selectInRequests.tryEmit {
-      try {
+    invokeWithSemaphore(
+      "SelectInProjectViewImpl.ensureSelected",
+      task = {
         doEnsureSelected(paneId, virtualFile, elementSupplier, requestFocus, allowSubIdChange, result)
-      }
-      finally {
+      },
+      onDone = {
         if (result?.isProcessed == false) { // exception, or coroutine cancelled
           result.setRejected()
         }
-      }
-    }
+      },
+    )
   }
 
   private suspend fun doEnsureSelected(
@@ -188,7 +200,7 @@ internal class SelectInProjectViewImpl(
   }
 
   fun selectInAnyTarget(context: SelectInContext, targets: Collection<SelectInTarget>, requestFocus: Boolean) {
-    selectInRequests.tryEmit {
+    invokeWithSemaphore("SelectInProjectViewImpl.selectInAnyTarget") {
       doSelectInAnyTarget(context, targets, requestFocus)
     }
   }
