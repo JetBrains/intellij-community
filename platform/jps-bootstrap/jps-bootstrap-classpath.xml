@@ -2,6 +2,7 @@
 <project name="Prepare classpath for jps bootstrap" xmlns:resolver="antlib:org.apache.maven.resolver.ant" default="jps-bootstrap-classpath">
   <dirname property="jps.bootstrap.dir" file="${ant.file}"/>
   <property name="community.home" value="${jps.bootstrap.dir}/../.."/>
+  <property name="ultimate.home" value="${community.home}/.."/>
   <property name="build.dir" value="${community.home}/out/jps-bootstrap" />
   <property name="classes.dir" value="${build.dir}/jps-bootstrap.classes" />
   <property name="uber.dir" value="${build.dir}/jps-bootstrap.out.lib" />
@@ -9,6 +10,8 @@
   <property prefix="dependencies" file="${community.home}/build/dependencies/dependencies.properties" />
   <property name="retry.attempts" value="7"/>
   <property name="retry.delay" value="1000"/>
+
+  <property name="ij.packages.auth.java.path" value="${ultimate.home}/build/private-packages-auth/src/com/intellij/idea/ultimate/build/packages/auth/IJPrivatePackagesAuthorizer.java"/>
 
   <mkdir dir="${build.dir}" />
 
@@ -30,8 +33,15 @@
   <echo message="kotlinc.version=${kotlinc.version}" />
 
   <available file="${maven.resolver.ant.tasks.cache.file}" property="maven.resolver.ant.tasks.file.exists"/>
+  <available file="${ij.packages.auth.java.path}" property="ij.packages.auth.java.exists" />
 
-  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists">
+  <target name="ij-ultimate-packages-auth" if="ij.packages.auth.java.exists" unless="env.TEAMCITY_VERSION">
+    <java sourcefile="${ij.packages.auth.java.path}" fork="true" >
+      <sysproperty key="ij.private.packages.authorizer.idea.ultimate.path" value="${ultimate.home}"/>
+    </java>
+  </target>
+
+  <target name="download.resolver" unless="maven.resolver.ant.tasks.file.exists" depends="ij-ultimate-packages-auth">
     <mkdir dir="${maven.resolver.ant.tasks.cache.dir}" />
     <retry retrycount="${retry.attempts}" retrydelay="${retry.delay}">
       <get
