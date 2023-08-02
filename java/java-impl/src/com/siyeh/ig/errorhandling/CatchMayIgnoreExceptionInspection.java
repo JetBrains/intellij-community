@@ -36,7 +36,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -47,10 +46,8 @@ import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TestUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
-import com.siyeh.ig.psiutils.VariableNameGenerator;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,8 +59,6 @@ import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
 public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInspectionTool {
-
-  private static final @NonNls String IGNORED_PARAMETER_NAME = "ignored";
 
   public boolean m_ignoreCatchBlocksWithComments = true;
   public boolean m_ignoreNonEmptyCatchBlock = true;
@@ -263,11 +258,6 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
       PsiElement owner = ((DfaVariableValue)variable).getPsiVariable();
       return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
-  }
-
-  @NotNull
-  private static String generateName(PsiCodeBlock block) {
-    return new VariableNameGenerator(block, VariableKind.LOCAL_VARIABLE).byName(IGNORED_PARAMETER_NAME).generate(true);
   }
 
   private static class AddCatchBodyFix extends PsiUpdateModCommandQuickFix implements LowPriorityAction {
