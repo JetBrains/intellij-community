@@ -33,10 +33,12 @@ import org.jetbrains.annotations.VisibleForTesting;
 import java.io.File;
 import java.util.*;
 
-@State(
-  name = "ProjectJdkTable",
-  storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED, useSaveThreshold = ThreeState.NO)
-)
+
+// TODO fix the registration by registry key
+//@State(
+//  name = "ProjectJdkTable",
+//  storages = @Storage(value = "jdk.table.xml", roamingType = RoamingType.DISABLED, useSaveThreshold = ThreeState.NO)
+//)
 public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableComponent, PersistentStateComponent<Element> {
   private final List<Sdk> mySdks = new ArrayList<>();
 

@@ -20,6 +20,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.JpsGlobalModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsGlobalModelSynchronizerImpl
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalLibraryTableBridge
+import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.NonNls
@@ -52,7 +53,7 @@ open class ApplicationStoreImpl(private val app: Application)
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    if (GlobalLibraryTableBridge.isEnabled()) {
+    if (GlobalLibraryTableBridge.isEnabled() ||GlobalSdkTableBridge.isEnabled()) {
       blockingContext {
         (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
       }

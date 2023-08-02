@@ -165,7 +165,10 @@ class JpsSdkEntitySerializer(val entitySource: JpsGlobalFileEntitySource): JpsFi
     sdkRootElement.addContent(rootsElement)
 
     val additional = Element(ELEMENT_ADDITIONAL)
-    additional.addContent(JDOMUtil.load(sdkEntity.additionalData))
+    val additionalData = sdkEntity.additionalData
+    if (additionalData.isNotBlank()) {
+      additional.addContent(JDOMUtil.load(additionalData))
+    }
     sdkRootElement.addContent(additional)
   }
 
