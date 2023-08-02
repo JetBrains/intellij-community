@@ -33,7 +33,7 @@ internal class MermaidPreviewEditor(
   private val file: VirtualFile
 ): FileEditor, UserDataHolder by UserDataHolderBase() {
   private val pluginScope
-    get() = service<MermaidPlugin>().coroutineScope
+    get() = MermaidPlugin.coroutineScope(project)
 
   private val coroutineScope = pluginScope.childScope(CoroutineName("MermaidPreviewEditorScope"))
   private val updateViewRequests = MutableSharedFlow<String>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
