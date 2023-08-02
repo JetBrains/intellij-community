@@ -11,7 +11,7 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class CustomLayoutsActionGroup : ActionGroup(), DumbAware {
 
-  private val childrenCache = NamedLayoutListBasedCache<AnAction> {
+  private val childrenCache = NamedLayoutListBasedCache<AnAction>(emptyList(), 0) {
     CustomLayoutActionGroup(it)
   }
 

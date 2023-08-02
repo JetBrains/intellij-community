@@ -3,6 +3,7 @@ package com.intellij.ide.actions
 
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,7 +15,9 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
-  private val childrenCache = NamedLayoutListBasedCache<AnAction> {
+  private val childrenCache = NamedLayoutListBasedCache<AnAction>(
+    listOf(ActionManager.getInstance().getAction(RestoreFactoryDefaultLayoutAction.ID)), 1
+  ) {
     RestoreNamedLayoutAction(it)
   }
 

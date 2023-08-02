@@ -9,6 +9,10 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 
 class RestoreFactoryDefaultLayoutAction : DumbAwareToggleAction() {
 
+  companion object {
+    const val ID = "RestoreFactoryDefaultLayout"
+  }
+
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 
   override fun isSelected(e: AnActionEvent): Boolean =

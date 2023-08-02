@@ -4,7 +4,11 @@ package com.intellij.ide.actions
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.util.containers.toArray
 
-internal class NamedLayoutListBasedCache<T>(private val mapping: (String) -> T?) {
+internal class NamedLayoutListBasedCache<T>(
+  private val baseList: List<T>,
+  private val insertionIndex: Int,
+  private val mapping: (String) -> T?
+) {
 
   private var cachedData: CachedData<T>? = null
 
@@ -15,11 +19,13 @@ internal class NamedLayoutListBasedCache<T>(private val mapping: (String) -> T?)
     if (newLayoutNames == cachedData?.cachedLayoutNames) {
       return cachedData.cachedArray
     }
-    val newArray = newLayoutNames.asSequence()
+    val newElements = newLayoutNames.asSequence()
       .sorted()
       .mapNotNull(mapping)
       .toList()
-      .toArray(emptyArray)
+    val newList = ArrayList(baseList)
+    newList.addAll(insertionIndex, newElements)
+    val newArray = newList.toArray(emptyArray)
     this.cachedData = CachedData(newLayoutNames, newArray)
     return newArray
   }
