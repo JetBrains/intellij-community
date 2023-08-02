@@ -46,8 +46,6 @@ public final class ExecutionUtil {
 
   private static final Logger LOG = Logger.getInstance(ExecutionUtil.class);
 
-  private static final NotificationGroup ourSilentNotificationGroup =
-    NotificationGroupManager.getInstance().getNotificationGroup("Silent Execution");
   private static final NotificationGroup ourNotificationGroup =
     NotificationGroupManager.getInstance().getNotificationGroup("Execution");
 
@@ -150,11 +148,8 @@ public final class ExecutionUtil {
         return;
       }
 
-      boolean balloonShown = IdeUiService.getInstance().notifyByBalloon(project, toolWindowId, MessageType.ERROR,
-                                                                        fullMessage, null, _listener);
-
-      NotificationGroup notificationGroup = balloonShown ? ourSilentNotificationGroup : ourNotificationGroup;
-      Notification notification = notificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      notification.setToolWindowId(toolWindowId);
       if (_listener != null) {
         notification.setListener((_notification, event) -> {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
