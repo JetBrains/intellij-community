@@ -756,6 +756,9 @@ private fun checkProductProperties(context: BuildContextImpl) {
     checkMandatoryField(macCustomizer.bundleIdentifier, "productProperties.macCustomizer.bundleIdentifier")
     checkMandatoryPath(macCustomizer.icnsPath, "productProperties.macCustomizer.icnsPath")
     checkPaths(listOfNotNull(macCustomizer.icnsPathForEAP), "productProperties.macCustomizer.icnsPathForEAP")
+    checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIcon), "productProperties.macCustomizer.icnsPathForAlternativeIcon")
+    checkPaths(listOfNotNull(macCustomizer.icnsPathForAlternativeIconForEAP),
+               "productProperties.macCustomizer.icnsPathForAlternativeIconForEAP")
     if (!context.isStepSkipped(BuildOptions.MAC_DMG_STEP)) {
       checkMandatoryPath(macCustomizer.dmgImagePath, "productProperties.macCustomizer.dmgImagePath")
       checkPaths(listOfNotNull(macCustomizer.dmgImagePathForEAP), "productProperties.macCustomizer.dmgImagePathForEAP")

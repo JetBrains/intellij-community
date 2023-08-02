@@ -229,6 +229,12 @@ class MacDistributionBuilder(override val context: BuildContext,
     val resourcesDistDir = macDistDir.resolve("Resources")
     copyFile(icnsPath, resourcesDistDir.resolve(targetIcnsFileName))
 
+    val alternativeIcon = (if (context.applicationInfo.isEAP) customizer.icnsPathForAlternativeIconForEAP else null)
+                          ?: customizer.icnsPathForAlternativeIcon
+    if (alternativeIcon != null) {
+      copyFile(Path.of(alternativeIcon), resourcesDistDir.resolve("custom.icns"))
+    }
+
     for (fileAssociation in customizer.fileAssociations) {
       if (!fileAssociation.iconPath.isEmpty()) {
         val source = Path.of(fileAssociation.iconPath)
