@@ -20,7 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase implements CleanupLocalInspectionTool {
+public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
   @NotNull
   @Override
