@@ -296,6 +296,6 @@ public class PsiUnnamedClassImpl extends JavaStubPsiElement<PsiClassStub<?>> imp
 
   @Override
   public String toString() {
-    return "PsiUnnamedClassImpl";
+    return "PsiUnnamedClass";
   }
 }

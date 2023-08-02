@@ -1,7 +1,7 @@
 PsiJavaFile:UnnamedClass2.java
   PsiImportList
     <empty list>
-  PsiUnnamedClassImpl
+  PsiUnnamedClass
     PsiClassInitializer
       PsiModifierList:static
         PsiKeyword:static('static')

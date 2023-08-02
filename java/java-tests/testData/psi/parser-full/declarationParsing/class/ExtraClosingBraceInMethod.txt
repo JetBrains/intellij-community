@@ -1,7 +1,7 @@
 PsiJavaFile:ExtraClosingBraceInMethod.java
   PsiImportList
     <empty list>
-  PsiUnnamedClassImpl
+  PsiUnnamedClass
     PsiClass:Foo
       PsiModifierList:
         <empty list>

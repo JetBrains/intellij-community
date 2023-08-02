@@ -28,7 +28,7 @@ PsiJavaFile:UnnamedClass3.java
           <empty list>
       PsiJavaToken:SEMICOLON(';')
   PsiWhiteSpace('\n\n')
-  PsiUnnamedClassImpl
+  PsiUnnamedClass
     PsiMethod:foo
       PsiModifierList:
         <empty list>
