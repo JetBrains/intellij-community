@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
@@ -24,7 +25,7 @@ private const val REPETITIONS = 100
 class CurrentThreadScopeTest {
 
   @Test
-  fun `capturing of thread context`() = timeoutRunBlocking {
+  fun `capturing of thread context`(): Unit = timeoutRunBlocking {
     val semaphore = Semaphore(1)
     val id = "abcde"
     withContext(TestElement(id)) {
@@ -39,7 +40,7 @@ class CurrentThreadScopeTest {
   }
 
   @Test
-  fun `no thread scope when there is no job`() = timeoutRunBlocking {
+  fun `no thread scope when there is no job`(): Unit = timeoutRunBlocking {
     val id = "abcde"
     withContext(TestElement(id)) {
       blockingContext {
@@ -51,7 +52,7 @@ class CurrentThreadScopeTest {
   }
 
   @Test
-  fun `allow scope when structured concurrency is enabled`() = timeoutRunBlocking {
+  fun `allow scope when structured concurrency is enabled`(): Unit = timeoutRunBlocking {
     val id = "abcde"
     withContext(TestElement(id)) {
       blockingContextScope {
@@ -65,7 +66,7 @@ class CurrentThreadScopeTest {
   }
 
   @RepeatedTest(REPETITIONS)
-  fun `spawned coroutines are awaited`() = timeoutRunBlocking {
+  fun `spawned coroutines are awaited`(): Unit = timeoutRunBlocking {
     val int = AtomicInteger(0)
     val semaphore = Semaphore(1)
     blockingContext {
@@ -81,7 +82,7 @@ class CurrentThreadScopeTest {
   }
 
   @RepeatedTest(REPETITIONS)
-  fun `EDT is not blocked, but launches are executed strictly later`() = timeoutRunBlocking {
+  fun `EDT is not blocked, but launches are executed strictly later`(): Unit = timeoutRunBlocking {
     val int = AtomicInteger(0)
     withContext(Dispatchers.EDT) {
       blockingContext {
@@ -97,7 +98,7 @@ class CurrentThreadScopeTest {
 
   // The users should use explicit scoping directives in deep coroutines
   @Test
-  fun `no leaking BlockingJob`() = timeoutRunBlocking {
+  fun `no leaking BlockingJob`(): Unit = timeoutRunBlocking {
     val blockingContextScopeEnded = Semaphore(1)
     val innerExecuteOnPooledThreadEnded = Semaphore(1)
     blockingContextScope {
@@ -105,6 +106,7 @@ class CurrentThreadScopeTest {
         currentThreadScope().launch {
           blockingContext {
             ApplicationManager.getApplication().executeOnPooledThread {
+              assertNull(Cancellation.currentJob())
               blockingContextScopeEnded.timeoutWaitUp()
               // happens strictly outside `blockingContextScope`
               innerExecuteOnPooledThreadEnded.up()
@@ -115,5 +117,16 @@ class CurrentThreadScopeTest {
     }
     blockingContextScopeEnded.up()
     innerExecuteOnPooledThreadEnded.timeoutWaitUp()
+  }
+
+  @Test
+  fun `thread scope does not retain dispatcher`(): Unit = timeoutRunBlocking {
+    withContext(Dispatchers.EDT) {
+      blockingContext {
+        currentThreadScope().launch {
+          ThreadingAssertions.assertBackgroundThread()
+        }
+      }
+    }
   }
 }

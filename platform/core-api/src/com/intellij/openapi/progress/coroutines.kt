@@ -305,9 +305,6 @@ fun currentThreadScope() : CoroutineScope {
   val newContext = threadContext
     // the users should explicitly request structured concurrency on the next transition to blocking code
     .minusKey(BlockingJob)
-    // blocking context does not carry any dispatcher by itself, so we'll default the dispatcher here to the `Default` one.
-    // anyway, it is easy to change it on `launch`
-    .plus(Dispatchers.Default)
   return CoroutineScope(newContext)
 }
 
