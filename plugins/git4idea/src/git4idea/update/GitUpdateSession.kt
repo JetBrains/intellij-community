@@ -6,10 +6,6 @@ import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.options.advanced.AdvancedSettings.Companion.getBoolean
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsException
@@ -19,8 +15,6 @@ import com.intellij.util.containers.MultiMap
 import git4idea.GitNotificationIdsHolder
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.update.GitPostUpdateHandler.Companion.POST_UPDATE_DATA
-import git4idea.update.GitPostUpdateHandler.Companion.PostUpdateData
 import java.util.function.Supplier
 
 /**
@@ -67,47 +61,23 @@ class GitUpdateSession(private val project: Project,
   }
 
   override fun showNotification() {
-    if (notificationData == null) return
+    if (notificationData != null) {
+      val notification = prepareNotification(notificationData.updatedFilesCount,
+                                             notificationData.receivedCommitsCount,
+                                             notificationData.filteredCommitsCount)
 
-    val isHandled = GitPostUpdateHandler.execute(project, notificationData.ranges) {
-      notificationData.postUpdateData = it
-      showNotificationImpl(notificationData)
+      notification.addAction(NotificationAction.createSimple(Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") },
+                                                             notificationData.viewCommitAction))
+
+      GitPostUpdateHandler.getActions(project, notificationData.ranges).forEach { notification.addAction(it) }
+
+      VcsNotifier.getInstance(project).notify(notification)
     }
-
-    if (!isHandled) {
-      showNotificationImpl(notificationData)
-    }
-  }
-
-  private fun showNotificationImpl(notificationData: GitUpdateInfoAsLog.NotificationData) {
-    val notification = prepareNotification(notificationData.updatedFilesCount,
-                                           notificationData.receivedCommitsCount,
-                                           notificationData.filteredCommitsCount,
-                                           notificationData.postUpdateData)
-
-    notification.addAction(NotificationAction.createSimple(
-      Supplier { GitBundle.message("action.NotificationAction.GitUpdateSession.text.view.commits") }, notificationData.viewCommitAction))
-
-    if (notificationData.postUpdateData?.text != null) {
-      val group = ActionManager.getInstance().getAction("Git.Update.Notification.Group") as ActionGroup
-      group.getChildren(null).forEach { notification.addAction(it) }
-    }
-
-    VcsNotifier.getInstance(project).notify(notification)
-  }
-
-  class DataProviderNotification(groupId: String,
-                                 title: @NlsContexts.NotificationTitle String,
-                                 content: @NlsContexts.NotificationContent String,
-                                 type: NotificationType,
-                                 private val data: PostUpdateData?) : Notification(groupId, title, content, type), DataProvider {
-    override fun getData(dataId: String) = data.takeIf { dataId == POST_UPDATE_DATA.name }
   }
 
   private fun prepareNotification(updatedFilesNumber: Int,
                                   updatedCommitsNumber: Int,
-                                  filteredCommitsNumber: Int?,
-                                  data: PostUpdateData?): Notification {
+                                  filteredCommitsNumber: Int?): Notification {
     val title: String
     var content: String?
     val type: NotificationType
@@ -134,16 +104,8 @@ class GitUpdateSession(private val project: Project,
       content += additionalContent
     }
 
-    return if (isAiGeneratedSummaryEnabled()) {
-      DataProviderNotification(VcsNotifier.STANDARD_NOTIFICATION.displayId, title, content, type, data).also {
-        it.setDisplayId(displayId)
-      }
-    } else {
-      VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type).also { it.setDisplayId(displayId) }
-    }
+    return VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, content, type).also { it.setDisplayId(displayId) }
   }
-
-  private fun isAiGeneratedSummaryEnabled() = getBoolean("git.ai.generated.commits.summary")
 }
 
 @NlsContexts.NotificationTitle

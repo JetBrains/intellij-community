@@ -491,8 +491,6 @@
       <add-to-group group-id="CopyFileReference"/>
       <add-to-group group-id="Copy.Paste.Special" relative-to-action="CopyReference" anchor="after"/>
     </group>
-
-    <group id="Git.Update.Notification.Group" popup="false"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">

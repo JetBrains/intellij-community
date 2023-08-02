@@ -35,7 +35,6 @@ import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
-import git4idea.update.GitPostUpdateHandler.Companion.PostUpdateData
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Function
@@ -53,9 +52,7 @@ class GitUpdateInfoAsLog(private val project: Project,
                          val receivedCommitsCount: Int,
                          val filteredCommitsCount: Int?,
                          val viewCommitAction: Runnable,
-                         val ranges: Map<GitRepository, HashRange>,
-                         var postUpdateData: PostUpdateData? = null
-  )
+                         val ranges: Map<GitRepository, HashRange>)
 
   private class CommitsAndFiles(val updatedFilesCount: Int, val receivedCommitsCount: Int)
 
