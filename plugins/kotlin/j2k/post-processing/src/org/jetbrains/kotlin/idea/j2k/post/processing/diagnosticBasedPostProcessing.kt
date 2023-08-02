@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.j2k.post.processing
 
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.RangeMarker
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.range
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
@@ -29,6 +30,8 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
         }
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
+        fun PsiElement.isInRange(outerRange: TextRange) = outerRange.contains(textRange)
+
         val diagnostics = runReadAction {
             val resolutionFacade = KotlinCacheService.getInstance(converterContext.project).getResolutionFacade(allFiles)
             analyzeFileRange(file, rangeMarker, resolutionFacade).all()
