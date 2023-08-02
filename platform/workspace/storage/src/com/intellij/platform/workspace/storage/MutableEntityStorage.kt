@@ -108,6 +108,9 @@ interface MutableEntityStorage : EntityStorage {
 
   /**
    * Add the given entity to the storage. All children of the entity will also be added.
+   *
+   * If any of the children exists in a different storage, this child will be copied with all sub-children and added to the storage.
+   * If any of the children exists in `this` storage, the reference to this child will be added instead of creating a new child entity.
    */
   infix fun <T : WorkspaceEntity> addEntity(entity: T): T
 

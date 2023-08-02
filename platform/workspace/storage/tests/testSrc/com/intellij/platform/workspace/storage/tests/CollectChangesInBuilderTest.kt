@@ -317,7 +317,6 @@ class CollectChangesInBuilderTest {
   }
 
   @Test
-  @Ignore("The store copies the child instead of reffering to the existing one. I'm not sure if this is correct behaviour.")
   fun `create parent to the existing child`() {
     val child = builder addEntity OptionalOneToOneChildEntity("Hey", MySource)
     val snapshot = builder.toSnapshot()

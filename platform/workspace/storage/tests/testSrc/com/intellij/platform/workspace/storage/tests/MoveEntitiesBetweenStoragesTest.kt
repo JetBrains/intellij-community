@@ -1,10 +1,13 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
+import com.intellij.platform.workspace.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.toBuilder
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
+import kotlin.test.assertIsNot
 
 class MoveEntitiesBetweenStoragesTest {
   @Test
@@ -65,5 +68,23 @@ class MoveEntitiesBetweenStoragesTest {
     val grandChild = child.childChild.single()
     assertEquals(entity, grandChild.parent1)
     assertEquals(child, grandChild.parent2)
+  }
+
+  @Test
+  fun `adding entity with a reference to the entity from the same builder doesnot create second entity`() {
+    val builder = createEmptyBuilder()
+    val child = builder addEntity OptionalOneToOneChildEntity("data", MySource)
+
+    val newBuilder = builder.toSnapshot().toBuilder()
+
+    val sameChild = child.from(newBuilder)
+    assertIsNot<ModifiableWorkspaceEntityBase<*, *>>(sameChild)
+    newBuilder addEntity OptionalOneToOneParentEntity(MySource) {
+      this.child = sameChild
+    }
+
+    val children = newBuilder.entities(OptionalOneToOneChildEntity::class.java).toList()
+
+    assertEquals(1, children.size)
   }
 }

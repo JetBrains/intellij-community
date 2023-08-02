@@ -211,6 +211,10 @@ internal class MutableEntityStorageImpl(
         entity as ModifiableWorkspaceEntityBase<T, *>
       }
       else {
+        if ((entity as WorkspaceEntityBase).snapshot === this) { // We don't re-add entity from the same store
+          return entity
+        }
+
         @Suppress("USELESS_CAST") //this is needed to work around a bug in Kotlin compiler (KT-55555)
         entity.createEntityTreeCopy(true) as ModifiableWorkspaceEntityBase<T, *>
       }
@@ -220,9 +224,9 @@ internal class MutableEntityStorageImpl(
     }
     finally {
       unlockWrite()
+      addEntityTimeMs.addElapsedTimeMs(start)
     }
 
-    addEntityTimeMs.addElapsedTimeMs(start)
     return entity
   }
 
