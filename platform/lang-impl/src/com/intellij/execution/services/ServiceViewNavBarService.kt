@@ -14,6 +14,9 @@ import kotlinx.coroutines.cancel
 
 @Service(Service.Level.PROJECT)
 internal class ServiceViewNavBarService(val project: Project, val cs: CoroutineScope) {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val dispatcher = Dispatchers.Default.limitedParallelism(1)
+
   companion object {
     @JvmStatic
     fun getInstance(project: Project): ServiceViewNavBarService = project.service()
@@ -21,8 +24,7 @@ internal class ServiceViewNavBarService(val project: Project, val cs: CoroutineS
 
   fun createNavBarPanel(serviceView: ServiceView,
                         selector: ServiceViewNavBarSelector): ServiceViewNavBarPanel {
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val childScope = cs.childScope(Dispatchers.Default.limitedParallelism(1))
+    val childScope = cs.childScope(dispatcher)
     Disposer.register(serviceView) {
       childScope.cancel()
     }
