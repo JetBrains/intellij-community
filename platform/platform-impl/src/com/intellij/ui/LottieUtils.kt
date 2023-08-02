@@ -19,13 +19,13 @@ object LottieUtils {
     val head = HtmlBuilder().append(
       HtmlChunk.tag("style").addRaw("""
           body {
-              background-color: ${ColorUtil.toHex(background)};
+              background-color: #${ColorUtil.toHex(background)};
               margin: 0;
               height: 100%;
               overflow: hidden;
           }
           #lottie {
-              background-color: ${ColorUtil.toHex(background)};
+              background-color: #${ColorUtil.toHex(background)};
               width: 100%;
               height: 100%;
               display: block;
