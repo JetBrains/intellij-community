@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -13,7 +13,7 @@ import java.util.List;
 /**
  * An alternative to {@link com.intellij.openapi.vfs.newvfs.BulkFileListener} that allows
  * for moving parts of VFS event processing to background thread and thus reduce the duration
- * of UI freezes. Asynchronous listeners should preferably be registered as "vfs.asyncListener" extensions.
+ * of UI freezes. Asynchronous listeners should preferably be registered as {@code com.intellij.vfs.asyncListener} extensions.
  * If that's too inconvenient, manual registration via {@link VirtualFileManager#addAsyncFileListener} is possible.<p></p>
  *
  * <h3>Migration of synchronous listeners:</h3>
@@ -76,7 +76,7 @@ public interface AsyncFileListener {
      * to apply modifications based on the information calculated during {@link #prepareChange}.<p></p>
      *
      * Although it's guaranteed that no write actions happen between {@link #prepareChange} and invoking all {@link ChangeApplier}s,
-     * another listener might already have changed something (e.g. send PSI events, increase modification trackers, etc)
+     * another listener might already have changed something (e.g. send PSI events, increase modification trackers, etc.)
      * by the time this implementation is executed, so be prepared. And if your listener depends on state not synchronized via read-write actions,
      * it can be changed by this moment as well.
      */
