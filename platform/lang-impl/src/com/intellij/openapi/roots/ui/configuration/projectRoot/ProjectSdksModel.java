@@ -12,7 +12,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MasterDetailsComponent;
@@ -468,8 +467,12 @@ public class ProjectSdksModel implements SdkModel {
   private static Sdk createSdkInternal(@NotNull SdkType type,
                                        @NotNull String newSdkName,
                                        @NotNull String home) {
-    final ProjectJdkImpl newJdk = new ProjectJdkImpl(newSdkName, type);
-    newJdk.setHomePath(home);
+    final Sdk newJdk = ProjectJdkTable.getInstance().createSdk(newSdkName, type);
+    SdkModificator sdkModificator = newJdk.getSdkModificator();
+    sdkModificator.setHomePath(home);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return newJdk;
   }
 

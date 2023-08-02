@@ -485,6 +485,8 @@ public final class SdkDownloadTracker {
     SdkModificator mod = sdk.getSdkModificator();
     mod.setHomePath(FileUtil.toSystemIndependentName(task.getPlannedHomeDir()));
     mod.setVersionString(task.getPlannedVersion());
-    mod.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      mod.commitChanges();
+    });
   }
 }

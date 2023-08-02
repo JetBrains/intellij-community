@@ -2,8 +2,7 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.execution.wsl.WslPath
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.SimplePersistentStateComponent
 import com.intellij.openapi.components.service
@@ -72,7 +71,9 @@ private class JarSdkConfigurator(val extraJars: List<String>) : UnknownSdkFixCon
         LOG.warn("Cant resolve path '$path' for jdk home '${sdk.homeDirectory}'")
       }
     }
-    sdkModificator.commitChanges()
+    runWriteAction {
+      sdkModificator.commitChanges()
+    }
   }
 
   private fun resolveExtraJar(sdk: Sdk, path: String): VirtualFile? {

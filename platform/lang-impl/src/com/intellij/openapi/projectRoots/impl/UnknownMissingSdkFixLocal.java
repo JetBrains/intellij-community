@@ -92,7 +92,9 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
       SdkModificator mod = sdk.getSdkModificator();
       mod.setHomePath(FileUtil.toSystemIndependentName(myFix.getExistingSdkHome()));
       mod.setVersionString(myFix.getVersionString());
-      mod.commitChanges();
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        mod.commitChanges();
+      });
 
       mySdk.getSdkType().setupSdkPaths(sdk);
       myFix.configureSdk(sdk);
