@@ -4,21 +4,27 @@ package org.jetbrains.kotlin.idea.formatter
 
 import com.intellij.application.options.CodeStyleAbstractPanel
 import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.ui.OptionGroup
-import com.intellij.ui.components.JBScrollPane
-import com.intellij.ui.components.panels.VerticalLayout
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import javax.swing.BorderFactory
-import javax.swing.BoxLayout
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import javax.swing.JCheckBox
-import javax.swing.JPanel
 
 class KotlinOtherSettingsPanel(settings: CodeStyleSettings) : CodeStyleAbstractPanel(KotlinLanguage.INSTANCE, null, settings) {
-    private val cbTrailingComma = JCheckBox(KotlinBundle.message("formatter.checkbox.text.use.trailing.comma"))
+
+    private lateinit var cbTrailingComma: JCheckBox
+    private val panel: DialogPanel = panel {
+        group(KotlinBundle.message("formatter.title.trailing.comma")) {
+            row {
+                cbTrailingComma = checkBox(KotlinBundle.message("formatter.checkbox.text.use.trailing.comma")).component
+            }
+        }
+    }.apply {
+        border = JBUI.Borders.empty(0, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP)
+    }
 
     override fun getRightMargin() = throw UnsupportedOperationException()
 
@@ -36,7 +42,7 @@ class KotlinOtherSettingsPanel(settings: CodeStyleSettings) : CodeStyleAbstractP
         return settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA != cbTrailingComma.isSelected
     }
 
-    override fun getPanel() = jPanel
+    override fun getPanel() = panel
 
     override fun resetImpl(settings: CodeStyleSettings) {
         cbTrailingComma.isSelected = settings.kotlinCustomSettings.ALLOW_TRAILING_COMMA
@@ -44,19 +50,4 @@ class KotlinOtherSettingsPanel(settings: CodeStyleSettings) : CodeStyleAbstractP
 
     override fun getTabTitle(): String = KotlinBundle.message("formatter.title.other")
 
-    private val jPanel = JPanel().apply {
-        layout = BoxLayout(this, BoxLayout.Y_AXIS)
-        add(
-            JBScrollPane(
-                JPanel(VerticalLayout(JBUI.scale(5))).apply {
-                    border = BorderFactory.createEmptyBorder(0, UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP, UIUtil.DEFAULT_HGAP)
-                    add(
-                        OptionGroup(KotlinBundle.message("formatter.title.trailing.comma")).apply {
-                            add(cbTrailingComma)
-                        }.createPanel()
-                    )
-                }
-            )
-        )
-    }
 }
