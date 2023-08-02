@@ -3,7 +3,6 @@ package com.intellij.webSymbols.search
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.model.Pointer
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.search.impl.WebSymbolDelegatedSearchTargetImpl
 import com.intellij.webSymbols.search.impl.WebSymbolSearchTargetImpl
 
 interface WebSymbolSearchTarget : SearchTarget {
@@ -13,11 +12,8 @@ interface WebSymbolSearchTarget : SearchTarget {
   override fun createPointer(): Pointer<out WebSymbolSearchTarget>
 
   companion object {
-    fun create(symbol: WebSymbol) =
-      if (symbol is SearchTarget)
-        WebSymbolDelegatedSearchTargetImpl(symbol)
-      else
-        WebSymbolSearchTargetImpl(symbol)
+    fun create(symbol: WebSymbol): WebSymbolSearchTarget =
+      WebSymbolSearchTargetImpl(symbol)
   }
 
 }

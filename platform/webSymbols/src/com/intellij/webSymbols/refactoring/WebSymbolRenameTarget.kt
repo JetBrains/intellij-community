@@ -4,7 +4,6 @@ package com.intellij.webSymbols.refactoring
 import com.intellij.model.Pointer
 import com.intellij.refactoring.rename.api.RenameTarget
 import com.intellij.webSymbols.WebSymbol
-import com.intellij.webSymbols.refactoring.impl.WebSymbolDelegatedRenameTargetImpl
 import com.intellij.webSymbols.refactoring.impl.WebSymbolRenameTargetImpl
 
 interface WebSymbolRenameTarget : RenameTarget {
@@ -15,10 +14,7 @@ interface WebSymbolRenameTarget : RenameTarget {
 
   companion object {
     fun create(symbol: WebSymbol): WebSymbolRenameTarget =
-      if (symbol is RenameTarget)
-        WebSymbolDelegatedRenameTargetImpl(symbol)
-      else
-        WebSymbolRenameTargetImpl(symbol)
+      WebSymbolRenameTargetImpl(symbol)
   }
 
 }

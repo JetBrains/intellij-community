@@ -16,7 +16,9 @@ import com.intellij.webSymbols.patterns.WebSymbolsPattern
 import com.intellij.webSymbols.query.WebSymbolsCodeCompletionQueryParams
 import com.intellij.webSymbols.query.WebSymbolsNameMatchQueryParams
 import com.intellij.webSymbols.refactoring.WebSymbolRenameTarget
+import com.intellij.webSymbols.refactoring.impl.WebSymbolDelegatedRenameTargetImpl
 import com.intellij.webSymbols.search.WebSymbolSearchTarget
+import com.intellij.webSymbols.search.impl.WebSymbolDelegatedSearchTargetImpl
 import javax.swing.Icon
 
 abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
@@ -98,13 +100,13 @@ abstract class WebSymbolDelegate<T : WebSymbol>(val delegate: T) : WebSymbol {
 
   override val searchTarget: WebSymbolSearchTarget?
     get() = when (delegate) {
-      is SearchTarget -> WebSymbolSearchTarget.create(delegate)
+      is SearchTarget -> WebSymbolDelegatedSearchTargetImpl(delegate)
       else -> delegate.searchTarget
     }
 
   override val renameTarget: WebSymbolRenameTarget?
     get() = when (delegate) {
-      is RenameTarget -> WebSymbolRenameTarget.create(delegate)
+      is RenameTarget -> WebSymbolDelegatedRenameTargetImpl(delegate)
       else -> delegate.renameTarget
     }
 
