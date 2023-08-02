@@ -19,7 +19,7 @@ import com.intellij.platform.workspace.storage.annotations.Abstract
  * 
  * A specific implementation of [SymbolicEntityId] may be used in properties of [an entity][WorkspaceEntity] to create a symbolic link to 
  * an entity of the corresponding type. 
- * Note that unlink parent-child "hard" links, symbolic links aren't guaranteed to be resolvable.
+ * Note that unlike parent-child "hard" links, symbolic links aren't guaranteed to be resolvable.
  * When a linked entity is removed, the entity referring to it doesn't change, and the ID will resolve to `null`.
  * However, if after modification of an entity its [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] changes, properties of all other 
  * entities which contain a value equal to the previous ID, are automatically replaced with the new ID. 
