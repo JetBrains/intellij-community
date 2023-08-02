@@ -11,12 +11,11 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.JsonComplianceCheckerOptions
 import com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker
 import com.jetbrains.jsonSchema.impl.JsonValidationError
-import com.jetbrains.jsonSchema.impl.JsonValidationError.FixableIssueKind
+import com.jetbrains.jsonSchema.impl.JsonValidationError.*
 
 @RequiresReadLock
 fun collectMissingPropertiesFromSchema(objectNode: PsiElement,
-                                       project: Project,
-                                       onlyRequired: Boolean): JsonValidationError.MissingMultiplePropsIssueData? {
+                                       project: Project): JsonSchemaPropertiesInfo? {
   val schemaObjectFile = JsonSchemaService.Impl.get(project).getSchemaObject(objectNode.containingFile) ?: return null
   val psiWalker = JsonLikePsiWalker.getWalker(objectNode, schemaObjectFile) ?: return null
   val position = psiWalker.findPosition(objectNode, true) ?: return null
@@ -24,23 +23,36 @@ fun collectMissingPropertiesFromSchema(objectNode: PsiElement,
   val valueAdapter = psiWalker.createValueAdapter(objectNode) ?: return null
   checker.checkObjectBySchemaRecordErrors(schemaObjectFile, valueAdapter, position)
 
-  val flattenedErrors =
-    checker.errors.values.asSequence()
-      .filter {
-        if (onlyRequired)
-          it.fixableIssueKind == FixableIssueKind.MissingProperty
-        else
-          it.fixableIssueKind == FixableIssueKind.MissingNotRequiredProperty
+  val errorsByKind = checker.errors.values.groupBy { it.fixableIssueKind }
+  val missingRequiredProperties = extractPropertiesOfKind(errorsByKind, FixableIssueKind.MissingProperty)
+  val missingKnownProperties = extractPropertiesOfKind(errorsByKind, FixableIssueKind.MissingNotRequiredProperty)
+  return JsonSchemaPropertiesInfo(missingRequiredProperties, missingKnownProperties)
+}
+
+private fun extractPropertiesOfKind(errorsByKind: Map<FixableIssueKind, List<JsonValidationError>>,
+                                    kind: FixableIssueKind): MissingMultiplePropsIssueData {
+  return errorsByKind[kind]
+    .orEmpty()
+    .asSequence()
+    .map(JsonValidationError::getIssueData)
+    .flatMap { issueData ->
+      when (issueData) {
+        is MissingMultiplePropsIssueData -> issueData.myMissingPropertyIssues.asSequence()
+        is MissingPropertyIssueData -> sequenceOf(issueData)
+        else -> emptySequence()
       }
-      .map(JsonValidationError::getIssueData)
-      .flatMap { issueData ->
-        when (issueData) {
-          is JsonValidationError.MissingMultiplePropsIssueData -> issueData.myMissingPropertyIssues.asSequence()
-          is JsonValidationError.MissingPropertyIssueData -> sequenceOf(issueData)
-          else -> emptySequence()
-        }
-      }
-      .toList()
-      .takeIf { it.isNotEmpty() } ?: return null
-  return JsonValidationError.MissingMultiplePropsIssueData(flattenedErrors)
+    }
+    .toList()
+    .let { MissingMultiplePropsIssueData(it) }
+}
+
+data class JsonSchemaPropertiesInfo(
+  val missingRequiredProperties: MissingMultiplePropsIssueData,
+  val missingKnownProperties: MissingMultiplePropsIssueData
+) {
+  val hasOnlyRequiredPropertiesMissing: Boolean
+    get() = missingRequiredProperties.myMissingPropertyIssues.size == missingKnownProperties.myMissingPropertyIssues.size
+
+  val hasNoRequiredPropertiesMissing: Boolean
+    get() = missingRequiredProperties.myMissingPropertyIssues.isEmpty()
 }

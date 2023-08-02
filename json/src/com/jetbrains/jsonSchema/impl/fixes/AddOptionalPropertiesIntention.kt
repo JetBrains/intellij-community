@@ -30,13 +30,15 @@ open class AddOptionalPropertiesIntention : IntentionAction {
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val containingObject = findContainingObjectNode(editor, file) ?: return false
-    return collectMissingPropertiesFromSchema(containingObject, containingObject.project, false) != null
+    val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
+    return missingProperties != null && !missingProperties.hasOnlyRequiredPropertiesMissing
 
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
     val containingObject = findContainingObjectNode(editor, file) ?: return
-    val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project, false) ?: return
+    val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
+                              ?.missingKnownProperties ?: return
 
     WriteCommandAction.runWriteCommandAction(file.project, Computable {
       AddMissingPropertyFix(missingProperties, JsonOriginalPsiWalker.INSTANCE.getSyntaxAdapter(project))
