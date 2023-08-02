@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("highlighting")
+@TestRoot("highlighting/highlighting-k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/exitPoints")
+@TestMetadata("../../idea/tests/testData/exitPoints")
 public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitPointsTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,206 +25,206 @@ public class K2HighlightExitPointsTestGenerated extends AbstractK2HighlightExitP
 
     @TestMetadata("anonymousFunction.kt")
     public void testAnonymousFunction() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/anonymousFunction.kt");
+        runTest("../../idea/tests/testData/exitPoints/anonymousFunction.kt");
     }
 
     @TestMetadata("anonymousFunction2.kt")
     public void testAnonymousFunction2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/anonymousFunction2.kt");
+        runTest("../../idea/tests/testData/exitPoints/anonymousFunction2.kt");
     }
 
     @TestMetadata("funKeyword.kt")
     public void testFunKeyword() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/funKeyword.kt");
+        runTest("../../idea/tests/testData/exitPoints/funKeyword.kt");
     }
 
     @TestMetadata("funKeyword2.kt")
     public void testFunKeyword2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/funKeyword2.kt");
+        runTest("../../idea/tests/testData/exitPoints/funKeyword2.kt");
     }
 
     @TestMetadata("funKeyword3.kt")
     public void testFunKeyword3() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/funKeyword3.kt");
+        runTest("../../idea/tests/testData/exitPoints/funKeyword3.kt");
     }
 
     @TestMetadata("funKeyword31.kt")
     public void testFunKeyword31() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/funKeyword31.kt");
+        runTest("../../idea/tests/testData/exitPoints/funKeyword31.kt");
     }
 
     @TestMetadata("funName.kt")
     public void testFunName() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/funName.kt");
+        runTest("../../idea/tests/testData/exitPoints/funName.kt");
     }
 
     @TestMetadata("getter.kt")
     public void testGetter() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/getter.kt");
+        runTest("../../idea/tests/testData/exitPoints/getter.kt");
     }
 
     @TestMetadata("getter2.kt")
     public void testGetter2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/getter2.kt");
+        runTest("../../idea/tests/testData/exitPoints/getter2.kt");
     }
 
     @TestMetadata("getter3.kt")
     public void testGetter3() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/getter3.kt");
+        runTest("../../idea/tests/testData/exitPoints/getter3.kt");
     }
 
     @TestMetadata("inLambda.kt")
     public void testInLambda() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambda.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambda.kt");
     }
 
     @TestMetadata("inLambda1.kt")
     public void testInLambda1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambda1.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambda1.kt");
     }
 
     @TestMetadata("inLambda2.kt")
     public void testInLambda2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambda2.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambda2.kt");
     }
 
     @TestMetadata("inLambdaLastStatement1.kt")
     public void testInLambdaLastStatement1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement1.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambdaLastStatement1.kt");
     }
 
     @TestMetadata("inLambdaLastStatement2.kt")
     public void testInLambdaLastStatement2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement2.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambdaLastStatement2.kt");
     }
 
     @TestMetadata("inLambdaLastStatement3.kt")
     public void testInLambdaLastStatement3() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement3.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambdaLastStatement3.kt");
     }
 
     @TestMetadata("inLambdaLastStatement4.kt")
     public void testInLambdaLastStatement4() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement4.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambdaLastStatement4.kt");
     }
 
     @TestMetadata("inLambdaLastStatement5.kt")
     public void testInLambdaLastStatement5() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement5.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambdaLastStatement5.kt");
     }
 
     @TestMetadata("inLambdaLastStatement6.kt")
     public void testInLambdaLastStatement6() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inLambdaLastStatement6.kt");
+        runTest("../../idea/tests/testData/exitPoints/inLambdaLastStatement6.kt");
     }
 
     @TestMetadata("inline1.kt")
     public void testInline1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inline1.kt");
+        runTest("../../idea/tests/testData/exitPoints/inline1.kt");
     }
 
     @TestMetadata("inline2.kt")
     public void testInline2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inline2.kt");
+        runTest("../../idea/tests/testData/exitPoints/inline2.kt");
     }
 
     @TestMetadata("inline3.kt")
     public void testInline3() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inline3.kt");
+        runTest("../../idea/tests/testData/exitPoints/inline3.kt");
     }
 
     @TestMetadata("inlineLocalReturn1.kt")
     public void testInlineLocalReturn1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inlineLocalReturn1.kt");
+        runTest("../../idea/tests/testData/exitPoints/inlineLocalReturn1.kt");
     }
 
     @TestMetadata("inlineLocalReturn2.kt")
     public void testInlineLocalReturn2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inlineLocalReturn2.kt");
+        runTest("../../idea/tests/testData/exitPoints/inlineLocalReturn2.kt");
     }
 
     @TestMetadata("inlineLocalReturn3.kt")
     public void testInlineLocalReturn3() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inlineLocalReturn3.kt");
+        runTest("../../idea/tests/testData/exitPoints/inlineLocalReturn3.kt");
     }
 
     @TestMetadata("inlineWithNoInlineParam.kt")
     public void testInlineWithNoInlineParam() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/inlineWithNoInlineParam.kt");
+        runTest("../../idea/tests/testData/exitPoints/inlineWithNoInlineParam.kt");
     }
 
     @TestMetadata("invalidReturn.kt")
     public void testInvalidReturn() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/invalidReturn.kt");
+        runTest("../../idea/tests/testData/exitPoints/invalidReturn.kt");
     }
 
     @TestMetadata("invalidThrow.kt")
     public void testInvalidThrow() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/invalidThrow.kt");
+        runTest("../../idea/tests/testData/exitPoints/invalidThrow.kt");
     }
 
     @TestMetadata("localFunction1.kt")
     public void testLocalFunction1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/localFunction1.kt");
+        runTest("../../idea/tests/testData/exitPoints/localFunction1.kt");
     }
 
     @TestMetadata("localFunction2.kt")
     public void testLocalFunction2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/localFunction2.kt");
+        runTest("../../idea/tests/testData/exitPoints/localFunction2.kt");
     }
 
     @TestMetadata("localFunctionThrow.kt")
     public void testLocalFunctionThrow() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/localFunctionThrow.kt");
+        runTest("../../idea/tests/testData/exitPoints/localFunctionThrow.kt");
     }
 
     @TestMetadata("notInline1.kt")
     public void testNotInline1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/notInline1.kt");
+        runTest("../../idea/tests/testData/exitPoints/notInline1.kt");
     }
 
     @TestMetadata("notInline2.kt")
     public void testNotInline2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/notInline2.kt");
+        runTest("../../idea/tests/testData/exitPoints/notInline2.kt");
     }
 
     @TestMetadata("notInline3.kt")
     public void testNotInline3() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/notInline3.kt");
+        runTest("../../idea/tests/testData/exitPoints/notInline3.kt");
     }
 
     @TestMetadata("notReturnedLabeledExpression.kt")
     public void testNotReturnedLabeledExpression() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/notReturnedLabeledExpression.kt");
+        runTest("../../idea/tests/testData/exitPoints/notReturnedLabeledExpression.kt");
     }
 
     @TestMetadata("returnIfStatement.kt")
     public void testReturnIfStatement() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/returnIfStatement.kt");
+        runTest("../../idea/tests/testData/exitPoints/returnIfStatement.kt");
     }
 
     @TestMetadata("returnTryStatement.kt")
     public void testReturnTryStatement() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/returnTryStatement.kt");
+        runTest("../../idea/tests/testData/exitPoints/returnTryStatement.kt");
     }
 
     @TestMetadata("returnWhenStatement.kt")
     public void testReturnWhenStatement() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/returnWhenStatement.kt");
+        runTest("../../idea/tests/testData/exitPoints/returnWhenStatement.kt");
     }
 
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/simple.kt");
+        runTest("../../idea/tests/testData/exitPoints/simple.kt");
     }
 
     @TestMetadata("throw1.kt")
     public void testThrow1() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/throw1.kt");
+        runTest("../../idea/tests/testData/exitPoints/throw1.kt");
     }
 
     @TestMetadata("throw2.kt")
     public void testThrow2() throws Exception {
-        runTest("../idea/tests/testData/exitPoints/throw2.kt");
+        runTest("../../idea/tests/testData/exitPoints/throw2.kt");
     }
 }

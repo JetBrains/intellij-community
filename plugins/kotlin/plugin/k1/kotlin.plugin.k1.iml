@@ -29,7 +29,8 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api-providers" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.klib" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k1" />
     <orderEntry type="module" module-name="kotlin.base.code-insight" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="RUNTIME" />

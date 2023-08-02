@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("highlighting")
+@TestRoot("highlighting/highlighting-k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins")
+@TestMetadata("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins")
 public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends AbstractK2BundledCompilerPluginsHighlightingMetaInfoTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,26 +25,26 @@ public class K2BundledCompilerPluginsHighlightingMetaInfoTestGenerated extends A
 
     @TestMetadata("allOpen.kt")
     public void testAllOpen() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/allOpen.kt");
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/allOpen.kt");
     }
 
     @TestMetadata("lombok.kt")
     public void testLombok() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/lombok.kt");
     }
 
     @TestMetadata("parcelize.kt")
     public void testParcelize() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/parcelize.kt");
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/parcelize.kt");
     }
 
     @TestMetadata("samWithReceiver.kt")
     public void testSamWithReceiver() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/samWithReceiver.kt");
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/samWithReceiver.kt");
     }
 
     @TestMetadata("serialize.kt")
     public void testSerialize() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize.kt");
+        runTest("../../idea/tests/testData/highlighterMetaInfoWithBundledCompilerPlugins/serialize.kt");
     }
 }

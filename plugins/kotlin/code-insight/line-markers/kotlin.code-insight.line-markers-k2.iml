@@ -44,8 +44,8 @@
     <orderEntry type="module" module-name="kotlin.searching.k2" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" />
-    <orderEntry type="module" module-name="kotlin.highlighting" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k2" />
     <orderEntry type="module" module-name="kotlin.base.indices" />
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers-shared" />
   </component>

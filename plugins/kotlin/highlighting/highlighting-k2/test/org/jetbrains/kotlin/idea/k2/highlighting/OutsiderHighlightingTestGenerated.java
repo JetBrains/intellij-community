@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.highlighting;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
@@ -14,17 +13,28 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("highlighting")
+@TestRoot("highlighting/highlighting-k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/highlighterMetaInfoWithExtension")
-public class K2HighlightingMetaInfoWithExtensionTestGenerated extends AbstractK2HighlightingMetaInfoWithExtensionTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+@TestMetadata("testData/outsider")
+public class OutsiderHighlightingTestGenerated extends AbstractOutsiderHighlightingTest {
+    @TestMetadata("badDiff")
+    public void testBadDiff() throws Exception {
+        performTest();
     }
 
-    @TestMetadata("Functions.kt")
-    public void testFunctions() throws Exception {
-        runTest("../idea/tests/testData/highlighterMetaInfoWithExtension/Functions.kt");
+    @TestMetadata("badSource")
+    public void testBadSource() throws Exception {
+        performTest();
+    }
+
+    @TestMetadata("badSourceDiff")
+    public void testBadSourceDiff() throws Exception {
+        performTest();
+    }
+
+    @TestMetadata("circularDependency")
+    public void testCircularDependency() throws Exception {
+        performTest();
     }
 }

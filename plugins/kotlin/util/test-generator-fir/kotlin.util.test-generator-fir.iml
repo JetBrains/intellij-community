@@ -66,7 +66,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.test.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.highlighting" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.tests.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.searching.test.k2" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-reference-index.tests.k2" scope="TEST" />

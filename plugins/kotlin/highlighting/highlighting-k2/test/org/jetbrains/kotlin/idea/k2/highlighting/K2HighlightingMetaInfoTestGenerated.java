@@ -14,13 +14,13 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("highlighting")
+@TestRoot("highlighting/highlighting-k2")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("../idea/tests/testData/highlighterMetaInfo")
+@TestMetadata("../../idea/tests/testData/highlighterMetaInfo")
 public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2HighlightingMetaInfoTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/diagnostics")
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/diagnostics")
     public static class Diagnostics extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -28,22 +28,22 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
 
         @TestMetadata("classRedeclaration.kt")
         public void testClassRedeclaration() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/classRedeclaration.kt");
         }
 
         @TestMetadata("javaCodeInKotlinFile1.kt")
         public void testJavaCodeInKotlinFile1() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/diagnostics/javaCodeInKotlinFile1.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/javaCodeInKotlinFile1.kt");
         }
 
         @TestMetadata("mppIsNotEnabled.kt")
         public void testMppIsNotEnabled() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/diagnostics/mppIsNotEnabled.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/dsl")
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/dsl")
     public static class Dsl extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -51,37 +51,37 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
 
         @TestMetadata("AnnotatedTypeParameter.kt")
         public void testAnnotatedTypeParameter() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/AnnotatedTypeParameter.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/AnnotatedTypeParameter.kt");
         }
 
         @TestMetadata("AnnotatedTypeSpecifier.kt")
         public void testAnnotatedTypeSpecifier() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/AnnotatedTypeSpecifier.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/AnnotatedTypeSpecifier.kt");
         }
 
         @TestMetadata("ImplementsDslInterface.kt")
         public void testImplementsDslInterface() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/ImplementsDslInterface.kt");
         }
 
         @TestMetadata("NestedReceivers.kt")
         public void testNestedReceivers() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/NestedReceivers.kt");
         }
 
         @TestMetadata("RegularDsl.kt")
         public void testRegularDsl() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/RegularDsl.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/RegularDsl.kt");
         }
 
         @TestMetadata("SubclassOfDslClass.kt")
         public void testSubclassOfDslClass() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/dsl/SubclassOfDslClass.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/smartCasts")
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/smartCasts")
     public static class SmartCasts extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -89,47 +89,47 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
 
         @TestMetadata("Explicit.kt")
         public void testExplicit() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit.kt");
         }
 
         @TestMetadata("Explicit_qualifiedCalls.kt")
         public void testExplicit_qualifiedCalls() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit_qualifiedCalls.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit_qualifiedCalls.kt");
         }
 
         @TestMetadata("Explicit_withInvokeCall.kt")
         public void testExplicit_withInvokeCall() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit_withInvokeCall.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Explicit_withInvokeCall.kt");
         }
 
         @TestMetadata("ImplicitAndExplicit_functions.kt")
         public void testImplicitAndExplicit_functions() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_functions.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_functions.kt");
         }
 
         @TestMetadata("ImplicitAndExplicit_operators.kt")
         public void testImplicitAndExplicit_operators() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_operators.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_operators.kt");
         }
 
         @TestMetadata("ImplicitAndExplicit_properties.kt")
         public void testImplicitAndExplicit_properties() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_properties.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/ImplicitAndExplicit_properties.kt");
         }
 
         @TestMetadata("Implicit_stable.kt")
         public void testImplicit_stable() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Implicit_stable.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Implicit_stable.kt");
         }
 
         @TestMetadata("Invokes.kt")
         public void testInvokes() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/smartCasts/Invokes.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/smartCasts/Invokes.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/highlighterMetaInfo")
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo")
     public static class Uncategorized extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -137,147 +137,147 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
 
         @TestMetadata("Annotations.kt")
         public void testAnnotations() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Annotations.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Annotations.kt");
         }
 
         @TestMetadata("AutoCreatedItParameter.kt")
         public void testAutoCreatedItParameter() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/AutoCreatedItParameter.kt");
         }
 
         @TestMetadata("deprecation.kt")
         public void testDeprecation() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/deprecation.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/deprecation.kt");
         }
 
         @TestMetadata("Destructuring.kt")
         public void testDestructuring() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Destructuring.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Destructuring.kt");
         }
 
         @TestMetadata("Enums.kt")
         public void testEnums() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Enums.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Enums.kt");
         }
 
         @TestMetadata("ExplicitInvokeCall.kt")
         public void testExplicitInvokeCall() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/ExplicitInvokeCall.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/ExplicitInvokeCall.kt");
         }
 
         @TestMetadata("Field.kt")
         public void testField() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Field.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Field.kt");
         }
 
         @TestMetadata("Functions.kt")
         public void testFunctions() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Functions.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Functions.kt");
         }
 
         @TestMetadata("InvokeCall.kt")
         public void testInvokeCall() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/InvokeCall.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/InvokeCall.kt");
         }
 
         @TestMetadata("javaFields.kt")
         public void testJavaFields() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/javaFields.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/javaFields.kt");
         }
 
         @TestMetadata("JavaRecord.kt")
         public void testJavaRecord() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/JavaRecord.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/JavaRecord.kt");
         }
 
         @TestMetadata("javaStaticFields.kt")
         public void testJavaStaticFields() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/javaStaticFields.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/javaStaticFields.kt");
         }
 
         @TestMetadata("JavaTypes.kt")
         public void testJavaTypes() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/JavaTypes.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/JavaTypes.kt");
         }
 
         @TestMetadata("KDoc.kt")
         public void testKDoc() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/KDoc.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/KDoc.kt");
         }
 
         @TestMetadata("KotlinAnnotationsInJava.kt")
         public void testKotlinAnnotationsInJava() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/KotlinAnnotationsInJava.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/KotlinAnnotationsInJava.kt");
         }
 
         @TestMetadata("KotlinInjection.kt")
         public void testKotlinInjection() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/KotlinInjection.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/KotlinInjection.kt");
         }
 
         @TestMetadata("Labels.kt")
         public void testLabels() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Labels.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Labels.kt");
         }
 
         @TestMetadata("NamedArguments.kt")
         public void testNamedArguments() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/NamedArguments.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/NamedArguments.kt");
         }
 
         @TestMetadata("NonNullAssertion.kt")
         public void testNonNullAssertion() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/NonNullAssertion.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/NonNullAssertion.kt");
         }
 
         @TestMetadata("Object.kt")
         public void testObject() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Object.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Object.kt");
         }
 
         @TestMetadata("PropertiesWithPropertyDeclarations.kt")
         public void testPropertiesWithPropertyDeclarations() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/PropertiesWithPropertyDeclarations.kt");
         }
 
         @TestMetadata("Suspend.kt")
         public void testSuspend() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Suspend.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Suspend.kt");
         }
 
         @TestMetadata("SyntheticExtensionProperty.kt")
         public void testSyntheticExtensionProperty() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/SyntheticExtensionProperty.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/SyntheticExtensionProperty.kt");
         }
 
         @TestMetadata("Todo.kt")
         public void testTodo() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Todo.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Todo.kt");
         }
 
         @TestMetadata("TypeAlias.kt")
         public void testTypeAlias() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/TypeAlias.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/TypeAlias.kt");
         }
 
         @TestMetadata("TypesAndAnnotations.kt")
         public void testTypesAndAnnotations() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/TypesAndAnnotations.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/TypesAndAnnotations.kt");
         }
 
         @TestMetadata("Variables.kt")
         public void testVariables() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/Variables.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/Variables.kt");
         }
 
         @TestMetadata("VariablesAsFunctions.kt")
         public void testVariablesAsFunctions() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/VariablesAsFunctions.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/VariablesAsFunctions.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../idea/tests/testData/highlighterMetaInfo/unresolved")
+    @TestMetadata("../../idea/tests/testData/highlighterMetaInfo/unresolved")
     public static class Unresolved extends AbstractK2HighlightingMetaInfoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -285,17 +285,17 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
 
         @TestMetadata("unresolvedImport.kt")
         public void testUnresolvedImport() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedImport.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedImport.kt");
         }
 
         @TestMetadata("unresolvedLabel.kt")
         public void testUnresolvedLabel() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedLabel.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedLabel.kt");
         }
 
         @TestMetadata("unresolvedReference.kt")
         public void testUnresolvedReference() throws Exception {
-            runTest("../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedReference.kt");
+            runTest("../../idea/tests/testData/highlighterMetaInfo/unresolved/unresolvedReference.kt");
         }
     }
 }

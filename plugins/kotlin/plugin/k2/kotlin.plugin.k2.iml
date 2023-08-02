@@ -17,7 +17,7 @@
     <orderEntry type="module" module-name="kotlin.base.compiler-configuration-ui" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.external-build-system" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.facet" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.base.highlighting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.shared" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.indices" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.kdoc" scope="RUNTIME" />
@@ -94,7 +94,7 @@
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.k2" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.highlighting" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.highlighting.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.introduce.k2" scope="RUNTIME" />
