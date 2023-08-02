@@ -68,6 +68,7 @@ import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.InstanceOfUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ig.psiutils.VariableNameGenerator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.awt.*;
@@ -840,7 +841,9 @@ public final class HighlightUtil {
       PsiElement parent = identifier.getParent();
       if (languageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !(parent instanceof PsiUnnamedPattern) && 
           !(parent instanceof PsiVariable var && var.isUnnamed())) {
-        String text = JavaErrorBundle.message("underscore.identifier.error");
+        String text = HighlightingFeature.UNNAMED_PATTERNS_AND_VARIABLES.isSufficient(languageLevel) ?
+                      JavaErrorBundle.message("underscore.identifier.error.unnamed")
+                      : JavaErrorBundle.message("underscore.identifier.error");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(identifier).descriptionAndTooltip(text);
       }
       else if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
@@ -855,13 +858,27 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo.Builder checkAllowedUnnamedLocation(@NotNull PsiVariable variable) {
+  static HighlightInfo.Builder checkUnnamedVariableDeclaration(@NotNull PsiVariable variable) {
+    if (isArrayDeclaration(variable)) {
+      IntentionAction fix = new NormalizeBracketsFix(variable).asIntention();
+      TokenSet brackets = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
+      TextRange range = StreamEx.of(variable.getChildren())
+        .filter(t -> PsiUtil.isJavaToken(t, brackets))
+        .map(PsiElement::getTextRangeInParent)
+        .reduce(TextRange::union)
+        .orElseThrow()
+        .shiftRight(variable.getTextRange().getStartOffset());// Must have at least one
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(
+        JavaAnalysisBundle.message("error.unnamed.variable.brackets")).registerFix(fix, null, null, null, null);
+    }
     if (variable instanceof PsiPatternVariable) return null;
     if (variable instanceof PsiResourceVariable) return null;
     String message;
+    IntentionAction fix = null;
     if (variable instanceof PsiLocalVariable local) {
-      if (local.getParent() instanceof PsiDeclarationStatement decl && decl.getParent() instanceof PsiCodeBlock) return null;
-      message = JavaAnalysisBundle.message("error.unnamed.local.variable.not.allowed.in.this.context");
+      if (local.getInitializer() != null) return null;
+      message = JavaAnalysisBundle.message("error.unnamed.variable.without.initializer");
+      fix = getFixFactory().createAddVariableInitializerFix(local);
     }
     else if (variable instanceof PsiParameter parameter) {
       PsiElement scope = parameter.getDeclarationScope();
@@ -872,10 +889,15 @@ public final class HighlightUtil {
       message = JavaAnalysisBundle.message("error.unnamed.field.not.allowed");
     }
     else {
-      message = JavaAnalysisBundle.message("error.unnamed.variable.not.allowed");
+      message = JavaAnalysisBundle.message("error.unnamed.variable.not.allowed.in.this.context");
     }
-    return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(Objects.requireNonNull(variable.getNameIdentifier()))
-      .descriptionAndTooltip(message);
+    TextRange range = TextRange.create(variable.getTextRange().getStartOffset(),
+                                       Objects.requireNonNull(variable.getNameIdentifier()).getTextRange().getEndOffset());
+    HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message);
+    if (fix != null) {
+      builder.registerFix(fix, null, null, null, null);
+    }
+    return builder;
   }
 
   @NotNull
