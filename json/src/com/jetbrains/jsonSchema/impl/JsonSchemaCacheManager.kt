@@ -2,8 +2,10 @@
 package com.jetbrains.jsonSchema.impl
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.thisLogger
@@ -11,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -30,8 +33,9 @@ class JsonSchemaCacheManager : Disposable {
   fun computeSchemaObject(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile): JsonSchemaObject? {
     val newFuture: JsonSchemaObjectFuture = CompletableFuture()
     val future: JsonSchemaObjectFuture = getUpToDateFuture(schemaVirtualFile, schemaPsiFile, newFuture)
+    val application = ApplicationManagerEx.getApplicationEx()
     if (future === newFuture) {
-      if (ApplicationManager.getApplication().isDispatchThread) {
+      if (application.isDispatchThread) {
         // Compute synchronously, because we can't start `NonBlockingReadAction` on EDT and
         // immediately after that wait on EDT for its computation in blocking manner.
         completeSync(schemaVirtualFile, schemaPsiFile, newFuture)
@@ -41,9 +45,24 @@ class JsonSchemaCacheManager : Disposable {
         // unwanted `ProcessCanceledException` caching. If we try to avoid `ProcessCanceledException` caching by
         // starting a new computation, the new computation will fail with PCE too, because of cancelled progress.
         completeAsync(schemaVirtualFile, schemaPsiFile, newFuture)
+        completeOnWriteActionStart(schemaVirtualFile, schemaPsiFile, future)
       }
     }
+    if (application.isWriteActionPending) {
+      completeSync(schemaVirtualFile, schemaPsiFile, future)
+    }
     return ProgressIndicatorUtils.awaitWithCheckCanceled(future, ProgressManager.getInstance().progressIndicator)
+  }
+
+  private fun completeOnWriteActionStart(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
+    val listenerDisposable = Disposer.newDisposable(this)
+    val listener = object : ApplicationListener {
+      override fun beforeWriteActionStart(action: Any) {
+        completeSync(schemaVirtualFile, schemaPsiFile, future)
+      }
+    }
+    ApplicationManager.getApplication().addApplicationListener(listener, listenerDisposable)
+    future.whenComplete { _, _ -> Disposer.dispose(listenerDisposable) }
   }
 
   private fun getUpToDateFuture(schemaVirtualFile: VirtualFile,
@@ -63,17 +82,19 @@ class JsonSchemaCacheManager : Disposable {
   }
 
   private fun completeSync(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
-    try {
-      future.complete(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile))
-    }
-    catch (e: Exception) {
-      completeExceptionally(future, e)
+    if (!future.isDone) {
+      try {
+        future.complete(JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile))
+      }
+      catch (e: Exception) {
+        completeExceptionally(future, e)
+      }
     }
   }
 
   private fun completeAsync(schemaVirtualFile: VirtualFile, schemaPsiFile: PsiFile, future: JsonSchemaObjectFuture) {
     val promise = ReadAction.nonBlocking<JsonSchemaObject?> {
-      JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile)
+      if (future.isDone) null else JsonSchemaReader(schemaVirtualFile).read(schemaPsiFile)
     }.expireWith(this).submit(READER_EXECUTOR)
     promise.onSuccess {
       future.complete(it)
