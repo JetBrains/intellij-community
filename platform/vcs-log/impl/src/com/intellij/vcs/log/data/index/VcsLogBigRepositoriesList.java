@@ -45,7 +45,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     synchronized (myLock) {
       added = myState.repositories.add(root.getPath());
     }
-    if (added) myDispatcher.getMulticaster().onRepositoriesListChanged();
+    if (added) myDispatcher.getMulticaster().onRepositoryAdded(root);
   }
 
   public boolean removeRepository(@NotNull VirtualFile root) {
@@ -53,7 +53,7 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
     synchronized (myLock) {
       removed = myState.repositories.remove(root.getPath());
     }
-    if (removed) myDispatcher.getMulticaster().onRepositoriesListChanged();
+    if (removed) myDispatcher.getMulticaster().onRepositoryRemoved(root);
     return removed;
   }
 
@@ -90,6 +90,21 @@ public final class VcsLogBigRepositoriesList implements PersistentStateComponent
   }
 
   public interface Listener extends EventListener {
+    default void onRepositoryAdded(@NotNull VirtualFile root) { }
+    default void onRepositoryRemoved(@NotNull VirtualFile root) { }
+  }
+
+  public interface Adapter extends Listener {
+    @Override
+    default void onRepositoryAdded(@NotNull VirtualFile root) {
+      onRepositoriesListChanged();
+    }
+
+    @Override
+    default void onRepositoryRemoved(@NotNull VirtualFile root) {
+      onRepositoriesListChanged();
+    }
+
     void onRepositoriesListChanged();
   }
 }

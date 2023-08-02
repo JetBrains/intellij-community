@@ -51,7 +51,7 @@ class WaitVcsLogIndexingCommand(text: String, line: Int) : PerformanceCommandCor
       vcsIndex.addListener(indexingListener)
       Disposer.register(listenersDisposable, Disposable { vcsIndex.removeListener(indexingListener) })
 
-      bigRepositoriesList.addListener(VcsLogBigRepositoriesList.Listener {
+      bigRepositoriesList.addListener(VcsLogBigRepositoriesList.Adapter {
         logIndexingCompleted("indexing was paused after ${VcsLogBigRepositoriesList.Listener::class.simpleName} invocation")
         isIndexingCompleted.complete(true)
       }, listenersDisposable)
