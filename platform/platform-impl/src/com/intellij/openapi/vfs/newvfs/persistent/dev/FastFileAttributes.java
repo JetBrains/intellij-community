@@ -18,7 +18,7 @@ import static com.intellij.openapi.vfs.newvfs.persistent.dev.MappedFileStorageHe
 
 /**
  * (Temporary) Different non-standard kinds of VirtualFile attributes.
- * Standard attributes are {@link com.intellij.openapi.vfs.newvfs.FileAttribute} and {@link SpecializedFileAttributes},
+ * Standard attributes are {@link FileAttribute} and {@link SpecializedFileAttributes},
  * and here are some more exotic kinds, which may or may not be useful.
  */
 @ApiStatus.Internal
@@ -108,8 +108,7 @@ public final class FastFileAttributes {
   }
 
   private static class TimestampedBooleanAttributeAccessorImpl implements TimestampedBooleanAttributeAccessor, Closeable {
-    public static final int FIELDS = 1;
-    public static final int ROW_SIZE = FIELDS * Long.BYTES;
+    public static final int ROW_SIZE = Long.BYTES;
 
     private final MappedFileStorageHelper storageHelper;
 

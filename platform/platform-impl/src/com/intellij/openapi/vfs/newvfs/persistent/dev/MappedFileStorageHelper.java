@@ -218,7 +218,7 @@ public class MappedFileStorageHelper implements Closeable {
   public long readLongField(@NotNull VirtualFile vFile,
                             int fieldOffset) throws IOException {
     int fileId = fileId(vFile);
-    return readIntField(fileId, fieldOffset);
+    return readLongField(fileId, fieldOffset);
   }
 
   public void writeLongField(@NotNull VirtualFile vFile,
@@ -359,12 +359,9 @@ public class MappedFileStorageHelper implements Closeable {
   }
 
 
-  /* ============== implementation: ====================================================================== */
-
-  @VisibleForTesting
-  int updateIntField(int fileId,
-                     int fieldOffsetInRow,
-                     @NotNull IntUnaryOperator updateOperator) throws IOException {
+  public int updateIntField(int fileId,
+                            int fieldOffsetInRow,
+                            @NotNull IntUnaryOperator updateOperator) throws IOException {
     int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
@@ -379,9 +376,8 @@ public class MappedFileStorageHelper implements Closeable {
     }
   }
 
-  @VisibleForTesting
-  long readLongField(int fileId,
-                     int fieldOffsetInRow) throws IOException {
+  public long readLongField(int fileId,
+                            int fieldOffsetInRow) throws IOException {
     int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
@@ -391,10 +387,9 @@ public class MappedFileStorageHelper implements Closeable {
     return (long)LONG_HANDLE.getVolatile(rawPageBuffer, offsetInPage);
   }
 
-  @VisibleForTesting
-  void writeLongField(int fileId,
-                      int fieldOffsetInRow,
-                      long attributeValue) throws IOException {
+  public void writeLongField(int fileId,
+                             int fieldOffsetInRow,
+                             long attributeValue) throws IOException {
     int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
@@ -404,10 +399,9 @@ public class MappedFileStorageHelper implements Closeable {
     LONG_HANDLE.setVolatile(rawPageBuffer, offsetInPage, attributeValue);
   }
 
-  @VisibleForTesting
-  long updateLongField(int fileId,
-                       int fieldOffsetInRow,
-                       @NotNull LongUnaryOperator updateOperator) throws IOException {
+  public long updateLongField(int fileId,
+                              int fieldOffsetInRow,
+                              @NotNull LongUnaryOperator updateOperator) throws IOException {
     int offsetInFile = toOffsetInFile(fileId) + fieldOffsetInRow;
     int offsetInPage = storage.toOffsetInPage(offsetInFile);
 
@@ -449,6 +443,8 @@ public class MappedFileStorageHelper implements Closeable {
       LONG_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
     }
   }
+
+  // ============== implementation: ======================================================================
 
   private int maxAllocatedFileID() {
     return maxAllocatedFileIdSupplier.getAsInt();

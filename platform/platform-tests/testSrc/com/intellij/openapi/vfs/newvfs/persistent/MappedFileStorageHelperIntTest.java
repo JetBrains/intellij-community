@@ -16,14 +16,15 @@ import static java.util.stream.Collectors.joining;
 import static org.junit.jupiter.api.Assertions.*;
 
 
-public class MappedFileStorageHelperTest {
+public class MappedFileStorageHelperIntTest {
   private static final int ENOUGH_VALUES = 1 << 22;
 
   private static final int DEFAULT_VALUE = 0;
 
   private static final int VERSION = 1;
 
-  private static final int FIELD_OFFSET_IN_ROW = 0;
+  private static final int FIELD_1_OFFSET_IN_ROW = 0;
+  public static final int BYTES_PER_ROW = Integer.BYTES;
 
   private FSRecordsImpl vfs;
   private MappedFileStorageHelper storageHelper;
@@ -64,19 +65,19 @@ public class MappedFileStorageHelperTest {
   }
 
   private static @NotNull MappedFileStorageHelper openAndEnsureVersionsMatch(@NotNull FSRecordsImpl vfs) throws IOException {
-    return MappedFileStorageHelper.openHelperAndVerifyVersions(vfs, "testIntAttributeStorage", VERSION, Integer.BYTES);
+    return MappedFileStorageHelper.openHelperAndVerifyVersions(vfs, "testIntAttributeStorage", VERSION, BYTES_PER_ROW);
   }
 
   private static @NotNull MappedFileStorageHelper openWithoutCheckingVersions(@NotNull FSRecordsImpl vfs) throws IOException {
-    return MappedFileStorageHelper.openHelper(vfs, "testIntAttributeStorage", Integer.BYTES);
+    return MappedFileStorageHelper.openHelper(vfs, "testIntAttributeStorage", BYTES_PER_ROW);
   }
 
 
   @Test
   public void openStorageWithSameName_JustReturnsSameInstance() throws IOException {
     String storageName = "name1";
-    try (MappedFileStorageHelper storageHelper1 = MappedFileStorageHelper.openHelper(vfs, storageName, Integer.BYTES)) {
-      try (MappedFileStorageHelper storageHelper2 = MappedFileStorageHelper.openHelper(vfs, storageName, Integer.BYTES)) {
+    try (MappedFileStorageHelper storageHelper1 = MappedFileStorageHelper.openHelper(vfs, storageName, BYTES_PER_ROW)) {
+      try (MappedFileStorageHelper storageHelper2 = MappedFileStorageHelper.openHelper(vfs, storageName, BYTES_PER_ROW)) {
         assertSame(
           storageHelper1,
           storageHelper2,
@@ -103,8 +104,8 @@ public class MappedFileStorageHelperTest {
   public void singleValue_CouldBeWrittenToStorage_AndReadBackAsIs() throws Exception {
     int fileId = vfs.createRecord();
     int valueToWrite = 42;
-    storageHelper.writeIntField(fileId, FIELD_OFFSET_IN_ROW, valueToWrite);
-    int valueReadBack = storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW);
+    storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, valueToWrite);
+    int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);
     assertEquals(valueToWrite, valueReadBack,
                  "attribute[#" + fileId + "] is unexpected");
   }
@@ -112,7 +113,7 @@ public class MappedFileStorageHelperTest {
   @Test
   public void notYetWrittenValue_ReadsBackAsZero() throws Exception {
     int fileId = vfs.createRecord();
-    int valueReadBack = storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW);
+    int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);
     assertEquals(DEFAULT_VALUE,
                  valueReadBack,
                  "attribute[#" + fileId + "] is unexpected -- must be 0 (default)");
@@ -126,11 +127,11 @@ public class MappedFileStorageHelperTest {
     int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-      storageHelper.writeIntField(fileId, FIELD_OFFSET_IN_ROW, /*value: */ fileId);
+      storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, /*value: */ fileId);
     }
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-      int valueReadBack = storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW);
+      int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);
       assertEquals(fileId, valueReadBack,
                    "attribute[#" + fileId + "] is unexpected");
     }
@@ -144,12 +145,11 @@ public class MappedFileStorageHelperTest {
     int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-      int valueReadBack = storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW);
+      int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);
       assertEquals(DEFAULT_VALUE, valueReadBack,
                    "attribute[#" + fileId + "] must be default(=0) since wasn't written before");
     }
   }
-
 
   @Test
   public void manyValues_CouldBeWrittenToStorage_AndReadBackAsIs_AfterReopen() throws Exception {
@@ -159,14 +159,14 @@ public class MappedFileStorageHelperTest {
     int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-      storageHelper.writeIntField(fileId, FIELD_OFFSET_IN_ROW, /*value: */ fileId);
+      storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, /*value: */ fileId);
     }
 
     storageHelper.close();
     storageHelper = openAndEnsureVersionsMatch(vfs);
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-      int valueReadBack = storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW);
+      int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);
       assertEquals(fileId, valueReadBack,
                    "attribute[#" + fileId + "] is unexpected");
     }
@@ -195,7 +195,7 @@ public class MappedFileStorageHelperTest {
 
     int attributeValue = Integer.MAX_VALUE;//all bits
     int fileId = vfs.createRecord();
-    storageHelper.writeIntField(fileId, FIELD_OFFSET_IN_ROW, /*value: */ attributeValue);
+    storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, /*value: */ attributeValue);
 
     storageHelper.close();
     storageHelper = openWithoutCheckingVersions(vfs);
@@ -204,7 +204,7 @@ public class MappedFileStorageHelperTest {
                  "Version must be read back as-is");
     assertEquals(creationTag, storageHelper.getVFSCreationTag(),
                  "VFSCreationTag must be read back as-is");
-    assertEquals(attributeValue, storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW),
+    assertEquals(attributeValue, storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW),
                  "Attribute value must be read back as-is");
   }
 
@@ -214,7 +214,7 @@ public class MappedFileStorageHelperTest {
     //Emulate 'wrong' vfsCreationTag:
     storageHelper.setVFSCreationTag(-1);
     int fileId = vfs.createRecord();
-    storageHelper.writeIntField(fileId, FIELD_OFFSET_IN_ROW, /*value: */ Integer.MAX_VALUE);
+    storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, /*value: */ Integer.MAX_VALUE);
 
     storageHelper.close();
     storageHelper = openAndEnsureVersionsMatch(vfs);
@@ -228,7 +228,7 @@ public class MappedFileStorageHelperTest {
                  storageHelper.getVFSCreationTag(),
                  "Storage VFSCreationTag must be == current VFS.getCreationTimestamp()");
     assertEquals(DEFAULT_VALUE,
-                 storageHelper.readIntField(fileId, FIELD_OFFSET_IN_ROW),
+                 storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW),
                  "row[#" + fileId + "] must be default(=0) since VFSCreationTag was not matched");
   }
 }
