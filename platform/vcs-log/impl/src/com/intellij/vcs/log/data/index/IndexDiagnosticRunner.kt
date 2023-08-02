@@ -15,6 +15,7 @@ import com.intellij.vcs.log.data.CommitDetailsGetter
 import com.intellij.vcs.log.data.DataPack
 import com.intellij.vcs.log.data.VcsLogStorage
 import com.intellij.vcs.log.data.index.IndexDiagnostic.getDiffFor
+import com.intellij.vcs.log.data.index.IndexDiagnostic.pickIndexedCommits
 import com.intellij.vcs.log.data.index.IndexDiagnostic.pickCommits
 import com.intellij.vcs.log.impl.VcsLogErrorHandler
 
@@ -55,7 +56,8 @@ internal class IndexDiagnosticRunner(private val index: VcsLogModifiableIndex,
 
     val oldCommits = dataPack.pickCommits(storage, uncheckedRoots, old = true)
     val newCommits = dataPack.pickCommits(storage, uncheckedRoots, old = false)
-    val commits = (oldCommits + newCommits).filter { index.isIndexed(it) }
+    val indexedCommits = dataPack.pickIndexedCommits(dataGetter, uncheckedRoots)
+    val commits = (oldCommits + newCommits).filter { !indexedCommits.contains(it) && index.isIndexed(it) } + indexedCommits
     if (commits.isEmpty()) {
       thisLogger().info("Index diagnostic for $uncheckedRoots is skipped as no commits were selected")
       return

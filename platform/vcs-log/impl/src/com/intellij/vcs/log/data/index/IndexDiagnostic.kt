@@ -20,6 +20,7 @@ import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 internal object IndexDiagnostic {
   private const val FILTERED_PATHS_LIMIT = 1000
   private const val COMMITS_TO_CHECK = 10
+  private const val INDEXED_COMMITS_ITERATIONS_LIMIT = 5_000
 
   fun IndexDataGetter.getDiffFor(commitsIdList: List<Int>, commitDetailsList: List<VcsFullCommitDetails>): String {
     val report = StringBuilder()
@@ -110,6 +111,36 @@ internal object IndexDiagnostic {
         return@walk result.size < COMMITS_TO_CHECK
       }
       if (rootsToCheck.isEmpty()) break
+    }
+
+    return result
+  }
+
+  fun DataPack.pickIndexedCommits(dataGetter: IndexDataGetter, roots: Collection<VirtualFile>): Set<Int> {
+    if (roots.isEmpty()) return emptySet()
+
+    val result = IntOpenHashSet()
+
+    // try to pick commits evenly across the graph
+    @Suppress("UNCHECKED_CAST") val permanentGraphInfo = permanentGraph as? PermanentGraphInfo<Int> ?: return emptySet()
+    for (i in 0 until COMMITS_TO_CHECK) {
+      val node = i * (permanentGraphInfo.linearGraph.nodesCount() / COMMITS_TO_CHECK)
+      val commit = permanentGraphInfo.permanentCommitsInfo.getCommitId(node)
+      if (!dataGetter.indexStorageBackend.containsCommit(commit)) continue
+      val root = dataGetter.logStorage.getCommitId(commit)?.root ?: continue
+      if (!roots.contains(root)) continue
+      result.add(commit)
+    }
+
+    if (result.size >= COMMITS_TO_CHECK) return result
+
+    // iterate over a limited number of indexed commits to select more commits to check
+    dataGetter.iterateIndexedCommits(INDEXED_COMMITS_ITERATIONS_LIMIT) { commit ->
+      val root = dataGetter.logStorage.getCommitId(commit)?.root
+      if (root != null && roots.contains(root)) {
+        result.add(commit)
+      }
+      result.size < COMMITS_TO_CHECK
     }
 
     return result
