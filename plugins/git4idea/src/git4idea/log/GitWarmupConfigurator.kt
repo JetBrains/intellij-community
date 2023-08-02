@@ -4,12 +4,12 @@ package git4idea.log
 import com.intellij.ide.CommandLineProgressReporterElement
 import com.intellij.ide.warmup.WarmupConfigurator
 import com.intellij.openapi.application.EDT
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.progress.blockingContextScope
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.vcs.log.data.index.VcsLogModifiableIndex
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogSharedSettings
@@ -37,11 +37,16 @@ class GitWarmupConfigurator : WarmupConfigurator {
       logger?.reportMessage(1, "No git roots to index")
       return false
     }
-    val manager = blockingContextScope {
-      VcsLogManager(project, project.service<VcsLogProjectTabsProperties>(), logProviders, true) { _, throwable ->
-        logger?.reportMessage(1, throwable.stackTraceToString())
-      }
+
+    val manager = VcsLogManager(project, project.serviceAsync<VcsLogProjectTabsProperties>(), logProviders, false) { _, throwable ->
+      logger?.reportMessage(1, throwable.stackTraceToString())
     }
+    blockingContextScope {
+      manager.scheduleInitialization()
+    }
+
+    assertVcsIndexed(manager)
+
     withContext(Dispatchers.EDT) {
       blockingContextScope {
         manager.dispose(null)
@@ -50,5 +55,13 @@ class GitWarmupConfigurator : WarmupConfigurator {
 
     logger?.reportMessage(1, "Git log indexing has finished")
     return false
+  }
+
+  private suspend fun assertVcsIndexed(manager: VcsLogManager) {
+    withContext(Dispatchers.EDT) {
+      assert(manager.isLogUpToDate)
+    }
+    val modifiableIndex = manager.dataManager.index as VcsLogModifiableIndex
+    assert(modifiableIndex.indexingRoots.all { !modifiableIndex.isIndexingEnabled(it) || modifiableIndex.isIndexed(it) })
   }
 }

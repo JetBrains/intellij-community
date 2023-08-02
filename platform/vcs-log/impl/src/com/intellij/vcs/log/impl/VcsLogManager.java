@@ -81,8 +81,9 @@ public class VcsLogManager implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
   @CalledInAny
-  void scheduleInitialization() {
+  public void scheduleInitialization() {
     myLogData.initialize();
   }
 
