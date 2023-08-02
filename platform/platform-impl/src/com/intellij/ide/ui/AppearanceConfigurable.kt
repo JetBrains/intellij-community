@@ -141,8 +141,6 @@ internal fun getAppearanceOptionDescriptors(): Sequence<OptionDescription> {
 }
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
-  private var shouldUpdateLaF = false
-
   private val propertyGraph = PropertyGraph()
   private val lafProperty = propertyGraph.lazyProperty { lafManager.lookAndFeelReference }
   private val syncThemeProperty = propertyGraph.lazyProperty { lafManager.autodetect }
@@ -230,13 +228,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           .onChanged { checkbox ->
             if (!checkbox.isSelected) resetCustomFont?.invoke()
           }
-          .shouldUpdateLaF()
 
         val fontFace = cell(FontComboBox())
           .bind({ it.fontName }, { it, value -> it.fontName = value },
                 MutableProperty({ if (settings.overrideLafFonts) getFontFamily(settings.fontFace) else getDefaultFont().family },
                                 { settings.fontFace = it }))
-          .shouldUpdateLaF()
           .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.name"))
           .component
@@ -245,7 +241,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                                         { settings.fontSize = it },
                          settings.fontSize)
           .label(message("label.font.size"))
-          .shouldUpdateLaF()
           .enabledIf(useCustomCheckbox.selected)
           .accessibleName(message("label.font.size"))
           .component
@@ -427,7 +422,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             comboBox(DefaultComboBoxModel(ideAAOptions), renderer = AAListCellRenderer(false))
               .label(message("label.text.antialiasing.scope.ide"))
               .bindItem(settings::ideAAType.toNullableProperty())
-              .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.ide"))
               .onApply {
                 for (w in Window.getWindows()) {
@@ -446,7 +440,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             comboBox(DefaultComboBoxModel(editorAAOptions), renderer = AAListCellRenderer(true))
               .label(message("label.text.antialiasing.scope.editor"))
               .bindItem(settings::editorAAType.toNullableProperty())
-              .shouldUpdateLaF()
               .accessibleName(message("label.text.antialiasing.scope.editor"))
           }
         )
@@ -505,7 +498,6 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                 }
               }
             }
-            .shouldUpdateLaF()
         }
       }
     }
@@ -513,20 +505,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
 
   override fun apply() {
     val uiSettingsChanged = isModified
-    shouldUpdateLaF = false
-
     super.apply()
-
-    if (shouldUpdateLaF) {
-      LafManager.getInstance().updateUI()
-    }
     if (uiSettingsChanged) {
       UISettings.getInstance().fireUISettingsChanged()
       EditorFactory.getInstance().refreshAllEditors()
     }
   }
-
-  private fun <T : JComponent> Cell<T>.shouldUpdateLaF(): Cell<T> = onApply { shouldUpdateLaF = true }
 }
 
 private fun getFontFamily(fontFace: String?): String {

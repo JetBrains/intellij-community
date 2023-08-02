@@ -183,6 +183,10 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
   // We remember the last used editor scheme for each laf in order to restore it after switching laf
   private var rememberSchemeForLaf = true
   private val lafToPreviousScheme: MutableMap<String, String> = mutableMapOf()
+  /**
+   * Stores values of options from [UISettings] which were used to set up current LaF. 
+   */
+  private var usedValuesOfUiOptions: List<Any?> = emptyList()
 
   override fun getDefaultLightLaf(): LookAndFeelInfo {
     return if (ExperimentalUI.isNewUI()) {
@@ -316,12 +320,13 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     runActivity("new ui configuration") {
       ExperimentalUI.getInstance().lookAndFeelChanged()
     }
-    addThemeAndDynamicPluginListeners()
+    addListeners()
   }
 
-  private fun addThemeAndDynamicPluginListeners() {
+  private fun addListeners() {
     UIThemeProvider.EP_NAME.addExtensionPointListener(UiThemeEpListener(), this)
-    ApplicationManager.getApplication().messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
         isUpdatingPlugin = isUpdate
         themeIdBeforePluginUpdate = if (myCurrentLaf is UIThemeBasedLookAndFeelInfo) {
@@ -335,6 +340,14 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
       override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
         isUpdatingPlugin = false
         themeIdBeforePluginUpdate = null
+      }
+    })
+    connection.subscribe(UISettingsListener.TOPIC, object : UISettingsListener {
+      override fun uiSettingsChanged(uiSettings: UISettings) {
+        val newValues = computeValuesOfUsedUiOptions()
+        if (newValues != usedValuesOfUiOptions) {
+          updateUI()
+        }
       }
     })
   }
@@ -878,6 +891,7 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
     uiDefaults.put(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, StartupUiUtil.getLcdContrastValue())
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS, AppUIUtil.adjustFractionalMetrics(getPreferredFractionalMetricsValue()))
+    usedValuesOfUiOptions = computeValuesOfUsedUiOptions()
     if (isFirstSetup) {
       ApplicationManager.getApplication().invokeLater { notifyLookAndFeelChanged() }
     }
@@ -888,6 +902,19 @@ class LafManagerImpl : LafManager(), PersistentStateComponent<Element>, Disposab
         updateUI(frame)
       }
     }
+  }
+
+  private fun computeValuesOfUsedUiOptions(): List<Any?> {
+    val instance = UISettings.getInstance()
+    return listOf(
+      instance.overrideLafFonts,
+      instance.fontFace,
+      instance.fontSize2D,
+      instance.ideAAType,
+      instance.editorAAType,
+      instance.ideScale,
+      instance.presentationModeIdeScale,
+    )
   }
 
   private fun notifyLookAndFeelChanged() {
