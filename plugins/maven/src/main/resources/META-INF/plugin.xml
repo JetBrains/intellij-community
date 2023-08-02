@@ -789,12 +789,12 @@
       <reference id="Maven.DownloadAllGroup"/>
       <separator/>
       <reference id="Maven.ShowEffectivePom"/>
-      <separator/>
-      <reference id="Maven.ViewDependencyAnalyzer"/>
     </group>
 
     <group id="Maven.NavigatorProjectMenu" popup="true">
       <reference ref="Maven.BaseProjectMenu"/>
+      <separator/>
+      <reference id="Maven.NavigatorDependencyAnalyzer"/>
       <separator/>
       <reference id="Maven.RunBuild"/>
       <reference ref="RunContextGroup"/>
