@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.decompiler.navigation
 
+import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
@@ -242,9 +243,14 @@ object SourceNavigationHelper {
         helper: KotlinStringStubIndexHelper<T>
     ): T? {
         val classFqName = entity.fqName ?: return null
+        val isForJvm = entity.containingKtFile.viewProvider.fileType is JavaClassFileType
         return targetScopes(entity, navigationKind).firstNotNullOfOrNull { scope ->
             ProgressManager.checkCanceled()
-            helper[classFqName.asString(), entity.project, scope].maxByOrNull { it.isExpectDeclaration() }
+            val declarations = helper[classFqName.asString(), entity.project, scope]
+            declarations.firstOrNull { declaration ->
+                val isExpect = declaration.isExpectDeclaration()
+                if (isForJvm) !isExpect else isExpect
+            } ?: declarations.firstOrNull()
         }
     }
 
