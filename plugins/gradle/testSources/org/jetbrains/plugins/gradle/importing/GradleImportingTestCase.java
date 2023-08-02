@@ -35,6 +35,7 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.RunAll;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -369,7 +370,9 @@ public abstract class GradleImportingTestCase extends JavaExternalSystemImportin
 
   @Override
   protected void importProject(@NonNls @Language("Groovy") String config, Boolean skipIndexing) throws IOException {
-    config = injectRepo(config);
+    if (UsefulTestCase.IS_UNDER_TEAMCITY) {
+      config = injectRepo(config);
+    }
     if (isGradleNewerOrSameAs("7.0")) {
       String failOnWarning = "-Dorg.gradle.warning.mode=fail";
       String originalVmOptions = GradleSystemSettings.getInstance().getGradleVmOptions();
