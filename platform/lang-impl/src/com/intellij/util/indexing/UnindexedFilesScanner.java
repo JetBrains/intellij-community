@@ -413,13 +413,30 @@ public class UnindexedFilesScanner implements FilesScanningTask {
         subTaskIndicator.setText(provider.getRootsScanningProgressText());
         try (PerProviderSink perProviderSink = project.getService(PerProjectIndexingQueue.class)
           .getSink(provider, projectScanningHistory.getScanningSessionId())) {
+          List<Pair<VirtualFile, List<VirtualFile>>> rootsAndFiles = new ArrayList<>();
           Function<@Nullable VirtualFile, ContentIterator> singleProviderIteratorFactory = root -> {
-            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
-                                                                   root);
-            return new SingleProviderIterator(project, subTaskIndicator, provider, fileScannerVisitors,
-                                              finder, scanningStatistics, perProviderSink);
+            List<VirtualFile> files = new ArrayList<>(1024);
+            rootsAndFiles.add(new Pair<>(root, files));
+            return fileOrDir -> {
+              // we apply scanners here, because scanners may mark directory as excluded, and we should skip excluded subtrees
+              // (e.g. JSDetectingProjectFileScanner.startSession will exclude "node_modules" directories during scanning)
+              PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
+              return files.add(fileOrDir);
+            };
           };
+
+          // TODO: add VFS+fileScannerVisitors time to statistics
           provider.iterateFilesInRoots(project, singleProviderIteratorFactory, thisProviderDeduplicateFilter);
+
+          // TODO: add scanning self-time to statistics
+          for (Pair<VirtualFile, List<VirtualFile>> rootAndFiles : rootsAndFiles) {
+            UnindexedFilesFinder finder = new UnindexedFilesFinder(project, sharedExplanationLogger, myIndex, getForceReindexingTrigger(),
+                                                                   rootAndFiles.getFirst());
+            var rootIterator = new SingleProviderIterator(project, subTaskIndicator, provider, finder,
+                                                          scanningStatistics, perProviderSink);
+            rootAndFiles.getSecond().forEach(it -> rootIterator.processFile(it));
+          }
+
           perProviderSink.commit();
         }
         catch (ProcessCanceledException pce) {

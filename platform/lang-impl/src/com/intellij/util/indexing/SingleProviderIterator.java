@@ -12,7 +12,6 @@ import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
-import com.intellij.util.indexing.roots.IndexableFileScanner;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleContentOrigin;
@@ -28,7 +27,6 @@ final class SingleProviderIterator implements ContentIterator {
   private final Project project;
   private final PerProjectIndexingQueue.PerProviderSink perProviderSink;
   private final SubTaskProgressIndicator subTaskIndicator;
-  private final List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors;
   private final List<FilePropertyPusher<?>> pushers;
   private final List<FilePropertyPusherEx<?>> pusherExs;
   private final Object[] moduleValues;
@@ -37,12 +35,10 @@ final class SingleProviderIterator implements ContentIterator {
   private final PushedFilePropertiesUpdater pushedFilePropertiesUpdater;
 
   SingleProviderIterator(Project project, SubTaskProgressIndicator subTaskIndicator, IndexableFilesIterator provider,
-                         List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors,
                          UnindexedFilesFinder unindexedFileFinder, ScanningStatistics scanningStatistics,
                          PerProjectIndexingQueue.PerProviderSink perProviderSink) {
     this.project = project;
     this.subTaskIndicator = subTaskIndicator;
-    this.fileScannerVisitors = fileScannerVisitors;
     this.unindexedFileFinder = unindexedFileFinder;
     this.scanningStatistics = scanningStatistics;
 
@@ -98,7 +94,6 @@ final class SingleProviderIterator implements ContentIterator {
 
   private void processFileRethrowExceptions(@NotNull VirtualFile fileOrDir) {
     long scanningStart = System.nanoTime();
-    PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
     if (pushers != null && pushedFilePropertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
       ((PushedFilePropertiesUpdaterImpl)pushedFilePropertiesUpdater).applyPushersToFile(fileOrDir, pushers, moduleValues);
     }
