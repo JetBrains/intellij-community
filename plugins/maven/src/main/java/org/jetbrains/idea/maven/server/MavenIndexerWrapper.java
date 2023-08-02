@@ -19,6 +19,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
@@ -116,7 +117,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
   public List<AddArtifactResponse> addArtifacts(MavenIndexId mavenIndexId, Collection<File> artifactFiles) {
     return perform(() -> {
       try {
-        return getOrCreateWrappee().addArtifacts(mavenIndexId, artifactFiles, ourToken);
+        return getOrCreateWrappee().addArtifacts(mavenIndexId, new ArrayList<>(artifactFiles), ourToken);
       }
       catch (Throwable ignore) {
         return ContainerUtil.map(artifactFiles, file -> new AddArtifactResponse(file, null));

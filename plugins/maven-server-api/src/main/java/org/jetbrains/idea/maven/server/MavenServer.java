@@ -26,6 +26,7 @@ import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.Collection;
+import java.util.HashSet;
 
 public interface MavenServer extends Remote, IdeaWatchdogAware {
 
@@ -41,7 +42,7 @@ public interface MavenServer extends Remote, IdeaWatchdogAware {
   ProfileApplicationResult applyProfiles(MavenModel model,
                                          File basedir,
                                          MavenExplicitProfiles explicitProfiles,
-                                         Collection<String> alwaysOnProfiles, MavenToken token) throws RemoteException;
+                                         HashSet<String> alwaysOnProfiles, MavenToken token) throws RemoteException;
 
   @Nullable
   MavenPullServerLogger createPullLogger(MavenToken token) throws RemoteException;

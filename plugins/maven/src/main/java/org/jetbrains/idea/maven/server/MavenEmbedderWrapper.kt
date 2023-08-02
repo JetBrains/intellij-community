@@ -114,7 +114,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   @Throws(MavenProcessCanceledException::class)
   fun resolveTransitively(artifacts: List<MavenArtifactInfo>, remoteRepositories: List<MavenRemoteRepository>): List<MavenArtifact> {
     return performCancelable<MavenArtifactResolveResult, RuntimeException> {
-      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), remoteRepositories, ourToken)
+      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
     }.mavenResolvedArtifacts
   }
 
@@ -122,7 +122,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
   fun resolveArtifactTransitively(artifacts: List<MavenArtifactInfo>,
                                   remoteRepositories: List<MavenRemoteRepository>): MavenArtifactResolveResult {
     return performCancelable<MavenArtifactResolveResult, RuntimeException> {
-      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), remoteRepositories, ourToken)
+      getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
     }
   }
 
@@ -170,12 +170,12 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     val indicator = progressIndicator?.indicator
     val syncConsole = progressIndicator?.syncConsole
     return runLongRunningTaskBlocking(
-      LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, requests, goal, ourToken) },
+      LongRunningEmbedderTask { embedder, taskId -> embedder.executeGoal(taskId, ArrayList(requests), goal, ourToken) },
       indicator, syncConsole, console)
   }
 
   fun resolveRepositories(repositories: Collection<MavenRemoteRepository?>): Set<MavenRemoteRepository> {
-    return perform<Set<MavenRemoteRepository>, RuntimeException> { getOrCreateWrappee().resolveRepositories(repositories, ourToken) }
+    return perform<Set<MavenRemoteRepository>, RuntimeException> { getOrCreateWrappee().resolveRepositories(ArrayList(repositories), ourToken) }
   }
 
   fun getInnerArchetypes(catalogPath: Path): Collection<MavenArchetype> {
@@ -194,7 +194,7 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
                                        repositories: List<MavenRemoteRepository>,
                                        url: String?): Map<String, String>? {
     return perform<Map<String, String>, RuntimeException> {
-      getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken)
+      getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, ArrayList(repositories), url, ourToken)
     }
   }
 

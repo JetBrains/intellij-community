@@ -35,7 +35,6 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Maven40ProjectResolver {
   @NotNull private final Maven40ServerEmbedderImpl myEmbedder;
@@ -63,7 +62,7 @@ public class Maven40ProjectResolver {
   }
 
   @NotNull
-  public Collection<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
+  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull LongRunningTask task,
                                                                 @NotNull Collection<File> files,
                                                                 @NotNull List<String> activeProfiles,
                                                                 @NotNull List<String> inactiveProfiles) {
@@ -74,8 +73,9 @@ public class Maven40ProjectResolver {
         activeProfiles,
         inactiveProfiles
       );
-
-      return results.stream().map(result -> createExecutionResult(result)).collect(Collectors.toList());
+      ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
+      results.stream().map(result -> createExecutionResult(result)).forEachOrdered(list::add);
+      return list;
     }
     catch (Exception e) {
       throw myEmbedder.wrapToSerializableRuntimeException(e);

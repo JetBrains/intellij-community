@@ -9,12 +9,12 @@ import java.util.HashSet;
 public class MavenExplicitProfiles implements Serializable {
   public static final MavenExplicitProfiles NONE = new MavenExplicitProfiles(Collections.emptySet());
 
-  private final Collection<String> myEnabledProfiles;
-  private final Collection<String> myDisabledProfiles;
+  private final HashSet<String> myEnabledProfiles;
+  private final HashSet<String> myDisabledProfiles;
 
   public MavenExplicitProfiles(Collection<String> enabledProfiles, Collection<String> disabledProfiles) {
-    myEnabledProfiles = enabledProfiles;
-    myDisabledProfiles = disabledProfiles;
+    myEnabledProfiles = new HashSet<>(enabledProfiles);
+    myDisabledProfiles = new HashSet<>(disabledProfiles);
   }
 
   public MavenExplicitProfiles(Collection<String> enabledProfiles) {
@@ -31,7 +31,7 @@ public class MavenExplicitProfiles implements Serializable {
 
   @Override
   public MavenExplicitProfiles clone() {
-    return new MavenExplicitProfiles(new HashSet<String>(myEnabledProfiles), new HashSet<String>(myDisabledProfiles));
+    return new MavenExplicitProfiles(myEnabledProfiles, myDisabledProfiles);
   }
 
   @Override

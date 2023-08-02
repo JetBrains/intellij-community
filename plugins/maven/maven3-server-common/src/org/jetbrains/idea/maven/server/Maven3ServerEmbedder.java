@@ -310,7 +310,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   }
 
   @Override
-  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
+  public HashSet<MavenRemoteRepository> resolveRepositories(@NotNull ArrayList<MavenRemoteRepository> repositories, MavenToken token)
     throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
@@ -323,7 +323,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
   }
 
   @Override
-  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
+  public ArrayList<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "catalog");
@@ -335,11 +335,11 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     catch (Exception e) {
       MavenServerGlobals.getLogger().warn(e);
     }
-    return Collections.emptyList();
+    return new ArrayList<>();
   }
 
   @Override
-  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
+  public ArrayList<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       ArchetypeDataSource source = getComponent(ArchetypeDataSource.class, "remote-catalog");
@@ -351,14 +351,14 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
     catch (ArchetypeDataSourceException e) {
       MavenServerGlobals.getLogger().warn(e);
     }
-    return Collections.emptyList();
+    return new ArrayList<>();
   }
 
   @Nullable
   @Override
-  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
+  public HashMap<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId,
                                                               @NotNull String version,
-                                                              @NotNull List<MavenRemoteRepository> repositories,
+                                                              @NotNull ArrayList<MavenRemoteRepository> repositories,
                                                               @Nullable String url, MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
@@ -368,7 +368,7 @@ public abstract class Maven3ServerEmbedder extends MavenServerEmbeddedBase {
         request.addRemoteRepository(repository);
       }
 
-      Map<String, String> result = new HashMap<>();
+      HashMap<String, String> result = new HashMap<>();
       AtomicBoolean unknownArchetypeError = new AtomicBoolean(false);
       executeWithMavenSession(request, () -> {
         MavenArtifactRepository artifactRepository = null;

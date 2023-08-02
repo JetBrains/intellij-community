@@ -25,9 +25,7 @@ import org.jetbrains.idea.maven.server.security.MavenToken;
 import java.io.File;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public interface MavenServerIndexer extends Remote {
   String SEARCH_TERM_CLASS_NAMES = "c"; // see org.sonatype.nexus.index.ArtifactInfo
@@ -41,17 +39,17 @@ public interface MavenServerIndexer extends Remote {
 
   @Nullable
     //null means no artifacts lasts
-  List<IndexedMavenId> processArtifacts(MavenIndexId mavenIndexId, int startFrom, MavenToken token)
+  ArrayList<IndexedMavenId> processArtifacts(MavenIndexId mavenIndexId, int startFrom, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
   @NotNull
-  List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull Collection<File> artifactFiles, MavenToken token)
+  ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId mavenIndexId, @NotNull ArrayList<File> artifactFiles, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
-  Set<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)
+  HashSet<MavenArtifactInfo> search(MavenIndexId mavenIndexId, String pattern, int maxResult, MavenToken token)
     throws RemoteException, MavenServerIndexerException;
 
-  Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException;
+  HashSet<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException;
 
   void release(MavenToken token) throws RemoteException;
 

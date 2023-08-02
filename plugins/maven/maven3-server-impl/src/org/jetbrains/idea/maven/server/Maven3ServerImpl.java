@@ -10,6 +10,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class Maven3ServerImpl extends MavenServerBase {
   @Override
@@ -70,7 +71,7 @@ public class Maven3ServerImpl extends MavenServerBase {
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles, MavenToken token) {
+                                                HashSet<String> alwaysOnProfiles, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
       return Maven3XProfileUtil.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);

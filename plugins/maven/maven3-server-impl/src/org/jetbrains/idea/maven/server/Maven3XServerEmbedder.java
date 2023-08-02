@@ -490,8 +490,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @Nullable
   @Override
   public String evaluateEffectivePom(@NotNull File file,
-                                     @NotNull List<String> activeProfiles,
-                                     @NotNull List<String> inactiveProfiles,
+                                     @NotNull ArrayList<String> activeProfiles,
+                                     @NotNull ArrayList<String> inactiveProfiles,
                                      MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
@@ -504,7 +504,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public Collection<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
+  public ArrayList<MavenServerExecutionResult> resolveProjects(@NotNull String longRunningTaskId,
                                                                 @NotNull ProjectResolutionRequest request, MavenToken token) {
     MavenServerUtil.checkToken(token);
     List<File> files = request.getPomFiles();
@@ -779,8 +779,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   @NotNull
   @Override
   public MavenArtifactResolveResult resolveArtifactsTransitively(
-    @NotNull final List<MavenArtifactInfo> artifacts,
-    @NotNull final List<MavenRemoteRepository> remoteRepositories,
+    @NotNull final ArrayList<MavenArtifactInfo> artifacts,
+    @NotNull final ArrayList<MavenRemoteRepository> remoteRepositories,
     MavenToken token) {
     MavenServerUtil.checkToken(token);
     try {
@@ -837,8 +837,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @Override
-  public List<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
-                                                       @NotNull Collection<PluginResolutionRequest> pluginResolutionRequests,
+  public ArrayList<PluginResolutionResponse> resolvePlugins(@NotNull String longRunningTaskId,
+                                                            @NotNull ArrayList<PluginResolutionRequest> pluginResolutionRequests,
                                                        MavenToken token) {
     MavenServerUtil.checkToken(token);
 
@@ -874,7 +874,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       List<PluginResolutionResponse> results = ParallelRunner.execute(runInParallel, resolutions, resolution ->
         resolvePlugin(task, resolution.mavenPluginId, resolution.pluginDependencies, resolution.remoteRepos, session)
       );
-      return results;
+      return new ArrayList<>(results);
     }
   }
 
@@ -984,7 +984,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId, @NotNull Collection<MavenArtifactResolutionRequest> requests, MavenToken token) {
+  public ArrayList<MavenArtifact> resolveArtifacts(@NotNull String longRunningTaskId, @NotNull ArrayList<MavenArtifactResolutionRequest> requests, MavenToken token) {
     MavenServerUtil.checkToken(token);
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       return doResolveArtifacts(task, requests);
@@ -992,9 +992,9 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
   }
 
   @NotNull
-  private List<MavenArtifact> doResolveArtifacts(@NotNull LongRunningTask task, @NotNull Collection<MavenArtifactResolutionRequest> requests) {
+  private ArrayList<MavenArtifact> doResolveArtifacts(@NotNull LongRunningTask task, @NotNull Collection<MavenArtifactResolutionRequest> requests) {
     try {
-      List<MavenArtifact> artifacts = new ArrayList<>();
+      ArrayList<MavenArtifact> artifacts = new ArrayList<>();
       for (MavenArtifactResolutionRequest request : requests) {
         if (task.isCanceled()) break;
         MavenArtifact artifact = doResolveArtifact(request.getArtifactInfo(), request.getRemoteRepositories(), task.getIndicator());
@@ -1101,8 +1101,8 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
 
   @NotNull
   @Override
-  public List<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
-                                                    @NotNull Collection<MavenGoalExecutionRequest> requests,
+  public ArrayList<MavenGoalExecutionResult> executeGoal(@NotNull String longRunningTaskId,
+                                                    @NotNull ArrayList<MavenGoalExecutionRequest> requests,
                                                     @NotNull String goal,
                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
@@ -1111,11 +1111,11 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     }
   }
 
-  private List<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
+  private ArrayList<MavenGoalExecutionResult> executeGoal(@NotNull LongRunningTask task,
                                                      @NotNull Collection<MavenGoalExecutionRequest> requests,
                                                      @NotNull String goal) {
     try {
-      List<MavenGoalExecutionResult> results = new ArrayList<>();
+      ArrayList<MavenGoalExecutionResult> results = new ArrayList<>();
       for (MavenGoalExecutionRequest request : requests) {
         if (task.isCanceled()) break;
         MavenGoalExecutionResult result = doExecute(request, goal);

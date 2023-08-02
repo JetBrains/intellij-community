@@ -210,7 +210,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public List<IndexedMavenId> processArtifacts(MavenIndexId indexId, int startFrom, MavenToken token)
+  public ArrayList<IndexedMavenId> processArtifacts(MavenIndexId indexId, int startFrom, MavenToken token)
     throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
@@ -222,7 +222,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
         IndexReader r = searcher.getIndexReader();
         int total = r.numDocs();
 
-        List<IndexedMavenId> result = new ArrayList<>(Math.min(CHUNK_SIZE, total));
+        ArrayList<IndexedMavenId> result = new ArrayList<>(Math.min(CHUNK_SIZE, total));
         for (int i = startFrom; i < total; i++) {
 
           Document doc = r.document(i);
@@ -258,13 +258,13 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public @NotNull List<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId,
-                                                         @NotNull Collection<File> artifactFiles,
+  public @NotNull ArrayList<AddArtifactResponse> addArtifacts(@NotNull MavenIndexId indexId,
+                                                         @NotNull ArrayList<File> artifactFiles,
                                                          MavenToken token) throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
       IndexingContext context = getIndex(indexId);
-      List<AddArtifactResponse> results = new ArrayList<>();
+      ArrayList<AddArtifactResponse> results = new ArrayList<>();
       synchronized (context) {
         for (File artifactFile : artifactFiles) {
           ArtifactContext artifactContext = myArtifactContextProducer.getArtifactContext(context, artifactFile);
@@ -286,7 +286,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public Set<MavenArtifactInfo> search(MavenIndexId indexId, String pattern, int maxResult, MavenToken token)
+  public HashSet<MavenArtifactInfo> search(MavenIndexId indexId, String pattern, int maxResult, MavenToken token)
     throws MavenServerIndexerException {
     MavenServerUtil.checkToken(token);
     try {
@@ -297,15 +297,16 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
       IndexSearcher searcher = context.acquireIndexSearcher();
       TopDocs docs = searcher.search(query, maxResult);
 
-      if (docs == null || docs.scoreDocs.length == 0) return Collections.emptySet();
+      if (docs == null || docs.scoreDocs.length == 0) return new HashSet<>();
 
-      Set<MavenArtifactInfo> result = new HashSet<>();
+      HashSet<MavenArtifactInfo> result = new HashSet<>();
 
       for (int i = 0; i < docs.scoreDocs.length; i++) {
         int docIndex = docs.scoreDocs[i].doc;
         Document doc = searcher.getIndexReader().document(docIndex);
         ArtifactInfo a = IndexUtils.constructArtifactInfo(doc, context);
         if (a == null) continue;
+
 
         a.setRepository(getRepositoryPathOrUrl(context));
         result.add(new MavenArtifactInfo(a.getGroupId(), a.getArtifactId(), a.getVersion(), a.getPackaging(), a.getClassifier(),
@@ -319,7 +320,7 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
   }
 
   @Override
-  public Collection<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
+  public HashSet<MavenArchetype> getInternalArchetypes(MavenToken token) throws RemoteException {
     MavenServerUtil.checkToken(token);
     try {
       return getInternalArchetypes();
@@ -329,9 +330,9 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
     }
   }
 
-  private Set<MavenArchetype> getInternalArchetypes()
+  private HashSet<MavenArchetype> getInternalArchetypes()
     throws RemoteException, ComponentLookupException {
-    Set<MavenArchetype> result = new HashSet<>();
+    HashSet<MavenArchetype> result = new HashSet<>();
 
     ArchetypeManager manager = myContainer.lookup(ArchetypeManager.class);
     ArchetypeCatalog internalCatalog = manager.getInternalCatalog();

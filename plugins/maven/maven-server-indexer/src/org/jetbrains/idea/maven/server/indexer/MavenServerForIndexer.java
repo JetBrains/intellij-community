@@ -13,6 +13,7 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogManager;
@@ -112,7 +113,7 @@ public class MavenServerForIndexer extends MavenWatchdogAware implements MavenSe
   public ProfileApplicationResult applyProfiles(MavenModel model,
                                                 File basedir,
                                                 MavenExplicitProfiles explicitProfiles,
-                                                Collection<String> alwaysOnProfiles,
+                                                HashSet<String> alwaysOnProfiles,
                                                 MavenToken token) throws RemoteException {
     throw new UnsupportedOperationException("indexing server");
   }
