@@ -25,6 +25,21 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayAccessor")
+        public void testArrayAccessor() throws Exception {
+            runTest("testData/editor/autoImport/arrayAccessor/");
+        }
+
+        @TestMetadata("assignmentPlugin")
+        public void testAssignmentPlugin() throws Exception {
+            runTest("testData/editor/autoImport/assignmentPlugin/");
+        }
+
+        @TestMetadata("components")
+        public void testComponents() throws Exception {
+            runTest("testData/editor/autoImport/components/");
+        }
+
         @TestMetadata("delegationExtFunction")
         public void testDelegationExtFunction() throws Exception {
             runTest("testData/editor/autoImport/delegationExtFunction/");
@@ -40,6 +55,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/extFunctionWithGenerics/");
         }
 
+        @TestMetadata("invoke")
+        public void testInvoke() throws Exception {
+            runTest("testData/editor/autoImport/invoke/");
+        }
+
         @TestMetadata("javaClass")
         public void testJavaClass() throws Exception {
             runTest("testData/editor/autoImport/javaClass/");
@@ -50,9 +70,19 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/method/");
         }
 
+        @TestMetadata("nestedClassifier")
+        public void testNestedClassifier() throws Exception {
+            runTest("testData/editor/autoImport/nestedClassifier/");
+        }
+
         @TestMetadata("property")
         public void testProperty() throws Exception {
             runTest("testData/editor/autoImport/property/");
+        }
+
+        @TestMetadata("unresolvedImport")
+        public void testUnresolvedImport() throws Exception {
+            runTest("testData/editor/autoImport/unresolvedImport/");
         }
     }
 
@@ -63,6 +93,21 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             KotlinTestUtils.runTest(this::doTestWithoutAutoImport, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayAccessor")
+        public void testArrayAccessor() throws Exception {
+            runTest("testData/editor/autoImport/arrayAccessor/");
+        }
+
+        @TestMetadata("assignmentPlugin")
+        public void testAssignmentPlugin() throws Exception {
+            runTest("testData/editor/autoImport/assignmentPlugin/");
+        }
+
+        @TestMetadata("components")
+        public void testComponents() throws Exception {
+            runTest("testData/editor/autoImport/components/");
+        }
+
         @TestMetadata("delegationExtFunction")
         public void testDelegationExtFunction() throws Exception {
             runTest("testData/editor/autoImport/delegationExtFunction/");
@@ -78,6 +123,11 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/extFunctionWithGenerics/");
         }
 
+        @TestMetadata("invoke")
+        public void testInvoke() throws Exception {
+            runTest("testData/editor/autoImport/invoke/");
+        }
+
         @TestMetadata("javaClass")
         public void testJavaClass() throws Exception {
             runTest("testData/editor/autoImport/javaClass/");
@@ -88,9 +138,19 @@ public abstract class AutoImportTestGenerated extends AbstractAutoImportTest {
             runTest("testData/editor/autoImport/method/");
         }
 
+        @TestMetadata("nestedClassifier")
+        public void testNestedClassifier() throws Exception {
+            runTest("testData/editor/autoImport/nestedClassifier/");
+        }
+
         @TestMetadata("property")
         public void testProperty() throws Exception {
             runTest("testData/editor/autoImport/property/");
+        }
+
+        @TestMetadata("unresolvedImport")
+        public void testUnresolvedImport() throws Exception {
+            runTest("testData/editor/autoImport/unresolvedImport/");
         }
     }
 }

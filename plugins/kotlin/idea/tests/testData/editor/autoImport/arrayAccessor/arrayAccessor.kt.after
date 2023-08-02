@@ -1,0 +1,10 @@
+package testing
+
+import some.Some
+import some.get
+
+fun foo(): Some = Some()
+
+fun testing() {
+    foo()["str"]
+}
