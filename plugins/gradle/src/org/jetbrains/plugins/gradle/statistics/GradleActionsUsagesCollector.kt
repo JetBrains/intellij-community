@@ -10,7 +10,7 @@ class GradleActionsUsagesCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("build.gradle.actions", 2)
+    private val GROUP = EventLogGroup("build.gradle.actions", 3)
 
     @JvmField
     val REFRESH_DAEMONS = GROUP.registerEvent("refreshDaemons")
