@@ -623,6 +623,8 @@
       }
     },
 
+    "Window.undecorated.border" : "1,1,1,1,#A8ADBD",
+
     "OnePixelDivider.background": "Grey12",
 
     "TitlePane": {
