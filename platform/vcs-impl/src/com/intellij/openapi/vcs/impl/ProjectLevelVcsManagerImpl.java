@@ -47,6 +47,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
+import kotlin.Pair;
 import org.jdom.Attribute;
 import org.jdom.DataConversionException;
 import org.jdom.Element;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements PersistentStateComponent<Element>, Disposable {
@@ -356,6 +358,16 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
     myHaveLegacyVcsConfiguration = true;
     myMappings.setMapping(FileUtil.toSystemIndependentName(path), activeVcsName);
+  }
+
+  public void registerNewDirectMappings(Collection<Pair<VirtualFile, AbstractVcs>> detectedRoots) {
+    var mappings = new ArrayList<>(myMappings.getDirectoryMappings());
+    var knownMappedRoots = mappings.stream().map(VcsDirectoryMapping::getDirectory).collect(Collectors.toSet());
+    var newMappings = detectedRoots.stream()
+      .map(pair -> new VcsDirectoryMapping(pair.component1().getPath(), pair.component2().getName()))
+      .filter(it -> !knownMappedRoots.contains(it.getDirectory())).toList();
+    mappings.addAll(newMappings);
+    setAutoDirectoryMappings(mappings);
   }
 
   public void setAutoDirectoryMappings(@NotNull List<VcsDirectoryMapping> mappings) {

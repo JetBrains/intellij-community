@@ -97,16 +97,7 @@ internal class ModuleVcsDetector(private val project: Project) {
       }
     }
 
-    registerNewDirectMappings(detectedRoots)
-  }
-
-  private fun registerNewDirectMappings(detectedRoots: Collection<Pair<VirtualFile, AbstractVcs>>) {
-    val oldMappings = vcsManager.directoryMappings
-    val knownMappedRoots = oldMappings.mapTo(mutableSetOf()) { it.directory }
-    val newMappings = detectedRoots.asSequence()
-      .map { (root, vcs) -> VcsDirectoryMapping(root.path, vcs.name) }
-      .filter { it.directory !in knownMappedRoots }
-    vcsManager.setAutoDirectoryMappings(oldMappings + newMappings)
+    vcsManager.registerNewDirectMappings(detectedRoots)
   }
 
   fun scheduleScanForNewContentRoots(removed: Collection<VirtualFile>, added: Collection<VirtualFile>) {
