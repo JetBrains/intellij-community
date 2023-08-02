@@ -128,11 +128,15 @@ interface MutableEntityStorage : EntityStorage {
   /**
    * Finds all entities which [entitySource][WorkspaceEntity.entitySource] satisfy the given [sourceFilter] and replaces them with the 
    * entities from [replaceWith]. 
-   * This operation tries to minimize the number of changes in the storage: 
-   * * if [replaceWith] contains an entity with the same properties as an existing entity, no [EntityChange] will be recorded; 
-   * * if [replaceWith] contains an entity which [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] is equals to 
-   * [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] of an existing entity, [EntityChange.Replaced] event will be recorded and old
-   * children of the existing entity will be kept.
+   * This operation tries to minimize the number of changes in the storage and matches entities from [replaceWith] with existing entities:
+   * * entities with [symbolicId][WorkspaceEntityWithSymbolicId.symbolicId] are matched by its value;
+   * * entities with properties annotated with [@EqualsBy][EqualsBy] are matched by values of all such properties;
+   * * other entities are matched by values of all properties excluding [entitySource][WorkspaceEntity.entitySource].
+   * 
+   * If there is a matching entity, new values of properties are compared with the old ones and [EntityChange.Replaced] event is recorded 
+   * if they are changed. 
+   * Children of the existing entity which [entitySource][WorkspaceEntity.entitySource] doesn't satisfy [sourceFilter] are kept, other 
+   * children are replaced by the children of the new entity.
    * 
    * The exact list of optimizations is an implementation detail.
    */
