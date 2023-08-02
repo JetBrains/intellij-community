@@ -176,12 +176,12 @@ class SdkTableBridgeImpl: GlobalSdkTableBridge() {
     val previousName: String = originalSdk.getName()
     val newName: String = modifiedSdk.getName()
 
-    originalSdk as SdkBridgeImpl
     globalWorkspaceModel.updateModel("Updating SDK ${originalSdk.name} ${originalSdk.sdkType.name}") {
-      originalSdk.applyChangesFrom(modifiedSdk as SdkBridgeImpl)
+      modifiedSdk as SdkBridgeImpl
       it.modifyEntity(sdkMainEntity) {
-        this.applyChangesFrom(originalSdk.getEntity())
+        this.applyChangesFrom(modifiedSdk.getEntity())
       }
+      (originalSdk as SdkBridgeImpl).applyChangesFrom(modifiedSdk)
     }
 
     if (previousName != newName) {

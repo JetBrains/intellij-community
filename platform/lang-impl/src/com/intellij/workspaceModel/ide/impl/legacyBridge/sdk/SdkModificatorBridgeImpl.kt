@@ -104,10 +104,14 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     if (isCommitted) error("Modification already completed")
 
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val existingEntity = globalWorkspaceModel.currentSnapshot.resolve(originalEntity.symbolicId) ?: error("Entity has to be available")
-    globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
-      it.modifyEntity(existingEntity) {
-        this.applyChangesFrom(modifiedSdkEntity)
+    // In some cases we create SDK in air and need to modify it somehow e.g
+    // com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.createSdkInternal
+    // so it's OK that entity may not be in storage
+    globalWorkspaceModel.currentSnapshot.resolve(originalEntity.symbolicId)?.let { existingEntity ->
+      globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
+        it.modifyEntity(existingEntity) {
+          this.applyChangesFrom(modifiedSdkEntity)
+        }
       }
     }
 
