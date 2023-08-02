@@ -34,7 +34,8 @@ def get_column_types(table):
 # noinspection PyUnresolvedReferences
 def get_data(table, start_index=None, end_index=None):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int) -> str
-    max_cols, max_colwidth = None, None
+    max_cols, max_colwidth = __get_tables_display_options()
+
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
 
@@ -61,7 +62,7 @@ def __get_data_slice(table, start, end):
 def display_data(table, start, end):
     # type: (Union[pd.DataFrame, pd.Series, np.ndarray], int, int) -> None
     from IPython.display import display
-    max_cols, max_colwidth = None, None
+    max_cols, max_colwidth = __get_tables_display_options()
 
     _jb_max_cols = pd.get_option('display.max_columns')
     _jb_max_colwidth = pd.get_option('display.max_colwidth')
@@ -147,3 +148,12 @@ def __array_to_df(table):
 def __categorical_to_df(table):
     # type: (pd.Categorical) -> pd.DataFrame
     return pd.DataFrame(table)
+
+
+# In old versions of pandas max_colwidth accepted only Int-s
+def __get_tables_display_options():
+    # type: () -> Tuple[None, Union[int, None]
+    import sys
+    if sys.version_info < (3, 0):
+        return None, 2000
+    return None, None
