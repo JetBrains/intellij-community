@@ -41,9 +41,9 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     }
 
     val protection = checker.isRealTimeProtectionEnabled
+    WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
     if (protection != true) {
       LOG.info("real-time protection: ${protection}")
-      WindowsDefenderStatisticsCollector.protectionCheckStatus(project, protection)
       return
     }
 
