@@ -96,11 +96,12 @@ internal object IndexDiagnostic {
       val root = storage.getCommitId(permanentGraphInfo.permanentCommitsInfo.getCommitId(node))?.root
       if (!rootsToCheck.remove(root)) continue
 
-      // initial commit may not have files (in case of shallow clone), or it may have too many files
-      // checking next commits instead
+      // bfs walk from the node in order to get commits in the same root
       BfsWalk(node, graph, IntHashSetFlags(COMMITS_TO_CHECK), false).walk { nextNode ->
-        if (nextNode != node && graph.getNodes(nextNode, LiteLinearGraph.NodeFilter.DOWN).size == 1) {
-          // skipping merge commits since they can have too many changes
+        // skipping merge commits or initial commits
+        // merge commits tend to have more changes
+        // for shallow clones, initial commits have a lot of changes as well
+        if (graph.getNodes(nextNode, LiteLinearGraph.NodeFilter.DOWN).size == 1) {
           commitsToCheck.add(permanentGraphInfo.permanentCommitsInfo.getCommitId(nextNode))
         }
         return@walk commitsToCheck.size < COMMITS_TO_CHECK
