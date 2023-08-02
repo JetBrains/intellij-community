@@ -12,11 +12,11 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
-import com.intellij.openapi.progress.runBackgroundableTask
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
+import kotlinx.coroutines.launch
 import java.nio.file.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
@@ -29,11 +29,8 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
   }
 
   override suspend fun execute(project: Project) {
-    if (!Registry.`is`("ide.check.windows.defender.rules")) {
-      return
-    }
-
     val checker = WindowsDefenderChecker.getInstance()
+
     if (checker.isStatusCheckIgnored(project)) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
@@ -47,48 +44,40 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    val paths = checker.getImportantPaths(project)
+    val paths = checker.getPathsToExclude(project)
     val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
-    val notification = if (checker.canRunScript()) {
-      val auto = DiagnosticBundle.message("defender.config.auto")
-      val manual = DiagnosticBundle.message("defender.config.manual")
-      notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
-        .setSuggestionType(true)
-        .setImportantSuggestion(true)
-        .addAction(createSimpleExpiring(auto) { updateDefenderConfig(checker, project, paths) })
-        .addAction(createSimple(manual) { showInstructions(checker, project) })
-    }
-    else {
-      notification(DiagnosticBundle.message("defender.config.prompt.no.script", pathList), NotificationType.INFORMATION)
-        .addAction(createSimple(DiagnosticBundle.message("defender.config.instructions")) { showInstructions(checker, project) })
-    }
-    notification
-      .also {
-        it.isImportant = true
-        it.collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
-      }
+    val auto = DiagnosticBundle.message("defender.config.auto")
+    val manual = DiagnosticBundle.message("defender.config.manual")
+    notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
+      .addAction(createSimpleExpiring(auto) { updateDefenderConfig(checker, project, paths) })
+      .addAction(createSimple(manual) { showInstructions(checker, project) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
+      .setSuggestionType(true)
+      .setImportantSuggestion(true)
+      .apply { collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST }
       .notify(project)
   }
 
   private fun updateDefenderConfig(checker: WindowsDefenderChecker, project: Project, paths: List<Path>) {
-    WindowsDefenderStatisticsCollector.auto(project)
-    @Suppress("DialogTitleCapitalization")
-    runBackgroundableTask(DiagnosticBundle.message("defender.config.progress"), project, false) {
-      val success = checker.excludeProjectPaths(paths)
-      if (success) {
-        checker.ignoreStatusCheck(project, true)
-        notification(DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
-          .notify(project)
+    @Suppress("DEPRECATION")
+    ApplicationManager.getApplication().coroutineScope.launch {
+      @Suppress("DialogTitleCapitalization")
+      withBackgroundProgress(project, DiagnosticBundle.message("defender.config.progress"), false) {
+        val success = checker.excludeProjectPaths(project, paths)
+        if (success) {
+          notification(DiagnosticBundle.message("defender.config.success"), NotificationType.INFORMATION)
+            .notify(project)
+        }
+        else {
+          notification(DiagnosticBundle.message("defender.config.failed"), NotificationType.WARNING)
+            .addAction(ShowLogAction.notificationAction())
+            .notify(project)
+        }
+        WindowsDefenderStatisticsCollector.configured(project, success)
       }
-      else {
-        notification(DiagnosticBundle.message("defender.config.failed"), NotificationType.WARNING)
-          .addAction(ShowLogAction.notificationAction())
-          .notify(project)
-      }
-      WindowsDefenderStatisticsCollector.configured(project, success)
     }
+    WindowsDefenderStatisticsCollector.auto(project)
   }
 
   private fun showInstructions(checker: WindowsDefenderChecker, project: Project) {

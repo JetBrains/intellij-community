@@ -8,13 +8,14 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
-import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Wbemcli;
@@ -23,18 +24,11 @@ import com.sun.jna.platform.win32.Ole32;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.TreeSet;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
-import static java.util.Objects.requireNonNull;
 
 /**
  * Sources:
@@ -47,7 +41,6 @@ public class WindowsDefenderChecker {
 
   private static final String IGNORE_STATUS_CHECK = "ignore.virus.scanning.warn.message";
   private static final String HELPER_SCRIPT_NAME = "defender-exclusions.ps1";
-  private static final String SIG_MARKER = "# SIG # Begin signature block";
   private static final int WMIC_COMMAND_TIMEOUT_MS = 10_000, POWERSHELL_COMMAND_TIMEOUT_MS = 30_000;
   private static final ExtensionPointName<Extension> EP_NAME = ExtensionPointName.create("com.intellij.defender.config");
 
@@ -59,30 +52,16 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
-  private final NullableLazyValue<Path> myHelper = volatileLazyNullable(() -> {
-    var candidate = PathManager.findBinFile(HELPER_SCRIPT_NAME);
-    if (candidate != null) {
-      try {
-        if (Files.readString(candidate).contains(SIG_MARKER)) {
-          return candidate;
-        }
-      }
-      catch (IOException e) {
-        LOG.warn(e);
-      }
-    }
-    LOG.info("'" + HELPER_SCRIPT_NAME + (candidate == null ? "' is missing" : "' is unsigned"));
-    return null;
-  });
-
-  public boolean isStatusCheckIgnored(@NotNull Project project) {
-    return PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
+  public final boolean isStatusCheckIgnored(@NotNull Project project) {
+    return !Registry.is("ide.check.windows.defender.rules") ||
+           PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
            PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK);
   }
 
-  final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
+  public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
     var component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     if (ignore) {
+      logCaller("scope=" + (project == null ? "global" : project));
       component.setValue(IGNORE_STATUS_CHECK, true);
     }
     else {
@@ -95,7 +74,7 @@ public class WindowsDefenderChecker {
    * {@link Boolean#FALSE} means something from the above list is not true.
    * {@code null} means the IDE cannot detect the status.
    */
-  public @Nullable Boolean isRealTimeProtectionEnabled() {
+  public final @Nullable Boolean isRealTimeProtectionEnabled() {
     if (!JnaLoader.isLoaded()) {
       LOG.debug("JNA is not loaded");
       return null;
@@ -142,14 +121,10 @@ public class WindowsDefenderChecker {
     }
   }
 
-  final boolean canRunScript() {
-    return myHelper.getValue() != null;
-  }
-
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
-  final @NotNull List<Path> getImportantPaths(@NotNull Project project) {
+  public final @NotNull List<Path> getPathsToExclude(@NotNull Project project) {
     var paths = new TreeSet<Path>();
 
     var projectDir = ProjectUtil.guessProjectDir(project);
@@ -166,9 +141,15 @@ public class WindowsDefenderChecker {
     return new ArrayList<>(paths);
   }
 
-  final boolean excludeProjectPaths(@NotNull List<Path> paths) {
+  public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
+    logCaller("paths=" + paths);
+
     try {
-      var script = requireNonNull(myHelper.getValue(), "missing/dysfunctional helper");
+      var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
+      if (script == null) {
+        LOG.info("'" + HELPER_SCRIPT_NAME + "' is missing from '" + PathManager.getBinPath() + "'");
+        return false;
+      }
 
       var psh = PathEnvironmentVariableUtil.findInPath("powershell.exe");
       if (psh == null) {
@@ -184,8 +165,16 @@ public class WindowsDefenderChecker {
       var scriptlet = "(Get-AuthenticodeSignature '" + script + "').Status";
       var command = new GeneralCommandLine(psh.getPath(), "-NoProfile", "-NonInteractive", "-Command", scriptlet);
       var output = run(command);
-      if (output.getExitCode() != 0 || !"Valid".equals(output.getStdout().trim())) {
+      if (output.getExitCode() != 0) {
         LOG.info("validation failed:\n[" + output.getExitCode() + "] " + command + "\noutput: " + output.getStdout().trim());
+        return false;
+      }
+      var status = output.getStdout().trim();
+      if ("NotSigned".equals(status) && ApplicationInfo.getInstance().getBuild().isSnapshot()) {
+        LOG.info("allowing unsigned helper in dev. build " + ApplicationInfo.getInstance().getBuild());
+      }
+      else if (!"Valid".equals(status)) {
+        LOG.info("validation failed: status='" + status + "'");
         return false;
       }
 
@@ -203,6 +192,7 @@ public class WindowsDefenderChecker {
       }
       else {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
+        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
         return true;
       }
     }
@@ -216,6 +206,14 @@ public class WindowsDefenderChecker {
     return ExecUtil.execAndGetOutput(
       command.withEnvironment("PSModulePath", "").withRedirectErrorStream(true).withWorkDirectory(PathManager.getTempPath()),
       POWERSHELL_COMMAND_TIMEOUT_MS);
+  }
+
+  private static void logCaller(String prefix) {
+    var options = EnumSet.of(StackWalker.Option.SHOW_HIDDEN_FRAMES, StackWalker.Option.SHOW_REFLECT_FRAMES);
+    var trace = StackWalker.getInstance(options).walk(stack -> stack.skip(1).limit(10)
+      .map(frame -> "  " + frame.toStackTraceElement())
+      .collect(Collectors.joining("\n", prefix + "; called from:\n", "\n  ...")));
+    LOG.info(trace);
   }
 
   public @NotNull String getConfigurationInstructionsUrl() {
