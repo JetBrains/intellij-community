@@ -685,7 +685,10 @@ private fun removeAdditionalLines(viewer: DiffViewer) {
   }
 }
 
-private fun Rectangle.intersects(bb: BlockBounds): Boolean = bb.minY >= minY && bb.minY <= maxY || bb.maxY >= minY && bb.maxY <= maxY
+private fun Rectangle.intersects(bb: BlockBounds): Boolean =
+  (bb.minY >= minY && bb.minY <= maxY) ||
+  (bb.maxY >= minY && bb.maxY <= maxY) ||
+  (bb.minY <= minY && bb.maxY >= maxY)
 
 interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)
