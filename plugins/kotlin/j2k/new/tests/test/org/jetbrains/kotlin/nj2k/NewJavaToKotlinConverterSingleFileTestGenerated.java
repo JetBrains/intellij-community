@@ -5844,6 +5844,29 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/newJ2k/visibility")
+    public static class Visibility extends AbstractNewJavaToKotlinConverterSingleFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("nestedClassPrivateConstructor.java")
+        public void testNestedClassPrivateConstructor() throws Exception {
+            runTest("testData/newJ2k/visibility/nestedClassPrivateConstructor.java");
+        }
+
+        @TestMetadata("nestedClassPrivateField.java")
+        public void testNestedClassPrivateField() throws Exception {
+            runTest("testData/newJ2k/visibility/nestedClassPrivateField.java");
+        }
+
+        @TestMetadata("nestedClassPrivateMethod.java")
+        public void testNestedClassPrivateMethod() throws Exception {
+            runTest("testData/newJ2k/visibility/nestedClassPrivateMethod.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/whileStatement")
     public static class WhileStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
         private void runTest(String testDataFilePath) throws Exception {

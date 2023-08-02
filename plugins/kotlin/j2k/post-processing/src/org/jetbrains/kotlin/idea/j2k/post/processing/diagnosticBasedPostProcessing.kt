@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixFactory
+import org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix.*
 import org.jetbrains.kotlin.idea.quickfix.asKotlinIntentionActionsFactory
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
@@ -91,6 +92,24 @@ internal fun diagnosticBasedProcessing(fixFactory: QuickFixFactory, vararg diagn
             val fix = runReadAction { actionFactory.createActions(diagnostic).singleOrNull() } ?: return
             runUndoTransparentActionInEdt(inWriteAction = true) {
                 fix.invoke(diagnostic.psiElement.project, null, diagnostic.psiFile)
+            }
+        }
+    }
+
+internal fun invisibleMemberDiagnosticBasedProcessing(fixFactory: QuickFixFactory, vararg diagnosticFactory: DiagnosticFactory<*>) =
+    object : DiagnosticBasedProcessing {
+        override val diagnosticFactories = diagnosticFactory.toList()
+
+        override fun fix(diagnostic: Diagnostic) {
+            val actionFactory = fixFactory.asKotlinIntentionActionsFactory()
+            val fixes = runReadAction { actionFactory.createActions(diagnostic) }
+            val leastVisibilityFix = fixes.find { it is ChangeToProtectedFix }
+                ?: fixes.find { it is ChangeToInternalFix }
+                ?: fixes.find { it is ChangeToPublicFix }
+                ?: return
+
+            runUndoTransparentActionInEdt(inWriteAction = true) {
+                leastVisibilityFix.invoke(diagnostic.psiElement.project, null, diagnostic.psiFile)
             }
         }
     }

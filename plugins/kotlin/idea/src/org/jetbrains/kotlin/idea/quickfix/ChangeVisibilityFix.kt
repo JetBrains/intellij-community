@@ -55,7 +55,7 @@ open class ChangeVisibilityFix(
         }
     }
 
-    protected class ChangeToPublicFix(element: KtModifierListOwner, elementName: String) :
+    class ChangeToPublicFix(element: KtModifierListOwner, elementName: String) :
         ChangeVisibilityFix(element, elementName, KtTokens.PUBLIC_KEYWORD), HighPriorityAction {
 
         override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
@@ -64,7 +64,7 @@ open class ChangeVisibilityFix(
         }
     }
 
-    protected class ChangeToProtectedFix(element: KtModifierListOwner, elementName: String) :
+    class ChangeToProtectedFix(element: KtModifierListOwner, elementName: String) :
         ChangeVisibilityFix(element, elementName, KtTokens.PROTECTED_KEYWORD) {
 
         override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
@@ -73,7 +73,7 @@ open class ChangeVisibilityFix(
         }
     }
 
-    protected class ChangeToInternalFix(element: KtModifierListOwner, elementName: String) :
+    class ChangeToInternalFix(element: KtModifierListOwner, elementName: String) :
         ChangeVisibilityFix(element, elementName, KtTokens.INTERNAL_KEYWORD) {
 
         override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
