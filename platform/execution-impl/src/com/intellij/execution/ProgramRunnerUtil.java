@@ -181,7 +181,7 @@ public final class ProgramRunnerUtil {
 
   @NotNull
   public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {
-    return IconLoader.getTransparentIcon(rawIcon, 0.3f);
+    return IconLoader.getTransparentIcon(rawIcon, 0.45f);
   }
 
   public static @NotNull @NlsSafe String shortenName(@Nullable @NlsSafe String name, int toBeAdded) {
