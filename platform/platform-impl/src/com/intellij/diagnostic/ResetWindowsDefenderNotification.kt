@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -17,11 +17,13 @@ private class ResetWindowsDefenderNotification : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val checker = WindowsDefenderChecker.getInstance()
     checker.ignoreStatusCheck(null, false)
-    val project = e.project ?: return
-    checker.ignoreStatusCheck(project, false)
-    @Suppress("DEPRECATION")
-    project.coroutineScope.launch {
-      WindowsDefenderCheckerActivity().execute(project)
+    val project = e.project
+    if (project != null) {
+      checker.ignoreStatusCheck(project, false)
+      @Suppress("DEPRECATION")
+      project.coroutineScope.launch {
+        WindowsDefenderCheckerActivity().execute(project)
+      }
     }
   }
 }
