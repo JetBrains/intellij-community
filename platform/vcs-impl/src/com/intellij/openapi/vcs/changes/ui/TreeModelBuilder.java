@@ -417,6 +417,8 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
                                   @NotNull ChangesBrowserNode<?> subtreeRoot,
                                   @NotNull ChangesBrowserNode<?> node,
                                   @NotNull Function<StaticFilePath, ChangesBrowserNode<?>> nodeBuilder) {
+    ProgressManager.checkCanceled();
+
     PATH_NODE_BUILDER.set(subtreeRoot, nodeBuilder);
     if (!GROUPING_POLICY.isIn(subtreeRoot)) {
       ChangesGroupingPolicy policy = myProject != null ? myGroupingPolicyFactory.createGroupingPolicy(myProject, myModel)
