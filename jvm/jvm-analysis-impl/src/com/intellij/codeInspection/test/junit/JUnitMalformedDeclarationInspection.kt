@@ -230,16 +230,10 @@ private class JUnitMalformedSignatureVisitor(
     val hasAnnotation = MetaAnnotationUtil.findMetaAnnotationsInHierarchy(this, listOf(ORG_JUNIT_JUPITER_API_EXTENSION_EXTEND_WITH))
       .asSequence()
       .any { annotation ->
-        val attrValue = annotation?.findAttributeValue("value")?.toUElement()
-        if (attrValue is UClassLiteralExpression) {
-          InheritanceUtil.isInheritor(attrValue.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
-        }
-        else if (attrValue is UCallExpression && attrValue.kind == UastCallKind.NESTED_ARRAY_INITIALIZER) {
-          attrValue.valueArguments.any {
-            it is UClassLiteralExpression && InheritanceUtil.isInheritor(it.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
-          }
-        }
-        else false
+        annotation?.nestedAttributeValues("value")?.any {
+          val uClassLiteral = it.toUElementOfType<UClassLiteralExpression>()
+          uClassLiteral != null && InheritanceUtil.isInheritor(uClassLiteral.type, ORG_JUNIT_JUPITER_API_EXTENSION_PARAMETER_RESOLVER)
+        } == true
       }
     if (hasAnnotation) return true
     val hasRegisteredExtension = if (this is PsiClass) {

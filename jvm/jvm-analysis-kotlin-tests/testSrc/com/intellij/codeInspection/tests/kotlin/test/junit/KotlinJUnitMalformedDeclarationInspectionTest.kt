@@ -817,7 +817,7 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       }
     """.trimIndent())
     }
-    fun `test non-malformed with multiple extensions`() {
+    fun `test non-malformed with multiple extensions in separate annotations`() {
       myFixture.testHighlighting(JvmLanguage.KOTLIN, """
       class TestNonParameterResolver : org.junit.jupiter.api.extension.Extension { }
       
@@ -835,6 +835,32 @@ class KotlinJUnitMalformedDeclarationInspectionTest {
       
       @org.junit.jupiter.api.extension.ExtendWith(TestNonParameterResolver::class)
       @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver::class)
+      class ParameterResolver {
+        companion object {
+          @JvmStatic
+          @org.junit.jupiter.api.BeforeAll
+          fun beforeAll(foo: String) { println(foo) }
+        }
+      }
+    """.trimIndent())
+    }
+    fun `test non-malformed with multiple extensions in single annotation`() {
+      myFixture.testHighlighting(JvmLanguage.KOTLIN, """
+      class TestNonParameterResolver : org.junit.jupiter.api.extension.Extension { }
+      
+      class TestParameterResolver : org.junit.jupiter.api.extension.ParameterResolver {
+        override fun supportsParameter(
+          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+        ): Boolean = true
+    
+        override fun resolveParameter(
+          parameterContext: org.junit.jupiter.api.extension.ParameterContext, 
+          extensionContext: org.junit.jupiter.api.extension.ExtensionContext
+        ): Any = ""
+      }
+      
+      @org.junit.jupiter.api.extension.ExtendWith(TestNonParameterResolver::class, TestParameterResolver::class)
       class ParameterResolver {
         companion object {
           @JvmStatic
