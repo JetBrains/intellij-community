@@ -82,22 +82,51 @@ import org.jetbrains.annotations.NonNls
  * 
  * ### Add Diff
  * Each instance of [MutableEntityStorage] records changes made in it: addition, modification and removal of entities. Such changes made
- * in one instance may be applied to a different instance by calling [addDiff] function. This can be used to run tasks which fill the
- * storage in parallel. For example, when configuration of a project is read from *.iml files, the IDE creates a separate empty 
- * [MutableEntityStorage] for each file, and run tasks which parse an *.iml file and load entities from it to the corresponding storage 
- * concurrently. When the tasks finish, their results are merged into the single storage via [addDiff].
+ * in one instance may be applied to a different instance by calling [addDiff] function.
+ *
+ * **Use cases**:
+ *
+ * - **Parallel filling of the storage.**
+ *
+ *   Example: When configuration of a project is read from `*.iml` files, the IDE creates a separate empty [MutableEntityStorage] for each
+ *   file, and run tasks which parse an `*.iml` file and load entities from it to the corresponding storage concurrently.
+ *   When the tasks finish, their results are merged into the single storage via [addDiff].
+ *
+ * - **Accumulating changes.**
+ *
+ *   Example: This fits the case the user performs modifications in the "Project Structure" dialog. We don't want the changes to be
+ *   applied immediately, so we accumulate changes in a builder and then add them to the main storage using the [addDiff] command when
+ *   the user presses "apply" button.
+ *
+ * This is not a full list of use cases. You can use this operation based on your needs.
  * 
  * ### Replace by source
- * 
- * Usually, entities in the workspace model storage are created from data loaded from some configuration files. When these configuration 
+ *
+ * Partially replace the storage with the new one based on the predicate.
+ * This operation actualizes the part of the storage affected by the change trying to minimize the number of changes in the entities.
+ *
+ * **Rationale:**
+ *
+ * Usually, entities in the workspace model storage are created from data loaded from some configuration files. When these configuration
  * files change, we need to update the corresponding entities in the storage. It would be rather hard and error-prone to analyze what
  * exactly was changed in the files since the previous version, so we use a different approach. Each entity must specify its 
- * [source][WorkspaceEntity.entitySource] describing where the entity comes from. For example, for entities loaded from configuration files
- * from .idea directory, [entitySource][WorkspaceEntity.entitySource] points to the corresponding xml file. When IDE detects changes in some
- * configuration files, it loads new entities from the created and modified files to a separate [MutableEntityStorage] instance, and then
- * calls [replaceBySource] passing a filter which accepts entity sources corresponding to the all created, modified and deleted files and
- * the prepared [MutableEntityStorage] instance. This operation actualizes the part of the storage affected by the change trying to minimize
- * the number of changes in the entities.
+ * [source][WorkspaceEntity.entitySource] describing where the entity comes from.
+ *
+ * **Use cases**:
+ *
+ * - **Importing a project model from the external system.**
+ *
+ *   Example: In a maven project, we can create the project model each time we detect the `pom.xml` was changed. We apply the new project
+ *   model to the main storage using the [replaceBySource] operation. This will affect only changed entities that were created from maven.
+ *
+ * - **Working with JPS build system**
+ *
+ *   Example: For entities loaded from configuration files from .idea directory, [entitySource][WorkspaceEntity.entitySource] points
+ *   to the corresponding xml file. When IDE detects changes in some configuration files, it loads new entities from the created
+ *   and modified files to a separate [MutableEntityStorage] instance, and then calls [replaceBySource] passing a filter which accepts
+ *   entity sources corresponding to the all created, modified and deleted files and the prepared [MutableEntityStorage] instance.
+ *
+ * This is not a full list of use cases. You can use this operation based on your needs.
  */
 interface MutableEntityStorage : EntityStorage {
   /**
