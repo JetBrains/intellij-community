@@ -3,6 +3,7 @@ package com.intellij.notification.impl
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.*
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -29,6 +30,7 @@ import javax.swing.JLabel
 private val mode: NotificationAnnouncingMode
   get() = NotificationsConfiguration.getNotificationsConfiguration().notificationAnnouncingMode
 
+@Service
 private class NotificationsAnnouncerService {
   private val callerCache = mutableListOf<FrameWithAccessible>()
 
@@ -81,14 +83,11 @@ private fun doNotify(notification: Notification, project: Project?) {
     return
   }
 
-  val groupId = notification.groupId
-  val type = NotificationsConfigurationImpl.getSettings(groupId).displayType
-  if (type == NotificationDisplayType.NONE) {
+  if (NotificationsConfigurationImpl.getSettings(notification.groupId).displayType == NotificationDisplayType.NONE) {
     return
   }
 
-  val service = service<NotificationsAnnouncerService>()
-  val caller = service.findCaller(frame) ?: return
+  val caller = service<NotificationsAnnouncerService>().findCaller(frame) ?: return
   announceComponents(components = getComponentsToAnnounce(notification), caller = caller, mode = mode)
 }
 
