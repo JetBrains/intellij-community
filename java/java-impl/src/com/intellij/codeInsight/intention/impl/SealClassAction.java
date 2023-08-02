@@ -48,6 +48,7 @@ public class SealClassAction extends PsiUpdateModCommandAction<PsiClass> {
     if (lBrace == null) return false;
     if (offset >= lBrace.getTextRange().getStartOffset()) return false;
     if (aClass.hasModifierProperty(PsiModifier.SEALED)) return false;
+    if (aClass.isAnnotationType()) return false;
     if (aClass.getPermitsList() != null) return false;
     if (aClass.getModifierList() == null) return false;
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) return false;
