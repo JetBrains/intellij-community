@@ -405,6 +405,10 @@ public final class IndexDataGetter {
     return myLogStorage;
   }
 
+  @NotNull VcsLogStorageBackend getIndexStorageBackend() {
+    return myIndexStorageBackend;
+  }
+
   private @Nullable VirtualFile getRoot(@NotNull FilePath path) {
     if (myIsProjectLog) return VcsLogUtil.getActualRoot(myProject, path);
     return VcsLogUtil.getActualRoot(myProject, myProviders, path);
