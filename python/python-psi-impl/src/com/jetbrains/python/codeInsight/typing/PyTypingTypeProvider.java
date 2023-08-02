@@ -62,6 +62,8 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   public static final String NAMEDTUPLE = "typing.NamedTuple";
   public static final String TYPED_DICT = "typing.TypedDict";
   public static final String TYPED_DICT_EXT = "typing_extensions.TypedDict";
+  public static final String TYPE_GUARD = "typing.TypeGuard";
+  public static final String TYPE_GUARD_EXT = "typing_extensions.TypeGuard";
   public static final String GENERIC = "typing.Generic";
   public static final String PROTOCOL = "typing.Protocol";
   public static final String PROTOCOL_EXT = "typing_extensions.Protocol";
@@ -1125,7 +1127,13 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   private static <T extends PyTypeCommentOwner & PyAnnotationOwner> boolean typeHintedWithName(@NotNull T owner,
                                                                                                @NotNull TypeEvalContext context,
                                                                                                String... names) {
-    final PyExpression annotation = getAnnotationValue(owner, context);
+    var annotation = getAnnotationValue(owner, context);
+    if (annotation instanceof PyStringLiteralExpression stringLiteralExpression) {
+      final var annotationText = stringLiteralExpression.getStringValue();
+      annotation = toExpression(annotationText, owner);
+      if (annotation == null) return false;
+    }
+
     if (annotation instanceof PySubscriptionExpression) {
       return resolvesToQualifiedNames(((PySubscriptionExpression)annotation).getOperand(), context, names);
     }
@@ -1163,6 +1171,11 @@ public class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<PyTypi
   public static boolean isNoReturn(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
     return PyUtil.getParameterizedCachedValue(function, context, p ->
       typeHintedWithName(function, context, NO_RETURN, NO_RETURN_EXT, NEVER, NEVER_EXT));
+  }
+
+  public static boolean isTypeGuard(@NotNull PyFunction function, @NotNull TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(function, context, p ->
+      typeHintedWithName(function, context, TYPE_GUARD, TYPE_GUARD_EXT));
   }
 
   private static boolean resolvesToQualifiedNames(@NotNull PyExpression expression, @NotNull TypeEvalContext context, String... names) {

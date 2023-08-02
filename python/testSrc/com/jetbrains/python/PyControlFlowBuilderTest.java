@@ -488,6 +488,18 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  public void testTypeGuard() {
+    doTest();
+  }
+
+  public void testTypeGuardConjunct() {
+    doTest();
+  }
+
+  public void testTypeGuardWhile() {
+    doTest();
+  }
+
   // PY-23859
   public void testControlFlowIsAbruptAfterSelfFail() {
     final String testName = getTestName(false);

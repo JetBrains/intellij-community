@@ -1966,6 +1966,166 @@ public class Py3TypeTest extends PyTestCase {
     );
   }
 
+  public void testTypeGuardList() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardListInStringLiteral() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> "TypeGuard[List[str]]":
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     expr = val
+             """);
+  }
+
+
+  public void testTypeGuardListTypeIsNotChanged() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if is_str_list(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardListNegation() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if not is_str_list(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  // PY-62078
+  public void ignoreTestTypeGuardAnnotation() {
+    doTest("list[str]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val):
+                 # type: (List[object]) -> TypeGuard[List[str]]
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if not is_str_list(val):
+                     pass
+                 else:
+                     expr = val
+             """);
+  }
+
+  public void testTypeGuardDidntChanged() {
+    doTest("list[object]",
+           """
+             from typing import List
+             from typing import TypeGuard
+                          
+                          
+             def is_str_list(val: List[object]) -> TypeGuard[List[str]]:
+                 return all(isinstance(x, str) for x in val)
+                          
+                          
+             def func1(val: List[object]):
+                 if not is_str_list(val):
+                     expr = val
+                 else:
+                     pass
+             """);
+  }
+
+  public void testTypeGuardDoubleCheck() {
+    doTest("Person",
+           """
+             from typing import TypeGuard
+             class Person(TypedDict):
+                 name: str
+                 age: int
+                                
+                                
+             def is_person(val: dict) -> TypeGuard[Person]:
+                 try:
+                     return isinstance(val["name"], str) and isinstance(val["age"], int)
+                 except KeyError:
+                     return False
+                                
+                                
+             def print_age(val: dict, val2: dict):
+                 if is_person(val) and is_person(val2):
+                     expr = val
+                 else:
+                     print("Not a person!")""");
+  }
+
+  public void testTypeGuardDoubleCheckNegation() {
+    doTest("Person",
+           """
+             from typing import TypeGuard
+             class Person(TypedDict):
+                 name: str
+                 age: int
+                                
+                                
+             def is_person(val: dict) -> TypeGuard[Person]:
+                 try:
+                     return isinstance(val["name"], str) and isinstance(val["age"], int)
+                 except KeyError:
+                     return False
+                                
+                                
+             def print_age(val: dict, val2: dict):
+                 if not is_person(val) or not is_person(val2):
+                     print("Not a person!");
+                 else:
+                     expr = val
+                     """);
+  }
+
   public void testDictCallOnDictLiteralResult() {
     doTest("dict[LiteralString, int]",
            "expr = dict({'a': 1})");
