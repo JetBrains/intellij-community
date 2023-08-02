@@ -51,9 +51,9 @@ kotlin {
         val jvmTest by getting
         val jsMain by getting {
             dependencies {
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react:18.2.0-pre.346")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:18.2.0-pre.346")
-                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:11.9.3-pre.346")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react:18.2.0-pre.535")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-react-dom:18.2.0-pre.535")
+                implementation("org.jetbrains.kotlin-wrappers:kotlin-emotion:11.10.6-pre.535")
             }
         }
         val jsTest by getting

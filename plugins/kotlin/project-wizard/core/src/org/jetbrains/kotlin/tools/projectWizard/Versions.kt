@@ -21,7 +21,7 @@ object Versions {
 
     val KOTLIN = loadVersion("1.8.21") { kotlinPluginVersion }
     val KOTLIN_FOR_COMPOSE = loadVersion("1.7.20") { kotlinForComposeVersion }
-    val COMPOSE_COMPILER_EXTENSION = loadVersion("1.3.2") { composeCompilerExtension }
+    val COMPOSE_COMPILER_EXTENSION = loadVersion("1.4.3") { composeCompilerExtension }
     val GRADLE = Version.fromString("8.1.1")
     val JUNIT = Dependencies.JUNIT.version
     val JUNIT5 = Dependencies.JUNIT5.version
@@ -49,7 +49,7 @@ object Versions {
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = loadVersion("7.3.1") { gradleAndroidVersion }
+        val ANDROID = loadVersion("8.1.0") { gradleAndroidVersion }
 
         val MIN_GRADLE_FOOJAY_VERSION = loadVersion("7.6") { minGradleFoojayVersion }
         val FOOJAY_VERSION = loadVersion("0.5.0") { foojayVersion }
