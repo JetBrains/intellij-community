@@ -39,6 +39,10 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.enableInspections(PluginXmlExtensionRegistrationInspection.class);
   }
 
+  public void testStatusBarWidgetFactoryEP() {
+    myFixture.testHighlighting("statusBarWidgetFactory.xml");
+  }
+
   public void testLanguageExtensions() {
     myFixture.testHighlighting("languageExtensions.xml");
   }
@@ -52,7 +56,7 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
     myFixture.checkResultByFile("languageAddLanguageTagFix_after.xml");
   }
 
-   public void testLanguageAddLanguageAttributeForCompletionContributorEPFix() {
+  public void testLanguageAddLanguageAttributeForCompletionContributorEPFix() {
     IntentionAction action =
       myFixture.getAvailableIntention("Define language attribute",
                                       "addLanguageAttributeForCompletionContributorEPFix.xml");
@@ -76,5 +80,4 @@ public class PluginXmlExtensionRegistrationInspectionTest extends JavaCodeInsigh
   public void testRedundantServiceInterfaceClass() {
     myFixture.testHighlighting("redundantServiceInterfaceClass.xml");
   }
-
 }
