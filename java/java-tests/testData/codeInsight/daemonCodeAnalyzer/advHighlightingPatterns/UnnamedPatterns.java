@@ -2,7 +2,7 @@ public class UnnamedPatterns {
   record R(int a, int b) {}
   
   void test(Object obj) {
-    if (obj instanceof <error descr="Since Java 9, '_' is a keyword, and may not be used as an identifier">_</error>) {}
+    if (obj instanceof <error descr="Using '_' as a reference is not allowed">_</error>) {}
     
     if (obj instanceof R(_, _)) {}
     if (obj instanceof R(int a, _)) {

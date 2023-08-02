@@ -756,7 +756,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         if (notAvailable != null) {
           add(notAvailable);
         } else {
-          add(HighlightUtil.checkAllowedUnnamedLocation(variable));
+          add(HighlightUtil.checkUnnamedVariableDeclaration(variable));
         }
       }
 
