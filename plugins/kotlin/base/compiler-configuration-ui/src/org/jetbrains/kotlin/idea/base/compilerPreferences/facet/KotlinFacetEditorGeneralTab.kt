@@ -373,7 +373,7 @@ class KotlinFacetEditorGeneralTab(
         }
     }
 
-    fun initializeIfNeeded() {
+    private fun initializeIfNeeded() {
         if (isInitialized) return
 
         editor.initialize()
@@ -405,10 +405,6 @@ class KotlinFacetEditorGeneralTab(
         isInitialized = true
 
         reset()
-    }
-
-    override fun onTabEntering() {
-        initializeIfNeeded()
     }
 
     override fun isModified(): Boolean {
@@ -462,7 +458,6 @@ class KotlinFacetEditorGeneralTab(
     }
 
     override fun apply() {
-        initializeIfNeeded()
         validateOnce {
             editor.compilerConfigurable.apply()
             with(configuration.settings) {
@@ -497,6 +492,7 @@ class KotlinFacetEditorGeneralTab(
     override fun getDisplayName() = KotlinBaseCompilerConfigurationUiBundle.message("facet.name.general")
 
     override fun createComponent(): JComponent {
+        initializeIfNeeded()
         return editor
     }
 
