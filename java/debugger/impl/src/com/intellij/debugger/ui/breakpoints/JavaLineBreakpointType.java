@@ -106,19 +106,19 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   @NotNull
   @Override
   public List<JavaBreakpointVariant> computeVariants(@NotNull Project project, @NotNull XSourcePosition position) {
-    SourcePosition pos = DebuggerUtilsEx.toSourcePosition(position, project);
-    if (pos == null) {
-      return Collections.emptyList();
-    }
+    PsiFile file = DebuggerUtilsEx.getPsiFile(position, project);
+    if (file == null) return Collections.emptyList();
 
-    Document document = PsiDocumentManager.getInstance(project).getDocument(pos.getFile());
+    SourcePosition pos = SourcePosition.createFromLine(file, position.getLine());
+
+    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) {
       return Collections.emptyList();
     }
 
     PsiElement startMethod = DebuggerUtilsEx.getContainingMethod(pos);
     List<PsiLambdaExpression> lambdas = DebuggerUtilsEx.collectLambdas(pos, true);
-    PsiElement condRet = canStopOnConditionalReturn(pos.getFile())
+    PsiElement condRet = canStopOnConditionalReturn(file)
                          ? findSingleConditionalReturn(project, document, position.getLine())
                          : null;
 
