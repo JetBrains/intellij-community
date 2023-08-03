@@ -152,7 +152,6 @@ public class JsonValidationError {
     if (quickFixAdapter == null) return LocalQuickFix.EMPTY_ARRAY;
     return switch (myFixableIssueKind) {
       case MissingProperty ->
-        //MissingNotRequiredProperty -> todo
         new AddMissingPropertyFix[]{new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter)};
       case MissingOneOfProperty, MissingAnyOfProperty ->
         ((MissingOneOfPropsIssueData)myIssueData).myExclusiveOptions.stream().map(d -> new AddMissingPropertyFix(d, quickFixAdapter))

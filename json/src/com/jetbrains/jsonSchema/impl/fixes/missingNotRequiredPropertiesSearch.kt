@@ -19,31 +19,30 @@ fun collectMissingPropertiesFromSchema(objectNode: PsiElement,
   val schemaObjectFile = JsonSchemaService.Impl.get(project).getSchemaObject(objectNode.containingFile) ?: return null
   val psiWalker = JsonLikePsiWalker.getWalker(objectNode, schemaObjectFile) ?: return null
   val position = psiWalker.findPosition(objectNode, true) ?: return null
-  val checker = JsonSchemaAnnotatorChecker(project, JsonComplianceCheckerOptions(false, false, true))
   val valueAdapter = psiWalker.createValueAdapter(objectNode) ?: return null
+  val checker = JsonSchemaAnnotatorChecker(project, JsonComplianceCheckerOptions(false, false, true))
   checker.checkObjectBySchemaRecordErrors(schemaObjectFile, valueAdapter, position)
+  val errorsForNode = checker.errors[objectNode] ?: return null
 
-  val errorsByKind = checker.errors.values.groupBy { it.fixableIssueKind }
-  val missingRequiredProperties = extractPropertiesOfKind(errorsByKind, FixableIssueKind.MissingProperty)
-  val missingKnownProperties = extractPropertiesOfKind(errorsByKind, FixableIssueKind.MissingNotRequiredProperty)
+  val missingRequiredProperties = extractPropertiesOfKind(errorsForNode, FixableIssueKind.MissingProperty)
+  val missingKnownProperties = extractPropertiesOfKind(errorsForNode, FixableIssueKind.MissingNotRequiredProperty)
   return JsonSchemaPropertiesInfo(missingRequiredProperties, missingKnownProperties)
 }
 
-private fun extractPropertiesOfKind(errorsByKind: Map<FixableIssueKind, List<JsonValidationError>>,
+private fun extractPropertiesOfKind(foundError: JsonValidationError,
                                     kind: FixableIssueKind): MissingMultiplePropsIssueData {
-  return errorsByKind[kind]
-    .orEmpty()
-    .asSequence()
-    .map(JsonValidationError::getIssueData)
-    .flatMap { issueData ->
-      when (issueData) {
-        is MissingMultiplePropsIssueData -> issueData.myMissingPropertyIssues.asSequence()
-        is MissingPropertyIssueData -> sequenceOf(issueData)
-        else -> emptySequence()
-      }
-    }
-    .toList()
-    .let { MissingMultiplePropsIssueData(it) }
+  val issueData = foundError.takeIf { it.fixableIssueKind == kind }?.issueData
+
+  val filteredProperties = when (issueData) {
+    is MissingMultiplePropsIssueData -> filterOutUnwantedProperties(issueData.myMissingPropertyIssues)
+    is MissingPropertyIssueData -> filterOutUnwantedProperties(listOf(issueData))
+    else -> emptyList()
+  }
+  return MissingMultiplePropsIssueData(filteredProperties)
+}
+
+private fun filterOutUnwantedProperties(missingProperties: Collection<MissingPropertyIssueData>): Collection<MissingPropertyIssueData> {
+  return missingProperties.filter { !it.propertyName.startsWith("$") }
 }
 
 data class JsonSchemaPropertiesInfo(

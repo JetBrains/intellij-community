@@ -118,6 +118,12 @@
     <psi.referenceContributor language="yaml" implementation="org.jetbrains.yaml.YAMLWebReferenceContributor"/>
 
     <pluginSuggestionProvider implementation="org.jetbrains.yaml.swagger.OpenApiSuggestionProvider"/>
+    <intentionAction>
+      <language>yaml</language>
+      <className>org.jetbrains.yaml.intentions.YAMLAddOptionalPropertiesIntention</className>
+      <bundleName>messages.YAMLBundle</bundleName>
+      <categoryKey>yaml.intention.category.name</categoryKey>
+    </intentionAction>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">

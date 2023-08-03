@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.parentOfType
+import com.jetbrains.jsonSchema.extension.JsonLikeSyntaxAdapter
 import com.jetbrains.jsonSchema.impl.JsonOriginalPsiWalker
 
 open class AddOptionalPropertiesIntention : IntentionAction {
@@ -41,7 +42,7 @@ open class AddOptionalPropertiesIntention : IntentionAction {
                               ?.missingKnownProperties ?: return
 
     WriteCommandAction.runWriteCommandAction(file.project, Computable {
-      AddMissingPropertyFix(missingProperties, JsonOriginalPsiWalker.INSTANCE.getSyntaxAdapter(project))
+      AddMissingPropertyFix(missingProperties, getSyntaxAdapter(project))
         .performFix(containingObject, Ref.create())
       ReformatCodeProcessor(containingObject.containingFile, false).run()
     })
@@ -49,6 +50,10 @@ open class AddOptionalPropertiesIntention : IntentionAction {
 
   protected open fun findContainingObjectNode(editor: Editor, file: PsiFile): PsiElement? {
     val offset = editor.caretModel.offset
-    return file.findElementAt(offset)?.parentOfType<JsonObject>(true)
+    return file.findElementAt(offset)?.parentOfType<JsonObject>(false)
+  }
+
+  protected open fun getSyntaxAdapter(project: Project): JsonLikeSyntaxAdapter {
+    return JsonOriginalPsiWalker.INSTANCE.getSyntaxAdapter(project)
   }
 }
