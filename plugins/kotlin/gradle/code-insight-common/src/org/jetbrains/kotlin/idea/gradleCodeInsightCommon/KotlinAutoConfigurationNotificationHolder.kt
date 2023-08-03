@@ -6,6 +6,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -22,10 +23,10 @@ import org.jetbrains.kotlin.idea.gradle.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.projectConfiguration.KotlinProjectConfigurationBundle
 
 @Service(Service.Level.PROJECT)
-class KotlinAutoConfigurationNotificationHolder {
+class KotlinAutoConfigurationNotificationHolder(private val project: Project) : Disposable {
     companion object {
-        fun getInstance(): KotlinAutoConfigurationNotificationHolder {
-            return service()
+        fun getInstance(project: Project): KotlinAutoConfigurationNotificationHolder {
+            return project.service()
         }
     }
 
@@ -35,7 +36,7 @@ class KotlinAutoConfigurationNotificationHolder {
     private var notificationData: NotificationData? = null
 
 
-    fun showAutoConfiguredNotification(project: Project, moduleName: String?, changes: List<Change>?) {
+    fun showAutoConfiguredNotification(moduleName: String?, changes: List<Change>?) {
         // shownNotification should never be non-null here as we should only ever have one notification at a time.
         // If more are shown then this is a leak of the notification somewhere in our code.
         shownNotification?.expire()
@@ -58,7 +59,7 @@ class KotlinAutoConfigurationNotificationHolder {
                 type = NotificationType.INFORMATION,
             )
         if (changes != null) {
-            notification.addAction(viewAppliedChangesAction(project, changes))
+            notification.addAction(viewAppliedChangesAction(changes))
         }
         notification.addAction(undoAction(project))
         notification.notify(project)
@@ -74,7 +75,7 @@ class KotlinAutoConfigurationNotificationHolder {
         })
     }
 
-    fun showAutoConfigurationUndoneNotification(project: Project, module: Module?) {
+    fun showAutoConfigurationUndoneNotification(module: Module?) {
         val existingNotificationData = notificationData
         shownNotification?.expire()
 
@@ -86,7 +87,7 @@ class KotlinAutoConfigurationNotificationHolder {
                 type = NotificationType.INFORMATION,
             )
         module?.let {
-            notification.addAction(configureKotlinManuallyAction(project, it))
+            notification.addAction(configureKotlinManuallyAction(it))
         }
         notification.notify(project)
         shownNotification = notification
@@ -95,15 +96,15 @@ class KotlinAutoConfigurationNotificationHolder {
         notification.expireShownNotificationsOnClose()
     }
 
-    fun reshowAutoConfiguredNotification(project: Project, module: Module?) {
+    fun reshowAutoConfiguredNotification(module: Module?) {
         val existingNotificationData = notificationData
         shownNotification?.expire()
 
-        showAutoConfiguredNotification(project, module?.name, existingNotificationData?.changes)
+        showAutoConfiguredNotification(module?.name, existingNotificationData?.changes)
     }
 
 
-    private fun configureKotlinManuallyAction(project: Project, module: Module) = NotificationAction.create(
+    private fun configureKotlinManuallyAction(module: Module) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("configure.kotlin.manually")
     ) { e, notification ->
         val configurators = getAbleToRunConfigurators(module).toList()
@@ -115,7 +116,7 @@ class KotlinAutoConfigurationNotificationHolder {
         notification.expire()
     }
 
-    private fun viewAppliedChangesAction(project: Project, changes: List<Change>) = NotificationAction.create(
+    private fun viewAppliedChangesAction(changes: List<Change>) = NotificationAction.create(
         KotlinProjectConfigurationBundle.message("view.code.differences.action")
     ) { _, _ ->
         KotlinConfiguratorChangesDialog(project, changes)
@@ -155,5 +156,9 @@ class KotlinAutoConfigurationNotificationHolder {
         // We unset the notificationData here to avoid leaking the data.
         // When a user closes the notification, this data is unset and cannot be used anymore.
         notificationData = null
+    }
+
+    override fun dispose() {
+        expireShownNotification()
     }
 }

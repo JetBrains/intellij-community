@@ -207,8 +207,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             isAutoConfig = true
         )
 
-        KotlinAutoConfigurationNotificationHolder.getInstance()
-            .showAutoConfiguredNotification(project, module.name, result.changedFiles.calculateChanges())
+        KotlinAutoConfigurationNotificationHolder.getInstance(project)
+            .showAutoConfiguredNotification(module.name, result.changedFiles.calculateChanges())
     }
 
     private class ConfigurationResult(
@@ -235,12 +235,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 UndoManager.getInstance(project).undoableActionPerformed(object : BasicUndoableAction() {
                     override fun undo() {
                         project.scheduleGradleSync()
-                        KotlinAutoConfigurationNotificationHolder.getInstance().showAutoConfigurationUndoneNotification(project, module)
+                        KotlinAutoConfigurationNotificationHolder.getInstance(project).showAutoConfigurationUndoneNotification(module)
                     }
 
                     override fun redo() {
                         project.scheduleGradleSync()
-                        KotlinAutoConfigurationNotificationHolder.getInstance().reshowAutoConfiguredNotification(project, module)
+                        KotlinAutoConfigurationNotificationHolder.getInstance(project).reshowAutoConfiguredNotification(module)
                     }
                 })
             }
