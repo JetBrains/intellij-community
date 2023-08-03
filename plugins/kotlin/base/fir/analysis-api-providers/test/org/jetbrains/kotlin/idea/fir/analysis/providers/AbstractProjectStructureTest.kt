@@ -3,12 +3,15 @@ package org.jetbrains.kotlin.idea.fir.analysis.providers
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.PsiTestUtil
+import com.intellij.util.io.jarFile
 import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.TestProjectStructureReader
 import org.jetbrains.kotlin.idea.stubs.AbstractMultiModuleTest
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
+import org.jetbrains.kotlin.idea.test.addRoot
 import org.jetbrains.kotlin.test.util.addDependency
 import java.nio.file.Paths
 
@@ -25,8 +28,17 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
             testProjectStructureParser = parser,
         )
 
+        val jarFilesByRootLabel = testStructure.libraries
+            .flatMapTo(mutableSetOf()) { it.roots }
+            .associate { it to jarFile { }.generateInTempDir().toFile() }
+
         val projectLibrariesByName = testStructure.libraries.associate { libraryData ->
-            libraryData.name to createProjectLibrary(libraryData.name)
+            libraryData.name to ConfigLibraryUtil.addProjectLibrary(project, libraryData.name) {
+                libraryData.roots.forEach { rootLabel ->
+                    addRoot(jarFilesByRootLabel.getValue(rootLabel), OrderRootType.CLASSES)
+                }
+                commit()
+            }
         }
 
         val modulesByName = testStructure.modules.associate { moduleData ->
@@ -49,8 +61,6 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure> : Abstract
 
         return Triple(testStructure, projectLibrariesByName, modulesByName)
     }
-
-    private fun createProjectLibrary(name: String): Library = ConfigLibraryUtil.addProjectLibraryWithClassesRoot(project, name)
 
     private fun createEmptyModule(name: String): Module {
         val tmpDir = createTempDirectory().toPath()

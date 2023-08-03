@@ -6,6 +6,7 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import org.jetbrains.kotlin.idea.fir.analysis.providers.testProjectStructure.getAsStringList
 import org.jetbrains.kotlin.idea.jsonUtils.getString
+import java.util.UUID
 
 interface TestProjectStructure {
     /**
@@ -24,12 +25,21 @@ fun interface TestProjectStructureParser<S : TestProjectStructure> {
     fun parse(libraries: List<TestProjectLibrary>, modules: List<TestProjectModule>, json: JsonObject): S
 }
 
-data class TestProjectLibrary(val name: String)
+/**
+ * @param roots A list of labels for the library's roots. The test infrastructure generates a unique, temporary JAR file for each such
+ *              label. This allows adding the same root to multiple libraries without having to wrangle JAR files in the test data.
+ *              The property is optional in `structure.json`. If absent, the library receives a single, unique root which won't be shared
+ *              with other libraries.
+ */
+data class TestProjectLibrary(val name: String, val roots: List<String>)
 
 object TestProjectLibraryParser {
+    private const val ROOTS_FIELD = "roots"
+
     fun parse(json: JsonElement): TestProjectLibrary {
         require(json is JsonObject)
-        return TestProjectLibrary(json.getString("name"))
+        val roots = json.getAsStringList(ROOTS_FIELD) ?: listOf(UUID.randomUUID().toString())
+        return TestProjectLibrary(json.getString("name"), roots)
     }
 }
 
