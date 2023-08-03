@@ -20,6 +20,7 @@ import com.intellij.ui.components.panels.Wrapper
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.action.*
@@ -49,10 +50,10 @@ internal object GitLabMergeRequestDetailsActionsComponentFactory {
       mergeSquashReviewAction = GitLabMergeRequestSquashAndMergeAction(scope, reviewFlowVm),
       rebaseReviewAction = GitLabMergeRequestRebaseAction(scope, reviewFlowVm)
     )
-    val moreActionsGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
 
     return Wrapper().apply {
-      bindContentIn(scope, reviewFlowVm.role) { role ->
+      bindContentIn(scope, reviewFlowVm.role.distinctUntilChanged()) { role ->
+        val moreActionsGroup = DefaultActionGroup(GitLabBundle.message("merge.request.details.action.review.more.text"), true)
         val mainPanel = when (role) {
           ReviewRole.AUTHOR -> createActionsForAuthor(reviewFlowVm, reviewActions, moreActionsGroup)
           ReviewRole.REVIEWER -> createActionsForReviewer(reviewFlowVm, reviewActions, moreActionsGroup)
