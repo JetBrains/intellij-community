@@ -48,6 +48,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.internal.inspector.ComponentPropertiesProvider.PROPERTIES_EP_PROVIDER_NAME;
 import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 
 public final class ComponentPropertiesCollector {
@@ -95,6 +96,7 @@ public final class ComponentPropertiesCollector {
 
   private void collectProperties(@NotNull Component component) {
     addProperties("", component, PROPERTIES);
+    PROPERTIES_EP_PROVIDER_NAME.getExtensionList().forEach(p -> fillExtendedProperties(p, component));
     Pair<String, String> addedAt = getAddedAtStacktrace(component);
     myProperties.add(new PropertyBean(addedAt.first, addedAt.second, addedAt.second != null));
 
@@ -126,6 +128,13 @@ public final class ComponentPropertiesCollector {
         addGridLayoutComponentConstraints(
           Objects.requireNonNull(((com.intellij.ui.dsl.gridLayout.GridLayout)layout).getConstraints((JComponent)component)));
       }
+    }
+  }
+
+  private <T> void fillExtendedProperties(ComponentPropertiesProvider<T> provider, Component component){
+    Class<T> pClass = provider.getComponentClass();
+    if (pClass.isAssignableFrom(component.getClass())) {
+      myProperties.addAll(provider.getProperties(pClass.cast(component)));
     }
   }
 
