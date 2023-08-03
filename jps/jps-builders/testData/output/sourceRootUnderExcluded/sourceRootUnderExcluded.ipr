@@ -5,7 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/sourceRootUnderExcluded.iml" filepath="$PROJECT_DIR$/sourceRootUnderExcluded.iml" />
     </modules>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_7" project-jdk-name="1.6" project-jdk-type="JavaSDK">
+  <component name="ProjectRootManager" version="2" project-jdk-name="1.6" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
 </project>
