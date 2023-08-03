@@ -98,7 +98,7 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
         List<IndexedMavenId> list;
         do {
           if (progress.isCanceled()) return null;
-          MavenLog.LOG.warn("process artifacts: " + start);
+          MavenLog.LOG.debug("process artifacts: " + start);
           list = getOrCreateWrappee().processArtifacts(mavenIndexId, start, ourToken);
           if (list != null) {
             processor.processArtifacts(list);
