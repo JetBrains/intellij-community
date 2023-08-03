@@ -1,8 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.test.events
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import org.gradle.tooling.LongRunningOperation
+import org.gradle.tooling.events.ProgressListener
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.service.project.GradleOperationHelperExtension
+import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
 import org.jetbrains.plugins.gradle.testFramework.annotations.GradleTestSource
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
@@ -630,5 +637,58 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       assertTestConsoleContains("Attempt to resolve configuration")
       assertTestConsoleDoesNotContain("Attempt to resolve configuration too early")
     }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
+    val extension = object : GradleOperationHelperExtension {
+      override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
+      override fun prepareForExecution(id: ExternalSystemTaskId,
+                                       operation: LongRunningOperation,
+                                       gradleExecutionSettings: GradleExecutionSettings) {
+        operation.addProgressListener(ProgressListener {})
+      }
+    }
+    val testDisposable = Disposer.newDisposable()
+    GradleOperationHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
+    testJunit5Project(gradleVersion) {
+      writeText("src/test/java/org/example/AppTest.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class AppTest {
+        |   @Test public void test1() {}
+        |}
+      """.trimMargin())
+      executeTasks(":test", isRunAsTest = true)
+      assertTestTreeView {
+        assertNode("AppTest") {
+          assertNode("test1")
+        }
+      }
+      assertBuildExecutionTree {
+        assertNode("successful") {
+          assertNode(":compileJava")
+          assertNode(":processResources")
+          assertNode(":classes")
+          assertNode(":compileTestJava")
+          assertNode(":processTestResources")
+          assertNode(":testClasses")
+          assertNode(":test") {
+            if (isBuiltInTestEventsUsed()) {
+              assertNode("Gradle Test Run :test") {
+                assertNode("Gradle Test Executor \\d+".toRegex()) {
+                  assertNode("AppTest") {
+                    assertNode("Test test1()(org.example.AppTest)")
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    Disposer.dispose(testDisposable)
   }
 }
