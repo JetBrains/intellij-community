@@ -51,7 +51,7 @@ TEMPLATE = """
  */
 
 /* Default Colors & Styles
- *   - Set the default foreground & background color with 'body'; and 
+ *   - Set the default foreground & background color with 'body'; and
  *     link colors with 'a:link' and 'a:visited'.
  *   - Use bold for decision list terms.
  *   - The heading styles defined here are used for headings *within*
@@ -73,7 +73,7 @@ h3                          { font-size: +110%; font-style: italic;
 code                        { font-size: 100%; }
 /* N.B.: class, not pseudoclass */
 a.link                      { font-family: monospace; }
- 
+
 /* Page Header & Footer
  *   - The standard page header consists of a navigation bar (with
  *     pointers to standard pages such as 'home' and 'trees'); a
@@ -84,7 +84,7 @@ a.link                      { font-family: monospace; }
  *     corresponding source code (using 'span.codelink').
  *   - The footer consists of a navigation bar, a timestamp, and a
  *     pointer to epydoc's homepage.
- */ 
+ */
 h1.epydoc                   { margin: 0; font-size: +140%; font-weight: bold; }
 h2.epydoc                   { font-size: +130%; font-weight: bold; }
 h3.epydoc                   { font-size: +115%; font-weight: bold;
@@ -95,8 +95,8 @@ table.navbar                { background: $navbar_bg; color: $navbar_fg;
                               border: $navbar_border; }
 table.navbar table          { color: $navbar_fg; }
 th.navbar-select            { background: $navbar_select_bg;
-                              color: $navbar_select_fg; } 
-table.navbar a              { text-decoration: none; }  
+                              color: $navbar_select_fg; }
+table.navbar a              { text-decoration: none; }
 table.navbar a:link         { color: $navbar_link; }
 table.navbar a:visited      { color: $navbar_visited_link; }
 span.breadcrumbs            { font-size: 85%; font-weight: bold; }
@@ -119,8 +119,8 @@ td.table-header table a:link      { color: $table_hdr_link; }
 td.table-header table a:visited   { color: $table_hdr_visited_link; }
 span.table-header           { font-size: 120%; font-weight: bold; }
 th.group-header             { background: $group_hdr_bg; color: $group_hdr_fg;
-                              text-align: left; font-style: italic; 
-                              font-size: 115%; 
+                              text-align: left; font-style: italic;
+                              font-size: 115%;
                               border: $table_border; }
 
 /* Summary Tables (functions, variables, etc)
@@ -180,7 +180,7 @@ table.link-index a:visited  { color: $table_visited_link; }
 span.index-where            { font-size: 70%; }
 table.metadata-index        { border-collapse: collapse;
                               background: $table_bg; color: $table_fg;
-                              border: $table_border; 
+                              border: $table_border;
                               margin: .2em 0 0 0; }
 td.metadata-index           { border-width: 1px; border-style: solid; }
 table.metadata-index a:link { color: $table_link; }
@@ -188,7 +188,7 @@ table.metadata-index a:visited  { color: $table_visited_link; }
 
 /* Function signatures
  *   - sig* is used for the signature in the details section.
- *   - .summary-sig* is used for the signature in the summary 
+ *   - .summary-sig* is used for the signature in the summary
  *     table, and when listing property accessor functions.
  * */
 .sig-name                   { color: $sig_name; }
@@ -219,7 +219,7 @@ table.summary
                               font-family: monospace; }
 
 /* Variable values
- *   - In the 'variable details' sections, each varaible's value is
+ *   - In the 'variable details' sections, each variable's value is
  *     listed in a 'pre.variable' box.  The width of this box is
  *     restricted to 80 chars; if the value's repr is longer than
  *     this it will be wrapped, using a backslash marked with
@@ -261,7 +261,7 @@ pre.base-tree               { font-size: 80%; margin: 0; }
 h1.toc                      { text-align: center; font-size: 105%;
                               margin: 0; font-weight: bold;
                               padding: 0; }
-h2.toc                      { font-size: 100%; font-weight: bold; 
+h2.toc                      { font-size: 100%; font-weight: bold;
                               margin: 0.5em 0 0 -0.3em; }
 
 /* Syntax Highlighting for Source Code
@@ -288,9 +288,9 @@ pre.py-doctest              { padding: .5em; margin: 1em;
                               border: $doctest_border; }
 table pre.py-doctest        { background: $doctest_in_table_bg;
                               color: $doctest_in_table_fg; }
-pre.py-src                  { border: $pysrc_border; 
+pre.py-src                  { border: $pysrc_border;
                               background: $pysrc_bg; color: $pysrc_fg; }
-.py-line                    { border-left: $pysrc_sep_border; 
+.py-line                    { border-left: $pysrc_sep_border;
                               margin-left: .2em; padding-left: .4em; }
 .py-lineno                  { font-style: italic; font-size: 90%;
                               padding-left: .5em; }
@@ -338,7 +338,7 @@ span.graph-caption          { }
  *     top and bottom margin (but not the left or right margin --
  *     for lists, that would cause the bullets to disappear.)
  */
-p.indent-wrapped-lines      { padding: 0 0 0 7em; text-indent: -7em; 
+p.indent-wrapped-lines      { padding: 0 0 0 7em; text-indent: -7em;
                               margin: 0; }
 .nomargin-top               { margin-top: 0; }
 .nomargin                   { margin-top: 0; margin-bottom: 0; }
@@ -363,7 +363,7 @@ p.log                       { font-weight: bold; margin: .5em 0 .5em 0; }
 tr.opt-changed              { color: $opt_changed_fg; font-weight: bold; }
 tr.opt-default              { color: $opt_default_fg; }
 pre.log                     { margin: 0; padding: 0; padding-left: 1em; }
-""" 
+"""
 
 ############################################################
 ## Derived stylesheets
@@ -378,7 +378,7 @@ def _set_colors(template, *dicts):
     colors = dicts[0].copy()
     for d in dicts[1:]: colors.update(d)
     return re.sub(r'\$(\w+)', lambda m:colors[m.group(1)], template)
-    
+
 def _rv(match):
     """
     Given a regexp match for a color, return the reverse-video version
@@ -417,7 +417,7 @@ _WHITE_COLORS = dict(
     table_visited_link      =  '#204080',
     table_border            =  '1px solid #608090',
     table_hdr_bg            =  '#70b0ff',
-    table_hdr_fg            =  '#000000', 
+    table_hdr_fg            =  '#000000',
     table_hdr_link          =  '#0000ff',
     table_hdr_visited_link  =  '#204080',
     group_hdr_bg            =  '#c0e0f8',

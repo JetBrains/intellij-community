@@ -1399,14 +1399,14 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pair.kt");
                 }
 
-                @TestMetadata("pairOfInitalizersWithNonLocalUsages.kt")
-                public void testPairOfInitalizersWithNonLocalUsages() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfInitalizersWithNonLocalUsages.kt");
+                @TestMetadata("pairOfInitializersWithNonLocalUsages.kt")
+                public void testPairOfInitializersWithNonLocalUsages() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfInitializersWithNonLocalUsages.kt");
                 }
 
-                @TestMetadata("pairOfVarInitalizersWithNonLocalUsages.kt")
-                public void testPairOfVarInitalizersWithNonLocalUsages() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfVarInitalizersWithNonLocalUsages.kt");
+                @TestMetadata("pairOfVarInitializersWithNonLocalUsages.kt")
+                public void testPairOfVarInitializersWithNonLocalUsages() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfVarInitializersWithNonLocalUsages.kt");
                 }
 
                 @TestMetadata("pairWithIf.kt")
@@ -1469,9 +1469,9 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/usedAndUnusedOutputValues.kt");
                 }
 
-                @TestMetadata("valAndVarInitalizersWithNonLocalUsages.kt")
-                public void testValAndVarInitalizersWithNonLocalUsages() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valAndVarInitalizersWithNonLocalUsages.kt");
+                @TestMetadata("valAndVarInitializersWithNonLocalUsages.kt")
+                public void testValAndVarInitializersWithNonLocalUsages() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valAndVarInitializersWithNonLocalUsages.kt");
                 }
 
                 @TestMetadata("valuesUsedInLambdaOnly.kt")

@@ -928,7 +928,7 @@
 	declare                  Whether the variable is declared
 				 or not.  True is the default.
 
-	scope                    The scope of the scripting varaible
+	scope                    The scope of the scripting variable
 				 defined.  NESTED is default.
 
       </xsd:documentation>
@@ -1007,4 +1007,3 @@
   </xsd:complexType>
 
 </xsd:schema>
-

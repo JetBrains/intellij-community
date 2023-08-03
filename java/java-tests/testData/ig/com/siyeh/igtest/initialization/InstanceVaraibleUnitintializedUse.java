@@ -1,13 +1,13 @@
 package com.siyeh.igtest.initialization;
 
-public class InstanceVaraibleUnitintializedUse{
+public class InstanceVariableUnitInitializedUse{
     private int foo;
 
     {
         foo++;
     }
 
-    public InstanceVaraibleUnitintializedUse()
+    public InstanceVariableUnitInitializedUse()
     {
         System.out.println(foo);
         foo = 3;
@@ -27,4 +27,3 @@ class AClass {
     aField = a.aField;
   }
 }
-

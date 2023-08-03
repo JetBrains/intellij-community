@@ -4,21 +4,21 @@
 /*************************************************************
  *
  *  MathJax/jax/element/mml/jax.js
- *  
+ *
  *  Implements the MML ElementJax that holds the internal represetation
  *  of the mathematics on the page.  Various InputJax will produce this
  *  format, and the OutputJax will display it in various formats.
  *
  *  ---------------------------------------------------------------------
- *  
+ *
  *  Copyright (c) 2009-2015 The MathJax Consortium
- * 
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- * 
+ *
  *      http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -78,7 +78,7 @@ MathJax.ElementJax.mml.Augment({
     SANSSERIFITALIC: "sans-serif-italic",
     SANSSERIFBOLDITALIC: "sans-serif-bold-italic",
     MONOSPACE: "monospace",
-    INITIAL: "inital",
+    INITIAL: "initial",
     TAILED: "tailed",
     LOOPED: "looped",
     STRETCHED: "stretched",
@@ -266,7 +266,7 @@ MathJax.ElementJax.mml.Augment({
     },
     getRemoved: {},
     linebreakContainer: false,
-    
+
     Init: function () {
       this.data = [];
       if (this.inferRow && !(arguments.length === 1 && arguments[0].inferred))
@@ -457,7 +457,7 @@ MathJax.ElementJax.mml.Augment({
       return this;
     }
   });
-  
+
   MML.mi = MML.mbase.Subclass({
     type: "mi", isToken: true,
     texClass: MML.TEXCLASS.ORD,
@@ -488,7 +488,7 @@ MathJax.ElementJax.mml.Augment({
       return this;
     }
   });
-  
+
   MML.mn = MML.mbase.Subclass({
     type: "mn", isToken: true,
     texClass: MML.TEXCLASS.ORD,
@@ -500,7 +500,7 @@ MathJax.ElementJax.mml.Augment({
       dir: MML.INHERIT
     }
   });
-  
+
   MML.mo = MML.mbase.Subclass({
     type: "mo", isToken: true,
     defaults: {
@@ -708,7 +708,7 @@ MathJax.ElementJax.mml.Augment({
       return this;
     }
   });
-  
+
   MML.mtext = MML.mbase.Subclass({
     type: "mtext", isToken: true,
     isSpacelike: function () {return true},
@@ -1089,7 +1089,7 @@ MathJax.ElementJax.mml.Augment({
     },
     setTeXclass: MML.mbase.setBaseTeXclasses
   });
-  
+
   MML.msub = MML.msubsup.Subclass({type: "msub"});
   MML.msup = MML.msubsup.Subclass({type: "msup", sub:2, sup:1});
   MML.mmultiscripts = MML.msubsup.Subclass({
@@ -1101,7 +1101,7 @@ MathJax.ElementJax.mml.Augment({
   });
   MML.mprescripts = MML.mbase.Subclass({type: "mprescripts"});
   MML.none = MML.mbase.Subclass({type: "none"});
-  
+
   MML.munderover = MML.mbase.Subclass({
     type: "munderover",
     base: 0, under: 1, over: 2, sub: 1, sup: 2,
@@ -1145,7 +1145,7 @@ MathJax.ElementJax.mml.Augment({
     },
     setTeXclass: MML.mbase.setBaseTeXclasses
   });
-  
+
   MML.munder = MML.munderover.Subclass({type: "munder"});
   MML.mover = MML.munderover.Subclass({
     type: "mover", over: 1, under: 2, sup: 1, sub: 2,
@@ -1276,7 +1276,7 @@ MathJax.ElementJax.mml.Augment({
   MML.mlabeledtr = MML.mtr.Subclass({
     type: "mlabeledtr"
   });
-  
+
   MML.maction = MML.mbase.Subclass({
     type: "maction",
     defaults: {
@@ -1301,7 +1301,7 @@ MathJax.ElementJax.mml.Augment({
       return prev;
     }
   });
-  
+
   MML.semantics = MML.mbase.Subclass({
     type: "semantics", notParent: true,
     isEmbellished: MML.mbase.childEmbellished,
@@ -1393,14 +1393,14 @@ MathJax.ElementJax.mml.Augment({
       return this.data[0].getAnnotation(name);
     }
   });
-  
+
   MML.chars = MML.mbase.Subclass({
     type: "chars",
     Append: function () {this.data.push.apply(this.data,arguments)},
     value: function () {return this.data.join("")},
     toString: function () {return this.data.join("")}
   });
-  
+
   MML.entity = MML.mbase.Subclass({
     type: "entity",
     Append: function () {this.data.push.apply(this.data,arguments)},
@@ -1417,7 +1417,7 @@ MathJax.ElementJax.mml.Augment({
            + String.fromCharCode((n&0x3FF)+0xDC00);
     }
   });
-  
+
   MML.xml = MML.mbase.Subclass({
     type: "xml",
     Init: function () {
@@ -1460,7 +1460,7 @@ MathJax.ElementJax.mml.Augment({
     value: function () {return this.div},
     toString: function () {return this.div.innerHTML}
   });
-  
+
   MML.TeXAtom = MML.mbase.Subclass({
     type: "texatom",
     inferRow: true, notParent: true,
@@ -1474,11 +1474,11 @@ MathJax.ElementJax.mml.Augment({
     },
     adjustTeXclass: MML.mo.prototype.adjustTeXclass
   });
-  
+
   MML.NULL = MML.mbase().With({type:"null"});
 
   var TEXCLASS = MML.TEXCLASS;
-  
+
   var MO = {
     ORD:        [0,0,TEXCLASS.ORD],
     ORD11:      [1,1,TEXCLASS.ORD],
@@ -1799,7 +1799,7 @@ MathJax.ElementJax.mml.Augment({
   },{
     OPTYPES: MO
   });
-  
+
   //
   //  These are not in the W3C table, but FF works this way,
   //  and it makes sense, so add it here
@@ -1811,7 +1811,7 @@ MathJax.ElementJax.mml.Augment({
   OPTABLE.prefix["\u2225"] = MO.OPEN;
   OPTABLE.postfix["\u2223"] = MO.CLOSE;
   OPTABLE.postfix["\u2225"] = MO.CLOSE;
-  
+
 })(MathJax.ElementJax.mml);
 
 MathJax.ElementJax.mml.loadComplete("jax.js");

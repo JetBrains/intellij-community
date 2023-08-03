@@ -378,7 +378,7 @@ def _windowsworker(ui, func, staticargs, args, hasretval):
             t.join(remainingtime)
             if t.is_alive():
                 # pass over the workers joining failure. it is more
-                # important to surface the inital exception than the
+                # important to surface the initial exception than the
                 # fact that one of workers may be processing a large
                 # task and does not get to handle the interruption.
                 ui.warn(

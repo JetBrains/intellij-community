@@ -306,7 +306,7 @@ variable-class           Name of the class of the variable.
 declare                  Whether the variable is declared or not.
                          True is the default.
 
-scope                    The scope of the scripting varaible
+scope                    The scope of the scripting variable
                          defined.  NESTED is default.
 
 description              Optional description of this variable
@@ -364,7 +364,7 @@ values are "AT_BEGIN" and "AT_END".
 The attribute tag defines an attribute for the nesting tag
 
 An attribute definition is composed of:
-	
+
 - the attributes name (required)
 - if the attribute is required or optional (optional)
 - if the attributes value may be dynamically calculated at runtime

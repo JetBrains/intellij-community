@@ -1861,9 +1861,9 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
                 runTest("testData/refactoring/inline/namedFunction/returnAtEnd/UnusedReturnValue.kt");
             }
 
-            @TestMetadata("ValIntializer.kt")
-            public void testValIntializer() throws Exception {
-                runTest("testData/refactoring/inline/namedFunction/returnAtEnd/ValIntializer.kt");
+            @TestMetadata("ValInitializer.kt")
+            public void testValInitializer() throws Exception {
+                runTest("testData/refactoring/inline/namedFunction/returnAtEnd/ValInitializer.kt");
             }
 
             @TestMetadata("WithComments.kt")

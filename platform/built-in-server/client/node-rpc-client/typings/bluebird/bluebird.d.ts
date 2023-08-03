@@ -301,14 +301,14 @@ interface PromiseConstructor {
 
     // array with values
     mapSeries<R, U>(values: R[], mapper: (item: R, index: number, arrayLength: number) => U | PromiseLike<U>): Promise<U[]>;
-    
+
 
     /**
      * Reduce an array, or a promise of an array, which contains a promises (or a mix of promises and values) with the given `reducer` function with the signature `(total, current, index, arrayLength)` where `item` is the resolved value of a respective promise in the input array. If any promise in the input array is rejected the returned promise is rejected as well.
      *
      * If the reducer function returns a promise or a thenable, the result for the promise is awaited for before continuing with next iteration.
      *
-     * *The original array is not modified. If no `intialValue` is given and the array doesn't contain at least 2 items, the callback will not be called and `undefined` is returned. If `initialValue` is given and the array doesn't have at least 1 item, `initialValue` is returned.*
+     * *The original array is not modified. If no `initialValue` is given and the array doesn't contain at least 2 items, the callback will not be called and `undefined` is returned. If `initialValue` is given and the array doesn't have at least 1 item, `initialValue` is returned.*
      */
     // promise of array with promises of value
     reduce<T, U>(values: PromiseLike<PromiseLike<T>[]>, reducer: (total: U, current: T, index: number, arrayLength: number) => PromiseLike<U>, initialValue?: U): Promise<U>;

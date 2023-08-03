@@ -198,9 +198,9 @@ public class StubBuilderTestGenerated extends AbstractStubBuilderTest {
         runTest("testData/stubs/ParametersWithFqName.kt");
     }
 
-    @TestMetadata("PropertyAsPropertyInitalizerInvalidCode.kt")
-    public void testPropertyAsPropertyInitalizerInvalidCode() throws Exception {
-        runTest("testData/stubs/PropertyAsPropertyInitalizerInvalidCode.kt");
+    @TestMetadata("PropertyAsPropertyInitializerInvalidCode.kt")
+    public void testPropertyAsPropertyInitializerInvalidCode() throws Exception {
+        runTest("testData/stubs/PropertyAsPropertyInitializerInvalidCode.kt");
     }
 
     @TestMetadata("QualifiedAnnotationOnFunction.kt")
