@@ -594,9 +594,9 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return file == null ? null : file.getUserData(DEFAULT_LAYOUT_FOR_FILE);
   }
 
-  public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
+  public static FileEditor @NotNull [] openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
     file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
-    FileEditorManager.getInstance(project).openFile(file, true);
+    return FileEditorManager.getInstance(project).openFile(file, true);
   }
 
   private static class MyEditorLayeredComponentWrapper extends JBLayeredPane {
