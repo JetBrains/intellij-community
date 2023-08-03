@@ -25,7 +25,7 @@ import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase implements CleanupLocalInspectionTool {
+public class LombokGetterMayBeUsedInspection extends LombokJavaInspectionBase {
 
   @NotNull
   @Override
