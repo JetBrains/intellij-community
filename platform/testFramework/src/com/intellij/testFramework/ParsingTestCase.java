@@ -385,20 +385,20 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     var rangeStart = StringUtil.commonPrefixLength(textBefore, textAfter);
     var rangeEnd = textBefore.length() - StringUtil.commonSuffixLength(textBefore, textAfter);
 
-    assert (rangeStart <= rangeEnd);
+    var range = new TextRange(Math.min(rangeStart, rangeEnd), Math.max(rangeStart, rangeEnd));
 
-    var psiToStringDefault = DebugUtil.psiToString(fileAfter, true, false);
+    var psiToStringDefault = DebugUtil.psiToString(fileAfter, true, false, true, null);
     DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
       new BlockSupportImpl().reparseRange(
         file,
         file.getNode(),
-        new TextRange(rangeStart, rangeEnd),
+        range,
         fileAfter.getText(),
         new EmptyProgressIndicator(),
         file.getText()
       ).performActualPsiChange(file);
     });
-    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
+    assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false, true, null));
   }
 
   protected PsiFile createPsiFile(@NotNull String name, @NotNull String text) {
