@@ -37,6 +37,7 @@ import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -75,8 +76,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -983,8 +984,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     boolean updateByTimerEnabled = dca.isUpdateByTimerEnabled();
     if (PassExecutorService.LOG.isDebugEnabled()) {
       PassExecutorService.log(null, null, "Update Runnable. myUpdateByTimerEnabled:",
-                              updateByTimerEnabled, " something disposed:",
-                              PowerSaveMode.isEnabled() || !project.isInitialized(), " activeEditors:", activeEditors);
+        updateByTimerEnabled, " activeEditors:", activeEditors,
+        (dca.myPsiDocumentManager.hasEventSystemEnabledUncommittedDocuments() ? " hasEventSystemEnabledUncommittedDocuments(" + Arrays.toString(dca.myPsiDocumentManager.getUncommittedDocuments())+")" : "()")
+        + (ApplicationManager.getApplication().isWriteAccessAllowed() ? " inside write action" : "r"));
     }
     if (!updateByTimerEnabled) return;
 
@@ -1004,10 +1006,17 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     try {
       boolean submitted = false;
       for (FileEditor fileEditor : activeEditors) {
+        if (fileEditor instanceof TextEditor textEditor && !AsyncEditorLoader.Companion.isEditorLoaded(textEditor.getEditor())) {
+          // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
+          // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
+          AsyncEditorLoader.Companion.performWhenLoaded(((TextEditor)fileEditor).getEditor(), updateRunnable);
+        }
         VirtualFile virtualFile = getVirtualFile(fileEditor);
         PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(dca.myProject, virtualFile);
-        if (psiFile == null) continue;
-        submitted |= dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+        submitted |= psiFile != null && dca.queuePassesCreation(fileEditor, virtualFile, psiFile, ArrayUtil.EMPTY_INT_ARRAY) != null;
+        if (PassExecutorService.LOG.isDebugEnabled()) {
+          PassExecutorService.log(null, null, "submitting psiFile:", psiFile+"; submitted=", submitted);
+        }
       }
       if (!submitted) {
         // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
@@ -1045,21 +1054,26 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     try (AccessToken ignored = ClientId.withClientId(ClientFileEditorManager.getClientId(fileEditor))) {
       highlighter = fileEditor.getBackgroundHighlighter();
     }
+    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (highlighter == null) {
+      if (PassExecutorService.LOG.isDebugEnabled()) {
+        PassExecutorService.log(null, null, "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
+          fileEditor,fileEditor.getClass(),(editor == null ? "editor is null" : "editor loaded:"+ AsyncEditorLoader.Companion.isEditorLoaded(editor)));
+      }
       return null;
     }
     DaemonProgressIndicator progress = createUpdateProgress(fileEditor);
     // pre-create HighlightingSession in EDT to make visible range available in a background thread
-    Editor editor = fileEditor instanceof TextEditor ? ((TextEditor)fileEditor).getEditor() : null;
     if (editor != null && editor.getDocument().isInBulkUpdate()) {
       // avoid restarts until the bulk mode is finished and daemon restarted in DaemonListeners
       stopProcess(false, editor.getDocument() +" is in bulk state");
       throw new ProcessCanceledException();
     }
-    Document document = fileEditor instanceof TextEditor
-                        ? ((TextEditor)fileEditor).getEditor().getDocument()
-                        : FileDocumentManager.getInstance().getCachedDocument(virtualFile);
+    Document document = editor == null ? FileDocumentManager.getInstance().getCachedDocument(virtualFile) : editor.getDocument();
     if (document == null) {
+      if (PassExecutorService.LOG.isDebugEnabled()) {
+        PassExecutorService.log(progress, null, "couldn't submit", virtualFile, "because document is null: fileEditor=",fileEditor,fileEditor.getClass());
+      }
       return null;
     }
     EditorColorsScheme scheme = editor == null ? null : editor.getColorsScheme();

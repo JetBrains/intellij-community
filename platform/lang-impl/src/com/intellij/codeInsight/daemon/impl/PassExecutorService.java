@@ -549,13 +549,12 @@ final class PassExecutorService implements Disposable {
       synchronized (PassExecutorService.class) {
         String infos = StringUtil.join(info, Functions.TO_STRING(), " ");
         String message = StringUtil.repeatSymbol(' ', getThreadNum() * 4)
-                         + " " + pass + " "
+                         + " " + (pass == null ? "" : pass + " ")
                          + infos
                          + "; progress=" + (progressIndicator == null ? null : progressIndicator.hashCode())
                          + " " + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
                          + docText;
         LOG.debug(message);
-        //System.out.println(message);
       }
     }
   }
