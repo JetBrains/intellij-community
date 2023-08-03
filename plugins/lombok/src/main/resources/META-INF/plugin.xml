@@ -23,9 +23,11 @@
   <li><a href="https://projectlombok.org/features/Builder.html">@Builder</a></li>
   <li><a href="https://projectlombok.org/features/experimental/SuperBuilder">@SuperBuilder</a></li>
   <li><a href="https://projectlombok.org/features/Builder.html#singular">@Singular</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/Jacksonized">@Jacksonized</a></li>
   <li><a href="https://projectlombok.org/features/Delegate.html">@Delegate</a></li>
   <li><a href="https://projectlombok.org/features/Value.html">@Value</a></li>
   <li><a href="https://projectlombok.org/features/experimental/Accessors.html">@Accessors</a></li>
+  <li><a href="https://projectlombok.org/features/experimental/Tolerate">@Tolerate</a></li>
   <li><a href="https://projectlombok.org/features/experimental/Wither.html">@Wither</a></li>
   <li><a href="https://projectlombok.org/features/With.html">@With</a></li>
   <li><a href="https://projectlombok.org/features/SneakyThrows.html">@SneakyThrows</a></li>
