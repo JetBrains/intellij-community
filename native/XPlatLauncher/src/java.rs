@@ -41,14 +41,18 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: *con
     match &mut *HOOK_MESSAGES.lock().unwrap() {
         None => unsafe { vfprintf(fp, format, args) },
         Some(messages) => {
-            let len = unsafe { vsnprintf(std::ptr::null_mut(), 0, format, args) } as usize + 1;
-            let mut buffer = Vec::<c_char>::with_capacity(len);
-            let len = unsafe { vsnprintf(buffer.as_mut_ptr(), len, format, args) };
-            let c_str = unsafe { CStr::from_ptr(buffer.as_ptr()) };
-            let message = c_str.to_string_lossy().to_string();
+            let required_len = unsafe { vsnprintf(std::ptr::null_mut(), 0, format, args) };
+            let message = if required_len <= 0 {
+                (unsafe { CStr::from_ptr(format) }).to_string_lossy().to_string()
+            } else {
+                let len = required_len as usize + 1;
+                let mut buffer = Vec::<c_char>::with_capacity(len);
+                let _ = unsafe { vsnprintf(buffer.as_mut_ptr(), len, format, args) };
+                (unsafe { CStr::from_ptr(buffer.as_ptr()) }).to_string_lossy().to_string()
+            };
             debug!("[JVM] vfprintf_hook: {:?}", message);
             messages.push(message);
-            len
+            0  // because nothing was actually printed
         }
     }
 }
