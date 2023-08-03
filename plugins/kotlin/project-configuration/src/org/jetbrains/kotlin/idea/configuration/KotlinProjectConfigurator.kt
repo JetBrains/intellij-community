@@ -43,8 +43,11 @@ interface KotlinProjectConfigurator {
     /**
      * Checks if the [module] can be automatically configured with Kotlin.
      * Returns the settings that can be configured, or null if automatic configuration is not possible.
+     *
+     * Note: This function is called from a background thread in a background task.
+     * Implementations are expected to make sure they obtain read-locks within this function appropriately.
      */
-    fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? = null
+    suspend fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? = null
 
     /**
      * Returns true if automatic configuration is available with this configurator.
@@ -52,7 +55,7 @@ interface KotlinProjectConfigurator {
     fun canRunAutoConfig(): Boolean = false
 
     /**
-     * Automatically configures the module specified in the [settings] previously calculated using [calculateAutoConfigSettings]
+     * Automatically configures the module specified in the [settings] previously calculated using [calculateAutoConfigSettings].
      */
     fun runAutoConfig(settings: AutoConfigurationSettings) {
         throw NotImplementedError("Auto-configuration is not implemented for this configurator")

@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.runInEdtAndWait
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
@@ -23,16 +24,16 @@ class KotlinAutoConfigTest : KotlinGradleImportingTestCase() {
         runInEdtAndWait {
             val registryValue = Registry.get("kotlin.configuration.gradle.autoConfig.enabled")
             val oldValue = registryValue.asBoolean()
-            registryValue.setValue(true)
+            registryValue.setValue(true, testRootDisposable)
             try {
-                runWriteAction {
-                    val module = ModuleManager.getInstance(myProject).findModuleByName(moduleName)!!
+                val module = runReadAction {
+                    ModuleManager.getInstance(myProject).findModuleByName(moduleName)!!
+                }
 
-                    val autoConfigStatus = findGradleModuleConfigurator().calculateAutoConfigSettings(module)
-                    assertEquals(expectedResult, autoConfigStatus?.kotlinVersion)
-                    if (expectedResult != null) {
-                        assertEquals(module, autoConfigStatus?.module)
-                    }
+                val autoConfigStatus = runBlocking { findGradleModuleConfigurator().calculateAutoConfigSettings(module) }
+                assertEquals(expectedResult, autoConfigStatus?.kotlinVersion)
+                if (expectedResult != null) {
+                    assertEquals(module, autoConfigStatus?.module)
                 }
             } finally {
                 registryValue.setValue(oldValue)

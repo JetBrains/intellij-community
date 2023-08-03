@@ -10,7 +10,6 @@ import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.LangDataKeys
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -39,6 +38,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.toModuleGroup
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinStatus
+import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurationService
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator
 import org.jetbrains.kotlin.idea.statistics.KotlinCreateFileFUSCollector
 import org.jetbrains.kotlin.idea.statistics.KotlinJ2KOnboardingFUSCollector
@@ -301,17 +301,8 @@ internal fun createKotlinFileFromTemplate(name: String, template: FileTemplate, 
         }
 
         // New auto-config logic
-        ApplicationManager.getApplication().invokeLater {
-            val autoConfigurator = KotlinProjectConfigurator.EP_NAME.extensions
-                .firstOrNull { it.canRunAutoConfig() && it.isApplicable(module) }
-            autoConfigurator?.let {
-                autoConfigurator.calculateAutoConfigSettings(module)?.let { settings ->
-                    autoConfigurator.runAutoConfig(settings)
-                }
-            }
-        }
-
-        return@computeWithAlternativeResolveEnabled psiFile
+        KotlinProjectConfigurationService.getInstance(module.project).runAutoConfigurationIfPossible(module)
+        psiFile
     }
 }
 

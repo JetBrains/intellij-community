@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleCodeInsightCommon
 import com.intellij.codeInsight.CodeInsightUtilCore
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.actions.OpenFileAction
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
@@ -14,6 +15,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
+import com.intellij.openapi.progress.withBackgroundProgress
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.projectRoots.Sdk
@@ -142,12 +144,13 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         return notificationVisibleProperty.get()
     }
 
-    override fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
+    private fun calculateAutoConfigSettingsReadAction(module: Module): AutoConfigurationSettings? {
         val project = module.project
         val baseModule = module.toModuleGroup().baseModule
 
         if (!isAutoConfigurationEnabled() || !isApplicable(baseModule)) return null
         if (project.isGradleSyncPending() || project.isGradleSyncInProgress()) return null
+
         if (module.hasKotlinPluginEnabled() || baseModule.getBuildScriptPsiFile() == null) return null
 
         val gradleVersion = project.guessProjectDir()?.path?.let {
@@ -155,8 +158,8 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             linkedSettings?.resolveGradleVersion()
         } ?: return null
 
-        val hierarchy = project.buildKotlinModuleHierarchy() ?: return null
-        val moduleNode = hierarchy.getNodeForModule(baseModule) ?: return null
+        val hierarchy = project.buildKotlinModuleHierarchy()
+        val moduleNode = hierarchy?.getNodeForModule(baseModule) ?: return null
         if (moduleNode.definedKotlinVersion != null || moduleNode.hasKotlinVersionConflict()) return null
 
         val forcedKotlinVersion = moduleNode.getForcedKotlinVersion()
@@ -176,6 +179,12 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
         val maxKotlinVersion = remainingKotlinVersions.maxOrNull() ?: return null
 
         return AutoConfigurationSettings(baseModule, maxKotlinVersion)
+    }
+
+    override suspend fun calculateAutoConfigSettings(module: Module): AutoConfigurationSettings? {
+        return readAction {
+            calculateAutoConfigSettingsReadAction(module)
+        }
     }
 
     private fun Project.scheduleGradleSync() {
