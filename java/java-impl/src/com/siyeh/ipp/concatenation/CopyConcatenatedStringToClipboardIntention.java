@@ -43,18 +43,18 @@ public class CopyConcatenatedStringToClipboardIntention extends PsiBasedModComma
   @Override
   protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiExpression element) {
     final String text;
-    if (element instanceof PsiLiteralExpression literalExpression) {
+    PsiPolyadicExpression polyadic = PsiTreeUtil.getNonStrictParentOfType(element, PsiPolyadicExpression.class);
+    if (ExpressionUtils.isStringConcatenation(polyadic)) {
+      text = buildConcatenationText(polyadic);
+    }
+    else if (element instanceof PsiLiteralExpression literalExpression) {
       if (!(literalExpression.getValue() instanceof String string)) {
         return ModCommand.nop();
       }
       text = string;
     }
     else {
-      PsiPolyadicExpression polyadic = PsiTreeUtil.getNonStrictParentOfType(element, PsiPolyadicExpression.class);
-      if (!ExpressionUtils.isStringConcatenation(polyadic)) {
-        return ModCommand.nop();
-      }
-      text = buildConcatenationText(polyadic);
+      return ModCommand.nop();
     }
     return ModCommand.copyToClipboard(text);
   }

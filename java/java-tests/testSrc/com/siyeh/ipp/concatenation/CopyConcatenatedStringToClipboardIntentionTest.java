@@ -21,6 +21,15 @@ public class CopyConcatenatedStringToClipboardIntentionTest extends IPPTestCase 
     assertEquals("simple", result);
   }
 
+  public void testConcatenationWithCaretInLiteral() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.launchAction(myFixture.findSingleIntention(
+      IntentionPowerPackBundle.message("copy.concatenated.string.to.clipboard.intention.name")));
+    final Object result = CopyPasteManager.getInstance().getContents(DataFlavor.stringFlavor);
+    assertEquals("not ? yet", result);
+  }
+
+
   public void testSimpleConcatenation() {
     myFixture.configureByFile(getTestName(false) + ".java");
     IntentionAction action = myFixture.findSingleIntention(
