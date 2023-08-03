@@ -35,6 +35,8 @@ import javax.swing.SwingUtilities
 
 @ApiStatus.Internal
 object NewUiOnboardingUtil {
+  const val ONBOARDING_PROPOSED_VERSION = "experimental.ui.onboarding.proposed.version"
+
   private const val LOTTIE_SCRIPT_PATH = "newUiOnboarding/lottie.js"
   private const val LIGHT_SUFFIX = ""
   private const val LIGHT_HEADER_SUFFIX = "_light_header"

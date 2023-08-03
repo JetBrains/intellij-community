@@ -47,7 +47,12 @@ public abstract class ExperimentalUI {
   @SuppressWarnings("deprecation") public static final String KEY = NewUiValue.KEY;
 
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
+  // Last IDE version when New UI was enabled
+  public static final String NEW_UI_USED_VERSION = "experimental.ui.used.version";
   public static final String NEW_UI_FIRST_SWITCH = "experimental.ui.first.switch";
+  // Means that IDE is started after enabling the New UI (not necessary the first time).
+  // Should be unset by the client, or it will be unset on the IDE close.
+  public static final String NEW_UI_SWITCH = "experimental.ui.switch";
   public static final String NEW_UI_PROMO_BANNER_DISABLED_PROPERTY = "experimental.ui.promo.banner.disabled";
 
   private static final String FIRST_PROMOTION_DATE_PROPERTY = "experimental.ui.first.promotion.localdate";
