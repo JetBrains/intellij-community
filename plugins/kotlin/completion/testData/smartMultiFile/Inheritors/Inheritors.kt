@@ -1,10 +1,10 @@
 package p1
 
-fun foo(): p2.KotlinTrait {
+fun foo(): p2.KotlinInterface {
     return <caret>
 }
 
-// EXIST: { lookupString: "object", itemText: "object : KotlinTrait{...}" }
+// EXIST: { lookupString: "object", itemText: "object : KotlinInterface{...}" }
 // EXIST: { lookupString: "KotlinInheritor1", itemText: "KotlinInheritor1", tailText: "() (p2)" }
 // EXIST: { lookupString: "KotlinInheritor2", itemText: "KotlinInheritor2", tailText: "(s: String) (p2)" }
 // EXIST: { lookupString: "object", itemText: "object : KotlinInheritor3(){...}" }

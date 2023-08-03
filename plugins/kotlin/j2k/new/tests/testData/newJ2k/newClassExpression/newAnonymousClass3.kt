@@ -1,8 +1,8 @@
-import kotlinApi.KotlinTrait
+import kotlinApi.KotlinInterface
 
 internal class C {
     fun foo() {
-        val t: KotlinTrait = object : KotlinTrait {
+        val t: KotlinInterface = object : KotlinInterface {
             override fun nullableFun(): String? {
                 return null
             }

@@ -25,7 +25,7 @@ public open class KotlinClass(public var field: Int) {
     }
 }
 
-public interface KotlinTrait {
+public interface KotlinInterface {
     public fun nullableFun(): String?
     public fun notNullableFun(): String
 
