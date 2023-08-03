@@ -34,8 +34,9 @@ import javax.swing.SwingUtilities
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(FlowPreview::class)
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 internal class ImageOrColorPreviewService(
+  private val project: Project,
   private val coroutineScope: CoroutineScope,
 ) {
 
@@ -67,28 +68,23 @@ internal class ImageOrColorPreviewService(
       return
     }
     val project = editor.getProject()
-    if (project == null || project.isDisposed()) {
-      return
+    if (project != this.project) {
+      LOG.error("ImageOrColorPreviewService.attach: invalid project, ours is ${this.project} and the editor's is $project")
     }
     coroutineScope.launch(CoroutineName("ImageOrColorPreviewService attach job for $editor")) {
-      EDITOR_ATTACH_JOB[editor] = coroutineContext.job
-      try {
-        doAttach(project, editor)
-        awaitCancellation()
-      }
-      finally {
-        withContext(NonCancellable) {
-          doDetach(editor)
-        }
-      }
+      doAttach(editor)
     }
   }
 
   fun detach(editor: Editor) {
-    EDITOR_ATTACH_JOB[editor]?.cancel()
+    val project = editor.getProject()
+    if (project != this.project) {
+      LOG.error("ImageOrColorPreviewService.detach: invalid project, ours is ${this.project} and the editor's is $project")
+    }
+    doDetach(editor)
   }
 
-  private suspend fun doAttach(project: Project, editor: Editor) {
+  private suspend fun doAttach(editor: Editor) {
     val psiFile = readAction {
       val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument())
       if (psiFile == null || !psiFile.isValid || psiFile is PsiCompiledElement || !isSupportedFile(psiFile)) {
@@ -111,19 +107,16 @@ internal class ImageOrColorPreviewService(
     }
   }
 
-  private suspend fun doDetach(editor: Editor) {
-    withContext(Dispatchers.EDT) {
-      val keyListener = EDITOR_KEY_LISTENER_ADDED[editor]
-      if (keyListener != null) {
-        EDITOR_KEY_LISTENER_ADDED[editor] = null
-        editor.getContentComponent().removeKeyListener(keyListener)
-      }
-      val mouseListener = EDITOR_MOUSE_LISTENER_ADDED[editor]
-      if (mouseListener != null) {
-        EDITOR_MOUSE_LISTENER_ADDED[editor] = null
-        editor.removeEditorMouseMotionListener(mouseListener)
-      }
-      EDITOR_ATTACH_JOB[editor] = null
+  private fun doDetach(editor: Editor) {
+    val keyListener = EDITOR_KEY_LISTENER_ADDED[editor]
+    if (keyListener != null) {
+      EDITOR_KEY_LISTENER_ADDED[editor] = null
+      editor.getContentComponent().removeKeyListener(keyListener)
+    }
+    val mouseListener = EDITOR_MOUSE_LISTENER_ADDED[editor]
+    if (mouseListener != null) {
+      EDITOR_MOUSE_LISTENER_ADDED[editor] = null
+      editor.removeEditorMouseMotionListener(mouseListener)
     }
   }
 
@@ -230,7 +223,6 @@ internal class ImageOrColorPreviewService(
 
     private val LOG = Logger.getInstance(ImageOrColorPreviewService::class.java)
 
-    private val EDITOR_ATTACH_JOB = Key.create<Job>("previewManagerEditorJob")
     private val EDITOR_KEY_LISTENER_ADDED = Key.create<KeyListener>("previewManagerKeyListenerAdded")
     private val EDITOR_MOUSE_LISTENER_ADDED = Key.create<EditorMouseMotionListener>("previewManagerMouseListenerAdded")
 

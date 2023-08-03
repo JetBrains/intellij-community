@@ -310,7 +310,7 @@ class CtrlMouseHandler2(
     val component = HintUtil.createInformationLabel(text, hyperlinkListener, null, null).also {
       it.border = JBUI.Borders.empty(6, 6, 5, 6)
     }
-    AppUIUtil.targetToDevice(component, editor.component)
+    //AppUIUtil.targetToDevice(component, editor.component)
     return showHint(editor, hostOffset, component)
   }
 
