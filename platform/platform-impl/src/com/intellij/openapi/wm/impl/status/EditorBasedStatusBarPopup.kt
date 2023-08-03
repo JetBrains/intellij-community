@@ -145,7 +145,7 @@ abstract class EditorBasedStatusBarPopup(
   private suspend fun doUpdate(finishUpdate: Runnable?) {
     val file = getSelectedFile()
     val state = readAction {
-      getWidgetState(file)
+      getWidgetState(file?.takeIf { it.isValid })
     }
     if (state != WidgetState.NO_CHANGE) {
       withContext(Dispatchers.EDT) {
