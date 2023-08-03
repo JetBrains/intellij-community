@@ -295,17 +295,14 @@ suspend fun <T> blockingContextScope(action: () -> T): T {
  */
 @RequiresBlockingContext
 fun currentThreadScope() : CoroutineScope {
-  val threadContext = currentThreadContext()
+  val threadContext = prepareCurrentThreadContext()
   if (threadContext[Job] == null) {
     LOG.error(IllegalStateException(
       """There is no `Job` in this thread, spawned coroutines are not cancellable. 
         | If the transition from coroutines to blocking code happens in the same stack frame as the call to this function, the transition should use `blockingContext`.
         | If the transition occurs in the different stack frame, then the transition should use `blockingContextScope` to set up a `Job` on this frame.""".trimMargin()))
   }
-  val newContext = threadContext
-    // the users should explicitly request structured concurrency on the next transition to blocking code
-    .minusKey(BlockingJob)
-  return CoroutineScope(newContext)
+  return CoroutineScope(threadContext)
 }
 
 

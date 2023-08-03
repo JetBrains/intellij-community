@@ -53,7 +53,7 @@ fun <X> withJob(job: Job, action: () -> X): X = blockingContext(job, action)
  * }
  * ```
  */
-private fun prepareCurrentThreadContext(): CoroutineContext {
+internal fun prepareCurrentThreadContext(): CoroutineContext {
   return currentThreadContext().minusKey(BlockingJob)
 }
 
