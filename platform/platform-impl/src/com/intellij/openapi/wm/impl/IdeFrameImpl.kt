@@ -6,6 +6,7 @@ import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.StatusBar
@@ -14,14 +15,12 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.Alarm
 import com.intellij.util.ui.EdtInvocationManager
 import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.awt.Graphics
-import java.awt.Insets
-import java.awt.Rectangle
-import java.awt.Window
+import java.awt.*
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.accessibility.AccessibleContext
@@ -38,7 +37,14 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
       get() = getFrames().firstOrNull { it.isActive }
   }
 
+  private var linuxComponentListener: LinuxComponentListener? = null
+
   init {
+    if (SystemInfoRt.isXWindow) {
+      linuxComponentListener = LinuxComponentListener(this)
+      addComponentListener(linuxComponentListener)
+    }
+
     if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
       addComponentListener(EventLogger(frame = this, log = IDE_FRAME_EVENT_LOG))
     }
@@ -123,6 +129,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun isInFullScreen(): Boolean = frameHelper?.isInFullScreen ?: false
 
   override fun dispose() {
+    linuxComponentListener?.let {
+      it.dispose()
+      linuxComponentListener = null
+    }
+
     val frameHelper = frameHelper
     if (frameHelper == null) {
       doDispose()
@@ -199,3 +210,29 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
   }
 }
 
+private class LinuxComponentListener(private val frame: IdeFrameImpl): ComponentAdapter() {
+
+  private val alarm = Alarm()
+  private var gc = frame.graphicsConfiguration
+
+  override fun componentMoved(e: ComponentEvent?) {
+    val newGc = frame.graphicsConfiguration
+    if (gc !== newGc) {
+      gc = newGc
+      // Ubuntu unexpectedly turns on FullScreen when maximized IDE is moved from one monitor to a secondary monitor via keyboard shortcuts.
+      // It happens with some delay, so schedule synchronize FullScreen mode with OS
+      alarm.cancelAllRequests()
+      alarm.addRequest(::syncFullScreen, 300)
+    }
+  }
+
+  fun dispose() {
+    Disposer.dispose(alarm)
+  }
+
+  private fun syncFullScreen() {
+    if (frame.isInFullScreen != X11UiUtil.isInFullScreenMode(frame)) {
+      X11UiUtil.toggleFullScreenMode(frame)
+    }
+  }
+}
