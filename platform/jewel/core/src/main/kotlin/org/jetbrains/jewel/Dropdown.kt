@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalInputModeManager
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.window.Popup
+import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Error
 import org.jetbrains.jewel.CommonStateBitMask.Focused
@@ -52,7 +53,7 @@ fun Dropdown(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     menuModifier: Modifier = Modifier,
-    error: Boolean = false,
+    outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: DropdownStyle = IntelliJTheme.dropdownStyle,
     menuContent: MenuScope.() -> Unit,
@@ -63,11 +64,11 @@ fun Dropdown(
         var skipNextClick by remember { mutableStateOf(false) }
 
         var dropdownState by remember(interactionSource) {
-            mutableStateOf(DropdownState.of(enabled = enabled, error = error))
+            mutableStateOf(DropdownState.of(enabled = enabled, outline = outline))
         }
 
-        remember(enabled, error) {
-            dropdownState = dropdownState.copy(enabled = enabled, error = error)
+        remember(enabled, outline) {
+            dropdownState = dropdownState.copy(enabled = enabled, outline = Outline.Error)
         }
 
         LaunchedEffect(interactionSource) {
@@ -205,6 +206,10 @@ internal fun DropdownMenu(
 value class DropdownState(val state: ULong) : StateWithOutline {
 
     @Stable
+    override val isActive: Boolean
+        get() = state and Active != 0UL
+
+    @Stable
     override val isEnabled: Boolean
         get() = state and Enabled != 0UL
 
@@ -234,39 +239,21 @@ value class DropdownState(val state: ULong) : StateWithOutline {
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
         outline: Outline = Outline.of(isWarning, isError),
+        active: Boolean = isActive,
     ) = of(
         enabled = enabled,
         focused = focused,
         pressed = pressed,
         hovered = hovered,
-        outline = outline
-    )
-
-    fun copy(
-        enabled: Boolean = isEnabled,
-        focused: Boolean = isFocused,
-        error: Boolean = isError,
-        pressed: Boolean = isPressed,
-        hovered: Boolean = isHovered,
-        warning: Boolean = isWarning,
-    ) = of(
-        enabled = enabled,
-        focused = focused,
-        error = error,
-        pressed = pressed,
-        hovered = hovered,
-        warning = warning
+        outline = outline,
+        active = active
     )
 
     override fun toString() =
         "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isError=$isError, isWarning=$isWarning, " +
-            "isHovered=$isHovered, isPressed=$isPressed)"
+            "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     companion object {
-
-        private const val SELECTED_BIT_OFFSET = CommonStateBitMask.FIRST_AVAILABLE_OFFSET
-
-        private val Selected = 1UL shl SELECTED_BIT_OFFSET
 
         fun of(
             enabled: Boolean = true,
@@ -274,32 +261,18 @@ value class DropdownState(val state: ULong) : StateWithOutline {
             pressed: Boolean = false,
             hovered: Boolean = false,
             outline: Outline = Outline.None,
-        ) = of(
-            enabled = enabled,
-            focused = focused,
-            error = outline == Outline.Error,
-            pressed = pressed,
-            hovered = hovered,
-            warning = outline == Outline.Warning
-        )
-
-        fun of(
-            enabled: Boolean = true,
-            focused: Boolean = false,
-            error: Boolean = false,
-            pressed: Boolean = false,
-            hovered: Boolean = false,
-            warning: Boolean = false,
+            active: Boolean = false,
         ) = DropdownState(
             if (enabled) {
                 Enabled
             } else {
                 0UL or
                     (if (focused) Focused else 0UL) or
-                    (if (error) Error else 0UL) or
-                    (if (warning) Warning else 0UL) or
                     (if (pressed) Pressed else 0UL) or
-                    (if (hovered) Hovered else 0UL)
+                    (if (hovered) Hovered else 0UL) or
+                    (if (outline == Outline.Error) Error else 0UL) or
+                    (if (outline == Outline.Warning) Warning else 0UL) or
+                    (if (active) Active else 0UL)
             }
         )
     }

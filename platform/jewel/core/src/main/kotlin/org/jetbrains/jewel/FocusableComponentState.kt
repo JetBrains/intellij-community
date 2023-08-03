@@ -3,35 +3,18 @@ package org.jetbrains.jewel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 
-interface StateWithOutline : FocusableComponentState {
+interface FocusableComponentState : InteractiveComponentState {
 
     @Stable
-    val isError: Boolean
-
-    @Stable
-    val isWarning: Boolean
-
-    @Stable
-    val hasOutline: Boolean
-        get() = outline != Outline.None
-
-    @Stable
-    val outline: Outline
-        get() = when {
-            isError -> Outline.Error
-            isWarning -> Outline.Warning
-            else -> Outline.None
-        }
+    val isFocused: Boolean
 
     @Composable
-    fun <T> chooseValueWithOutline(
+    fun <T> chooseValue(
         normal: T,
         disabled: T,
         focused: T,
         pressed: T,
         hovered: T,
-        warning: T,
-        error: T,
         active: T,
     ): T =
         when {
@@ -39,8 +22,6 @@ interface StateWithOutline : FocusableComponentState {
             isPressed && !IntelliJTheme.isSwingCompatMode -> pressed
             isHovered && !IntelliJTheme.isSwingCompatMode -> hovered
             isFocused -> focused
-            isError -> error
-            isWarning -> warning
             isActive -> active
             else -> normal
         }

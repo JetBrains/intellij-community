@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
+import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Error
 import org.jetbrains.jewel.CommonStateBitMask.Focused
@@ -139,7 +140,11 @@ private fun ButtonImpl(
 
 @Immutable
 @JvmInline
-value class ButtonState(val state: ULong) : InteractiveComponentState {
+value class ButtonState(val state: ULong) : FocusableComponentState {
+
+    @Stable
+    override val isActive: Boolean
+        get() = state and Active != 0UL
 
     @Stable
     override val isEnabled: Boolean
@@ -162,15 +167,18 @@ value class ButtonState(val state: ULong) : InteractiveComponentState {
         focused: Boolean = isFocused,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
+        active: Boolean = isActive,
     ) = of(
         enabled = enabled,
         focused = focused,
         pressed = pressed,
-        hovered = hovered
+        hovered = hovered,
+        active = active
     )
 
     override fun toString() =
-        "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, isPressed=$isPressed)"
+        "${javaClass.simpleName}(isEnabled=$isEnabled, isFocused=$isFocused, isHovered=$isHovered, " +
+            "isPressed=$isPressed, isActive=$isActive)"
 
     companion object {
 
@@ -181,13 +189,15 @@ value class ButtonState(val state: ULong) : InteractiveComponentState {
             pressed: Boolean = false,
             hovered: Boolean = false,
             warning: Boolean = false,
+            active: Boolean = true,
         ) = ButtonState(
             state = (if (enabled) Enabled else 0UL) or
                 (if (focused) Focused else 0UL) or
                 (if (hovered) Hovered else 0UL) or
                 (if (pressed) Pressed else 0UL) or
                 (if (warning) Warning else 0UL) or
-                (if (error) Error else 0UL)
+                (if (error) Error else 0UL) or
+                (if (active) Active else 0UL)
         )
     }
 }

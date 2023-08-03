@@ -81,7 +81,9 @@ fun Text(
 ) {
     val textColor = color.takeOrElse {
         style.color.takeOrElse {
-            LocalContentColor.current.copy(alpha = LocalTextAlpha.current)
+            LocalContentColor.current.takeOrElse {
+                LocalTextStyle.current.color
+            }
         }
     }
 

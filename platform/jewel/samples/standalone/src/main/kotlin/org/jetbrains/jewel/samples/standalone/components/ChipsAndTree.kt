@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.samples.standalone.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -80,6 +81,8 @@ fun TreeSample(modifier: Modifier = Modifier) {
         tree = tree,
         resourceLoader = resourceLoader
     ) { element ->
-        Text(element.data, modifier.padding(2.dp))
+        Box(Modifier.fillMaxWidth()) {
+            Text(element.data, modifier.padding(2.dp))
+        }
     }
 }

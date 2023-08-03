@@ -3,15 +3,18 @@ package org.jetbrains.jewel
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.res.ResourceLoader
 import org.jetbrains.jewel.foundation.lazy.SelectableLazyItemScope
 import org.jetbrains.jewel.foundation.tree.BasicLazyTree
 import org.jetbrains.jewel.foundation.tree.DefaultTreeViewKeyActions
 import org.jetbrains.jewel.foundation.tree.KeyBindingScopedActions
 import org.jetbrains.jewel.foundation.tree.Tree
+import org.jetbrains.jewel.foundation.tree.TreeElementState
 import org.jetbrains.jewel.foundation.tree.TreeState
 import org.jetbrains.jewel.foundation.tree.rememberTreeState
 import org.jetbrains.jewel.styling.LazyTreeStyle
@@ -32,7 +35,6 @@ fun <T> LazyTree(
 ) {
     val colors = style.colors
     val metrics = style.metrics
-
     BasicLazyTree(
         tree = tree,
         onElementClick = onElementClick,
@@ -59,6 +61,20 @@ fun <T> LazyTree(
                 )
             }
         },
-        nodeContent = nodeContent
+        nodeContent = {
+            CompositionLocalProvider(
+                LocalContentColor provides (
+                    style.colors.contentFor(
+                        TreeElementState.of(
+                            isFocused,
+                            isSelected,
+                            false
+                        )
+                    ).value
+                        .takeIf { !it.isUnspecified }
+                        ?: LocalContentColor.current
+                    )
+            ) { nodeContent(it) }
+        }
     )
 }

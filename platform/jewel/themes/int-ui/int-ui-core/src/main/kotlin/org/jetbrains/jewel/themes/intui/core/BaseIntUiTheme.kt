@@ -19,7 +19,9 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.styling.LocalChipStyle
 import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
+import org.jetbrains.jewel.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.styling.LocalDropdownStyle
+import org.jetbrains.jewel.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.styling.LocalHorizontalProgressBarStyle
 import org.jetbrains.jewel.styling.LocalLabelledTextFieldStyle
@@ -34,6 +36,7 @@ import org.jetbrains.jewel.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
+import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 
@@ -82,7 +85,9 @@ fun BaseIntUiTheme(
         LocalRadioButtonStyle provides componentStyling.radioButtonStyle,
         LocalScrollbarStyle provides componentStyling.scrollbarStyle,
         LocalTextAreaStyle provides componentStyling.textAreaStyle,
-        LocalTextFieldStyle provides componentStyling.textFieldStyle
+        LocalTextFieldStyle provides componentStyling.textFieldStyle,
+        LocalDefaultTabStyle provides componentStyling.defaultTabStyle,
+        LocalEditorTabStyle provides componentStyling.editorTabStyle
     ) {
         IntelliJTheme(theme, swingCompatMode, content)
     }
@@ -104,4 +109,6 @@ data class ComponentStyling(
     val textAreaStyle: TextAreaStyle,
     val textFieldStyle: TextFieldStyle,
     val lazyTreeStyle: LazyTreeStyle,
+    val defaultTabStyle: TabStyle,
+    val editorTabStyle: TabStyle,
 )

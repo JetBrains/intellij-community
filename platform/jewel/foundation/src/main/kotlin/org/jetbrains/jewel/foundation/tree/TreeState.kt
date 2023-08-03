@@ -13,7 +13,7 @@ import org.jetbrains.jewel.foundation.utils.Log
 import kotlin.properties.Delegates
 
 @Composable
-fun rememberTreeState(selectionMode: SelectionMode = SelectionMode.Multiple) = remember {
+fun rememberTreeState(selectionMode: SelectionMode = SelectionMode.Single) = remember {
     TreeState(
         SelectableLazyListState(
             LazyListState(),
@@ -32,9 +32,9 @@ class TreeState(
     val selectedItemIndexes get() = delegate.selectedItemIndexes
 
     val selectedElements
-        get() = buildList<Tree.Element<*>> {
+        get() = buildList {
             selectedItemIndexes.forEach {
-                flattenedTree[it]
+                add(flattenedTree[it])
             }
         }
 

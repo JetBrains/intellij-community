@@ -36,7 +36,8 @@ interface ButtonColors {
             disabled = backgroundDisabled,
             focused = backgroundFocused,
             pressed = backgroundPressed,
-            hovered = backgroundHovered
+            hovered = backgroundHovered,
+            active = background
         )
     )
 
@@ -53,7 +54,8 @@ interface ButtonColors {
             disabled = contentDisabled,
             focused = contentFocused,
             pressed = contentPressed,
-            hovered = contentHovered
+            hovered = contentHovered,
+            active = content
         )
     )
 
@@ -70,7 +72,8 @@ interface ButtonColors {
             disabled = borderDisabled,
             focused = borderFocused,
             pressed = borderPressed,
-            hovered = borderHovered
+            hovered = borderHovered,
+            active = border
         )
     )
 }

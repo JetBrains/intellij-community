@@ -143,11 +143,6 @@ internal class SelectableLazyListScopeContainer(
         focusable: Boolean,
         content: @Composable (SelectableLazyItemScope.() -> Unit),
     ) {
-        // should be like that, but it seems does not work,
-        // it do not recompose when state.lastFocusedIndex == state.keys.indexOf(selectableKey) changes
-        // val isFocused by remember {
-        // derivedStateOf(structuralEqualityPolicy()) { state.lastFocusedIndex == state.keys.indexOf(selectableKey) }
-        // }
         val isFocused = state.lastFocusedIndex == state.keys.indexOf(selectableKey)
         val isSelected = key in state.selectedIdsMap
         val scope = rememberCoroutineScope()

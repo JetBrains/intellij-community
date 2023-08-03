@@ -52,6 +52,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
+import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.foundation.Stroke
 import org.jetbrains.jewel.foundation.border
 import org.jetbrains.jewel.foundation.onHover
@@ -461,10 +462,14 @@ internal fun Submenu(
 
 @Immutable
 @JvmInline
-value class MenuItemState(val state: ULong) : InteractiveComponentState {
+value class MenuItemState(val state: ULong) : SelectableComponentState {
 
     @Stable
-    val isSelected: Boolean
+    override val isActive: Boolean
+        get() = state and Selected != 0UL
+
+    @Stable
+    override val isSelected: Boolean
         get() = state and Selected != 0UL
 
     @Stable
@@ -489,12 +494,13 @@ value class MenuItemState(val state: ULong) : InteractiveComponentState {
         focused: Boolean = isFocused,
         hovered: Boolean = isHovered,
         pressed: Boolean = isPressed,
+        active: Boolean = isActive,
     ): MenuItemState =
-        of(selected, enabled, focused, hovered, pressed)
+        of(selected, enabled, focused, hovered, pressed, active)
 
     override fun toString() =
         "MenuItemState(state=$state, isSelected=$isSelected, isEnabled=$isEnabled, isFocused=$isFocused, " +
-            "isHovered=$isHovered, isPressed=$isPressed)"
+            "isHovered=$isHovered, isPressed=$isPressed, isActive=$isActive)"
 
     companion object {
 
@@ -510,6 +516,7 @@ value class MenuItemState(val state: ULong) : InteractiveComponentState {
             focused: Boolean = false,
             hovered: Boolean = false,
             pressed: Boolean = false,
+            active: Boolean = false,
         ): MenuItemState {
             var state = 0UL
             if (selected) state = state or Selected
@@ -517,6 +524,7 @@ value class MenuItemState(val state: ULong) : InteractiveComponentState {
             if (focused) state = state or Focused
             if (hovered) state = state or Hovered
             if (pressed) state = state or Pressed
+            if (active) state = state or Active
             return MenuItemState(state)
         }
     }

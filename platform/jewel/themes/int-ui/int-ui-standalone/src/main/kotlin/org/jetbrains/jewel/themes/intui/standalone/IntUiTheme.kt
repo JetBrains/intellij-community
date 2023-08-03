@@ -29,6 +29,7 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
+import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 import org.jetbrains.jewel.themes.intui.core.BaseIntUiTheme
@@ -53,6 +54,7 @@ import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiLinkStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiMenuStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiRadioButtonStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiScrollbarStyle
+import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTabStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextAreaStyle
 import org.jetbrains.jewel.themes.intui.standalone.styling.IntUiTextFieldStyle
 
@@ -182,6 +184,15 @@ object IntUiTheme : BaseIntUiTheme {
         @Composable
         @ReadOnlyComposable
         get() = IntelliJTheme.treeStyle
+
+    val defaultTabStyle: TabStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = IntelliJTheme.defaultTabStyle
+    val editorTabStyle: TabStyle
+        @Composable
+        @ReadOnlyComposable
+        get() = IntelliJTheme.editorTabStyle
 }
 
 @OptIn(ExperimentalJewelApi::class)
@@ -233,6 +244,8 @@ fun darkComponentStyling(
     textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.dark(),
     textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.dark(),
     lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.dark(),
+    defaultTabStyle: TabStyle = IntUiTabStyle.Default.dark(svgLoader),
+    editorTabStyle: TabStyle = IntUiTabStyle.Editor.dark(svgLoader),
 ) =
     ComponentStyling(
         defaultButtonStyle = defaultButtonStyle,
@@ -249,7 +262,9 @@ fun darkComponentStyling(
         scrollbarStyle = scrollbarStyle,
         textAreaStyle = textAreaStyle,
         textFieldStyle = textFieldStyle,
-        lazyTreeStyle = lazyTreeStyle
+        lazyTreeStyle = lazyTreeStyle,
+        defaultTabStyle = defaultTabStyle,
+        editorTabStyle = editorTabStyle
     )
 
 @Composable
@@ -270,6 +285,8 @@ fun lightComponentStyling(
     textAreaStyle: IntUiTextAreaStyle = IntUiTextAreaStyle.light(),
     textFieldStyle: TextFieldStyle = IntUiTextFieldStyle.light(),
     lazyTreeStyle: LazyTreeStyle = IntUiLazyTreeStyle.light(),
+    defaultTabStyle: TabStyle = IntUiTabStyle.Default.light(svgLoader),
+    editorTabStyle: TabStyle = IntUiTabStyle.Editor.light(svgLoader),
 ) =
     ComponentStyling(
         defaultButtonStyle = defaultButtonStyle,
@@ -286,5 +303,7 @@ fun lightComponentStyling(
         scrollbarStyle = scrollbarStyle,
         textAreaStyle = textAreaStyle,
         textFieldStyle = textFieldStyle,
-        lazyTreeStyle = lazyTreeStyle
+        lazyTreeStyle = lazyTreeStyle,
+        defaultTabStyle = defaultTabStyle,
+        editorTabStyle = editorTabStyle
     )

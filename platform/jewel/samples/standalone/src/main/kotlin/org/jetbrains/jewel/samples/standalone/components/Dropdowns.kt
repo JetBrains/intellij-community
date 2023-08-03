@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.Dropdown
 import org.jetbrains.jewel.GroupHeader
 import org.jetbrains.jewel.LocalResourceLoader
+import org.jetbrains.jewel.Outline
 import org.jetbrains.jewel.Text
 import org.jetbrains.jewel.divider
 
@@ -39,11 +40,10 @@ fun Dropdowns() {
             enabled = false,
             resourceLoader = resourceLoader,
             menuContent = {
-            },
-            content = {
-                Text(selected)
             }
-        )
+        ) {
+            Text(selected)
+        }
         Dropdown(
             resourceLoader = resourceLoader,
             menuContent = {
@@ -90,14 +90,13 @@ fun Dropdowns() {
                 }) {
                     Text("Submenu")
                 }
-            },
-            content = {
-                Text(selected)
             }
-        )
+        ) {
+            Text(selected)
+        }
         Dropdown(
             resourceLoader = resourceLoader,
-            error = true,
+            outline = Outline.Error,
             menuContent = {
                 items.forEach {
                     if (it == "---") {
@@ -110,10 +109,9 @@ fun Dropdowns() {
                         }
                     }
                 }
-            },
-            content = {
-                Text(selected)
             }
-        )
+        ) {
+            Text(selected)
+        }
     }
 }

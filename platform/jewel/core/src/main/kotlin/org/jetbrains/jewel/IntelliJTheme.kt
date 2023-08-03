@@ -17,7 +17,9 @@ import org.jetbrains.jewel.styling.LinkStyle
 import org.jetbrains.jewel.styling.LocalCheckboxStyle
 import org.jetbrains.jewel.styling.LocalChipStyle
 import org.jetbrains.jewel.styling.LocalDefaultButtonStyle
+import org.jetbrains.jewel.styling.LocalDefaultTabStyle
 import org.jetbrains.jewel.styling.LocalDropdownStyle
+import org.jetbrains.jewel.styling.LocalEditorTabStyle
 import org.jetbrains.jewel.styling.LocalGroupHeaderStyle
 import org.jetbrains.jewel.styling.LocalHorizontalProgressBarStyle
 import org.jetbrains.jewel.styling.LocalLabelledTextFieldStyle
@@ -32,6 +34,7 @@ import org.jetbrains.jewel.styling.LocalTextFieldStyle
 import org.jetbrains.jewel.styling.MenuStyle
 import org.jetbrains.jewel.styling.RadioButtonStyle
 import org.jetbrains.jewel.styling.ScrollbarStyle
+import org.jetbrains.jewel.styling.TabStyle
 import org.jetbrains.jewel.styling.TextAreaStyle
 import org.jetbrains.jewel.styling.TextFieldStyle
 
@@ -146,6 +149,16 @@ interface IntelliJTheme {
             @Composable
             @ReadOnlyComposable
             get() = LocalLazyTreeStyle.current
+
+        val defaultTabStyle: TabStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalDefaultTabStyle.current
+
+        val editorTabStyle: TabStyle
+            @Composable
+            @ReadOnlyComposable
+            get() = LocalEditorTabStyle.current
     }
 }
 

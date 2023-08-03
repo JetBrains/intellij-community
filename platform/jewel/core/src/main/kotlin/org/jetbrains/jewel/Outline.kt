@@ -28,7 +28,7 @@ enum class Outline {
 
 @Composable
 fun Modifier.focusOutline(
-    state: InteractiveComponentState,
+    state: FocusableComponentState,
     outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),
     outlineWidth: Dp = LocalThemeMetrics.current.outlineWidth,
 ): Modifier {
@@ -61,7 +61,7 @@ fun Modifier.outline(
 
 @Composable
 fun Modifier.outline(
-    state: InteractiveComponentState,
+    state: FocusableComponentState,
     outline: Outline,
     alignment: Stroke.Alignment = Stroke.Alignment.Outside,
     outlineShape: Shape = RoundedCornerShape(LocalThemeMetrics.current.outlineCornerSize),

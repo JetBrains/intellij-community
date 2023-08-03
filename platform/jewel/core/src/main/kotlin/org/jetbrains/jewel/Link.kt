@@ -33,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
+import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Focused
 import org.jetbrains.jewel.CommonStateBitMask.Hovered
@@ -307,7 +308,11 @@ private fun LinkImpl(
 
 @Immutable
 @JvmInline
-value class LinkState(val state: ULong) : InteractiveComponentState {
+value class LinkState(val state: ULong) : FocusableComponentState {
+
+    @Stable
+    override val isActive: Boolean
+        get() = state and Active != 0UL
 
     @Stable
     override val isEnabled: Boolean
@@ -330,7 +335,8 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
         get() = state and Hovered != 0UL
 
     override fun toString(): String =
-        "${javaClass.simpleName}(enabled=$isEnabled, focused=$isFocused, visited=$isVisited, pressed=$isPressed, hovered=$isHovered)"
+        "${javaClass.simpleName}(enabled=$isEnabled, focused=$isFocused, visited=$isVisited, " +
+            "pressed=$isPressed, hovered=$isHovered, isActive=$isActive)"
 
     fun copy(
         enabled: Boolean = isEnabled,
@@ -338,12 +344,14 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
         visited: Boolean = isVisited,
         pressed: Boolean = isPressed,
         hovered: Boolean = isHovered,
+        active: Boolean = isActive,
     ) = of(
         enabled = enabled,
         focused = focused,
         visited = visited,
         pressed = pressed,
-        hovered = hovered
+        hovered = hovered,
+        active = active
     )
 
     @Composable
@@ -354,6 +362,7 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
         pressed: T,
         hovered: T,
         visited: T,
+        active: T,
     ): T =
         when {
             !isEnabled -> disabled
@@ -361,6 +370,7 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
             isHovered && !isSwingCompatMode -> hovered
             isFocused -> focused
             isVisited -> visited
+            isActive -> active
             else -> normal
         }
 
@@ -376,12 +386,14 @@ value class LinkState(val state: ULong) : InteractiveComponentState {
             visited: Boolean = false,
             hovered: Boolean = false,
             pressed: Boolean = false,
+            active: Boolean = false,
         ) = LinkState(
             (if (visited) Visited else 0UL) or
                 (if (enabled) Enabled else 0UL) or
                 (if (focused) Focused else 0UL) or
                 (if (pressed) Pressed else 0UL) or
-                (if (hovered) Hovered else 0UL)
+                (if (hovered) Hovered else 0UL) or
+                (if (active) Active else 0UL)
         )
     }
 }

@@ -98,11 +98,11 @@ data class IntUiMenuItemColors(
 
         @Composable
         fun light(
-            background: Color = IntUiLightTheme.colors.grey(1),
+            background: Color = IntUiLightTheme.colors.grey(14),
             backgroundDisabled: Color = IntUiLightTheme.colors.grey(14),
             backgroundFocused: Color = IntUiLightTheme.colors.blue(11),
             backgroundPressed: Color = background,
-            backgroundHovered: Color = background,
+            backgroundHovered: Color = backgroundFocused,
             content: Color = IntUiLightTheme.colors.grey(1),
             contentDisabled: Color = IntUiLightTheme.colors.grey(8),
             contentFocused: Color = content,

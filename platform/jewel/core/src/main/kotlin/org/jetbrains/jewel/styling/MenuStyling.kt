@@ -71,7 +71,14 @@ interface MenuItemColors {
 
     @Composable
     fun backgroundFor(state: MenuItemState) = rememberUpdatedState(
-        state.chooseValue(background, backgroundDisabled, backgroundFocused, backgroundPressed, backgroundHovered)
+        state.chooseValue(
+            normal = background,
+            disabled = backgroundDisabled,
+            active = background,
+            focused = backgroundFocused,
+            pressed = backgroundPressed,
+            hovered = backgroundHovered
+        )
     )
 
     val content: Color
@@ -82,7 +89,14 @@ interface MenuItemColors {
 
     @Composable
     fun contentFor(state: MenuItemState) = rememberUpdatedState(
-        state.chooseValue(content, contentDisabled, contentFocused, contentPressed, contentHovered)
+        state.chooseValue(
+            normal = content,
+            disabled = contentDisabled,
+            focused = contentFocused,
+            pressed = contentPressed,
+            hovered = contentHovered,
+            active = content
+        )
     )
 
     val iconTint: Color
@@ -93,7 +107,14 @@ interface MenuItemColors {
 
     @Composable
     fun iconTintFor(state: MenuItemState) = rememberUpdatedState(
-        state.chooseValue(iconTint, iconTintDisabled, iconTintFocused, iconTintPressed, iconTintHovered)
+        state.chooseValue(
+            normal = iconTint,
+            disabled = iconTintDisabled,
+            focused = iconTintFocused,
+            pressed = iconTintPressed,
+            hovered = iconTintHovered,
+            active = iconTint
+        )
     )
 
     val separator: Color

@@ -32,7 +32,15 @@ interface LinkColors {
 
     @Composable
     fun contentFor(state: LinkState) = rememberUpdatedState(
-        state.chooseValueWithVisited(content, contentDisabled, contentFocused, contentPressed, contentHovered, contentVisited)
+        state.chooseValueWithVisited(
+            normal = content,
+            disabled = contentDisabled,
+            focused = contentFocused,
+            pressed = contentPressed,
+            hovered = contentHovered,
+            visited = contentVisited,
+            active = content
+        )
     )
 
     val iconTint: Color
@@ -66,7 +74,15 @@ interface LinkTextStyles {
 
     @Composable
     fun styleFor(state: LinkState) = rememberUpdatedState(
-        state.chooseValueWithVisited(normal, disabled, focused, pressed, hovered, visited)
+        state.chooseValueWithVisited(
+            normal = normal,
+            disabled = disabled,
+            focused = focused,
+            pressed = pressed,
+            hovered = hovered,
+            visited = visited,
+            active = normal
+        )
     )
 }
 

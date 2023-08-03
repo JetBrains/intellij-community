@@ -183,7 +183,7 @@ value class TreeElementState(val state: ULong) {
 
     @Stable
     val isSelected: Boolean
-        get() = state and Hovered != 0UL
+        get() = state and Selected != 0UL
 
     @Stable
     val isExpanded: Boolean
@@ -202,7 +202,7 @@ value class TreeElementState(val state: ULong) {
 
         private val Focused = 1UL shl 0
         private val Hovered = 1UL shl 1
-        private val Pressed = 1UL shl 2
+        private val Selected = 1UL shl 2
         private val Expanded = 1UL shl 3
 
         fun of(
@@ -211,7 +211,7 @@ value class TreeElementState(val state: ULong) {
             expanded: Boolean,
         ) = TreeElementState(
             (if (focused) Focused else 0UL) or
-                (if (selected) Pressed else 0UL) or
+                (if (selected) Selected else 0UL) or
                 (if (expanded) Expanded else 0UL)
         )
     }

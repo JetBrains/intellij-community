@@ -36,6 +36,7 @@ import org.jetbrains.jewel.samples.standalone.components.Dropdowns
 import org.jetbrains.jewel.samples.standalone.components.Links
 import org.jetbrains.jewel.samples.standalone.components.ProgressBar
 import org.jetbrains.jewel.samples.standalone.components.RadioButtons
+import org.jetbrains.jewel.samples.standalone.components.Tabs
 import org.jetbrains.jewel.samples.standalone.components.TextAreas
 import org.jetbrains.jewel.samples.standalone.components.TextFields
 import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
@@ -83,6 +84,7 @@ fun main() {
                     TextAreas()
                     ProgressBar()
                     TextFields()
+                    Tabs()
                     ChipsAndTree()
                 }
                 VerticalScrollbar(

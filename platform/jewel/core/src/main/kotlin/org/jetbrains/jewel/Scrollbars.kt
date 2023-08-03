@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.styling.ScrollbarStyle
 import kotlin.time.DurationUnit
 import androidx.compose.foundation.ScrollbarStyle as ComposeScrollbarStyle
@@ -72,6 +73,37 @@ fun HorizontalScrollbar(
         HorizontalScrollbar(
             adapter = adapter,
             modifier = modifier.padding(style.metrics.trackPadding),
+            reverseLayout = reverseLayout,
+            style = LocalScrollbarStyle.current,
+            interactionSource = interactionSource
+        )
+    }
+}
+
+@Composable
+fun TabStripHorizontalScrollbar(
+    adapter: ScrollbarAdapter,
+    modifier: Modifier = Modifier,
+    reverseLayout: Boolean = false,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    style: ScrollbarStyle = IntelliJTheme.scrollbarStyle,
+) {
+    val shape by remember { mutableStateOf(RoundedCornerShape(style.metrics.thumbCornerSize)) }
+    val hoverDurationMillis by remember { mutableStateOf(style.hoverDuration.toInt(DurationUnit.MILLISECONDS)) }
+
+    CompositionLocalProvider(
+        LocalScrollbarStyle provides ComposeScrollbarStyle(
+            minimalHeight = style.metrics.minThumbLength,
+            thickness = 3.dp,
+            shape = shape,
+            hoverDurationMillis = hoverDurationMillis,
+            unhoverColor = style.colors.thumbBackground,
+            hoverColor = style.colors.thumbBackgroundHovered
+        )
+    ) {
+        HorizontalScrollbar(
+            adapter = adapter,
+            modifier = modifier.padding(1.dp),
             reverseLayout = reverseLayout,
             style = LocalScrollbarStyle.current,
             interactionSource = interactionSource

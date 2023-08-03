@@ -43,7 +43,8 @@ interface DropdownColors {
             pressed = backgroundPressed,
             hovered = backgroundHovered,
             warning = backgroundWarning,
-            error = backgroundError
+            error = backgroundError,
+            active = background
         )
     )
 
@@ -64,7 +65,8 @@ interface DropdownColors {
             pressed = contentPressed,
             hovered = contentHovered,
             warning = contentWarning,
-            error = contentError
+            error = contentError,
+            active = content
         )
     )
 
@@ -85,7 +87,8 @@ interface DropdownColors {
             pressed = borderPressed,
             hovered = borderHovered,
             warning = borderWarning,
-            error = borderError
+            error = borderError,
+            active = border
         )
     )
 
@@ -106,7 +109,8 @@ interface DropdownColors {
             pressed = iconTintPressed,
             hovered = iconTintHovered,
             warning = iconTintWarning,
-            error = iconTintError
+            error = iconTintError,
+            active = iconTint
         )
     )
 }

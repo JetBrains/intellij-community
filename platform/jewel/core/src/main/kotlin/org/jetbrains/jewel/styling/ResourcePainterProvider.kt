@@ -6,6 +6,7 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.ResourceLoader
+import org.jetbrains.jewel.FocusableComponentState
 import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.InteractiveComponentState
 import org.jetbrains.jewel.LocalIsDarkTheme
@@ -47,7 +48,7 @@ class ResourcePainterProvider<T : InteractiveComponentState>(
 
         if (state.isEnabled) {
             when {
-                state.isFocused -> append("Focused")
+                state is FocusableComponentState && state.isFocused -> append("Focused")
                 !IntelliJTheme.isSwingCompatMode && state.isPressed -> append("Pressed")
                 !IntelliJTheme.isSwingCompatMode && state.isHovered -> append("Hovered")
             }
