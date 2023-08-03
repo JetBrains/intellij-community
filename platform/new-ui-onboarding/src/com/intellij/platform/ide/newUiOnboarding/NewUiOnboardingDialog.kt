@@ -6,7 +6,6 @@ import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.JBColor
 import com.intellij.ui.PopupBorder
@@ -30,15 +29,7 @@ class NewUiOnboardingDialog(project: Project)
     setUndecorated(true)
     rootPane.windowDecorationStyle = JRootPane.NONE
     rootPane.border = PopupBorder.Factory.create(true, true)
-    if (WindowRoundedCornersManager.isAvailable()) {
-      if ((SystemInfoRt.isMac && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
-        WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
-        rootPane.border = PopupBorder.Factory.createEmpty()
-      }
-      else {
-        WindowRoundedCornersManager.setRoundedCorners(window)
-      }
-    }
+    WindowRoundedCornersManager.configure(this)
   }
 
   override fun createCenterPanel(): JComponent {

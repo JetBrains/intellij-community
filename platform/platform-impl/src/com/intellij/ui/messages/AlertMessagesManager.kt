@@ -215,15 +215,7 @@ private class AlertDialog(project: Project?,
       }.start()
     }
 
-    if (WindowRoundedCornersManager.isAvailable()) {
-      if ((SystemInfoRt.isMac && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
-        WindowRoundedCornersManager.setRoundedCorners(window, JBUI.CurrentTheme.Popup.borderColor(true))
-        rootPane.border = PopupBorder.Factory.createEmpty()
-      }
-      else {
-        WindowRoundedCornersManager.setRoundedCorners(window)
-      }
-    }
+    WindowRoundedCornersManager.configure(this)
   }
 
   override fun beforeShowCallback() {

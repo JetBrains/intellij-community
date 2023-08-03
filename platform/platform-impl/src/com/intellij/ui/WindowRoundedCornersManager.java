@@ -2,12 +2,14 @@
 package com.intellij.ui;
 
 import com.intellij.ide.ui.laf.intellij.IdeaPopupMenuUI;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.PopupCornerType;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.JBR;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +20,18 @@ import java.awt.*;
  * @author Alexander Lobas
  */
 public final class WindowRoundedCornersManager {
+  public static void configure(@NotNull DialogWrapper dialog) {
+    if (isAvailable()) {
+      if ((SystemInfoRt.isMac && UIUtil.isUnderDarcula()) || SystemInfoRt.isWindows) {
+        setRoundedCorners(dialog.getWindow(), JBUI.CurrentTheme.Popup.borderColor(true));
+        dialog.getRootPane().setBorder(PopupBorder.Factory.createEmpty());
+      }
+      else {
+        setRoundedCorners(dialog.getWindow());
+      }
+    }
+  }
+
   public static boolean isAvailable() {
     if (!JBR.isRoundedCornersManagerSupported()) {
       return false;
@@ -51,7 +65,7 @@ public final class WindowRoundedCornersManager {
         params = Float.valueOf(radius.getFloat());
       }
       else if (params instanceof Color) {
-        params = new Object[] {Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()), Integer.valueOf(1), params};
+        params = new Object[]{Float.valueOf(IdeaPopupMenuUI.CORNER_RADIUS.getFloat()), Integer.valueOf(1), params};
       }
       else if (params instanceof Object[] values) {
         if (values.length != 2 || !(values[0] instanceof PopupCornerType cornerType) || !(values[1] instanceof Color)) {
