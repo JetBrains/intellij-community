@@ -438,8 +438,8 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitStatement(statement);
   }
 
-  public void visitTemplate(@NotNull PsiTemplate expression) {
-    visitElement(expression);
+  public void visitTemplate(@NotNull PsiTemplate template) {
+    visitElement(template);
   }
 
   public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
