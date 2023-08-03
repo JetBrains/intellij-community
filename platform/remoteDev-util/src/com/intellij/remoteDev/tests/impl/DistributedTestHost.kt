@@ -35,6 +35,7 @@ import com.jetbrains.rd.util.threading.SynchronousScheduler
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
+import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.InetAddress
@@ -322,34 +323,32 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
     val result = CompletableFuture<Boolean>()
     ApplicationManager.getApplication().invokeLater {
-      fun makeScreenshotOfComponent(screenshotFile: File, component: Component?) {
-        if (component != null) {
-          LOG.info("Making screenshot")
-          val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-          component.printAll(img.createGraphics())
-          ApplicationManager.getApplication().executeOnPooledThread {
-            try {
-              ImageIO.write(img, "png", screenshotFile)
-              LOG.info("Screenshot is saved at: $screenshotFile")
-            }
-            catch (t: Throwable) {
-              LOG.warn("Exception while writing screenshot image to file", t)
-            }
+      fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
+        LOG.info("Making screenshot of ${component}")
+        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+        component.printAll(img.createGraphics())
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            ImageIO.write(img, "png", screenshotFile)
+            LOG.info("Screenshot is saved at: $screenshotFile")
           }
-        }
-        else {
-          LOG.warn("Frame was empty when makeScreenshot was called")
+          catch (t: Throwable) {
+            LOG.warn("Exception while writing screenshot image to file", t)
+          }
         }
       }
 
-      val focusedComponent = WindowManager.getInstance().getFocusedComponent(project)?.focusCycleRootAncestor
-      val projectFrame = WindowManager.getInstance().getIdeFrame(projectOrNull)?.component
-      if (focusedComponent != projectFrame) {
-        makeScreenshotOfComponent(screenshotFile("_focusedWindow"), focusedComponent)
+      val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
+      windows.forEachIndexed { index, window ->
+        val screenshotFile = if (window.isFocusAncestor()) {
+          screenshotFile("_${index}_focusedWindow")
+        }
+        else {
+          screenshotFile("_$index")
+        }
+        makeScreenshotOfComponent(screenshotFile, window)
       }
-      val screenshotFile = screenshotFile()
-      makeScreenshotOfComponent(screenshotFile, projectFrame)
-      result.complete(screenshotFile.exists())
+      result.complete(true)
     }
 
     IdeEventQueue.getInstance().flushQueue()
