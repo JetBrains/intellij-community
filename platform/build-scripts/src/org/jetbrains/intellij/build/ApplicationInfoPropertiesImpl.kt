@@ -143,10 +143,12 @@ class ApplicationInfoPropertiesImpl: ApplicationInfoProperties {
       "buildContext property is not initialized, please use different constructor"
     }
     val appInfoXmlPath = findApplicationInfoInSources(context.project, context.productProperties)
+/* Android Studio: temporarily disable version checks
     val snapshotBuildNumber = readSnapshotBuildNumber(context.paths.communityHomeDirRoot).takeWhile { it != '.' }
     check("$majorVersion$minorVersion".removePrefix("20").take(snapshotBuildNumber.count()) == snapshotBuildNumber) {
       "'major=$majorVersion' and 'minor=$minorVersion' attributes of '$appInfoXmlPath' don't match snapshot build number '$snapshotBuildNumber'"
     }
+Android Studio: temporarily disable version checks */
     val artifactsServer = context.proprietaryBuildTools.artifactsServer
     var builtinPluginsRepoUrl = ""
     if (artifactsServer != null && context.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
