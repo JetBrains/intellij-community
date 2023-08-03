@@ -93,7 +93,7 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     val srcCall = call.sourcePsi ?: return null
     val stringType = PsiType.getJavaLangString(srcCall.manager, srcCall.resolveScope)
     if (assertHint.expected.getExpressionType() != stringType || assertHint.actual.getExpressionType() != stringType) return null
-    val method = call.resolveToUElement()?.asSafely<UMethod>() ?: return null
+    val method = call.resolveToUElementOfType<UMethod>() ?: return null
     if (method.name != "assertEquals") return null
     return method.uastParameters.firstOrNull()
   }
@@ -107,7 +107,7 @@ abstract class JvmTestDiffProvider : TestDiffProvider {
     val candidateCalls = getCallElementsInRange(file, startOffset, endOffset) ?: return null
     return if (candidateCalls.size != 1) {
       candidateCalls.firstOrNull { call ->
-        call.resolveToUElement().asSafely<UMethod>()?.sourcePsi?.isEquivalentTo(resolvedMethod?.sourcePsi) == true
+        call.resolveToUElementOfType<UMethod>()?.sourcePsi?.isEquivalentTo(resolvedMethod?.sourcePsi) == true
       }
     }
     else candidateCalls.first()

@@ -88,7 +88,7 @@ private class MigrateToAssertThatQuickFix(private val matcherClassFqn: String, p
     val factory = call.getUastElementFactory(project) ?: return
     val methodName = call.methodName ?: return
     val arguments = call.valueArguments.toMutableList()
-    val method = call.resolveToUElement()?.asSafely<UMethod>() ?: return
+    val method = call.resolveToUElementOfType<UMethod>() ?: return
     val message = if (TypeUtils.typeEquals(JAVA_LANG_STRING, method.uastParameters.first().type)) {
       arguments.removeFirst()
     } else null

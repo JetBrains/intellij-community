@@ -81,7 +81,7 @@ class UElementAsPsiInspection : DevKitUastInspectionBase(UMethod::class.java) {
         }
         return
       }
-      val uMethod = node.resolveToUElement() as? UMethod ?: return
+      val uMethod = node.resolveToUElementOfType<UMethod>() ?: return
       if (UElementAsPsiCheckProviders.allForLanguage(node.lang).any { it.isPsiElementReceiver(uMethod) }) {
         node.receiver?.sourcePsi?.let {
           reportedElements.add(it)

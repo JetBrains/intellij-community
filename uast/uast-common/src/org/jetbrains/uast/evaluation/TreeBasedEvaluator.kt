@@ -54,7 +54,7 @@ class TreeBasedEvaluator(
   }
 
   override fun evaluateVariableByReference(variableReference: UReferenceExpression, state: UEvaluationState?): UValue {
-    val target = variableReference.resolveToUElement() as? UVariable ?: return UUndeterminedValue
+    val target = variableReference.resolveToUElementOfType<UVariable>() ?: return UUndeterminedValue
     return getEvaluationInfo(variableReference, state).state[target]
   }
 

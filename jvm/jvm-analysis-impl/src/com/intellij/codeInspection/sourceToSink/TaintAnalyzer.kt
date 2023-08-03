@@ -350,7 +350,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
 
   private fun fromLocalVar(expression: UExpression, sourceTarget: PsiElement, analyzeContext: AnalyzeContext): TaintValue? {
     if (sourceTarget !is PsiLocalVariable) return null
-    val localVariable = (expression as? UResolvable)?.resolveToUElement() as? ULocalVariable ?: return null
+    val localVariable = (expression as? UResolvable)?.resolveToUElementOfType<ULocalVariable>() ?: return null
     val containingMethod = localVariable.getContainingUMethod() ?: return null
     val skipAfterReference = possibleToSkipCheckAfterReference(expression, containingMethod)
     val uInitializer = localVariable.uastInitializer
@@ -717,13 +717,13 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             val flow = VariableFlow()
 
             override fun afterVisitExpression(node: UExpression) {
-              val currentVariable = (node as? UResolvable)?.resolveToUElement() as? UVariable ?: return
+              val currentVariable = (node as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: return
               if (!(currentVariable is ULocalVariable || currentVariable is UParameter)) return
               flow.addUsage(currentVariable, node)
             }
 
             override fun afterVisitCallExpression(node: UCallExpression) {
-              val javaPsi = (node.resolveToUElement() as? UMethod)?.javaPsi
+              val javaPsi = node.resolveToUElementOfType<UMethod>()?.javaPsi
               if (javaPsi != null && JavaMethodContractUtil.isPure(javaPsi)) {
                 return
               }
@@ -741,7 +741,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             override fun afterVisitBinaryExpression(node: UBinaryExpression) {
               if (node.operator !is AssignOperator) return
               val lhs = (node.leftOperand as? UReferenceExpression) ?: return
-              val uElement = lhs.resolveToUElement() as? UVariable ?: return
+              val uElement = lhs.resolveToUElementOfType<UVariable>() ?: return
               if (!(uElement is ULocalVariable || uElement is UParameter)) return
               val rhs = node.rightOperand
               flow.addAssign(uElement, rhs)
@@ -750,7 +750,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
             private fun checkUsages(expressions: List<UExpression?>, dependsOn: List<UExpression?>?) {
               for (expression in expressions) {
                 if (expression == null) continue
-                val currentVariable = (expression as? UResolvable)?.resolveToUElement() as? UVariable ?: continue
+                val currentVariable = (expression as? UResolvable)?.resolveToUElementOfType<UVariable>() ?: continue
                 if (!(currentVariable is ULocalVariable || currentVariable is UParameter)) continue
                 flow.addDropLocality(currentVariable, dependsOn)
               }
@@ -788,7 +788,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
               val sourcePsi = node.sourcePsi
               if (sourcePsi == null) return super.visitBinaryExpression(node)
               val lhs = (node.leftOperand as? UReferenceExpression) ?: return super.visitBinaryExpression(node)
-              val uField = (lhs.resolveToUElement() as? UField) ?: return super.visitBinaryExpression(node)
+              val uField = lhs.resolveToUElementOfType<UField>() ?: return super.visitBinaryExpression(node)
               if (node.rightOperand !is ULiteralExpression) {
                 assignedFields.add(uField)
               }

@@ -160,7 +160,7 @@ internal class IncorrectProcessCanceledExceptionHandlingInspection : DevKitUastI
         tryClause.accept(object : AbstractUastVisitor() {
           override fun visitCallExpression(node: UCallExpression): Boolean {
             if (pceThrowingExpression == null) {
-              val calledMethod = node.resolveToUElement() as? UMethod ?: return super.visitCallExpression(node)
+              val calledMethod = node.resolveToUElementOfType<UMethod>() ?: return super.visitCallExpression(node)
               for (throwsType in calledMethod.javaPsi.throwsTypes) {
                 val psiClassType = throwsType as? PsiClassType ?: continue
                 if (psiClassType.isInheritorOrSelf(pceClass)) {

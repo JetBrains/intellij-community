@@ -96,7 +96,7 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
       override fun visitCallExpression(node: UCallExpression): Boolean {
         if (migratableMethodNames.contains(node.methodName)) return false
         if (node.kind == UastCallKind.CONSTRUCTOR_CALL) return false
-        val method = node.resolveToUElement()?.asSafely<UMethod>() ?: return false
+        val method = node.resolveToUElementOfType<UMethod>() ?: return false
         if (migratableConstructorNames.contains(method.name)) return false
         if (method.isStatic) return false // filter out assertions, they will be converted later
         val containingMethodClass = method.javaPsi.containingClass ?: return false
@@ -303,7 +303,7 @@ class JUnit4ConverterQuickfix : LocalQuickFix {
   private class AssertionsConverter : AbstractUastVisitor() {
     override fun visitCallExpression(node: UCallExpression): Boolean {
       if (!node.isPsiValid) return true
-      val method = node.resolveToUElement()?.asSafely<UMethod>() ?: return false
+      val method = node.resolveToUElementOfType<UMethod>() ?: return false
       if (!method.isStatic) return false // assert methods are always static
       val containingMethodClass = method.javaPsi.containingClass ?: return false
       val containingClassFqn = containingMethodClass.qualifiedName
