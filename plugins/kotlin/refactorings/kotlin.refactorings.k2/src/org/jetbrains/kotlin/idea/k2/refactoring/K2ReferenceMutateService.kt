@@ -137,7 +137,7 @@ internal class K2ReferenceMutateService : KtReferenceMutateServiceBase() {
     }
 
     private fun KtSimpleNameExpression.replaceShortName(fqName: FqName): KtExpression {
-        val newNameExpression = KtPsiFactory(project).createExpression(fqName.shortName().asString())
+        val newNameExpression = KtPsiFactory(project).createSimpleName(fqName.shortName().asString())
         return replaced(newNameExpression)
     }
 
