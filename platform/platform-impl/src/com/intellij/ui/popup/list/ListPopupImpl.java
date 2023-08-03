@@ -71,6 +71,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   private int myIndexForShowingChild = -1;
   private boolean myAutoHandleBeforeShow;
   private boolean myShowSubmenuOnHover;
+  private boolean myExecuteExpandedItemOnClick;
 
   /**
    * @deprecated use {@link #ListPopupImpl(Project, ListPopupStep)}
@@ -448,7 +449,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
     if (getSpeedSearch().isHoldingFilter() && myList.getModel().getSize() == 0) return false;
 
-    if (myList.getSelectedIndex() == getIndexForShowingChild()) {
+    if (!myExecuteExpandedItemOnClick && myList.getSelectedIndex() == getIndexForShowingChild()) {
       if (myChild != null && !myChild.isVisible()) setIndexForShowingChild(-1);
       return false;
     }
@@ -571,6 +572,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
         child.addListSelectionListener(listener);
       }
       child.setShowSubmenuOnHover(myShowSubmenuOnHover);
+      child.setExecuteExpandedItemOnClick(myExecuteExpandedItemOnClick);
     }
     JComponent container = getContent();
 
@@ -955,6 +957,11 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   @Override
   public void setShowSubmenuOnHover(boolean showSubmenuOnHover) {
     myShowSubmenuOnHover = showSubmenuOnHover;
+  }
+
+  @Override
+  public void setExecuteExpandedItemOnClick(boolean executeExpandedItemOnClick) {
+    myExecuteExpandedItemOnClick = executeExpandedItemOnClick;
   }
 
   @Override
