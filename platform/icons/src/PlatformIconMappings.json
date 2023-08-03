@@ -658,18 +658,33 @@
       "stepOver.svg": "actions/traceOver.svg",
       "stop.svg": "actions/suspend.svg",
       "testCustom.svg": "runConfigurations/testCustom.svg",
-      "testError.svg": "runConfigurations/testError.svg",
-      "testFailed.svg": "runConfigurations/testFailed.svg",
+      "testError.svg": [
+        "runConfigurations/testError.svg",
+        "runConfigurations/toolbarError.svg"
+      ],
+      "testFailed.svg": [
+        "runConfigurations/testFailed.svg",
+        "runConfigurations/toolbarFailed.svg"
+      ],
       "testIgnored.svg": "runConfigurations/testIgnored.svg",
       "testNotRunYet.svg": "runConfigurations/testNotRan.svg",
-      "testPassed.svg": "runConfigurations/testPassed.svg",
+      "testPassed.svg": [
+        "runConfigurations/testPassed.svg",
+        "runConfigurations/toolbarPassed.svg"
+      ],
       "testPassedIgnored.svg": [
         "runConfigurations/testPassedIgnored.svg",
         "runConfigurations/toolbarPassedIgnored.svg"
       ],
       "testPaused.svg": "runConfigurations/testPaused.svg",
-      "testSkipped.svg": "runConfigurations/testSkipped.svg",
-      "testTerminated.svg": "runConfigurations/testTerminated.svg",
+      "testSkipped.svg": [
+        "runConfigurations/testSkipped.svg",
+        "runConfigurations/toolbarSkipped.svg"
+      ],
+      "testTerminated.svg": [
+        "runConfigurations/testTerminated.svg",
+        "runConfigurations/toolbarTerminated.svg"
+      ],
       "testUnknown.svg": "runConfigurations/testUnknown.svg",
       "viewBreakpoints.svg": "debugger/viewBreakpoints.svg"
     },
