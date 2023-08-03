@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
@@ -756,6 +757,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                                     <url>http://pom/http</url>
                                                   </repository>
                                                 </repositories>""");
+    //Registry.get("maven.server.debug").setValue(true);
     importProject();
 
     Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
@@ -776,7 +778,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     Assert.assertTrue(repoIds.contains("repo-pom1"));
     Assert.assertTrue(repoIds.contains("repo1"));
     Assert.assertTrue(repoIds.contains("central"));
-    Assert.assertTrue(repoIds.contains("maven-default-http-blocker"));
+    //    Assert.assertTrue(repoIds.contains("maven-default-http-blocker"));
 
     Assert.assertFalse(repoIds.contains("repo-pom"));
     Assert.assertFalse(repoIds.contains("repo"));

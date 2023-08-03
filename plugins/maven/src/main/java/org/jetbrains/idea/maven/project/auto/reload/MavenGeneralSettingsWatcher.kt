@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenImportSpec
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
+import org.jetbrains.idea.maven.utils.MavenUtil
 import java.util.concurrent.ExecutorService
 
 @ApiStatus.Internal
@@ -23,14 +24,8 @@ class MavenGeneralSettingsWatcher(
 
   private fun collectSettingsFiles(): Set<String> {
     val result = LinkedHashSet<String>()
-    val userSettingsFile = generalSettings.effectiveUserSettingsIoFile
-    if (userSettingsFile != null) {
-      result.add(userSettingsFile.toPath().toCanonicalPath())
-    }
-    val globalSettingsFile = generalSettings.effectiveGlobalSettingsIoFile
-    if (globalSettingsFile != null) {
-      result.add(globalSettingsFile.toPath().toCanonicalPath())
-    }
+    val userSettingsFile = MavenUtil.resolveUserSettingsFile(generalSettings.userSettingsFile)
+    result.add(userSettingsFile.toPath().toCanonicalPath())
     return result
   }
 

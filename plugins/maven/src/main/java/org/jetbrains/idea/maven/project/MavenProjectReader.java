@@ -394,7 +394,7 @@ public final class MavenProjectReader {
       }
 
       Pair<VirtualFile, RawModelReadResult> parentModelWithProblems =
-        new MavenParentProjectFileProcessor<Pair<VirtualFile, RawModelReadResult>>() {
+        new MavenParentProjectFileProcessor<Pair<VirtualFile, RawModelReadResult>>(myProject) {
           @Override
           @Nullable
           protected VirtualFile findManagedFile(@NotNull MavenId id) {

@@ -9,7 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.model.MavenId;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
+import org.jetbrains.idea.maven.project.BundledMaven3;
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServer;
@@ -26,8 +27,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.server.MavenServerManager.BUNDLED_MAVEN_3;
-
 final class Maven3Support implements MavenVersionAwareSupportExtension {
   @Override
   public boolean isSupportedByExtension(@Nullable File mavenHome) {
@@ -36,32 +35,12 @@ final class Maven3Support implements MavenVersionAwareSupportExtension {
   }
 
   @Override
-  public @Nullable File getMavenHomeFile(@Nullable String mavenHome) {
-    if (mavenHome == null) return null;
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome) ||
-        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.3.title"), mavenHome)) {
+  public @Nullable File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType) {
+    if (mavenHomeType == null) return null;
+    if (mavenHomeType == BundledMaven3.INSTANCE) {
       return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     return null;
-  }
-
-  @Override
-  public @Nullable String asMavenHome(DistributionInfo distribution) {
-    if (distribution instanceof Bundled3DistributionInfo) return BUNDLED_MAVEN_3;
-    return null;
-  }
-
-  @Override
-  public @Nullable DistributionInfo asDistributionInfo(String mavenHome) {
-    if (StringUtil.equals(BUNDLED_MAVEN_3, mavenHome)) {
-      return new Bundled3DistributionInfo(MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion());
-    }
-    return null;
-  }
-
-  @Override
-  public @NotNull List<String> supportedBundles() {
-    return Collections.singletonList(BUNDLED_MAVEN_3);
   }
 
   @Override

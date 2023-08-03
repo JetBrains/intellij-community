@@ -11,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.execution.SyncBundle;
+import org.jetbrains.idea.maven.project.BundledMaven3;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettings;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
@@ -65,7 +66,7 @@ public final class MavenWrapperDownloader {
       MavenWrapperEventLogNotification.errorDownloading(project, e.getLocalizedMessage());
       if (syncConsole != null) {
         MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(project).getSettings();
-        settings.getGeneralSettings().setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+        settings.getGeneralSettings().setMavenHomeType(BundledMaven3.INSTANCE);
       }
     }
     finally {

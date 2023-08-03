@@ -9,7 +9,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenVersionAwareSupportExtension;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.BundledMaven3;
+import org.jetbrains.idea.maven.project.BundledMaven4;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType;
 import org.jetbrains.idea.maven.server.MavenDistribution;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenServer;
@@ -26,7 +29,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
-import static org.jetbrains.idea.maven.server.MavenServerManager.BUNDLED_MAVEN_4;
 
 final class Maven4Support implements MavenVersionAwareSupportExtension {
   @Override
@@ -36,33 +38,12 @@ final class Maven4Support implements MavenVersionAwareSupportExtension {
   }
 
   @Override
-  public @Nullable File getMavenHomeFile(@Nullable String mavenHome) {
-    if (mavenHome == null) return null;
-    if (StringUtil.equals(BUNDLED_MAVEN_4, mavenHome) ||
-        StringUtil.equals(MavenProjectBundle.message("maven.bundled.version.4.title"), mavenHome)) {
+  public @Nullable File getMavenHomeFile(@Nullable StaticResolvedMavenHomeType mavenHomeType) {
+    if (mavenHomeType == null) return null;
+    if (mavenHomeType == BundledMaven4.INSTANCE) {
       return MavenDistributionsCache.resolveEmbeddedMavenHome().getMavenHome().toFile();
     }
     return null;
-  }
-
-  @Override
-  public @Nullable String asMavenHome(DistributionInfo distribution) {
-    if (distribution instanceof Bundled4DistributionInfo) return BUNDLED_MAVEN_4;
-    return null;
-  }
-
-  @Override
-  public @Nullable DistributionInfo asDistributionInfo(String mavenHome) {
-    if (StringUtil.equals(BUNDLED_MAVEN_4, mavenHome)) {
-      return new Bundled4DistributionInfo(MavenDistributionsCache.resolveEmbeddedMavenHome().getVersion());
-    }
-    return null;
-  }
-
-  @Override
-  public @NotNull List<String> supportedBundles() {
-    return List.of();
-    //return Collections.singletonList(BUNDLED_MAVEN_4);
   }
 
   @Override
