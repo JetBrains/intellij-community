@@ -1162,6 +1162,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("arrayInitializer.java")
+        public void testArrayInitializer() throws Exception {
+            runTest("testData/newJ2k/comments/arrayInitializer.java");
+        }
+
         @TestMetadata("beginningOfCommentInsideMultilineOne.java")
         public void testBeginningOfCommentInsideMultilineOne() throws Exception {
             runTest("testData/newJ2k/comments/beginningOfCommentInsideMultilineOne.java");
