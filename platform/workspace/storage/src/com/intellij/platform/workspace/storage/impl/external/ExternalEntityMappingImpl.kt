@@ -129,7 +129,9 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
                 }
               }
               is IndexLogRecord.Remove -> {
-                remove(record.id)
+                getTargetId(replaceMap, target, record.id)?.let { entityId ->
+                  remove(entityId)
+                }
               }
             }
           }

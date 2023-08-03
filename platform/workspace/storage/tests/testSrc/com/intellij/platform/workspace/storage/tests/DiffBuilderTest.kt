@@ -17,6 +17,7 @@ import org.junit.jupiter.api.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import java.util.*
 import kotlin.test.assertNotNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class DiffBuilderTest {
@@ -24,6 +25,8 @@ class DiffBuilderTest {
   private var shaker = -1L
 
   private lateinit var virtualFileUrlManager: VirtualFileUrlManager
+
+  private val externalMappingName = "test.checking.external.mapping"
 
   private fun MutableEntityStorage.applyDiff(anotherBuilder: MutableEntityStorage): EntityStorage {
     val builder = createBuilderFrom(this)
@@ -326,14 +329,39 @@ class DiffBuilderTest {
     val source = createEmptyBuilder()
     val sourceSample = source addEntity SampleEntity(false, "Entity at index 1", ArrayList(), HashMap(),
                                                      virtualFileUrlManager.fromUrl("file:///tmp"), SampleEntitySource("test"))
-    val mutableExternalMapping = source.getMutableExternalMapping<Any>("test.checking.external.mapping")
+    val mutableExternalMapping = source.getMutableExternalMapping<Any>(externalMappingName)
     val anyObj = Any()
     mutableExternalMapping.addMapping(sourceSample, anyObj)
 
     target.addDiff(source)
 
-    val externalMapping = target.getExternalMapping<Any>("test.checking.external.mapping") as ExternalEntityMappingImpl<Any>
+    val externalMapping = target.getExternalMapping<Any>(externalMappingName) as ExternalEntityMappingImpl<Any>
     assertEquals(1, externalMapping.index.size)
+  }
+
+  @RepeatedTest(10)
+  fun `checking external mapping is moved to the target builder`() {
+    val target = createEmptyBuilder()
+
+    val entity = target addEntity ParentEntity("Hey", MySource)
+    val obj = Any()
+    val obj2 = Any()
+    target.getMutableExternalMapping<Any>(externalMappingName).addMapping(entity, obj)
+
+    val newBuilder = target.toSnapshot().toBuilder()
+    val newEntity = newBuilder addEntity ParentEntity("Hey 2", MySource)
+    newBuilder.getMutableExternalMapping<Any>(externalMappingName).addMapping(newEntity, obj2)
+    newBuilder.removeEntity(entity.from(newBuilder))
+
+    target.removeEntity(entity)
+    val freezed = target.toSnapshot().toBuilder()
+
+    freezed.addDiff(newBuilder)
+
+    assertEquals(1, freezed.entities(ParentEntity::class.java).toList().size)
+    val requestedEntity = freezed.entities(ParentEntity::class.java).single()
+    assertEquals("Hey 2", requestedEntity.parentData)
+    assertSame(obj2, freezed.getMutableExternalMapping<Any>(externalMappingName).getDataByEntity(requestedEntity))
   }
 
   @RepeatedTest(10)
