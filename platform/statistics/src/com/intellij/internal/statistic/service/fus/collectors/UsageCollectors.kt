@@ -22,7 +22,7 @@ object UsageCollectors {
 
   internal fun getApplicationCollectors(invoker: UsagesCollectorConsumer,
                                         allowedOnStartupOnly: Boolean): Collection<ApplicationUsagesCollector> {
-    if (!isAllowed(invoker)) return emptyList()
+    if (isCalledFromPlugin(invoker)) return emptyList()
 
     if (!allowedOnStartupOnly) return getAllApplicationCollectors()
 
@@ -41,7 +41,7 @@ object UsageCollectors {
   }
 
   internal fun getProjectCollectors(invoker: UsagesCollectorConsumer): Collection<ProjectUsagesCollector> {
-    if (!isAllowed(invoker)) return emptyList()
+    if (isCalledFromPlugin(invoker)) return emptyList()
 
     return PROJECT_EP_NAME.extensions.asSequence()
       .map { it.collector as ProjectUsagesCollector }
@@ -57,7 +57,7 @@ object UsageCollectors {
     return valid
   }
 
-  private fun isAllowed(invoker: UsagesCollectorConsumer): Boolean {
+  private fun isCalledFromPlugin(invoker: UsagesCollectorConsumer): Boolean {
     return invoker.javaClass.getClassLoader() is PluginAwareClassLoader
   }
 }
