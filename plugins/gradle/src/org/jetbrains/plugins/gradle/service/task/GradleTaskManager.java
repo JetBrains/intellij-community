@@ -189,7 +189,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       LOG.debug("TestLauncher isn't applicable: RC doesn't expect task rerun");
       return false;
     }
-    if (gradleVersion == null || isGradleOlderThan(gradleVersion, "8.2")) {
+    if (gradleVersion == null || isGradleOlderThan(gradleVersion, "8.3")) {
       LOG.debug("TestLauncher isn't applicable: unsupported Gradle version " + gradleVersion);
       return false;
     }
