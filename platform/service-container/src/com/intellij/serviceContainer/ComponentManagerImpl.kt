@@ -895,6 +895,9 @@ abstract class ComponentManagerImpl(
     try {
       return findConstrictorAndInstantiateClass(MethodHandles.privateLookupIn(aClass, methodLookup), aClass)
     }
+    catch (e: CancellationException) {
+      throw e
+    }
     catch (e: Throwable) {
       if (e is ControlFlowException || e is PluginException) {
         throw e
