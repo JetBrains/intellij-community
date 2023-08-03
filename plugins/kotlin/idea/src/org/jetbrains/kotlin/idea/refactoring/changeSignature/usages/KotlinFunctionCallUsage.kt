@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.refactoring.changeSignature.usages
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.changeSignature.ChangeInfo
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
@@ -16,9 +17,10 @@ import org.jetbrains.kotlin.idea.codeInsight.shorten.addDelayedImportRequest
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.RemoveEmptyParenthesesFromLambdaCallUtils.removeEmptyArgumentListIfApplicable
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinChangeInfo
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.KotlinParameterInfo
-import org.jetbrains.kotlin.idea.refactoring.changeSignature.isInsideOfCallerBody
+import org.jetbrains.kotlin.idea.refactoring.changeSignature.isCaller
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.createNameCounterpartMap
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
+import org.jetbrains.kotlin.idea.refactoring.isInsideOfCallerBody
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.refactoring.replaceListPsiAndKeepDelimiters
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -115,7 +117,7 @@ class KotlinFunctionCallUsage(
             return resolvedCall?.resultingDescriptor is JavaMethodDescriptor
         }
 
-    private fun changeNameIfNeeded(changeInfo: KotlinChangeInfo, element: KtCallElement) {
+    private fun changeNameIfNeeded(changeInfo: ChangeInfo, element: KtCallElement) {
         if (!changeInfo.isNameChanged) return
 
         val callee = element.calleeExpression as? KtSimpleNameExpression ?: return
@@ -287,7 +289,7 @@ class KotlinFunctionCallUsage(
         allUsages: Array<out UsageInfo>,
         psiFactory: KtPsiFactory
     ): KtValueArgument {
-        val isInsideOfCallerBody = element.isInsideOfCallerBody(allUsages)
+        val isInsideOfCallerBody = element.isInsideOfCallerBody(allUsages) { isCaller(allUsages) }
         val defaultValueForCall = parameter.defaultValueForCall
         val argValue = when {
             isInsideOfCallerBody -> psiFactory.createExpression(parameter.name)

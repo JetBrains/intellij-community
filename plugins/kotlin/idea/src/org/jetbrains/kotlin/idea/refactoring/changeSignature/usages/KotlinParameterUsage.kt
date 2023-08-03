@@ -69,7 +69,7 @@ class KotlinNonQualifiedOuterThisCallUsage(
     override fun getReplacementText(changeInfo: KotlinChangeInfo): String {
         val inheritedName = parameterInfo.getInheritedName(containingCallable)
         val receiver = targetDescriptor.explicateAsTextForReceiver()
-        element?.calleeExpression?.replace(KtPsiFactory(changeInfo.context.project).createExpression(receiver))
+        element?.calleeExpression?.replace(KtPsiFactory(changeInfo.method.project).createExpression(receiver))
         return "with($inheritedName) $inheritedName@{ ${element?.text} }"
     }
 }

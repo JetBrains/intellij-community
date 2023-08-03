@@ -12,9 +12,8 @@ interface KotlinModifiableChangeInfo<P : KotlinModifiableParameterInfo> : Change
   fun setNewName(value: String)
   fun setNewParameter(index: Int, parameterInfo: P)
   fun setNewVisibility(visibility: Visibility)
-  val context: PsiElement
 
-  var receiverParameterInfo: P?
+    var receiverParameterInfo: P?
   var primaryPropagationTargets: Collection<PsiElement>
 
   override fun getNewParameters(): Array<out P>

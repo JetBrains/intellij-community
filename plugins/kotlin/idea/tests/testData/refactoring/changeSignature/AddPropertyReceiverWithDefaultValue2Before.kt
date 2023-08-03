@@ -6,3 +6,5 @@ fun callFoo() = foo
 fun t() {
     val s = foo + " world"
 }
+
+// IGNORE_K2

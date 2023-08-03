@@ -1,0 +1,1 @@
+Function 'inner2' is already declared in class 'outer'

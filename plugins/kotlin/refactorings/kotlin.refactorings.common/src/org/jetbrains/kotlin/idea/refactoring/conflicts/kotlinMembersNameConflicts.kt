@@ -103,6 +103,7 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
   }
 
   for (candidateSymbol in getPotentialConflictCandidates()) {
+    if (symbol == candidateSymbol) continue
     val candidate = candidateSymbol.psi as? KtNamedDeclaration ?: continue
 
     if (candidateSymbol is KtFunctionLikeSymbol && symbol is KtFunctionLikeSymbol && !areSameSignatures(candidateSymbol, symbol)) {
@@ -118,8 +119,7 @@ private fun checkDeclarationNewNameConflicts(declaration: KtNamedDeclaration, ne
 
 context(KtAnalysisSession)
 private fun areSameSignatures(s1: KtFunctionLikeSymbol, s2: KtFunctionLikeSymbol): Boolean {
-  return areTypesTheSame(s1.receiverType, s2.receiverType) && areTypesTheSame(s1.returnType,
-                                                                              s2.returnType) && s1.valueParameters.size == s2.valueParameters.size && s1.valueParameters.zip(
+  return areTypesTheSame(s1.receiverType, s2.receiverType) && s1.valueParameters.size == s2.valueParameters.size && s1.valueParameters.zip(
     s2.valueParameters).all { (p1, p2) ->
     areTypesTheSame(p1.returnType, p2.returnType) && areTypesTheSame(p1.receiverType, p2.receiverType)
   } && s1.contextReceivers.size == s2.contextReceivers.size && s1.contextReceivers.zip(

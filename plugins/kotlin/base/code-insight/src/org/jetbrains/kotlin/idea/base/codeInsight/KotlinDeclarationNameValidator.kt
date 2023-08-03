@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
+import org.jetbrains.kotlin.psi.psiUtil.isAncestor
 import org.jetbrains.kotlin.psi.psiUtil.siblings
 
 class KotlinDeclarationNameValidator(
@@ -68,6 +69,10 @@ class KotlinDeclarationNameValidator(
     private fun KtNamedDeclaration.isConflicting(name: Name): Boolean {
         if (nameAsName != name) return false
         if (this is KtCallableDeclaration && receiverTypeReference != null) return false
+
+        if (this is KtParameter && !visibleDeclarationsContext.isAncestor(this)) {
+            return false
+        }
 
         return when (target) {
             KotlinNameSuggestionProvider.ValidatorTarget.PROPERTY, KotlinNameSuggestionProvider.ValidatorTarget.PARAMETER, KotlinNameSuggestionProvider.ValidatorTarget.VARIABLE ->

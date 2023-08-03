@@ -43,3 +43,4 @@ class Test {
         new C().baz();
     }
 }
+// IGNORE_K2

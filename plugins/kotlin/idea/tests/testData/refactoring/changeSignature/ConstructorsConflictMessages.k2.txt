@@ -1,0 +1,2 @@
+Property '_y' is already declared in class 'Class'
+Property '_z' is already declared in class 'Class'
