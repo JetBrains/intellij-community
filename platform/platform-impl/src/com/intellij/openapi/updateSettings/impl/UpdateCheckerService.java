@@ -16,7 +16,6 @@ import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.PluginId;
@@ -45,7 +44,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static java.lang.Math.max;
 
-@SuppressWarnings("LightServiceMigrationCode")
 final class UpdateCheckerService {
   public static UpdateCheckerService getInstance() {
     return ApplicationManager.getApplication().getService(UpdateCheckerService.class);
@@ -80,7 +78,9 @@ final class UpdateCheckerService {
 
   public void cancelChecks() {
     ScheduledFuture<?> future = myScheduledCheck;
-    if (future != null) future.cancel(false);
+    if (future != null) {
+      future.cancel(false);
+    }
   }
 
   private void appStarted() {
