@@ -43,7 +43,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
     private val expectedProblemDirectiveName: String = "PROBLEM"
 
-    private val expectedProblemHighlightType: String = "HIGHLIGHT"
+    protected val expectedProblemHighlightType: String = "HIGHLIGHT"
 
     private val fixTextDirectiveName: String = "FIX"
 

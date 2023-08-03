@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.k2.codeinsight.inspections
 
 import com.intellij.codeInspection.LocalInspectionToolSession
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -32,12 +33,16 @@ internal class RemoveSingleExpressionStringTemplateInspection :
 
     override fun getApplicabilityRange(): KotlinApplicabilityRange<KtStringTemplateExpression> = ApplicabilityRanges.SELF
 
+    override fun getProblemHighlightType(element: KtStringTemplateExpression, context: Context): ProblemHighlightType =
+      if (context.isString) ProblemHighlightType.GENERIC_ERROR_OR_WARNING else ProblemHighlightType.INFORMATION
+
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean = element.singleExpressionOrNull() != null
 
     context(KtAnalysisSession)
     override fun prepareContext(element: KtStringTemplateExpression): Context? {
         val expression = element.singleExpressionOrNull() ?: return null
-        return Context(expression.getKtType()?.isString == true)
+        val type = expression.getKtType()
+        return Context(type?.isString == true && !type.isMarkedNullable)
     }
 
     override fun apply(element: KtStringTemplateExpression, context: Context, project: Project, editor: Editor?) {

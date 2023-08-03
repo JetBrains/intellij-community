@@ -3089,6 +3089,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("testData/inspectionsLocal/removeSingleExpressionStringTemplate/singleExpressionStringTemplate.kt");
             }
 
+            @TestMetadata("singleExpressionStringTemplateNullableString.kt")
+            public void testSingleExpressionStringTemplateNullableString() throws Exception {
+                runTest("testData/inspectionsLocal/removeSingleExpressionStringTemplate/singleExpressionStringTemplateNullableString.kt");
+            }
+
             @TestMetadata("singleExpressionStringTemplateWithMethodCall.kt")
             public void testSingleExpressionStringTemplateWithMethodCall() throws Exception {
                 runTest("testData/inspectionsLocal/removeSingleExpressionStringTemplate/singleExpressionStringTemplateWithMethodCall.kt");
