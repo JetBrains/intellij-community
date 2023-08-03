@@ -18,10 +18,12 @@ public interface IMemoryManager {
    * Method tries to allocate buffer of requested size, and returns it, if successful.
    * Method returns null if buffer can't be allocated by any reason -- most likely because
    * manager's capacity is already exceeded.
+   * @param allowAllocateAboveCapacity if true, allocate buffer above capacity, if possible.
    * @return allocated buffer (native of heap), or null, if new buffer can't be allocated (e.g. because
    * of capacity overflow)
    */
-  @Nullable ByteBuffer tryAllocate(int bufferSize);
+  @Nullable ByteBuffer tryAllocate(int bufferSize,
+                                   boolean allowAllocateAboveCapacity);
 
   void releaseBuffer(@NotNull ByteBuffer buffer);
 

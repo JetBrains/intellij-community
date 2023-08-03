@@ -1,18 +1,18 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
+import com.intellij.util.io.pagecache.FilePageCacheStatistics;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
+import java.io.IOException;
 
 import static org.junit.Assert.*;
 
-/**
- *
- */
 public class FilePageCacheLockFreeTest {
 
   private static final long CACHE_CAPACITY_BYTES = 1 << 25;//32M
@@ -23,33 +23,31 @@ public class FilePageCacheLockFreeTest {
 
   @Test
   public void housekeeperThreadNotStartUntilFirstStorageRegistered() throws Exception {
-    final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
+    FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     try (fpCache) {
       Thread.sleep(1000L);
     }
     assertEquals(
       "Housekeeper thread shouldn't start until first storage registered",
       0,
-      fpCache.getStatistics().housekeeperTurnDone()
+      fpCache.getStatistics().housekeeperTurnsDone()
     );
   }
 
   @Test
   public void housekeeperThreadStartsOnFirstStorageRegistered() throws Exception {
-    final File file = tmpDirectory.newFile();
+    File file = tmpDirectory.newFile();
 
-    final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
+    FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     try (fpCache) {
       final StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
-      try (final PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext,
-                                                                                                               PAGE_SIZE, true,
-                                                                                                               PageContentLockingStrategy.LOCK_PER_PAGE)) {
+      try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext)) {
         Thread.sleep(1000L);
       }
     }
     assertTrue(
       "Housekeeper thread shouldn't start until first storage registered",
-      fpCache.getStatistics().housekeeperTurnDone() > 0
+      fpCache.getStatistics().housekeeperTurnsDone() > 0
     );
   }
 
@@ -62,20 +60,60 @@ public class FilePageCacheLockFreeTest {
 
   @Test
   public void openTheStorageWithClosedCacheFails() throws Exception {
-    final File file = tmpDirectory.newFile();
+    File file = tmpDirectory.newFile();
 
-    final FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
+    FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES);
     fpCache.close();
 
-    final StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
+    StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
     assertThrows(
       "Open storage with closed FilePageCache is prohibited",
       IllegalStateException.class,
       () -> {
         //noinspection EmptyTryBlock
-        try (PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, PAGE_SIZE, true,
-                                                                                                           PageContentLockingStrategy.LOCK_PER_PAGE)) {
+        try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext)) {
         }
       });
+  }
+
+  @Test
+  public void cacheSettlesDownAfterEachOperationAndDontDoAnyWorkByItself() throws Exception {
+    File file = tmpDirectory.newFile();
+
+    try (FilePageCacheLockFree fpCache = new FilePageCacheLockFree(CACHE_CAPACITY_BYTES)) {
+      checkCacheDoesNothing(fpCache);
+
+      StorageLockContext storageContext = new StorageLockContext(fpCache, true, true, true);
+
+      //do SOMETHING
+      try (PagedFileStorageWithRWLockedPageContent storage = createStorage(file, storageContext)) {
+        try (var page = storage.pageByIndex(0, true)) {
+          page.write(0, 1, buffer -> buffer.put(0, (byte)1));
+        }
+      }
+
+      checkCacheDoesNothing(fpCache);
+    }
+  }
+
+  private static void checkCacheDoesNothing(@NotNull FilePageCacheLockFree fpCache) throws Exception {
+    Thread.sleep(1000);
+
+    FilePageCacheStatistics statistics = fpCache.getStatistics();
+    long housekeeperTurnsBefore = statistics.housekeeperTurnsDone();
+
+    Thread.sleep(1000);
+
+    long housekeeperTurnsAfter = statistics.housekeeperTurnsDone();
+    assertEquals("Housekeeper thread should NOT do any work since there is no work to be done",
+                 housekeeperTurnsBefore, housekeeperTurnsAfter);
+  }
+
+  @NotNull
+  private static PagedFileStorageWithRWLockedPageContent createStorage(File file, StorageLockContext storageContext) throws IOException {
+    return new PagedFileStorageWithRWLockedPageContent(file.toPath(),
+                                                       storageContext,
+                                                       PAGE_SIZE,
+                                                       PageContentLockingStrategy.LOCK_PER_PAGE);
   }
 }

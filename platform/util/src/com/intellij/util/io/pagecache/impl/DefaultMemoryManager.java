@@ -70,18 +70,19 @@ public class DefaultMemoryManager implements IMemoryManager {
   }
 
   @Override
-  public @Nullable ByteBuffer tryAllocate(int bufferSize) {
+  public @Nullable ByteBuffer tryAllocate(int bufferSize,
+                                          boolean allowAllocateAboveCapacity) {
     //if we have >= bufferSize of free capacity -> just allocate new direct buffer:
     ByteBuffer nativeBuffer = tryReserveInNative(bufferSize);
     if (nativeBuffer != null) {
       return nativeBuffer;
     }
 
-    //Instead of forcing existing pages to unload -- allocate heap buffers.
-    //  (We'll release them progressively, during regular background page scans)
-    ByteBuffer heapBuffer = tryReserveInHeap(bufferSize);
-    if (heapBuffer != null) {
-      return heapBuffer;
+    if (allowAllocateAboveCapacity) {
+      ByteBuffer heapBuffer = tryReserveInHeap(bufferSize);
+      if (heapBuffer != null) {
+        return heapBuffer;
+      }
     }
     return null;
   }
@@ -105,7 +106,8 @@ public class DefaultMemoryManager implements IMemoryManager {
 
   @Override
   public boolean hasOverflow() {
-    return totalMemoryUsed() > (nativeCapacityBytes + nativeCapacityBytes);
+    //heap buffers considered an overflow:
+    return totalMemoryUsed() > nativeCapacityBytes;
   }
 
   @Override

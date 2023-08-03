@@ -284,6 +284,7 @@ object StorageDiagnosticData {
     val totalPagesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesAllocated").buildObserver()
     val totalPagesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReclaimed").buildObserver()
     val totalPagesHandedOver = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesHandedOver").buildObserver()
+    val totalPageAllocationsWaited = otelMeter.counterBuilder("FilePageCacheLockFree.totalPageAllocationsWaited").buildObserver()
 
     val totalBytesRead = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesRead").buildObserver()
     val totalBytesWritten = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesWritten").buildObserver()
@@ -297,9 +298,9 @@ object StorageDiagnosticData {
     val totalPagesReadMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReadMs").buildObserver()
     val totalPagesWriteMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWriteMs").buildObserver()
 
-    val housekeeperTurnDone = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnDone").buildObserver()
+    val housekeeperTurnsDone = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnsDone").buildObserver()
     val housekeeperTimeSpentMs = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTimeSpentMs").buildObserver()
-    val housekeeperTurnSkipped = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnSkipped").buildObserver()
+    val housekeeperTurnsSkipped = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnsSkipped").buildObserver()
 
     val totalClosedStoragesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalClosedStoragesReclaimed").buildObserver()
 
@@ -319,6 +320,7 @@ object StorageDiagnosticData {
             totalPagesAllocated.record(it.totalPagesAllocated().toLong())
             totalPagesReclaimed.record(it.totalPagesReclaimed().toLong())
             totalPagesHandedOver.record(it.totalPagesHandedOver().toLong())
+            totalPageAllocationsWaited.record(it.totalPageAllocationsWaited().toLong())
 
             totalBytesRead.record(it.totalBytesRead())
             totalBytesWritten.record(it.totalBytesWritten())
@@ -334,8 +336,8 @@ object StorageDiagnosticData {
 
             totalClosedStoragesReclaimed.record(it.totalClosedStoragesReclaimed().toLong())
 
-            housekeeperTurnSkipped.record(it.housekeeperTurnSkipped())
-            housekeeperTurnDone.record(it.housekeeperTurnDone())
+            housekeeperTurnsSkipped.record(it.housekeeperTurnsSkipped())
+            housekeeperTurnsDone.record(it.housekeeperTurnsDone())
             housekeeperTimeSpentMs.record(it.housekeeperTimeSpent(MILLISECONDS))
           }
         }
@@ -345,13 +347,19 @@ object StorageDiagnosticData {
       },
       totalNativeBytesAllocated, totalNativeBytesReclaimed,
       totalHeapBytesAllocated, totalHeapBytesReclaimed,
+
       totalHeapBytesInUse, totalNativeBytesInUse,
-      totalPagesAllocated, totalPagesReclaimed, totalPagesHandedOver,
+
+      totalPagesAllocated, totalPagesReclaimed, totalPagesHandedOver, totalPageAllocationsWaited,
+
       totalBytesRead, totalBytesWritten, totalPagesWritten,
+
       totalPagesRequested, totalBytesRequested,
       totalPagesRequestsMs, totalPagesReadMs, totalPagesWriteMs,
+
       totalClosedStoragesReclaimed,
-      housekeeperTurnDone, housekeeperTurnSkipped, housekeeperTimeSpentMs
+
+      housekeeperTurnsDone, housekeeperTurnsSkipped, housekeeperTimeSpentMs
     )
 
   }

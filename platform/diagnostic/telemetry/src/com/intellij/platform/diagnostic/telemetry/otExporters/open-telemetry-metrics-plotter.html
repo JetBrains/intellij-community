@@ -977,6 +977,7 @@ as an example
       const totalPagesAllocated = extractTimeSeries("FilePageCacheLockFree.totalPagesAllocated")
       const totalPagesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalPagesReclaimed")
       const totalPagesHandedOver = extractTimeSeries("FilePageCacheLockFree.totalPagesHandedOver")
+      const totalPageAllocationsWaited = extractTimeSeries("FilePageCacheLockFree.totalPageAllocationsWaited")
 
       const totalPagesWritten = extractTimeSeries("FilePageCacheLockFree.totalPagesWritten")
       const totalPagesRequested = extractTimeSeries("FilePageCacheLockFree.totalPagesRequested")
@@ -989,9 +990,9 @@ as an example
       const totalPagesReadMs = extractTimeSeries("FilePageCacheLockFree.totalPagesReadMs")
       const totalPagesWriteMs = extractTimeSeries("FilePageCacheLockFree.totalPagesWriteMs")
 
-      const housekeeperTurnDone = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnDone")
+      const housekeeperTurnsDone = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnsDone")
+      const housekeeperTurnsSkipped = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnsSkipped")
       const housekeeperTimeSpentMs = extractTimeSeries("FilePageCacheLockFree.housekeeperTimeSpentMs")
-      const housekeeperTurnSkipped = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnSkipped")
 
       const totalClosedStoragesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalClosedStoragesReclaimed")
 
@@ -1008,6 +1009,7 @@ as an example
           {name: 'Pages reclaimed', color: 'blue', series: totalPagesReclaimed},
           {name: 'Pages reused immediately', color: 'cyan', series: totalPagesHandedOver},
           {name: 'Pages written on disk', color: 'magenta', series: totalPagesWritten},
+          {name: 'Pages allocation waited', color: 'orange', series: totalPageAllocationsWaited}
         ],
         /*yaxis: */ {
           title: '',
@@ -1053,7 +1055,6 @@ as an example
         ],
         /*yaxis: */ {
           title: 'Mb',
-          range: [0],
           autorange: true
         }
       )
@@ -1063,8 +1064,8 @@ as an example
         'Housekeeper thread activity',
         $("#filePageCacheLockFree_Housekeeper"),
         [
-          {name: 'Turns done', color: 'green', series: housekeeperTurnDone},
-          {name: 'Turns skipped', color: 'blue', series: housekeeperTurnSkipped}
+          {name: 'Turns done', color: 'green', series: housekeeperTurnsDone},
+          {name: 'Turns skipped', color: 'blue', series: housekeeperTurnsSkipped}
         ],
         /*yaxis: */ {
           title: '',
@@ -1083,21 +1084,6 @@ as an example
           autorange: true
         }
       )
-
-      // plotTimeSeries(
-      //   'FilePageCache: loads/dispose times',
-      //   $("#filePageCache_Times_Chart"),
-      //   [
-      //     {name: 'Page load times, ms', color: 'green', series: pageLoadsTimeUs.mulScalar(1e-3 /*us->ms*/)},
-      //     {name: 'Page dispose times, ms', color: 'blue', series: pageDisposalTimeUs.mulScalar(1e-3 /*us->ms*/)}
-      //   ],
-      //   /*yaxis: */ {
-      //     title: 'ms',
-      //     autorange: true
-      //   }
-      // )
-
-
     }
 
     //====== 'Custom' plot: =================

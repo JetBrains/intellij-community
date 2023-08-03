@@ -51,15 +51,19 @@ public class FilePageCacheStatistics {
   private final AtomicLong totalPagesReadNs = new AtomicLong();
   private final AtomicLong totalPagesWriteNs = new AtomicLong();
 
+  /** How many times page-allocating thread was forced to wait so housekeeper thread could keep up */
+  private final AtomicInteger pageAllocationsWaited = new AtomicInteger();
+
 
   //modified by housekeeper thread only, hence not atomic but just volatile:
-  private volatile long housekeeperTurnDone = 0;
-  private volatile long housekeeperTurnSkipped = 0;
+  private volatile long housekeeperTurnsDone = 0;
+  private volatile long housekeeperTurnsSkipped = 0;
   private volatile long housekeeperTotalTimeNs = 0;
 
   private volatile int totalClosedStoragesReclaimed;
 
   //MAYBE RC: totalStorageRegistered?
+
 
   public long startTimestampNs() {
     if (MEASURE_TIMESTAMPS) {
@@ -69,6 +73,7 @@ public class FilePageCacheStatistics {
       return 0L;
     }
   }
+
 
   public void pageAllocatedNative(final int pageSize) {
     totalNativeBytesAllocated.addAndGet(pageSize);
@@ -130,6 +135,11 @@ public class FilePageCacheStatistics {
     }
   }
 
+  public void pageAllocationWaited() {
+    pageAllocationsWaited.incrementAndGet();
+  }
+
+
   public void heapBytesCurrentlyUsed(long heapBytesCurrentlyUsed) {
     this.heapBytesCurrentlyUsed = heapBytesCurrentlyUsed;
   }
@@ -139,17 +149,16 @@ public class FilePageCacheStatistics {
   }
 
 
-
   public void cacheMaintenanceTurnDone(long timeSpentNs) {
     //noinspection NonAtomicOperationOnVolatileField
-    housekeeperTurnDone++;
+    housekeeperTurnsDone++;
     //noinspection NonAtomicOperationOnVolatileField
     housekeeperTotalTimeNs += timeSpentNs;
   }
 
   public void cacheMaintenanceTurnSkipped(long timeSpentNs) {
     //noinspection NonAtomicOperationOnVolatileField
-    housekeeperTurnSkipped++;
+    housekeeperTurnsSkipped++;
     //noinspection NonAtomicOperationOnVolatileField
     housekeeperTotalTimeNs += timeSpentNs;
   }
@@ -183,6 +192,10 @@ public class FilePageCacheStatistics {
 
   public int totalPagesHandedOver() { return totalPagesHandedOver.get(); }
 
+  public int totalPageAllocationsWaited() {
+    return pageAllocationsWaited.get();
+  }
+
 
   public long totalBytesRequested() { return totalBytesRequested.get(); }
 
@@ -203,16 +216,17 @@ public class FilePageCacheStatistics {
   public long totalPagesWrite(TimeUnit unit) { return unit.convert(totalPagesWriteNs.get(), NANOSECONDS); }
 
 
-  public long housekeeperTurnDone() {
-    return housekeeperTurnDone;
+  public long housekeeperTurnsDone() {
+    return housekeeperTurnsDone;
   }
+
 
   public long housekeeperTimeSpent(TimeUnit unit) {
     return unit.convert(housekeeperTotalTimeNs, NANOSECONDS);
   }
 
-  public long housekeeperTurnSkipped() {
-    return housekeeperTurnSkipped;
+  public long housekeeperTurnsSkipped() {
+    return housekeeperTurnsSkipped;
   }
 
 
@@ -232,16 +246,17 @@ public class FilePageCacheStatistics {
            "nativeBytes: {" +
            "allocated: " + totalNativeBytesAllocated + ", reclaimed: " + totalNativeBytesReclaimed + ", current: " + nativeBytesCurrentlyUsed +
            "}, " +
-           
+
            "heapBytes: {" +
            "allocated: " + totalHeapBytesAllocated + ", reclaimed: " + totalHeapBytesReclaimed + ", current: " + heapBytesCurrentlyUsed +
            "}, " +
 
            "pages handed over: " + totalPagesHandedOver + ", " +
+           "pages allocation waited: " + pageAllocationsWaited + ", " +
 
            "bytes: {requested: " + totalBytesRequested + ", read: " + totalBytesRead + ", written=" + totalBytesWritten + "}, " +
 
-           "housekeeperTurns: {done: " + housekeeperTurnDone + ", skipped: " + housekeeperTurnSkipped + "}, " +
+           "housekeeperTurns: {done: " + housekeeperTurnsDone + ", skipped: " + housekeeperTurnsSkipped + "}, " +
            "closedStoragesReclaimed: " + totalClosedStoragesReclaimed +
            ']';
     //@formatter:on
@@ -252,11 +267,12 @@ public class FilePageCacheStatistics {
     return String.format(
       "Statistics: {\n" +
       " pages: {\n" +
-      "   requested:   %s\n" +
-      "   allocated:   %s (~%2.1f%% of requested)\n" +
-      "   written:     %s (~%2.1f%% of allocated)\n" +
-      "   reclaimed:   %s (~%2.1f%% of allocated)\n" +
-      "   handed over: %s (~%2.1f%% of allocated)\n" +
+      "   requested:      %s\n" +
+      "   allocated:      %s (~%2.1f%% of requested)\n" +
+      "   written:        %s (~%2.1f%% of allocated)\n" +
+      "   reclaimed:      %s (~%2.1f%% of allocated)\n" +
+      "   handed over:    %s (~%2.1f%% of allocated)\n" +
+      "   request waited: %s (~%2.1f%% of requested)\n" +
       " }\n" +
 
       " total bytes: {\n" +
@@ -274,16 +290,16 @@ public class FilePageCacheStatistics {
       " native memory: {\n" +
       "   allocated: %s b (~%2.1f%% of total)\n" +
       "   reclaimed: %s b (~%2.1f%% of allocated)\n" +
-      "   current:   %s b" +
+      "   current:   %s b\n" +
       " }\n" +
 
       " heap memory: {\n" +
       "   allocated: %s b (~%.1f%% of total)\n" +
       "   reclaimed: %s b (~%.1f%% of allocated)\n" +
-      "   current:   %s b" +
+      "   current:   %s b\n" +
       " }\n" +
 
-      " housekeeperTurns: {done: %d, skipped: %d}\n" +
+      " housekeeperTurns: {done: %d, skipped: %d, total time %d ms}\n" +
       " closedStoragesReclaimed: %d\n" +
       "}",
 
@@ -292,6 +308,7 @@ public class FilePageCacheStatistics {
       totalPagesWritten, (totalPagesWritten.get() * 100.0 / totalPagesAllocated.get()),
       totalPagesReclaimed, (totalPagesReclaimed.get() * 100.0 / totalPagesAllocated.get()),
       totalPagesHandedOver, (totalPagesHandedOver.get() * 100.0 / totalPagesAllocated.get()),
+      pageAllocationsWaited, (pageAllocationsWaited.get() * 100.0 / totalPagesRequested.get()),
 
       totalBytesRequested,
       totalBytesRead, (totalBytesRead.get() * 100.0 / totalBytesRequested.get()),
@@ -313,7 +330,7 @@ public class FilePageCacheStatistics {
       heapBytesCurrentlyUsed,
 
 
-      housekeeperTurnDone, housekeeperTurnSkipped,
+      housekeeperTurnsDone, housekeeperTurnsSkipped, NANOSECONDS.toMillis(housekeeperTotalTimeNs),
 
       totalClosedStoragesReclaimed
     );

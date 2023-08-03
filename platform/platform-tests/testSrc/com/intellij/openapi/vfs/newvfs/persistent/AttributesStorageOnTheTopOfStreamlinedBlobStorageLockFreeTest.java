@@ -10,6 +10,8 @@ import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
+import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -24,6 +26,7 @@ import static org.junit.Assume.assumeTrue;
 /**
  *
  */
+@RunWith(Enclosed.class)
 public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
   extends AttributesStorageOnTheTopOfBlobStorageTestBase {
 
