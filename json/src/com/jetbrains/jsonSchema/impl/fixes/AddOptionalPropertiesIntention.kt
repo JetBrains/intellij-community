@@ -33,7 +33,6 @@ open class AddOptionalPropertiesIntention : IntentionAction {
     val containingObject = findContainingObjectNode(editor, file) ?: return false
     val missingProperties = collectMissingPropertiesFromSchema(containingObject, containingObject.project)
     return missingProperties != null && !missingProperties.hasOnlyRequiredPropertiesMissing
-
   }
 
   override fun invoke(project: Project, editor: Editor, file: PsiFile) {
