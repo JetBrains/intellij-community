@@ -526,12 +526,18 @@ class JavaToJKTreeBuilder(
             return qualifierExpression?.toJK() ?: JKStubExpression()
         }
 
-        fun PsiReferenceExpression.toJK(): JKExpression {
+        fun PsiReferenceExpression.toJK(ignoreFacades: Boolean = true): JKExpression {
             if (this is PsiMethodReferenceExpression) return toJK()
             val target = resolve()
-            if (target is KtLightClassForFacade
-                || target is KtLightClassForDecompiledDeclaration
-            ) return JKStubExpression()
+
+            if (ignoreFacades && (target is KtLightClassForFacade || target is KtLightClassForDecompiledDeclaration)) {
+                // Normally, references to facade classes shouldn't be converted, because that would be
+                // an unresolved reference in Kotlin: hence the `JKStubExpression`.
+                // But in the case of copy-pasting a single facade class we handle it specially and just paste it as is.
+                // It will still be an unresolved reference in Kotlin, but at least the user won't be surprised by disappearing code.
+                return JKStubExpression()
+            }
+
             if (target is KtLightField
                 && target.name == "INSTANCE"
                 && target.containingClass.kotlinOrigin is KtObjectDeclaration
@@ -1154,6 +1160,7 @@ class JavaToJKTreeBuilder(
     fun buildTree(psi: PsiElement, saveImports: Boolean): JKTreeRoot? =
         when (psi) {
             is PsiJavaFile -> psi.toJK()
+            is PsiReferenceExpression -> with(expressionTreeMapper) { psi.toJK(ignoreFacades = false) }
             is PsiExpression -> with(expressionTreeMapper) { psi.toJK() }
             is PsiStatement -> with(declarationMapper) { psi.toJK() }
             is PsiTypeParameter -> with(declarationMapper) { psi.toJK() }

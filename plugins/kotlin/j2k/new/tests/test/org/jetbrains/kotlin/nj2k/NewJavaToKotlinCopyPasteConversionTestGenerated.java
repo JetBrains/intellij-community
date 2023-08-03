@@ -93,6 +93,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("testData/copyPaste/ExtendsTypeRef.java");
     }
 
+    @TestMetadata("FacadeClassName.java")
+    public void testFacadeClassName() throws Exception {
+        runTest("testData/copyPaste/FacadeClassName.java");
+    }
+
     @TestMetadata("FieldWithNoEndComment.java")
     public void testFieldWithNoEndComment() throws Exception {
         runTest("testData/copyPaste/FieldWithNoEndComment.java");
