@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
@@ -12,7 +11,6 @@ import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
@@ -85,6 +83,12 @@ public final class ExceptionUtil {
       @Override
       public void visitClass(@NotNull PsiClass aClass) {
         // do not go inside class declaration
+      }
+
+      @Override
+      public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+        addExceptions(result, getUnhandledProcessorExceptions(expression, element));
+        super.visitTemplateExpression(expression);
       }
 
       @Override
@@ -268,6 +272,9 @@ public final class ExceptionUtil {
       PsiCallExpression expression = (PsiCallExpression)element;
       unhandledExceptions = getUnhandledExceptions(expression, topElement, callFilter);
     }
+    else if (element instanceof PsiTemplateExpression) {
+      unhandledExceptions = getUnhandledProcessorExceptions((PsiTemplateExpression)element, topElement);
+    }
     else if (element instanceof PsiMethodReferenceExpression) {
       PsiExpression qualifierExpression = ((PsiMethodReferenceExpression)element).getQualifierExpression();
       return qualifierExpression != null ? collectUnhandledExceptions(qualifierExpression, topElement, null, callFilter)
@@ -427,9 +434,7 @@ public final class ExceptionUtil {
       return getUnhandledCloserExceptions((PsiResourceListElement)element, null);
     }
     if (element instanceof PsiTemplateExpression) {
-      final PsiTemplateExpression templateExpression = (PsiTemplateExpression)element;
-      PsiType type = templateExpression.getProcessor().getType();
-      return getUnhandledProcessorExceptions(element, type);
+      return getUnhandledProcessorExceptions((PsiTemplateExpression)element, null);
     }
     return Collections.emptyList();
   }
@@ -606,54 +611,23 @@ public final class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledProcessorExceptions(PsiElement place, PsiType type) {
-    List<PsiClassType> result = getExceptionsFromProcess(type, place.getResolveScope());
-    return result != null
-           ? getUnhandledExceptions(place, null, PsiSubstitutor.EMPTY, result.toArray(PsiClassType.EMPTY_ARRAY))
-           : Collections.emptyList();
-  }
-
-  private static List<PsiClassType> getExceptionsFromProcess(PsiType type, GlobalSearchScope scope) {
-    List<PsiClassType> result = null;
+  private static List<PsiClassType> getUnhandledProcessorExceptions(@NotNull PsiTemplateExpression templateExpression,
+                                                                    @Nullable PsiElement topElement) {
+    PsiExpression processor = templateExpression.getProcessor();
+    if (processor == null) return Collections.emptyList();
+    PsiType type = processor.getType();
+    List<PsiClassType> result = new ArrayList<>();
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
-      PsiClassType.ClassResolveResult processorType = PsiUtil.resolveGenericsClassInType(classType);
-      PsiClass processorClass = processorType.getElement();
-      if (processorClass == null) continue;
-
-      PsiMethod[] methods = getProcessorProcessMethodsForType(processorClass, classType.getResolveScope());
-      for (PsiMethod method : methods) {
-        PsiClass closerClass = method.getContainingClass();
-        if (closerClass != null) {
-          PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(closerClass, processorClass, processorType.getSubstitutor());
-          if (substitutor != null) {
-            final PsiClassType[] exceptionTypes = method.getThrowsList().getReferencedTypes();
-            if (exceptionTypes.length == 0) return Collections.emptyList();
-
-            if (result == null) {
-              result = collectSubstituted(substitutor, exceptionTypes, scope);
-            }
-            else {
-              retainExceptions(result, collectSubstituted(substitutor, exceptionTypes, scope));
-            }
-          }
-        }
+      // Currently, generic parameter type is considered as unhandled exception; not actual exceptions declared by 'process' method
+      PsiType substituted = PsiUtil.substituteTypeParameter(classType, "java.lang.StringTemplate.Processor", 1, false);
+      if (!(substituted instanceof PsiClassType)) continue;
+      PsiClassType exceptionType = (PsiClassType)substituted;
+      if (!isUncheckedException(exceptionType) &&
+          getHandlePlace(templateExpression, exceptionType, topElement) == HandlePlace.UNHANDLED) {
+        result.add(exceptionType);
       }
     }
     return result;
-  }
-
-  private static PsiMethod @NotNull [] getProcessorProcessMethodsForType(@NotNull PsiClass processorClass, @NotNull GlobalSearchScope scope) {
-    final Project project = processorClass.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiClass processor = facade.findClass("java.lang.StringTemplate.Processor", ProjectScope.getLibrariesScope(project));
-    if (processor == null) return PsiMethod.EMPTY_ARRAY;
-
-    if (JavaClassSupers.getInstance().getSuperClassSubstitutor(processor, processorClass, scope, PsiSubstitutor.EMPTY) == null) {
-      return PsiMethod.EMPTY_ARRAY;
-    }
-
-    final PsiMethod[] closes = processor.findMethodsByName("process", false);
-    return closes.length == 1 ? processorClass.findMethodsBySignature(closes[0], true) : PsiMethod.EMPTY_ARRAY;
   }
 
   @NotNull
