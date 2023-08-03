@@ -49,4 +49,53 @@ class X {
     System.out.println(STR."\{<error descr="Illegal line end in string literal">}unclosed);</error>
     return STR."\{} <error descr="Illegal Unicode escape sequence">\u</error>X";
   }
+
+  static class Covariant implements StringTemplate.Processor<Object, RuntimeException> {
+    @Override
+    public Integer process(StringTemplate stringTemplate) {
+      return 123;
+    }
+  }
+
+  public static void testCovariant() {
+    Covariant proc = new Covariant();
+    // As of Java 21, covariant processors are not supported
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'java.lang.Integer'">Integer i = proc."hello";</error>
+  }
+
+  static class CovariantException implements StringTemplate.Processor<Integer, Exception> {
+    @Override
+    public Integer process(StringTemplate stringTemplate) throws Ex {
+      return 123;
+    }
+  }
+  
+  class Ex extends Exception {}
+  class Ex2 extends Exception {}
+  
+  public static void testHandle(StringTemplate.Processor<Integer, Ex> proc) {
+    try {
+      Object x = proc."hello";
+    }
+    catch (Ex ex) {} 
+  }
+
+  public static void testExceptionInFragments(StringTemplate.Processor<Integer, Ex> proc,
+                                              StringTemplate.Processor<Integer, Ex2> proc2) {
+    try {
+      proc."hell\{<error descr="Unhandled exception: X.Ex2">proc2."xyz"</error>}o";
+    }
+    catch (Ex ex) {} 
+  }
+
+  public static void testCovariantException() {
+    CovariantException proc = new CovariantException();
+    // As of Java 21, covariant processors are not supported
+    Integer i = <error descr="Unhandled exception: java.lang.Exception">proc."hello";</error>
+
+    try {
+      Integer i2 = <error descr="Unhandled exception: java.lang.Exception">proc."hello";</error>
+    }
+    catch (Ex ex) {}
+  }
 }
