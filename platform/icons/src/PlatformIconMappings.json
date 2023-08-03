@@ -413,7 +413,7 @@
       "feedbackRatingFocused.svg": "ide/feedbackRatingFocused.svg",
       "feedbackRatingFocusedOn.svg": "ide/feedbackRatingFocusedOn.svg",
       "feedbackRatingOn.svg": "ide/feedbackRatingOn.svg",
-      "localScope.svg": "ide/localScope.svg"
+      "localScope.svg": ["ide/localScope.svg", "ide/localScopeAction.svg"]
     },
     "image": {
       "actualZoom.svg": "graph/actualZoom.svg",
