@@ -18,9 +18,9 @@ import com.intellij.platform.feedback.aqua.state.AquaOldUserInfoState
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.platform.feedback.impl.state.DontShowAgainFeedbackService.Companion.dontShowFeedbackInCurrentVersion
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logDisableNotificationActionInvoked
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logRequestNotificationShown
-import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.logRespondNotificationActionInvoked
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logDisableNotificationActionInvoked
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logRequestNotificationShown
+import com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector.Companion.logRespondNotificationActionInvoked
 import com.intellij.platform.feedback.kafka.bundle.KafkaFeedbackBundle
 import com.intellij.platform.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
 import com.intellij.platform.feedback.kafka.dialog.KafkaProducerFeedbackDialog
