@@ -106,8 +106,9 @@ public class PagedFileStorageWithRWLockedPageContentTest {
     final File file = tmpDirectory.newFile();
     for (int tryNo = 0; tryNo < ENOUGH_TRIES; tryNo++) {
       final PagedFileStorageWithRWLockedPageContent
-        storage = new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, PAGE_SIZE, true,
-                                                              PageContentLockingStrategy.LOCK_PER_PAGE);
+        storage =
+        new PagedFileStorageWithRWLockedPageContent(file.toPath(), storageContext, PAGE_SIZE, true,
+                                                    PageContentLockingStrategy.LOCK_PER_PAGE);
       storage.close();
     }
   }

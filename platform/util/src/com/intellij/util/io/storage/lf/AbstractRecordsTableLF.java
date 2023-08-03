@@ -54,7 +54,7 @@ public abstract class AbstractRecordsTableLF implements IRecordsTable {
 
 
   public AbstractRecordsTableLF(@NotNull Path storageFilePath, @NotNull StorageLockContext context) throws IOException {
-    PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
+    PagedFileStorageWithRWLockedPageContent storage = PagedFileStorageWithRWLockedPageContent.createWithDefaults(
       storageFilePath,
       context,
       getPageSize(),

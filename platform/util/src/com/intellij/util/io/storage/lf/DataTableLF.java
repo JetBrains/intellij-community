@@ -29,7 +29,7 @@ public final class DataTableLF implements IDataTable {
 
   public DataTableLF(@NotNull Path filePath,
                      @NotNull StorageLockContext context) throws IOException {
-    file = new PagedFileStorageWithRWLockedPageContent(
+    file = PagedFileStorageWithRWLockedPageContent.createWithDefaults(
       filePath,
       context,
       /*pageSize: */ 8 * 1024,

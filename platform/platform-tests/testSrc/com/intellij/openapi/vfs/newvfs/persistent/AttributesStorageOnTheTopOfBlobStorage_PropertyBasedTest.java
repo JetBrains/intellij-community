@@ -71,7 +71,9 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
     final SpaceAllocationStrategy spaceAllocationStrategy = new DataLengthPlusFixedPercentStrategy(256, 64, 30);
     final StreamlinedBlobStorage storage = useLockFreeStorage ?
                                            new StreamlinedBlobStorageOverLockFreePagesStorage(
-                                             new PagedFileStorageWithRWLockedPageContent(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, PageContentLockingStrategy.LOCK_PER_PAGE),
+                                             new PagedFileStorageWithRWLockedPageContent(
+                                               storagePath, LOCK_CONTEXT, PAGE_SIZE, PageContentLockingStrategy.LOCK_PER_PAGE
+                                             ),
                                              spaceAllocationStrategy
                                            ) :
                                            new SmallStreamlinedBlobStorage(

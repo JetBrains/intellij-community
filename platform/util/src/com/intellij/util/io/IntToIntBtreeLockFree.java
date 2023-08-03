@@ -67,7 +67,7 @@ public final class IntToIntBtreeLockFree extends AbstractIntToIntBtree {
       Files.deleteIfExists(file);
     }
 
-    storage = new PagedFileStorageWithRWLockedPageContent(
+    storage = PagedFileStorageWithRWLockedPageContent.createWithDefaults(
       file,
       storageLockContext,
       SystemProperties.getIntProperty("idea.IntToIntBtree.page.size", DEFAULT_PAGE_SIZE),

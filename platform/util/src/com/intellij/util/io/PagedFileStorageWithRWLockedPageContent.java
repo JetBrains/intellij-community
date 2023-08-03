@@ -103,18 +103,58 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
     }
   };
 
-  public PagedFileStorageWithRWLockedPageContent(final @NotNull Path file,
-                                                 final @Nullable StorageLockContext storageLockContext,
-                                                 final int pageSize,
-                                                 final boolean nativeBytesOrder,
-                                                 final @NotNull PageContentLockingStrategy strategy) throws IOException {
+  public static PagedFileStorageWithRWLockedPageContent createWithDefaults(@NotNull Path file,
+                                                                           @Nullable StorageLockContext storageLockContext,
+                                                                           int pageSize,
+                                                                           boolean nativeBytesOrder,
+                                                                           @NotNull PageContentLockingStrategy strategy)
+    throws IOException {
+    //TODO RC: remove all that crazyness from ctor. Just plain non-null storageContext, and boolean readOnly.
+    //         It is responsibility of a caller to prepare params!
+    // TODO read-only flag should be extracted from PersistentHashMapValueStorage.CreationTimeOptions
+    boolean readOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
+
+    StorageLockContext storageContext = findOutAppropriateContext(storageLockContext);
+
+    int actualPageSize = Math.max(pageSize > 0 ? pageSize : PageCacheUtils.DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
+
+    return new PagedFileStorageWithRWLockedPageContent(
+      file, storageContext,
+      actualPageSize, nativeBytesOrder, readOnly,
+      strategy
+    );
+  }
+
+  public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
+                                                 @NotNull StorageLockContext storageLockContext,
+                                                 int pageSize,
+                                                 @NotNull PageContentLockingStrategy strategy) throws IOException {
+    this(file, storageLockContext, pageSize, /*nativeBytesOrder: */true , /*readOnly: */false, strategy);
+  }
+
+  public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
+                                                 @NotNull StorageLockContext storageLockContext,
+                                                 int pageSize,
+                                                 boolean nativeBytesOrder,
+                                                 @NotNull PageContentLockingStrategy strategy) throws IOException {
+    this(file, storageLockContext, pageSize, nativeBytesOrder, /*readOnly: */false, strategy);
+  }
+
+  public PagedFileStorageWithRWLockedPageContent(@NotNull Path file,
+                                                 @NotNull StorageLockContext storageLockContext,
+                                                 int pageSize,
+                                                 boolean nativeBytesOrder,
+                                                 boolean readOnly,
+                                                 @NotNull PageContentLockingStrategy strategy) throws IOException {
+    if (pageSize <= 0) {
+      throw new IllegalArgumentException("pageSize(=" + pageSize + ") must be positive");
+    }
+
     this.file = file;
 
-    // TODO read-only flag should be extracted from PersistentHashMapValueStorage.CreationTimeOptions
-    this.readOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
-
-    this.storageLockContext = findOutAppropriateContext(storageLockContext);
-    this.pageSize = Math.max(pageSize > 0 ? pageSize : PageCacheUtils.DEFAULT_PAGE_SIZE, AbstractStorage.PAGE_SIZE);
+    this.storageLockContext = storageLockContext;
+    this.pageSize = pageSize;
+    this.readOnly = readOnly;
     this.nativeBytesOrder = nativeBytesOrder;
 
     this.pageContentLockingStrategy = strategy;
@@ -130,6 +170,7 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
     catch (IOException ignored) {
     }
   }
+
 
   @Override
   public @NotNull StorageLockContext getStorageLockContext() {

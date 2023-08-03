@@ -50,7 +50,7 @@ public class AppendableStorageBackedByPagedStorageLockFree<Data> implements Appe
                                                        @NotNull DataExternalizer<Data> dataDescriptor,
                                                        @NotNull ReentrantReadWriteLock storageLock) throws IOException {
     this.storageLock = storageLock;
-    PagedFileStorageWithRWLockedPageContent storage = new PagedFileStorageWithRWLockedPageContent(
+    PagedFileStorageWithRWLockedPageContent storage = PagedFileStorageWithRWLockedPageContent.createWithDefaults(
       file,
       lockContext,
       pageSize,

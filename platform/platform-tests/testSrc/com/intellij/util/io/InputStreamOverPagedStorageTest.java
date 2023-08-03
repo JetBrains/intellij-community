@@ -22,7 +22,7 @@ public class InputStreamOverPagedStorageTest extends InputStreamOverPagedStorage
   public void setUp() throws Exception {
     assumeTrue("Can't test lock-free storage if LOCK_FREE_VFS_ENABLED=false", PageCacheUtils.LOCK_FREE_VFS_ENABLED);
     storageLock = new ReentrantReadWriteLock();
-    storage = new PagedFileStorageWithRWLockedPageContent(
+    storage =  new PagedFileStorageWithRWLockedPageContent(
       temporaryFolder.newFile().toPath(),
       CONTEXT,
       PAGE_SIZE,

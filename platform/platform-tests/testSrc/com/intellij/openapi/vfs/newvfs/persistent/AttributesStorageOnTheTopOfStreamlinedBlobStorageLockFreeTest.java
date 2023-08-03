@@ -37,13 +37,13 @@ public class AttributesStorageOnTheTopOfStreamlinedBlobStorageLockFreeTest
 
   @Override
   protected AttributesStorageOverBlobStorage openAttributesStorage(final Path storagePath) throws IOException {
-    final PagedFileStorageWithRWLockedPageContent pagedStorage = new PagedFileStorageWithRWLockedPageContent(
-      this.storagePath,
-      LOCK_CONTEXT,
-      PAGE_SIZE,
-      true,
-      PageContentLockingStrategy.LOCK_PER_PAGE
-    );
+    final PagedFileStorageWithRWLockedPageContent pagedStorage =
+      new PagedFileStorageWithRWLockedPageContent(
+        this.storagePath,
+        LOCK_CONTEXT,
+        PAGE_SIZE,
+        PageContentLockingStrategy.LOCK_PER_PAGE
+      );
     storage = new StreamlinedBlobStorageOverLockFreePagesStorage(
       pagedStorage,
       new DataLengthPlusFixedPercentStrategy(256, 64, 30)

@@ -583,7 +583,7 @@ public final class PersistentFSLoader {
       final StreamlinedBlobStorage blobStorage;
       if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
         blobStorage = new StreamlinedBlobStorageOverLockFreePagesStorage(
-          new PagedFileStorageWithRWLockedPageContent(
+          PagedFileStorageWithRWLockedPageContent.createWithDefaults(
             attributesFile,
             PERSISTENT_FS_STORAGE_CONTEXT,
             PageCacheUtils.DEFAULT_PAGE_SIZE,

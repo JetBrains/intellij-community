@@ -84,7 +84,7 @@ class PagedFileStorageWithRWLockedPageContent_Livelock_Test {
         future.get(20, SECONDS)
       }
     }
-    catch (e: TimeoutException){
+    catch (e: TimeoutException) {
       //ok
     }
     finally {
@@ -98,9 +98,10 @@ class PagedFileStorageWithRWLockedPageContent_Livelock_Test {
   private fun openFile(file: Path): PagedFileStorageWithRWLockedPageContent {
     return PagedFileStorageWithRWLockedPageContent(
       file,
-      storageContext,
+      storageContext!!,
       PAGE_SIZE,
       true,
+      false,
       PageContentLockingStrategy.LOCK_PER_PAGE
     )
   }
