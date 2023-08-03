@@ -133,7 +133,23 @@ public final class ClipboardSynchronizer implements Disposable {
     @Nullable
     public Transferable getContents() {
       Clipboard clipboard = getClipboard();
-      return clipboard == null ? null: clipboard.getContents(this);
+      if (clipboard == null) {
+        return null;
+      }
+      Transferable contents = clipboard.getContents(this);
+      if (LOG.isDebugEnabled()) {
+        // this temporary logging is needed to investigate clipboard pasting issue (see IDEA-316996)
+        LOG.debug("Clipboard class: " + clipboard.getClass().getName());
+        LOG.debug("ClipboardHandler class: " + getClass().getName());
+        try {
+          String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
+          text = text.substring(0, Math.min(text.length(), 256)).replace(System.lineSeparator(), " ");
+          LOG.debug("Transferable contents: " + text);
+        } catch (Exception e) {
+          LOG.debug(e);
+        }
+      }
+      return contents;
     }
 
     @Nullable
