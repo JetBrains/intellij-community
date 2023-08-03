@@ -131,9 +131,10 @@ private fun sendFeedback(feedbackUrl: String,
           LOG.info("Feedback submitted successfully. Record ID is ${requestId}")
         }
         catch (e: IOException) {
-          val errorResponse = (it.connection as HttpURLConnection).errorStream.readAllBytes().toString(Charsets.UTF_8)
-          LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nServer response:\n$errorResponse\n" +
-                   "Exception message: ${e.message}")
+          val errorResponse = (it.connection as HttpURLConnection).errorStream?.readAllBytes()?.toString(Charsets.UTF_8)
+          LOG.info("Failed to submit feedback. Feedback data:\n$requestData\n" +
+                   "Server response:\n$errorResponse\n" +
+                   "Exception: ${e.stackTraceToString()}")
           onError()
           return@connect
         }
