@@ -81,7 +81,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
         FS_MONITOR with repository.detectFsMonitor(),
       )
 
-      val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
+      val remoteTypes = HashMultiset.create(repository.remotes.map { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
         repositoryMetric.data.addData("remote_$remoteType", remoteTypes.count(remoteType))
       }
@@ -144,7 +144,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("git.configuration", 13)
+    private val GROUP = EventLogGroup("git.configuration", 14)
 
     private val REPO_SYNC_VALUE: EnumEventField<Value> = EventFields.Enum("value", Value::class.java) { it.name.lowercase() }
     private val REPO_SYNC: VarargEventId = GROUP.registerVarargEvent("repo.sync", REPO_SYNC_VALUE)
@@ -174,8 +174,9 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val REMOTES = EventFields.RoundedInt("remotes")
     private val IS_WORKTREE_USED = EventFields.Boolean("is_worktree_used")
     private val FS_MONITOR = EventFields.Enum<FsMonitor>("fs_monitor")
-    private val remoteTypes = setOf("github", "gitlab", "bitbucket",
-                                    "github_custom", "gitlab_custom", "bitbucket_custom")
+    private val remoteTypes = setOf("github", "gitlab", "bitbucket", "gitee",
+                                    "github_custom", "gitlab_custom", "bitbucket_custom", "gitee_custom",
+                                    "other")
 
     private val remoteTypesEventIds = remoteTypes.map {
       EventFields.Int("remote_$it")
@@ -198,18 +199,20 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     private val SHOW_GIT_BRANCHES_IN_LOG = GROUP.registerVarargEvent("showGitBranchesInLog", EventFields.Enabled)
     private val UPDATE_BRANCH_FILTERS_ON_SELECTION = GROUP.registerVarargEvent("updateBranchesFilterInLogOnSelection", EventFields.Enabled)
 
-    private fun getRemoteServerType(remote: GitRemote): String? {
+    private fun getRemoteServerType(remote: GitRemote): String {
       val hosts = remote.urls.map(URLUtil::parseHostFromSshUrl).distinct()
 
       if (hosts.contains("github.com")) return "github"
       if (hosts.contains("gitlab.com")) return "gitlab"
       if (hosts.contains("bitbucket.org")) return "bitbucket"
+      if (hosts.contains("gitee.com")) return "gitee"
 
       if (remote.urls.any { it.contains("github") }) return "github_custom"
       if (remote.urls.any { it.contains("gitlab") }) return "gitlab_custom"
       if (remote.urls.any { it.contains("bitbucket") }) return "bitbucket_custom"
+      if (remote.urls.any { it.contains("gitee") }) return "gitee_custom"
 
-      return null
+      return "other"
     }
   }
 }
