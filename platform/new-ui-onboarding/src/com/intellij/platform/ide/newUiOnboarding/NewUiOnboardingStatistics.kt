@@ -22,7 +22,7 @@ internal class NewUiOnboardingStatistics : CounterUsagesCollector() {
   }
 
   companion object {
-    private val GROUP: EventLogGroup = EventLogGroup("new.ui.onboarding", 2)
+    private val GROUP: EventLogGroup = EventLogGroup("new.ui.onboarding", 3)
 
     private val stepIdField = EventFields.StringValidatedByCustomRule<NewUiOnboardingStepIdRule>("step_id")
     private val durationField = EventFields.DurationMs
@@ -38,6 +38,7 @@ internal class NewUiOnboardingStatistics : CounterUsagesCollector() {
     private val onboardingFinishedEvent = GROUP.registerEvent("finished", durationField)
     private val stepStartedEvent = GROUP.registerEvent("step.started", stepIdField)
     private val stepFinishedEvent = GROUP.registerEvent("step.finished", stepIdField, durationField)
+    private val linkClickedEvent = GROUP.registerEvent("link.clicked", stepIdField)
 
     fun logWelcomeDialogShown(project: Project) {
       welcomeDialogShownEvent.log(project)
@@ -69,6 +70,10 @@ internal class NewUiOnboardingStatistics : CounterUsagesCollector() {
 
     fun logStepFinished(project: Project, stepId: String, startMillis: Long) {
       stepFinishedEvent.log(project, stepId, getDuration(startMillis))
+    }
+
+    fun logLinkClicked(project: Project, stepId: String) {
+      linkClickedEvent.log(project, stepId)
     }
 
     private fun getDuration(startMillis: Long): Long = System.currentTimeMillis() - startMillis
