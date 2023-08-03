@@ -2,29 +2,21 @@
 package org.jetbrains.plugins.terminal.exp
 
 import com.intellij.codeInsight.completion.CompletionContributor
-import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.patterns.PatternCondition
-import com.intellij.patterns.PlatformPatterns.psiElement
-import com.intellij.patterns.PlatformPatterns.psiFile
-import com.intellij.psi.PsiFile
+import com.intellij.codeInsight.completion.CompletionParameters
+import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.util.ProcessingContext
-import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
 import org.jetbrains.plugins.terminal.util.ShellType
 
 class TerminalSessionCompletionContributor : CompletionContributor() {
-  init {
-    val provider = ShCompletionProvider()
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.ZSH))), provider)
-    extend(CompletionType.BASIC, psiElement().inFile(psiFile().with(ShellTypeCondition(ShellType.BASH))), provider)
-  }
-
-  private class ShellTypeCondition(private val type: ShellType) : PatternCondition<PsiFile>("shellType") {
-    override fun accepts(file: PsiFile, context: ProcessingContext?): Boolean {
-      var original = file
-      while (original.originalFile != original) {
-        original = original.originalFile
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    val session = parameters.editor.getUserData(TerminalSession.KEY) ?: return
+    val shellType = session.shellIntegration?.shellType ?: return
+    when (shellType) {
+      ShellType.ZSH, ShellType.BASH -> {
+        val provider = ShCompletionProvider()
+        provider.addCompletionVariants(parameters, ProcessingContext(), result)
       }
-      return original.getUserData(SHELL_TYPE_KEY) == type
+      else -> {}
     }
   }
 

@@ -19,7 +19,6 @@ import com.intellij.testFramework.utils.io.createFile
 import com.jediterm.core.util.TermSize
 import org.jetbrains.plugins.terminal.LocalTerminalDirectRunner
 import org.jetbrains.plugins.terminal.exp.util.TerminalSessionTestUtil
-import org.jetbrains.plugins.terminal.util.SHELL_TYPE_KEY
 import org.junit.Assume
 import org.junit.Test
 import java.io.File
@@ -50,7 +49,6 @@ abstract class BaseShCompletionTest : BasePlatformTestCase() {
     myFixture.configureByText("test.sh", "")
     myFixture.editor.putUserData(TerminalSession.KEY, session)
     myFixture.editor.putUserData(TerminalCompletionManager.KEY, completionManager)
-    myFixture.file.putUserData(SHELL_TYPE_KEY, session.shellIntegration?.shellType)
 
     testDirectory = createTempDirectory(prefix = "sh_completion")
 
