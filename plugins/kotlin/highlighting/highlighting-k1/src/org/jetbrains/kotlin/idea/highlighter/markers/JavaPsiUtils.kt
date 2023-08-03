@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter.markers
 
@@ -7,6 +7,7 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
@@ -30,7 +31,8 @@ fun collectContainingClasses(methods: Collection<PsiMethod>): Set<PsiClass> {
     return classes
 }
 
-internal tailrec fun getPsiClass(element: PsiElement?): PsiClass? {
+@ApiStatus.Internal
+tailrec fun getPsiClass(element: PsiElement?): PsiClass? {
     return when {
         element == null -> null
         element is PsiClass -> element
@@ -40,7 +42,8 @@ internal tailrec fun getPsiClass(element: PsiElement?): PsiClass? {
     }
 }
 
-internal fun getPsiMethod(element: PsiElement?): PsiMethod? {
+@ApiStatus.Internal
+fun getPsiMethod(element: PsiElement?): PsiMethod? {
     val parent = element?.parent
     return when {
         element == null -> null

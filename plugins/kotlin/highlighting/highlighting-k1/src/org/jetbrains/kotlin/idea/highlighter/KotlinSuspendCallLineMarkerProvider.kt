@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -10,7 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinIcons
-import org.jetbrains.kotlin.idea.KotlinIdeaBundle
+import org.jetbrains.kotlin.idea.base.fe10.highlighting.KotlinBaseFe10HighlightingBundle
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
@@ -42,7 +42,7 @@ class KotlinSuspendCallLineMarkerProvider : LineMarkerProviderDescriptor() {
         }
     }
 
-    override fun getName() = KotlinIdeaBundle.message("gutter.name.suspend.call")
+    override fun getName() = KotlinBaseFe10HighlightingBundle.message("gutter.name.suspend.call")
 
     override fun getIcon() = KotlinIcons.SUSPEND_CALL
 
@@ -162,4 +162,13 @@ fun getSuspendCallKind(expression: KtExpression, bindingContext: BindingContext)
     }
 
     return null
+}
+
+// TODO: copy-paste
+internal fun getElementForLineMark(callElement: PsiElement): PsiElement = when (callElement) {
+    is KtSimpleNameExpression -> callElement.getReferencedNameElement()
+    else ->
+        // a fallback,
+        //but who knows what to reference in KtArrayAccessExpression ?
+        generateSequence(callElement) { it.firstChild }.last()
 }

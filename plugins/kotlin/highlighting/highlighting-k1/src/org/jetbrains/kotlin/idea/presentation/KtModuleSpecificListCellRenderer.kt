@@ -5,5 +5,4 @@ package org.jetbrains.kotlin.idea.presentation
 import com.intellij.ide.util.PsiElementListCellRenderer
 import com.intellij.psi.NavigatablePsiElement
 
-abstract class KtModuleSpecificListCellRenderer<T : NavigatablePsiElement> : PsiElementListCellRenderer<T>() {
-}
+abstract class KtModuleSpecificListCellRenderer<T : NavigatablePsiElement> : PsiElementListCellRenderer<T>()

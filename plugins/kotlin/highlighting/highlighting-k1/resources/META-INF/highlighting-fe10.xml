@@ -34,21 +34,13 @@
                  description="Suppress kotlin.Deprecated warning"
                  defaultValue="false"/>
 
-    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.DebugInfoHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.highlighter.ScriptExternalHighlightingPass$Registrar"/>
     <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsPassFactory$Registrar"/>
 
-    <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter"/>
-    <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighting.KotlinProblemFileHighlightFilter"/>
-
     <daemon.changeLocalityDetector implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinChangeLocalityDetector"/>
 
-    <defaultHighlightingSettingProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinDefaultHighlightingSettingsProvider"/>
-
     <annotator language="JAVA" implementationClass="org.jetbrains.kotlin.idea.java.UnimplementedKotlinInterfaceMemberAnnotator"/>
-
-    <colorSettingsPage implementation="org.jetbrains.kotlin.idea.highlighter.KotlinColorSettingsPage"/>
 
     <registryKey
             key="kotlin.resolve.force.full.resolve.on.highlighting"

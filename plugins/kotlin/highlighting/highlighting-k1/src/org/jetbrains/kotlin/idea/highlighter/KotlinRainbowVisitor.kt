@@ -1,18 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
+import com.intellij.codeInsight.TargetElementEvaluatorEx2
 import com.intellij.codeInsight.TargetElementUtil
+import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.daemon.RainbowVisitor
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator
-import org.jetbrains.kotlin.idea.util.isAnonymousFunction
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -21,7 +22,9 @@ import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class KotlinRainbowVisitor : RainbowVisitor() {
     companion object {
-        val KOTLIN_TARGET_ELEMENT_EVALUATOR = FE10KotlinTargetElementEvaluator()
+        val KOTLIN_TARGET_ELEMENT_EVALUATOR: TargetElementEvaluatorEx2 by lazy {
+            TargetElementUtilBase.getElementEvaluatorsEx2(KotlinLanguage.INSTANCE) ?: error("no TargetElementEvaluatorEx2")
+        }
     }
 
     override fun suitableForFile(file: PsiFile) = file is KtFile

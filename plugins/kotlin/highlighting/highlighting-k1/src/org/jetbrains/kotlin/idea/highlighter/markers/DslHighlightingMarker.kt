@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.application.options.colors.ColorAndFontOptions
@@ -10,13 +10,16 @@ import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.highlighting.dsl.DslStyleUtils
-import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.highlighter.dsl.DslKotlinHighlightingVisitorExtension
 import org.jetbrains.kotlin.idea.highlighter.dsl.isDslHighlightingMarker
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtScriptInitializer
 import javax.swing.JComponent
 
 private val navHandler = GutterIconNavigationHandler<PsiElement> { event, element ->
@@ -44,13 +47,13 @@ fun collectHighlightingColorsMarkers(
     @Suppress("MoveLambdaOutsideParentheses")
     result.add(
         LineMarkerInfo(
-            anchor,
-            anchor.textRange,
-            DslStyleUtils.createDslStyleIcon(styleId),
-            toolTipHandler,
-            navHandler,
-            GutterIconRenderer.Alignment.RIGHT,
-            { KotlinBundle.message("highlighter.tool.tip.marker.annotation.for.dsl") }
+          anchor,
+          anchor.textRange,
+          DslStyleUtils.createDslStyleIcon(styleId),
+          toolTipHandler,
+          navHandler,
+          GutterIconRenderer.Alignment.RIGHT,
+          { KotlinBundle.message("highlighter.tool.tip.marker.annotation.for.dsl") }
         )
     )
 }
@@ -60,4 +63,13 @@ private fun KtClass.styleIdForMarkerAnnotation(): Int? {
     if (classDescriptor.kind != ClassKind.ANNOTATION_CLASS) return null
     if (!classDescriptor.isDslHighlightingMarker()) return null
     return DslKotlinHighlightingVisitorExtension.styleIdByMarkerAnnotation(classDescriptor)
+}
+
+// TODO: copy-paste
+fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
+    if (this is KtScriptInitializer) {
+        return null
+    }
+
+    return resolveToDescriptorIfAny()
 }

@@ -27,7 +27,7 @@ import org.jetbrains.kotlin.idea.refactoring.changeSignature.toValVar
 import org.jetbrains.kotlin.idea.references.KtPropertyDelegationMethodsReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.readWriteAccessWithFullExpression
-import org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator
+import org.jetbrains.kotlin.idea.util.findLambdaOpenLBraceForGeneratedIt
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
@@ -381,7 +381,7 @@ class InflowSlicer(
     private fun KtFunctionLiteral.implicitItUsages(): Collection<KtSimpleNameExpression> {
         return collectDescendantsOfType(fun(expression: KtSimpleNameExpression): Boolean {
             if (expression.getQualifiedExpressionForSelector() != null || expression.getReferencedNameAsName() != StandardNames.IMPLICIT_LAMBDA_PARAMETER_NAME) return false
-            val lBrace = FE10KotlinTargetElementEvaluator.findLambdaOpenLBraceForGeneratedIt(expression.mainReference) ?: return false
+            val lBrace = findLambdaOpenLBraceForGeneratedIt(expression.mainReference) ?: return false
             return lBrace == this.lBrace.node.treeNext.psi
         })
     }
