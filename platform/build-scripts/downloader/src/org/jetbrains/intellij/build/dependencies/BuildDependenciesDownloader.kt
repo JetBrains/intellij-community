@@ -99,6 +99,10 @@ object BuildDependenciesDownloader {
   fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI): Path =
     downloadFileToCacheLocationSync(uri.toString(), communityRoot)
 
+  @JvmStatic
+  fun downloadFileToCacheLocation(communityRoot: BuildDependenciesCommunityRoot, uri: URI, username: String, password: String): Path =
+    downloadFileToCacheLocationSync(uri.toString(), communityRoot, username, password)
+
   fun getTargetFile(communityRoot: BuildDependenciesCommunityRoot, uriString: String): Path {
     val lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
     val hashString = hashString("${uriString}V${DOWNLOAD_CODE_VERSION}").substring(0, 10)
