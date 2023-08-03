@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.util.TextRange;
@@ -181,7 +181,7 @@ public final class PsiLiteralUtil {
     PsiElement literal = expression.getFirstChild();
     assert literal instanceof PsiJavaToken : literal;
     IElementType type = ((PsiJavaToken)literal).getTokenType();
-    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) && 
+    return (type == JavaTokenType.CHARACTER_LITERAL || type == JavaTokenType.STRING_LITERAL || type == JavaTokenType.TEXT_BLOCK_LITERAL) &&
            expression.getValue() == null;
   }
 
@@ -396,15 +396,18 @@ public final class PsiLiteralUtil {
    */
   public static String @Nullable [] getTextBlockLines(@NotNull PsiLiteralExpression expression) {
     if (!expression.isTextBlock()) return null;
-    String rawText = expression.getText();
-    if (rawText.length() < 7 || !rawText.endsWith("\"\"\"")) return null;
+    return getTextBlockLines(expression.getText());
+  }
+
+  public static String @Nullable [] getTextBlockLines(String text) {
+    if (text.length() < 7 || !text.endsWith("\"\"\"")) return null;
     int start = 3;
     while (true) {
-      char c = rawText.charAt(start++);
+      char c = text.charAt(start++);
       if (c == '\n') break;
-      if (!isTextBlockWhiteSpace(c) || start == rawText.length()) return null;
+      if (!isTextBlockWhiteSpace(c) || start == text.length()) return null;
     }
-    return rawText.substring(start, rawText.length() - 3).split("\n", -1);
+    return text.substring(start, text.length() - 3).split("\n", -1);
   }
 
   public static boolean isTextBlockWhiteSpace(char c) {
@@ -487,7 +490,7 @@ public final class PsiLiteralUtil {
     StringBuilder sb = new StringBuilder();
     for (int i = 0; i < lines.length; i++) {
       String line = lines[i];
-      if (line.length() > 0) {
+      if (!line.isEmpty()) {
         sb.append(trimTrailingWhitespaces(line.substring(prefix)));
       }
       if (i < lines.length - 1) {
@@ -498,7 +501,7 @@ public final class PsiLiteralUtil {
   }
 
   @NotNull
-  private static String trimTrailingWhitespaces(@NotNull String line) {
+  public static String trimTrailingWhitespaces(@NotNull String line) {
     int index = line.length();
     while (true) {
       int wsIndex = parseWhitespaceBackwards(line, index - 1);
