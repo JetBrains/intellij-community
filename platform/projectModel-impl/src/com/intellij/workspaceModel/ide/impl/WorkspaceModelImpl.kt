@@ -427,7 +427,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     private val initializeBridgesTimeMs: AtomicLong = AtomicLong()
 
     /**
-     * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more then once.
+     * This setup is in static part because meters will not be collected if the same instrument (gauge, counter ...) are registered more than once.
      * In that case WARN by OpenTelemetry will be logged 'Instrument XYZ has recorded multiple values for the same attributes.'
      * https://github.com/airbytehq/airbyte-platform/pull/213/files
      */

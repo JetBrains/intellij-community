@@ -769,7 +769,8 @@ class EntityStorageSerializerImpl(
       if (urlRelativizer == null) {
         val url = kryo.readObject(input, List::class.java) as List<String>
         return virtualFileManager.fromUrlSegments(url)
-      } else {
+      }
+      else {
         val serializedUrl = kryo.readObject(input, String::class.java) as String
         val convertedUrl = urlRelativizer.toAbsoluteUrl(serializedUrl)
         return virtualFileManager.fromUrl(convertedUrl)
