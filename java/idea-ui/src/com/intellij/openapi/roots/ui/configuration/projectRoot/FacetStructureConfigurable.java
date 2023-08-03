@@ -235,7 +235,8 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   @Override
   public void disposeUIResources() {
     super.disposeUIResources();
-
+    disposeMultipleSettingsEditor();
+    
     for (FacetTypeEditor editor : myFacetTypeEditors.values()) {
       editor.disposeUIResources();
     }
