@@ -54,19 +54,20 @@ import javax.swing.JComponent
 import kotlin.Result
 import kotlin.concurrent.withLock
 
+private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
+
+private val LOG = logger<UpdateChecker>()
+
+private const val DISABLED_UPDATE = "disabled_update.txt"
+private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
+private const val PRODUCT_DATA_TTL_MIN = 5L
+
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
  */
 object UpdateChecker {
-  private val LOG = logger<UpdateChecker>()
-
-  private const val DISABLED_UPDATE = "disabled_update.txt"
-  private const val DISABLED_PLUGIN_UPDATE = "plugin_disabled_updates.txt"
-  private const val PRODUCT_DATA_TTL_MIN = 5L
   const val MACHINE_ID_DISABLED_PROPERTY: String = "machine.id.disabled"
   const val MACHINE_ID_PARAMETER: String = "mid"
-
-  private enum class NotificationKind { PLATFORM, PLUGINS, EXTERNAL }
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls!!.checkingUrl
@@ -676,10 +677,11 @@ object UpdateChecker {
     }
   }
 
-  private fun notificationsEnabled(): Boolean =
-    NotificationsConfiguration.getNotificationsConfiguration().let {
+  private fun notificationsEnabled(): Boolean {
+    return NotificationsConfiguration.getNotificationsConfiguration().let {
       it.areNotificationsEnabled() && it.getDisplayType(getNotificationGroup().displayId) != NotificationDisplayType.NONE
     }
+  }
 
   private fun showNotification(project: Project?,
                                kind: NotificationKind,
