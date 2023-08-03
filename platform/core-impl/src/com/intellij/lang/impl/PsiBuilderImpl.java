@@ -960,10 +960,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
     private final ASTConverter myConverter;
 
     private ConvertFromTokensToASTBuilder(@NotNull StartMarker rootNode,
-                                          @NotNull DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> delegate,
-                                          @Nullable ASTFactory astFactory) {
+                                          @NotNull DiffTreeChangeBuilder<? super ASTNode, ? super ASTNode> delegate) {
       myDelegate = delegate;
-      myConverter = new ASTConverter(rootNode, astFactory);
+      myConverter = new ASTConverter(rootNode);
     }
 
     @Override
@@ -989,7 +988,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private @NotNull DiffLog merge(@NotNull ASTNode oldRoot, @NotNull StartMarker newRoot, @NotNull CharSequence lastCommittedText) {
     DiffLog diffLog = new DiffLog();
-    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog, getASTFactory());
+    DiffTreeChangeBuilder<ASTNode, LighterASTNode> builder = new ConvertFromTokensToASTBuilder(newRoot, diffLog);
     MyTreeStructure treeStructure = new MyTreeStructure(newRoot, null);
     List<CustomLanguageASTComparator> customLanguageASTComparators = CustomLanguageASTComparator.getMatchingComparators(myFile);
     ShallowNodeComparator<ASTNode, LighterASTNode> comparator =
@@ -1658,11 +1657,9 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
 
   private static final class ASTConverter implements Function<Node, ASTNode> {
     private final StartMarker myRoot;
-    private final ASTFactory myASTFactory;
 
-    private ASTConverter(@NotNull StartMarker root, @Nullable ASTFactory astFactory) {
+    private ASTConverter(@NotNull StartMarker root) {
       myRoot = root;
-      myASTFactory = astFactory;
     }
 
     @Override
@@ -1677,7 +1674,7 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
       else {
         StartMarker startMarker = (StartMarker)n;
         CompositeElement composite = n == myRoot ? (CompositeElement)myRoot.myBuilder.createRootAST(myRoot)
-                                                         : createComposite(startMarker, myASTFactory);
+                                                 : createComposite(startMarker, startMarker.myBuilder.getASTFactory());
         startMarker.myBuilder.bind(startMarker, composite);
         return composite;
       }
