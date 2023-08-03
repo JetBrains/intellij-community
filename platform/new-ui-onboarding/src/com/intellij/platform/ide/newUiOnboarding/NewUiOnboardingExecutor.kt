@@ -71,6 +71,7 @@ internal class NewUiOnboardingExecutor(private val project: Project,
         NewUiOnboardingStatistics.logOnboardingStopped(project, stepId, OnboardingStopReason.ESCAPE_PRESSED,
                                                        tourStartMillis, stepStartMillis)
       }
+    builder.onLinkClick { NewUiOnboardingStatistics.logLinkClicked(project, stepId) }
 
     if (ind < steps.lastIndex) {
       builder.withButtonLabel(NewUiOnboardingBundle.message("gotIt.button.next"))
