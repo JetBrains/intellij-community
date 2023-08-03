@@ -113,13 +113,6 @@
             restartRequired="true"/>
 
     <registryKey
-            key="kotlin.scripting.wait-init.attempts.num"
-            description="Scripting initialization takes time. This key limits the number of waiting attempts (each takes milliseconds)
-             before the data becomes available for other subsystems."
-            defaultValue="10"
-            restartRequired="false"/>
-
-    <registryKey
             key="kotlin.scripting.deferred.definition.attempts.num"
             description="Script definition loading has async nature. In synchronous contexts we use a sync-wrapper waiting for the loading
               under the hood. This key limits the number of polling attempts (each takes milliseconds)."

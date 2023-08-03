@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -28,7 +27,6 @@ import org.jetbrains.kotlin.idea.base.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptDependenciesModificationTracker
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
-import org.jetbrains.kotlin.idea.core.script.scriptingWarnLog
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -36,11 +34,8 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import org.jetbrains.kotlin.utils.addToStdlib.ifFalse
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import java.nio.file.Paths
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.system.measureTimeMillis
 
 /**
  * Holder for [ScriptClassRootsCache].
@@ -55,8 +50,6 @@ import kotlin.system.measureTimeMillis
  * This will start indexing.
  * Also analysis cache will be cleared and changed opened script files will be reanalyzed.
  */
-
-private const val INIT_WAIT_ATTEMPTS_REGISTRY_KEY = "kotlin.scripting.wait-init.attempts.num"
 
 abstract class ScriptClassRootsUpdater(
     val project: Project,
@@ -84,8 +77,6 @@ abstract class ScriptClassRootsUpdater(
      */
     private val cache: AtomicReference<ScriptClassRootsCache> = AtomicReference(ScriptClassRootsCache.EMPTY)
 
-    private val cacheNotEmptyLatch = CountDownLatch(1)
-
 
     init {
         ProjectManager.getInstance().addProjectManagerListener(project, object : ProjectManagerListener {
@@ -100,24 +91,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     val classpathRoots: ScriptClassRootsCache
-        get() {
-            val timeoutMs = 500L
-            var attemptsLeft = Registry.intValue(INIT_WAIT_ATTEMPTS_REGISTRY_KEY, 10)
-
-            val ms = measureTimeMillis {
-                while (!cacheNotEmptyLatch.await(timeoutMs, TimeUnit.MILLISECONDS) && attemptsLeft > 0) {
-                    attemptsLeft--
-                    ProgressManager.checkCanceled()
-                }
-            }
-
-            if (attemptsLeft == 0) {
-                scriptingWarnLog("Couldn't load initial script cache state after $ms ms. In most cases we can cope with it. " +
-                                         "For others see registry key kotlin.scripting.wait-init.attempts.num.")
-            }
-
-            return cache.get()
-        }
+        get() = cache.get()
 
     /**
      * @param synchronous Used from legacy FS cache only, don't use
@@ -340,7 +314,6 @@ abstract class ScriptClassRootsUpdater(
             val old = cache.get()
             val new = recreateRootsCache()
             if (cache.compareAndSet(old, new)) {
-                if (old == ScriptClassRootsCache.EMPTY) cacheNotEmptyLatch.countDown()
                 afterUpdate()
                 return new.diff(project, lastSeen)
             }
