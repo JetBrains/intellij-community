@@ -3,9 +3,7 @@ package com.intellij.platform.feedback
 
 import com.intellij.openapi.extensions.PluginAware
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.project.Project
-import com.intellij.util.xmlb.annotations.Attribute
 
 /**
  * Represents a feedback survey.
@@ -17,16 +15,16 @@ import com.intellij.util.xmlb.annotations.Attribute
  */
 abstract class FeedbackSurvey : PluginAware {
 
-  @RequiredElement
-  @Attribute("survey_id")
-  protected var surveyId: String = ""
-
   private var pluginDescriptor: PluginDescriptor? = null
 
   protected abstract val feedbackSurveyType: FeedbackSurveyType<*>
 
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor
+  }
+
+  fun getFeedbackSurveyId(): String {
+    return feedbackSurveyType.getFeedbackSurveyId()
   }
 
   fun getPluginDescriptor(): PluginDescriptor? {

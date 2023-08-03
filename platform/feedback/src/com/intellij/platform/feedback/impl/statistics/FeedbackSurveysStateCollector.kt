@@ -14,25 +14,25 @@ class FeedbackSurveysStateCollector : ApplicationUsagesCollector() {
 
     private val NUMBER_FEEDBACK_SURVEY_SHOWS = GROUP.registerEvent(
       "number.of.notifications.shown",
-      EventFields.StringValidatedByInlineRegexp("survey_id", ".+"),
+      EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
       EventFields.Count
     )
 
     private val NUMBER_RESPOND_ACTION_INVOKED = GROUP.registerEvent(
       "number.of.respond.actions.invoked",
-      EventFields.StringValidatedByInlineRegexp("survey_id", ".+"),
+      EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
       EventFields.Count
     )
 
     private val NUMBER_DISABLE_ACTION_INVOKED = GROUP.registerEvent(
       "number.of.disable.actions.invoked",
-      EventFields.StringValidatedByInlineRegexp("survey_id", ".+"),
+      EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
       EventFields.Count
     )
 
     private val FEEDBACK_SURVEY_ANSWER_SENT = GROUP.registerEvent(
       "feedback.survey.answered",
-      EventFields.StringValidatedByInlineRegexp("survey_id", ".+")
+      EventFields.StringValidatedByCustomRule("survey_id", FeedbackSurveyIdValidationRule::class.java),
     )
 
   }

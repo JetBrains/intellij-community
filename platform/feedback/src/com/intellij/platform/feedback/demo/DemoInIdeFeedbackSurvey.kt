@@ -8,5 +8,5 @@ import com.intellij.platform.feedback.InIdeFeedbackSurveyType
 class DemoInIdeFeedbackSurvey : FeedbackSurvey() {
 
   override val feedbackSurveyType: InIdeFeedbackSurveyType<InIdeFeedbackSurveyConfig> =
-    InIdeFeedbackSurveyType(DemoFeedbackSurveyConfig(surveyId))
+    InIdeFeedbackSurveyType(DemoFeedbackSurveyConfig())
 }

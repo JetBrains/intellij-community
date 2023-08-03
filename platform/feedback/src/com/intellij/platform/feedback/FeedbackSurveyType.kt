@@ -17,8 +17,12 @@ sealed class FeedbackSurveyType<T : FeedbackSurveyConfig> {
 
   protected abstract val feedbackSurveyConfig: T
 
-  fun updateCommonFeedbackSurveysStateAfterSent() {
+  private fun updateCommonFeedbackSurveysStateAfterSent() {
     CommonFeedbackSurveyService.feedbackSurveyAnswerSent(feedbackSurveyConfig.surveyId)
+  }
+
+  fun getFeedbackSurveyId(): String {
+    return feedbackSurveyConfig.surveyId
   }
 
   fun isSuitableToShow(project: Project): Boolean {

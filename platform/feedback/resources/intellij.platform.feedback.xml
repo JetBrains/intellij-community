@@ -20,12 +20,15 @@
     <registryKey key="platform.feedback" defaultValue="true" description="Enable to collect user feedback"/>
     <registryKey key="platform.feedback.time.to.show.notification" defaultValue="600"
                  description="Explicitly sets the number of seconds until the feedback notification is displayed."/>
+
+    <statistics.validation.customValidationRule
+      implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveyIdValidationRule"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.DontShowAgainValueCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.platform.feedback.impl.statistics.FeedbackSurveysStateCollector"/>
     <statistics.counterUsagesCollector
       implementationClass="com.intellij.platform.feedback.impl.statistics.FeedbackNotificationCountCollector"/>
 
-    <feedback.idleFeedbackSurvey survey_id="demo_survey" implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
+    <feedback.idleFeedbackSurvey implementation="com.intellij.platform.feedback.demo.DemoInIdeFeedbackSurvey"/>
   </extensions>
 
   <applicationListeners>
