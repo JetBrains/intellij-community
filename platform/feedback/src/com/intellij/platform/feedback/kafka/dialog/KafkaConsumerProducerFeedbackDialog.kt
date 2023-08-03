@@ -3,10 +3,10 @@ package com.intellij.platform.feedback.kafka.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.feedback.impl.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.impl.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.impl.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.impl.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.platform.feedback.kafka.bundle.KafkaFeedbackBundle
 import javax.swing.Action

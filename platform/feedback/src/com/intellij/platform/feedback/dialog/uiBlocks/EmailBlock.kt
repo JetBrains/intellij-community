@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.impl.dialog.uiBlocks
+package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.impl.dialog.EMAIL_REGEX
-import com.intellij.platform.feedback.impl.dialog.TEXT_FIELD_EMAIL_COLUMN_SIZE
+import com.intellij.platform.feedback.dialog.EMAIL_REGEX
+import com.intellij.platform.feedback.dialog.TEXT_FIELD_EMAIL_COLUMN_SIZE
 import com.intellij.platform.feedback.impl.feedbackAgreement
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.components.JBCheckBox

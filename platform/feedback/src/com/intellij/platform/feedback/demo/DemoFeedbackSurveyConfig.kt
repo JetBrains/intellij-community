@@ -6,8 +6,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.InIdeFeedbackSurveyConfig
 import com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundle
 import com.intellij.platform.feedback.demo.dialog.DemoFeedbackDialog
-import com.intellij.platform.feedback.impl.dialog.BlockBasedFeedbackDialog
-import com.intellij.platform.feedback.impl.dialog.SystemDataJsonSerializable
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate

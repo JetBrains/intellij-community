@@ -1,11 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.impl.dialog.uiBlocks
+package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.platform.feedback.impl.dialog.TEXT_AREA_COLUMN_SIZE
-import com.intellij.platform.feedback.impl.dialog.TEXT_AREA_ROW_SIZE
-import com.intellij.platform.feedback.impl.dialog.adjustBehaviourForFeedbackForm
+import com.intellij.platform.feedback.dialog.TEXT_AREA_COLUMN_SIZE
+import com.intellij.platform.feedback.dialog.TEXT_AREA_ROW_SIZE
+import com.intellij.platform.feedback.dialog.adjustBehaviourForFeedbackForm
 import com.intellij.ui.dsl.builder.*
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.put

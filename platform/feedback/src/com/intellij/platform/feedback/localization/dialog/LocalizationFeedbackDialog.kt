@@ -11,10 +11,10 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.platform.feedback.impl.*
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.impl.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.platform.feedback.impl.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.impl.dialog.adjustBehaviourForFeedbackForm
-import com.intellij.platform.feedback.impl.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.adjustBehaviourForFeedbackForm
+import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.impl.notification.ThanksForFeedbackNotification
 import com.intellij.platform.feedback.localization.bundle.LocalizationFeedbackBundle
 import com.intellij.platform.feedback.localization.service.LocalizationFeedbackNotificationService

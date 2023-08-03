@@ -2,8 +2,8 @@
 package com.intellij.platform.feedback
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.impl.dialog.BlockBasedFeedbackDialog
-import com.intellij.platform.feedback.impl.dialog.SystemDataJsonSerializable
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialog
+import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 
 /**
  * Represents the config for In-IDE feedback survey.

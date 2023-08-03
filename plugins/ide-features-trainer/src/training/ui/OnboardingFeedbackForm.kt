@@ -19,9 +19,9 @@ import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
 import com.intellij.platform.feedback.impl.FeedbackRequestType
-import com.intellij.platform.feedback.impl.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
-import com.intellij.platform.feedback.impl.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.impl.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
+import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.impl.submitGeneralFeedback
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter

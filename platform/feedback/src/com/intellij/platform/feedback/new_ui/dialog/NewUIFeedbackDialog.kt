@@ -2,11 +2,11 @@
 package com.intellij.platform.feedback.new_ui.dialog
 
 import com.intellij.openapi.project.Project
-import com.intellij.platform.feedback.impl.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.impl.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.impl.dialog.SystemDataJsonSerializable
-import com.intellij.platform.feedback.impl.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.impl.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
+import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.uiBlocks.*
 import com.intellij.platform.feedback.new_ui.CancelFeedbackNotification
 import com.intellij.platform.feedback.new_ui.bundle.NewUIFeedbackBundle
 import com.intellij.platform.feedback.new_ui.state.NewUIInfoService

@@ -3,10 +3,10 @@ package com.intellij.platform.feedback.demo.dialog
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.demo.bundle.DemoFeedbackBundle
-import com.intellij.platform.feedback.impl.dialog.BlockBasedFeedbackDialogWithEmail
-import com.intellij.platform.feedback.impl.dialog.CommonFeedbackSystemData
-import com.intellij.platform.feedback.impl.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.impl.dialog.uiBlocks.*
+import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
+import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
+import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
+import com.intellij.platform.feedback.dialog.uiBlocks.*
 
 class DemoFeedbackDialogWithEmail(
   project: Project?,
