@@ -41,7 +41,6 @@ object KotlinPluginBuilder {
     "kotlin.base.kdoc",
     "kotlin.base.platforms",
     "kotlin.base.facet",
-    "kotlin.base.klib",
     "kotlin.base.project-structure",
     "kotlin.base.external-build-system",
     "kotlin.base.scripting",
