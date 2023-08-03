@@ -119,6 +119,13 @@
             defaultValue="10"
             restartRequired="false"/>
 
+    <registryKey
+            key="kotlin.scripting.deferred.definition.attempts.num"
+            description="Script definition loading has async nature. In synchronous contexts we use a sync-wrapper waiting for the loading
+              under the hood. This key limits the number of polling attempts (each takes milliseconds)."
+            defaultValue="20"
+            restartRequired="false"/>
+
     <fileType name="script-definition-marker" fieldName="INSTANCE"
               implementationClass="org.jetbrains.kotlin.idea.script.ScriptDefinitionMarkerFileType"/>
   </extensions>
