@@ -43,6 +43,11 @@ public class ModuleDependentsTestGenerated extends AbstractModuleDependentsTest 
         runTest("testData/moduleDependents/cyclicalWithOutsideDependency/");
     }
 
+    @TestMetadata("deduplicatedLibraries")
+    public void testDeduplicatedLibraries() throws Exception {
+        runTest("testData/moduleDependents/deduplicatedLibraries/");
+    }
+
     @TestMetadata("linear")
     public void testLinear() throws Exception {
         runTest("testData/moduleDependents/linear/");

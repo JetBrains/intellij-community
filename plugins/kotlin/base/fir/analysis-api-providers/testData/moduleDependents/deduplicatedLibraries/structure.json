@@ -1,0 +1,29 @@
+{
+  "libraries": [
+    { "name": "L1", "roots": ["R1", "R2"] },
+    { "name": "L2", "roots": ["R1", "R2"] },
+    { "name": "L3", "roots": ["R1", "R3"] }
+  ],
+  "modules": [
+    { "name": "A", "dependsOn": ["L1", "L3"] },
+    { "name": "B", "dependsOn": ["L2"] },
+    { "name": "C", "dependsOn": ["L3"] }
+  ],
+  "targets": [
+    {
+      "library": "L1",
+      "directDependents": ["A", "B"],
+      "transitiveDependents": ["A", "B"]
+    },
+    {
+      "library": "L2",
+      "directDependents": ["A", "B"],
+      "transitiveDependents": ["A", "B"]
+    },
+    {
+      "library": "L3",
+      "directDependents": ["A", "C"],
+      "transitiveDependents": ["A", "C"]
+    }
+  ]
+}
