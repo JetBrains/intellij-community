@@ -13,6 +13,8 @@ publishing {
 }
 
 kotlin {
+    { { target_hierarchy } }
+
     jvm()
     linuxX64()
     iosArm64()

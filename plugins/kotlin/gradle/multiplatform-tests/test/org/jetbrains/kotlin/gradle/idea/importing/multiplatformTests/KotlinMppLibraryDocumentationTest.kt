@@ -5,6 +5,7 @@ import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImp
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.DocumentationChecker
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import kotlin.test.Test
 
 
@@ -17,6 +18,7 @@ class KotlinMppLibraryDocumentationTest : AbstractKotlinMppGradleImportingTest()
     }
 
     @Test
+    @PluginTargetVersions(pluginVersion = "1.8.22+")
     fun testExpectDocumentationInPublishedMppLibrary() {
         doTest {
             publish("lib")
