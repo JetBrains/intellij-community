@@ -33,8 +33,10 @@ class X {
   interface MyProcessor extends StringTemplate.Processor {}
 
   String raw(StringTemplate.Processor processor, MyProcessor myProcessor) {
-    System.out.println(<error descr="Raw processor type is not allowed: X.MyProcessor">myProcessor</error>."");
-    return <error descr="Raw processor type is not allowed: java.lang.StringTemplate.Processor">processor</error>."\{}\{}\{}\{}\{}\{}";
+    System.out.println(<error descr="Raw processor type is not allowed: MyProcessor">myProcessor</error>."");
+    return <error descr="Raw processor type is not allowed: Processor">processor</error>."\{}\{}\{}\{}\{}\{}";
+    var z = (java.io.Serializable & StringTemplate.Processor)myProcessor;
+    System.out.println(<error descr="Raw processor type is not allowed: Serializable & Processor">z</error>."");
   }
 
   void nested() {

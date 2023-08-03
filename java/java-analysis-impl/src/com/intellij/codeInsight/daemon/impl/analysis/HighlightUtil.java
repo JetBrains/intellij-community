@@ -2294,6 +2294,7 @@ public final class HighlightUtil {
     PsiClass processorClass = processorType.resolve();
     if (processorClass == null) return null;
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      if (!TypeConversionUtil.isAssignable(processorType, classType)) continue;
       PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       PsiClass aClass = resolveResult.getElement();
       if (aClass == null) continue;
@@ -2301,7 +2302,7 @@ public final class HighlightUtil {
       if (substitutor == null) continue;
       Map<PsiTypeParameter, PsiType> substitutionMap = substitutor.getSubstitutionMap();
       if (substitutionMap.isEmpty() || substitutionMap.containsValue(null)) {
-        String text = JavaErrorBundle.message("raw.processor.type.not.allowed", type.getCanonicalText());
+        String text = JavaErrorBundle.message("raw.processor.type.not.allowed", type.getPresentableText());
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(processor).descriptionAndTooltip(text);
       }
     }

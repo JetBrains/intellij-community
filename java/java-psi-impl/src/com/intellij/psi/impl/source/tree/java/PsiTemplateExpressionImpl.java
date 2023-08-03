@@ -67,6 +67,7 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
     final PsiClassType processorType = factory.createTypeByFQClassName("java.lang.StringTemplate.Processor", processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) return null;
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      if (!TypeConversionUtil.isAssignable(processorType, classType)) continue;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) continue;
