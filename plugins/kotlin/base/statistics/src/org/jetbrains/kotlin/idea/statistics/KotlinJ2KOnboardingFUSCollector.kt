@@ -8,8 +8,6 @@ import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfoById
-import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceOrNull
@@ -197,8 +195,7 @@ internal data class KotlinOnboardingSession(
 }
 
 @Service(Service.Level.PROJECT)
-class KotlinOnboardingJ2KSessionService(private val project: Project) : Disposable {
-    private var coroutineScope = MainScope() + Dispatchers.EDT
+class KotlinOnboardingJ2KSessionService(private val project: Project, private val coroutineScope: CoroutineScope) {
     private var hasKotlinPlugin: Boolean? = null
     private var hasKotlinFile: Boolean? = null
 
@@ -227,10 +224,6 @@ class KotlinOnboardingJ2KSessionService(private val project: Project) : Disposab
                 }
             }
         }
-    }
-
-    override fun dispose() {
-        coroutineScope.cancel()
     }
 
     private fun BuildSystemType.getType(): KotlinJ2KOnboardingBuildSystem {
