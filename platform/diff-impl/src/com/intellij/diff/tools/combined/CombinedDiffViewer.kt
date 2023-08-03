@@ -124,6 +124,7 @@ class CombinedDiffViewer(
 
   init {
     blockListeners.listeners.add(blockListener)
+    selectDiffBlock(blockState.currentBlock, true)
     notifyVisibleBlocksChanged()
   }
 
