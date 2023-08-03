@@ -361,7 +361,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
 
         val adjustedDescriptor = kotlinChangeSignature.adjustDescriptor(declarations)!!
         val processor = kotlinChangeSignature.createSilentRefactoringProcessor(adjustedDescriptor) as KotlinChangeSignatureProcessor
-        processor.ktChangeInfo.also { it.checkUsedParameters = true }
+        processor.changeInfo.also { it.checkUsedParameters = true }
         processor.run()
 
         compareEditorsWithExpectedData()
@@ -1610,5 +1610,5 @@ fun createChangeInfo(
     val declarations = callableDescriptor.safeAs<CallableMemberDescriptor>()?.getDeepestSuperDeclarations() ?: listOf(callableDescriptor)
     val adjustedDescriptor = kotlinChangeSignature.adjustDescriptor(declarations) ?: return null
     val processor = kotlinChangeSignature.createSilentRefactoringProcessor(adjustedDescriptor) as KotlinChangeSignatureProcessor
-    return processor.ktChangeInfo.also { it.checkUsedParameters = true }
+    return processor.changeInfo.also { it.checkUsedParameters = true }
 }

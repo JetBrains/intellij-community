@@ -99,7 +99,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         result.add(OriginalJavaMethodDescriptorWrapper(info.method))
 
-        val kotlinChangeInfo = info.asKotlinChangeInfo
+        val kotlinChangeInfo = info as? KotlinChangeInfo
         if (kotlinChangeInfo != null) {
             findAllMethodUsages(kotlinChangeInfo, result)
         } else {
@@ -114,7 +114,9 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
         return result.toTypedArray()
     }
 
-    private fun canHandle(changeInfo: ChangeInfo) = changeInfo.asKotlinChangeInfo is KotlinChangeInfo || changeInfo is JavaChangeInfo
+    private fun canHandle(changeInfo: ChangeInfo): Boolean {
+        return changeInfo is KotlinChangeInfo || changeInfo is JavaChangeInfo
+    }
 
     private fun findAllMethodUsages(changeInfo: KotlinChangeInfo, result: MutableSet<UsageInfo>) {
         loop@ for (functionUsageInfo in changeInfo.getAffectedCallables()) {
@@ -738,7 +740,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         @Suppress("UNCHECKED_CAST")
         val kotlinUsageInfo = usageInfo as? KotlinUsageInfo<PsiElement>
-        val ktChangeInfo = changeInfo.asKotlinChangeInfo
+        val ktChangeInfo = changeInfo as? KotlinChangeInfo
         return ktChangeInfo != null && kotlinUsageInfo != null && kotlinUsageInfo.processUsage(
             ktChangeInfo,
             element,
@@ -771,7 +773,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 changeInfo.updateMethod(method)
             }
         } else {
-            changeInfo.asKotlinChangeInfo ?: return false
+            changeInfo as? KotlinChangeInfo ?: return false
         }
 
         for (primaryFunction in ktChangeInfo.methodDescriptor.primaryCallables) {
