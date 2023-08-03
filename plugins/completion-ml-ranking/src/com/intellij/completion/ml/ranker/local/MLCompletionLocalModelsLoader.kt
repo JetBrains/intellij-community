@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.ranker.local
 
 import com.intellij.internal.ml.DecisionFunction
@@ -14,14 +14,19 @@ class MLCompletionLocalModelsLoader(private val registryPathKey: String) {
   @Volatile
   private var localModel: LocalModalInfo? = null
 
-  fun getModel(languageId: String): DecisionFunction? {
+  fun getModel(languageId: String, synchronous: Boolean = false): DecisionFunction? {
     if (!isPathToTheModelSet()) {
       localModel = null
       return null
     }
     if (isPathToTheModelChanged()) {
-      scheduleInitModel()
-      return null
+      if (synchronous) {
+        initModelFromPathToZipSynchronously()
+        return localModel?.decisionFunction
+      } else {
+        scheduleInitModel()
+        return null
+      }
     }
 
     val resLocalModel = localModel ?: return null

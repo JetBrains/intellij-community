@@ -23,5 +23,5 @@ class TokenCompletionFeature : EvaluableFeatureBase<CompletionStrategy>("token-c
   override fun getStrategySerializer(): StrategySerializer<CompletionStrategy> = CompletionStrategySerializer()
 
   override fun getEvaluationSteps(language: Language, strategy: CompletionStrategy): List<EvaluationStep> =
-    listOf(SetupCompletionStep(language.name, strategy.completionType))
+    listOf(SetupCompletionStep(language, strategy.completionType))
 }

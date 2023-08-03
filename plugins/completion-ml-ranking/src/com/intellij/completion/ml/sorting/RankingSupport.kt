@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
@@ -49,6 +50,9 @@ object RankingSupport {
     }
   }
 
+  @ApiStatus.Internal
+  fun loadLocalDebugModel(language: Language): LanguageRankingModel? = tryLoadLocalDebugModel(language, synchronous = true)
+
   private fun tryGetModel(provider: RankingModelProvider): RankingModelWrapper? {
     try {
       return LanguageRankingModel(provider.model, provider.decoratingPolicy)
@@ -75,8 +79,8 @@ object RankingSupport {
     return shouldSort
   }
 
-  private fun tryLoadLocalDebugModel(language: Language): LanguageRankingModel? {
-    return localDebugModelLoader.getModel(language.id)?.let {
+  private fun tryLoadLocalDebugModel(language: Language, synchronous: Boolean = false): LanguageRankingModel? {
+    return localDebugModelLoader.getModel(language.id, synchronous)?.let {
       return LanguageRankingModel(it, DecoratingItemsPolicy.DISABLED)
     }
   }
