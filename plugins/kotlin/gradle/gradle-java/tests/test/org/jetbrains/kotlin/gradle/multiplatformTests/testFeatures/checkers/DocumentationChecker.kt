@@ -50,7 +50,8 @@ object DocumentationChecker : TestFeature<DocumentationCheckerConfig> {
     override fun KotlinMppTestsContext.beforeTestExecution() {
         val config = testConfiguration.getConfiguration(DocumentationChecker)
         if (config.downloadSources) {
-            GradleSettings.getInstance(testProject).isDownloadSources = true
+            // in old branches sources downloaded by default
+            //GradleSettings.getInstance(testProject).isDownloadSources = true
         }
         carets.clear()
     }
