@@ -35,6 +35,7 @@ import java.time.ZoneId
 import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.io.path.absolute
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
@@ -277,6 +278,9 @@ object StorageDiagnosticData {
     val totalHeapBytesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalHeapBytesAllocated").buildObserver()
     val totalHeapBytesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalHeapBytesReclaimed").buildObserver()
 
+    val totalNativeBytesInUse = otelMeter.gaugeBuilder("FilePageCacheLockFree.nativeBytesInUse").ofLongs().buildObserver()
+    val totalHeapBytesInUse = otelMeter.gaugeBuilder("FilePageCacheLockFree.heapBytesInUse").ofLongs().buildObserver()
+
     val totalPagesAllocated = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesAllocated").buildObserver()
     val totalPagesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReclaimed").buildObserver()
     val totalPagesHandedOver = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesHandedOver").buildObserver()
@@ -289,11 +293,12 @@ object StorageDiagnosticData {
 
     val totalBytesRequested = otelMeter.counterBuilder("FilePageCacheLockFree.totalBytesRequested").buildObserver()
 
-    val totalPagesRequestsNs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesRequestsNs").buildObserver()
-    val totalPagesReadNs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReadNs").buildObserver()
-    val totalPagesWriteNs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWriteNs").buildObserver()
+    val totalPagesRequestsMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesRequestsMs").buildObserver()
+    val totalPagesReadMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesReadMs").buildObserver()
+    val totalPagesWriteMs = otelMeter.counterBuilder("FilePageCacheLockFree.totalPagesWriteMs").buildObserver()
 
     val housekeeperTurnDone = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnDone").buildObserver()
+    val housekeeperTimeSpentMs = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTimeSpentMs").buildObserver()
     val housekeeperTurnSkipped = otelMeter.counterBuilder("FilePageCacheLockFree.housekeeperTurnSkipped").buildObserver()
 
     val totalClosedStoragesReclaimed = otelMeter.counterBuilder("FilePageCacheLockFree.totalClosedStoragesReclaimed").buildObserver()
@@ -308,6 +313,9 @@ object StorageDiagnosticData {
             totalHeapBytesAllocated.record(it.totalHeapBytesAllocated())
             totalHeapBytesReclaimed.record(it.totalHeapBytesReclaimed())
 
+            totalHeapBytesInUse.record(it.heapBytesCurrentlyUsed())
+            totalNativeBytesInUse.record(it.nativeBytesCurrentlyUsed())
+
             totalPagesAllocated.record(it.totalPagesAllocated().toLong())
             totalPagesReclaimed.record(it.totalPagesReclaimed().toLong())
             totalPagesHandedOver.record(it.totalPagesHandedOver().toLong())
@@ -320,14 +328,15 @@ object StorageDiagnosticData {
 
             totalBytesRequested.record(it.totalBytesRequested())
 
-            totalPagesRequestsNs.record(it.totalPagesRequestsNs())
-            totalPagesReadNs.record(it.totalPagesReadNs())
-            totalPagesWriteNs.record(it.totalPagesWriteNs())
+            totalPagesRequestsMs.record(it.totalPagesRequests(MILLISECONDS))
+            totalPagesReadMs.record(it.totalPagesRead(MILLISECONDS))
+            totalPagesWriteMs.record(it.totalPagesWrite(MILLISECONDS))
 
             totalClosedStoragesReclaimed.record(it.totalClosedStoragesReclaimed().toLong())
 
             housekeeperTurnSkipped.record(it.housekeeperTurnSkipped())
             housekeeperTurnDone.record(it.housekeeperTurnDone())
+            housekeeperTimeSpentMs.record(it.housekeeperTimeSpent(MILLISECONDS))
           }
         }
         catch (_: AlreadyDisposedException) {
@@ -336,12 +345,13 @@ object StorageDiagnosticData {
       },
       totalNativeBytesAllocated, totalNativeBytesReclaimed,
       totalHeapBytesAllocated, totalHeapBytesReclaimed,
+      totalHeapBytesInUse, totalNativeBytesInUse,
       totalPagesAllocated, totalPagesReclaimed, totalPagesHandedOver,
       totalBytesRead, totalBytesWritten, totalPagesWritten,
       totalPagesRequested, totalBytesRequested,
-      totalPagesRequestsNs, totalPagesReadNs, totalPagesWriteNs,
+      totalPagesRequestsMs, totalPagesReadMs, totalPagesWriteMs,
       totalClosedStoragesReclaimed,
-      housekeeperTurnDone, housekeeperTurnSkipped
+      housekeeperTurnDone, housekeeperTurnSkipped, housekeeperTimeSpentMs
     )
 
   }

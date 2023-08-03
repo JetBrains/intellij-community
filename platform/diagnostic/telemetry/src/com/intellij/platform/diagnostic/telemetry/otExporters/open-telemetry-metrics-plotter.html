@@ -219,12 +219,12 @@ as an example
     /* open/close markers */
     div > div.caption::before {
       content: '-';
-      font-family: monospaced;
+      font-family: monospaced,monospace;
     }
 
     div.hidden > div.caption::before {
       content: '+';
-      font-family: monospaced;
+      font-family: monospaced,monospace;
     }
 
     div.plot {
@@ -971,6 +971,9 @@ as an example
       const totalHeapBytesAllocated = extractTimeSeries("FilePageCacheLockFree.totalHeapBytesAllocated")
       const totalHeapBytesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalHeapBytesReclaimed")
 
+      const nativeBytesInUse = extractTimeSeries("FilePageCacheLockFree.nativeBytesInUse")
+      const heapBytesInUse = extractTimeSeries("FilePageCacheLockFree.heapBytesInUse")
+
       const totalPagesAllocated = extractTimeSeries("FilePageCacheLockFree.totalPagesAllocated")
       const totalPagesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalPagesReclaimed")
       const totalPagesHandedOver = extractTimeSeries("FilePageCacheLockFree.totalPagesHandedOver")
@@ -982,11 +985,12 @@ as an example
       const totalBytesRead = extractTimeSeries("FilePageCacheLockFree.totalBytesRead")
       const totalBytesWritten = extractTimeSeries("FilePageCacheLockFree.totalBytesWritten")
 
-      const totalPagesRequestsNs = extractTimeSeries("FilePageCacheLockFree.totalPagesRequestsNs")
-      const totalPagesReadNs = extractTimeSeries("FilePageCacheLockFree.totalPagesReadNs")
-      const totalPagesWriteNs = extractTimeSeries("FilePageCacheLockFree.totalPagesWriteNs")
+      const totalPagesRequestsMs = extractTimeSeries("FilePageCacheLockFree.totalPagesRequestsMs")
+      const totalPagesReadMs = extractTimeSeries("FilePageCacheLockFree.totalPagesReadMs")
+      const totalPagesWriteMs = extractTimeSeries("FilePageCacheLockFree.totalPagesWriteMs")
 
       const housekeeperTurnDone = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnDone")
+      const housekeeperTimeSpentMs = extractTimeSeries("FilePageCacheLockFree.housekeeperTimeSpentMs")
       const housekeeperTurnSkipped = extractTimeSeries("FilePageCacheLockFree.housekeeperTurnSkipped")
 
       const totalClosedStoragesReclaimed = extractTimeSeries("FilePageCacheLockFree.totalClosedStoragesReclaimed")
@@ -1015,9 +1019,9 @@ as an example
         'Page timings',
         $("#filePageCacheLockFree_PageTimings"),
         [
-          {name: 'Total time of page requests', color: 'blue', series: totalPagesRequestsNs.mulScalar(1e-9)},
-          {name: 'Total time of page reads', color: 'green', series: totalPagesReadNs.mulScalar(1e-9)},
-          {name: 'Total time of page writes', color: 'red', series: totalPagesWriteNs.mulScalar(1e-9)}
+          {name: 'Total time of page requests', color: 'blue', series: totalPagesRequestsMs.mulScalar(1e-3)},
+          {name: 'Total time of page reads', color: 'green', series: totalPagesReadMs.mulScalar(1e-3)},
+          {name: 'Total time of page writes', color: 'red', series: totalPagesWriteMs.mulScalar(1e-3)}
         ],
         /*yaxis: */ {
           title: 'sec',
@@ -1041,20 +1045,22 @@ as an example
       )
 
       plotTimeSeries(
-        'Pages allocated: Heap vs Off-Heap (Native)',
+        'Memory used by page buffers: Heap vs Off-heap (Native)',
         $("#filePageCacheLockFree_HeapVsNativeMemoryUsed"),
         [
-          {name: 'Pages allocated heap', color: 'green', series: totalHeapBytesAllocated.mulScalar(1e-6)},
-          {name: 'Pages allocated off-heap', color: 'blue', series: totalNativeBytesAllocated.mulScalar(1e-6)}
+          {name: 'Heap memory in use', color: 'red', series: heapBytesInUse.mulScalar(1e-6)},
+          {name: 'Off-heap memory in use', color: 'blue', series: nativeBytesInUse.mulScalar(1e-6)}
         ],
         /*yaxis: */ {
           title: 'Mb',
+          range: [0],
           autorange: true
         }
       )
 
+      //MAYBE RC: monitor total _time_ spent by housekeeper thread?
       plotTimeSeries(
-        'Housekeeper thread',
+        'Housekeeper thread activity',
         $("#filePageCacheLockFree_Housekeeper"),
         [
           {name: 'Turns done', color: 'green', series: housekeeperTurnDone},
@@ -1062,6 +1068,18 @@ as an example
         ],
         /*yaxis: */ {
           title: '',
+          autorange: true
+        }
+      )
+
+      plotTimeSeries(
+        'Housekeeper thread times',
+        $("#filePageCacheLockFree_HousekeeperTimes"),
+        [
+          {name: 'Time spent', color: 'green', series: housekeeperTimeSpentMs.mulScalar(1e-3)}
+        ],
+        /*yaxis: */ {
+          title: 'sec',
           autorange: true
         }
       )
@@ -1365,21 +1383,21 @@ as an example
       <div class="hideable">
         <dl>
           <dt>What this page is for?</dt>
-          <dd>During its work IDE exports its internal monitoring data into a <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+          <dd>During its work IDE exports its internal monitoring data into a <span style="font-family: monospace">open-telemetry-metrics.*.csv</span>
             files. The page could parse those files and plot nice time series charts. The data is mostly for JetBrains support and
             development engineers.
           </dd>
 
           <dt>Why do I need it?</dt>
           <dd>Maybe you don't need it. But it is quite easy to try and see yourself: drag-n-drop
-            any <span style="font-family: monospaced">open-telemetry-metrics.*.csv</span>
+            any <span style="font-family: monospace">open-telemetry-metrics.*.csv</span>
             file onto the page.
           </dd>
 
-          <dt>There to find <span style="font-family: Monospace">open-telemetry-metrics.*.csv</span>
+          <dt>There to find <span style="font-family: monospace">open-telemetry-metrics.*.csv</span>
             files?
           </dt>
-          <dd>In IDE logs folder (menu: <span style="font-family: monospaced">Help/Show logs in Finder</span>)</dd>
+          <dd>In IDE logs folder (menu: <span style="font-family: monospace">Help/Show logs in Finder</span>)</dd>
         </dl>
       </div>
     </div>
@@ -1486,6 +1504,7 @@ as an example
     <div id="filePageCacheLockFree_HeapVsNativeMemoryUsed" class="plot hideable"></div>
 
     <div id="filePageCacheLockFree_Housekeeper" class="plot hideable"></div>
+    <div id="filePageCacheLockFree_HousekeeperTimes" class="plot hideable"></div>
 
   </div>
 

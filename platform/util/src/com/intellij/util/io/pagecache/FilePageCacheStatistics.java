@@ -5,8 +5,11 @@ import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * Used by {@link FilePageCacheLockFree} to gather inside statistics
@@ -19,13 +22,18 @@ public class FilePageCacheStatistics {
   private final AtomicLong totalHeapBytesAllocated = new AtomicLong();
   private final AtomicLong totalHeapBytesReclaimed = new AtomicLong();
 
+  private volatile long nativeBytesCurrentlyUsed = 0;
+  private volatile long heapBytesCurrentlyUsed = 0;
+
   private final AtomicInteger totalPagesAllocated = new AtomicInteger();
   private final AtomicInteger totalPagesReclaimed = new AtomicInteger();
   private final AtomicInteger totalPagesHandedOver = new AtomicInteger();
 
+  /** Total bytes read from disk (since cache creation) */
   private final AtomicLong totalBytesRead = new AtomicLong();
+  /** Total bytes written on disk during pages flush (since cache creation) */
   private final AtomicLong totalBytesWritten = new AtomicLong();
-
+  /** Total pages written on disk == i.e. total number of .flush calls that actually write >1 bytes */
   private final AtomicLong totalPagesWritten = new AtomicLong();
 
   /**
@@ -34,7 +42,7 @@ public class FilePageCacheStatistics {
    */
   private final AtomicLong totalPagesRequested = new AtomicLong();
   /**
-   * Total pages bytes requested from {@link PagedFileStorageWithRWLockedPageContent#pageByOffset(long, boolean)}
+   * Cumulative size of all pages requested from {@link PagedFileStorageWithRWLockedPageContent#pageByOffset(long, boolean)}
    * methods
    */
   private final AtomicLong totalBytesRequested = new AtomicLong();
@@ -47,6 +55,7 @@ public class FilePageCacheStatistics {
   //modified by housekeeper thread only, hence not atomic but just volatile:
   private volatile long housekeeperTurnDone = 0;
   private volatile long housekeeperTurnSkipped = 0;
+  private volatile long housekeeperTotalTimeNs = 0;
 
   private volatile int totalClosedStoragesReclaimed;
 
@@ -121,15 +130,28 @@ public class FilePageCacheStatistics {
     }
   }
 
-
-  public void cacheMaintenanceTurnDone() {
-    //noinspection NonAtomicOperationOnVolatileField
-    housekeeperTurnDone++;
+  public void heapBytesCurrentlyUsed(long heapBytesCurrentlyUsed) {
+    this.heapBytesCurrentlyUsed = heapBytesCurrentlyUsed;
   }
 
-  public void cacheMaintenanceTurnSkipped() {
+  public void nativeBytesCurrentlyUsed(long nativeBytesCurrentlyUsed) {
+    this.nativeBytesCurrentlyUsed = nativeBytesCurrentlyUsed;
+  }
+
+
+
+  public void cacheMaintenanceTurnDone(long timeSpentNs) {
+    //noinspection NonAtomicOperationOnVolatileField
+    housekeeperTurnDone++;
+    //noinspection NonAtomicOperationOnVolatileField
+    housekeeperTotalTimeNs += timeSpentNs;
+  }
+
+  public void cacheMaintenanceTurnSkipped(long timeSpentNs) {
     //noinspection NonAtomicOperationOnVolatileField
     housekeeperTurnSkipped++;
+    //noinspection NonAtomicOperationOnVolatileField
+    housekeeperTotalTimeNs += timeSpentNs;
   }
 
   public void closedStoragesReclaimed(final int reclaimed) {
@@ -147,36 +169,52 @@ public class FilePageCacheStatistics {
 
   public long totalHeapBytesReclaimed() { return totalHeapBytesReclaimed.get(); }
 
+  public long heapBytesCurrentlyUsed() {
+    return heapBytesCurrentlyUsed;
+  }
+
+  public long nativeBytesCurrentlyUsed() {
+    return nativeBytesCurrentlyUsed;
+  }
+
   public int totalPagesAllocated() { return totalPagesAllocated.get(); }
 
   public int totalPagesReclaimed() { return totalPagesReclaimed.get(); }
 
   public int totalPagesHandedOver() { return totalPagesHandedOver.get(); }
 
+
+  public long totalBytesRequested() { return totalBytesRequested.get(); }
+
   public long totalBytesRead() { return totalBytesRead.get(); }
 
   public long totalBytesWritten() { return totalBytesWritten.get(); }
 
-  public long totalPagesWritten() { return totalPagesWritten.get(); }
 
   public long totalPagesRequested() { return totalPagesRequested.get(); }
 
-  public long totalBytesRequested() { return totalBytesRequested.get(); }
+  public long totalPagesWritten() { return totalPagesWritten.get(); }
 
-  public long totalPagesRequestsNs() { return totalPagesRequestsNs.get(); }
 
-  public long totalPagesReadNs() { return totalPagesReadNs.get(); }
+  public long totalPagesRequests(TimeUnit unit) { return unit.convert(totalPagesRequestsNs.get(), NANOSECONDS); }
 
-  public long totalPagesWriteNs() { return totalPagesWriteNs.get(); }
+  public long totalPagesRead(TimeUnit unit) { return unit.convert(totalPagesReadNs.get(), NANOSECONDS); }
+
+  public long totalPagesWrite(TimeUnit unit) { return unit.convert(totalPagesWriteNs.get(), NANOSECONDS); }
 
 
   public long housekeeperTurnDone() {
     return housekeeperTurnDone;
   }
 
+  public long housekeeperTimeSpent(TimeUnit unit) {
+    return unit.convert(housekeeperTotalTimeNs, NANOSECONDS);
+  }
+
   public long housekeeperTurnSkipped() {
     return housekeeperTurnSkipped;
   }
+
 
   public int totalClosedStoragesReclaimed() {
     return totalClosedStoragesReclaimed;
@@ -185,15 +223,19 @@ public class FilePageCacheStatistics {
 
   @Override
   public String toString() {
+    //@formatter:off
     return "Statistics[" +
            "pages: " +
            "{requested: " + totalPagesRequested + ", allocated: " + totalPagesAllocated +
            ", flushed: " + totalPagesWritten + ", reclaimed: " + totalPagesReclaimed + "}, " +
 
-           "nativeBytes: " +
-           "{allocated: " + totalNativeBytesAllocated + ", reclaimed: " + totalNativeBytesReclaimed + "}, " +
-           "heapBytes: " +
-           "{allocated: " + totalHeapBytesAllocated + ", reclaimed: " + totalHeapBytesReclaimed + "}, " +
+           "nativeBytes: {" +
+           "allocated: " + totalNativeBytesAllocated + ", reclaimed: " + totalNativeBytesReclaimed + ", current: " + nativeBytesCurrentlyUsed +
+           "}, " +
+           
+           "heapBytes: {" +
+           "allocated: " + totalHeapBytesAllocated + ", reclaimed: " + totalHeapBytesReclaimed + ", current: " + heapBytesCurrentlyUsed +
+           "}, " +
 
            "pages handed over: " + totalPagesHandedOver + ", " +
 
@@ -202,6 +244,7 @@ public class FilePageCacheStatistics {
            "housekeeperTurns: {done: " + housekeeperTurnDone + ", skipped: " + housekeeperTurnSkipped + "}, " +
            "closedStoragesReclaimed: " + totalClosedStoragesReclaimed +
            ']';
+    //@formatter:on
   }
 
   public String toPrettyString() {
@@ -231,11 +274,13 @@ public class FilePageCacheStatistics {
       " native memory: {\n" +
       "   allocated: %s b (~%2.1f%% of total)\n" +
       "   reclaimed: %s b (~%2.1f%% of allocated)\n" +
+      "   current:   %s b" +
       " }\n" +
 
       " heap memory: {\n" +
       "   allocated: %s b (~%.1f%% of total)\n" +
       "   reclaimed: %s b (~%.1f%% of allocated)\n" +
+      "   current:   %s b" +
       " }\n" +
 
       " housekeeperTurns: {done: %d, skipped: %d}\n" +
@@ -261,9 +306,11 @@ public class FilePageCacheStatistics {
 
       totalNativeBytesAllocated, (totalNativeBytesAllocated.get() * 100.0 / totalBytesAllocated),
       totalNativeBytesReclaimed, (totalNativeBytesReclaimed.get() * 100.0 / totalNativeBytesAllocated.get()),
+      nativeBytesCurrentlyUsed,
 
       totalHeapBytesAllocated, (totalHeapBytesAllocated.get() * 100.0 / totalBytesAllocated),
       totalHeapBytesReclaimed, (totalHeapBytesReclaimed.get() * 100.0 / totalHeapBytesAllocated.get()),
+      heapBytesCurrentlyUsed,
 
 
       housekeeperTurnDone, housekeeperTurnSkipped,
