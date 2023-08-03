@@ -1541,7 +1541,7 @@
     <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineActionsPromoter"/>
 
     <registryKey key="annotate.hyperlinks.in.general.pass"
-                 defaultValue="false"
+                 defaultValue="true"
                  description="Enables old behavior of HyperlinkAnnotator to run as part of GeneralHighlightingPass"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
