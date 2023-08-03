@@ -1135,6 +1135,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/breakpointInCrossinlineLambdaWithImport.kt");
         }
 
+        @TestMetadata("breakpointInCrossinlineLambdaWithNoLambdaPassing.kt")
+        public void testBreakpointInCrossinlineLambdaWithNoLambdaPassing() throws Exception {
+            runTest("testData/stepping/custom/breakpointInCrossinlineLambdaWithNoLambdaPassing.kt");
+        }
+
         @TestMetadata("breakpointInFlowLambda.kt")
         public void testBreakpointInFlowLambda() throws Exception {
             runTest("testData/stepping/custom/breakpointInFlowLambda.kt");

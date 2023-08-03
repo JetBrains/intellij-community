@@ -66,9 +66,20 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean {
-    val visibleVariables = location.visibleVariables(debugProcess)
-    val markerLocalVariables = visibleVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+fun isInsideInlineArgument(inlineArgument: KtFunction, location: Location, debugProcess: DebugProcessImpl): Boolean =
+  isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
+
+/**
+ * Check whether [inlineArgument] is a lambda that is inlined in bytecode
+ * by looking for a marker inline variable corresponding to this lambda.
+ *
+ * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
+ */
+fun isInlinedArgument(inlineArgument: KtFunction, location: Location): Boolean =
+  isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
+
+private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtFunction): Boolean {
+    val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
     return runReadAction {
         val lambdaOrdinal = lambdaOrdinalByArgument(inlineArgument)

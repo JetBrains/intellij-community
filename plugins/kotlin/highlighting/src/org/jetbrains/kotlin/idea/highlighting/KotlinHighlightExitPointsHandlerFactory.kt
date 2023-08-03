@@ -2,7 +2,7 @@ package org.jetbrains.kotlin.idea.highlighting
 
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.base.highlighting.AbstractKotlinHighlightExitPointsHandlerFactory
-import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
+import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument as utilsIsInlinedArgument
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtReturnExpression
@@ -18,7 +18,7 @@ class KotlinHighlightExitPointsHandlerFactory: AbstractKotlinHighlightExitPoints
 
     override fun isInlinedArgument(declaration: KtDeclarationWithBody): Boolean {
         return declaration is KtFunction && analyze(declaration) {
-            isInlinedArgument(declaration, false)
+            utilsIsInlinedArgument(declaration)
         }
     }
 

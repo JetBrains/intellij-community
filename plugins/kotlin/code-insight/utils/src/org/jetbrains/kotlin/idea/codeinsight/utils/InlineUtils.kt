@@ -14,19 +14,11 @@ import org.jetbrains.kotlin.psi.*
 
 context(KtAnalysisSession)
 @ApiStatus.Internal
-fun isInlinedArgument(argument: KtFunction, checkNonLocalReturn: Boolean): Boolean {
-    val parameterSymbol = getInlineArgumentSymbol(argument) ?: return false
-    if (parameterSymbol.isNoinline || (checkNonLocalReturn && parameterSymbol.isCrossinline)) {
-        return false
-    }
-
-    val parameterType = parameterSymbol.returnType
-    return !parameterType.isMarkedNullable
-            && (parameterType.isFunctionType || parameterType.isSuspendFunctionType)
-}
+fun isInlinedArgument(argument: KtFunction): Boolean = getInlineArgumentSymbol(argument) != null
 
 context(KtAnalysisSession)
-private fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
+@ApiStatus.Internal
+fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbol? {
     if (argument !is KtFunctionLiteral && argument !is KtNamedFunction) return null
 
     val parentCallExpression = KtPsiUtil.getParentCallIfPresent(argument) as? KtCallExpression ?: return null
@@ -35,7 +27,13 @@ private fun getInlineArgumentSymbol(argument: KtFunction): KtValueParameterSymbo
 
     if ((symbol is KtFunctionSymbol && symbol.isInline) || isArrayGeneratorConstructorCall(symbol)) {
         val valueArgument = parentCallExpression.getContainingValueArgument(argument) ?: return null
-        return parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol
+        val argumentSymbol = parentCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return null
+        if (argumentSymbol.isNoinline) return null
+        val parameterType = argumentSymbol.returnType
+        if (!parameterType.isMarkedNullable
+               && (parameterType.isFunctionType || parameterType.isSuspendFunctionType)) {
+            return argumentSymbol
+        }
     }
 
     return null

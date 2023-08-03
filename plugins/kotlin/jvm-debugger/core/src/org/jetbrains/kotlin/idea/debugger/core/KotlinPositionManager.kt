@@ -60,7 +60,7 @@ import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.base.psi.*
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_TYPES
-import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
+import org.jetbrains.kotlin.idea.codeinsight.utils.getInlineArgumentSymbol
 import org.jetbrains.kotlin.idea.core.syncNonBlockingReadAction
 import org.jetbrains.kotlin.idea.debugger.base.util.*
 import org.jetbrains.kotlin.idea.debugger.core.*
@@ -69,7 +69,6 @@ import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBacken
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrame
-import org.jetbrains.kotlin.idea.debugger.core.stepping.getLineRange
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT
 import org.jetbrains.kotlin.name.FqName
@@ -318,7 +317,8 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
             val notInlinedLambdas = mutableListOf<KtFunction>()
             var innermostContainingLiteral: KtFunction? = null
             for (literal in literalsOrFunctions) {
-                if (isInlinedArgument(literal, checkNonLocalReturn = true)) {
+                val inlineArgument = getInlineArgumentSymbol(literal)
+                if (inlineArgument != null && (!inlineArgument.isCrossinline || isInlinedArgument(literal, location))) {
                     if (isInsideInlineArgument(literal, location, debugProcess as DebugProcessImpl)) {
                         innermostContainingLiteral = literal
                     }

@@ -156,6 +156,6 @@ private fun findExpressionToStartAnalysisFrom(expression: KtExpression): KtExpre
     context(KtAnalysisSession)
     private fun isInlined(expression: KtBlockExpression): Boolean {
         val parentFunction = expression.parentOfType<KtFunction>() ?: return false
-        return isInlinedArgument(parentFunction, false)
+        return isInlinedArgument(parentFunction)
     }
 }
