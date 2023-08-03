@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.platform.backend.workspace.WorkspaceModel
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtScriptModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSdkModule
 import org.jetbrains.kotlin.analysis.project.structure.impl.KotlinModuleDependentsProviderBase
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.LibraryInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleProductionSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.util.getTransitiveLibraryDependencyInfos
@@ -27,60 +29,45 @@ import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 /**
- * [IdeKotlinModuleDependentsProvider] provides [KtModule] dependents by querying the workspace model.
+ * [IdeKotlinModuleDependentsProvider] provides [KtModule] dependents by querying the workspace model and Kotlin plugin indices/caches.
  */
 internal class IdeKotlinModuleDependentsProvider(private val project: Project) : KotlinModuleDependentsProviderBase() {
     override fun getDirectDependents(module: KtModule): Set<KtModule> {
-        val symbolicId = when (module) {
-            is KtSourceModuleByModuleInfo -> module.moduleId
-            is KtLibraryModuleByModuleInfo -> module.libraryId ?: return emptySet()
-            is KtLibrarySourceModuleByModuleInfo -> return getDirectDependents(module.binaryLibrary)
+        return when (module) {
+            is KtSourceModuleByModuleInfo -> getDirectDependentsForSourceModule(module)
+            is KtLibraryModuleByModuleInfo -> getDirectDependentsForLibraryModule(module)
+            is KtLibrarySourceModuleByModuleInfo -> getDirectDependents(module.binaryLibrary)
 
             // No dependents need to be provided for `KtSdkModule` and `KtBuiltinsModule` (see `KotlinModuleDependentsProvider`).
-            is KtSdkModule -> return emptySet()
-            is KtBuiltinsModule -> return emptySet()
+            is KtSdkModule -> emptySet()
+            is KtBuiltinsModule -> emptySet()
 
             // Script modules are not supported yet (see KTIJ-25620).
-            is KtScriptModule, is KtScriptDependencyModule -> return emptySet()
+            is KtScriptModule, is KtScriptDependencyModule -> emptySet()
 
-            is NotUnderContentRootModuleByModuleInfo -> return emptySet()
+            is NotUnderContentRootModuleByModuleInfo -> emptySet()
 
             else -> throw KotlinExceptionWithAttachments("Unexpected ${KtModule::class.simpleName}").withAttachment("module.txt", module)
         }
-
-        val directDependents = mutableSetOf<KtModule>()
-        directDependents.addFriendDependents(module)
-        directDependents.addWorkspaceModelDependents(symbolicId)
-        directDependents.addAnchorModuleDependents(module)
-
-        return directDependents
     }
 
-    private fun MutableSet<KtModule>.addFriendDependents(module: KtModule) {
+    private fun getDirectDependentsForSourceModule(module: KtSourceModuleByModuleInfo): Set<KtModule> =
+        mutableSetOf<KtModule>().apply {
+            addFriendDependentsForSourceModule(module)
+            addWorkspaceModelDependents(module.moduleId)
+            addAnchorModuleDependents(module)
+        }
+
+    private fun MutableSet<KtModule>.addFriendDependentsForSourceModule(module: KtSourceModuleByModuleInfo) {
         // The only friend dependency that currently exists in the IDE is the dependency of an IDEA module's test sources on its production
         // sources. Hence, a test source `KtModule` is a direct dependent of its production source `KtModule`.
-        if (module is KtSourceModuleByModuleInfo && module.ideaModuleInfo is ModuleProductionSourceInfo) {
+        if (module.ideaModuleInfo is ModuleProductionSourceInfo) {
             addIfNotNull(module.ideaModule.testSourceInfo?.toKtModule())
         }
     }
 
-    private fun MutableSet<KtModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
-        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
-        snapshot
-            .referrers(symbolicId, ModuleEntity::class.java)
-            .forEach { moduleEntity ->
-                // The set of dependents should not include `module` itself.
-                if (moduleEntity.symbolicId == symbolicId) return@forEach
-
-                // We can skip the module entity if `findModule` returns `null` because the module won't have been added to the project
-                // model yet and thus cannot be a proper `KtModule`. If there is a production source `KtModule`, we only need to add that
-                // because the test source `KtModule` will be a direct friend dependent of the production source `KtModule`.
-                addIfNotNull(moduleEntity.findModule(snapshot)?.productionOrTestSourceModuleInfo?.toKtModule())
-            }
-    }
-
-    private fun MutableSet<KtModule>.addAnchorModuleDependents(module: KtModule) {
-        val moduleInfo = (module as? KtSourceModuleByModuleInfo)?.ideaModuleInfo as? ModuleSourceInfo ?: return
+    private fun MutableSet<KtModule>.addAnchorModuleDependents(module: KtSourceModuleByModuleInfo) {
+        val moduleInfo = module.ideaModuleInfo as? ModuleSourceInfo ?: return
 
         // If `module` is an anchor module, it has library dependents in the form of anchoring libraries. See
         // `ResolutionAnchorCacheService` for additional documentation.
@@ -100,6 +87,26 @@ internal class IdeKotlinModuleDependentsProvider(private val project: Project) :
             .forEach { libraryInfo ->
                 add(libraryInfo.toKtModule())
                 add(libraryInfo.sourcesModuleInfo.toKtModule())
+            }
+    }
+
+    private fun getDirectDependentsForLibraryModule(module: KtLibraryModuleByModuleInfo): Set<KtModule> =
+        project.service<LibraryUsageIndex>()
+            .getDependentModules(module.libraryInfo)
+            .mapNotNullTo(mutableSetOf()) { it.productionOrTestSourceModuleInfo?.toKtModule() }
+
+    private fun MutableSet<KtModule>.addWorkspaceModelDependents(symbolicId: SymbolicEntityId<WorkspaceEntityWithSymbolicId>) {
+        val snapshot = WorkspaceModel.getInstance(project).currentSnapshot
+        snapshot
+            .referrers(symbolicId, ModuleEntity::class.java)
+            .forEach { moduleEntity ->
+                // The set of dependents should not include `module` itself.
+                if (moduleEntity.symbolicId == symbolicId) return@forEach
+
+                // We can skip the module entity if `findModule` returns `null` because the module won't have been added to the project
+                // model yet and thus cannot be a proper `KtModule`. If there is a production source `KtModule`, we only need to add that
+                // because the test source `KtModule` will be a direct friend dependent of the production source `KtModule`.
+                addIfNotNull(moduleEntity.findModule(snapshot)?.productionOrTestSourceModuleInfo?.toKtModule())
             }
     }
 

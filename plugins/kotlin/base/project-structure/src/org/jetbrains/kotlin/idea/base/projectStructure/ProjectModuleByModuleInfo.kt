@@ -159,22 +159,20 @@ private object DependencyKeys {
     val TEST_MODULE_DEPENDENCIES_IGNORED = Key.create<CachedValue<List<KtModule>>>("TEST_MODULE_DEPENDENCIES_IGNORED")
 }
 
-internal class KtLibraryModuleByModuleInfo(private val moduleInfo: LibraryInfo) : KtModuleByModuleInfoBase(moduleInfo), KtLibraryModule {
+internal class KtLibraryModuleByModuleInfo(val libraryInfo: LibraryInfo) : KtModuleByModuleInfoBase(libraryInfo), KtLibraryModule {
     override val libraryName: String
-        get() = moduleInfo.library.name ?: "Unnamed library"
-
-    val libraryId: LibraryId? get() = (moduleInfo.library as? LibraryBridge)?.libraryId
+        get() = libraryInfo.library.name ?: "Unnamed library"
 
     override val librarySources: KtLibrarySourceModule
-        get() = moduleInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
+        get() = libraryInfo.sourcesModuleInfo.toKtModuleOfType<KtLibrarySourceModule>()
 
     override fun getBinaryRoots(): Collection<Path> {
-        return moduleInfo.getLibraryRoots().map(Paths::get)
+        return libraryInfo.getLibraryRoots().map(Paths::get)
     }
 
     override val contentScope: GlobalSearchScope get() = ideaModuleInfo.contentScope
 
-    override val project: Project get() = moduleInfo.project
+    override val project: Project get() = libraryInfo.project
 }
 
 internal class SdkKtModuleByModuleInfo(private val moduleInfo: SdkInfo) : KtModuleByModuleInfoBase(moduleInfo), KtSdkModule {
