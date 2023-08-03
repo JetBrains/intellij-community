@@ -8,6 +8,7 @@ import com.intellij.vcs.log.util.StorageId
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.io.IOException
 import java.util.function.IntConsumer
+import java.util.function.IntFunction
 
 internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage {
   val storageId: StorageId
@@ -38,6 +39,9 @@ internal interface VcsLogStorageBackend : VcsLogUsersStorage, VcsLogPathsStorage
 
   @Throws(IOException::class)
   fun collectMissingCommits(commitIds: IntSet): IntSet
+
+  @Throws(IOException::class)
+  fun iterateIndexedCommits(limit: Int, processor: IntFunction<Boolean>)
 
   @Throws(IOException::class)
   fun processMessages(processor: (Int, String) -> Boolean)

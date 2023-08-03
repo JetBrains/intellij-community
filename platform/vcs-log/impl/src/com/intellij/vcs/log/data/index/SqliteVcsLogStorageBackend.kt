@@ -198,6 +198,18 @@ internal class SqliteVcsLogStorageBackend(project: Project,
     return missing
   }
 
+  override fun iterateIndexedCommits(limit: Int, processor: IntFunction<Boolean>) {
+    connectionManager.runUnderReadonlyConnection { connection ->
+      val limitClause = if (limit > 0) " limit $limit" else ""
+      connection.prepareStatement("select commitId from log$limitClause", IntBinder(paramCount = 0)).use { statement ->
+        val rs = statement.executeQuery()
+        while (rs.next()) {
+          if (!processor.apply(rs.getInt(0))) return@runUnderReadonlyConnection
+        }
+      }
+    }
+  }
+
   override fun getMessage(commitId: Int): String? {
     return connection.selectString("select message from log where commitId = ?", commitId)
   }
