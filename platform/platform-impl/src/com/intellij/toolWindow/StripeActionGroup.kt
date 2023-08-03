@@ -32,10 +32,6 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.*
-import com.intellij.openapi.wm.impl.AbstractSquareStripeButton
-import com.intellij.openapi.wm.impl.SquareStripeButton
-import com.intellij.openapi.wm.impl.SquareStripeButtonLook
-import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.ui.ToggleActionButton
@@ -277,7 +273,9 @@ class EnableStripeGroup : ToggleAction(), DumbAware {
     }
 
     fun isSingleStripeEnabled() = hasActionOnToolbar()
-                                  && NotRoamableUiSettings.getInstance().experimentalSingleStripe
+                                  && shouldSingleStripeBeEnabled()
+
+    fun shouldSingleStripeBeEnabled() = NotRoamableUiSettings.getInstance().experimentalSingleStripe
 
     fun hasActionOnToolbar() = customizedGroup?.let { isActionGroupAdded(it, STRIPE_ACTION_GROUP_ID) } == true
 
