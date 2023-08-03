@@ -55,9 +55,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     @Suppress("ConstPropertyName")
     const val screenshotOnFailureFileName: String = "ScreenshotOnFailure"
 
-    fun getDistributedTestPort(): Int? {
-      return (System.getProperty(AgentConstants.protocolPortEnvVar) ?: System.getenv(AgentConstants.protocolPortEnvVar))?.toIntOrNull()
-    }
+    fun getDistributedTestPort(): Int? =
+      System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
   }
 
   open fun setUpLogging(sessionLifetime: Lifetime, session: RdTestSession) {
