@@ -99,7 +99,6 @@ public interface RefClass extends RefJavaElement, RefOverridable {
     return false;
   }
 
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   @Deprecated(forRemoval = true)
   default boolean isSelfInheritor(PsiClass psiClass) {
     throw new UnsupportedOperationException();

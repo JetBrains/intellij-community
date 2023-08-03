@@ -20,7 +20,6 @@ public abstract class NotNullLazyValue<T> implements Supplier<T> {
   /** @deprecated Use {@link NotNullLazyValue#lazy(Supplier)} */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
   protected NotNullLazyValue() { }
 
   protected abstract @NotNull T compute();

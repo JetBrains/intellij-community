@@ -12,8 +12,7 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
   @ApiStatus.ScheduledForRemoval
   @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected VolatileNullableLazyValue() { }
+  VolatileNullableLazyValue() { }
 
   @Override
   @SuppressWarnings("DuplicatedCode")
