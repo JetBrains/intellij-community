@@ -4,6 +4,7 @@ package com.intellij.compiler.progress
 import com.intellij.build.BuildWorkspaceConfiguration
 import com.intellij.compiler.BaseCompilerTestCase
 import com.intellij.compiler.CompilerWorkspaceConfiguration
+import com.intellij.compiler.server.BuildManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.compiler.CompilationStatusListener
 import com.intellij.openapi.compiler.CompileContext
@@ -16,6 +17,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.util.Disposer
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil.addSourceRoot
 import com.intellij.testFramework.common.runAll
@@ -31,6 +33,11 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
     super.setUp()
     buildViewTestFixture = BuildViewTestFixture(project)
     buildViewTestFixture.setUp()
+  }
+
+  override fun getProjectLanguageLevel(): LanguageLevel {
+    // if possible, use the language level, that corresponds to the build's jdk to avoid various compatibility warnings in compiler output
+    return BuildManager.getBuildProcessRuntimeSdk(myProject).second?.maxLanguageLevel ?: super.getProjectLanguageLevel()
   }
 
   public override fun tearDown() {
