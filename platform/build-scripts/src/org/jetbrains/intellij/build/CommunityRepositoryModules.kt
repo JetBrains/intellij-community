@@ -736,21 +736,10 @@ object CommunityRepositoryModules {
       //  "//tools/adt/idea/android/annotations:androidAnnotations",
       spec.withResourceArchiveFromModule("intellij.android.plugin", "../android/annotations", "resources/androidAnnotations.jar")
       //  "//tools/adt/idea/emulator/native:native_lib",
-
-      val streamingResourcesPath = when(os) {
-        OsFamily.WINDOWS -> "native/win"
-        OsFamily.MACOS -> if(arch == JvmArchitecture.aarch64) "native/mac_arm" else "native/mac"
-        OsFamily.LINUX -> "native/linux"
-        null -> null
-      }
-      if (streamingResourcesPath != null) {
-        spec.withResourceFromModule(
-          "intellij.android.streaming",
-          streamingResourcesPath,
-          "resources/$streamingResourcesPath"
-        )
-      }
-
+      spec.withResourceFromModule("intellij.android.streaming", "native/linux", "resources/native/linux")
+      spec.withResourceFromModule("intellij.android.streaming", "native/mac", "resources/native/mac")
+      spec.withResourceFromModule("intellij.android.streaming", "native/mac_arm", "resources/native/mac_arm")
+      spec.withResourceFromModule("intellij.android.streaming", "native/win", "resources/native/win")
       // "//tools/adt/idea/emulator/screen-sharing-agent:bundle", TODO-ank
 
       //  "//tools/base/app-inspection/inspectors/backgroundtask:bundle",
