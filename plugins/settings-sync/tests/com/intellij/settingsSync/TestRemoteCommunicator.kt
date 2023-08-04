@@ -1,10 +1,9 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.io.inputStream
-import com.jetbrains.cloudconfig.CloudConfigFileClientV2
 import org.junit.Assert
 import java.time.Instant
 import java.util.concurrent.CountDownLatch
+import kotlin.io.path.inputStream
 
 internal open class TestRemoteCommunicator(customServerUrl: String = "http://localhost:7777/cloudconfig")
   : CloudConfigServerCommunicator(customServerUrl) {

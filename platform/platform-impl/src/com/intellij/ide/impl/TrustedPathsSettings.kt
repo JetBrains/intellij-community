@@ -2,7 +2,6 @@
 package com.intellij.ide.impl
 
 import com.intellij.openapi.components.*
-import com.intellij.util.io.isAncestor
 import com.intellij.util.xmlb.annotations.OptionTag
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -29,7 +28,7 @@ class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings
   fun isPathTrusted(path: Path): Boolean {
     return state.trustedPaths.asSequence()
       .mapNotNull { path.fileSystem.getPath(it) }
-      .any { it.isAncestor(path) }
+      .any { path.startsWith(it) }
   }
 
   fun getTrustedPaths(): List<String> = Collections.unmodifiableList(state.trustedPaths)

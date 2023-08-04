@@ -6,7 +6,6 @@ package org.jetbrains.intellij.build
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.copyRecursively
-import com.intellij.util.io.inputStream
 import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -23,6 +22,7 @@ import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.inputStream
 import kotlin.random.Random
 
 private val testDataPath: Path

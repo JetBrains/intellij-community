@@ -8,12 +8,12 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.stateStore
 import com.intellij.util.containers.forEachGuaranteed
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.isFile
 import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 
 fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager.getApplication()!!.stateStore.storageManager as StateStorageManagerImpl) {
   val streamProvider = storageManager.compoundStreamProvider.providers.first { it is IcsManager.IcsStreamProvider } as IcsManager.IcsStreamProvider
@@ -37,7 +37,7 @@ fun copyLocalConfig(storageManager: StateStorageManagerImpl = ApplicationManager
     }
 
     val roamingType = fileToItems.get(file)?.firstOrNull()?.roamingType ?: RoamingType.DEFAULT
-    if (file.isFile()) {
+    if (file.isRegularFile()) {
       val fileBytes = file.readBytes()
       streamProvider.doSave(fileSpec, fileBytes, roamingType)
     }
@@ -55,7 +55,7 @@ private fun saveDirectory(parent: Path, parentFileSpec: String, roamingType: Roa
   parent.directoryStreamIfExists {
     for (file in it) {
       val childFileSpec = "$parentFileSpec/${file.fileName}"
-      if (file.isFile()) {
+      if (file.isRegularFile()) {
         val fileBytes = Files.readAllBytes(file)
         streamProvider.doSave(childFileSpec, fileBytes, roamingType)
       }

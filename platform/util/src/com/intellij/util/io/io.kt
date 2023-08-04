@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.util.SmartList
@@ -25,7 +25,7 @@ fun Reader.readCharSequence(length: Int): CharSequence {
 }
 
 /**
- * Think twice before use - consider to to specify length.
+ * Think twice before use - consider to specify length.
  */
 fun Reader.readCharSequence(): CharSequence {
   var chars = CharArray(DEFAULT_BUFFER_SIZE)
@@ -84,6 +84,10 @@ fun ByteBuffer.toByteArray(isClear: Boolean = false): ByteArray {
   return bytes
 }
 
-fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
+@Deprecated("Use URLEncoder.encode()")
+@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+inline fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
 
-fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)
+@Deprecated("Use java.util.Base64.getDecoder().decode()")
+@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+inline fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)

@@ -39,15 +39,15 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.Restarter
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
@@ -316,7 +316,7 @@ private fun restartWithCommand(command: Array<String>, deployDirPath: String, be
 
 private fun readPluginsDir(pluginsDirPath: Path): List<PluginNode> {
   val pluginsXml = pluginsDirPath.resolve("plugins.xml")
-  if (!pluginsXml.isFile()) {
+  if (!pluginsXml.isRegularFile()) {
     LOG.warn("Cannot read non-bundled plugins from $pluginsXml, they won't be updated")
     return emptyList()
   }

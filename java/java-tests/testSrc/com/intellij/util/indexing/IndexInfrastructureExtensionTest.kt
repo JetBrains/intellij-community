@@ -8,10 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import com.intellij.util.io.lastModified
 import org.junit.Assert
 import java.nio.file.Files
-import kotlin.streams.toList
+import kotlin.io.path.getLastModifiedTime
 
 class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
   fun `test infrastructure extension drops all indexes when it requires invalidation`() {
@@ -19,7 +18,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
     Disposer.register(testRootDisposable, loadExtensionWithText(text))
 
     val before = Files.list(PathManager.getIndexRoot()).use {
-      it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()
+      it.toList().associate { p -> p.fileName.toString() to p.getLastModifiedTime().toMillis() }.toSortedMap()
     }
 
     val switcher = FileBasedIndexTumbler("test")
@@ -27,7 +26,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
     switcher.turnOn()
 
     val after = Files.list(PathManager.getIndexRoot()).use {
-      it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()
+      it.toList().associate { p -> p.fileName.toString() to p.getLastModifiedTime().toMillis() }.toSortedMap()
     }
 
     var containsExtensionCaches = false

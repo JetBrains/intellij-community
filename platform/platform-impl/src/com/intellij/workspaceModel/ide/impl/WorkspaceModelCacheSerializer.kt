@@ -15,7 +15,6 @@ import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.url.UrlRelativizer
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.io.basicAttributesIfExists
-import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
 import io.opentelemetry.api.metrics.Meter
@@ -26,6 +25,7 @@ import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
 
 class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelativizer: UrlRelativizer?) {
   private val serializer: EntityStorageSerializer =
@@ -42,7 +42,7 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
 
     val invalidateCachesMarkerFileAttributes = invalidateGlobalCachesMarkerFile.basicAttributesIfExists()
     if ((invalidateCachesMarkerFileAttributes != null && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFileAttributes.lastModifiedTime()) ||
-        invalidateCachesMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFile.lastModified()) {
+        invalidateCachesMarkerFile.exists() && cacheFileAttributes.lastModifiedTime() < invalidateCachesMarkerFile.getLastModifiedTime()) {
       LOG.info("Skipping cache loading since '${invalidateGlobalCachesMarkerFile}' is present and newer than cache file '$file'")
       runCatching { Files.deleteIfExists(file) }
       return null

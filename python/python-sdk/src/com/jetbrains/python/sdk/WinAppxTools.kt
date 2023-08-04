@@ -3,7 +3,6 @@ package com.jetbrains.python.sdk
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.io.isAncestor
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.Kernel32.*
 import com.sun.jna.platform.win32.Ntifs
@@ -58,7 +57,7 @@ fun getAppxFiles(expectedProduct: String?, filePattern: Regex): Collection<Path>
 val Path.appxProduct: String?
   get() {
     val userAppxFolder = userAppxFolder ?: return null
-    if (!userAppxFolder.isAncestor(this)) return null
+    if (!this.startsWith(userAppxFolder)) return null
     return getAppxTag(this)?.let {
       if (storeMarker !in it) it else null
     }

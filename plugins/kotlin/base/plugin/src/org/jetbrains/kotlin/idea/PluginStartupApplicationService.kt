@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
-import com.intellij.util.io.isFile
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 
 class PluginStartupApplicationService : Disposable {
     private var aliveFlagPath: String? = null
@@ -32,9 +32,9 @@ class PluginStartupApplicationService : Disposable {
         val flagFile = aliveFlagPath?.let(Path::of) ?: return
 
         try {
-            if (flagFile.isFile() && Files.deleteIfExists(flagFile)) {
-                this.aliveFlagPath = null
-            }
+          if (flagFile.isRegularFile() && Files.deleteIfExists(flagFile)) {
+            this.aliveFlagPath = null
+          }
         } catch (ignored: IOException) {}
     }
 

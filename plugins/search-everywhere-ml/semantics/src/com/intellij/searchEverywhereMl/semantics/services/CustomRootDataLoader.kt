@@ -3,9 +3,9 @@ package com.intellij.searchEverywhereMl.semantics.services
 import ai.grazie.utils.mpp.DataLoader
 import ai.grazie.utils.mpp.RootDataLoader
 import ai.grazie.utils.mpp.RootStreamDataLoader
-import com.intellij.util.io.inputStream
 import java.io.InputStream
 import java.nio.file.Path
+import kotlin.io.path.inputStream
 
 class CustomRootDataLoader(private val root: Path) : RootDataLoader, RootStreamDataLoader {
   override fun stream(path: DataLoader.Path): InputStream {

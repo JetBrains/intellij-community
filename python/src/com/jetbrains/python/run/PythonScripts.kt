@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.isAncestor
 import com.jetbrains.python.HelperPackage
 import com.jetbrains.python.PythonHelpersLocator
 import com.jetbrains.python.debugger.PyDebugRunner
@@ -228,7 +227,7 @@ fun TargetedCommandLine.execute(env: TargetEnvironment, indicator: ProgressIndic
  */
 fun TargetEnvironmentRequest.ensureProjectSdkAndModuleDirsAreOnTarget(project: Project, vararg modules: Module) {
   fun TargetEnvironmentRequest.addPathToVolume(basePath: Path) {
-    if (uploadVolumes.none { it.localRootPath.isAncestor(basePath) }) {
+    if (uploadVolumes.none { basePath.startsWith(it.localRootPath) }) {
       uploadVolumes += UploadRoot(localRootPath = basePath, targetRootPath = TargetPath.Temporary())
     }
   }

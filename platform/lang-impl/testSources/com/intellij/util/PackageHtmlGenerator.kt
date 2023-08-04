@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFileFactory
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.UsefulTestCase
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import com.vladsch.flexmark.ast.FencedCodeBlock
 import com.vladsch.flexmark.html.HtmlRenderer
@@ -25,6 +24,7 @@ import org.junit.ClassRule
 import org.junit.Test
 import java.io.StringWriter
 import java.nio.file.Paths
+import kotlin.io.path.inputStream
 
 //private class MyApp : CommandLineApplication(true, false, true)
 

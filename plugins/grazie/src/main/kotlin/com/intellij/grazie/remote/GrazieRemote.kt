@@ -7,11 +7,11 @@ import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.inputStream
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.security.DigestInputStream
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
 object GrazieRemote {
   private fun isLibExists(lib: String) = GrazieDynamic.dynamicFolder.resolve(lib).exists() || GraziePlugin.libFolder.resolve(lib).exists()

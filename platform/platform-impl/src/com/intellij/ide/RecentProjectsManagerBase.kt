@@ -40,7 +40,6 @@ import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.project.stateStore
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PathUtilRt
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import kotlinx.coroutines.*
@@ -64,6 +63,7 @@ import javax.swing.JFrame
 import kotlin.collections.Map.Entry
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.io.path.isDirectory
 import kotlin.time.Duration.Companion.milliseconds
 
 private val LOG = logger<RecentProjectsManager>()

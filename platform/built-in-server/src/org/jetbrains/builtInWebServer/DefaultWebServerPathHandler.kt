@@ -21,6 +21,7 @@ import org.jetbrains.io.send
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
+import kotlin.io.path.isDirectory
 
 val chromeVersionFromUserAgent: Pattern = Pattern.compile(" Chrome/([\\d.]+) ")
 private val WEB_SERVER_FILE_HANDLER_EP_NAME = ExtensionPointName<WebServerFileHandler>("org.jetbrains.webServerFileHandler")

@@ -12,9 +12,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.util.io.lastModified
 import com.intellij.util.io.write
-import com.intellij.util.io.writeChild
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
@@ -32,6 +30,7 @@ import java.io.InputStream
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
 import kotlin.properties.Delegates
 
 internal class ApplicationStoreTest {
@@ -111,7 +110,7 @@ internal class ApplicationStoreTest {
     out.write(0xbb)
     out.write(0xbf)
     out.write("<application>${createComponentData("new")}</application>".toByteArray())
-    testAppConfig.writeChild("new.xml", out.toByteArray())
+    testAppConfig.resolve("new.xml").write(out.toByteArray())
 
     testAppConfig.refreshVfs()
 
@@ -162,7 +161,7 @@ internal class ApplicationStoreTest {
 
     // additional export path
     val additionalPath = configDir.resolve("foo")
-    additionalPath.writeChild("bar.icls", "")
+    additionalPath.resolve("bar.icls").write("".toByteArray())
     val exportedData = BufferExposingByteArrayOutputStream()
     exportSettings(setOf(ExportableItem(FileSpec("a.xml", "a.xml", false), ""),
                          ExportableItem(FileSpec("foo", "foo", true), "")), exportedData, mapOf(), storageManager)
@@ -239,7 +238,7 @@ internal class ApplicationStoreTest {
     <component name="OtherComponent" foo="old" />
     ${createComponentData("old")}
     </application>""")
-   writeConfig("new.xml", "<application>$data</application>")
+    writeConfig("new.xml", "<application>$data</application>")
 
     testAppConfig.refreshVfs()
 
@@ -258,7 +257,7 @@ internal class ApplicationStoreTest {
   fun `don't save if only format is changed`() = runBlocking<Unit> {
     val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
     val file = writeConfig("a.xml", oldContent)
-    val oldModificationTime = file.lastModified()
+    val oldModificationTime = file.getLastModifiedTime()
     testAppConfig.refreshVfs()
 
     val component = A()
@@ -268,7 +267,7 @@ internal class ApplicationStoreTest {
     componentStore.save()
 
     assertThat(file).hasContent(oldContent)
-    assertThat(oldModificationTime).isEqualTo(file.lastModified())
+    assertThat(oldModificationTime).isEqualTo(file.getLastModifiedTime())
 
     component.options.bar = "2"
     component.options.foo = "1"
@@ -516,7 +515,7 @@ internal class ApplicationStoreTest {
   @State(name = "A", storages = [Storage(value = "per-os.xml", roamingType = RoamingType.PER_OS)])
   private class PerOsComponent : FooComponent()
 
-  private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.writeChild(fileName, data)
+  private fun writeConfig(fileName: String, @Language("XML") data: String) = testAppConfig.resolve(fileName).write(data.toByteArray())
 
   private class MyStreamProvider : StreamProvider {
     override val isExclusive = true

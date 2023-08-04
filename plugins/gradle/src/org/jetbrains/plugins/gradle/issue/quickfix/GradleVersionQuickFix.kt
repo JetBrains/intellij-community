@@ -23,7 +23,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.TimeoutUtil
 import com.intellij.util.io.createFile
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.internal.util.PropertiesUtils
@@ -41,6 +40,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import kotlin.io.path.inputStream
 
 /**
  * @author Vladislav.Soroka
@@ -149,4 +149,3 @@ class GradleVersionQuickFix(private val projectPath: String,
     private val LOG = logger<GradleVersionQuickFix>()
   }
 }
-

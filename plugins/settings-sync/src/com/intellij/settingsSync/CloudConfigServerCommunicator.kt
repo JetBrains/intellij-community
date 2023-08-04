@@ -9,7 +9,6 @@ import com.intellij.settingsSync.auth.SettingsSyncAuthService
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.delete
-import com.intellij.util.io.inputStream
 import com.jetbrains.cloudconfig.*
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
@@ -20,6 +19,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.io.path.inputStream
 
 internal const val CROSS_IDE_SYNC_MARKER_FILE = "cross-ide-sync-enabled"
 internal const val SETTINGS_SYNC_SNAPSHOT = "settings.sync.snapshot"

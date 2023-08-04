@@ -20,6 +20,7 @@ import java.util.function.Consumer
 import java.util.stream.Collectors
 import kotlin.io.path.div
 import kotlin.io.path.exists
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.name
 
 internal object SettingsSnapshotZipSerializer {
@@ -99,14 +100,14 @@ internal object SettingsSnapshotZipSerializer {
     val metaInfo = parseMetaInfo(metaInfoFolder)
 
     val fileStates = Files.walk(tempDir)
-      .filter { it.isFile() && !metaInfoFolder.isAncestor(it) }
+      .filter { it.isRegularFile() && !it.startsWith(metaInfoFolder) }
       .map { getFileStateFromFileWithDeletedMarker(it, tempDir) }
       .collect(Collectors.toSet())
 
     val (settingsFromProviders, filesFromProviders) = deserializeSettingsProviders(metaInfoFolder)
 
     val additionalFiles = Files.walk(metaInfoFolder)
-      .filter { it.isFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
+      .filter { it.isRegularFile() && it.name != INFO && it.name != PLUGINS && !filesFromProviders.contains(it) }
       .map { getFileStateFromFileWithDeletedMarker(it, metaInfoFolder) }
       .collect(Collectors.toSet())
 

@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.newvfs.persistent.log.io
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.newvfs.persistent.log.io.EntryArrayStorage.EntryExternalizer
-import com.intellij.util.io.size
 import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
@@ -57,7 +56,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       }
       if (!idsToKeep.contains(id)) {
         try {
-          val size = blockPath.size()
+          val size = blockPath.fileSize()
           blockPath.deleteExisting()
           obsoleteFilesRemoved++
           spaceFreed += size
@@ -68,7 +67,7 @@ class AutoSizeAdjustingBlockEntryArrayStorage<Entry>(
       }
       else {
         filesInUse++
-        spaceInUse += blockPath.size()
+        spaceInUse += blockPath.fileSize()
       }
     }
     return EntryArrayStorage.StorageSpaceConsumptionStatistics(obsoleteFilesRemoved, spaceFreed, filesInUse, spaceInUse)

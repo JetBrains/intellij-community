@@ -21,8 +21,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.copy
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.isDirectory
 import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
@@ -30,6 +28,8 @@ import java.nio.file.Paths
 import java.util.zip.ZipException
 import java.util.zip.ZipInputStream
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
+import kotlin.io.path.isDirectory
 
 // the class is open for Rider purpose
 open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.Frontend, DumbAware {
@@ -85,7 +85,8 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
 
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
-      Messages.showErrorDialog(ConfigurationStoreBundle.message("error.cannot.find.file", saveFile), ConfigurationStoreBundle.message("title.file.not.found"))
+      Messages.showErrorDialog(ConfigurationStoreBundle.message("error.cannot.find.file", saveFile),
+                               ConfigurationStoreBundle.message("title.file.not.found"))
       return
     }
 
@@ -97,16 +98,16 @@ open class ImportSettingsAction : AnAction(), ActionRemoteBehaviorSpecification.
     val relativePaths = getPaths(saveFile.inputStream())
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
-          ConfigurationStoreBundle.message("error.no.settings.to.import", saveFile),
-          ConfigurationStoreBundle.message("title.invalid.file"))
+        ConfigurationStoreBundle.message("error.no.settings.to.import", saveFile),
+        ConfigurationStoreBundle.message("title.invalid.file"))
       return
     }
 
     val configPath = Paths.get(PathManager.getConfigPath())
     val dialog = ChooseComponentsToExportDialog(
-        getExportableComponents(relativePaths), false,
-        ConfigurationStoreBundle.message("title.select.components.to.import"),
-        ConfigurationStoreBundle.message("prompt.check.components.to.import"))
+      getExportableComponents(relativePaths), false,
+      ConfigurationStoreBundle.message("title.select.components.to.import"),
+      ConfigurationStoreBundle.message("prompt.check.components.to.import"))
     if (!dialog.showAndGet()) {
       return
     }

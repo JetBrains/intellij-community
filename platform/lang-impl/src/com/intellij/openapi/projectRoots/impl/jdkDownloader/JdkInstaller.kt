@@ -28,6 +28,7 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jetbrains.annotations.Nls
 import java.nio.file.Files
+import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.*
@@ -35,6 +36,8 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 import kotlin.math.absoluteValue
 
 interface JdkInstallRequest {
@@ -234,7 +237,7 @@ abstract class JdkInstallerBase {
           .productNameAsUserAgent()
           .saveToFile(downloadFile.toFile(), indicator)
 
-        if (!downloadFile.isFile()) {
+        if (!downloadFile.isRegularFile()) {
           throw RuntimeException("Downloaded file does not exist: $downloadFile")
         }
       }
@@ -382,10 +385,13 @@ abstract class JdkInstallerBase {
 
       // Java package install dir have several folders up from it, e.g. Contents/Home on macOS
       val markerFile = generateSequence(jdkPath, { file -> file.parent })
-                         .takeWhile { it.isDirectory() }
+                         .takeWhile {
+                           arrayOf<LinkOption>()
+                           it.isDirectory()
+                         }
                          .take(5)
                          .mapNotNull { markerFile(it) }
-                         .firstOrNull { it.isFile() } ?: return null
+                         .firstOrNull { it.isRegularFile() } ?: return null
 
       val json = JdkListParser.readTree(markerFile.readBytes())
       return JdkListParser.parseJdkItem(json, predicate).firstOrNull()
@@ -399,19 +405,24 @@ abstract class JdkInstallerBase {
     try {
       val localRoots = run {
         val defaultInstallDir = defaultInstallDir(distribution)
+        arrayOf<LinkOption>()
         if (!defaultInstallDir.isDirectory()) return@run listOf()
         Files.list(defaultInstallDir).use { it.toList() }
       }
 
       val historyRoots = findHistoryRoots(feedItem)
       for (installDir in localRoots + historyRoots) {
+        arrayOf<LinkOption>()
         if (!installDir.isDirectory()) continue
 
         val item = findJdkItemForInstalledJdk(installDir) ?: continue
         if (item != feedItem) continue
 
         val jdkHome = item.resolveJavaHome(installDir)
-        if (jdkHome.isDirectory() && JdkUtil.checkForJdk(jdkHome) && wslDistributionFromPath(jdkHome) == distribution) {
+        if (run {
+            arrayOf<LinkOption>()
+            jdkHome.isDirectory()
+          } && JdkUtil.checkForJdk(jdkHome) && wslDistributionFromPath(jdkHome) == distribution) {
           return LocallyFoundJdk(feedItem, installDir, jdkHome)
         }
       }
@@ -560,13 +571,19 @@ class JdkInstallerStore : SimplePersistentStateComponent<JdkInstallerState>(JdkI
   }
 
   fun registerInstall(jdkItem: JdkItem, targetPath: Path): Unit = lock.withLock {
-    state.installedItems.removeIf { it.installPath?.isDirectory() != null || it.matches(jdkItem) }
+    state.installedItems.removeIf { run {
+      arrayOf<LinkOption>()
+      it.installPath?.isDirectory()
+    } != null || it.matches(jdkItem) }
     state.installedItems.add(JdkInstallerStateEntry().apply { copyForm(jdkItem, targetPath) })
     state.intIncrementModificationCount()
   }
 
   fun findInstallations(jdkItem: JdkItem) : List<Path> = lock.withLock {
-    state.installedItems.filter { it.matches(jdkItem) }.mapNotNull { it.installPath }.filter { it.isDirectory() }
+    state.installedItems.filter { it.matches(jdkItem) }.mapNotNull { it.installPath }.filter {
+      arrayOf<LinkOption>()
+      it.isDirectory()
+    }
   }
 
   fun listJdkInstallHomes() : List<Path> = lock.withLock {

@@ -27,11 +27,11 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
 import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.concurrency.runAsync
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
 /**
  * Reports references to resources bundled with IDE or plugin distribution from users' projects (e.g. libraries which include IDE_HOME/lib/junit.jar). 

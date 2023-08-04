@@ -5,7 +5,6 @@ import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.openapi.components.impl.ProjectWidePathMacroContributor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
-import com.intellij.util.io.lastModified
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinArtifactsDownloader
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
@@ -14,8 +13,8 @@ import java.io.IOException
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.exists
 import kotlin.io.path.extension
+import kotlin.io.path.getLastModifiedTime
 
 const val KOTLIN_BUNDLED: String = "KOTLIN_BUNDLED"
 
@@ -54,12 +53,13 @@ private class KotlinBundledPathMacroContributor : ProjectWidePathMacroContributo
         return mapOf(KOTLIN_BUNDLED to path)
     }
 
-    private fun Path.lastModifiedOrNull(): FileTime? =
-        try {
-            lastModified()
-        } catch (ex: IOException) {
-            null
-        }
+  private fun Path.lastModifiedOrNull(): FileTime? =
+    try {
+      getLastModifiedTime()
+    }
+    catch (ex: IOException) {
+      null
+    }
 
     override fun projectClosed(project: Project) {
         val projectFilePath = project.projectFilePath ?: return

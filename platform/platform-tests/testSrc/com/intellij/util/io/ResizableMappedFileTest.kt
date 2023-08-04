@@ -11,6 +11,7 @@ import org.junit.Assert
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
+import kotlin.io.path.fileSize
 
 class ResizableMappedFileTest {
   companion object {
@@ -70,7 +71,7 @@ class ResizableMappedFileTest {
       }
     }
 
-    Assert.assertTrue(address + 8 < storagePath.size())
+    Assert.assertTrue(address + 8 < storagePath.fileSize())
   }
 
   @Test

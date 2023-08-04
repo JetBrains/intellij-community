@@ -5,13 +5,12 @@ import com.intellij.ide.customize.transferSettings.models.RecentPathInfo
 import com.intellij.ide.customize.transferSettings.models.Settings
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.systemIndependentPath
 import com.jetbrains.rd.util.URI
 import org.jdom.Element
 import java.io.File
 import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.io.path.isDirectory
 
 private val logger = logger<RecentProjectsParser>()
 class RecentProjectsParser(private val settings: Settings) {

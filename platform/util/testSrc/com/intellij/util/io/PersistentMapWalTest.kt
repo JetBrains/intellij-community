@@ -7,9 +7,9 @@ import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import org.junit.rules.TestRule
-import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
+import kotlin.io.path.fileSize
 
 class PersistentMapWalTest {
   @Rule
@@ -225,9 +225,9 @@ class PersistentMapWalTest {
       remove(key4)
       remove(key4)
     }
-    val beforeCompactionSize = walFile.size()
+    val beforeCompactionSize = walFile.fileSize()
     fillMap(mapFile) {}
-    val afterCompactionSize = walFile.size()
+    val afterCompactionSize = walFile.fileSize()
     Assert.assertTrue("before compaction size = $beforeCompactionSize, " +
                       "after compaction size = $afterCompactionSize",
                       beforeCompactionSize > afterCompactionSize)

@@ -3,7 +3,6 @@ package com.intellij.ide.plugins.certificates
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.util.io.inputStream
 import com.intellij.util.net.ssl.ConfirmingTrustManager
 import com.intellij.util.net.ssl.ConfirmingTrustManager.MutableTrustManager
 import java.io.File
@@ -11,6 +10,7 @@ import java.security.KeyStore
 import java.security.cert.X509Certificate
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
 object PluginCertificateStore {
   private val LOG = Logger.getInstance(PluginCertificateStore::class.java)

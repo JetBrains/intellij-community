@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.io.delete
-import com.intellij.util.io.isDirectory
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Path
@@ -13,10 +12,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.util.*
-import kotlin.io.path.createDirectory
-import kotlin.io.path.exists
-import kotlin.io.path.listDirectoryEntries
-import kotlin.io.path.name
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 class ConfigBackup(private val configDir: Path) {

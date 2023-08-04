@@ -17,7 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.util.io.sizeOrNull
+import com.intellij.util.io.fileSizeSafe
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -143,7 +143,6 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   private inner class Volume(override val localRoot: Path,
                              override val targetRoot: String,
                              private val useWslSync: Boolean) : UploadableVolume, DownloadableVolume {
-
     @Throws(IOException::class)
     override fun resolveTargetPath(relativePath: String): String {
       val localPath = FileUtil.toCanonicalPath(FileUtil.join(localRoot.toString(), relativePath))
@@ -162,16 +161,15 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
         WslSync.syncWslFolders("$targetRoot/$relativePath", localRoot.resolve(relativePath), distribution, linToWinCopy = true)
         return
       }
-      // Synchronization may be slow -- let us wait until file size does not change
-      // in a reasonable amount of time
+      // synchronization may be slow -- let us wait until file size does not change in a reasonable amount of time
       // (see https://github.com/microsoft/WSL/issues/4197)
       val path = localRoot.resolve(relativePath)
-      var previousSize = -2L  // sizeOrNull returns -1 if file does not exist
-      var newSize = path.sizeOrNull()
+      var previousSize = -2L
+      var newSize = path.fileSizeSafe(-1)
       while (previousSize < newSize) {
         Thread.sleep(100)
         previousSize = newSize
-        newSize = path.sizeOrNull()
+        newSize = path.fileSizeSafe(-1)
       }
       if (newSize == -1L) {
         LOG.warn("Path $path was not found on local filesystem")

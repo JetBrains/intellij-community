@@ -6,7 +6,6 @@ package com.intellij.ui
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.ui.scale.paint.ImageComparator
 import com.intellij.ui.svg.renderSvg
-import com.intellij.util.io.inputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -22,6 +21,7 @@ import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
 import java.nio.file.attribute.BasicFileAttributes
 import javax.imageio.ImageIO
+import kotlin.io.path.inputStream
 
 internal object IntelliJIconsIconsVerifier {
   @JvmStatic

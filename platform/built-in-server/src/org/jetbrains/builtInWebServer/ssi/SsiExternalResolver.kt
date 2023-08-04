@@ -7,14 +7,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.lastModified
-import com.intellij.util.io.size
 import io.netty.handler.codec.http.HttpRequest
 import org.jetbrains.builtInWebServer.RootProvider
 import org.jetbrains.builtInWebServer.WebServerPathToFileManager
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.fileSize
+import kotlin.io.path.getLastModifiedTime
 
 @NlsSafe
 private val VARIABLE_NAMES = arrayOf("AUTH_TYPE", "CONTENT_LENGTH", "CONTENT_TYPE", "DOCUMENT_NAME", "DOCUMENT_URI", "GATEWAY_INTERFACE",
@@ -77,11 +77,11 @@ internal class SsiExternalResolver(private val project: Project,
 
   fun getFileLastModified(path: String, virtual: Boolean): Long {
     val file = findFileInProject(path, virtual)
-    return if (file == null || !file.exists()) 0 else file.lastModified().toMillis()
+    return if (file == null || !file.exists()) 0 else file.getLastModifiedTime().toMillis()
   }
 
   fun getFileSize(path: String, virtual: Boolean): Long {
     val file = findFileInProject(path, virtual)
-    return if (file == null || !file.exists()) -1 else file.size()
+    return if (file == null || !file.exists()) -1 else file.fileSize()
   }
 }

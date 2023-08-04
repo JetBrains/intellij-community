@@ -34,6 +34,8 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 abstract class AbstractSource {
     protected val body = StringBuilder()
@@ -396,7 +398,7 @@ class ProjectBuilder {
         val buildGradleKtsPath = buildGradleKts?.let { Paths.get(it) }
         buildGradleKtsPath?.let { buildGradlePath ->
             when {
-                buildGradlePath.isFile() -> buildGradlePath.copy(projectPath)
+                buildGradlePath.isRegularFile() -> buildGradlePath.copy(projectPath)
                 buildGradlePath.isDirectory() -> {
                     val buildGradleFile = listOf("build.gradle.kts", "build.gradle").map { buildGradlePath.resolve(it) }
                         .firstOrNull { it.exists() }
@@ -404,6 +406,7 @@ class ProjectBuilder {
 
                     buildGradleFile.copy(projectPath.resolve(buildGradleFile.fileName))
                 }
+
                 else -> error("illegal type of build gradle path: $buildGradlePath")
             }
         }

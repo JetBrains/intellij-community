@@ -9,11 +9,11 @@ import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.io.DataInputOutputUtil
 import com.intellij.util.io.DataOutputStream
 import com.intellij.util.io.EnumeratorStringDescriptor
-import com.intellij.util.io.inputStream
 import java.io.DataInputStream
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.inputStream
 import kotlin.io.path.outputStream
 
 object FileBasedIndexLayoutSettings {

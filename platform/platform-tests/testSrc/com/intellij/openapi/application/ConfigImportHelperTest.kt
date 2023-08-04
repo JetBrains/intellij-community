@@ -18,7 +18,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.createDirectories
-import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
@@ -30,6 +29,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Predicate
+import kotlin.io.path.isDirectory
 import kotlin.io.path.readLines
 import kotlin.io.path.writeLines
 

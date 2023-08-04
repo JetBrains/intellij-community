@@ -15,7 +15,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.components.textFieldWithHistoryWithBrowseButton
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.enteredTextSatisfies
-import com.intellij.util.io.isWritable
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.awt.event.ActionEvent
 import java.nio.file.Path
@@ -23,6 +22,7 @@ import java.nio.file.Paths
 import javax.swing.AbstractAction
 import javax.swing.Action
 import kotlin.io.path.exists
+import kotlin.io.path.isWritable
 
 class UpdateFromSourcesDialog(private val project: Project,
                               private val showApplyButton: Boolean) : DialogWrapper(project, true) {
@@ -58,7 +58,7 @@ class UpdateFromSourcesDialog(private val project: Project,
   override fun doValidate(): ValidationInfo? {
     val outputPath = Paths.get(pathField.text)
     val existingParent = generateSequence(outputPath, Path::getParent).firstOrNull { it.exists() }
-    if (existingParent == null || !existingParent.isWritable) {
+    if (existingParent == null || !existingParent.isWritable()) {
       return ValidationInfo(DevKitBundle.message("action.UpdateIdeFromSourcesAction.dialog.message.directory.not.writable", outputPath), pathField.childComponent)
     }
     return null

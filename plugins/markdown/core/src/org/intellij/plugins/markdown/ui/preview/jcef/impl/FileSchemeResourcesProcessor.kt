@@ -5,12 +5,12 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
-import com.intellij.util.io.isDirectory
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.io.File
 import java.net.URI
 import java.nio.file.Path
+import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
 internal class FileSchemeResourcesProcessor: IncrementalDOMBuilder.FileSchemeResourceProcessingStrategy, ResourceProvider {

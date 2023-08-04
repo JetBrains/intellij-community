@@ -41,6 +41,8 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isHidden
 
 class SchemeManagerImpl<T : Scheme, MUTABLE_SCHEME : T>(
   val fileSpec: String,

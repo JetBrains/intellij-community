@@ -13,7 +13,6 @@ import com.intellij.psi.statistics.StatisticsInfo
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.util.ScrambledInputStream
 import com.intellij.util.ScrambledOutputStream
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import org.jetbrains.annotations.TestOnly
 import java.io.BufferedOutputStream
@@ -24,6 +23,7 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.io.path.inputStream
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min

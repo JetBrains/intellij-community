@@ -26,7 +26,7 @@ import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.directoryStreamIfExists
-import com.intellij.util.io.sizeOrNull
+import com.intellij.util.io.fileSizeSafe
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
@@ -34,7 +34,6 @@ import java.nio.file.Path
 import java.time.LocalDateTime
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.*
-import kotlin.math.max
 import kotlin.math.min
 import kotlin.streams.asSequence
 
@@ -185,8 +184,8 @@ class IndexDiagnosticDumper : Disposable {
       var sizeLimitLevel = sizeLimit
       var number = 0
       for (diagnostic in existingDiagnostics) {
-        sizeLimitLevel -= max(0, diagnostic.jsonFile.sizeOrNull())
-        sizeLimitLevel -= max(0, diagnostic.htmlFile.sizeOrNull())
+        sizeLimitLevel -= diagnostic.jsonFile.fileSizeSafe()
+        sizeLimitLevel -= diagnostic.htmlFile.fileSizeSafe()
         if (sizeLimitLevel <= 0) {
           break
         }
@@ -201,8 +200,8 @@ class IndexDiagnosticDumper : Disposable {
       var sizeLimitLevel = sizeLimit
       var number = 0
       for (diagnostic in existingDiagnostics) {
-        sizeLimitLevel -= max(0, diagnostic.jsonFile.sizeOrNull())
-        sizeLimitLevel -= max(0, diagnostic.htmlFile.sizeOrNull())
+        sizeLimitLevel -= diagnostic.jsonFile.fileSizeSafe()
+        sizeLimitLevel -= diagnostic.htmlFile.fileSizeSafe()
         if (sizeLimitLevel <= 0) {
           break
         }

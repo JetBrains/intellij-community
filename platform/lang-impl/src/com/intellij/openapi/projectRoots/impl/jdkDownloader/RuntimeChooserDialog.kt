@@ -23,7 +23,6 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.toJBEmptyBorder
 import com.intellij.util.asSafely
-import com.intellij.util.io.isDirectory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import java.awt.datatransfer.DataFlavor
@@ -33,6 +32,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.isDirectory
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()

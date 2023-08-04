@@ -11,7 +11,6 @@ import com.intellij.testFramework.fixtures.TestFixtureRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.createFile
 import com.intellij.util.io.delete
-import com.intellij.util.io.lastModified
 import com.intellij.util.io.readText
 import org.junit.Assert
 import org.junit.ClassRule
@@ -26,10 +25,7 @@ import org.junit.runners.Parameterized.Parameters
 import java.nio.file.Path
 import java.nio.file.attribute.FileTime
 import java.util.concurrent.TimeUnit
-import kotlin.io.path.createDirectory
-import kotlin.io.path.exists
-import kotlin.io.path.name
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 @RunWith(Parameterized::class)
 class WslSyncTest(private val linToWin: Boolean) {
@@ -153,13 +149,13 @@ class WslSyncTest(private val linToWin: Boolean) {
 
     linuxDirAsPath.resolve("file.txt").createFile()
     val destFile = win.resolve("File.txt").createFile()
-    val modTime = destFile.lastModified()
+    val modTime = destFile.getLastModifiedTime()
 
     Thread.sleep(100)
     wslRule.wsl.executeOnWsl(1000, "touch", "${linuxDirRule.dir}/${destFile.name}")
 
     WslSync.syncWslFolders(linuxDirRule.dir, win, wslRule.wsl, true)
-    Assert.assertEquals(destFile.lastModified(), modTime)
+    Assert.assertEquals(destFile.getLastModifiedTime(), modTime)
   }
 
   @Test
@@ -199,7 +195,7 @@ class WslSyncTest(private val linToWin: Boolean) {
       val file = dstDir.resolve(fileName)
       Assert.assertTrue("File hasn't been copied", file.exists())
       Assert.assertEquals("Copied with wrong content", "hello $fileName", file.readText())
-      modificationTimes[file] = file.lastModified()
+      modificationTimes[file] = file.getLastModifiedTime()
     }
     Assert.assertEquals(fileNames.size + 2, dstDir.toFile().list()!!.size) // +  exec files
 
@@ -216,11 +212,11 @@ class WslSyncTest(private val linToWin: Boolean) {
       val file = dstDir.resolve(fileName)
       if (id in fileIdsToModify) {
         Assert.assertEquals("File not copied", "Modified", file.readText())
-        Assert.assertNotEquals("File not modified: $file", modificationTimes[file], file.lastModified())
+        Assert.assertNotEquals("File not modified: $file", modificationTimes[file], file.getLastModifiedTime())
       }
       else {
         Assert.assertEquals("Content broken", "hello $fileName", file.readText())
-        Assert.assertEquals("Wrong file modified: $file", modificationTimes[file], file.lastModified())
+        Assert.assertEquals("Wrong file modified: $file", modificationTimes[file], file.getLastModifiedTime())
       }
     }
   }

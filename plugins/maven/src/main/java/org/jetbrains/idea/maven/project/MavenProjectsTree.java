@@ -42,6 +42,7 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.*;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -109,7 +110,7 @@ public final class MavenProjectsTree {
   public static @Nullable MavenProjectsTree read(Project project, Path file) throws IOException {
     MavenProjectsTree result = new MavenProjectsTree(project);
 
-    try (DataInputStream in = new DataInputStream(new BufferedInputStream(PathKt.inputStream(file)))) {
+    try (DataInputStream in = new DataInputStream(new BufferedInputStream(Files.newInputStream(file)))) {
       try {
         if (!STORAGE_VERSION.equals(in.readUTF())) return null;
         result.myManagedFilesPaths = readCollection(in, new LinkedHashSet<>());
@@ -121,7 +122,7 @@ public final class MavenProjectsTree {
       }
       catch (IOException e) {
         in.close();
-        PathKt.delete(file);
+        Files.delete(file);
         throw e;
       }
       catch (Throwable e) {
@@ -173,7 +174,7 @@ public final class MavenProjectsTree {
   public void save(@NotNull Path file) throws IOException {
     synchronized (myStateLock) {
       withReadLock(() -> {
-        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(PathKt.outputStream(file)))) {
+        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
           out.writeUTF(STORAGE_VERSION);
           writeCollection(out, myManagedFilesPaths);
           writeCollection(out, myIgnoredFilesPaths);

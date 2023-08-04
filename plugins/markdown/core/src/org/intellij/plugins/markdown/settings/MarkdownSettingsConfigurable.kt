@@ -28,7 +28,6 @@ import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
-import com.intellij.util.io.isDirectory
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
@@ -38,6 +37,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider
 import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import javax.swing.DefaultComboBoxModel
+import kotlin.io.path.isDirectory
 import kotlin.io.path.notExists
 
 class MarkdownSettingsConfigurable(private val project: Project): BoundSearchableConfigurable(

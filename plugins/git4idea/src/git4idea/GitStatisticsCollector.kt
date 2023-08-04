@@ -18,8 +18,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.util.io.URLUtil
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
@@ -35,6 +33,8 @@ import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
@@ -229,7 +229,7 @@ private fun GitRepository.isWorkTreeUsed(): Boolean {
     val rootPath = this.root.toNioPath()
 
     val dotGit = Path.of(rootPath.toString(), GitUtil.DOT_GIT)
-    if (dotGit.isFile()) return true
+    if (dotGit.isRegularFile()) return true
 
     val worktreesPath = repositoryFiles.worktreesDirFile.toPath()
     if (!worktreesPath.exists()) return false

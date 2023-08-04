@@ -4,7 +4,6 @@ package com.intellij.testFramework.assertions
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.io.readChars
 import com.intellij.util.io.readText
-import com.intellij.util.io.size
 import junit.framework.ComparisonFailure
 import org.assertj.core.api.PathAssert
 import org.assertj.core.internal.ComparatorBasedComparisonStrategy
@@ -14,6 +13,7 @@ import java.nio.file.Files
 import java.nio.file.LinkOption
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.fileSize
 
 class PathAssertEx(actual: Path?) : PathAssert(actual) {
   override fun doesNotExist(): PathAssert {
@@ -21,7 +21,7 @@ class PathAssertEx(actual: Path?) : PathAssert(actual) {
 
     if (Files.exists(actual, LinkOption.NOFOLLOW_LINKS)) {
       var error = "Expecting path:\n\t$actual\nnot to exist"
-      if (actual.size() < 16 * 1024) {
+      if (actual.fileSize() < 16 * 1024) {
         try {
           error += " but it does, with content:\n\n${actual.readText()}\n"
         }

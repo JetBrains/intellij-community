@@ -12,9 +12,9 @@ import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
-import com.intellij.util.io.encodeUrlQueryParameter
 import com.intellij.util.text.nullize
 import java.awt.Component
+import java.net.URLEncoder
 import javax.swing.JPasswordField
 import javax.swing.JTextField
 
@@ -47,7 +47,7 @@ fun askJBAccountCredentials(parent: Component, project: Project?, authFailed: Bo
         .selected(remember)
         .component
       link(DiagnosticBundle.message("error.report.auth.restore")) {
-        val userName = userField.text.trim().encodeUrlQueryParameter()
+        val userName = URLEncoder.encode(userField.text.trim(), Charsets.UTF_8)!!
         BrowserUtil.browse("https://account.jetbrains.com/forgot-password?username=$userName")
       }.align(AlignX.RIGHT)
     }

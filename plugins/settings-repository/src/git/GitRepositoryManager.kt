@@ -5,8 +5,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.util.SmartList
-import com.intellij.util.io.inputStream
-import com.intellij.util.io.lastModified
 import kotlinx.coroutines.ensureActive
 import org.eclipse.jgit.api.errors.NoHeadException
 import org.eclipse.jgit.api.errors.UnmergedPathsException
@@ -25,6 +23,8 @@ import java.nio.file.Path
 import kotlin.concurrent.write
 import kotlin.coroutines.coroutineContext
 import kotlin.io.path.exists
+import kotlin.io.path.getLastModifiedTime
+import kotlin.io.path.inputStream
 
 class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStore>,
                            dir: Path) : BaseRepositoryManager(dir), GitRepositoryClient {
@@ -101,7 +101,7 @@ class GitRepositoryManager(private val credentialsStore: Lazy<IcsCredentialsStor
   override fun hasUpstream() = getUpstream() != null
 
   override fun addToIndex(file: Path, path: String, content: ByteArray) {
-    repository.edit(AddLoadedFile(path, content, file.lastModified().toMillis()))
+    repository.edit(AddLoadedFile(path, content, file.getLastModifiedTime().toMillis()))
   }
 
   override fun deleteFromIndex(path: String, isFile: Boolean) {

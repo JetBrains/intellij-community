@@ -20,7 +20,6 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
-import com.intellij.util.io.isDirectory
 import com.intellij.util.text.nullize
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
@@ -43,6 +42,7 @@ import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.isDirectory
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                                 private val classpathInferer: GradleServerClasspathInferer,

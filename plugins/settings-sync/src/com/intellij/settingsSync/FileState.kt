@@ -1,6 +1,5 @@
 package com.intellij.settingsSync
 
-import com.intellij.util.io.isFile
 import com.intellij.util.io.readBytes
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.annotations.ApiStatus
@@ -8,6 +7,7 @@ import org.jetbrains.annotations.SystemIndependent
 import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.relativeTo
 
 @ApiStatus.Internal
@@ -52,7 +52,7 @@ internal fun getFileStateFromFileWithDeletedMarker(file: Path, storageBasePath: 
 internal fun collectFileStatesFromFiles(paths: Set<Path>, rootConfigPath: Path): Set<FileState> {
   val fileStates = mutableSetOf<FileState>()
   for (path in paths) {
-    if (path.isFile()) {
+    if (path.isRegularFile()) {
       fileStates += getFileStateFromFileWithDeletedMarker(path, rootConfigPath)
     }
     else { // 'path' is e.g. 'ROOT_CONFIG/keymaps/'

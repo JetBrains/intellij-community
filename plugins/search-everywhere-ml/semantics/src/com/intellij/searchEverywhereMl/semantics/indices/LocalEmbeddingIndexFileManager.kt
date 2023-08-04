@@ -3,7 +3,6 @@ package com.intellij.searchEverywhereMl.semantics.indices
 import ai.grazie.emb.FloatTextEmbedding
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import com.intellij.util.io.inputStream
 import com.intellij.util.io.outputStream
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -12,6 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.io.path.exists
+import kotlin.io.path.inputStream
 
 class LocalEmbeddingIndexFileManager(
   private val root: Path,

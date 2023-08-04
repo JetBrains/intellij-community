@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.images.sync.dotnet
 
-import com.intellij.util.io.isFile
 import org.jetbrains.intellij.build.images.isImage
 import org.jetbrains.intellij.build.images.sync.isAncestorOf
 import java.io.File
@@ -10,6 +9,7 @@ import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.SimpleFileVisitor
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.relativeTo
 
 internal object DotnetIconsTransformation {
@@ -33,7 +33,7 @@ internal object DotnetIconsTransformation {
         if (exc != null) throw exc
         (dir.toFile().listFiles() ?: emptyArray())
           .asSequence().map(File::toPath)
-          .filter { it.isFile() && isImage(it) }
+          .filter { it.isRegularFile() && isImage(it) }
           .map(::DotnetIcon).groupBy(DotnetIcon::name)
           .forEach { (_, icons) ->
             transform(icons, path)

@@ -17,7 +17,6 @@ import com.intellij.settingsSync.*
 import com.intellij.settingsSync.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.INSTALL_SETTINGS_REPOSITORY
 import com.intellij.settingsSync.SettingsSyncEventsStatistics.SettingsRepositoryMigrationNotificationAction.USE_NEW_SETTINGS_SYNC
 import com.intellij.settingsSync.plugins.PluginManagerProxy
-import com.intellij.util.io.isFile
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -80,7 +79,7 @@ internal class SettingsRepositoryToSettingsSyncMigration {
       if (!SPECIAL_FILES.contains(topLevelFile.name)) {
         Files.walkFileTree(topLevelFile, object : SimpleFileVisitor<Path>() {
           override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
-            if (!file.isFile()) return FileVisitResult.CONTINUE
+            if (!file.isRegularFile()) return FileVisitResult.CONTINUE
 
             val relative = settingsRepositoryConfigPath.relativize(file).invariantSeparatorsPathString
             val relativeWithFixedPrefix = if (prefix != null) relative.replaceFirst(prefix.first, prefix.second) else relative

@@ -8,7 +8,7 @@ import com.intellij.openapi.vcs.merge.MergeSession
 import com.intellij.testFramework.file
 import com.intellij.util.PathUtilRt
 import com.intellij.util.io.delete
-import com.intellij.util.io.writeChild
+import com.intellij.util.io.write
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.settingsRepository.CannotResolveConflictInTestMode
@@ -378,7 +378,7 @@ internal class SettingsRepositoryGitTest : SettingsRepositoryGitTestBase() {
       </component>
     </application>"""
     if (addLocalFiles) {
-      localConfigPath.writeChild("options/ui.lnf.xml", lafData)
+      localConfigPath.resolve("options/ui.lnf.xml").write(lafData.toByteArray())
     }
 
     store.setPath(localConfigPath)

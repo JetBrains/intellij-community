@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.execution
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.isDirectory
 import org.gradle.util.DistributionLocator
 import org.gradle.util.GradleVersion
 import org.gradle.wrapper.PathAssembler
@@ -17,8 +16,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleUtil
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
-import kotlin.streams.toList
+import kotlin.io.path.isDirectory
 
 internal open class LocalBuildLayoutParameters(private val project: Project,
                                                private val projectPath: String?) : BuildLayoutParameters {
@@ -54,7 +52,7 @@ internal open class LocalBuildLayoutParameters(private val project: Project,
     val distributionDir = localDistribution.distributionDir ?: return null
     if (!distributionDir.exists()) return null
     try {
-      val dirs = Files.list(distributionDir.toPath()).use { it.filter(Path::isDirectory).unordered().limit(2).toList() }
+      val dirs = Files.list(distributionDir.toPath()).use { it.filter { it.isDirectory() }.unordered().limit(2).toList() }
       if (dirs.size == 1) {
         // Expected to find exactly 1 directory, see org.gradle.wrapper.Install.verifyDistributionRoot
         return dirs.first().toString()

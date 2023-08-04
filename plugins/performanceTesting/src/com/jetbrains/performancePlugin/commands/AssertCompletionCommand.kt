@@ -2,11 +2,11 @@ package com.jetbrains.performancePlugin.commands
 
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
-import com.intellij.util.io.lastModified
 import com.jetbrains.performancePlugin.commands.CompletionCommand.CompletionItemsReport
 import com.jetbrains.performancePlugin.commands.CompletionCommand.getCompletionItemsDir
 import com.jetbrains.performancePlugin.utils.DataDumper
 import org.jetbrains.annotations.NonNls
+import kotlin.io.path.getLastModifiedTime
 import kotlin.io.path.listDirectoryEntries
 
 class AssertCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
@@ -19,7 +19,7 @@ class AssertCompletionCommand(text: String, line: Int) : PlaybackCommandCoroutin
     if (completionItemsDir == null) {
       throw IllegalStateException("Completion items dump dir not set")
     }
-    val lastCompletion = completionItemsDir.listDirectoryEntries().maxByOrNull { it.lastModified() }
+    val lastCompletion = completionItemsDir.listDirectoryEntries().maxByOrNull { it.getLastModifiedTime() }
     if (lastCompletion == null) {
       throw IllegalStateException("No completion data items file found")
     }

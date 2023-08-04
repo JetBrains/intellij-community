@@ -14,7 +14,6 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.io.delete
-import com.intellij.util.io.isDirectory
 import com.intellij.util.io.write
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentReaderWithCache
@@ -29,6 +28,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.isDirectory
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {

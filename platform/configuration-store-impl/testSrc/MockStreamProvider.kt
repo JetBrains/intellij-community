@@ -5,7 +5,10 @@ import com.intellij.openapi.components.RoamingType
 import com.intellij.util.io.*
 import java.io.InputStream
 import java.nio.file.NoSuchFileException
+import java.nio.file.OpenOption
 import java.nio.file.Path
+import kotlin.io.path.inputStream
+import kotlin.io.path.isHidden
 
 class MockStreamProvider(private val dir: Path) : StreamProvider {
   override val isExclusive = true
@@ -39,6 +42,7 @@ class MockStreamProvider(private val dir: Path) : StreamProvider {
           continue
         }
 
+        arrayOf<OpenOption>()
         if (!file.inputStream().use { processor(file.fileName.toString(), it, false) }) {
           break
         }

@@ -5,8 +5,6 @@ import com.intellij.execution.Platform
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.io.isDirectory
-import com.intellij.util.io.isFile
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.sdk.appxProduct
 import org.jetbrains.annotations.Nls
@@ -15,7 +13,9 @@ import java.io.IOException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import javax.swing.JComponent
+import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
+import kotlin.io.path.isRegularFile
 import kotlin.io.path.listDirectoryEntries
 
 /**
@@ -65,7 +65,7 @@ fun validateExecutableFile(
 ): ValidationInfo? = request.validate {
   if (it.appxProduct != null) return@validate null // Nio can't be used to validate appx, assume file is valid
   when {
-    it.isFile() -> if (it.isExecutable()) null else PySdkBundle.message("path.validation.cannot.execute", it)
+    it.isRegularFile() -> if (it.isExecutable()) null else PySdkBundle.message("path.validation.cannot.execute", it)
     it.isDirectory() -> PySdkBundle.message("path.validation.cannot.execute", it)
     else -> PySdkBundle.message("path.validation.file.not.found", it)
   }
@@ -81,7 +81,7 @@ fun validateEmptyDir(request: ValidationRequest,
 ): ValidationInfo? = request.validate {
   when {
     it.isDirectory() -> if (it.listDirectoryEntries().isEmpty()) null else directoryNotEmpty
-    it.isFile() || it.appxProduct != null -> notADirectory
+    it.isRegularFile() || it.appxProduct != null -> notADirectory
     else -> null
   }
 }

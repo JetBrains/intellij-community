@@ -12,22 +12,18 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.settingsSync.SettingsSnapshot.MetaInfo
 import com.intellij.settingsSync.notification.NotificationService
 import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
-import com.intellij.util.io.*
+import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.io.write
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.InputStream
-import java.nio.file.FileVisitResult
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.SimpleFileVisitor
+import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.time.Instant
 import java.util.concurrent.locks.ReadWriteLock
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import kotlin.concurrent.withLock
-import kotlin.io.path.exists
-import kotlin.io.path.name
-import kotlin.io.path.pathString
+import kotlin.io.path.*
 
 internal class SettingsSyncIdeMediatorImpl(private val componentStore: ComponentStoreImpl,
                                            private val rootConfig: Path,
@@ -156,7 +152,11 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     val adjustedSpec = getFileRelativeToRootConfig(fileSpec)
     return readUnderLock(adjustedSpec) {
       try {
-        consumer(path.inputStreamIfExists())
+        consumer(path.inputStream())
+        true
+      }
+      catch (e: NoSuchFileException) {
+        consumer(null)
         true
       }
       catch (e: Throwable) {
@@ -183,7 +183,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
     Files.walkFileTree(folder, object : SimpleFileVisitor<Path>() {
       override fun visitFile(file: Path, attrs: BasicFileAttributes?): FileVisitResult {
         if (!filter(file.name)) return FileVisitResult.CONTINUE
-        if (!file.isFile()) return FileVisitResult.CONTINUE
+        if (!file.isRegularFile()) return FileVisitResult.CONTINUE
 
         val shouldProceed = file.inputStream().use { inputStream ->
           val fileSpec = rootConfig.relativize(file).systemIndependentPath
@@ -223,7 +223,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
 
   private fun deleteOrLogError(file: Path): Boolean {
     try {
-      file.delete()
+      file.deleteExisting()
       return true
     }
     catch (e: Exception) {
@@ -260,7 +260,7 @@ internal class SettingsSyncIdeMediatorImpl(private val componentStore: Component
           }
           is FileState.Deleted -> {
             writeUnderLock(fileSpec) {
-              file.delete()
+              file.deleteExisting()
             }
             deletedFileSpecs.add(fileSpec)
           }
