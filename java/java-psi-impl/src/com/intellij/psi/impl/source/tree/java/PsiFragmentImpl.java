@@ -116,7 +116,7 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
     return result.toString();
   }
 
-  private static int getTextBlockFragmentIndent(PsiFragment fragment) {
+  public static int getTextBlockFragmentIndent(PsiFragment fragment) {
     final PsiElement parent = fragment.getParent();
     if (!(parent instanceof PsiTemplate)) {
       return -1;

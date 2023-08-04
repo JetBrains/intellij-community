@@ -364,6 +364,11 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
                                              @Nullable PsiElement context);
 
   /**
+   * Creates a string template fragment with the specified text of the specified token type.
+   */
+  @NotNull PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context);
+
+  /**
    * Creates a PSI element for the "&#64;param" JavaDoc tag.
    *
    * @throws IncorrectOperationException if the name or description are invalid.

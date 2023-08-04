@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.*;
@@ -732,6 +732,45 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
 
     GeneratedMarkerVisitor.markGenerated(catchSection);
     return catchSection;
+  }
+
+  @Override
+  @NotNull
+  public PsiFragment createStringTemplateFragment(@NotNull String newText, @NotNull IElementType tokenType, @Nullable PsiElement context) {
+    int index;
+    if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) {
+      newText += "}\"\"\"";
+      index = 0;
+    }
+    else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
+      newText = "\"\"\"\n\\{" + newText + "}\"\"\"";
+      index = 1;
+    }
+    else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_END) {
+      newText = "\"\"\"\n\\{" + newText;
+      index = 1;
+    }
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_BEGIN) {
+      newText += "}\"";
+      index = 0;
+    }
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_MID) {
+      newText = "\"\\{" + newText + "}\"";
+      index = 1;
+    }
+    else if (tokenType == JavaTokenType.STRING_TEMPLATE_END) {
+      newText = "\"\\{" + newText;
+      index = 1;
+    }
+    else {
+      throw new IllegalArgumentException();
+    }
+    PsiTemplateExpression expression = (PsiTemplateExpression)createExpressionFromText(newText, context);
+    PsiTemplate template = expression.getTemplate();
+    assert template != null;
+    PsiFragment fragment = template.getFragments().get(index);
+    GeneratedMarkerVisitor.markGenerated(fragment);
+    return fragment;
   }
 
   @Override

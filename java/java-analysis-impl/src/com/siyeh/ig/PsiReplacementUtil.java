@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig;
 
 import com.intellij.openapi.project.Project;
@@ -14,6 +14,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class PsiReplacementUtil {
+
+  public static void replaceFragment(@NotNull PsiFragment fragment, @NotNull @NonNls String newFragmentText) {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(fragment.getProject());
+    final PsiFragment newFragment = factory.createStringTemplateFragment(newFragmentText, fragment.getTokenType(), fragment);
+    fragment.replace(newFragment);
+  }
 
   /**
    * Consider to use {@link #replaceExpression(PsiExpression, String, CommentTracker)} to preserve comments
