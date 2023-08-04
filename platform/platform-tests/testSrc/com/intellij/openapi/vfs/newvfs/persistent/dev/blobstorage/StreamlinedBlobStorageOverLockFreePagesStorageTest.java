@@ -6,14 +6,25 @@ import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.file.Path;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeTrue;
 
 public class StreamlinedBlobStorageOverLockFreePagesStorageTest
   extends StreamlinedBlobStorageTestBase<StreamlinedBlobStorageOverLockFreePagesStorage> {
+
+  @Test
+  public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
+    assertEquals(
+      "New storage version == STORAGE_VERSION_CURRENT",
+      storage.getStorageVersion(),
+      StreamlinedBlobStorageOverLockFreePagesStorage.STORAGE_VERSION_CURRENT
+    );
+  }
 
   @BeforeClass
   public static void beforeClass() throws Exception {

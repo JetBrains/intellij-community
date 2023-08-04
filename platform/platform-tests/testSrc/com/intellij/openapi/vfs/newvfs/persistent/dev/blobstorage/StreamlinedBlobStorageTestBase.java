@@ -86,15 +86,6 @@ public abstract class StreamlinedBlobStorageTestBase<S extends StreamlinedBlobSt
   }
 
   @Test
-  public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
-    assertEquals(
-      "New storage version == STORAGE_VERSION_CURRENT",
-      storage.getStorageVersion(),
-      SmallStreamlinedBlobStorage.STORAGE_VERSION_CURRENT
-    );
-  }
-
-  @Test
   public void dataFormatVersion_CouldBeWritten_AndReadBackAsIs_AfterStorageReopened() throws Exception {
     final int dataFormatVersion = 42;
 

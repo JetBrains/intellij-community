@@ -3,11 +3,14 @@ package com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage;
 
 import com.intellij.util.io.PagedFileStorage;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Test;
 import org.junit.experimental.theories.Theories;
 import org.junit.runner.RunWith;
 
 import java.io.IOException;
 import java.nio.file.Path;
+
+import static org.junit.Assert.assertEquals;
 
 
 /**
@@ -62,4 +65,12 @@ public class LargeSizeStreamlinedBlobStorageTest extends StreamlinedBlobStorageT
     super.tearDown();
   }
 
+  @Test
+  public void newStorage_HasVersion_OfCurrentStorageFormat() throws Exception {
+    assertEquals(
+      "New storage version == STORAGE_VERSION_CURRENT",
+      storage.getStorageVersion(),
+      LargeSizeStreamlinedBlobStorage.STORAGE_VERSION_CURRENT
+    );
+  }
 }

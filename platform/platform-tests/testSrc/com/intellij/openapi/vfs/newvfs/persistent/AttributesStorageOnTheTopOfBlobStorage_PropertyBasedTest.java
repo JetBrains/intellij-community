@@ -3,11 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.AttributeRecord;
 import com.intellij.openapi.vfs.newvfs.persistent.AttributesStorageOnTheTopOfBlobStorageTestBase.Attributes;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SmallStreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.*;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagesStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.PageCacheUtils;
 import com.intellij.util.io.PagedFileStorage;
@@ -76,7 +73,7 @@ public class AttributesStorageOnTheTopOfBlobStorage_PropertyBasedTest {
                                              ),
                                              spaceAllocationStrategy
                                            ) :
-                                           new SmallStreamlinedBlobStorage(
+                                           new LargeSizeStreamlinedBlobStorage(
                                              new PagedFileStorage(storagePath, LOCK_CONTEXT, PAGE_SIZE, true, true),
                                              spaceAllocationStrategy
                                            );

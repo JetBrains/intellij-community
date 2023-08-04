@@ -36,7 +36,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.Storag
  * <p/>
  * Storage is optimized to store small records (~tens bytes) -- it tries to compress record headers
  * so smaller records have just 2 bytes of overhead because of header. At the same time storage allows
- * record size up to 1Mb large -- in contrast to {@link SmallStreamlinedBlobStorage}.
+ * record size up to 1Mb large.
  * <p>
  */
 public class LargeSizeStreamlinedBlobStorage implements StreamlinedBlobStorage {
