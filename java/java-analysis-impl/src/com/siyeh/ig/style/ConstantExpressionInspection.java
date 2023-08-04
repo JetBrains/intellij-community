@@ -38,7 +38,8 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
   public @NotNull OptPane getOptionsPane() {
     return OptPane.pane(
       OptPane.checkbox("skipIfContainsReferenceExpression",
-                       InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal")),
+                       InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal"))
+        .description(InspectionGadgetsBundle.message("inspection.constant.expression.skip.non.literal.description")),
       OptPane.checkbox("reportOnlyCompileTimeConstants",
                        InspectionGadgetsBundle.message("inspection.constant.expression.report.compile.time"))
         .description(InspectionGadgetsBundle.message("inspection.constant.expression.report.compile.time.description")));
@@ -59,6 +60,7 @@ public class ConstantExpressionInspection extends AbstractBaseJavaLocalInspectio
       }
       
       private void handle(@NotNull PsiExpression expression) {
+        if (expression instanceof PsiLiteralExpression) return;
         // inspection disabled for long expressions because of performance issues on
         // relatively common large string expressions.
         Object value = computeConstant(expression);
