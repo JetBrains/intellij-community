@@ -19,11 +19,12 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.elementsInRange
 import org.jetbrains.kotlin.resolve.diagnostics.Diagnostics
+import kotlin.reflect.KFunction1
 
 internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: List<DiagnosticBasedProcessing>) : FileBasedPostProcessing() {
     constructor(vararg diagnosticBasedProcessings: DiagnosticBasedProcessing) : this(diagnosticBasedProcessings.toList())
 
-    private val diagnosticToFix =
+    private val diagnosticToFixes: Map<DiagnosticFactory<*>, List<KFunction1<Diagnostic, Unit>>> =
         diagnosticBasedProcessings.asSequence().flatMap { processing ->
             processing.diagnosticFactories.asSequence().map { it to processing::fix }
         }.groupBy { it.first }.mapValues { (_, list) ->
@@ -31,24 +32,16 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
         }
 
     override fun runProcessing(file: KtFile, allFiles: List<KtFile>, rangeMarker: RangeMarker?, converterContext: NewJ2kConverterContext) {
-        fun PsiElement.isInRange(outerRange: TextRange) = outerRange.contains(textRange)
-
-        val diagnostics = runReadAction {
+        val (range, diagnostics) = runReadAction {
             val resolutionFacade = KotlinCacheService.getInstance(converterContext.project).getResolutionFacade(allFiles)
-            analyzeFileRange(file, rangeMarker, resolutionFacade).all()
+            Pair(
+              rangeMarker?.range ?: file.textRange,
+              analyzeFileRange(file, rangeMarker, resolutionFacade).all()
+            )
         }
+
         for (diagnostic in diagnostics) {
-            val elementIsInRange = runReadAction {
-                val range = rangeMarker?.range ?: file.textRange
-                diagnostic.psiElement.isInRange(range)
-            }
-            if (!elementIsInRange) continue
-            diagnosticToFix[diagnostic.factory]?.forEach { fix ->
-                val elementIsValid = runReadAction { diagnostic.psiElement.isValid }
-                if (elementIsValid) {
-                    fix(diagnostic)
-                }
-            }
+            processDiagnostic(diagnostic, range)
         }
     }
 
@@ -62,6 +55,19 @@ internal class DiagnosticBasedPostProcessingGroup(diagnosticBasedProcessings: Li
         return if (elements.isNotEmpty())
             resolutionFacade.analyzeWithAllCompilerChecks(elements).bindingContext.diagnostics
         else Diagnostics.EMPTY
+    }
+
+    private fun processDiagnostic(diagnostic: Diagnostic, range: TextRange) {
+        val fixes = diagnosticToFixes[diagnostic.factory] ?: return
+        val elementIsInRange = runReadAction { range.contains(diagnostic.psiElement.textRange) }
+        if (!elementIsInRange) return
+
+        for (fix in fixes) {
+            val elementIsValid = runReadAction { diagnostic.psiElement.isValid }
+            if (elementIsValid) {
+                fix(diagnostic)
+            }
+        }
     }
 }
 
