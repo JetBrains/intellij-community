@@ -24,6 +24,7 @@ import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.TabData
 import org.jetbrains.jewel.TabStrip
 import org.jetbrains.jewel.Text
+import kotlin.math.max
 
 @Composable
 fun Tabs() {
@@ -51,7 +52,9 @@ private fun DefaultTabShowcase() {
                 onClose = {
                     tabIds = tabIds.toMutableList().apply { removeAt(index) }
                     if (selectedTabIndex >= index) {
-                        selectedTabIndex = (selectedTabIndex - 1).coerceIn(tabIds.indices)
+                        val maxPossibleIndex = max(0, tabIds.lastIndex)
+                        selectedTabIndex = (selectedTabIndex - 1)
+                            .coerceIn(0..maxPossibleIndex)
                     }
                 },
                 onClick = { selectedTabIndex = index }
@@ -84,7 +87,9 @@ private fun EditorTabShowcase() {
                 onClose = {
                     tabIds = tabIds.toMutableList().apply { removeAt(index) }
                     if (selectedTabIndex >= index) {
-                        selectedTabIndex = (selectedTabIndex - 1).coerceIn(tabIds.indices)
+                        val maxPossibleIndex = max(0, tabIds.lastIndex)
+                        selectedTabIndex = (selectedTabIndex - 1)
+                            .coerceIn(0..maxPossibleIndex)
                     }
                 },
                 onClick = { selectedTabIndex = index }
