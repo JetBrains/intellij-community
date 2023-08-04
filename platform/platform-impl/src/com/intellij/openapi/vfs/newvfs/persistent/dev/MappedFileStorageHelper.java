@@ -196,42 +196,42 @@ public class MappedFileStorageHelper implements Closeable {
 
   public int readIntField(@NotNull VirtualFile vFile,
                           int fieldOffset) throws IOException {
-    int fileId = fileId(vFile);
+    int fileId = extractFileId(vFile);
     return readIntField(fileId, fieldOffset);
   }
 
   public void writeIntField(@NotNull VirtualFile vFile,
                             int fieldOffset,
                             int value) throws IOException {
-    int fileId = fileId(vFile);
+    int fileId = extractFileId(vFile);
     writeIntField(fileId, fieldOffset, value);
   }
 
   public int updateIntField(@NotNull VirtualFile vFile,
                             int fieldOffset,
                             @NotNull IntUnaryOperator updateOperator) throws IOException {
-    int fileId = fileId(vFile);
+    int fileId = extractFileId(vFile);
     return updateIntField(fileId, fieldOffset, updateOperator);
   }
 
 
   public long readLongField(@NotNull VirtualFile vFile,
                             int fieldOffset) throws IOException {
-    int fileId = fileId(vFile);
+    int fileId = extractFileId(vFile);
     return readLongField(fileId, fieldOffset);
   }
 
   public void writeLongField(@NotNull VirtualFile vFile,
                              int fieldOffset,
                              long value) throws IOException {
-    int fileId = fileId(vFile);
+    int fileId = extractFileId(vFile);
     writeLongField(fileId, fieldOffset, value);
   }
 
   public long updateLongField(@NotNull VirtualFile vFile,
                               int fieldOffset,
                               @NotNull LongUnaryOperator updateOperator) throws IOException {
-    int fileId = fileId(vFile);
+    int fileId = extractFileId(vFile);
     return updateLongField(fileId, fieldOffset, updateOperator);
   }
 
@@ -257,7 +257,7 @@ public class MappedFileStorageHelper implements Closeable {
 
   private void clearImpl(boolean clearHeaders) throws IOException {
     int maxAllocatedFileId = maxAllocatedFileID();
-    long maxOffset = maxAllocatedFileId * (long)bytesPerRow * HeaderLayout.HEADER_SIZE;
+    long maxOffset = maxAllocatedFileId * (long)bytesPerRow + HeaderLayout.HEADER_SIZE;
     int pageSize = storage.pageSize();
     for (long offset = clearHeaders ? 0 : HeaderLayout.HEADER_SIZE;
          offset < maxOffset;
@@ -416,38 +416,43 @@ public class MappedFileStorageHelper implements Closeable {
     }
   }
 
-  //MAYBE RC: add accessors for shortField, byteField?
+  //MAYBE RC: add accessors for headerShortField, headerByteField?
 
-  public int readIntHeaderField(int headerRelativeOffsetBytes) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      return (int)INT_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
+  public int readIntHeaderField(int headerRelativeOffset) throws IOException {
+    checkHeaderFieldOffset(headerRelativeOffset);
+    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
+      return (int)INT_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
     }
   }
 
-  public long readLongHeaderField(int headerRelativeOffsetBytes) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes);
+  public long readLongHeaderField(int headerRelativeOffset) throws IOException {
+    checkHeaderFieldOffset(headerRelativeOffset);
+    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
+      return (long)LONG_HANDLE.getVolatile(page.rawPageBuffer(), headerRelativeOffset);
     }
   }
 
-  public void writeIntHeaderField(int headerRelativeOffsetBytes,
+  public void writeIntHeaderField(int headerRelativeOffset,
                                   int headerFieldValue) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      INT_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
+    checkHeaderFieldOffset(headerRelativeOffset);
+    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
+      INT_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
     }
   }
 
-  public void writeLongHeaderField(int headerRelativeOffsetBytes,
+  public void writeLongHeaderField(int headerRelativeOffset,
                                    long headerFieldValue) throws IOException {
-    try (Page page = storage.pageByOffset(headerRelativeOffsetBytes)) {
-      LONG_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffsetBytes, headerFieldValue);
+    checkHeaderFieldOffset(headerRelativeOffset);
+    try (Page page = storage.pageByOffset(headerRelativeOffset)) {
+      LONG_HANDLE.setVolatile(page.rawPageBuffer(), headerRelativeOffset, headerFieldValue);
     }
   }
+
 
   // ============== implementation: ======================================================================
-
-  private int maxAllocatedFileID() {
-    return maxAllocatedFileIdSupplier.getAsInt();
+  private int toOffsetInFile(int fileId) {
+    checkFileIdValid(fileId);
+    return (fileId - FSRecords.ROOT_FILE_ID) * bytesPerRow + HeaderLayout.HEADER_SIZE;
   }
 
   private void checkFileIdValid(int fileId) {
@@ -458,17 +463,23 @@ public class MappedFileStorageHelper implements Closeable {
     }
   }
 
-  private int toOffsetInFile(int fileId) {
-    return (fileId - FSRecords.ROOT_FILE_ID) * bytesPerRow + HeaderLayout.HEADER_SIZE;
+  private int maxAllocatedFileID() {
+    return maxAllocatedFileIdSupplier.getAsInt();
   }
 
-  private int fileId(@NotNull VirtualFile vFile) {
+  private static void checkHeaderFieldOffset(int headerRelativeOffset) {
+    if (headerRelativeOffset >= HeaderLayout.HEADER_SIZE) {
+      throw new IllegalArgumentException(
+        "Header offset(=" + headerRelativeOffset + ") is outside of header[0.." + HeaderLayout.HEADER_SIZE + ")");
+    }
+  }
+
+  private static int extractFileId(@NotNull VirtualFile vFile) {
     if (!(vFile instanceof VirtualFileWithId)) {
       throw new IllegalArgumentException(vFile + " must be VirtualFileWithId");
     }
     VirtualFileWithId fileWithId = (VirtualFileWithId)vFile;
-    int fileId = fileWithId.getId();
-    checkFileIdValid(fileId);
-    return fileId;
+
+    return fileWithId.getId();
   }
 }

@@ -149,6 +149,8 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       myForwardIndex = forwardIndex;
       myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
+    //FIXME RC: why do we use synchronized in this class? -- all the method calls are protected by RWLock up the
+    // callstack anyway
 
     public void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
@@ -453,6 +455,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   private static class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
     private static final String STORAGE_NAME = "filetype.index";
     private static final int FIELD_OFFSET = 0;
+    
     private final MappedFileStorageHelper storage;
 
     private final AtomicLong modificationsCounter = new AtomicLong(0);
@@ -544,13 +547,11 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
 
     private void writeImpl(int inputId,
                            short value) throws IOException {
-      //attributeAccessor.write(inputId, value);
       storage.writeShortField(inputId, FIELD_OFFSET, value);
     }
 
     private short readImpl(int inputId) throws IOException {
       return storage.readShortField(inputId, FIELD_OFFSET);
-      //return attributeAccessor.read(inputId, (short)0);
     }
   }
 }
