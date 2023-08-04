@@ -82,7 +82,7 @@ public class PagesTable {
     //    But I see no simple way to fix it, apart from returning to global lock protecting all
     //    writes -- which is exactly what we're escaping from by moving to concurrent implementation.
     for (int i = 0; i < pages.length(); i++) {
-      final Page page = pages.get(i);
+      final PageImpl page = pages.get(i);
       if (page != null && page.isDirty()) {
         page.flush();
       }

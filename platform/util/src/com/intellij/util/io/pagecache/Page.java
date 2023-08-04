@@ -5,8 +5,6 @@ import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.util.io.FilePageCacheLockFree;
 import com.intellij.util.io.PagedFileStorageWithRWLockedPageContent;
 
-import java.io.Flushable;
-import java.io.IOException;
 import java.nio.ByteBuffer;
 
 /**
@@ -16,7 +14,7 @@ import java.nio.ByteBuffer;
  *
  * @see FilePageCacheLockFree
  */
-public interface Page extends AutoCloseable, Flushable {
+public interface Page extends AutoCloseable {
   int pageSize();
 
   int pageIndex();
@@ -40,11 +38,6 @@ public interface Page extends AutoCloseable, Flushable {
   /** == {@link #release()} */
   @Override
   void close();
-
-  boolean isDirty();
-
-  @Override
-  void flush() throws IOException;
 
   //===== page content access: ================================================================================
   //RC: There are several different ways to access/modify page content:

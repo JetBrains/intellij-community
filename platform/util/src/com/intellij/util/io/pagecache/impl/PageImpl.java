@@ -10,6 +10,7 @@ import com.intellij.util.io.pagecache.PageUnsafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Flushable;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
@@ -80,7 +81,7 @@ import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
  * @see PagedFileStorageWithRWLockedPageContent
  */
 @ApiStatus.Internal
-public abstract class PageImpl implements Page, PageUnsafe {
+public abstract class PageImpl implements Page, Flushable, PageUnsafe {
 
   /**
    * Initial state page is created with. Page buffer is not yet allocated, page data is not yet
@@ -355,19 +356,9 @@ public abstract class PageImpl implements Page, PageUnsafe {
    * @return false if page can't be acquired because it is not USABLE yet (so it is worth to
    * try acquiring again), true if page is acquired for use
    * @throws IOException if page state is [ABOUT_TO_RECLAIM | TOMBSTONE], so it is not worth
-   *                     to try acquiring again)
+   *                     to try acquiring again
    */
-  public boolean tryAcquireForUse(final Object acquirer) throws IOException {
-    return tryAcquireForUse(acquirer, /*allowAcquireInAboutToUnmapState: */ false);
-  }
-
-  /**
-   * @param allowAcquireInAboutToUnmapState normally it is prohibited to acquire page in ABOUT_TO_UNMAP,
-   *                                        but in some cases it is the lesser evil, so this parameter
-   *                                        allows overwriting default behaviour and acquire the page
-   */
-  public boolean tryAcquireForUse(final Object acquirer,
-                                  final boolean allowAcquireInAboutToUnmapState) throws IOException {
+  public boolean tryAcquireForUse(@SuppressWarnings("unused") final Object acquirer) throws IOException {
     while (true) {//CAS loop:
       final int packedState = statePacked;
       final int state = unpackState(packedState);
@@ -378,7 +369,7 @@ public abstract class PageImpl implements Page, PageUnsafe {
       else if (state > STATE_ABOUT_TO_UNMAP) {
         throw new IOException("Page.state[=" + state + "] != USABLE");
       }
-      else if (state == STATE_ABOUT_TO_UNMAP && !allowAcquireInAboutToUnmapState) {
+      else if (state == STATE_ABOUT_TO_UNMAP) {
         throw new IOException("Page.state[=" + state + "] != USABLE");
       }
       //else -> try to acquire:
@@ -549,6 +540,11 @@ public abstract class PageImpl implements Page, PageUnsafe {
   }
 
   // ====================================================================
+
+  public abstract boolean isDirty();
+
+  @Override
+  public abstract void flush() throws IOException;
 
   /**
    * Method tries flushing page content on disk, but only if there is a way to do so without waiting for
@@ -794,7 +790,7 @@ public abstract class PageImpl implements Page, PageUnsafe {
            "{" +
            "state: " + unpackState(packedState) + ", " +
            "inUse: " + unpackUsageCount(packedState) +
-           "}";
+           "}" + ((auxDebugData != null) ? auxDebugData : "");
   }
 
   @Override
