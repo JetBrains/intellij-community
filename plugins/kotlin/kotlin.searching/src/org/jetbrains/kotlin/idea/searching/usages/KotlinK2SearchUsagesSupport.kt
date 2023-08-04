@@ -124,37 +124,46 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         }
     }
 
+    context(KtAnalysisSession)
+    private fun containerSymbol(symbol: KtCallableSymbol): KtDeclarationSymbol? {
+        return symbol.getContainingSymbol() ?: symbol.receiverType?.expandedClassSymbol
+    }
+
     override fun isUsageInContainingDeclaration(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
-        analyze(declaration) {
+        val container = analyze(declaration) {
             val symbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
-            fun container(symbol: KtCallableSymbol): KtDeclarationSymbol? {
-                return symbol.getContainingSymbol() ?: symbol.receiverType?.expandedClassSymbol
+             containerSymbol(symbol)?.psi?.originalElement ?: return false
+        }
+        return reference.unwrappedTargets.filterIsInstance<KtDeclaration>().any { candidateDeclaration ->
+            if (candidateDeclaration == declaration) return@any false
+            if (candidateDeclaration !is KtCallableDeclaration) return@any false
+            if (candidateDeclaration.receiverTypeReference == null && candidateDeclaration.containingFile != container.containingFile) {
+                return@any false
             }
-            val containerSymbol = container(symbol) ?: return false
-            return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
+            analyze(candidateDeclaration) {
                 val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol is KtCallableSymbol && candidateSymbol != symbol && container(candidateSymbol) == containerSymbol
+                candidateSymbol is KtCallableSymbol && candidateDeclaration != declaration && containerSymbol(candidateSymbol)?.psi == container
             }
         }
     }
 
-
     override fun isExtensionOfDeclarationClassUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
         if (declaration !is KtCallableDeclaration) return false
-        analyze(declaration) {
-            fun KtClassOrObjectSymbol.isContainerReceiverFor(
-                candidateSymbol: KtDeclarationSymbol
-            ): Boolean {
-                val receiverType = (candidateSymbol as? KtCallableSymbol)?.receiverType ?: return false
-                val expandedClassSymbol = receiverType.expandedClassSymbol ?: return false
-                return expandedClassSymbol == this || this.isSubClassOf(expandedClassSymbol)
-            }
+        val container = analyze(declaration) {
+            (declaration.getSymbol().getContainingSymbol() as? KtClassOrObjectSymbol)?.psi?.originalElement as? KtClassOrObject ?: return false
+        }
 
-            val symbol = declaration.getSymbol()
-            val containerSymbol = symbol.getContainingSymbol() as? KtClassOrObjectSymbol ?: return false
-            return reference.unwrappedTargets.filterIsInstance(KtDeclaration::class.java).any { candidateDeclaration ->
-                val candidateSymbol = candidateDeclaration.getSymbol()
-                candidateSymbol != symbol && containerSymbol.isContainerReceiverFor(candidateSymbol)
+        return reference.unwrappedTargets.filterIsInstance<KtDeclaration>().any { candidateDeclaration ->
+            if (candidateDeclaration == declaration) return@any false
+            if (candidateDeclaration !is KtCallableDeclaration || candidateDeclaration.receiverTypeReference == null) return@any false
+            analyze(candidateDeclaration) {
+                if (!container.canBeAnalysed()) return@any false
+                val containerSymbol = container.getSymbol() as? KtClassOrObjectSymbol ?: return@any false
+
+                val receiverType = (candidateDeclaration.getSymbol() as? KtCallableSymbol)?.receiverType ?: return@any false
+                val expandedClassSymbol = receiverType.expandedClassSymbol ?: return@any false
+
+                expandedClassSymbol == containerSymbol || containerSymbol.isSubClassOf(expandedClassSymbol)
             }
         }
     }
