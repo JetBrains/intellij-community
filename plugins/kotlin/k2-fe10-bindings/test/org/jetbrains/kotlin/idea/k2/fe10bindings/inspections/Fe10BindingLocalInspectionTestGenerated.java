@@ -715,6 +715,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toList.kt");
             }
 
+            @TestMetadata("toList2.kt")
+            public void testToList2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toList2.kt");
+            }
+
             @TestMetadata("toMutableList.kt")
             public void testToMutableList() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toMutableList.kt");
@@ -728,6 +733,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             @TestMetadata("toSet.kt")
             public void testToSet() throws Exception {
                 runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toSet.kt");
+            }
+
+            @TestMetadata("toSet2.kt")
+            public void testToSet2() throws Exception {
+                runTest("../idea/tests/testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toSet2.kt");
             }
 
             @TestMetadata("toSortedSet.kt")

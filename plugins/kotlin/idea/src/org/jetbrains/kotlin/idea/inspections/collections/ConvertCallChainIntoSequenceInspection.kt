@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
@@ -78,7 +79,8 @@ private class ConvertCallChainIntoSequenceFix : LocalQuickFix {
         val lastCall = calls.lastOrNull() ?: return
         val first = firstCall.getQualifiedExpressionForSelector() ?: firstCall
         val last = lastCall.getQualifiedExpressionForSelector() ?: return
-        val endWithTermination = lastCall.isTermination(context)
+        val endWithTermination = lastCall.calleeText() in terminations ||
+                (lastCall.parent.parent as? KtQualifiedExpression)?.callExpression?.calleeText() in terminations
 
         val psiFactory = KtPsiFactory(project)
         val dot = buildString {
@@ -153,40 +155,46 @@ private fun KtQualifiedExpression.collectCallExpression(context: BindingContext)
 
     if (calls.size < 2) return emptyList()
 
-    val transformationCalls = calls
+    val targetCalls = calls
         .asSequence()
-        .dropWhile { !it.isTransformationOrTermination(context) }
-        .dropWhile { !it.receiverType(context).isIterable() && !it.returnType(context).isIterable() }
-        .takeWhile { it.isTransformationOrTermination(context) && !it.hasReturn() }
+        .map { call ->
+            val returnType = transformationAndTerminations[call.calleeText()]?.let { fqName ->
+                call.getResolvedCall(context)?.resultingDescriptor?.takeIf { it.fqNameOrNull() == fqName }?.returnType
+            }
+            call to returnType
+        }
+        .dropWhile { (call, returnType) ->
+            if (returnType == null) return@dropWhile true
+            val receiverType = call.receiverType(context) ?: return@dropWhile true
+            !(returnType.isIterable() || receiverType.isIterable()) || call.isRedundantTermination(receiverType)
+        }
+        .takeWhile { (call, returnType) ->
+            returnType != null && !call.hasReturn()
+        }
         .toList()
-        .dropLastWhile { it.isLazyTermination(context) || (it.isTermination(context) && !it.returnType(context).isIterable()) }
-    if (transformationCalls.size < 2) return emptyList()
+        .dropLastWhile { (call, returnType) ->
+            call.calleeText() in terminations && !returnType.isIterable()
+        }
 
-    return transformationCalls
+    if (targetCalls.size < 2) return emptyList()
+
+    return targetCalls.map { (call, _) -> call }
 }
 
-private fun KtCallExpression.returnType(context: BindingContext): KotlinType? {
-    return getResolvedCall(context)?.resultingDescriptor?.returnType
+private fun KtCallExpression.isRedundantTermination(receiverType: KotlinType?): Boolean {
+    if (getQualifiedExpressionForSelector()?.parent is KtQualifiedExpression) return false
+    return when (calleeExpression?.text) {
+        "toList" -> receiverType.isList()
+        "toSet" -> receiverType.isSet()
+        else -> false
+    }
 }
 
 private fun KtCallExpression.hasReturn(): Boolean = valueArguments.any { arg ->
     arg.anyDescendantOfType<KtReturnExpression> { it.labelQualifier == null }
 }
 
-private fun KtCallExpression.isTransformationOrTermination(context: BindingContext): Boolean {
-    val fqName = transformationAndTerminations[calleeExpression?.text] ?: return false
-    return isCalling(fqName, context)
-}
-
-private fun KtCallExpression.isTermination(context: BindingContext): Boolean {
-    val fqName = terminations[calleeExpression?.text] ?: return false
-    return isCalling(fqName, context)
-}
-
-private fun KtCallExpression.isLazyTermination(context: BindingContext): Boolean {
-    val fqName = lazyTerminations[calleeExpression?.text] ?: return false
-    return isCalling(fqName, context)
-}
+private fun KtCallExpression.calleeText(): String? = calleeExpression?.text
 
 internal val collectionTransformationFunctionNames = listOf(
     "chunked",
@@ -320,7 +328,5 @@ private val terminations = collectionTerminationFunctionNames.associateWith {
     val pkg = if (it in listOf("contains", "indexOf", "lastIndexOf")) "kotlin.collections.List" else "kotlin.collections"
     FqName("$pkg.$it")
 }
-
-private val lazyTerminations = terminations.filter { (key, _) -> key == "groupingBy" }
 
 private val transformationAndTerminations = transformations + terminations

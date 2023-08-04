@@ -1383,6 +1383,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toList.kt");
                 }
 
+                @TestMetadata("toList2.kt")
+                public void testToList2() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toList2.kt");
+                }
+
                 @TestMetadata("toMutableList.kt")
                 public void testToMutableList() throws Exception {
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toMutableList.kt");
@@ -1396,6 +1401,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 @TestMetadata("toSet.kt")
                 public void testToSet() throws Exception {
                     runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toSet.kt");
+                }
+
+                @TestMetadata("toSet2.kt")
+                public void testToSet2() throws Exception {
+                    runTest("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination/toSet2.kt");
                 }
 
                 @TestMetadata("toSortedSet.kt")
