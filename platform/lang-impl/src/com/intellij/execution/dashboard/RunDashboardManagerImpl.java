@@ -82,6 +82,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private String myToolWindowId;
   private final Predicate<Content> myReuseCondition;
   private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
+  private RunDashboardComponentWrapper myContentWrapper;
   private JComponent myEmptyContent;
 
   public RunDashboardManagerImpl(@NotNull Project project) {
@@ -734,6 +735,14 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       myEmptyContent = mainPanel;
     }
     return myEmptyContent;
+  }
+
+  RunDashboardComponentWrapper getContentWrapper() {
+    if (myContentWrapper == null) {
+      myContentWrapper = new RunDashboardComponentWrapper();
+      ClientProperty.put(myContentWrapper, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
+    }
+    return myContentWrapper;
   }
 
   @Override
