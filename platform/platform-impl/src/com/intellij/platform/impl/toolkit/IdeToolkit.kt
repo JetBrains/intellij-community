@@ -153,4 +153,5 @@ class IdeToolkit : SunToolkit() {
 
   //TODO(sviatoslav.vlasov): Pass parameters from original toolkit into constructor
   override fun areExtraMouseButtonsEnabled() = true
+  override fun getNumberOfButtons() = 5
 }
