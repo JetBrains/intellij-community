@@ -3,7 +3,7 @@ package com.intellij.cce.report
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.core.SuggestionKind
+import com.intellij.cce.metric.MatchedRatio
 import com.intellij.cce.metric.MovesCount
 import com.intellij.cce.metric.MovesCountNormalised
 import com.intellij.cce.metric.TotalLatencyMetric
@@ -35,10 +35,11 @@ class CompletionGolfFileReportGenerator(
   }
 
   override fun getKindClass(lookup: Lookup, expectedText: String): String {
-    val kinds = lookup.suggestions.map { suggestion -> suggestion.kind }
+    val restText = expectedText.substring(lookup.offset)
+    val matchedRatio = (MatchedRatio().computeSimilarity(lookup, restText) ?: 0.0) / restText.length
     return when {
-      SuggestionKind.LINE in kinds -> "cg-line"
-      SuggestionKind.TOKEN in kinds -> "cg-token"
+      matchedRatio == 1.0 -> "cg-line"
+      matchedRatio > 0.0 -> "cg-token"
       else -> "cg-none"
     }
   }

@@ -1,8 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.core
 
-import com.intellij.cce.evaluable.golf.firstToken
-
 data class Lookup(
   val prefix: String,
   val offset: Int,
@@ -12,6 +10,37 @@ data class Lookup(
   val selectedPosition: Int,
   val isNew: Boolean
 ) {
+
+  constructor(
+    prefix: String,
+    offset: Int,
+    suggestions: List<Suggestion>,
+    latency: Long,
+    features: Features? = null,
+    isNew: Boolean
+  ) : this(
+      prefix = prefix,
+      offset = offset,
+      suggestions = suggestions,
+      latency = latency,
+      features = features,
+      selectedPosition = calculateSelectedPosition(suggestions),
+      isNew = isNew
+      )
+  //val selectedPosition: Int
+  //  get() {
+  //    val maxLength = suggestions.filter { it.isRelevant }.maxOfOrNull { it.text.length }
+  //    return suggestions.indexOfFirst { it.isRelevant && it.text.length == maxLength }
+  //      .let { if (it < 0) -1 else it }
+  //  }
+  //
+  //fun filterSuggestions(f: (Suggestion) -> Boolean) {
+  //  suggestions = suggestions.filter { f(it) }
+  //}
+  //
+  //fun takeTopNSuggestions(n: Int) {
+  //  suggestions = suggestions.take(n)
+  //}
   fun clearFeatures() {
     features = null
   }
@@ -19,24 +48,61 @@ data class Lookup(
   fun selectedWithoutPrefix(): String? {
     if (selectedPosition == -1) return null
 
-    return suggestions.getOrNull(selectedPosition)?.let {
-      if (it.kind == SuggestionKind.TOKEN) firstToken(it.text) else it.text
-    }?.drop(prefix.length)?.takeIf { it.isNotEmpty() }
+    return suggestions.getOrNull(selectedPosition)?.text?.drop(prefix.length)?.takeIf { it.isNotEmpty() }
   }
 
   companion object {
     fun fromExpectedText(
       expectedText: String,
-      text: String,
+      prefix: String,
       suggestions: List<Suggestion>,
       latency: Long,
       features: Features? = null,
-      isNew: Boolean = false
+      isNew: Boolean = false,
+      caretPosition: Int = 0
     ): Lookup {
-      val selectedPosition = suggestions.indexOfFirst { it.text == expectedText }
-        .let { if (it < 0) -1 else it }
+      fun comparator(generated: String, expected: String): Boolean {
+        return !(generated.isEmpty() || !expected.startsWith(generated))
+      }
+      suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(caretPosition - prefix.length)) }
 
-      return Lookup(text, text.length, suggestions, latency, features, selectedPosition, isNew)
+      return Lookup(
+        prefix = prefix,
+        offset = caretPosition,
+        suggestions = suggestions,
+        latency = latency,
+        features = features,
+        isNew = isNew
+      )
+    }
+
+    private fun calculateSelectedPosition(suggestions: List<Suggestion>): Int {
+      val maxLength = suggestions.filter { it.isRelevant }.maxOfOrNull { it.text.length }
+      return suggestions.indexOfFirst { it.isRelevant && it.text.length == maxLength }
+        .let { if (it < 0) -1 else it }
+    }
+    fun filterSuggestions(lookup: Lookup, f: (Suggestion) -> Boolean): Lookup {
+      val filteredSuggestions = lookup.suggestions.filter { f(it) }
+      return Lookup(
+        prefix = lookup.prefix,
+        offset = lookup.offset,
+        suggestions = filteredSuggestions,
+        latency = lookup.latency,
+        features = lookup.features,
+        isNew = lookup.isNew
+      )
+    }
+
+    fun takeTopNSuggestions(lookup: Lookup, n: Int): Lookup {
+      val topSuggestions = lookup.suggestions.take(n)
+      return Lookup(
+        prefix = lookup.prefix,
+        offset = lookup.offset,
+        suggestions = topSuggestions,
+        latency = lookup.latency,
+        features = lookup.features,
+        isNew = lookup.isNew
+      )
     }
   }
 }

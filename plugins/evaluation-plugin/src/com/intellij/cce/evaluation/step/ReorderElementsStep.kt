@@ -41,13 +41,12 @@ class ReorderElementsStep(config: Config, project: Project) :
             val sortedElements2features = elements2features.sortedWith(compareByMultipleFeatures())
             newSession.addLookup(
               Lookup(
-                lookup.prefix,
-                lookup.offset,
-                sortedElements2features.map { it.first },
-                lookup.latency,
-                Features(features[i].common, sortedElements2features.map { it.second }),
-                lookup.selectedPosition,
-                lookup.isNew
+                prefix = lookup.prefix,
+                offset = lookup.offset,
+                suggestions = sortedElements2features.map { it.first },
+                latency = lookup.latency,
+                features = Features(features[i].common, sortedElements2features.map { it.second }),
+                isNew = lookup.isNew
               )
             )
           }

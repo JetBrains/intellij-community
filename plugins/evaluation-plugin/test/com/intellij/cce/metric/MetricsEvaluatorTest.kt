@@ -73,7 +73,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test HasMatch@1 metric`() {
-    val metric = HasMatchAt(1)
+    val metric = HasMatchAt(showByDefault = false, n = 1)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoTop1Custom)))

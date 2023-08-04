@@ -49,7 +49,9 @@ class CompletionActionsInvoker(project: Project,
     if (activeLookup == null) {
       commonInvoker.printText(expectedText.substring(prefix.length))
       return@readActionInSmartMode createSession(offset, expectedText, properties,
-                                                 Lookup.fromExpectedText(expectedText, prefix, emptyList(), latency, isNew = isNew))
+                                                 Lookup.fromExpectedText(expectedText, prefix, emptyList(), latency,
+                                                                         isNew = isNew,
+                                                                         caretPosition = editor.caretModel.logicalPosition.column))
     }
 
     val lookup = activeLookup as LookupImpl
@@ -66,7 +68,7 @@ class CompletionActionsInvoker(project: Project,
     }
     return@readActionInSmartMode createSession(offset, expectedText, properties,
                                                Lookup.fromExpectedText(expectedText, lookup.prefix(), suggestions, latency, resultFeatures,
-                                                                       isNew))
+                                                                       isNew, editor.caretModel.logicalPosition.column))
   }
 
   private fun finishSession(expectedText: String, prefix: String, editor: Editor): Boolean {

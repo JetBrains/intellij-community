@@ -7,12 +7,12 @@ interface ReportColors<T> {
   companion object {
     fun <T> getColor(session: Session?, colors: ReportColors<T>, lookupOrder: Int): T {
       if (session == null || session.lookups.size <= lookupOrder) return colors.absentLookupColor
-      val suggestions = session.lookups[lookupOrder].suggestions
+      val lookup = session.lookups[lookupOrder]
 
       return when {
-        !suggestions.any { it.isSelected } -> colors.notFoundColor
-        suggestions.first().isSelected -> colors.perfectSortingColor
-        suggestions.take(colors.goodSortingThreshold).any { it.isSelected } -> colors.goodSortingColor
+        lookup.selectedPosition == -1 -> colors.notFoundColor
+        lookup.selectedPosition == 0 -> colors.perfectSortingColor
+        lookup.selectedPosition < colors.goodSortingThreshold -> colors.goodSortingColor
         else -> colors.badSortingColor
       }
     }

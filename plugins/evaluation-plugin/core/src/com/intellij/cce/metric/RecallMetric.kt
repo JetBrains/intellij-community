@@ -18,7 +18,7 @@ class RecallMetric : Metric {
     val fileSample = Sample()
     lookups
       .forEach { lookup ->
-        val value = if (lookup.suggestions.any { it.isSelected }) 1.0 else 0.0
+        val value = if (lookup.selectedPosition >= 0) 1.0 else 0.0
         fileSample.add(value)
         sample.add(value)
       }

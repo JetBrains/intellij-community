@@ -18,7 +18,7 @@ class MeanRankMetric : Metric {
 
     val fileSample = Sample()
     lookups.forEach { lookup ->
-      val position = lookup.suggestions.indexOfFirst { it.isSelected }
+      val position = lookup.selectedPosition
       if (position != -1) {
         fileSample.add(position.toDouble())
         sample.add(position.toDouble())
