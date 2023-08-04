@@ -1,8 +1,8 @@
 package testing.rename
 
-public open class A {
+public open class B() {
 }
 
 fun test() {
-    /*rename*/A()
+    B()
 }
