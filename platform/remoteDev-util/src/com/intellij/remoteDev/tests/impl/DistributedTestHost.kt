@@ -72,17 +72,16 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
     get() = projectOrNull!!
 
   init {
-    val hostAddress = when (SystemInfoRt.isLinux) {
-      true -> System.getenv(AgentConstants.dockerHostIpEnvVar)?.let {
-        LOG.info("${AgentConstants.dockerHostIpEnvVar} env var is set=$it, will try to get address from it.")
+    val hostAddress =
+      System.getProperty(AgentConstants.protocolHostPropertyName)?.let {
+        LOG.info("${AgentConstants.protocolHostPropertyName} system property is set=$it, will try to get address from it.")
         // this won't work when we do custom network setups as the default gateway will be overridden
         // val hostEntries = File("/etc/hosts").readText().lines()
         // val dockerInterfaceEntry = hostEntries.last { it.isNotBlank() }
         // val ipAddress = dockerInterfaceEntry.split("\\s".toRegex()).first()
+        //  host.docker.internal is not available on linux yet (20.04+)
         InetAddress.getByName(it)
       } ?: InetAddress.getLoopbackAddress()
-      false -> InetAddress.getLoopbackAddress()
-    }
 
     val port = getDistributedTestPort()
     if (port != null) {
