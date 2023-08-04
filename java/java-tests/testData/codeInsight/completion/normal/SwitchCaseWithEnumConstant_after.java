@@ -2,7 +2,7 @@ class A extends Base{
   void foo(){
     B x = null;
     switch(x){
-        case GOO:<caret>
+        case GOO -> <caret>
     }
   }
 }

@@ -769,15 +769,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
     }
 
     boolean inSwitchLabel = IN_SWITCH_LABEL.accepts(position);
-    TailType forcedTail = null;
-    if (!smart) {
-      if (inSwitchLabel) {
-        forcedTail = TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
-      }
-      else if (shouldInsertSemicolon(position)) {
-        forcedTail = TailType.SEMICOLON;
-      }
-    }
+    TailType forcedTail = getTailType(smart, inSwitchLabel, position);
 
     List<LookupElement> items = new ArrayList<>();
     if (INSIDE_CONSTRUCTOR.accepts(position) &&
@@ -805,7 +797,15 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       LookupItem<?> item = element.as(LookupItem.CLASS_CONDITION_KEY);
 
       if (forcedTail != null && !(element instanceof JavaPsiClassReferenceElement)) {
-        element = TailTypeDecorator.withTail(element, forcedTail);
+        element = new TailTypeDecorator<>(element) {
+          @Override
+          protected TailType computeTailType(InsertionContext context) {
+            if (context.getCompletionChar() == ':' && forcedTail == TailTypes.CASE_ARROW) {
+              return TailType.CASE_COLON;
+            }
+            return forcedTail;
+          }
+        };
       }
 
       if (inSwitchLabel && !smart) {
@@ -835,6 +835,17 @@ public final class JavaCompletionContributor extends CompletionContributor imple
       items.addAll(getInnerScopeVariables(parameters, position));
     }
     return items;
+  }
+
+  @Nullable
+  private static TailType getTailType(boolean smart, boolean inSwitchLabel, PsiElement position) {
+    if (!smart && inSwitchLabel) {
+      return TailTypes.forSwitchLabel(Objects.requireNonNull(PsiTreeUtil.getParentOfType(position, PsiSwitchBlock.class)));
+    }
+    if (!smart && shouldInsertSemicolon(position)) {
+      return TailType.SEMICOLON;
+    }
+    return null;
   }
 
   private static Collection<LookupElement> getInnerScopeVariables(CompletionParameters parameters, PsiElement position) {
