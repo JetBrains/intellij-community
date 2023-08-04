@@ -4,6 +4,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.plugins.BundledPluginsState.Companion.savedBuildNumber
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -35,7 +36,7 @@ class BundledPluginsState : ApplicationInitializedListener {
   companion object {
     var PropertiesComponent.savedBuildNumber: BuildNumber?
       @VisibleForTesting get() = getValue(SAVED_VERSION_KEY)?.let { BuildNumber.fromString(it) }
-      private set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
+      internal set(value) = setValue(SAVED_VERSION_KEY, value?.asString())
 
     val loadedPlugins: Set<IdeaPluginDescriptor>
       @VisibleForTesting get() = PluginManagerCore.loadedPlugins.filterTo(HashSet()) { it.isBundled }
@@ -52,27 +53,32 @@ class BundledPluginsState : ApplicationInitializedListener {
       // postpone avoiding getting PropertiesComponent and writing to disk too early
       delay(1.minutes)
 
-      val savedBuildNumber = serviceAsync<PropertiesComponent>().savedBuildNumber
-      val currentBuildNumber = ApplicationInfo.getInstance().build
+      saveBundledPluginsState()
+    }
+  }
+}
 
-      val shouldSave = savedBuildNumber == null
-                       || savedBuildNumber < currentBuildNumber
-                       || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
+@VisibleForTesting
+suspend fun saveBundledPluginsState() {
+  val savedBuildNumber = serviceAsync<PropertiesComponent>().savedBuildNumber
+  val currentBuildNumber = ApplicationInfo.getInstance().build
 
-      if (!shouldSave) {
-        return@launch
-      }
+  val shouldSave = savedBuildNumber == null
+                   || savedBuildNumber < currentBuildNumber
+                   || (!ApplicationManager.getApplication().isUnitTestMode && PluginManagerCore.isRunningFromSources())
 
-      val bundledPluginIds = loadedPlugins
-      withContext(Dispatchers.IO) {
-        try {
-          writePluginIdsToFile(bundledPluginIds)
-          serviceAsync<PropertiesComponent>().savedBuildNumber = currentBuildNumber
-        }
-        catch (e: IOException) {
-          LOG.warn("Unable to save bundled plugins list", e)
-        }
-      }
+  if (!shouldSave) {
+    return
+  }
+
+  val bundledPluginIds = BundledPluginsState.loadedPlugins
+  withContext(Dispatchers.IO) {
+    try {
+      writePluginIdsToFile(bundledPluginIds)
+      serviceAsync<PropertiesComponent>().savedBuildNumber = currentBuildNumber
+    }
+    catch (e: IOException) {
+      LOG.warn("Unable to save bundled plugins list", e)
     }
   }
 }
