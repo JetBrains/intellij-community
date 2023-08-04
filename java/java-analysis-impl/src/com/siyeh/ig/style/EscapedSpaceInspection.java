@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -108,7 +109,12 @@ public class EscapedSpaceInspection extends AbstractBaseJavaLocalInspectionTool 
         .append(text.length())
         .pairMap((start, end) -> text.substring(start + 2, end))
         .joining(" ");
-      element.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, null));
+      if (element instanceof PsiFragment) {
+        PsiReplacementUtil.replaceFragment((PsiFragment)element, newText);
+      }
+      else {
+        element.replace(JavaPsiFacade.getElementFactory(project).createExpressionFromText(newText, null));
+      }
     }
   }
 }

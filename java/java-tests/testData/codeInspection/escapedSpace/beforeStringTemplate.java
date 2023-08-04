@@ -4,6 +4,6 @@ class X {
   String x() {
 
     return STR."""
-      <caret>\s\{}"""
+      \{}<caret>\s\{}"""
   }
 }
