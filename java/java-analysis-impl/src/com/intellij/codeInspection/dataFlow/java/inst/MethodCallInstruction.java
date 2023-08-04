@@ -89,12 +89,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
   }
 
   public MethodCallInstruction(@NotNull PsiCall call, @Nullable DfaValue precalculatedReturnValue, List<? extends MethodContract> contracts) {
-    super(call instanceof PsiExpression ? new JavaExpressionAnchor((PsiExpression)call) : null);
+    super(call instanceof PsiExpression expr ? new JavaExpressionAnchor(expr) : null);
     myContext = call;
     myContracts = Collections.unmodifiableList(contracts);
     final PsiExpressionList argList = call.getArgumentList();
     PsiExpression[] args = argList != null ? argList.getExpressions() : PsiExpression.EMPTY_ARRAY;
-    myType = call instanceof PsiCallExpression ? ((PsiCallExpression)call).getType() : null;
+    myType = call instanceof PsiExpression expr ? expr.getType() : null;
 
     JavaResolveResult result = call.resolveMethodGenerics();
     myTargetMethod = (PsiMethod)result.getElement();

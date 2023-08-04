@@ -124,9 +124,8 @@ public final class NullabilityUtil {
     if (useDataflow) {
       return DfaNullability.toNullability(DfaNullability.fromDfType(CommonDataflow.getDfType(expression)));
     }
-    if (expression instanceof PsiReferenceExpression) {
-      PsiReferenceExpression ref = (PsiReferenceExpression)expression;
-      PsiElement target = (ref).resolve();
+    if (expression instanceof PsiReferenceExpression ref) {
+      PsiElement target = ref.resolve();
       if (target instanceof PsiPatternVariable) {
         return Nullability.NOT_NULL; // currently all pattern variables are not-null
       }
@@ -138,8 +137,8 @@ public final class NullabilityUtil {
       }
       return DfaPsiUtil.getElementNullabilityIgnoringParameterInference(expression.getType(), (PsiModifierListOwner)target);
     }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+    if (expression instanceof PsiMethodCallExpression || expression instanceof PsiTemplateExpression) {
+      PsiMethod method = ((PsiCall)expression).resolveMethod();
       return method != null ? DfaPsiUtil.getElementNullability(expression.getType(), method) : Nullability.UNKNOWN;
     }
     return Nullability.UNKNOWN;

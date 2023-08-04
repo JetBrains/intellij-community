@@ -497,6 +497,12 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
                                                alwaysNull).toArray(LocalQuickFix.EMPTY_ARRAY);
         reporter.registerProblem(arrayAccess, problem.getMessage(IGNORE_ASSERT_STATEMENTS), fixes);
       });
+      NullabilityProblemKind.templateNPE.ifMyProblem(problem, template -> {
+        PsiExpression processor = template.getProcessor();
+        LocalQuickFix[] fixes = createNPEFixes(processor, template, reporter.isOnTheFly(),
+                                               alwaysNull).toArray(LocalQuickFix.EMPTY_ARRAY);
+        reporter.registerProblem(processor, problem.getMessage(IGNORE_ASSERT_STATEMENTS), fixes);
+      });
       NullabilityProblemKind.fieldAccessNPE.ifMyProblem(problem, element -> {
         PsiElement parent = element.getParent();
         PsiExpression fieldAccess = parent instanceof PsiReferenceExpression ? (PsiExpression)parent : element;

@@ -48,7 +48,7 @@ public class MethodCandidateInfo extends CandidateInfo{
                              @NotNull PsiSubstitutor substitutor,
                              boolean accessProblem,
                              boolean staticsProblem,
-                             PsiElement argumentList,
+                             @NotNull PsiElement argumentList,
                              PsiElement currFileContext,
                              PsiType @Nullable [] argumentTypes,
                              PsiType[] typeArguments) {

@@ -1243,6 +1243,76 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     finishElement(statement);
   }
 
+  @Override
+  public void visitTemplateExpression(@NotNull PsiTemplateExpression expression) {
+    PsiExpression processor = PsiUtil.skipParenthesizedExprDown(expression.getProcessor());
+    if (processConcatTemplate(expression)) {
+      return;
+    }
+    if (processor != null) {
+      processor.accept(this);
+    }
+    PsiTemplate template = expression.getTemplate();
+    if (template != null) {
+      for (PsiExpression embeddedExpression : template.getEmbeddedExpressions()) {
+        embeddedExpression.accept(this);
+        addInstruction(new PopInstruction());
+      }
+    }
+    addInstruction(new MethodCallInstruction(expression, null, List.of()));
+    if (myTrapTracker.shouldHandleException()) {
+      addThrows(ExceptionUtil.getOwnUnhandledExceptions(expression));
+    }
+    addNullCheck(expression);
+  }
+
+  private boolean processConcatTemplate(@NotNull PsiTemplateExpression expression) {
+    PsiExpression processor = PsiUtil.skipParenthesizedExprDown(expression.getProcessor());
+    if (!JavaPsiStringTemplateUtil.isStrTemplate(processor)) return false;
+    PsiLiteralExpression literalExpression = expression.getLiteralExpression();
+    if (literalExpression != null) {
+      literalExpression.accept(this);
+      return true;
+    }
+    PsiTemplate template = expression.getTemplate();
+    if (template == null) {
+      pushUnknown();
+      return true;
+    }
+    PsiType stringType = expression.getType();
+    if (stringType == null) return false;
+    TypeConstraint constraint = TypeConstraints.exact(stringType); 
+    List<@NotNull PsiExpression> expressions = template.getEmbeddedExpressions();
+    List<@NotNull PsiFragment> fragments = template.getFragments();
+    int count = expressions.size();
+    if (count + 1 != fragments.size()) return false;
+    for (int i = 0; i < count; i++) {
+      PsiFragment fragment = fragments.get(i);
+      Object value = fragment.getValue();
+      if (value instanceof String) {
+        addInstruction(new PushValueInstruction(DfTypes.referenceConstant(value, stringType)));
+      } else {
+        pushUnknown();
+      }
+      if (i > 0) {
+        addInstruction(new StringConcatInstruction(null, constraint));
+      }
+      expressions.get(i).accept(this);
+      addInstruction(new StringConcatInstruction(null, constraint));
+    }
+    PsiFragment lastFragment = fragments.get(count);
+    Object value = lastFragment.getValue();
+    if (value instanceof String) {
+      addInstruction(new PushValueInstruction(DfTypes.referenceConstant(value, stringType)));
+    } else {
+      pushUnknown();
+    }
+    if (count > 0) {
+      addInstruction(new StringConcatInstruction(new JavaExpressionAnchor(expression), constraint));
+    }
+    return true;
+  }
+
   @Override public void visitThrowStatement(@NotNull PsiThrowStatement statement) {
     startElement(statement);
 
@@ -1825,7 +1895,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       .isInstance(expression);
   }
 
-  void addMethodThrows(PsiMethod method) {
+  void addMethodThrows(@Nullable PsiMethod method) {
     if (myTrapTracker.shouldHandleException()) {
       addThrows(method == null ? Collections.emptyList() : Arrays.asList(method.getThrowsList().getReferencedTypes()));
     }

@@ -2286,7 +2286,7 @@ public final class HighlightUtil {
     if (type == null) return null;
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(processor.getProject());
-    PsiClassType processorType = factory.createTypeByFQClassName("java.lang.StringTemplate.Processor", processor.getResolveScope());
+    PsiClassType processorType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, processor.getResolveScope());
     if (!TypeConversionUtil.isAssignable(processorType, type)) {
       return createIncompatibleTypeHighlightInfo(processorType, type, processor.getTextRange(), 0);
     }

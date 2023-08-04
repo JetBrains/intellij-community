@@ -1,10 +1,15 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.java;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.infos.MethodCandidateInfo;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,31 +61,72 @@ public final class PsiTemplateExpressionImpl extends ExpressionPsiElement implem
     final PsiElement lastChild = getLastChild();
     return lastChild instanceof PsiLiteralExpression ? (PsiLiteralExpression)lastChild : null;
   }
+  
+  @Override
+  public @NotNull JavaResolveResult resolveMethodGenerics() {
+    final PsiExpression processor = getProcessor();
+    if (processor == null) return JavaResolveResult.EMPTY;
+    final PsiType type = processor.getType();
+    if (type == null) return JavaResolveResult.EMPTY;
+    PsiMethod method = findBaseProcessMethod(type);
+    if (method == null) return JavaResolveResult.EMPTY;
+    for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
+      if (!TypeConversionUtil.isAssignable(type, classType)) continue;
+      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
+      final PsiClass aClass = resolveResult.getElement();
+      if (aClass == null) continue;
+      PsiMethod foundMethod = aClass.findMethodBySignature(method, true);
+      if (foundMethod == null) continue;
+      PsiClass methodContainingClass = foundMethod.getContainingClass();
+      if (methodContainingClass == null) continue;
+      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(methodContainingClass, aClass, resolveResult.getSubstitutor());
+      if (substitutor == null) continue;
+      return new MethodCandidateInfo(foundMethod, substitutor, false, false, this, null, null, null);
+    }
+    return JavaResolveResult.EMPTY;
+  }
+
+  @Override
+  public @Nullable PsiMethod resolveMethod() {
+    return ObjectUtils.tryCast(resolveMethodGenerics(), PsiMethod.class);
+  }
+
+  private static PsiMethod findBaseProcessMethod(PsiType type) {
+    Ref<PsiMethod> refMethod = Ref.create();
+    InheritanceUtil.processSuperTypes(type, true, superType -> {
+      if (!(superType instanceof PsiClassType)) return true;
+      PsiClassType.ClassResolveResult result = ((PsiClassType)superType).resolveGenerics();
+      PsiClass superClass = result.getElement();
+      if (superClass == null) return true;
+      if (!CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR.equals(superClass.getQualifiedName())) return true;
+      PsiMethod[] processMethods = superClass.findMethodsByName("process", false);
+      for (PsiMethod method : processMethods) {
+        PsiParameter[] parameters = method.getParameterList().getParameters();
+        if (parameters.length == 1) {
+          PsiType parameterType = parameters[0].getType();
+          if (parameterType instanceof PsiClassType && parameterType.equalsToText(CommonClassNames.JAVA_LANG_STRING_TEMPLATE)) {
+            refMethod.set(method);
+            return false;
+          }
+        }
+      }
+      return true;
+    });
+    return refMethod.get();
+  }
 
   @Override
   public @Nullable PsiType getType() {
     final PsiExpression processor = getProcessor();
-    if (processor ==  null) return null;
-    final PsiType type = processor.getType();
+    if (processor == null) return null;
+    PsiType type = processor.getType();
     if (type == null) return null;
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
-    final PsiClassType processorType = factory.createTypeByFQClassName("java.lang.StringTemplate.Processor", processor.getResolveScope());
-    if (!TypeConversionUtil.isAssignable(processorType, type)) return null;
     for (PsiClassType classType : PsiTypesUtil.getClassTypeComponents(type)) {
-      if (!TypeConversionUtil.isAssignable(processorType, classType)) continue;
-      final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
-      final PsiClass aClass = resolveResult.getElement();
-      if (aClass == null) continue;
-
-      final PsiClass processorClass = processorType.resolve();
-      if (processorClass == null) continue;
-      final PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(processorClass, aClass, resolveResult.getSubstitutor());
-      if (substitutor == null) continue;
-      final PsiMethod[] methods = processorClass.findMethodsByName("process", false);
-      if (methods.length != 1) continue;
-      return substitutor.substitute(methods[0].getReturnType());
+      PsiType substituted = PsiUtil.substituteTypeParameter(classType, CommonClassNames.JAVA_LANG_STRING_TEMPLATE_PROCESSOR, 0, false);
+      if (substituted != null) {
+        return substituted;
+      }
     }
-
     return null;
   }
 

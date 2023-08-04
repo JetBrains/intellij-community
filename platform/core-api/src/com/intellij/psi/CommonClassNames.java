@@ -97,6 +97,8 @@ public interface CommonClassNames {
   String JAVA_LANG_CHAR_SEQUENCE = "java.lang.CharSequence";
   String JAVA_LANG_STRING_BUFFER = "java.lang.StringBuffer";
   String JAVA_LANG_STRING_BUILDER = "java.lang.StringBuilder";
+  String JAVA_LANG_STRING_TEMPLATE = "java.lang.StringTemplate";
+  String JAVA_LANG_STRING_TEMPLATE_PROCESSOR = "java.lang.StringTemplate.Processor";
   String JAVA_LANG_ABSTRACT_STRING_BUILDER = "java.lang.AbstractStringBuilder";
 
   String JAVA_LANG_MATH = "java.lang.Math";
