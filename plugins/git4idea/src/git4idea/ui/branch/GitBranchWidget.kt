@@ -4,7 +4,6 @@ package git4idea.ui.branch
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsStatusWidget
-import com.intellij.ide.DataManager
 import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.openapi.components.service
@@ -29,8 +28,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.BranchIconUtil.Companion.getBranchIcon
-import git4idea.ui.branch.popup.GitBranchesTreePopup.Companion.create
-import git4idea.ui.branch.popup.GitBranchesTreePopup.Companion.isEnabled
+import git4idea.ui.branch.popup.GitBranchesTreePopup
 import org.jetbrains.annotations.NonNls
 import javax.swing.Icon
 
@@ -64,12 +62,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
 
   override fun getWidgetPopup(project: Project, repository: GitRepository): JBPopup {
     branchWidgetClicked()
-    return if (isEnabled()) {
-      create(project, repository)
-    }
-    else {
-      GitBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar!!.component)).asListPopup()
-    }
+    return GitBranchesTreePopup.create(project, repository)
   }
 
   override fun rememberRecentRoot(path: String) {

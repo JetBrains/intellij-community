@@ -48,7 +48,6 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupFetchAction
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SINGLE_REPOSITORY_ACTION_PLACE
 import git4idea.ui.branch.popup.GitBranchesTreePopupStep.Companion.SPEED_SEARCH_DEFAULT_ACTIONS_GROUP
@@ -108,7 +107,7 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
   init {
     setParentValue(parentValue)
     minimumSize = if (isNewUI) JBDimension(350, 300) else JBDimension(300, 200)
-    dimensionServiceKey = if (isChild()) null else GitBranchPopup.DIMENSION_SERVICE_KEY
+    dimensionServiceKey = if (isChild()) null else DIMENSION_SERVICE_KEY
     userResized = !isChild() && WindowStateService.getInstance(project).getSizeFor(project, dimensionServiceKey) != null
     installGeneralShortcutActions()
     installShortcutActions(step.treeModel)
@@ -712,6 +711,8 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
   companion object {
 
+    private const val DIMENSION_SERVICE_KEY = "Git.Branch.Popup"
+
     private inline val isNewUI
       get() = ExperimentalUI.isNewUI()
 
@@ -719,9 +720,6 @@ class GitBranchesTreePopup(project: Project, step: GitBranchesTreePopupStep, par
 
     internal val treeRowHeight: Int
       get() = if (isNewUI) JBUI.CurrentTheme.List.rowHeight() else JBUIScale.scale(22)
-
-    @JvmStatic
-    fun isEnabled() = true
 
     /**
      * @param selectedRepository - Selected repository:

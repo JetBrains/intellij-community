@@ -7,14 +7,14 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.ListPopup;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.BranchIconUtil;
-import git4idea.ui.branch.GitBranchPopup;
+import git4idea.ui.branch.popup.GitBranchesTreePopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,13 +56,13 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements DumbAwa
   }
 
   @Override
-  protected @NotNull ListPopup createActionPopup(@NotNull DataContext context,
+  protected @NotNull JBPopup createActionPopup(@NotNull DataContext context,
                                                  @NotNull JComponent component,
                                                  @Nullable Runnable disposeCallback) {
     Project project = Objects.requireNonNull(context.getData(CommonDataKeys.PROJECT));
     GitRepository repo = Objects.requireNonNull(GitBranchUtil.guessWidgetRepository(project, context));
 
-    ListPopup popup = GitBranchPopup.getInstance(project, repo, context).asListPopup();
+    JBPopup popup = GitBranchesTreePopup.create(project, repo);
     popup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {

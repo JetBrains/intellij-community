@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
+import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.popup.PopupDispatcher
 import com.intellij.ui.popup.WizardPopup
 import git4idea.actions.GitFetch
@@ -14,7 +15,9 @@ import git4idea.fetch.GitFetchSupport
 import git4idea.i18n.GitBundle
 import kotlin.streams.asSequence
 
-class GitBranchPopupFetchAction<P: WizardPopup>(private val popupClass: Class<P>) : GitFetch() {
+private val LOADING_ICON = AnimatedIcon.Default()
+
+class GitBranchPopupFetchAction<P : WizardPopup>(private val popupClass: Class<P>) : GitFetch() {
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -23,7 +26,7 @@ class GitBranchPopupFetchAction<P: WizardPopup>(private val popupClass: Class<P>
       e.presentation.isEnabledAndVisible = false
       return
     }
-    e.presentation.icon = if (isBusy(project)) GitBranchPopup.LOADING_ICON else AllIcons.Vcs.Fetch
+    e.presentation.icon = if (isBusy(project)) LOADING_ICON else AllIcons.Vcs.Fetch
     e.presentation.text = if (isBusy(project)) GitBundle.message("fetching") else GitBundle.message("action.fetch.text")
   }
 

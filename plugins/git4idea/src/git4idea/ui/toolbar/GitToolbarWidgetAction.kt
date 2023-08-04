@@ -27,7 +27,6 @@ import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.GitBranchPopup
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA
 import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_SUFFIX_LENGTH
@@ -55,12 +54,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val repository = event.presentation.getClientProperty(repositoryKey)
 
     val popup: JBPopup = if (repository != null) {
-      if (GitBranchesTreePopup.isEnabled()) {
-        GitBranchesTreePopup.create(project, repository)
-      }
-      else {
-        GitBranchPopup.getInstance(project, repository, event.dataContext).asListPopup()
-      }
+      GitBranchesTreePopup.create(project, repository)
     }
     else {
       updatePlaceholder(project, null)
@@ -125,7 +119,7 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
         with(e.presentation) {
           isEnabledAndVisible = true
           text = placeholder ?: GitBundle.message("git.toolbar.widget.no.repo")
-          icon = if (placeholder != null ) widgetIcon else null
+          icon = if (placeholder != null) widgetIcon else null
           description = GitBundle.message("git.toolbar.widget.no.repo.tooltip")
         }
       }
@@ -143,7 +137,8 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
 
     val changes = gitRepository?.currentBranchName?.let { branch ->
       val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
-      MyRepoChanges(incomingOutgoingManager.hasIncomingFor(gitRepository, branch), incomingOutgoingManager.hasOutgoingFor(gitRepository, branch))
+      MyRepoChanges(incomingOutgoingManager.hasIncomingFor(gitRepository, branch),
+                    incomingOutgoingManager.hasOutgoingFor(gitRepository, branch))
     } ?: MyRepoChanges(incoming = false, outgoing = false)
     e.presentation.putClientProperty(changesKey, changes)
   }
