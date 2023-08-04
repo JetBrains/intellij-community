@@ -53,6 +53,10 @@ public final class DefUseUtil {
     public boolean isRead() {
       return myIsRead;
     }
+
+    /**
+     * @return true if this variable was written at least once (except declaration).
+     */
     public boolean isWriteOutsideDeclaration() {
       return myWriteOutsideDeclaration;
     }
