@@ -82,7 +82,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
      * A global out-of-block modification event will be published by `FirIdeOutOfBlockPsiTreeChangePreprocessor` when a Kotlin file is
      * moved, but we still need this listener to publish a module state modification event specifically.
      */
-    class SingleFileModuleModificationListener(private val project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
+    internal class SingleFileModuleModificationListener(private val project: Project) : AbstractSingleFileModuleBeforeFileEventListener(project) {
         override fun isRelevantEvent(event: VFileEvent, file: VirtualFile): Boolean = event is VFileMoveEvent || event is VFileDeleteEvent
 
         override fun processEvent(event: VFileEvent, module: KtModule) {
@@ -94,7 +94,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
         }
     }
 
-    class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
+    internal class LibraryUpdatesListener(private val project: Project) : BulkFileListener {
         val index = ProjectRootManager.getInstance(project).fileIndex
 
         private val moduleStateModificationService: KotlinModuleStateModificationService get() = getInstance(project)
@@ -118,7 +118,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
         }
     }
 
-    class JdkListener(private val project: Project) : ProjectJdkTable.Listener {
+    internal class JdkListener(private val project: Project) : ProjectJdkTable.Listener {
         override fun jdkRemoved(jdk: Sdk) {
             // Most modules will depend on an SDK, so its removal constitutes global module state modification. We cannot be more
             // fine-grained here because `KtSdkModules`s aren't supported by `IdeKotlinModuleDependentsProvider`, so invalidation based on
@@ -127,7 +127,7 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
         }
     }
 
-    class NonWorkspaceModuleRootListener(private val project: Project) : ModuleRootListener {
+    internal class NonWorkspaceModuleRootListener(private val project: Project) : ModuleRootListener {
         override fun beforeRootsChange(event: ModuleRootEvent) {
             if (event.isCausedByWorkspaceModelChangesOnly) return
 
