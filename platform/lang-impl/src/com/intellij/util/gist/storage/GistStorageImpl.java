@@ -55,7 +55,7 @@ public class GistStorageImpl extends GistStorage {
   /**
    * If  > 0: only store in VFS attributes gists <= this size. Store larger gists in dedicated files.
    * If == 0: store all gists in VFS attributes.
-   * Value should be < {@link com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
+   * Value should be < {@link AbstractAttributesStorage#MAX_ATTRIBUTE_VALUE_SIZE}
    */
   @VisibleForTesting
   public static final int MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES = getIntProperty("idea.gist.max-size-to-store-in-attributes", 50 * KiB);

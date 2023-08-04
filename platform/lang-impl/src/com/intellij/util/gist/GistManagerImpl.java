@@ -15,8 +15,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.NullableFunction;
-import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.io.DataExternalizer;
@@ -29,12 +27,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
-
-  private static final boolean USE_NEW_GIST_STORAGE_IMPLEMENTATION = SystemProperties.getBooleanProperty("idea.gist.use-new-impl", true);
 
   private static final int INTERNAL_VERSION = 2;
 
@@ -71,18 +65,7 @@ public final class GistManagerImpl extends GistManager {
   }
 
   public GistManagerImpl() {
-    if (USE_NEW_GIST_STORAGE_IMPLEMENTATION) {
-      gistStorage = GistStorage.getInstance();
-    }
-    else {
-      gistStorage = null;
-      //Setup cleanup task for old Gists:
-      // remove <caches>/huge-gists/<fsrecords-timestamp> dirs there <fsrecords-timestamp> != FSRecords.getCreatedTimestamp()
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(
-        (Runnable)VirtualFileGistImpl::cleanupAncientGistsDirs,
-        1, MINUTES
-      );
-    }
+    gistStorage = GistStorage.getInstance();
   }
 
   @NotNull
@@ -96,14 +79,10 @@ public final class GistManagerImpl extends GistManager {
     }
 
     //noinspection unchecked
-    return (VirtualFileGist<Data>)ourGists.computeIfAbsent(id, __ -> {
-      if (USE_NEW_GIST_STORAGE_IMPLEMENTATION) {
-        return new VirtualFileGistOverGistStorage<>(gistStorage.newGist(id, version, externalizer), calcData);
-      }
-      else {
-        return new VirtualFileGistImpl<>(id, version, externalizer, calcData);
-      }
-    });
+    return (VirtualFileGist<Data>)ourGists.computeIfAbsent(
+      id,
+      __ -> new VirtualFileGistOverGistStorage<>(gistStorage.newGist(id, version, externalizer), calcData)
+    );
   }
 
   @NotNull
@@ -176,9 +155,9 @@ public final class GistManagerImpl extends GistManager {
     //mix the bits in all 4 components so that there is little chance change in one counter
     //  'compensate' change in another, and the resulting stamp happens to be the same:
     return mixBits(
-        mixBits(Long.hashCode(fileModificationCount), reindexCount),
-        mixBits(invalidationCount != null ? invalidationCount.get() : 0, INTERNAL_VERSION)
-      );
+      mixBits(Long.hashCode(fileModificationCount), reindexCount),
+      mixBits(invalidationCount != null ? invalidationCount.get() : 0, INTERNAL_VERSION)
+    );
   }
 
 

@@ -28,10 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
-import static com.intellij.util.gist.VirtualFileGistImpl.MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES;
+import static com.intellij.util.gist.storage.GistStorageImpl.MAX_GIST_SIZE_TO_STORE_IN_ATTRIBUTES;
 
 public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
 
@@ -86,17 +84,9 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
     IntRef invocationCounter = new IntRef();
     VirtualFileGist<String> gistOfFileContent = gistOfFileContent(invocationCounter);
 
-    //File checking is implementation-specific detail => skip the test if different impl is used:
-    //TODO RC: better to find a way to check it for other implementations also
-    boolean checkFilePresense = gistOfFileContent instanceof VirtualFileGistImpl;
-
     String hugeFileContent = "a".repeat(hugeGistSize);
     String notHugeFileContent = "b".repeat(notHugeGistSize);
     VirtualFile file = fileWithContent("a.txt", hugeFileContent);
-
-    Path dedicatedGistFile = checkFilePresense ?
-                             ((VirtualFileGistImpl<String>)gistOfFileContent).dedicatedGistFilePath(file) :
-                             null;
 
     final int enoughTries = 8;
     for (int i = 0; i < enoughTries; i++) {
@@ -118,13 +108,6 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
           invocationsBefore,
           invocationCounter.get()
         );
-
-        if (checkFilePresense) {
-          assertTrue(
-            "Dedicated gist file [" + dedicatedGistFile + "] must exists since Gist now is huge",
-            Files.exists(dedicatedGistFile)
-          );
-        }
       }
 
       {//Now change file content to 'not huge':
@@ -145,13 +128,6 @@ public class VirtualFileGistTest extends LightJavaCodeInsightFixtureTestCase {
           invocationsBefore,
           invocationCounter.get()
         );
-
-        if (checkFilePresense) {
-          assertFalse(
-            "Dedicated gist file [" + dedicatedGistFile + "] must be deleted since Gist now is not huge",
-            Files.exists(dedicatedGistFile)
-          );
-        }
       }
     }
   }
