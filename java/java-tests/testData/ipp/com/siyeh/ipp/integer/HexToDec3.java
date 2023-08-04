@@ -1,3 +1,3 @@
 class C {
-  float f = <caret>0xab_cd.P2_2f;
+  float f = <caret>0xab_c5.P2_2f;
 }
