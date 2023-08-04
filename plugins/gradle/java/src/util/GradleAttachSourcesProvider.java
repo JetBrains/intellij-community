@@ -148,7 +148,9 @@ final class GradleAttachSourcesProvider implements AttachSourcesProvider {
         UserDataHolderBase userData = new UserDataHolderBase();
         userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
 
-        String gradleVmOptions = GradleSettings.getInstance(project).getGradleVmOptions();
+        String projectGradleVmOptions = Objects.requireNonNullElse(GradleSettings.getInstance(project).getGradleVmOptions(), "");
+        String gradleVmOptions =
+          projectGradleVmOptions + " -Dorg.gradle.configuration-cache=false -Dorg.gradle.unsafe.configuration-cache=false";
         ExternalSystemTaskExecutionSettings settings = new ExternalSystemTaskExecutionSettings();
         settings.setExecutionName(getName());
         settings.setExternalProjectPath(gradleModuleData.getDirectoryToRunTask());
