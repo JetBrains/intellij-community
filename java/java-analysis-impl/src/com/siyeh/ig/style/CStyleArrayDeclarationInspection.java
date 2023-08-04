@@ -75,8 +75,11 @@ public class CStyleArrayDeclarationInspection extends BaseInspection implements 
     public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
       if (ignoreVariables || variable instanceof PsiRecordComponent) {
-        // C-style array declaration in records was accepted by Java 15 (Preview) javac
-        // This was fixed in Java 16 (https://bugs.openjdk.org/browse/JDK-8250629)
+        // C-style array declaration in records are not accepted -- see https://bugs.openjdk.org/browse/JDK-8250629
+        return;
+      }
+      if (variable.isUnnamed()) {
+        // C-style array declaration in unnamed variables are not accepted
         return;
       }
       if (variable instanceof PsiParameter parameter && parameter.isVarArgs()) {
