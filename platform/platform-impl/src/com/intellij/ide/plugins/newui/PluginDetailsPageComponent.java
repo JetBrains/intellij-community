@@ -1596,17 +1596,17 @@ public final class PluginDetailsPageComponent extends MultiPanel {
   @Nullable
   @NlsSafe
   private String getChangeNotes() {
+    if (myUpdateDescriptor != null) {
+      String notes = myUpdateDescriptor.getChangeNotes();
+      if (!Strings.isEmptyOrSpaces(notes)) {
+        return notes;
+      }
+    }
     PluginNode node = getInstalledPluginMarketplaceNode();
     if (node != null) {
       String changeNotes = node.getChangeNotes();
       if (!Strings.isEmptyOrSpaces(changeNotes)) {
         return changeNotes;
-      }
-    }
-    if (myUpdateDescriptor != null) {
-      String notes = myUpdateDescriptor.getChangeNotes();
-      if (!Strings.isEmptyOrSpaces(notes)) {
-        return notes;
       }
     }
     String notes = myPlugin.getChangeNotes();
