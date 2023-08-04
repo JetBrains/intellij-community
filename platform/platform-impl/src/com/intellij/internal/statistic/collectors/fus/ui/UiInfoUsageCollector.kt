@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.internal.statistic.collectors.fus.ui
@@ -20,6 +20,8 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.jdkEx.JdkEx
 import com.intellij.openapi.actionSystem.ex.QuickListsManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.ui.JreHiDpiUtil
 import com.intellij.ui.scale.JBUIScale
@@ -33,7 +35,7 @@ import java.awt.GraphicsEnvironment
 /**
  * @author Konstantin Bulenkov
  */
-internal class UiInfoUsageCollector : ApplicationUsagesCollector() {
+private class UiInfoUsageCollector : ApplicationUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   override suspend fun getMetricsAsync(): Set<MetricEvent> = getDescriptors()
@@ -148,7 +150,7 @@ private suspend fun addScreenScale(set: MutableSet<MetricEvent>) {
   val userScale = roundScaleValue(JBUIScale.scale(1.0f))
   var isScaleMode: Boolean? = null
   if (!GraphicsEnvironment.isHeadless()) {
-    withContext(Dispatchers.EDT) {
+    withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
       val dm = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice.displayMode
       isScaleMode = dm != null && !JdkEx.getDisplayModeEx().isDefault(dm)
     }
