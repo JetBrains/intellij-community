@@ -17,6 +17,7 @@ import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Immutable
 data class IntUiRadioButtonStyle(
@@ -60,7 +61,7 @@ data class IntUiRadioButtonColors(
 
         @Composable
         fun light(
-            content: Color = IntUiLightTheme.colors.grey(1),
+            content: Color = IntUiTheme.defaultLightTextStyle.color,
             contentHovered: Color = IntUiLightTheme.colors.grey(8),
             contentDisabled: Color = content,
             contentSelected: Color = content,
@@ -79,7 +80,7 @@ data class IntUiRadioButtonColors(
 
         @Composable
         fun dark(
-            content: Color = IntUiDarkTheme.colors.grey(1),
+            content: Color = IntUiTheme.defaultDarkTextStyle.color,
             contentHovered: Color = IntUiDarkTheme.colors.grey(8),
             contentDisabled: Color = content,
             contentSelected: Color = content,

@@ -11,7 +11,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import org.jetbrains.jewel.DropdownState
-import org.jetbrains.jewel.IntelliJTheme
 import org.jetbrains.jewel.SvgLoader
 import org.jetbrains.jewel.styling.DropdownColors
 import org.jetbrains.jewel.styling.DropdownIcons
@@ -22,6 +21,7 @@ import org.jetbrains.jewel.styling.ResourcePainterProvider
 import org.jetbrains.jewel.styling.StatefulPainterProvider
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiDarkTheme
 import org.jetbrains.jewel.themes.intui.core.theme.IntUiLightTheme
+import org.jetbrains.jewel.themes.intui.standalone.IntUiTheme
 
 @Stable
 data class IntUiDropdownStyle(
@@ -40,7 +40,7 @@ data class IntUiDropdownStyle(
             colors: IntUiDropdownColors = IntUiDropdownColors.light(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
             icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
-            textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
             menuStyle: MenuStyle = IntUiMenuStyle.light(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
 
@@ -50,7 +50,7 @@ data class IntUiDropdownStyle(
             colors: IntUiDropdownColors = IntUiDropdownColors.dark(),
             metrics: IntUiDropdownMetrics = IntUiDropdownMetrics(),
             icons: IntUiDropdownIcons = intUiDropdownIcons(svgLoader),
-            textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
+            textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
             menuStyle: MenuStyle = IntUiMenuStyle.dark(),
         ) = IntUiDropdownStyle(colors, metrics, icons, textStyle, menuStyle)
     }

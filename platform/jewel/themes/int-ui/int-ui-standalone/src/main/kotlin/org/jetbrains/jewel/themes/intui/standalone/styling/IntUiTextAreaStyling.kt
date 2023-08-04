@@ -34,16 +34,16 @@ data class IntUiTextAreaStyle(
         fun light(
             colors: IntUiTextAreaColors = IntUiTextAreaColors.light(),
             metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            hintTextStyle: TextStyle = IntUiTheme.defaultTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
+            textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
+            hintTextStyle: TextStyle = IntUiTheme.defaultLightTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
         ) = IntUiTextAreaStyle(colors, metrics, textStyle, hintTextStyle)
 
         @Composable
         fun dark(
             colors: IntUiTextAreaColors = IntUiTextAreaColors.dark(),
             metrics: IntUiTextAreaMetrics = IntUiTextAreaMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            hintTextStyle: TextStyle = IntUiTheme.defaultTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
+            textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            hintTextStyle: TextStyle = IntUiTheme.defaultDarkTextStyle.copy(fontSize = 12.sp, lineHeight = 16.sp),
         ) = IntUiTextAreaStyle(colors, metrics, textStyle, hintTextStyle)
     }
 }

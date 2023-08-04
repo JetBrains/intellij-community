@@ -115,7 +115,7 @@ data class IntUiLazyTreeColors(
 
 @Stable
 data class IntUiLazyTreeMetrics(
-    override val indentSize: Dp = 8.dp,
+    override val indentSize: Dp = 8.dp + 16.dp,
     override val elementBackgroundCornerSize: CornerSize = CornerSize(4.dp),
     override val elementPadding: PaddingValues = PaddingValues(horizontal = 12.dp),
     override val elementContentPadding: PaddingValues = PaddingValues(4.dp),

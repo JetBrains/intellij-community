@@ -35,16 +35,16 @@ data class IntUiLabelledTextFieldStyle(
         fun light(
             colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.light(),
             metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            textStyles: IntUiLabelledTextFieldTextStyles = intUiLabelledTextFieldTextStyles(),
+            textStyle: TextStyle = IntUiTheme.defaultLightTextStyle,
+            textStyles: IntUiLabelledTextFieldTextStyles = IntUiLabelledTextFieldTextStyles.light(),
         ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
 
         @Composable
         fun dark(
             colors: IntUiLabelledTextFieldColors = IntUiLabelledTextFieldColors.dark(),
             metrics: IntUiLabelledTextFieldMetrics = IntUiLabelledTextFieldMetrics(),
-            textStyle: TextStyle = IntUiTheme.defaultTextStyle,
-            textStyles: IntUiLabelledTextFieldTextStyles = intUiLabelledTextFieldTextStyles(),
+            textStyle: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            textStyles: IntUiLabelledTextFieldTextStyles = IntUiLabelledTextFieldTextStyles.dark(),
         ) = IntUiLabelledTextFieldStyle(colors, metrics, textStyle, textStyles)
     }
 }
@@ -236,13 +236,26 @@ data class IntUiLabelledTextFieldMetrics(
 data class IntUiLabelledTextFieldTextStyles(
     override val label: TextStyle,
     override val hint: TextStyle,
-) : LabelledTextFieldTextStyles
+) : LabelledTextFieldTextStyles {
 
-@Composable
-fun intUiLabelledTextFieldTextStyles(
-    label: TextStyle = IntUiTheme.defaultTextStyle,
-    hint: TextStyle = IntUiTheme.defaultTextStyle.copy(
-        fontSize = 12.sp,
-        lineHeight = 16.sp
-    ),
-) = IntUiLabelledTextFieldTextStyles(label, hint)
+    companion object {
+
+        @Composable
+        fun light(
+            label: TextStyle = IntUiTheme.defaultLightTextStyle,
+            hint: TextStyle = IntUiTheme.defaultLightTextStyle.copy(
+                fontSize = 12.sp,
+                lineHeight = 16.sp
+            ),
+        ) = IntUiLabelledTextFieldTextStyles(label, hint)
+
+        @Composable
+        fun dark(
+            label: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            hint: TextStyle = IntUiTheme.defaultDarkTextStyle.copy(
+                fontSize = 12.sp,
+                lineHeight = 16.sp
+            ),
+        ) = IntUiLabelledTextFieldTextStyles(label, hint)
+    }
+}

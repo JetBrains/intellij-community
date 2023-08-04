@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.state.ToggleableState
@@ -52,25 +53,27 @@ fun Checkbox(
     enabled: Boolean = true,
     outline: Outline = Outline.None,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-    colors: CheckboxColors = LocalCheckboxStyle.current.colors,
-    metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
-    icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
-) = CheckboxImpl(
-    state = ToggleableState(checked),
-    onClick = {
-        onCheckedChange.invoke(!checked)
-    },
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-    textStyle = IntelliJTheme.defaultTextStyle,
-    resourceLoader = resourceLoader,
-    content = null
-)
+    colors: CheckboxColors = IntelliJTheme.checkboxStyle.colors,
+    metrics: CheckboxMetrics = IntelliJTheme.checkboxStyle.metrics,
+    icons: CheckboxIcons = IntelliJTheme.checkboxStyle.icons,
+    textStyle: TextStyle = LocalTextStyle.current,
+) {
+    val state by remember { mutableStateOf(ToggleableState(checked)) }
+    CheckboxImpl(
+        state = state,
+        onClick = { onCheckedChange.invoke(!checked) },
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        colors = colors,
+        metrics = metrics,
+        icons = icons,
+        textStyle = textStyle,
+        resourceLoader = resourceLoader,
+        content = null
+    )
+}
 
 @Composable
 fun TriStateCheckbox(
@@ -84,6 +87,7 @@ fun TriStateCheckbox(
     colors: CheckboxColors = LocalCheckboxStyle.current.colors,
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
+    textStyle: TextStyle = LocalTextStyle.current,
 ) = CheckboxImpl(
     state = state,
     onClick = onClick,
@@ -94,7 +98,7 @@ fun TriStateCheckbox(
     colors = colors,
     metrics = metrics,
     icons = icons,
-    textStyle = IntelliJTheme.defaultTextStyle,
+    textStyle = textStyle,
     resourceLoader = resourceLoader,
     content = null
 )
@@ -143,22 +147,24 @@ fun CheckboxRow(
     metrics: CheckboxMetrics = LocalCheckboxStyle.current.metrics,
     icons: CheckboxIcons = LocalCheckboxStyle.current.icons,
     textStyle: TextStyle = LocalTextStyle.current,
-) = CheckboxImpl(
-    state = ToggleableState(checked),
-    onClick = {
-        onCheckedChange?.invoke(!checked)
-    },
-    modifier = modifier,
-    enabled = enabled,
-    outline = outline,
-    interactionSource = interactionSource,
-    colors = colors,
-    metrics = metrics,
-    icons = icons,
-    resourceLoader = resourceLoader,
-    textStyle = textStyle
 ) {
-    Text(text)
+    val state by remember(checked) { mutableStateOf(ToggleableState(checked)) }
+
+    CheckboxImpl(
+        state = state,
+        onClick = { onCheckedChange?.invoke(!checked) },
+        modifier = modifier,
+        enabled = enabled,
+        outline = outline,
+        interactionSource = interactionSource,
+        colors = colors,
+        metrics = metrics,
+        icons = icons,
+        resourceLoader = resourceLoader,
+        textStyle = textStyle
+    ) {
+        Text(text)
+    }
 }
 
 @Composable
@@ -243,6 +249,7 @@ private fun CheckboxImpl(
     remember(state, enabled) {
         checkboxState = checkboxState.copy(toggleableState = state, enabled = enabled)
     }
+
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { interaction ->
             when (interaction) {
@@ -289,9 +296,10 @@ private fun CheckboxImpl(
         ) {
             CheckBoxImage(Modifier, checkboxPainter, checkBoxImageModifier)
 
+            val contentColor by colors.contentFor(checkboxState)
             CompositionLocalProvider(
-                LocalTextStyle provides textStyle,
-                LocalContentColor provides colors.contentFor(checkboxState).value
+                LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
+                LocalContentColor provides contentColor.takeOrElse { textStyle.color }
             ) {
                 content()
             }

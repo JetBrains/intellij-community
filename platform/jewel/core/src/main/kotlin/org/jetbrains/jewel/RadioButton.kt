@@ -25,6 +25,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.res.ResourceLoader
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.TextStyle
@@ -171,9 +172,10 @@ private fun RadioButtonImpl(
         ) {
             RadioButtonImage(Modifier, radioButtonPainter, radioButtonModifier)
 
+            val contentColor by colors.contentFor(radioButtonState)
             CompositionLocalProvider(
-                LocalTextStyle provides textStyle,
-                LocalContentColor provides colors.contentFor(radioButtonState).value
+                LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color }),
+                LocalContentColor provides contentColor.takeOrElse { textStyle.color }
             ) {
                 content()
             }

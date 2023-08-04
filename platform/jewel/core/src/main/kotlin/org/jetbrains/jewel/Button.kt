@@ -24,7 +24,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.TextStyle
 import org.jetbrains.jewel.CommonStateBitMask.Active
 import org.jetbrains.jewel.CommonStateBitMask.Enabled
 import org.jetbrains.jewel.CommonStateBitMask.Error
@@ -43,6 +45,7 @@ fun DefaultButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = IntelliJTheme.defaultButtonStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
@@ -51,7 +54,8 @@ fun DefaultButton(
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
-        content = content
+        content = content,
+        textStyle = textStyle,
     )
 }
 
@@ -62,6 +66,7 @@ fun OutlinedButton(
     enabled: Boolean = true,
     interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
     style: ButtonStyle = IntelliJTheme.outlinedButtonStyle,
+    textStyle: TextStyle = IntelliJTheme.defaultTextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     ButtonImpl(
@@ -70,7 +75,8 @@ fun OutlinedButton(
         enabled = enabled,
         interactionSource = interactionSource,
         style = style,
-        content = content
+        content = content,
+        textStyle = textStyle,
     )
 }
 
@@ -81,6 +87,7 @@ private fun ButtonImpl(
     enabled: Boolean,
     interactionSource: MutableInteractionSource,
     style: ButtonStyle,
+    textStyle: TextStyle,
     content: @Composable RowScope.() -> Unit,
 ) {
     var buttonState by remember(interactionSource) {
@@ -123,8 +130,10 @@ private fun ButtonImpl(
             .focusOutline(buttonState, shape),
         propagateMinConstraints = true
     ) {
+        val contentColor by colors.contentFor(buttonState)
         CompositionLocalProvider(
-            LocalContentColor provides colors.contentFor(buttonState).value
+            LocalContentColor provides contentColor.takeOrElse { textStyle.color },
+            LocalTextStyle provides textStyle.copy(color = contentColor.takeOrElse { textStyle.color })
         ) {
             Row(
                 Modifier

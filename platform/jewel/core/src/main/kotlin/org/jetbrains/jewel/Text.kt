@@ -4,7 +4,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.takeOrElse
@@ -103,12 +103,13 @@ fun Text(
     BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, minLines = 1, inlineContent)
 }
 
-// TODO these should blow up if not defined by the theme
-val LocalTextStyle = compositionLocalOf { TextStyle.Default }
+val LocalTextStyle = staticCompositionLocalOf<TextStyle> {
+    error("No TextStyle provided")
+}
 
-val LocalContentColor = compositionLocalOf { Color.Black }
-
-val LocalTextAlpha = compositionLocalOf { 1f }
+val LocalContentColor = staticCompositionLocalOf<Color> {
+    error("No ContentColor provided")
+}
 
 @Composable
 fun ProvideTextStyle(value: TextStyle, content: @Composable () -> Unit) {

@@ -67,13 +67,16 @@ object IntUiTheme : BaseIntUiTheme {
         fontStyle = FontStyle.Normal
     )
 
+    internal val defaultLightTextStyle = intUiDefaultTextStyle.copy(color = IntUiLightTheme.colors.grey(1))
+    internal val defaultDarkTextStyle = intUiDefaultTextStyle.copy(color = IntUiDarkTheme.colors.grey(12))
+
     @Composable
     fun light(
         colors: ThemeColors = IntUiThemeColors.light(),
         metrics: ThemeMetrics = IntUiThemeMetrics(),
         palette: IntelliJThemeColorPalette = IntUiLightTheme.colors,
         icons: IntelliJThemeIcons = IntUiLightTheme.icons,
-        defaultTextStyle: TextStyle = intUiDefaultTextStyle,
+        defaultTextStyle: TextStyle = defaultLightTextStyle,
     ) = IntUiThemeDefinition(isDark = false, colors, palette, icons, metrics, defaultTextStyle)
 
     @Composable
@@ -82,7 +85,7 @@ object IntUiTheme : BaseIntUiTheme {
         metrics: ThemeMetrics = IntUiThemeMetrics(),
         palette: IntelliJThemeColorPalette = IntUiDarkTheme.colors,
         icons: IntelliJThemeIcons = IntUiDarkTheme.icons,
-        defaultTextStyle: TextStyle = intUiDefaultTextStyle,
+        defaultTextStyle: TextStyle = defaultDarkTextStyle,
     ) = IntUiThemeDefinition(isDark = true, colors, palette, icons, metrics, defaultTextStyle)
 
     val colors: ThemeColors
@@ -189,6 +192,7 @@ object IntUiTheme : BaseIntUiTheme {
         @Composable
         @ReadOnlyComposable
         get() = IntelliJTheme.defaultTabStyle
+
     val editorTabStyle: TabStyle
         @Composable
         @ReadOnlyComposable
@@ -203,6 +207,7 @@ fun IntUiTheme(theme: IntUiThemeDefinition, swingCompatMode: Boolean = false, co
         val svgPatcher = IntelliJSvgPatcher(paletteMapper)
         mutableStateOf(IntelliJSvgLoader(svgPatcher))
     }
+
     val componentStyling = defaultComponentStyling(theme.isDark, svgLoader)
     IntUiTheme(theme, componentStyling, swingCompatMode, content)
 }

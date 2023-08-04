@@ -77,15 +77,13 @@ interface TabColors {
     @Composable
     fun backgroundFor(state: TabState) = rememberUpdatedState(
         when {
+            !state.isEnabled -> backgroundDisabled
+            state.isPressed -> backgroundPressed
+            state.isHovered -> backgroundHovered
+            state.isFocused -> backgroundFocused
+            state.isActive -> background
             state.isSelected -> backgroundSelected
-            else -> state.chooseValueIgnoreCompat(
-                normal = background,
-                disabled = backgroundDisabled,
-                focused = backgroundFocused,
-                pressed = backgroundPressed,
-                hovered = backgroundHovered,
-                active = background
-            )
+            else -> background
         }
     )
 

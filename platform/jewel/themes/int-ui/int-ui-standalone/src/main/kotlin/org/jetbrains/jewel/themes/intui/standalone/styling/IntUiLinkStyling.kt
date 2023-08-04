@@ -38,7 +38,7 @@ data class IntUiLinkStyle(
             colors: IntUiLinkColors = IntUiLinkColors.light(),
             metrics: IntUiLinkMetrics = IntUiLinkMetrics(),
             icons: IntUiLinkIcons = intUiLinkIcons(svgLoader),
-            textStyles: IntUiLinkTextStyles = intUiLinkTextStyles(),
+            textStyles: IntUiLinkTextStyles = IntUiLinkTextStyles.light(),
         ) = IntUiLinkStyle(colors, metrics, icons, textStyles)
 
         @Composable
@@ -47,7 +47,7 @@ data class IntUiLinkStyle(
             colors: IntUiLinkColors = IntUiLinkColors.dark(),
             metrics: IntUiLinkMetrics = IntUiLinkMetrics(),
             icons: IntUiLinkIcons = intUiLinkIcons(svgLoader),
-            textStyles: IntUiLinkTextStyles = intUiLinkTextStyles(),
+            textStyles: IntUiLinkTextStyles = IntUiLinkTextStyles.dark(),
         ) = IntUiLinkStyle(colors, metrics, icons, textStyles)
     }
 }
@@ -156,14 +156,28 @@ data class IntUiLinkTextStyles(
     override val pressed: TextStyle,
     override val hovered: TextStyle,
     override val visited: TextStyle,
-) : LinkTextStyles
+) : LinkTextStyles {
 
-@Composable
-fun intUiLinkTextStyles(
-    normal: TextStyle = IntUiTheme.defaultTextStyle.copy(textDecoration = TextDecoration.Underline),
-    disabled: TextStyle = IntUiTheme.defaultTextStyle,
-    focused: TextStyle = normal,
-    pressed: TextStyle = normal,
-    hovered: TextStyle = normal,
-    visited: TextStyle = normal,
-): IntUiLinkTextStyles = IntUiLinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
+    companion object {
+
+        @Composable
+        fun light(
+            normal: TextStyle = IntUiTheme.defaultLightTextStyle.copy(textDecoration = TextDecoration.Underline),
+            disabled: TextStyle = IntUiTheme.defaultLightTextStyle,
+            focused: TextStyle = normal,
+            pressed: TextStyle = normal,
+            hovered: TextStyle = normal,
+            visited: TextStyle = normal,
+        ): IntUiLinkTextStyles = IntUiLinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
+
+        @Composable
+        fun dark(
+            normal: TextStyle = IntUiTheme.defaultDarkTextStyle.copy(textDecoration = TextDecoration.Underline),
+            disabled: TextStyle = IntUiTheme.defaultDarkTextStyle,
+            focused: TextStyle = normal,
+            pressed: TextStyle = normal,
+            hovered: TextStyle = normal,
+            visited: TextStyle = normal,
+        ): IntUiLinkTextStyles = IntUiLinkTextStyles(normal, disabled, focused, pressed, hovered, visited)
+    }
+}
