@@ -52,10 +52,10 @@ public final class FileLevelIntentionComponent extends EditorNotificationPanel {
       for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> intention : intentions) {
         HighlightInfo.IntentionActionDescriptor descriptor = intention.getFirst();
         IntentionAction action = descriptor.getAction();
-        ReadAction.nonBlocking(() -> ShowIntentionActionsHandler.availableFor(psiFile, editor, action))
+        ReadAction.nonBlocking(() -> action.isAvailable(project, editor, psiFile))
           .expireWith(project)
           .inSmartMode(project)
-          .finishOnUiThread(ModalityState.any(), isAvailable -> {
+          .finishOnUiThread(ModalityState.nonModal(), isAvailable -> {
             if (!isAvailable) return;
             info.intentionsToShow.add(descriptor);
             if (action instanceof EmptyIntentionAction) {
