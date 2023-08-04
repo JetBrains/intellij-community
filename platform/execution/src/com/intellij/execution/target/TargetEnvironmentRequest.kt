@@ -68,10 +68,17 @@ interface TargetEnvironmentRequest {
   val downloadVolumes: MutableSet<TargetEnvironment.DownloadRoot>
     get() = throw UnsupportedOperationException()
 
-  /** Values are local ports. */
+  /**
+   * Set of required ports on the target that will be made available on the local machine, such as through SSH local port forwarding, Docker
+   * port binding, or other target-specific means.
+   */
   val targetPortBindings: MutableSet<TargetEnvironment.TargetPortBinding>
     get() = throw UnsupportedOperationException()
 
+  /**
+   * Set of required ports on the local machine that will be made available on the target, such as through SSH remote port forwarding, or
+   * other target-specific means.
+   */
   val localPortBindings: MutableSet<TargetEnvironment.LocalPortBinding>
     get() = throw UnsupportedOperationException()
 

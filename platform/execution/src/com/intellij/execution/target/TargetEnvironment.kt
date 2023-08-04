@@ -162,8 +162,7 @@ abstract class TargetEnvironment(
   open val downloadVolumes: Map<DownloadRoot, DownloadableVolume>
     get() = throw UnsupportedOperationException()
 
-  /** Values are local ports. */
-  open val targetPortBindings: Map<TargetPortBinding, Int>
+  open val targetPortBindings: Map<TargetPortBinding, ResolvedPortBinding>
     get() = throw UnsupportedOperationException()
 
   open val localPortBindings: Map<LocalPortBinding, ResolvedPortBinding>

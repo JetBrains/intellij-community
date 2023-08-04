@@ -414,7 +414,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       request.targetPortBindings.add(binding)
       val result = DeferredLocalTargetValue(targetPort)
       doWhenEnvironmentPrepared { environment, _ ->
-        val localPort = environment.targetPortBindings[binding]
+        val localPort = environment.targetPortBindings[binding]?.localEndpoint?.port
         result.resolve(localPort)
       }
       return result
