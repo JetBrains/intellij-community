@@ -3,14 +3,13 @@ package com.intellij.workspaceModel.ide.legacyBridge.sdk
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedEntityStorage
 
-abstract class GlobalSdkTableBridge: ProjectJdkTable() {
+interface GlobalSdkTableBridge {
 
-  abstract fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
+  fun initializeSdkBridgesAfterLoading(mutableStorage: MutableEntityStorage,
                                                 initialEntityStorage: VersionedEntityStorage): () -> Unit
 
   companion object {

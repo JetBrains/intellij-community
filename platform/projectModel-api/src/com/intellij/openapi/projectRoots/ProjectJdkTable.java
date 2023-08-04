@@ -22,11 +22,7 @@ import java.util.List;
 @ApiStatus.NonExtendable
 public abstract class ProjectJdkTable {
   public static ProjectJdkTable getInstance() {
-    if (GlobalSdkTableBridge.Companion.isEnabled()) {
-      return GlobalSdkTableBridge.Companion.getInstance();
-    } else {
-      return ApplicationManager.getApplication().getService(ProjectJdkTable.class);
-    }
+    return ApplicationManager.getApplication().getService(ProjectJdkTable.class);
   }
 
   public abstract @Nullable Sdk findJdk(@NotNull String name);

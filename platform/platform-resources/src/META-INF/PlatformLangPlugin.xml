@@ -66,7 +66,10 @@
                         serviceImplementation="com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl"/>
 
     <applicationService serviceInterface="com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge"
-                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl"/>
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.GlobalSdkBridgesLoader"/>
+
+    <!--<workspaceModel.sdk.implementation.delegate implementation="com.intellij.openapi.projectRoots.impl.LegacyProjectJdkTableDelegate"/>-->
+    <!--<workspaceModel.sdk.implementation.delegate implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl"/>-->
 
     <postStartupActivity implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"/>
     <commandLineInspectionProjectConfigurator implementation="com.intellij.openapi.projectRoots.impl.UnknownSdkInspectionCommandLineConfigurator"/>

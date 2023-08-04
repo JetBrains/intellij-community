@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, SdkModificator, Disposable {
@@ -148,19 +149,16 @@ public class ProjectJdkImpl extends UserDataHolderBase implements ProjectJdk, Sd
   }
 
   public void readExternal(@NotNull Element element) {
-    readExternal(element, null);
+    readExternal(element, ProjectJdkTable.getInstance()::getSdkTypeByName);
   }
 
-  public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) throws InvalidDataException {
+  public void readExternal(@NotNull Element element, @NotNull Function<String, SdkTypeId> sdkTypeByNameFunction) throws InvalidDataException {
     Element elementName = assertNotMissing(element, ELEMENT_NAME);
     myName = elementName.getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null ? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
-      if (projectJdkTable == null) {
-        projectJdkTable = ProjectJdkTable.getInstance();
-      }
-      mySdkType = projectJdkTable.getSdkTypeByName(sdkTypeName);
+      mySdkType = sdkTypeByNameFunction.apply(sdkTypeName);
     }
     final Element version = element.getChild(ELEMENT_VERSION);
 
