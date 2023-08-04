@@ -70,10 +70,18 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
    * If true, all roots are load from {@link FSRecords} and cached on the first attempt to load the fileId
    * under yet-uncached root. This may take time and lead to a freeze, hence the flag to disable it.
    */
-  private static final boolean CACHE_MISSED_ROOTS_ALL_AT_ONCE = getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ALL_AT_ONCE", false);
+  private static final boolean CACHE_MISSED_ROOTS_ALL_AT_ONCE =
+    getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ALL_AT_ONCE", false);
   //TODO better use single property & enum as a value?
   /** If true, on the attempt to load fileId under yet-uncached root only this specific root is loaded (if exists) */
   private static final boolean CACHE_MISSED_ROOTS_ONE_BY_ONE = getBooleanProperty("PersistentFSImpl.CACHE_MISSED_ROOTS_ONE_BY_ONE", true);
+
+  /**
+   * Eager VFS saving causes a lot of issues with dispose ordering. So far disable it by default -- until we'll
+   * be able to sort that out.
+   */
+  private static final boolean SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN =
+    getBooleanProperty("PersistentFSImpl.SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN", false);
 
   private final AtomicBoolean missedRootsLoaded = new AtomicBoolean(false);
 
@@ -99,7 +107,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               : ConcurrentCollectionFactory.createConcurrentMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(),
                                                                 HashingStrategy.caseInsensitive());
 
-    if (!app.isUnitTestMode()) {
+    if (SAVE_VFS_EAGERLY_ON_UNEXPECTED_SHUTDOWN && !app.isUnitTestMode()) {
       //PersistentFSImpl is an application service, and generally disposed as such, via .dispose(), but to
       // be on the safe side -- we added a shutdown task also.
       //
@@ -830,7 +838,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     }
   }
 
-  /** Method is obsolete, migrate to {@link #contentHashIfStored(VirtualFile)} instance method*/
+  /** Method is obsolete, migrate to {@link #contentHashIfStored(VirtualFile)} instance method */
   @TestOnly
   @ApiStatus.Obsolete
   public static byte @Nullable [] getContentHashIfStored(@NotNull VirtualFile file) {
@@ -866,8 +874,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         List<VFileEvent> events = List.of(event);
         fireBeforeEvents(getPublisher(), events);
         final VFileEventTracker eventTracker;
-        if (getVfsLogEx() == null) eventTracker = null;
-        else eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
+        if (getVfsLogEx() == null) {
+          eventTracker = null;
+        }
+        else {
+          eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
+        }
         NewVirtualFileSystem fs = getFileSystem(file);
         // `FSRecords.ContentOutputStream` already buffered, no need to wrap in `BufferedStream`
         try (OutputStream persistenceStream = writeContent(file, /*contentOfFixedSize: */ fs.isReadOnly())) {
@@ -885,7 +897,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
               long newTimestamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
               long newLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
               executeTouch(file, false, event.getModificationStamp(), newLength, newTimestamp);
-            } finally {
+            }
+            finally {
               if (eventTracker != null) eventTracker.completeEventTracking();
             }
             fireAfterEvents(getPublisher(), events);
@@ -1871,8 +1884,12 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       LOG.debug("Applying " + event);
     }
     final VFileEventTracker eventTracker;
-    if (getVfsLogEx() == null) eventTracker = null;
-    else eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
+    if (getVfsLogEx() == null) {
+      eventTracker = null;
+    }
+    else {
+      eventTracker = getVfsLogEx().getApplicationVFileEventsTracker().trackEvent(event);
+    }
     try {
       if (event instanceof VFileCreateEvent) {
         VFileCreateEvent ce = (VFileCreateEvent)event;
@@ -1998,7 +2015,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   /** @deprecated use instance {@link PersistentFSImpl#moveChildren(int, int)} instead */
   @Deprecated(forRemoval = true)
-  public static void moveChildrenRecords(int fromParentId, int toParentId){
+  public static void moveChildrenRecords(int fromParentId, int toParentId) {
     ((PersistentFSImpl)getInstance()).moveChildren(fromParentId, toParentId);
   }
 
