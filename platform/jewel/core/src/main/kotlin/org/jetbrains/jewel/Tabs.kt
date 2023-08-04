@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
@@ -79,16 +80,18 @@ internal fun TabImpl(
         LocalIndication provides NoIndication,
         LocalContentColor provides tabStyle.colors.contentFor(tabState).value
     ) {
-        val contentAlpha by tabStyle.contentAlpha.alphaFor(tabState)
+        val labelAlpha by tabStyle.contentAlpha.labelFor(tabState)
+        val iconAlpha by tabStyle.contentAlpha.iconFor(tabState)
 
         Row(
             modifier
                 .height(tabStyle.metrics.tabHeight)
                 .background(backgroundColor)
-                .clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
+                .selectable(
                     onClick = tabData.onClick,
+                    selected = tabData.selected,
+                    interactionSource = interactionSource,
+                    indication = NoIndication,
                     role = Role.Tab
                 )
                 .drawBehind {
@@ -96,6 +99,7 @@ internal fun TabImpl(
                     val startY = size.height - (strokeThickness / 2f)
                     val endX = size.width
                     val capDxFix = strokeThickness / 2f
+
                     drawLine(
                         brush = SolidColor(lineColor),
                         start = Offset(0 + capDxFix, startY),
@@ -110,10 +114,11 @@ internal fun TabImpl(
         ) {
             tabData.tabIconResource?.let { icon ->
                 val iconPainter = painterResource(icon, LocalResourceLoader.current)
-                Image(modifier = Modifier.alpha(contentAlpha), painter = iconPainter, contentDescription = null)
+                Image(modifier = Modifier.alpha(iconAlpha), painter = iconPainter, contentDescription = null)
             }
+
             Text(
-                modifier = Modifier.alpha(contentAlpha),
+                modifier = Modifier.alpha(labelAlpha),
                 text = tabData.label,
                 color = tabStyle.colors.contentFor(tabState).value
             )
@@ -143,7 +148,7 @@ internal fun TabImpl(
                         indication = null,
                         onClick = tabData.onClose,
                         role = Role.Button
-                    ).size(16.dp).alpha(contentAlpha),
+                    ).size(16.dp),
                     painter = closePainter,
                     contentDescription = "Close tab ${tabData.label}"
                 )

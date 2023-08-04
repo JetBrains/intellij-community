@@ -1,6 +1,7 @@
 package org.jetbrains.jewel.styling
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.ContentAlpha.disabled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -107,24 +108,47 @@ interface TabColors {
 
 @Immutable
 interface TabContentAlpha {
-    val normal: Float
-    val disabled: Float
-    val focused: Float
-    val pressed: Float
-    val hovered: Float
-    val selected: Float
+
+    val iconNormal: Float
+    val iconDisabled: Float
+    val iconFocused: Float
+    val iconPressed: Float
+    val iconHovered: Float
+    val iconSelected: Float
 
     @Composable
-    fun alphaFor(state: TabState) = rememberUpdatedState(
+    fun iconFor(state: TabState) = rememberUpdatedState(
         when {
-            state.isSelected -> selected
+            state.isSelected -> iconSelected
             else -> state.chooseValue(
-                normal = normal,
-                disabled = disabled,
-                focused = focused,
-                pressed = pressed,
-                hovered = hovered,
-                active = normal
+                normal = iconNormal,
+                disabled = iconDisabled,
+                focused = iconFocused,
+                pressed = iconPressed,
+                hovered = iconHovered,
+                active = iconNormal
+            )
+        }
+    )
+
+    val labelNormal: Float
+    val labelDisabled: Float
+    val labelFocused: Float
+    val labelPressed: Float
+    val labelHovered: Float
+    val labelSelected: Float
+
+    @Composable
+    fun labelFor(state: TabState) = rememberUpdatedState(
+        when {
+            state.isSelected -> labelSelected
+            else -> state.chooseValue(
+                normal = labelNormal,
+                disabled = labelDisabled,
+                focused = labelFocused,
+                pressed = labelPressed,
+                hovered = labelHovered,
+                active = labelNormal
             )
         }
     )

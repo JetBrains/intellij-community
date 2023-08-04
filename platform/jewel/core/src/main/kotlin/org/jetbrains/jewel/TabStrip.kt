@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -58,6 +59,7 @@ fun TabStrip(
                     state = scrollState,
                     interactionSource = remember { MutableInteractionSource() }
                 )
+                .selectableGroup()
         ) {
             tabsData.forEach {
                 TabImpl(isActive = tabStripState.isActive, tabData = it)

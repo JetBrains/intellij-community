@@ -125,7 +125,7 @@ data class IntUiTabColors(
             background: Color = IntUiLightTheme.colors.grey(14),
             backgroundFocused: Color = background,
             backgroundHovered: Color = IntUiLightTheme.colors.grey(12),
-            backgroundPressed: Color = background,
+            backgroundPressed: Color = backgroundHovered,
             backgroundSelected: Color = background,
             backgroundDisabled: Color = background,
             content: Color = IntUiLightTheme.colors.grey(1),
@@ -290,34 +290,77 @@ data class IntUiTabColors(
 
 @Immutable
 data class IntUiTabContentAlpha(
-    override val normal: Float,
-    override val disabled: Float,
-    override val focused: Float,
-    override val pressed: Float,
-    override val hovered: Float,
-    override val selected: Float,
+    override val iconNormal: Float,
+    override val iconDisabled: Float,
+    override val iconFocused: Float,
+    override val iconPressed: Float,
+    override val iconHovered: Float,
+    override val iconSelected: Float,
+    override val labelNormal: Float,
+    override val labelDisabled: Float,
+    override val labelFocused: Float,
+    override val labelPressed: Float,
+    override val labelHovered: Float,
+    override val labelSelected: Float,
 ) : TabContentAlpha {
 
     companion object {
 
         fun default(
-            normal: Float = 1f,
-            disabled: Float = normal,
-            focused: Float = normal,
-            pressed: Float = normal,
-            hovered: Float = normal,
-            selected: Float = normal,
-        ) =
-            IntUiTabContentAlpha(normal, disabled, focused, pressed, hovered, selected)
+            iconNormal: Float = 1f,
+            iconDisabled: Float = iconNormal,
+            iconFocused: Float = iconNormal,
+            iconPressed: Float = iconNormal,
+            iconHovered: Float = iconNormal,
+            iconSelected: Float = iconNormal,
+            labelNormal: Float = iconNormal,
+            labelDisabled: Float = iconNormal,
+            labelFocused: Float = iconNormal,
+            labelPressed: Float = iconNormal,
+            labelHovered: Float = iconNormal,
+            labelSelected: Float = iconNormal,
+        ) = IntUiTabContentAlpha(
+            iconNormal,
+            iconDisabled,
+            iconFocused,
+            iconPressed,
+            iconHovered,
+            iconSelected,
+            labelNormal,
+            labelDisabled,
+            labelFocused,
+            labelPressed,
+            labelHovered,
+            labelSelected,
+        )
 
         fun editor(
-            normal: Float = .75f,
-            disabled: Float = normal,
-            focused: Float = normal,
-            pressed: Float = 1f,
-            hovered: Float = pressed,
-            selected: Float = pressed,
+            iconNormal: Float = .7f,
+            iconDisabled: Float = iconNormal,
+            iconFocused: Float = iconNormal,
+            iconPressed: Float = 1f,
+            iconHovered: Float = iconPressed,
+            iconSelected: Float = iconPressed,
+            labelNormal: Float = .9f,
+            labelDisabled: Float = labelNormal,
+            labelFocused: Float = labelNormal,
+            labelPressed: Float = 1f,
+            labelHovered: Float = labelPressed,
+            labelSelected: Float = labelPressed,
         ) =
-            IntUiTabContentAlpha(normal, disabled, focused, pressed, hovered, selected)
+            IntUiTabContentAlpha(
+                iconNormal,
+                iconDisabled,
+                iconFocused,
+                iconPressed,
+                iconHovered,
+                iconSelected,
+                labelNormal,
+                labelDisabled,
+                labelFocused,
+                labelPressed,
+                labelHovered,
+                labelSelected,
+            )
     }
 }
