@@ -150,7 +150,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       myInvertedIndexChangeCallback = invertedIndexChangeCallback;
     }
 
-    public synchronized void setAssociation(int inputId, short data) throws StorageException {
+    public void setAssociation(int inputId, short data) throws StorageException {
       short indexedData = getIndexedData(inputId);
       if (indexedData != 0) {
         var indexedSet = myInvertedIndex.get(indexedData);
@@ -175,12 +175,12 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
       }
     }
 
-    public synchronized @NotNull IntIdsIterator getFileIds(int data) {
+    public @NotNull IntIdsIterator getFileIds(int data) {
       RandomAccessIntContainer fileIds = myInvertedIndex.get(data);
       return fileIds == null ? ValueContainerImpl.EMPTY_ITERATOR : fileIds.intIterator();
     }
 
-    public synchronized short getIndexedData(int inputId) throws StorageException {
+    public short getIndexedData(int inputId) throws StorageException {
       return myForwardIndex.get(inputId);
     }
 
