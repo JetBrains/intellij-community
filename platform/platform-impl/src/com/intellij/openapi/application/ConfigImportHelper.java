@@ -983,7 +983,12 @@ public final class ConfigImportHelper {
       AppUIUtilKt.updateAppWindowIcon(dialog);
       hideSplash();
       PluginDownloader.runSynchronouslyInBackground(() -> {
-        downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
+        try {
+          downloadUpdatesForIncompatiblePlugins(newPluginsDir, options, incompatiblePlugins, dialog.getIndicator());
+        }
+        catch (Throwable e) {
+          options.log.info("Failed to download updates for plugins", e);
+        }
         SwingUtilities.invokeLater(() -> dialog.setVisible(false));
       });
       dialog.setVisible(true);
