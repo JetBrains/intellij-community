@@ -56,7 +56,7 @@ open class IdeaCommunityProperties(private val communityHomeDir: Path) : BaseIde
     productLayout.buildAllCompatiblePlugins = false
     productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
       JavaPluginLayout.javaPlugin(),
-      *CommunityRepositoryModules.androidPlugin(emptyMap()),
+      CommunityRepositoryModules.androidPlugin(emptyMap()),
       CommunityRepositoryModules.groovyPlugin()
     ))
 
