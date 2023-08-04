@@ -1654,12 +1654,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
 
     if (leftCast != null) {
-      generateBoxingUnboxingInstructionFor(lExpr, leftCast);
+      generateBoxingUnboxingInstructionFor(lExpr, lType, leftCast, false);
     }
 
     rExpr.accept(this);
     if (rightCast != null) {
-      generateBoxingUnboxingInstructionFor(rExpr, rightCast);
+      generateBoxingUnboxingInstructionFor(rExpr, rType, rightCast, false);
     }
   }
 

@@ -147,6 +147,12 @@ public final class CustomMethodHandlers {
     .register(anyOf(instanceCall("java.io.InputStream", "skip").parameterTypes("long"),
                     instanceCall("java.io.Reader", "skip").parameterTypes("long")),
               toValue((args, memState, factory, method) -> skip(args.myArguments, memState)))
+    .register(anyOf(
+      staticCall(JAVA_LANG_INTEGER, "toString").parameterCount(1),
+      staticCall(JAVA_LANG_LONG, "toString").parameterCount(1),
+      staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
+      staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("long")
+    ), toValue((args, memState, factory, method) -> numberAsDecimalString(args, memState)))
     .register(staticCall(JAVA_LANG_INTEGER, "toHexString").parameterCount(1),
               toValue((args, memState, factory, method) -> numberAsString(args, memState, 4, Integer.SIZE)))
     .register(staticCall(JAVA_LANG_INTEGER, "toOctalString").parameterCount(1),
@@ -503,6 +509,30 @@ public final class CustomMethodHandlers {
     if (arguments.length != 1) return DfType.TOP;
     LongRangeSet range = DfLongType.extractRange(state.getDfType(arguments[0]));
     return longRange(LongRangeSet.range(0, Math.max(0, range.max())));
+  }
+
+  private static @NotNull DfType numberAsDecimalString(DfaCallArguments args, DfaMemoryState state) {
+    DfaValue arg = args.myArguments[0];
+    if (arg == null) return DfType.TOP;
+    return numberAsDecimalString(state, arg);
+  }
+
+  public static @NotNull DfType numberAsDecimalString(@NotNull DfaMemoryState state, @NotNull DfaValue arg) {
+    LongRangeSet range = DfLongType.extractRange(state.getDfType(arg));
+    if (range.isEmpty()) return DfType.TOP;
+    long min = range.min();
+    long max = range.max();
+    DfType length;
+    if (min >= 0) {
+      length = intRange(LongRangeSet.range(String.valueOf(min).length(), String.valueOf(max).length()));
+    }
+    else if (max <= 0) {
+      length = intRange(LongRangeSet.range(String.valueOf(max).length(), String.valueOf(min).length()));
+    }
+    else {
+      length = intRange(LongRangeSet.range(1, Math.max(String.valueOf(max).length(), String.valueOf(min).length())));
+    }
+    return STRING_LENGTH.asDfType(length);
   }
 
   private static @NotNull DfType numberAsString(DfaCallArguments args, DfaMemoryState state, int bitsPerChar, int maxBits) {
