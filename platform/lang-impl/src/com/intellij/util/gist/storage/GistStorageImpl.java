@@ -16,7 +16,9 @@ import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.AbstractAttributesStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLog;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -128,35 +130,41 @@ public class GistStorageImpl extends GistStorage {
    * there {fsrecords-timestamp} != FSRecords.creationTimestamp
    */
   private static void cleanupAncientGistsDirs() {
-    long currentVFSTimestamp = FSRecords.getCreationTimestamp();
-    Path hugeGistsDir = DIR_FOR_HUGE_GISTS.get();
-    Path hugeGistsParentDir = hugeGistsDir.getParent();
-    LOG.info("Cleaning old huge-gists dirs from [" + hugeGistsParentDir.toAbsolutePath() + "] ...");
-    try (var children = Files.list(hugeGistsParentDir)) {
-      children
-        .filter(Files::isDirectory)
-        .filter(dir -> {
-          String dirName = dir.getFileName().toString();
-          try {
-            long dirTimestamp = Long.parseLong(dirName);
-            return dirTimestamp != currentVFSTimestamp;
-          }
-          catch (NumberFormatException e) {
-            //intentionally don't remove dirs that looks like not created by us:
-            return false;
-          }
-        })
-        .forEach(outdatedHugeGistsDir -> {
-          try {
-            FileUtilRt.deleteRecursively(outdatedHugeGistsDir);
-          }
-          catch (IOException e) {
-            LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
-          }
-        });
+    try {
+      FSRecordsImpl vfs = FSRecords.getInstance();
+      long currentVFSTimestamp = vfs.getCreationTimestamp();
+      Path hugeGistsDir = DIR_FOR_HUGE_GISTS.get();
+      Path hugeGistsParentDir = hugeGistsDir.getParent();
+      LOG.info("Cleaning old huge-gists dirs from [" + hugeGistsParentDir.toAbsolutePath() + "] ...");
+      try (var children = Files.list(hugeGistsParentDir)) {
+        children
+          .filter(Files::isDirectory)
+          .filter(dir -> {
+            String dirName = dir.getFileName().toString();
+            try {
+              long dirTimestamp = Long.parseLong(dirName);
+              return dirTimestamp < currentVFSTimestamp;
+            }
+            catch (NumberFormatException e) {
+              //intentionally don't remove dirs that looks like not created by us:
+              return false;
+            }
+          })
+          .forEach(outdatedHugeGistsDir -> {
+            try {
+              FileUtilRt.deleteRecursively(outdatedHugeGistsDir);
+            }
+            catch (IOException e) {
+              LOG.info("Can't delete old huge-gists dir [" + outdatedHugeGistsDir.toAbsolutePath() + "]", e);
+            }
+          });
+      }
+      catch (IOException e) {
+        LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
+      }
     }
-    catch (IOException e) {
-      LOG.info("Can't list huge-gists dir [" + hugeGistsParentDir.toAbsolutePath() + "] children", e);
+    catch (AlreadyDisposedException e) {
+      LOG.info("Can't cleanup old huge-gists: vfs is disposed -> try next time", e);
     }
   }
 
