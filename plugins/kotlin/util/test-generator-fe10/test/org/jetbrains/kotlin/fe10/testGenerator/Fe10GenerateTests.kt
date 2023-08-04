@@ -273,7 +273,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractBreakpointApplicabilityTest> {
-            model("breakpointApplicability")
+            model("breakpointApplicability", pattern = KT_OR_KTS)
         }
 
         listOf(AbstractFileRankingTest::class, AbstractK1IdeK2CodeFileRankingTest::class).forEach {

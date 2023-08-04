@@ -666,7 +666,10 @@ class KotlinPositionManager(private val debugProcess: DebugProcess) : MultiReque
 
 internal fun PsiElement.getContainingMethod(excludingElement: Boolean = true): PsiElement? =
     PsiTreeUtil.getParentOfType(this, excludingElement,
-                                KtFunction::class.java, KtClassInitializer::class.java, KtPropertyAccessor::class.java)
+                                KtFunction::class.java,
+                                KtClassInitializer::class.java,
+                                KtPropertyAccessor::class.java,
+                                KtScript::class.java)
 
 // Kotlin compiler generates private final static <outer-method>$lambda$0 method
 // per each lambda that takes lambda (kotlin.jvm.functions.FunctionN) as the first parameter
