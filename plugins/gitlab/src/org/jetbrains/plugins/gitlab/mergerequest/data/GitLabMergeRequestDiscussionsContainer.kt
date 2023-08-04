@@ -130,7 +130,8 @@ class GitLabMergeRequestDiscussionsContainerImpl(
       .mapCaching(
         GitLabDiscussionDTO::id,
         { disc ->
-          LoadedGitLabDiscussion(this, project, api, glProject, { discussionEvents.emit(it) }, mr, disc, getDiscussionDraftNotes(disc.id).throwFailure())
+          LoadedGitLabDiscussion(this, project, api, glProject, { discussionEvents.emit(it) }, mr, disc,
+                                 getDiscussionDraftNotes(disc.id).throwFailure())
         },
         LoadedGitLabDiscussion::destroy,
         LoadedGitLabDiscussion::update
@@ -291,9 +292,7 @@ class GitLabMergeRequestDiscussionsContainerImpl(
     }
   }
 
-  fun checkUpdates() {
-    cs.launch {
-      updateRequests.emit(Unit)
-    }
+  suspend fun checkUpdates() {
+    updateRequests.emit(Unit)
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.data
 
-import com.intellij.collaboration.api.HttpStatusErrorException
 import com.intellij.collaboration.async.asResultFlow
 import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.async.modelFlow
@@ -162,7 +161,16 @@ internal class LoadedGitLabMergeRequest(
       labelEventsLoader.checkForUpdates()
       milestoneEventsLoader.checkForUpdates()
     }
+    // TODO: make suspending
     discussionsContainer.requestReload()
+  }
+
+  private suspend fun updateData() {
+    mergeRequestRefreshRequest.emit(Unit)
+    stateEventsLoader.checkForUpdates()
+    labelEventsLoader.checkForUpdates()
+    milestoneEventsLoader.checkForUpdates()
+    discussionsContainer.checkUpdates()
   }
 
   override suspend fun merge(commitMessage: String) {
@@ -208,35 +216,27 @@ internal class LoadedGitLabMergeRequest(
   }
 
   override suspend fun approve() {
-    withContext(cs.coroutineContext + Dispatchers.IO) {
-      val response = api.rest.mergeRequestApprove(glProject, mergeRequestDetailsState.value)
-      val statusCode = response.statusCode()
-      val mergeRequest = response.body()
-      if (statusCode != 201) {
-        throw HttpStatusErrorException("Unable to approve Merge Request", statusCode, mergeRequest.toString())
+    try {
+      withContext(cs.coroutineContext + Dispatchers.IO) {
+        api.rest.mergeRequestApprove(glProject, mergeRequestDetailsState.value)
       }
-
-      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
-    discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.APPROVE)
+    finally {
+      updateData()
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.APPROVE)
+    }
   }
 
   override suspend fun unApprove() {
-    withContext(cs.coroutineContext + Dispatchers.IO) {
-      val response = api.rest.mergeRequestUnApprove(glProject, mergeRequestDetailsState.value)
-      val statusCode = response.statusCode()
-      val mergeRequest = response.body()
-      if (statusCode != 201) {
-        throw HttpStatusErrorException("Unable to unapprove Merge Request", statusCode, mergeRequest.toString())
+    try {
+      withContext(cs.coroutineContext + Dispatchers.IO) {
+        api.rest.mergeRequestUnApprove(glProject, mergeRequestDetailsState.value)
       }
-
-      val updatedMergeRequest = api.graphQL.loadMergeRequest(glProject, mergeRequestDetailsState.value).body()!!
-      mergeRequestDetailsState.value = GitLabMergeRequestFullDetails.fromGraphQL(updatedMergeRequest)
     }
-    discussionsContainer.checkUpdates()
-    GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UNAPPROVE)
+    finally {
+      updateData()
+      GitLabStatistics.logMrActionExecuted(project, GitLabStatistics.MergeRequestAction.UNAPPROVE)
+    }
   }
 
   override suspend fun close() {
