@@ -1233,7 +1233,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
   }
 
-  static class MyShutDownTask implements Runnable {
+  static final class MyShutDownTask implements Runnable {
     private final boolean myTermination;
 
     MyShutDownTask(boolean termination) { myTermination = termination; }

@@ -10,6 +10,8 @@ import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
 import java.io.Writer
 import java.nio.charset.StandardCharsets
@@ -26,8 +28,10 @@ private class BundledPluginsLister : ModernApplicationStarter() {
     try {
       val out: Writer = if (args.size == 2) {
         val outFile = Path.of(args[1])
-        Files.createDirectories(outFile.parent)
-        Files.newBufferedWriter(outFile)
+        withContext(Dispatchers.IO) {
+          Files.createDirectories(outFile.parent)
+          Files.newBufferedWriter(outFile)
+        }
       }
       else {
         // noinspection UseOfSystemOutOrSystemErr
@@ -53,6 +57,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
           }
         }
         extensions.sort()
+
         writer.obj {
           writeList(writer, "modules", modules.sorted())
           writeList(writer, "plugins", pluginIds)
