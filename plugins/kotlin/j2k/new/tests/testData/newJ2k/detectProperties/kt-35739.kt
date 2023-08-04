@@ -1,6 +1,6 @@
 class Foo {
     private var value: String? = null
-        private get() {
+        get() {
             if (true) {
                 field = "new"
             }

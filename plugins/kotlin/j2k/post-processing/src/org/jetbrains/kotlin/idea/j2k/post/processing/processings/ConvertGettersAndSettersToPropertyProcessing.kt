@@ -34,7 +34,8 @@ import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
-import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
+import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.NewJ2kConverterContext
 import org.jetbrains.kotlin.nj2k.asGetterName
@@ -88,7 +89,12 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
     private val externalCodeUpdater: NewExternalCodeProcessing
 ) {
     private val searcher = JKInMemoryFilesSearcher.create(elements)
-
+    private val redundantSetterModifiers: Set<KtModifierKeywordToken> = setOf(
+        OVERRIDE_KEYWORD, FINAL_KEYWORD, OPEN_KEYWORD
+    )
+    private val redundantGetterModifiers: Set<KtModifierKeywordToken> = redundantSetterModifiers + setOf(
+        PUBLIC_KEYWORD, INTERNAL_KEYWORD, PROTECTED_KEYWORD, PRIVATE_KEYWORD
+    )
 
     fun runProcessing() {
         val collectingState = CollectingState()
@@ -158,7 +164,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             ?.singleOrNull()
             ?.let { expression ->
                 if (expression is KtBinaryExpression) {
-                    if (expression.operationToken != KtTokens.EQ) return@let null
+                    if (expression.operationToken != EQ) return@let null
                     val right = expression.right as? KtNameReferenceExpression ?: return@let null
                     if (right.resolve() != valueParameters.single()) return@let null
                     expression.left?.unpackedReferenceToProperty()
@@ -192,16 +198,18 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             if (isFakeProperty) getter.body
             else getter.body?.withReplacedExpressionInBody(
                 property,
-                factory.createExpression(KtTokens.FIELD_KEYWORD.value),
+                factory.createExpression(FIELD_KEYWORD.value),
                 replaceOnlyWriteUsages = false
             )
 
         val ktGetter = factory.createGetter(body, getter.modifiersText)
-        ktGetter.filterModifiers()
+        redundantGetterModifiers.forEach { ktGetter.removeModifier(it) }
+
         if (getter is RealGetter) {
             savePossibleLeadingAndTrailingComments(getter, ktGetter, factory)
         }
         property.add(factory.createNewLine(1))
+
         return property.add(ktGetter).cast<KtPropertyAccessor>().also {
             if (getter is RealGetter) {
                 getter.function.forAllUsages { usage ->
@@ -225,7 +233,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             findReferences.mapNotNull { reference ->
                 val element = reference.element
                 val isBackingField = element is KtNameReferenceExpression &&
-                        element.text == KtTokens.FIELD_KEYWORD.value
+                        element.text == FIELD_KEYWORD.value
                         && element.mainReference.resolve() == this
                         && isAncestor(element)
                 if (isBackingField) return@mapNotNull null
@@ -247,7 +255,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             if (isFakeProperty) setter.body
             else setter.body?.withReplacedExpressionInBody(
                 property,
-                factory.createExpression(KtTokens.FIELD_KEYWORD.value),
+                factory.createExpression(FIELD_KEYWORD.value),
                 true
             )
         val modifiers = setter.modifiersText?.takeIf { it.isNotEmpty() }
@@ -259,8 +267,9 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             setter.parameterName,
             modifiers
         )
-        ktSetter.filterModifiers()
+        redundantSetterModifiers.forEach { ktSetter.removeModifier(it) }
         val propertyName = property.name
+
         if (setter is RealSetter) {
             savePossibleLeadingAndTrailingComments(setter, ktSetter, factory)
 
@@ -293,12 +302,6 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             ktAccessor.add(factory.createWhiteSpace())
             ktAccessor.add(accessor.function.lastChild)
         }
-    }
-
-    private fun KtPropertyAccessor.filterModifiers() {
-        removeModifier(KtTokens.OVERRIDE_KEYWORD)
-        removeModifier(KtTokens.FINAL_KEYWORD)
-        removeModifier(KtTokens.OPEN_KEYWORD)
     }
 
     private fun KtExpression.isReferenceToThis() =
@@ -608,7 +611,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         for (usage in usages()) {
             val element = usage.element
             val isBackingField = element is KtNameReferenceExpression
-                    && element.text == KtTokens.FIELD_KEYWORD.value
+                    && element.text == FIELD_KEYWORD.value
                     && element.mainReference.resolve() == this
                     && isAncestor(element)
             if (isBackingField) continue
@@ -670,8 +673,8 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 setter.safeAs<RealSetter>()?.function?.setPropertyInfo(propertyInfo)
             }
 
-            val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
-                    || setter.safeAs<RealSetter>()?.function?.hasModifier(KtTokens.OPEN_KEYWORD) == true
+            val isOpen = getter.safeAs<RealGetter>()?.function?.hasModifier(OPEN_KEYWORD) == true
+                    || setter.safeAs<RealSetter>()?.function?.hasModifier(OPEN_KEYWORD) == true
 
             val ktGetter = addGetter(getter, ktProperty, psiFactory, property.isFake)
             val ktSetter =
@@ -681,7 +684,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
             val getterVisibility = getter.safeAs<RealGetter>()?.function?.visibilityModifierTypeOrDefault()
             if (getter is RealGetter) {
                 if (getter.function.isAbstract()) {
-                    ktProperty.addModifier(KtTokens.ABSTRACT_KEYWORD)
+                    ktProperty.addModifier(ABSTRACT_KEYWORD)
                 }
                 if (ktGetter.isRedundantGetter()) {
                     val commentSaver = CommentSaver(getter.function)
@@ -716,7 +719,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                 ktProperty.renameTo(property.name, psiFactory)
             }
             if (isOpen) {
-                ktProperty.addModifier(KtTokens.OPEN_KEYWORD)
+                ktProperty.addModifier(OPEN_KEYWORD)
             }
 
             moveAccessorAnnotationsToProperty(ktProperty)
@@ -842,7 +845,7 @@ private data class CollectingState(
 )
 
 private fun String.fixSetterParameterName() =
-    if (this == KtTokens.FIELD_KEYWORD.value) "value"
+    if (this == FIELD_KEYWORD.value) "value"
     else this
 
 private val PropertyInfo.isFake: Boolean

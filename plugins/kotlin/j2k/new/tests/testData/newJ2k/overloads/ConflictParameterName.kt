@@ -7,7 +7,7 @@ class Test {
     }
 
     private val isD: Boolean
-        private get() = true
+        get() = true
     private val e = E()
 
     class E {
@@ -19,7 +19,7 @@ class Test {
     }
 
     private val g: Int
-        private get() = 1
+        get() = 1
 
     @JvmOverloads
     fun foo(
