@@ -24,6 +24,10 @@
               topic="com.intellij.openapi.projectRoots.ProjectJdkTable$Listener"/>
     <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$NonWorkspaceModuleRootListener"
               topic="com.intellij.openapi.roots.ModuleRootListener"/>
+    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$FileDocumentListener"
+              topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"/>
+    <listener class="org.jetbrains.kotlin.idea.base.analysisApiProviders.KotlinModuleStateModificationService$MyDynamicPluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
   </projectListeners>
 
   <dependencies>

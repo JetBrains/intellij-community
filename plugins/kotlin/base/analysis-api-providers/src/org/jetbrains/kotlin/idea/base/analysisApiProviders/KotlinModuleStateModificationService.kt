@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.analysisApiProviders
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.java.workspace.entities.JavaSourceRootPropertiesEntity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
@@ -10,6 +13,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.StandardFileSystems
@@ -130,6 +134,37 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
             // The cases described in `isCausedByWorkspaceModelChangesOnly` are rare enough to publish global module state modification
             // events for simplicity. `NonWorkspaceModuleRootListener` can eventually be removed once the APIs described in
             // `isCausedByWorkspaceModelChangesOnly` are removed.
+            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+        }
+    }
+
+    internal class FileDocumentListener(private val project: Project) : FileDocumentManagerListener {
+        override fun fileWithNoDocumentChanged(file: VirtualFile) {
+            // `FileDocumentManagerListener` may receive events from other projects via `FileDocumentManagerImpl`'s `AsyncFileListener`.
+            if (!ProjectFileIndex.getInstance(project).isInContent(file)) {
+                return
+            }
+
+            // Workspace model changes are already handled by `KotlinModuleStateModificationService`, so we shouldn't publish a module state
+            // modification event when the `workspace.xml` is changed by the IDE.
+            if (file == project.workspaceFile) {
+                return
+            }
+
+            // "No document" means no pomModel change. If the file's PSI was not loaded, then a modification event would be published via
+            // the `PsiTreeChangeEvent.PROP_UNLOADED_PSI` event. If the PSI was loaded, then `FileManagerImpl.reloadPsiAfterTextChange` is
+            // fired which doesn't provide any explicit changes, so we need to publish a global modification event because the file's
+            // content may have been changed externally.
+            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+        }
+    }
+
+    internal class MyDynamicPluginListener(private val project: Project) : DynamicPluginListener {
+        override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+            KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
+        }
+
+        override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
             KotlinGlobalModificationService.getInstance(project).publishGlobalModuleStateModification()
         }
     }
