@@ -1559,8 +1559,6 @@
     <toolbarQuickAction implementationClass="com.intellij.openapi.wm.impl.headertoolbar.ProfilerQuickAction" listGroupID="MainToolbarQuickActions.Run" />
 
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
-
-    <uiiPropertiesProvider implementation="com.intellij.openapi.wm.impl.ToolbarComboWidgetPropertiesProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
