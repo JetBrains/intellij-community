@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Bas Leijdekkers
  */
 public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment {
+  public static final Key<Integer> FRAGMENT_INDENT_KEY = Key.create("FRAGMENT_INDENT_KEY");
 
   public PsiFragmentImpl(@NotNull IElementType type, @NotNull CharSequence text) {
     super(type, text);
@@ -65,7 +67,7 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
           return null;
         }
       }
-      content = text.substring(start - 1, text.length() - 2);
+      content = text.substring(start, text.length() - 2);
     }
     else if (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID) {
       content = text.substring(1, text.length() - 2);
@@ -78,34 +80,63 @@ public final class PsiFragmentImpl extends LeafPsiElement implements PsiFragment
       return null;
     }
 
+    final int indent = getTextBlockFragmentIndent(fragment);
+    if (indent < 0) return null;
+
+    final StringBuilder result = new StringBuilder();
+    int strip = (tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN) ? 0 : -1;
+    for (int i = 0, length = content.length(); i < length; i++) {
+      final char c = content.charAt(i);
+      if (strip >= 0) {
+        if (c == '\n') {
+          strip = -1;
+        }
+        else if (strip <= indent) {
+          strip++;
+        }
+      }
+      if (c == '\n') {
+        while (result.length() > 0) {
+          int end = result.length() - 1;
+          char d = result.charAt(end);
+          if (d == '\n' || !Character.isWhitespace(d)) break;
+          // trim line trailing whitespace
+          result.deleteCharAt(end);
+        }
+        strip = 0;
+      }
+      else if (strip > indent && indent > 0) {
+        // strip indent
+        int end = result.length();
+        result.delete(end - indent, end);
+        strip = -1;
+      }
+      result.append(c);
+    }
+    return result.toString();
+  }
+
+  private static int getTextBlockFragmentIndent(PsiFragment fragment) {
     final PsiElement parent = fragment.getParent();
     if (!(parent instanceof PsiTemplate)) {
-      return null;
+      return -1;
     }
     final PsiTemplate template = (PsiTemplate)parent;
+    Integer cache = template.getUserData(FRAGMENT_INDENT_KEY);
+    if (cache != null) {
+      return cache;
+    }
     final StringBuilder sb = new StringBuilder();
     for (PsiFragment templateFragment : template.getFragments()) {
       sb.append(templateFragment.getText());
     }
     final String[] lines = PsiLiteralUtil.getTextBlockLines(sb.toString());
     if (lines == null) {
-      return null;
+      return -1;
     }
-    final int indent = PsiLiteralUtil.getTextBlockIndent(lines);
-    final StringBuilder result = new StringBuilder();
-    final String[] split = content.split("\n", -1);
-    boolean newline = false;
-    for (int i = tokenType == JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN ? 1 : 0; i < split.length; i++) {
-      if (newline) {
-        result.append('\n');
-      }
-      else {
-        newline = true;
-      }
-      final String line = split[i];
-      result.append(PsiLiteralUtil.trimTrailingWhitespaces((line.length() > indent) ? line.substring(indent) : line));
-    }
-    return result.toString();
+    int indent = PsiLiteralUtil.getTextBlockIndent(lines);
+    fragment.putUserData(FRAGMENT_INDENT_KEY, indent);
+    return indent;
   }
 
   @Override

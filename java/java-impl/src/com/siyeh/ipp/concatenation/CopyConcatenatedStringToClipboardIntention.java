@@ -6,7 +6,9 @@ import com.intellij.modcommand.ModCommand;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +17,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public class CopyConcatenatedStringToClipboardIntention extends PsiBasedModCommandAction<PsiExpression> {
+public class CopyConcatenatedStringToClipboardIntention extends PsiBasedModCommandAction<PsiElement> {
   public CopyConcatenatedStringToClipboardIntention() {
-    super(PsiExpression.class);
+    super(PsiElement.class);
   }
   
   @Override
@@ -26,37 +28,60 @@ public class CopyConcatenatedStringToClipboardIntention extends PsiBasedModComma
   }
 
   @Override
-  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpression element) {
-    final boolean isStringLiteral =
-      element instanceof PsiLiteralExpression &&
-      ExpressionUtils.hasStringType(element) &&
-      !(PsiTreeUtil.skipParentsOfType(element, PsiParenthesizedExpression.class) instanceof PsiPolyadicExpression);
-    if (isStringLiteral) {
-      return Presentation.of(IntentionPowerPackBundle.message("copy.string.literal.to.clipboard.intention.name"));
+  protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    if (element instanceof PsiFragment) {
+      return Presentation.of(IntentionPowerPackBundle.message("copy.string.template.text.to.clipboard.intention.name"));
     }
-    if (ExpressionUtils.isStringConcatenation(PsiTreeUtil.getNonStrictParentOfType(element, PsiPolyadicExpression.class))) {
+    PsiPolyadicExpression polyadicExpression =
+      PsiTreeUtil.getParentOfType(element, PsiPolyadicExpression.class, false,
+                                  PsiStatement.class, PsiMember.class, PsiLambdaExpression.class);
+    if (ExpressionUtils.isStringConcatenation(polyadicExpression)) {
       return Presentation.of(IntentionPowerPackBundle.message("copy.concatenated.string.to.clipboard.intention.name"));
+    }
+    if (PsiUtil.isJavaToken(element, ElementType.STRING_LITERALS)) {
+      return Presentation.of(IntentionPowerPackBundle.message("copy.string.literal.to.clipboard.intention.name"));
     }
     return null;
   }
 
   @Override
-  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiExpression element) {
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
     final String text;
-    PsiPolyadicExpression polyadic = PsiTreeUtil.getNonStrictParentOfType(element, PsiPolyadicExpression.class);
-    if (ExpressionUtils.isStringConcatenation(polyadic)) {
-      text = buildConcatenationText(polyadic);
-    }
-    else if (element instanceof PsiLiteralExpression literalExpression) {
-      if (!(literalExpression.getValue() instanceof String string)) {
-        return ModCommand.nop();
-      }
-      text = string;
+    if (element instanceof PsiFragment) {
+      text = buildStringTemplateText((PsiTemplate)element.getParent());
     }
     else {
-      return ModCommand.nop();
+      PsiPolyadicExpression polyadic = PsiTreeUtil.getNonStrictParentOfType(element, PsiPolyadicExpression.class);
+      if (ExpressionUtils.isStringConcatenation(polyadic)) {
+        text = buildConcatenationText(polyadic);
+      }
+      else if (element.getParent() instanceof PsiLiteralExpression literalExpression) {
+        if (!(literalExpression.getValue() instanceof String string)) {
+          return ModCommand.nop();
+        }
+        text = string;
+      }
+      else {
+        return ModCommand.nop();
+      }
     }
     return ModCommand.copyToClipboard(text);
+  }
+
+  @NotNull
+  private static String buildStringTemplateText(PsiTemplate template) {
+    StringBuilder sb = new StringBuilder();
+    boolean separator = false;
+    for (PsiFragment fragment : template.getFragments()) {
+      if (separator) {
+        sb.append('?');
+      }
+      else {
+        separator = true;
+      }
+      sb.append(fragment.getValue());
+    }
+    return sb.toString();
   }
 
   public static String buildConcatenationText(PsiPolyadicExpression polyadicExpression) {
