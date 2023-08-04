@@ -44,6 +44,7 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.selected
+import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import javax.swing.DefaultComboBoxModel
@@ -203,7 +204,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         }.bind({ editorSettings.isWheelFontChangePersistent }, { editorSettings.isWheelFontChangePersistent = it })
         row {
           checkBox(enableDnD)
-          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment"))
+          comment(message("checkbox.enable.drag.n.drop.functionality.in.editor.comment", UIUtil.getControlKeyName()))
         }
       }
       group(message("group.soft.wraps")) {

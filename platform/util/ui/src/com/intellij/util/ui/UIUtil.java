@@ -1168,6 +1168,10 @@ public final class UIUtil {
     return SystemInfoRt.isMac ? mouseEvent.isMetaDown() : mouseEvent.isControlDown();
   }
 
+  public static @NotNull String getControlKeyName() {
+    return SystemInfoRt.isMac ? "Command" : "Ctrl";
+  }
+
   public static String @NotNull [] getStandardFontSizes() {
     return STANDARD_FONT_SIZES;
   }
