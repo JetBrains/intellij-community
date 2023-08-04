@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectUtil
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
+import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.PathManager
@@ -25,6 +26,7 @@ import com.intellij.remoteDev.tests.modelGenerated.RdTestSession
 import com.intellij.remoteDev.tests.modelGenerated.distributedTestModel
 import com.intellij.ui.WinFocusStealer
 import com.intellij.util.ui.ImageUtil
+import com.intellij.util.ui.UIUtil
 import com.jetbrains.rd.framework.*
 import com.jetbrains.rd.framework.impl.RdTask
 import com.jetbrains.rd.util.lifetime.EternalLifetime
@@ -39,10 +41,6 @@ import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.InetAddress
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
@@ -97,6 +95,17 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           createProtocol(hostAddress, port)
         }
       }
+    }
+  }
+
+  private fun Application.flushQueueFromAnyThread() {
+    if (isDispatchThread) {
+      // Flush all events to process pending protocol events and other things
+      //   before actual test method execution
+      IdeEventQueue.getInstance().flushQueue()
+    }
+    else {
+      UIUtil.pump()
     }
   }
 
@@ -157,17 +166,15 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
                 val isNotRdHost = !(session.agentInfo.productTypeType == RdProductType.REMOTE_DEVELOPMENT && session.agentInfo.agentType == RdAgentType.HOST)
                 if (!app.isHeadlessEnvironment && isNotRdHost) {
-                  IdeEventQueue.getInstance().flushQueue()
+                  app.flushQueueFromAnyThread()
                   requestFocus(actionTitle)
                 }
               }
 
               showNotification("${session.agentInfo.id}: $actionTitle")
-              if (expectIsDispatchThread) {
-                // Flush all events to process pending protocol events and other things
-                //   before actual test method execution
-                IdeEventQueue.getInstance().flushQueue()
-              }
+              // Flush all events to process pending protocol events and other things
+              //   before actual test method execution
+              app.flushQueueFromAnyThread()
 
               val agentContext = when (session.agentInfo.agentType) {
                 RdAgentType.HOST -> HostAgentContextImpl(session.agentInfo, app, projectOrNull, protocol)
@@ -183,16 +190,14 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               }
               LOG.info("'$actionTitle': completed action in ${elapsedAction}ms")
 
-              if (expectIsDispatchThread) {
-                projectOrNull?.let {
-                  // Sync state across all IDE agents to maintain proper order in protocol events
-                  LOG.info("'$actionTitle': Sync protocol events after execution...")
-                  val elapsedSync = measureTimeMillis {
-                    DistributedTestBridge.getInstance(it).syncProtocolEvents()
-                    IdeEventQueue.getInstance().flushQueue()
-                  }
-                  LOG.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
+              projectOrNull?.let {
+                // Sync state across all IDE agents to maintain proper order in protocol events
+                LOG.info("'$actionTitle': Sync protocol events after execution...")
+                val elapsedSync = measureTimeMillis {
+                  DistributedTestBridge.getInstance(it).syncProtocolEvents()
+                  app.flushQueueFromAnyThread()
                 }
+                LOG.info("'$actionTitle': Protocol state sync completed in ${elapsedSync}ms")
               }
 
               // Assert state
