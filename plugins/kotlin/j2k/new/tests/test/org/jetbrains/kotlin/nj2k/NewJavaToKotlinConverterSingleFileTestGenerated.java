@@ -4981,6 +4981,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/OptimizeImports.java");
         }
 
+        @TestMetadata("PrivateMutablePropertyAccessedByQualifiedExpression.java")
+        public void testPrivateMutablePropertyAccessedByQualifiedExpression() throws Exception {
+            runTest("testData/newJ2k/postProcessing/PrivateMutablePropertyAccessedByQualifiedExpression.java");
+        }
+
         @TestMetadata("RedundantTypeCast.java")
         public void testRedundantTypeCast() throws Exception {
             runTest("testData/newJ2k/postProcessing/RedundantTypeCast.java");
