@@ -58,7 +58,7 @@ public class ContentStoragesRecoverer implements VFSRecoverer {
         contentStorage.dispose();
         IOUtil.deleteAllFilesStartingWith(loader.contentsFile);
 
-        RefCountingContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile, loader.useContentHashes);
+        RefCountingContentStorage emptyContentStorage = loader.createContentStorage(loader.contentsFile);
         ContentHashEnumerator emptyHashesEnumerator = PersistentFSLoader.createContentHashStorage(loader.contentsHashesFile);
         loader.setContentsStorage(emptyContentStorage);
         loader.setContentHashesEnumerator(emptyHashesEnumerator);

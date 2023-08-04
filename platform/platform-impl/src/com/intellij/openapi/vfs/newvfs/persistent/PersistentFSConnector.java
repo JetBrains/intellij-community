@@ -65,12 +65,11 @@ final class PersistentFSConnector {
 
   public static @NotNull VFSInitializationResult connect(@NotNull Path cachesDir,
                                                          int version,
-                                                         boolean useContentHashes,
                                                          boolean enableVfsLog,
                                                          List<ConnectionInterceptor> interceptors) {
     connectDisconnectLock.lock();
     try {
-      return init(cachesDir, version, useContentHashes, enableVfsLog, interceptors);
+      return init(cachesDir, version, enableVfsLog, interceptors);
     }
     finally {
       connectDisconnectLock.unlock();
@@ -91,7 +90,6 @@ final class PersistentFSConnector {
 
   private static @NotNull VFSInitializationResult init(@NotNull Path cachesDir,
                                                        int expectedVersion,
-                                                       boolean useContentHashes,
                                                        boolean enableVfsLog,
                                                        List<ConnectionInterceptor> interceptors) {
     List<Throwable> attemptsFailures = new ArrayList<>();
@@ -101,7 +99,6 @@ final class PersistentFSConnector {
         PersistentFSConnection connection = tryInit(
           cachesDir,
           expectedVersion,
-          useContentHashes,
           enableVfsLog,
           interceptors,
           RECOVERERS
@@ -134,7 +131,6 @@ final class PersistentFSConnector {
   @VisibleForTesting
   static @NotNull PersistentFSConnection tryInit(@NotNull Path cachesDir,
                                                  int currentImplVersion,
-                                                 boolean useContentHashes,
                                                  boolean enableVfsLog,
                                                  @NotNull List<ConnectionInterceptor> interceptors,
                                                  @NotNull List<VFSRecoverer> recoverers) throws IOException {
@@ -187,7 +183,7 @@ final class PersistentFSConnector {
                                                           : ConcurrencyUtil.newSameThreadExecutorService();
 
     PersistentFSPaths persistentFSPaths = new PersistentFSPaths(cachesDir);
-    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, useContentHashes, enableVfsLog, pool);
+    PersistentFSLoader vfsLoader = new PersistentFSLoader(persistentFSPaths, enableVfsLog, pool);
     try {
       if (VfsLog.isVfsTrackingEnabled() && enableVfsLog) {
         vfsLoader.replaceStoragesIfMarkerPresent();

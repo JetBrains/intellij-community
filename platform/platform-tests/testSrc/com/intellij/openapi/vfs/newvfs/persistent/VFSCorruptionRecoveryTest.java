@@ -87,7 +87,6 @@ public class VFSCorruptionRecoveryTest {
         PersistentFSConnector.tryInit(
           cachesDir,
           FSRecordsImpl.currentImplementationVersion(),
-          FSRecordsImpl.USE_CONTENT_HASHES,
           false,
           Collections.emptyList(),
           Collections.emptyList()
@@ -131,7 +130,6 @@ public class VFSCorruptionRecoveryTest {
       PersistentFSConnector.tryInit(
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
-        FSRecordsImpl.USE_CONTENT_HASHES,
         false,
         Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())
@@ -164,7 +162,6 @@ public class VFSCorruptionRecoveryTest {
       PersistentFSConnection connection = PersistentFSConnector.tryInit(
         cachesDir,
         FSRecordsImpl.currentImplementationVersion(),
-        FSRecordsImpl.USE_CONTENT_HASHES,
         false,
         Collections.emptyList(),
         List.of(new ContentStoragesRecoverer())

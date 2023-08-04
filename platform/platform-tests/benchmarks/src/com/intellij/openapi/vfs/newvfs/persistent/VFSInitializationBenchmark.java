@@ -125,7 +125,6 @@ public class VFSInitializationBenchmark {
     VFSInitializationResult initResult = PersistentFSConnector.connect(
       cachesDir,
       version,
-      true,
       false,
       Collections.emptyList()
     );

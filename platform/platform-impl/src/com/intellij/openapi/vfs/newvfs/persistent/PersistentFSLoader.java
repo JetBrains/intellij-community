@@ -64,7 +64,6 @@ public final class PersistentFSLoader {
   private final PersistentFSPaths vfsPaths;
   private final ExecutorService executorService;
 
-  public final boolean useContentHashes;
   public final boolean enableVfsLog;
 
   public final @NotNull Path namesFile;
@@ -108,7 +107,6 @@ public final class PersistentFSLoader {
 
 
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
-                     boolean useContentHashes,
                      boolean enableVfsLog,
                      ExecutorService pool) {
     recordsFile = persistentFSPaths.storagePath("records");
@@ -125,7 +123,6 @@ public final class PersistentFSLoader {
     vfsPaths = persistentFSPaths;
     this.executorService = pool;
 
-    this.useContentHashes = useContentHashes;
     this.enableVfsLog = enableVfsLog;
   }
 
@@ -157,7 +154,7 @@ public final class PersistentFSLoader {
       () -> createAttributesStorage(attributesFile)
     );
     Future<RefCountingContentStorage> contentsStorageFuture = executorService.submit(
-      () -> createContentStorage(contentsFile, useContentHashes)
+      () -> createContentStorage(contentsFile)
     );
     Future<PersistentFSRecordsStorage> recordsStorageFuture = executorService.submit(
       () -> createRecordsStorage(recordsFile)
@@ -189,13 +186,9 @@ public final class PersistentFSLoader {
     });
 
 
-    Future<ContentHashEnumerator> contentHashesEnumeratorFuture;
-    if (useContentHashes) {
-      contentHashesEnumeratorFuture = executorService.submit(() -> createContentHashStorage(contentsHashesFile));
-    }
-    else {
-      contentHashesEnumeratorFuture = CompletableFuture.completedFuture(null);
-    }
+    Future<ContentHashEnumerator> contentHashesEnumeratorFuture = executorService.submit(
+      () -> createContentHashStorage(contentsHashesFile)
+    );
 
     ExceptionUtil.runAllAndRethrowAllExceptions(
       new IOException(),
@@ -414,15 +407,13 @@ public final class PersistentFSLoader {
       addProblem(HAS_ERRORS_IN_PREVIOUS_SESSION, "VFS accumulated " + errorsAccumulated + " errors in last session");
     }
 
-    if (useContentHashes) {
-      int largestId = contentHashesEnumerator.getLargestId();
-      int liveRecordsCount = contentsStorage.getRecordsCount();
-      if (largestId != liveRecordsCount) {
-        addProblem(CONTENT_STORAGES_NOT_MATCH,
-                   "Content storage is not match content hash enumerator: " +
-                   "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
-        );
-      }
+    int largestId = contentHashesEnumerator.getLargestId();
+    int liveRecordsCount = contentsStorage.getRecordsCount();
+    if (largestId != liveRecordsCount) {
+      addProblem(CONTENT_STORAGES_NOT_MATCH,
+                 "Content storage is not match content hash enumerator: " +
+                 "contents.records(=" + liveRecordsCount + ") != contentHashes.largestId(=" + largestId + ")"
+      );
     }
 
     if (attributesEnumerator.isEmpty() && !attributesStorage.isEmpty()) {
@@ -642,9 +633,8 @@ public final class PersistentFSLoader {
     }
   }
 
-  public @NotNull RefCountingContentStorage createContentStorage(@NotNull Path contentsFile,
-                                                                 boolean useContentHashes) throws IOException {
-    RefCountingContentStorage storage = createContentStorage_makeStorage(contentsFile, useContentHashes);
+  public @NotNull RefCountingContentStorage createContentStorage(@NotNull Path contentsFile) throws IOException {
+    RefCountingContentStorage storage = createContentStorage_makeStorage(contentsFile);
     if (vfsLog != null) {
       var contentInterceptors = vfsLog.getConnectionInterceptors().stream()
         .filter(ContentsInterceptor.class::isInstance)
@@ -655,15 +645,14 @@ public final class PersistentFSLoader {
     return storage;
   }
 
-  private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile,
-                                                                                     boolean useContentHashes) throws IOException {
+  private static @NotNull RefCountingContentStorage createContentStorage_makeStorage(@NotNull Path contentsFile) throws IOException {
     // sources usually zipped with 4x ratio
     if (PageCacheUtils.LOCK_FREE_VFS_ENABLED) {
       return new RefCountingContentStorageImplLF(
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
         SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
-        useContentHashes
+        /*useContentHashes: */ true
       );
     }
     else {
@@ -671,7 +660,7 @@ public final class PersistentFSLoader {
         contentsFile,
         CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH,
         SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FSRecords Content Write Pool"),
-        useContentHashes
+        /*useContentHashes: */ true
       );
     }
   }
