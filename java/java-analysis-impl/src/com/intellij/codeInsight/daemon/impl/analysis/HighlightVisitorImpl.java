@@ -990,7 +990,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitErrorElement(@NotNull PsiErrorElement element) {
     super.visitErrorElement(element);
-    add(HighlightClassUtil.checkClassMemberDeclaredOutside(element));
     String text = element.getText();
     if ((text.equals(PsiKeyword.NON_SEALED) || text.equals(PsiKeyword.SEALED)) &&
         PsiTreeUtil.skipWhitespacesAndCommentsForward(element) instanceof PsiClass) {
