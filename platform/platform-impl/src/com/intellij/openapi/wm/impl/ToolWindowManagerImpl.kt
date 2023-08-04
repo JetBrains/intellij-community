@@ -666,6 +666,8 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     if (!entry.readOnlyWindowInfo.isVisible) {
       info.isActiveOnStart = autoFocusContents
       showToolWindowImpl(entry, info, dirtyMode = false, source = source)
+    } else if (!autoFocusContents /* if focus is requested, focusing code will do this */ && !info.type.isInternal) {
+      bringWindowToFront(entry.toolWindow)
     }
 
     if (autoFocusContents && ApplicationManager.getApplication().isActive) {
@@ -676,6 +678,18 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
 
     fireStateChanged(ToolWindowManagerEventType.ActivateToolWindow, entry.toolWindow)
+  }
+
+  private fun bringWindowToFront(toolWindow: ToolWindowImpl) {
+    SwingUtilities.getWindowAncestor(toolWindow.component)?.run {
+      isAutoRequestFocus = false
+      try {
+        toFront()
+      }
+      finally {
+        isAutoRequestFocus = true
+      }
+    }
   }
 
   private fun isUnifiedToolWindowSizesEnabled(): Boolean = !isIndependentToolWindowResizeEnabled()
