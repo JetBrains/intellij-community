@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentCo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.task.RunConfigurationTaskState
+import com.intellij.util.ThreeState
 import org.gradle.initialization.BuildCancellationToken
 import org.gradle.tooling.CancellationToken
 import org.gradle.tooling.GradleConnector
@@ -46,12 +47,12 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
   private val cancellationTokens = ConcurrentCollectionFactory.createConcurrentSet<BuildCancellationToken>()
 
   @Volatile
-  private var shutdownStarted = false
+  private var shutdownStarted = ThreeState.UNSURE
 
   init {
     Runtime.getRuntime().addShutdownHook(object : Thread("Shutdown hook to get to know whether shutdown is started") {
       override fun start() {
-        shutdownStarted = true
+        shutdownStarted = ThreeState.YES
         super.start()
       }
     })
@@ -83,26 +84,37 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
   }
 
   private fun disconnectGradleConnections() {
-    if (!shutdownStarted) {
+    if (shutdownStarted != ThreeState.YES) {
       // do not call Gradle connector disconnect API when IDE app exit is called during VM shutdown
       // otherwise Gradle call might lead to adding a new shutdown hook, but it's prohibited when shutdown is already started
-      connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+      try {
+        connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+      }
+      catch (t: Throwable) {
+        LOG.warn("Failed to disconnect Gradle connections during project close", t)
+        // one more attempt to clean up Gradle daemons
+        gracefulStopDaemons()
+      }
     }
     else {
-      cancellationTokens.forEach {
-        if (!it.isCancellationRequested) {
-          try {
-            it.cancel()
-          }
-          catch (t : Throwable) {
-            LOG.warn("Failed to cancel build", t)
-          }
-        }
-      }
-      GradleDaemonServices.gracefulStopDaemons()
+      gracefulStopDaemons()
     }
     cancellationTokens.clear()
     connectorsMap.clear()
+  }
+
+  private fun gracefulStopDaemons() {
+    cancellationTokens.forEach {
+      if (!it.isCancellationRequested) {
+        try {
+          it.cancel()
+        }
+        catch (t: Throwable) {
+          LOG.warn("Failed to cancel build", t)
+        }
+      }
+    }
+    GradleDaemonServices.gracefulStopDaemons()
   }
 
   private fun getConnection(connectorParams: ConnectorParams,
@@ -141,12 +153,7 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
 
   private class GradleProjectConnection(val params: ConnectorParams, val connector: GradleConnector, val connection: ProjectConnection) {
     fun disconnect() {
-      try {
-        connector.disconnect()
-      }
-      catch (e: Exception) {
-        LOG.warn("Failed to disconnect Gradle connector during project close. Project path: '${params.projectPath}'", e)
-      }
+      connector.disconnect()
     }
   }
 
