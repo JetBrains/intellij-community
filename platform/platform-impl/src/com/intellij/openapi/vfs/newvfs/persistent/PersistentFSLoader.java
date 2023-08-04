@@ -610,15 +610,15 @@ public final class PersistentFSLoader {
     else {
       LOG.info("VFS uses regular attributes storage");
       boolean bulkAttrReadSupport = false;
+      boolean inlineAttributes = true;
       return new AttributesStorageOld(
         bulkAttrReadSupport,
-        FSRecordsImpl.INLINE_ATTRIBUTES,
+        inlineAttributes,
         new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
           @Override
           protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
-                                                            @NotNull Path recordsFile)
-            throws IOException {
-            return FSRecordsImpl.INLINE_ATTRIBUTES && FSRecordsImpl.USE_SMALL_ATTR_TABLE
+                                                            @NotNull Path recordsFile) throws IOException {
+            return FSRecordsImpl.USE_SMALL_ATTR_TABLE
                    ? new CompactRecordsTable(recordsFile, context, false)
                    : super.createRecordsTable(context, recordsFile);
           }

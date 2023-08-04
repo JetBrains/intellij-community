@@ -85,7 +85,6 @@ public final class FSRecordsImpl {
 
   //@formatter:off
   static final boolean USE_CONTENT_HASHES = getBooleanProperty("idea.share.contents", true);
-  static final boolean INLINE_ATTRIBUTES = getBooleanProperty("idea.inline.vfs.attributes", true);
 
   /**
    * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
@@ -192,7 +191,7 @@ public final class FSRecordsImpl {
            nextMask(USE_CONTENT_HASHES,
            nextMask(IOUtil.useNativeByteOrderForByteBuffers(),
            nextMask(false, // feel free to re-use
-           nextMask(INLINE_ATTRIBUTES,
+           nextMask(true,  //former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
            nextMask(false, // feel free to re-use
            nextMask(USE_SMALL_ATTR_TABLE,
