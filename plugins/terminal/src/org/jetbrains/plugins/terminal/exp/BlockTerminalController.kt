@@ -11,7 +11,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 
-class TerminalBlocksController(
+class BlockTerminalController(
   project: Project,
   private val session: TerminalSession,
   settings: JBTerminalSystemSettingsProviderBase
