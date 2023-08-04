@@ -21,7 +21,7 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
 
   init {
     val componentManager = ApplicationManager.getApplication() as ComponentManagerImpl
-    if (GlobalSdkTableBridge.isEnabled()) {
+    if (!GlobalSdkTableBridge.isEnabled()) {
       componentManager.registerService(SdkTableImplementationDelegate::class.java, LegacyProjectJdkTableDelegate::class.java,
                                        ComponentManagerImpl.fakeCorePluginDescriptor, false)
     } else {
