@@ -226,7 +226,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   protected boolean isStopping() {
-    return wasStarted() && (isCanceled() || !isRunning()) && !isFinished();
+    return (isCanceled() || !isRunning()) && !isFinished();
   }
 
   protected boolean isFinished() {

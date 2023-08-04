@@ -186,18 +186,18 @@ private fun CoroutineScope.showIndicator(
   return launch(Dispatchers.Default) {
     delay(DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS.toLong())
     val indicator = coroutineCancellingIndicator(taskJob) // cancel taskJob from UI
-    val indicatorAdded = withContext(Dispatchers.EDT) {
-      showIndicatorInUI(project, taskInfo, indicator)
-    }
-    if (indicatorAdded) {
-      indicator.start()
-      try {
+    indicator.start()
+    try {
+      val indicatorAdded = withContext(Dispatchers.EDT) {
+        showIndicatorInUI(project, taskInfo, indicator)
+      }
+      if (indicatorAdded) {
         indicator.updateFromFlow(stateFlow)
       }
-      finally {
-        indicator.stop()
-        indicator.finish(taskInfo)
-      }
+    }
+    finally {
+      indicator.stop()
+      indicator.finish(taskInfo)
     }
   }
 }
