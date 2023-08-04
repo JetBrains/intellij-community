@@ -5,6 +5,7 @@ import com.intellij.execution.util.ExecUtil
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.execution.ParametersListUtil
+import com.sun.jna.Memory
 import com.sun.jna.platform.win32.*
 import com.sun.jna.ptr.IntByReference
 import org.jetbrains.annotations.ApiStatus
@@ -17,62 +18,77 @@ import java.time.Duration
 object WindowsFileUtil {
   private val LOG = Logger.getInstance(javaClass)
 
-  private const val SEE_MASK_NO_CLOSE_PROCESS = 0x00000040
+  fun windowsCreateProcess(
+    executable: Path,
+    workingDirectory: Path,
+    parameters: List<String>,
+    environment: Map<String, String> = emptyMap(),
+    waitForProcess: Duration? = null
+  ) : WinNT.HANDLE {
 
-  fun windowsShellExecute(executable: Path, workingDirectory: Path, parameters: List<String>, waitForProcess: Duration? = null) : WinNT.HANDLE {
-    val info = ShellAPI.SHELLEXECUTEINFO()
-    info.cbSize = info.size()
-    info.lpFile = executable.toString()
-    info.lpVerb = "open"
-    info.lpParameters = ParametersListUtil.join(parameters)
-    info.lpDirectory = workingDirectory.toString()
-    info.nShow = WinUser.SW_NORMAL
-    info.fMask = SEE_MASK_NO_CLOSE_PROCESS
+    val si = WinBase.STARTUPINFO()
+    val pi = WinBase.PROCESS_INFORMATION()
 
-    val shellExecuteDebugParams = "ShellExecuteEx(" +
-                                  "lpFile='${info.lpFile}', " +
-                                  "lpVerb='${info.lpVerb}', " +
-                                  "lpParameters='${info.lpParameters}', " +
-                                  "lpDirectory='${info.lpDirectory}', " +
-                                  "nShow='${info.nShow}', " +
-                                  "fMask='0x${Integer.toHexString(info.fMask)}')"
+    val commandLine = ParametersListUtil.join(listOf(executable.toString()) + parameters)
 
-    LOG.info("Calling $shellExecuteDebugParams")
+    // A=1\0B=1\0\0
+    val environmentValue = environment
+      .map { "${it.key}=${it.value}" }.sorted()
+      .joinToString(separator = "${Char.MIN_VALUE}", postfix = "${Char.MIN_VALUE}${Char.MIN_VALUE}")
 
-    if (!Shell32.INSTANCE.ShellExecuteEx(info)) {
-      throw IOException("$shellExecuteDebugParams returned 0x" + Integer.toHexString(Kernel32.INSTANCE.GetLastError()))
-    }
+    val createProcessDebugParams = "CreateProcess(" +
+                                   "lpApplicationName=null, " +
+                                   "lpCommandLine='$commandLine', " +
+                                   "lpProcessAttributes=null, " +
+                                   "lpThreadAttributes=null, " +
+                                   "bInheritHandles=true, " +
+                                   "dwCreationFlags=0, " +
+                                   "lpEnvironment=$environmentValue, " +
+                                   "lpCurrentDirectory='$workingDirectory', " +
+                                   "lpStartupInfo=si, " +
+                                   "lpProcessInformation=pi)"
 
-    /*
-     * known reasons for a null hProcess:
-     *   1) ShellExecuteEx didn't result in creation of a new process
-     *   2) lpFile is a symlink and was not resolved
-     */
-    require(info.hProcess != null) {
-      "hProcess should not be null in our case"
+    LOG.info("Calling $createProcessDebugParams")
+
+    val environmentBytes = environmentValue.toByteArray(Charsets.UTF_16LE)
+    val environmentBlock = Memory(environmentBytes.size.toLong())
+    environmentBlock.write(0, environmentBytes, 0, environmentBytes.size)
+
+    if (!Kernel32.INSTANCE.CreateProcess(
+        /* lpApplicationName    = */ null,
+        /* lpCommandLine        = */ commandLine,
+        /* lpProcessAttributes  = */ null,
+        /* lpThreadAttributes   = */ null,
+        /* bInheritHandles      = */ true,
+        /* dwCreationFlags      = */ WinDef.DWORD(0),
+        /* lpEnvironment        = */ environmentBlock,
+        /* lpCurrentDirectory   = */ workingDirectory.toString(),
+        /* lpStartupInfo        = */ si,
+        /* lpProcessInformation = */ pi)) {
+      throw IOException("$createProcessDebugParams returned error: " + Kernel32.INSTANCE.GetLastError())
     }
 
     if (waitForProcess != null) {
       val exitCode = IntByReference(WinBase.INFINITE)
 
-      val waitRc = Kernel32.INSTANCE.WaitForSingleObject(info.hProcess, WinBase.INFINITE)
+      val waitRc = Kernel32.INSTANCE.WaitForSingleObject(pi.hProcess, WinBase.INFINITE)
       if (waitRc == WinError.WAIT_TIMEOUT) {
-        throw IOException("$shellExecuteDebugParams: timeout waiting for process to exit")
+        throw IOException("$createProcessDebugParams: timeout waiting for process to exit")
       }
 
-      Kernel32.INSTANCE.GetExitCodeProcess(info.hProcess, exitCode)
-      Kernel32.INSTANCE.CloseHandle(info.hProcess)
+      Kernel32.INSTANCE.GetExitCodeProcess(pi.hProcess, exitCode)
+      Kernel32.INSTANCE.CloseHandle(pi.hProcess)
 
       if (exitCode.value == WinBase.INFINITE) {
-        throw IOException("$shellExecuteDebugParams: could not read exit code")
+        throw IOException("$createProcessDebugParams: could not read exit code")
       }
 
       if (exitCode.value != 0) {
-        throw IOException("$shellExecuteDebugParams: non-zero exit code: ${exitCode.value}")
+        throw IOException("$createProcessDebugParams: non-zero exit code: ${exitCode.value}")
       }
     }
 
-    return info.hProcess
+    return pi.hProcess
   }
 
   fun createJunction(junctionFile: Path, targetFile: Path) {
