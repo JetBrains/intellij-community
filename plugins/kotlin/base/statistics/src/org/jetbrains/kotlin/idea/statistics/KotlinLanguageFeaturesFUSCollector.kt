@@ -154,6 +154,7 @@ class LanguageFeatureDeprecationCollector<T : InspectionData>(
         if (!service.recordInspection(file, inspectionType, data)) return
 
         inspectionUpdatedEvent.log(
+            file.project,
             EventFields.AnonymizedPath.with(file.virtualFilePath),
             kotlinLanguageVersionField.with(languageVersion.versionString),
             KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType),
@@ -164,6 +165,7 @@ class LanguageFeatureDeprecationCollector<T : InspectionData>(
     fun logQuickFixApplied(file: PsiFile?) {
         if (file !is KtFile || file.virtualFile == null) return
         inspectionAppliedEvent.log(
+            file.project,
             EventFields.AnonymizedPath.with(file.virtualFilePath),
             KotlinLanguageFeaturesFUSCollector.inspectionTypeField.with(inspectionType)
         )
