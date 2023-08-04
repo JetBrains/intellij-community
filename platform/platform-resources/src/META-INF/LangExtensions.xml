@@ -1541,12 +1541,13 @@
     <actionPromoter implementation="com.intellij.codeInsight.inline.completion.InlineActionsPromoter"/>
 
     <registryKey key="annotate.hyperlinks.in.general.pass"
-                 defaultValue="true"
+                 defaultValue="false"
                  description="Enables old behavior of HyperlinkAnnotator to run as part of GeneralHighlightingPass"/>
 
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory"/>
+    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ContributedReferenceHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.SlowLineMarkersPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory"/>

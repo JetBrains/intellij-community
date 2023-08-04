@@ -6,10 +6,6 @@ import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.DocumentWindow;
-import com.intellij.lang.ContributedReferencesAnnotators;
-import com.intellij.lang.Language;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
@@ -21,21 +17,20 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.TextAttributesScheme;
 import com.intellij.openapi.editor.ex.util.LayeredTextAttributes;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,28 +72,12 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
     List<PsiElement> allInsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.inside));
     List<PsiElement> allOutsideElements = ContainerUtil.concat((List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> d.outside));
 
-    boolean enableContributedReferencePass = !Registry.is("annotate.hyperlinks.in.general.pass");
-    List<PsiElement> contributedReferenceHosts = new ArrayList<>();
-    List<PsiElement> contributedReferenceHostsInside = new ArrayList<>();
-    if (enableContributedReferencePass) {
-      findContributedReferenceHosts(myFile, contributedReferenceHosts);
-
-      for (int i = 0; i < allInsideElements.size(); i++) {
-        PsiElement element = allInsideElements.get(i);
-        if (WebReference.isWebReferenceWorthy(element)) {
-          contributedReferenceHostsInside.add(element);
-        }
-      }
-    }
-
-    int contributedReferenceHostsCount = contributedReferenceHosts.size();
-
     List<HighlightInfo> resultInside = new ArrayList<>(100);
     List<HighlightInfo> resultOutside = new ArrayList<>(100);
 
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     TextAttributesKey fragmentKey = createInjectedLanguageFragmentKey(myFile.getLanguage());
-    processInjectedPsiFiles(allInsideElements, allOutsideElements, contributedReferenceHostsCount, progress, (injectedPsi, places) ->
+    processInjectedPsiFiles(allInsideElements, allOutsideElements, progress, (injectedPsi, places) ->
       addInjectedPsiHighlights(injectedLanguageManager, injectedPsi, places, fragmentKey, patchedInfo -> {
         queueInfoToUpdateIncrementally(patchedInfo, getId());
         synchronized (myHighlights) {
@@ -111,31 +90,6 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
           }
         }
       }));
-
-    if (enableContributedReferencePass) {
-      List<PsiElement> toVisit;
-      if (resultOutside.isEmpty() && !myUpdateAll) { // we can update incrementally, no results for injected fragments outside of range
-        toVisit = contributedReferenceHostsInside;
-      }
-      else { // we must update everything, since there can be updates outside of ranges
-        Set<PsiElement> allOrdered = new LinkedHashSet<>(contributedReferenceHostsInside.size() + contributedReferenceHosts.size());
-        allOrdered.addAll(contributedReferenceHostsInside);
-        allOrdered.addAll(contributedReferenceHosts);
-        toVisit = new ArrayList<>(allOrdered);
-      }
-
-      processContributedReferencesHosts(toVisit, highlightInfo -> {
-        queueInfoToUpdateIncrementally(highlightInfo, getId());
-        synchronized (myHighlights) {
-          if (myRestrictRange.contains(highlightInfo)) {
-            resultInside.add(highlightInfo);
-          }
-          else {
-            resultOutside.add(highlightInfo);
-          }
-        }
-      });
-    }
 
     synchronized (myHighlights) {
       // all infos for the "injected fragment for the host which is inside" are indeed inside
@@ -168,7 +122,6 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
   private void processInjectedPsiFiles(@NotNull List<? extends PsiElement> elements1,
                                        @NotNull List<? extends PsiElement> elements2,
-                                       int contributedReferenceHostsCount,
                                        @NotNull ProgressIndicator progress,
                                        @NotNull PsiLanguageInjectionHost.InjectedPsiVisitor visitor) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
@@ -212,7 +165,7 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     // the most expensive process is running injectors for these hosts, comparing to highlighting the resulting injected fragments,
     // so instead of showing "highlighted 1% of injected fragments", show "ran injectors for 1% of hosts"
-    setProgressLimit(hosts.size() + contributedReferenceHostsCount);
+    setProgressLimit(hosts.size());
     Set<PsiElement> visitedInjected = ConcurrentCollectionFactory.createConcurrentSet(); // in case of concatenation, multiple hosts can return the same injected fragment. have to visit it only once
 
     if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(new ArrayList<>(hosts), progress, element -> {
@@ -402,140 +355,5 @@ final class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
       .textAttributes(injectedAttributes)
       .createUnconditionally();
     outInfos.accept(injectedInfo);
-  }
-
-  /**
-   * We highlight contributed references only after injected fragments, because InjectedReferencesContributor supplies references from
-   * fragments and thus PsiLanguageInjectionHost.getReferences() depends on parsing of injected fragments.
-   * <p>
-   * This helps to not block {@link GeneralHighlightingPass} with a long parsing of nested code in a single threaded manner.
-   */
-  private void processContributedReferencesHosts(@NotNull List<PsiElement> contributedReferenceHosts,
-                                                 @NotNull Consumer<? super HighlightInfo> outInfos) {
-    ContributedReferencesHighlightVisitor visitor = new ContributedReferencesHighlightVisitor(myProject);
-
-    HighlightInfoFilter[] filters = HighlightInfoFilter.EXTENSION_POINT_NAME.getExtensions();
-    EditorColorsScheme actualScheme = getColorsScheme() == null ? EditorColorsManager.getInstance().getGlobalScheme() : getColorsScheme();
-    HighlightInfoHolder holder = new HighlightInfoHolder(myFile, filters) {
-      @Override
-      public @NotNull TextAttributesScheme getColorsScheme() {
-        return actualScheme;
-      }
-
-      @Override
-      public boolean add(@Nullable HighlightInfo info) {
-        boolean added = super.add(info);
-        if (info != null && added) {
-          outInfos.accept(info);
-        }
-        return added;
-      }
-    };
-
-    visitor.analyze(holder, () -> {
-      for (int i = 0; i < contributedReferenceHosts.size(); i++) {
-        PsiElement contributedReferenceHost = contributedReferenceHosts.get(i);
-
-        visitor.visit(contributedReferenceHost);
-
-        advanceProgress(1);
-      }
-    });
-  }
-
-  private static void findContributedReferenceHosts(PsiFile file, List<PsiElement> result) {
-    FileViewProvider viewProvider = file.getViewProvider();
-    for (Language language : viewProvider.getLanguages()) {
-      PsiFile root = viewProvider.getPsi(language);
-
-      if (SHOULD_HIGHLIGHT_FILTER.test(root)) {
-        // due to non-incremental nature of the injected pass we must always find all of them and add highlights
-        // otherwise highlights outside restricted or priority range will be removed
-        root.acceptChildren(new PsiRecursiveElementVisitor() {
-          @Override
-          public void visitElement(@NotNull PsiElement element) {
-            super.visitElement(element);
-
-            if (WebReference.isWebReferenceWorthy(element)) {
-              result.add(element);
-            }
-          }
-        });
-      }
-    }
-  }
-}
-
-final class ContributedReferencesHighlightVisitor {
-  private AnnotationHolderImpl myAnnotationHolder;
-
-  private final Map<Language, List<Annotator>> myAnnotators;
-
-  private final DumbService myDumbService;
-  private final boolean myBatchMode;
-  private boolean myDumb;
-
-  ContributedReferencesHighlightVisitor(@NotNull Project project) {
-    this(project, false);
-  }
-
-  private ContributedReferencesHighlightVisitor(@NotNull Project project,
-                                                boolean batchMode) {
-    myDumbService = DumbService.getInstance(project);
-    myBatchMode = batchMode;
-    myAnnotators = ConcurrentFactoryMap.createMap(language -> createAnnotators(language));
-  }
-
-  public void analyze(@NotNull HighlightInfoHolder holder, @NotNull Runnable action) {
-    myDumb = myDumbService.isDumb();
-
-    myAnnotationHolder = new AnnotationHolderImpl(holder.getAnnotationSession(), myBatchMode) {
-      @Override
-      void queueToUpdateIncrementally() {
-        if (!isEmpty()) {
-          //noinspection ForLoopReplaceableByForEach
-          for (int i = 0; i < size(); i++) {
-            Annotation annotation = get(i);
-            holder.add(HighlightInfo.fromAnnotation(annotation, myBatchMode));
-          }
-          clear();
-        }
-      }
-    };
-    try {
-      action.run();
-      myAnnotationHolder.assertAllAnnotationsCreated();
-    }
-    finally {
-      myAnnotators.clear();
-      myAnnotationHolder = null;
-    }
-  }
-
-  public void visit(@NotNull PsiElement element) {
-    runAnnotators(element);
-  }
-
-  private void runAnnotators(@NotNull PsiElement element) {
-    List<Annotator> annotators = myAnnotators.get(element.getLanguage());
-    if (!annotators.isEmpty()) {
-      AnnotationHolderImpl holder = myAnnotationHolder;
-      holder.myCurrentElement = element;
-      for (Annotator annotator : annotators) {
-        if (!myDumb || DumbService.isDumbAware(annotator)) {
-          ProgressManager.checkCanceled();
-          holder.myCurrentAnnotator = annotator;
-          annotator.annotate(element, holder);
-          // assume that annotator is done messing with just created annotations after its annotate() method completed,
-          // so we can start applying them incrementally at last
-          // (but not sooner, thanks to awfully racey Annotation.setXXX() API)
-          holder.queueToUpdateIncrementally();
-        }
-      }
-    }
-  }
-
-  private static @NotNull List<Annotator> createAnnotators(@NotNull Language language) {
-    return ContributedReferencesAnnotators.INSTANCE.allForLanguageOrAny(language);
   }
 }
