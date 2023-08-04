@@ -55,7 +55,7 @@ fun DefaultButton(
         interactionSource = interactionSource,
         style = style,
         content = content,
-        textStyle = textStyle,
+        textStyle = textStyle
     )
 }
 
@@ -76,7 +76,7 @@ fun OutlinedButton(
         interactionSource = interactionSource,
         style = style,
         content = content,
-        textStyle = textStyle,
+        textStyle = textStyle
     )
 }
 

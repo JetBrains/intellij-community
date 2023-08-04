@@ -6,12 +6,15 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,7 +28,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.singleWindowApplication
 import org.jetbrains.jewel.CheckboxRow
-import org.jetbrains.jewel.GroupHeader
+import org.jetbrains.jewel.Divider
 import org.jetbrains.jewel.LocalResourceLoader
 import org.jetbrains.jewel.VerticalScrollbar
 import org.jetbrains.jewel.samples.standalone.components.Borders
@@ -45,14 +48,13 @@ import java.io.InputStream
 fun main() {
     val icon = svgResource("icons/jewel-logo.svg")
     singleWindowApplication(
-        title = "Jewel sample",
+        title = "Jewel component catalog",
         icon = icon
     ) {
         var isDark by remember { mutableStateOf(false) }
         var swingCompat by remember { mutableStateOf(false) }
         val theme = if (isDark) IntUiTheme.dark() else IntUiTheme.light()
 
-        val verticalScrollState = rememberScrollState(0)
         val resourceLoader = LocalResourceLoader.current
 
         IntUiTheme(theme, swingCompat) {
@@ -61,42 +63,54 @@ fun main() {
             } else {
                 IntUiTheme.palette.grey(14)
             }
-            Box(
-                Modifier.fillMaxSize()
-                    .background(windowBackground),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    Modifier.width(IntrinsicSize.Max).padding(24.dp).verticalScroll(verticalScrollState),
-                    verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
-                    horizontalAlignment = Alignment.CenterHorizontally
+
+            Column(Modifier.fillMaxSize().background(windowBackground)) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    GroupHeader("Themes")
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(10.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CheckboxRow("Dark", isDark, resourceLoader, { isDark = it })
-                        CheckboxRow("Swing compat", swingCompat, resourceLoader, { swingCompat = it })
-                    }
-                    Borders()
-                    Buttons()
-                    Dropdowns()
-                    Checkboxes()
-                    RadioButtons()
-                    Links()
-                    TextAreas()
-                    ProgressBar()
-                    TextFields()
-                    Tabs()
-                    ChipsAndTree()
+                    CheckboxRow("Dark", isDark, resourceLoader, { isDark = it })
+                    CheckboxRow("Swing compat", swingCompat, resourceLoader, { swingCompat = it })
                 }
-                VerticalScrollbar(
-                    modifier = Modifier.align(Alignment.CenterEnd),
-                    adapter = rememberScrollbarAdapter(verticalScrollState)
-                )
+
+                Divider(Modifier.fillMaxWidth())
+
+                ComponentShowcase()
             }
         }
+    }
+}
+
+@Composable
+private fun ComponentShowcase() {
+    val verticalScrollState = rememberScrollState()
+
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier.width(IntrinsicSize.Max)
+                .verticalScroll(verticalScrollState)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp, Alignment.CenterVertically),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Borders()
+            Buttons()
+            Dropdowns()
+            Checkboxes()
+            RadioButtons()
+            Links()
+            TextAreas()
+            ProgressBar()
+            TextFields()
+            Tabs()
+            ChipsAndTree()
+        }
+
+        VerticalScrollbar(
+            modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+            adapter = rememberScrollbarAdapter(verticalScrollState)
+        )
     }
 }
 
