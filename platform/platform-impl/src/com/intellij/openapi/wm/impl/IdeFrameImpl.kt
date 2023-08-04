@@ -130,6 +130,7 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
 
   override fun dispose() {
     linuxComponentListener?.let {
+      removeComponentListener(it)
       it.dispose()
       linuxComponentListener = null
     }
