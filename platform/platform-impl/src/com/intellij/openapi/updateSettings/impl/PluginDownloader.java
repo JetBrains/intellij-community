@@ -21,7 +21,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -36,7 +36,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
@@ -175,8 +176,8 @@ public final class PluginDownloader {
     return myShownErrors;
   }
 
-  @RequiresBackgroundThread
   public boolean prepareToInstall(@NotNull ProgressIndicator indicator) throws IOException {
+    ThreadingAssertions.assertBackgroundThread();
     myShownErrors = false;
 
     if (myFile != null) {
@@ -254,8 +255,8 @@ public final class PluginDownloader {
     return true;
   }
 
-  @RequiresBackgroundThread
   private @Nullable IdeaPluginDescriptorImpl loadDescriptorFromArtifact() throws IOException {
+    ThreadingAssertions.assertBackgroundThread();
     return PluginDescriptorLoader.loadDescriptorFromArtifact(getFilePath(), myBuildNumber);
   }
 
@@ -338,8 +339,8 @@ public final class PluginDownloader {
     return appliedWithoutRestart;
   }
 
-  @RequiresBackgroundThread
   private @NotNull File tryDownloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
+    ThreadingAssertions.assertBackgroundThread();
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 

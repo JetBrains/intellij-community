@@ -40,7 +40,7 @@ import com.intellij.ui.AppUIUtilKt;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.Restarter;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -976,7 +976,7 @@ public final class ConfigImportHelper {
       });
     }
     else {
-      ApplicationManager.getApplication().assertIsDispatchThread();
+      ThreadingAssertions.assertEventDispatchThread();
 
       ConfigImportProgressDialog dialog = new ConfigImportProgressDialog();
       dialog.setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
@@ -995,11 +995,11 @@ public final class ConfigImportHelper {
     }
   }
 
-  @RequiresBackgroundThread
   private static void downloadUpdatesForIncompatiblePlugins(Path newPluginsDir,
                                                             ConfigImportOptions options,
                                                             List<IdeaPluginDescriptor> incompatiblePlugins,
                                                             ProgressIndicator indicator) {
+    ThreadingAssertions.assertBackgroundThread();
     Logger log = options.log;
     for (Iterator<IdeaPluginDescriptor> iterator = incompatiblePlugins.iterator(); iterator.hasNext(); ) {
       IdeaPluginDescriptor descriptor = iterator.next();
