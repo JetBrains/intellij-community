@@ -69,7 +69,7 @@ public final class SearchableOptionsRegistrarImpl extends SearchableOptionsRegis
 
   private static final Logger LOG = Logger.getInstance(SearchableOptionsRegistrarImpl.class);
   @NonNls
-  private static final Pattern WORD_SEPARATOR_CHARS = Pattern.compile("[^-\\pL\\d]+");
+  private static final Pattern WORD_SEPARATOR_CHARS = Pattern.compile("[^-\\pL\\d#+]+");
 
   public SearchableOptionsRegistrarImpl() {
     Application app = ApplicationManager.getApplication();
