@@ -38,7 +38,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.ClientProperty;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.ObjectUtils;
@@ -187,11 +186,9 @@ public final class RunDashboardServiceViewContributor
                                                                         ServiceViewLocatableDescriptor,
                                                                         ServiceViewDnDDescriptor {
     private final RunConfigurationNode myNode;
-    private final RunDashboardComponentWrapper myWrapper = new RunDashboardComponentWrapper();
 
     RunConfigurationServiceViewDescriptor(RunConfigurationNode node) {
       myNode = node;
-      ClientProperty.put(myWrapper, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
     }
 
     @Nullable
@@ -203,19 +200,21 @@ public final class RunDashboardServiceViewContributor
 
     @Override
     public JComponent getContentComponent() {
+      RunDashboardManagerImpl manager = ((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject()));
+      RunDashboardComponentWrapper wrapper = manager.getContentWrapper();
       Content content = myNode.getContent();
       if (content == null) {
-        myWrapper.setContent(((RunDashboardManagerImpl)RunDashboardManager.getInstance(myNode.getProject())).getEmptyContent());
-        myWrapper.setContentId(null);
+        wrapper.setContent(manager.getEmptyContent());
+        wrapper.setContentId(null);
       }
       else {
         ContentManager contentManager = content.getManager();
         if (contentManager == null) return null;
 
-        myWrapper.setContent(contentManager.getComponent());
-        myWrapper.setContentId(getContentId());
+        wrapper.setContent(contentManager.getComponent());
+        wrapper.setContentId(getContentId());
       }
-      return myWrapper;
+      return wrapper;
     }
 
     private Integer getContentId() {
