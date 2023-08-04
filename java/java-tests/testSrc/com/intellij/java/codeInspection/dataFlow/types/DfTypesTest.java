@@ -69,10 +69,10 @@ public class DfTypesTest {
     assertEquals("2147483647", ((DfDoubleType)DfTypes.doubleRange(1e10, 1e20)).castTo(PsiTypes.intType()).toString());
     assertEquals("-1", ((DfDoubleType)DfTypes.doubleRange(1e10, 1e20)).castTo(PsiTypes.shortType()).toString());
     assertEquals("long", ((DfDoubleType)DfTypes.LONG.castTo(PsiTypes.doubleType())).castTo(PsiTypes.longType()).toString());
-    DfLongType range = (DfLongType)DfTypes.longRange(LongRangeSet.range(-1_234_567_890_123_456_789L, 1_234_567_890_123_456_789L));
-    assertEquals("long in {-1234567890123456789..1234567890123456789}", range.toString());
-    assertEquals("double >= -1.23456789012345677E18 && <= 1.23456789012345677E18 not NaN", range.castTo(PsiTypes.doubleType()).toString());
-    assertEquals("long in {-1234567890123456768..1234567890123456768}", ((DfDoubleType)range.castTo(PsiTypes.doubleType())).castTo(
+    DfLongType range = (DfLongType)DfTypes.longRange(LongRangeSet.range(-1_234_567_890_123_458_234L, 1_234_567_890_123_458_234L));
+    assertEquals("long in {-1234567890123458234..1234567890123458234}", range.toString());
+    assertEquals("double >= -1.2345678901234583E18 && <= 1.2345678901234583E18 not NaN", range.castTo(PsiTypes.doubleType()).toString());
+    assertEquals("long in {-1234567890123458304..1234567890123458304}", ((DfDoubleType)range.castTo(PsiTypes.doubleType())).castTo(
       PsiTypes.longType()).toString());
     assertEquals("long", ((DfFloatType)DfTypes.LONG.castTo(PsiTypes.floatType())).castTo(PsiTypes.longType()).toString());
     assertEquals("long <= 0 or >= 10", ((DfDoubleType)DfTypes.doubleRange(1.0, 10.0).tryNegate()).castTo(PsiTypes.longType()).toString());
