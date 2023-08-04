@@ -59,6 +59,7 @@ import kotlinx.coroutines.flow.FlowCollector
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseMotionAdapter
+import java.awt.event.WindowStateListener
 import javax.accessibility.AccessibleContext
 import javax.accessibility.AccessibleRole
 import javax.swing.*
@@ -178,6 +179,14 @@ open class IdeRootPane internal constructor(frame: JFrame,
           isLightEdit = isLightEdit
         )
         layeredPane.add(customFrameTitlePane.getComponent(), (JLayeredPane.DEFAULT_LAYER - 3) as Any)
+
+        val windowStateListener = WindowStateListener {
+          installLinuxBorder()
+        }
+        frame.addWindowStateListener(windowStateListener)
+        coroutineScope.coroutineContext.job.invokeOnCompletion {
+          frame.removeWindowStateListener(windowStateListener)
+        }
       }
       else {
         helper = UndecoratedHelper
@@ -339,7 +348,9 @@ open class IdeRootPane internal constructor(frame: JFrame,
 
   private fun installLinuxBorder() {
     if (SystemInfoRt.isXWindow) {
-      border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && hideNativeLinuxTitle)
+      val extendedState = frame?.extendedState ?: 0
+      val maximized = extendedState and Frame.MAXIMIZED_BOTH == Frame.MAXIMIZED_BOTH
+      border = JBUI.CurrentTheme.Window.getBorder(!fullScreen && !maximized && hideNativeLinuxTitle)
     }
   }
 
