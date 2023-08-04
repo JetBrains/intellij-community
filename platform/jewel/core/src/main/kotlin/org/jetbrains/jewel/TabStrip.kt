@@ -30,12 +30,10 @@ import org.jetbrains.jewel.foundation.onHover
 
 @Composable
 fun TabStrip(
+    tabs: List<TabData>,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    content: TabStripScope.() -> Unit,
 ) {
-    val tabsData = remember { content.asList() }
-
     var tabStripState: TabStripState by remember { mutableStateOf(TabStripState.of(enabled = true)) }
 
     remember(enabled) { tabStripState = tabStripState.copy(enabled) }
@@ -61,7 +59,7 @@ fun TabStrip(
                 )
                 .selectableGroup()
         ) {
-            tabsData.forEach {
+            tabs.forEach {
                 TabImpl(isActive = tabStripState.isActive, tabData = it)
             }
         }
@@ -90,175 +88,89 @@ fun TabStrip(
     }
 }
 
-interface TabStripScope {
+@Immutable
+sealed class TabData {
 
-    fun tab(
-        selected: Boolean,
-        label: String,
-        tabIconResource: String? = null,
-        closable: Boolean = true,
-        onClose: () -> Unit = {},
-        onClick: () -> Unit = {},
-    )
+    abstract val selected: Boolean
+    abstract val label: String
+    abstract val tabIconResource: String? // TODO use painters instead
+    abstract val closable: Boolean
+    abstract val onClose: () -> Unit
+    abstract val onClick: () -> Unit
 
-    fun tabs(
-        tabsCount: Int,
-        selected: (Int) -> Boolean,
-        label: (Int) -> String,
-        tabIconResource: (Int) -> String?,
-        closable: (Int) -> Boolean,
-        onClose: (Int) -> Unit,
-        onClick: (Int) -> Unit,
-    )
-
-    fun editorTab(
-        selected: Boolean,
-        label: String,
-        tabIconResource: String? = null,
-        closable: Boolean = true,
-        onClose: () -> Unit = {},
-        onClick: () -> Unit = {},
-    )
-
-    fun editorTabs(
-        tabsCount: Int,
-        selected: (Int) -> Boolean,
-        label: (Int) -> String,
-        tabIconResource: (Int) -> String?,
-        closable: (Int) -> Boolean,
-        onClose: (Int) -> Unit,
-        onClick: (Int) -> Unit,
-    )
-}
-
-sealed class TabData(
-    val selected: Boolean,
-    val label: String,
-    val tabIconResource: String? = null,
-    val closable: Boolean = true,
-    val onClose: () -> Unit = {},
-    val onClick: () -> Unit = {},
-) {
-
+    @Immutable
     class Default(
-        selected: Boolean,
-        label: String,
-        tabIconResource: String? = null,
-        closable: Boolean = true,
-        onClose: () -> Unit = {},
-        onClick: () -> Unit = {},
-    ) : TabData(
-        selected,
-        label,
-        tabIconResource,
-        closable,
-        onClose,
-        onClick
-    )
+        override val selected: Boolean,
+        override val label: String,
+        override val tabIconResource: String? = null,
+        override val closable: Boolean = true,
+        override val onClose: () -> Unit = {},
+        override val onClick: () -> Unit = {},
+    ) : TabData() {
 
-    class Editor(
-        selected: Boolean,
-        label: String,
-        tabIconResource: String? = null,
-        closable: Boolean = true,
-        onClose: () -> Unit = {},
-        onClick: () -> Unit = {},
-    ) : TabData(
-        selected,
-        label,
-        tabIconResource,
-        closable,
-        onClose,
-        onClick
-    )
-}
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
 
-private fun (TabStripScope.() -> Unit).asList() = buildList {
-    this@asList(
-        object : TabStripScope {
-            override fun tab(
-                selected: Boolean,
-                label: String,
-                tabIconResource: String?,
-                closable: Boolean,
-                onClose: () -> Unit,
-                onClick: () -> Unit,
-            ) {
-                add(
-                    TabData.Default(
-                        selected = selected,
-                        label = label,
-                        tabIconResource = tabIconResource,
-                        closable = closable,
-                        onClose = onClose,
-                        onClick = onClick
-                    )
-                )
-            }
+            other as Default
 
-            override fun tabs(
-                tabsCount: Int,
-                selected: (Int) -> Boolean,
-                label: (Int) -> String,
-                tabIconResource: (Int) -> String?,
-                closable: (Int) -> Boolean,
-                onClose: (Int) -> Unit,
-                onClick: (Int) -> Unit,
-            ) {
-                repeat(tabsCount) {
-                    tab(
-                        selected(it),
-                        label(it),
-                        tabIconResource(it),
-                        closable(it),
-                        { onClose(it) },
-                        { onClick(it) }
-                    )
-                }
-            }
+            if (selected != other.selected) return false
+            if (label != other.label) return false
+            if (tabIconResource != other.tabIconResource) return false
+            if (closable != other.closable) return false
+            if (onClose != other.onClose) return false
+            if (onClick != other.onClick) return false
 
-            override fun editorTab(
-                selected: Boolean,
-                label: String,
-                tabIconResource: String?,
-                closable: Boolean,
-                onClose: () -> Unit,
-                onClick: () -> Unit,
-            ) {
-                add(
-                    TabData.Editor(
-                        selected = selected,
-                        label = label,
-                        tabIconResource = tabIconResource,
-                        closable = closable,
-                        onClose = onClose,
-                        onClick = onClick
-                    )
-                )
-            }
-
-            override fun editorTabs(
-                tabsCount: Int,
-                selected: (Int) -> Boolean,
-                label: (Int) -> String,
-                tabIconResource: (Int) -> String?,
-                closable: (Int) -> Boolean,
-                onClose: (Int) -> Unit,
-                onClick: (Int) -> Unit,
-            ) {
-                repeat(tabsCount) {
-                    editorTab(
-                        selected(it),
-                        label(it),
-                        tabIconResource(it),
-                        closable(it),
-                        { onClose(it) },
-                        { onClick(it) }
-                    )
-                }
-            }
+            return true
         }
-    )
+
+        override fun hashCode(): Int {
+            var result = selected.hashCode()
+            result = 31 * result + label.hashCode()
+            result = 31 * result + (tabIconResource?.hashCode() ?: 0)
+            result = 31 * result + closable.hashCode()
+            result = 31 * result + onClose.hashCode()
+            result = 31 * result + onClick.hashCode()
+            return result
+        }
+    }
+
+    @Immutable
+    class Editor(
+        override val selected: Boolean,
+        override val label: String,
+        override val tabIconResource: String? = null,
+        override val closable: Boolean = true,
+        override val onClose: () -> Unit = {},
+        override val onClick: () -> Unit = {},
+    ) : TabData() {
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as Editor
+
+            if (selected != other.selected) return false
+            if (label != other.label) return false
+            if (tabIconResource != other.tabIconResource) return false
+            if (closable != other.closable) return false
+            if (onClose != other.onClose) return false
+            if (onClick != other.onClick) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = selected.hashCode()
+            result = 31 * result + label.hashCode()
+            result = 31 * result + (tabIconResource?.hashCode() ?: 0)
+            result = 31 * result + closable.hashCode()
+            result = 31 * result + onClose.hashCode()
+            result = 31 * result + onClick.hashCode()
+            return result
+        }
+    }
 }
 
 @Immutable

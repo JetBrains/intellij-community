@@ -50,7 +50,7 @@ import java.util.jar.JarFile
 @Composable
 fun Icon(
     imageVector: ImageVector,
-    contentDescription: String? = null,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
 ) {
@@ -78,7 +78,7 @@ fun Icon(
 @Composable
 fun Icon(
     bitmap: ImageBitmap,
-    contentDescription: String? = null,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
 ) {
@@ -94,8 +94,8 @@ fun Icon(
 @Composable
 fun Icon(
     resource: String,
+    contentDescription: String?,
     resourceLoader: ResourceLoader = LocalResourceLoader.current,
-    contentDescription: String? = null,
     modifier: Modifier = Modifier,
     tint: Color = Color.Unspecified,
 ) {

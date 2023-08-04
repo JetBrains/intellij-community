@@ -1,7 +1,6 @@
 package org.jetbrains.jewel.styling
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material.ContentAlpha.disabled
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
@@ -64,7 +63,7 @@ interface TabColors {
     fun contentFor(state: TabState) = rememberUpdatedState(
         when {
             state.isSelected -> contentSelected
-            else -> state.chooseValue(
+            else -> state.chooseValueIgnoreCompat(
                 normal = content,
                 disabled = contentDisabled,
                 focused = contentFocused,
@@ -79,7 +78,7 @@ interface TabColors {
     fun backgroundFor(state: TabState) = rememberUpdatedState(
         when {
             state.isSelected -> backgroundSelected
-            else -> state.chooseValue(
+            else -> state.chooseValueIgnoreCompat(
                 normal = background,
                 disabled = backgroundDisabled,
                 focused = backgroundFocused,
@@ -94,7 +93,7 @@ interface TabColors {
     fun underlineFor(state: TabState) = rememberUpdatedState(
         when {
             state.isSelected -> underlineSelected
-            else -> state.chooseValue(
+            else -> state.chooseValueIgnoreCompat(
                 normal = underline,
                 disabled = underlineDisabled,
                 focused = underlineFocused,
@@ -120,7 +119,7 @@ interface TabContentAlpha {
     fun iconFor(state: TabState) = rememberUpdatedState(
         when {
             state.isSelected -> iconSelected
-            else -> state.chooseValue(
+            else -> state.chooseValueIgnoreCompat(
                 normal = iconNormal,
                 disabled = iconDisabled,
                 focused = iconFocused,
@@ -142,7 +141,7 @@ interface TabContentAlpha {
     fun labelFor(state: TabState) = rememberUpdatedState(
         when {
             state.isSelected -> labelSelected
-            else -> state.chooseValue(
+            else -> state.chooseValueIgnoreCompat(
                 normal = labelNormal,
                 disabled = labelDisabled,
                 focused = labelFocused,
@@ -153,6 +152,25 @@ interface TabContentAlpha {
         }
     )
 }
+
+// Tabs are the only components that handle hover states
+@Composable
+private fun <T> TabState.chooseValueIgnoreCompat(
+    normal: T,
+    disabled: T,
+    focused: T,
+    pressed: T,
+    hovered: T,
+    active: T,
+): T =
+    when {
+        !isEnabled -> disabled
+        isPressed -> pressed
+        isHovered -> hovered
+        isFocused -> focused
+        isActive -> active
+        else -> normal
+    }
 
 val LocalDefaultTabStyle = staticCompositionLocalOf<TabStyle> {
     error("No LocalTabStyle provided")

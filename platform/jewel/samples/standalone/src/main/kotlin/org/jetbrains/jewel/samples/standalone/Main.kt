@@ -54,12 +54,16 @@ fun main() {
 
         val verticalScrollState = rememberScrollState(0)
         val resourceLoader = LocalResourceLoader.current
-        val palette = IntUiTheme.palette
 
         IntUiTheme(theme, swingCompat) {
+            val windowBackground = if (isDark) {
+                IntUiTheme.palette.grey(1)
+            } else {
+                IntUiTheme.palette.grey(14)
+            }
             Box(
                 Modifier.fillMaxSize()
-                    .background(if (isDark) palette.grey(1) else palette.grey(14)),
+                    .background(windowBackground),
                 contentAlignment = Alignment.Center
             ) {
                 Column(

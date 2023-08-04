@@ -331,7 +331,7 @@ data class IntUiTabContentAlpha(
             labelFocused,
             labelPressed,
             labelHovered,
-            labelSelected,
+            labelSelected
         )
 
         fun editor(
@@ -360,7 +360,7 @@ data class IntUiTabContentAlpha(
                 labelFocused,
                 labelPressed,
                 labelHovered,
-                labelSelected,
+                labelSelected
             )
     }
 }
