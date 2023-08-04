@@ -12,7 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 class IJShellRuntimeDataProvider(private val session: TerminalSession) : ShellRuntimeDataProvider {
   override suspend fun getFilesFromDirectory(path: String): List<String> {
-    if (session.shellIntegration?.shellType != ShellType.ZSH) {
+    val shellType = session.shellIntegration?.shellType ?: return emptyList()
+    if (shellType != ShellType.ZSH && shellType != ShellType.BASH) {
       return emptyList()
     }
     val requestId = CUR_ID.getAndIncrement()

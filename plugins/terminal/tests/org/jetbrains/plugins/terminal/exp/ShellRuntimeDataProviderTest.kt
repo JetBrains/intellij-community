@@ -24,22 +24,16 @@ import kotlin.time.Duration.Companion.seconds
 class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
   private lateinit var session: TerminalSession
   private lateinit var testDirectory: Path
-  private val shellPath = "/bin/zsh"
-
-  override fun setUp() {
-    Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
-    super.setUp()
-    session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
-    testDirectory = createTempDirectory(prefix = "runtime_data")
-  }
 
   override fun tearDown() {
-    if (!this::session.isInitialized) {
-      return // no shell installed
-    }
     try {
-      Disposer.dispose(session)
-      FileUtil.deleteRecursively(testDirectory)
+      // Can be not initialized if there is no required Shell
+      if (this::session.isInitialized) {
+        Disposer.dispose(session)
+      }
+      if (this::testDirectory.isInitialized) {
+        FileUtil.deleteRecursively(testDirectory)
+      }
     }
     catch (t: Throwable) {
       addSuppressedException(t)
@@ -50,7 +44,20 @@ class ShellRuntimeDataProviderTest : BasePlatformTestCase() {
   }
 
   @Test
-  fun `get all files from directory`() = runBlocking {
+  fun `get all files from directory (zsh)`() {
+    doTest(shellPath = "/bin/zsh")
+  }
+
+  @Test
+  fun `get all files from directory (bash)`() {
+    doTest(shellPath = "/bin/bash")
+  }
+
+  fun doTest(shellPath: String) = runBlocking {
+    Assume.assumeTrue("Shell is not found in '$shellPath'", File(shellPath).exists())
+    session = TerminalSessionTestUtil.startTerminalSession(project, shellPath, testRootDisposable)
+    testDirectory = createTempDirectory(prefix = "runtime_data")
+
     val expected = listOf(
       file("abcde.txt"),
       file("aghsdml"),

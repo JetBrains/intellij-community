@@ -25,6 +25,17 @@ __jetbrains_intellij_encode() {
   fi
 }
 
+__jetbrains_intellij_is_generator_command() {
+  [[ "$1" == *"__jetbrains_intellij_get_directory_files"* ]]
+}
+
+__jetbrains_intellij_get_directory_files() {
+  __JETBRAINS_INTELLIJ_GENERATOR_COMMAND=1
+  builtin local request_id="$1"
+  builtin local result="$(ls -1ap "$2")"
+  builtin printf '\e]1341;generator_finished;request_id=%s;result=%s\a' "$request_id" "$(__jetbrains_intellij_encode "${result}")"
+}
+
 __jetbrains_intellij_prompt_shown() {
   builtin printf '\e]1341;prompt_shown\a'
 }
@@ -44,6 +55,10 @@ __jetbrains_intellij_debug_log() {
 
 __jetbrains_intellij_command_started() {
   builtin local bash_command="$BASH_COMMAND"
+  if __jetbrains_intellij_is_generator_command "$bash_command"
+  then
+    return 0
+  fi
   if [[ "$bash_command" != "$PROMPT_COMMAND" ]]; then
     __jetbrains_intellij_debug_log "command_started '$bash_command'"
     builtin local current_directory="$PWD"
@@ -56,6 +71,11 @@ __jetbrains_intellij_command_started() {
 __jetbrains_intellij_initialized=""
 
 __jetbrains_intellij_command_terminated() {
+  if [ ! -z $__JETBRAINS_INTELLIJ_GENERATOR_COMMAND ]
+  then
+    unset __JETBRAINS_INTELLIJ_GENERATOR_COMMAND
+    return 0
+  fi
   builtin local last_exit_code="$?"
 
   # Show completions on first TAB if there are more than one suitable option
@@ -84,3 +104,4 @@ __jetbrains_intellij_command_terminated() {
 }
 
 PROMPT_COMMAND='__jetbrains_intellij_command_terminated'
+HISTIGNORE="${HISTIGNORE}:__jetbrains_intellij_get_directory_files*"
