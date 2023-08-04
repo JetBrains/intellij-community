@@ -86,11 +86,6 @@ public final class FSRecordsImpl {
   //@formatter:off
   static final boolean USE_CONTENT_HASHES = getBooleanProperty("idea.share.contents", true);
 
-  /**
-   * If true -> use {@link CompactRecordsTable} for managing attributes record, instead of default {@link com.intellij.util.io.storage.RecordsTable}
-   */
-  static final boolean USE_SMALL_ATTR_TABLE = getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
-
   static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-storage", false);
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
@@ -194,7 +189,7 @@ public final class FSRecordsImpl {
            nextMask(true,  //former 'inline attributes', feel free to re-use
            nextMask(getBooleanProperty(FSRecords.IDE_USE_FS_ROOTS_DATA_LOADER, false),
            nextMask(false, // feel free to re-use
-           nextMask(USE_SMALL_ATTR_TABLE,
+           nextMask(true,  // former USE_SMALL_ATTR_TABLE, feel free to re-use
            nextMask(PersistentHashMapValueStorage.COMPRESSION_ENABLED,
            nextMask(FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS,
            nextMask(ZipHandlerBase.getUseCrcInsteadOfTimestampPropertyValue(),

@@ -618,9 +618,7 @@ public final class PersistentFSLoader {
           @Override
           protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
                                                             @NotNull Path recordsFile) throws IOException {
-            return FSRecordsImpl.USE_SMALL_ATTR_TABLE
-                   ? new CompactRecordsTable(recordsFile, context, false)
-                   : super.createRecordsTable(context, recordsFile);
+            return new CompactRecordsTable(recordsFile, context, false);
           }
         });
     }
