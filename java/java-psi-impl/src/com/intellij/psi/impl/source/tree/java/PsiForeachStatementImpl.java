@@ -32,7 +32,9 @@ public class PsiForeachStatementImpl extends PsiForeachStatementBaseImpl impleme
       // Parent element should not see our vars
       return true;
 
-    return processor.execute(getIterationParameter(), state);
+    PsiParameter parameter = getIterationParameter();
+    if (parameter.isUnnamed()) return true;
+    return processor.execute(parameter, state);
   }
 
   @Override
