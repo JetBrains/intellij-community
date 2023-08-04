@@ -269,7 +269,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           app.exit(true, true, false)
         }
 
-        session.makeScreenshot.set { fileName ->
+        session.makeScreenshot.set(SynchronousScheduler, SynchronousScheduler) { fileName ->
           return@set makeScreenshot(fileName)
         }
 
@@ -325,51 +325,32 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       return File(PathManager.getLogPath()).resolve(fileName)
     }
 
-    val result = CompletableFuture<Boolean>()
-    ApplicationManager.getApplication().invokeLater {
-      fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
-        LOG.info("Making screenshot of ${component}")
-        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-        component.printAll(img.createGraphics())
-        ApplicationManager.getApplication().executeOnPooledThread {
-          try {
-            ImageIO.write(img, "png", screenshotFile)
-            LOG.info("Screenshot is saved at: $screenshotFile")
-          }
-          catch (t: Throwable) {
-            LOG.warn("Exception while writing screenshot image to file", t)
-          }
+    fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
+      LOG.info("Making screenshot of ${component}")
+      val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+      component.printAll(img.createGraphics())
+      ApplicationManager.getApplication().executeOnPooledThread {
+        try {
+          ImageIO.write(img, "png", screenshotFile)
+          LOG.info("Screenshot is saved at: $screenshotFile")
         }
-      }
-
-      val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
-      windows.forEachIndexed { index, window ->
-        val screenshotFile = if (window.isFocusAncestor()) {
-          screenshotFile("_${index}_focusedWindow")
-        }
-        else {
-          screenshotFile("_$index")
-        }
-        makeScreenshotOfComponent(screenshotFile, window)
-      }
-      result.complete(true)
-    }
-
-    IdeEventQueue.getInstance().flushQueue()
-
-    try {
-      result[45, TimeUnit.SECONDS]
-    }
-    catch (e: Throwable) {
-      when (e) {
-        is InterruptedException, is ExecutionException, is TimeoutException -> LOG.info(e)
-        else -> {
-          LOG.warn("Test action 'makeScreenshot' hasn't finished successfully", e)
-          return false
+        catch (t: Throwable) {
+          LOG.warn("Exception while writing screenshot image to file", t)
         }
       }
     }
-    return result.get()
+
+    val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
+    windows.forEachIndexed { index, window ->
+      val screenshotFile = if (window.isFocusAncestor()) {
+        screenshotFile("_${index}_focusedWindow")
+      }
+      else {
+        screenshotFile("_$index")
+      }
+      makeScreenshotOfComponent(screenshotFile, window)
+    }
+    return true
   }
 }
 
