@@ -197,6 +197,7 @@ public final class PsiImplUtil {
     if (fromBody) {
       final PsiParameter[] parameters = element.getParameterList().getParameters();
       for (PsiParameter parameter : parameters) {
+        if (parameter.isUnnamed()) continue;
         if (!processor.execute(parameter, state)) return false;
       }
     }
@@ -213,7 +214,9 @@ public final class PsiImplUtil {
 
     for (PsiResourceListElement resource : resourceList) {
       if (resource == lastParent) break;
-      if (resource instanceof PsiResourceVariable && !processor.execute(resource, state)) return false;
+      if (resource instanceof PsiResourceVariable &&
+          !((PsiResourceVariable)resource).isUnnamed() &&     
+          !processor.execute(resource, state)) return false;
     }
 
     return true;

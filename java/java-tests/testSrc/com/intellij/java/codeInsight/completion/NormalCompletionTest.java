@@ -2966,4 +2966,18 @@ public class NormalCompletionTest extends NormalCompletionTestCase {
     listElement.renderElement(presentation);
     assertEquals("(Object paramName)", presentation.getTailText());
   }
+
+  @NeedsIndex.ForStandardLibrary
+  public void testCompleteUnnamed() {
+    myFixture.configureByText("Test.java", """
+      class X {
+        void test() {
+          String _ = "hello";
+          _.t<caret>
+        }
+      }
+      """);
+    LookupElement[] elements = myFixture.completeBasic();
+    assertEquals(0, elements.length);
+  }
 }
