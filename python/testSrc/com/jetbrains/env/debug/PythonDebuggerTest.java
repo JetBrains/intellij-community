@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.jetbrains.env.EnvTestTagsRequired;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -914,7 +913,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyDebuggerTask("/debug", "test_builtin_break.py") {
       @Override
       public void before() {
-        toggleBreakpoint(getFilePath(getScriptName()),2);
+        toggleBreakpoint(getFilePath(getScriptName()), 2);
       }
 
       @Override
@@ -938,7 +937,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testTypeHandler() {
     runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_type_handler.py") {
 
-      private final static String PYTHON2_TAG = "python2";
 
       @Override
       public void before() {
@@ -955,19 +953,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         eval("s5").hasValue("'\n'");
         eval("s6").hasValue("\"'foo'bar\nbaz\\\\\"");
         eval("s7").hasValue("'^\\\\w+$'");
-        if (hasPython2Tag()) {
-          eval("s8").hasValue("u\"'459'\"");
-          eval("s9").hasValue("u'459'");
-          eval("s10").hasValue("u'❤'");
-        } else {
-          eval("s8").hasValue("\"'459'\"");
-          eval("s9").hasValue("'459'");
-          eval("s10").hasValue("'❤'");
-        }
-      }
-
-      private boolean hasPython2Tag() throws NullPointerException {
-        return hasTag(PYTHON2_TAG);
+        eval("s8").hasValue("\"'459'\"");
+        eval("s9").hasValue("'459'");
+        eval("s10").hasValue("'❤'");
       }
     });
   }
@@ -1127,7 +1115,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         assertEquals("size", children.getName(4));
         assertEquals("array", children.getName(5));
 
-        PyDebugValue array = (PyDebugValue) children.getValue(5);
+        PyDebugValue array = (PyDebugValue)children.getValue(5);
 
         children = loadVariable(array);
         assertEquals(MAX_ITEMS_TO_HANDLE + 1, children.size());
@@ -1149,9 +1137,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         PyDebugValue s = findDebugValueByName(frameVariables, "s");
         children = loadVariable(s);
-        PyDebugValue values = (PyDebugValue) children.getValue(children.size() - 1);
+        PyDebugValue values = (PyDebugValue)children.getValue(children.size() - 1);
         children = loadVariable(values);
-        array = (PyDebugValue) children.getValue(children.size() - 1);
+        array = (PyDebugValue)children.getValue(children.size() - 1);
         children = loadVariable(array);
 
         assertEquals(MAX_ITEMS_TO_HANDLE + 1, children.size());
@@ -1173,9 +1161,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         PyDebugValue df = findDebugValueByName(frameVariables, "df");
         children = loadVariable(df);
-        values = (PyDebugValue) children.getValue(children.size() - 1);
+        values = (PyDebugValue)children.getValue(children.size() - 1);
         children = loadVariable(values);
-        array = (PyDebugValue) children.getValue(children.size() - 1);
+        array = (PyDebugValue)children.getValue(children.size() - 1);
         children = loadVariable(array);
 
         assertEquals(MAX_ITEMS_TO_HANDLE + 1, children.size());
@@ -1316,16 +1304,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
     final class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTaskTagAware {
 
-      private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
-                                                       "Breakpoints may not work correctly.\n";
-      private final static String PYTHON2_TAG = "python2";
+      private final static String BYTES_ARGS_WARNING =
+        "pydev debugger: bytes arguments were passed to a new process creation function. " + "Breakpoints may not work correctly.\n";
 
       private ExecAndSpawnWithBytesArgsTask(@Nullable String relativeTestDataPath, String scriptName) {
         super(relativeTestDataPath, scriptName);
-      }
-
-      private boolean hasPython2Tag() throws NullPointerException {
-          return hasTag(PYTHON2_TAG);
       }
 
       @Override
@@ -1343,16 +1326,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         setProcessCanTerminate(true);
         resume();
-        try {
-          if (hasPython2Tag()) {
-            assertFalse(output().contains(BYTES_ARGS_WARNING));
-          }
-          else
-            waitForOutput(BYTES_ARGS_WARNING);
-        }
-        catch (NullPointerException e) {
-          fail("Error while checking if the env has the " + PYTHON2_TAG + " tag.");
-        }
+        waitForOutput(BYTES_ARGS_WARNING);
       }
 
       @NotNull
@@ -1362,9 +1336,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       }
     }
 
-    Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py").forEach(
-      (script) -> runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", script))
-    );
+    Arrays.asList("test_call_exec_with_bytes_args.py", "test_call_spawn_with_bytes_args.py")
+      .forEach((script) -> runPythonTest(new ExecAndSpawnWithBytesArgsTask("/debug", script)));
   }
 
   @Test
@@ -1381,7 +1354,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         resume();
         waitForPause();
         List<PyDebugValue> frameVariables = loadFrame();
-        assertTrue(findDebugValueByName(frameVariables,".0").getType().endsWith("_iterator"));
+        assertTrue(findDebugValueByName(frameVariables, ".0").getType().endsWith("_iterator"));
         eval(".0");
         // Different Python versions have different types of an internal list comprehension loop. Whatever the type is, we shouldn't get
         // an evaluating error.
@@ -1455,8 +1428,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   public void testCodeEvaluationWithGeneratorExpression() {
     runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_code_eval_with_generator_expr.py") {
 
-      private final static String PYTHON2_TAG = "python2";
-
       @Override
       public void before() {
         toggleBreakpoint(getFilePath(getScriptName()), 8);
@@ -1478,21 +1449,9 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                           gen = (c for c in TFN if c == q)
                           lcomp = [c for c in TFN if c == q]
                           print(list(gen), "\\t", list(lcomp))""");
-        if (hasPython2Tag()) {
-          // Python 2 formats the output slightly differently.
-          expectedOutput = ("""
-                              ([True], '\\t', [True])
-                              ([False], '\\t', [False])
-                              ([None], '\\t', [None])""").split("\n");
-          for (String line : expectedOutput) {
-            waitForOutput(line);
-          }
-        }
-        else {
           for (String line : expectedOutput) {
             waitForOutput(line, 2);
           }
-        }
         consoleExec("""
                       def g():
                           print("Foo, bar, baz")
@@ -1501,10 +1460,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
                       f()""");
         waitForOutput("Foo, bar, baz");
         resume();
-      }
-
-      private boolean hasPython2Tag() throws NullPointerException {
-        return hasTag(PYTHON2_TAG);
       }
     });
   }
@@ -1690,22 +1645,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   public void testDictWithUnicodeOrBytesValuesOrNames() {
     runPythonTest(new PyDebuggerTaskTagAware("/debug", "test_dict_with_unicode_or_bytes_values_names.py") {
-      private final static String PYTHON2_TAG = "python2";
 
       @Override
       public void testing() throws Exception {
-        if (hasPython2Tag()) {
-          waitForOutput("{u\"u'Foo \\u201cFoo\\u201d Bar' (4706573888)\": u'\\u201cFoo\\u201d'}");
-          waitForOutput("{'\\xfc\\x00': '\\x00\\x10'}");
-        }
-        else {
-          waitForOutput("{\"u'Foo “Foo” Bar' (4706573888)\": '“Foo”'}");
-          waitForOutput("{b'\\xfc\\x00': b'\\x00\\x10'}");
-        }
-      }
-
-      private boolean hasPython2Tag() throws NullPointerException {
-        return hasTag(PYTHON2_TAG);
+        waitForOutput("{\"u'Foo “Foo” Bar' (4706573888)\": '“Foo”'}");
+        waitForOutput("{b'\\xfc\\x00': b'\\x00\\x10'}");
       }
     });
   }
