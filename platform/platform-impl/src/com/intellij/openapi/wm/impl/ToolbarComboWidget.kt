@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.internal.inspector.PropertyBean
+import com.intellij.internal.inspector.UiInspectorContextProvider
 import com.intellij.openapi.ui.popup.JBPopup
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -13,7 +15,7 @@ import kotlin.properties.Delegates
 import kotlin.reflect.KProperty
 
 @Suppress("LeakingThis")
-abstract class ToolbarComboWidget: JComponent() {
+abstract class ToolbarComboWidget: JComponent(), UiInspectorContextProvider {
   val pressListeners: MutableList<ActionListener> = mutableListOf()
 
   var text: @Nls String? by Delegates.observable("", this::fireUpdateEvents)
@@ -32,6 +34,17 @@ abstract class ToolbarComboWidget: JComponent() {
     // set UI for component
     updateUI()
     isOpaque = false
+  }
+
+  override fun getUiInspectorContext(): List<PropertyBean> {
+    val res = mutableListOf<PropertyBean>()
+    if (leftIcons.size == 1) res.add(PropertyBean("icon", leftIcons[0], false))
+    if (leftIcons.size > 1) res.add(PropertyBean("leftIcons", leftIcons, false))
+
+    if (rightIcons.size == 1) res.add(PropertyBean("rightIcon", rightIcons[0], false))
+    if (rightIcons.size > 1) res.add(PropertyBean("rightIcons", rightIcons, false))
+
+    return res
   }
 
   abstract fun doExpand(e: InputEvent?)
