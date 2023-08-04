@@ -1958,6 +1958,9 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     if (type1 == JavaTokenType.GTGT && type2 != JavaTokenType.GT && type2 != JavaTokenType.EQ) return true;
     if (type1 != JavaTokenType.GT && type2 == JavaTokenType.GTGT) return true;
 
+    // Because 21 Preview is not the highest language level.
+    if (ElementType.STRING_TEMPLATE_FRAGMENTS.contains(type1) || ElementType.STRING_TEMPLATE_FRAGMENTS.contains(type2)) return true;
+
     Pair<IElementType, IElementType> key = pair(type1, type2);
     Boolean result = ourTokenStickingMatrix.get(key);
 
