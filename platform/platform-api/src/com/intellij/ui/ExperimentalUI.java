@@ -46,6 +46,8 @@ import static java.time.temporal.ChronoUnit.DAYS;
 public abstract class ExperimentalUI {
   @SuppressWarnings("deprecation") public static final String KEY = NewUiValue.KEY;
 
+  /** @deprecated please use {@link #isNewUiUsedOnce()} instead */
+  @SuppressWarnings("DeprecatedIsStillUsed") @Deprecated
   public static final String NEW_UI_USED_PROPERTY = "experimental.ui.used.once";
   // Last IDE version when New UI was enabled
   public static final String NEW_UI_USED_VERSION = "experimental.ui.used.version";
@@ -116,6 +118,12 @@ public abstract class ExperimentalUI {
 
   public static boolean isEditorTabsWithScrollBar() {
     return isNewUI() && Registry.is("ide.experimental.ui.editor.tabs.scrollbar");
+  }
+
+  /** Whether New UI was enabled at least once. Note: tracked since 2023.1 */
+  public static boolean isNewUiUsedOnce() {
+    var propertiesComponent = PropertiesComponent.getInstance();
+    return propertiesComponent.getValue(NEW_UI_USED_VERSION) != null || propertiesComponent.getBoolean(NEW_UI_USED_PROPERTY);
   }
 
   public static final class NotPatchedIconRegistry {

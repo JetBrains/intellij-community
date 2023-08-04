@@ -7,7 +7,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -173,8 +172,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static boolean calculateOurNewUiIcon() {
-    PropertiesComponent propertyComponent = PropertiesComponent.getInstance();
-    return !ExperimentalUI.isNewUI() && !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY)
+    return !ExperimentalUI.isNewUI() && !ExperimentalUI.isNewUiUsedOnce()
            && ExperimentalUI.getPromotionDaysCount() < 14;
   }
 

@@ -20,10 +20,9 @@ class NewUiPromoter : BannerStartPagePromoter() {
     get() = IconLoader.getIcon("welcome/newUiPromo.png", NewUiPromoter::class.java.classLoader)
 
   override fun canCreatePromo(isEmptyState: Boolean): Boolean {
-    val propertyComponent = PropertiesComponent.getInstance()
     return !ExperimentalUI.isNewUI() &&
-           !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_USED_PROPERTY) &&
-           !propertyComponent.getBoolean(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY)
+           !ExperimentalUI.isNewUiUsedOnce() &&
+           !PropertiesComponent.getInstance().getBoolean(ExperimentalUI.NEW_UI_PROMO_BANNER_DISABLED_PROPERTY)
   }
 
   override fun getPriorityLevel(): Int = PRIORITY_LEVEL_HIGH

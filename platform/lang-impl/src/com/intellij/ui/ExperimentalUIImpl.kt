@@ -80,10 +80,8 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   fun appStarted() {
     if (isNewUI()) {
-      val propertiesComponent = PropertiesComponent.getInstance()
-      propertiesComponent.setValue(NEW_UI_USED_PROPERTY, true)
       val version = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
-      propertiesComponent.setValue(NEW_UI_USED_VERSION, version)
+      PropertiesComponent.getInstance().setValue(NEW_UI_USED_VERSION, version)
     }
   }
 
@@ -143,7 +141,7 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
   private fun setNewUiUsed() {
     val propertyComponent = PropertiesComponent.getInstance()
-    if (propertyComponent.getBoolean(NEW_UI_USED_PROPERTY)) {
+    if (isNewUiUsedOnce()) {
       propertyComponent.unsetValue(NEW_UI_FIRST_SWITCH)
     }
     else {
