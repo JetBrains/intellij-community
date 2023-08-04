@@ -40,4 +40,4 @@ interface UMultiResolvable {
 
 fun UResolvable.resolveToUElement(): UElement? = resolve().toUElement()
 
-inline fun <reified T : UElement> UResolvable.resolveToUElementOfType(): T? = resolve().toUElement() as? T?
+inline fun <reified T : UElement> UResolvable.resolveToUElementOfType(): T? = resolveToUElement() as? T
