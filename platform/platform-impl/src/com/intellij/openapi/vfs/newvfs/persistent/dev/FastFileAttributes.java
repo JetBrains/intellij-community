@@ -52,8 +52,8 @@ public final class FastFileAttributes {
     MappedFileStorageHelper helper = openHelperAndVerifyVersions(
       vfs,
       attribute.getId(),
-      TimestampedBooleanAttributeAccessorImpl.ROW_SIZE,
-      attribute.getVersion()
+      attribute.getVersion(),
+      TimestampedBooleanAttributeAccessorImpl.ROW_SIZE
     );
 
     vfs.addCloseable(helper);

@@ -57,6 +57,9 @@ public class MappedFileStorageHelper implements Closeable {
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
                                                             @NotNull String storageName,
                                                             int bytesPerRow) throws IOException {
+    if (bytesPerRow <= 0) {
+      throw new IllegalArgumentException("bytesPerRow(=" + bytesPerRow + ") must be >0");
+    }
     PersistentFSConnection connection = vfs.connection();
     Path fastAttributesDir = connection.getPersistentFSPaths().storagesSubDir("extended-attributes");
     Files.createDirectories(fastAttributesDir);
