@@ -44,12 +44,11 @@ class LoggingConditionDisagreesWithLogLevelStatementInspection : AbstractBaseUas
 
     private fun processActualLoggers(callExpression: UCallExpression) {
       val guardedCondition = LoggingUtil.getGuardedCondition(callExpression) ?: return
-      if (!guardIsUsed(guardedCondition)) {
-        val loggerLevel = LoggingUtil.getLoggerLevel(callExpression) ?: return
-        val levelFromCondition = LoggingUtil.getLevelFromCondition(guardedCondition) ?: return
-        if (!LoggingUtil.isGuardedIn(levelFromCondition, loggerLevel)) {
-          registerProblem(guardedCondition, levelFromCondition.name, loggerLevel.name)
-        }
+      if (guardIsUsed(guardedCondition)) return
+      val loggerLevel = LoggingUtil.getLoggerLevel(callExpression) ?: return
+      val levelFromCondition = LoggingUtil.getLevelFromCondition(guardedCondition) ?: return
+      if (!LoggingUtil.isGuardedIn(levelFromCondition, loggerLevel)) {
+        registerProblem(guardedCondition, levelFromCondition.name, loggerLevel.name)
       }
     }
 
@@ -76,12 +75,11 @@ class LoggingConditionDisagreesWithLogLevelStatementInspection : AbstractBaseUas
 
     private fun processLegacyLoggers(callExpression: UCallExpression) {
       val guardedCondition = LoggingUtil.getGuardedCondition(callExpression) ?: return
-      if (!guardIsUsedLegacy(guardedCondition)) {
-        val loggerLevel = LoggingUtil.getLegacyLoggerLevel(callExpression) ?: return
-        val levelFromCondition = LoggingUtil.getLegacyLevelFromCondition(guardedCondition) ?: return
-        if (!LoggingUtil.isLegacyGuardedIn(levelFromCondition, loggerLevel)) {
-          registerProblem(guardedCondition, levelFromCondition.name, loggerLevel.name)
-        }
+      if (guardIsUsedLegacy(guardedCondition)) return
+      val loggerLevel = LoggingUtil.getLegacyLoggerLevel(callExpression) ?: return
+      val levelFromCondition = LoggingUtil.getLegacyLevelFromCondition(guardedCondition) ?: return
+      if (!LoggingUtil.isLegacyGuardedIn(levelFromCondition, loggerLevel)) {
+        registerProblem(guardedCondition, levelFromCondition.name, loggerLevel.name)
       }
     }
 

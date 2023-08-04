@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.logging
 
-import com.intellij.psi.util.CachedValueProvider
-import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiModificationTracker
 import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -154,6 +151,23 @@ internal class LoggingUtil {
         if (thenExpression == null || !isPsiAncestor(thenExpression, call)) return null
       }
       return getGuardedCondition(condition, loggerSource)
+    }
+
+    internal fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
+      val sourcePsi = variable.sourcePsi ?: return emptyList()
+      val result = mutableListOf<UQualifiedReferenceExpression>()
+      val visitor = object : AbstractUastVisitor() {
+        override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
+          val selector = node.receiver
+          val resolveToUElement = (selector as? UResolvable)?.resolveToUElement() ?: return true
+          if (sourcePsi.isEquivalentTo(resolveToUElement.sourcePsi)) {
+            result.add(node)
+          }
+          return true
+        }
+      }
+      context.accept(visitor)
+      return result
     }
 
     private fun getGuardedCondition(condition: UExpression, loggerSource: UElement): UExpression? {
@@ -338,34 +352,28 @@ internal class LoggingUtil {
 
     fun getLoggerCalls(guardedCondition: UExpression): List<UCallExpression> {
       val sourcePsi = guardedCondition.sourcePsi ?: return emptyList()
-      return CachedValuesManager.getManager(sourcePsi.project).getCachedValue(sourcePsi, CachedValueProvider {
-        val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
-          is UQualifiedReferenceExpression -> {
-            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
-          }
-          is UCallExpression -> {
-            (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
-          }
-          else -> {
-            null
-          }
+      val qualifier = when (val guarded = sourcePsi.toUElementOfType<UExpression>()) {
+        is UQualifiedReferenceExpression -> {
+          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
         }
-        if (qualifier == null) {
-          return@CachedValueProvider CachedValueProvider.Result.create(emptyList<UCallExpression>(),
-                                                                       PsiModificationTracker.MODIFICATION_COUNT)
+        is UCallExpression -> {
+          (guarded.receiver as? UResolvable)?.resolveToUElement() as? UVariable
         }
-        val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
-        if (uIfExpression == null) {
-          return@CachedValueProvider CachedValueProvider.Result.create(emptyList<UCallExpression>(),
-                                                                       PsiModificationTracker.MODIFICATION_COUNT)
+        else -> {
+          null
         }
-        val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
-        return@CachedValueProvider CachedValueProvider.Result.create(
-          referencesForVariable.mapNotNull { it.selector as? UCallExpression }
-            .filter { it.sourcePsi?.containingFile != null }
-            .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) },
-          PsiModificationTracker.MODIFICATION_COUNT)
-      })
+      }
+      if (qualifier == null) {
+        return emptyList()
+      }
+      val uIfExpression = guardedCondition.getParentOfType<UIfExpression>()
+      if (uIfExpression == null) {
+        return emptyList()
+      }
+      val referencesForVariable = getReferencesForVariable(qualifier, uIfExpression)
+      return referencesForVariable.mapNotNull { it.selector as? UCallExpression }
+        .filter { it.sourcePsi?.containingFile != null }
+        .filter { LOG_MATCHERS.uCallMatches(it) || LEGACY_LOG_MATCHERS.uCallMatches(it) }
     }
 
     enum class LoggerType {
@@ -381,21 +389,4 @@ internal class LoggingUtil {
       FATAL, ERROR, SEVERE, WARN, WARNING, INFO, DEBUG, TRACE, CONFIG, FINE, FINER, FINEST
     }
   }
-}
-
-internal fun getReferencesForVariable(variable: UElement, context: UElement): List<UQualifiedReferenceExpression> {
-  val sourcePsi = variable.sourcePsi ?: return emptyList()
-  val result: MutableList<UQualifiedReferenceExpression> = mutableListOf()
-  val visitor: AbstractUastVisitor = object : AbstractUastVisitor() {
-    override fun visitQualifiedReferenceExpression(node: UQualifiedReferenceExpression): Boolean {
-      val selector = node.receiver
-      val resolveToUElement = (selector as? UResolvable)?.resolveToUElement() ?: return true
-      if (sourcePsi.isEquivalentTo(resolveToUElement.sourcePsi)) {
-        result.add(node)
-      }
-      return true
-    }
-  }
-  context.accept(visitor)
-  return result
 }
