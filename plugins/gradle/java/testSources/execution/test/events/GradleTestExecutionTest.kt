@@ -62,24 +62,16 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test()(org.example.AppTest)")
-                  }
-                }
+              assertNode("AppTest") {
+                assertNode("Test test()(org.example.AppTest)")
               }
             }
           }
           assertNode(":additionalTest") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :additionalTest") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test()(org.example.AppTest)") {
-                      assertNode("'Test error message'")
-                    }
-                  }
+              assertNode("AppTest") {
+                assertNode("Test test()(org.example.AppTest)") {
+                  assertNode("'Test error message'")
                 }
               }
             }
@@ -158,12 +150,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test()(org.example.AppTest)")
-                  }
-                }
+              assertNode("AppTest") {
+                assertNode("Test test()(org.example.AppTest)")
               }
             }
           }
@@ -250,12 +238,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -278,12 +262,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -306,12 +286,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -367,12 +343,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -396,12 +368,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -507,12 +475,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -529,12 +493,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -553,12 +513,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("TestCase") {
-                    assertNode("Test test()(org.example.TestCase)")
-                  }
-                }
+              assertNode("TestCase") {
+                assertNode("Test test()(org.example.TestCase)")
               }
             }
           }
@@ -676,12 +632,8 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
           assertNode(":testClasses")
           assertNode(":test") {
             if (isBuiltInTestEventsUsed()) {
-              assertNode("Gradle Test Run :test") {
-                assertNode("Gradle Test Executor \\d+".toRegex()) {
-                  assertNode("AppTest") {
-                    assertNode("Test test1()(org.example.AppTest)")
-                  }
-                }
+              assertNode("AppTest") {
+                assertNode("Test test1()(org.example.AppTest)")
               }
             }
           }

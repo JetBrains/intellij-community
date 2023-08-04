@@ -44,7 +44,7 @@ public final class GradleProgressEventConverter {
     joiner.add("[" + operationId + "]");
     var currentDescriptor = descriptor;
     while (currentDescriptor != null) {
-      if (!isMissedProgressEvent(currentDescriptor)) {
+      if (!isSkipped(currentDescriptor)) {
         joiner.add("[" + currentDescriptor.getDisplayName() + "]");
       }
       currentDescriptor = currentDescriptor.getParent();
@@ -57,7 +57,7 @@ public final class GradleProgressEventConverter {
     @NotNull String operationId,
     @NotNull ProgressEvent event
   ) {
-    if (isMissedProgressEvent(event.getDescriptor())) {
+    if (isSkipped(event.getDescriptor())) {
       return null;
     }
     if (event instanceof TaskProgressEvent taskProgressEvent) {
@@ -285,8 +285,16 @@ public final class GradleProgressEventConverter {
     return new ExternalSystemTaskNotificationEvent(taskId, event);
   }
 
-  private static boolean isMissedProgressEvent(@NotNull OperationDescriptor descriptor) {
+  private static boolean isSkipped(@NotNull OperationDescriptor descriptor) {
     String name = descriptor.getDisplayName();
+    return isMissedProgressEvent(name) || isUnnecessaryTestProgressEvent(name);
+  }
+
+  private static boolean isUnnecessaryTestProgressEvent(@NotNull String name) {
+    return name.startsWith("Gradle Test Executor") || name.startsWith("Gradle Test Run");
+  }
+
+  private static boolean isMissedProgressEvent(@NotNull String name) {
     return name.startsWith("Execute executeTests for") || name.startsWith("Executing task")
            || name.startsWith("Run tasks") || name.startsWith("Run main tasks")
            || name.startsWith("Run build");
