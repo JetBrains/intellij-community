@@ -100,7 +100,7 @@ fun Text(
             letterSpacing = letterSpacing
         )
     )
-    BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, inlineContent)
+    BasicText(text, modifier, mergedStyle, onTextLayout, overflow, softWrap, maxLines, minLines = 1, inlineContent)
 }
 
 // TODO these should blow up if not defined by the theme
