@@ -7,7 +7,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.IdeGlassPane
@@ -21,8 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.awt.EventQueue
 import java.awt.Frame
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.JRootPane
 
@@ -43,7 +40,7 @@ internal abstract class IdeFrameDecorator protected constructor(@JvmField protec
         return when {
           SystemInfoRt.isMac -> MacMainFrameDecorator(frame, glassPane, coroutineScope)
           SystemInfoRt.isWindows -> WinMainFrameDecorator(frame)
-          SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame, coroutineScope)
+          SystemInfoRt.isXWindow && X11UiUtil.isFullScreenSupported() -> EWMHFrameDecorator(frame)
           else -> null
         }
       }
@@ -172,27 +169,10 @@ private class WinMainFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(fra
 }
 
 // Extended WM Hints-based decorator
-private class EWMHFrameDecorator(frame: IdeFrameImpl, coroutineScope: CoroutineScope) : IdeFrameDecorator(frame) {
+private class EWMHFrameDecorator(frame: IdeFrameImpl) : IdeFrameDecorator(frame) {
 
   override val isInFullScreen: Boolean
     get() = ClientProperty.isTrue(frame, FULL_SCREEN)
-
-  init {
-    if (SystemInfo.isKDE && DialogWrapperPeerImpl.isDisableAutoRequestFocus()) {
-      // KDE sends an unexpected MapNotify event if a window is deiconified.
-      // suppress.focus.stealing fix handles the MapNotify event differently
-      // if the application is not active
-      val listener = object : WindowAdapter() {
-        override fun windowDeiconified(event: WindowEvent) {
-          frame.toFront()
-        }
-      }
-      frame.addWindowListener(listener)
-      executeOnCancelInEdt(coroutineScope) {
-        frame.removeWindowListener(listener)
-      }
-    }
-  }
 
   override suspend fun toggleFullScreen(state: Boolean): Boolean {
     X11UiUtil.toggleFullScreenMode(frame)

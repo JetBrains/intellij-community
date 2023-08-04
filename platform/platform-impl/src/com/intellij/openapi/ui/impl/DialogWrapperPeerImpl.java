@@ -442,8 +442,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       hidePopupsIfNeeded();
     }
 
-    myDialog.getWindow().setAutoRequestFocus((getOwner() != null && getOwner().isActive()) || !isDisableAutoRequestFocus());
-
     if (SystemInfo.isMac) {
       final Disposable tb = TouchbarSupport.showWindowActions(myDialog.getContentPane());
       if (tb != null) {
@@ -575,7 +573,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
       myWindowListener = new MyWindowListener();
       addWindowListener(myWindowListener);
       addWindowFocusListener(myWindowListener);
-      UIUtil.setAutoRequestFocus(this, (owner != null && owner.isActive()) || !isDisableAutoRequestFocus());
     }
 
     @Override
@@ -1027,12 +1024,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     RegistryManager registryManager = getRegistryManager();
     return registryManager != null && registryManager.is("ide.perProjectModality");
-  }
-
-  public static boolean isDisableAutoRequestFocus() {
-    RegistryManager registryManager = getRegistryManager();
-    return (registryManager == null || registryManager.is("suppress.focus.stealing.disable.auto.request.focus"))
-           && !(SystemInfo.isXfce || SystemInfo.isI3);
   }
 
   private static @Nullable RegistryManager getRegistryManager() {
