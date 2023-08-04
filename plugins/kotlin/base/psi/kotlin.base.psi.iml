@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.java.psi" />
-    <orderEntry type="module" module-name="kotlin.formatter" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle" />
   </component>
 </module>

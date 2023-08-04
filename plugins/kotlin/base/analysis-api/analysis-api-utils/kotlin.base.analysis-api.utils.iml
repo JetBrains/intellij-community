@@ -36,5 +36,7 @@
     <orderEntry type="module" module-name="intellij.java.indexing.impl" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="module" module-name="kotlin.formatter" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle" />
   </component>
 </module>
