@@ -1,10 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent.dev;
+package com.intellij.openapi.vfs.newvfs.persistent.dev.appendonlylog;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsLockFreeOverMMappedFile.MMappedFileStorage.Page;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferReader;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.ByteBufferWriter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,7 +23,7 @@ import static java.nio.ByteOrder.nativeOrder;
  * There are other caveats, pitfalls, and dragons, so beware
  */
 @ApiStatus.Internal
-public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
+public class AppendOnlyLogOverMMappedFile implements AppendOnlyLog {
   private static final VarHandle INT32_OVER_BYTE_BUFFER = byteBufferViewVarHandle(int[].class, nativeOrder()).withInvokeExactBehavior();
   private static final VarHandle INT64_OVER_BYTE_BUFFER = byteBufferViewVarHandle(long[].class, nativeOrder()).withInvokeExactBehavior();
 
@@ -73,6 +74,16 @@ public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
                                       byte[] data) {
       int totalRecordSize = data.length + RECORD_HEADER_SIZE;
       buffer.put(offsetInBuffer + DATA_OFFSET, data);
+      //INT32_OVER_BYTE_BUFFER.setRelease(buffer, offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
+      buffer.putInt(offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
+    }
+
+    private static void putDataRecord(@NotNull ByteBuffer buffer,
+                                      int offsetInBuffer,
+                                      int recordSize,
+                                      ByteBufferWriter writer) throws IOException {
+      int totalRecordSize = recordSize + RECORD_HEADER_SIZE;
+      writer.write(buffer.slice(offsetInBuffer + DATA_OFFSET, recordSize));
       //INT32_OVER_BYTE_BUFFER.setRelease(buffer, offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
       buffer.putInt(offsetInBuffer + LENGTH_OFFSET, totalRecordSize);
     }
@@ -190,37 +201,112 @@ public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
     return storage.storagePath();
   }
 
-  public long writeRecord(byte[] data) throws IOException {
-    if (data.length == 0) {
-      throw new IllegalArgumentException("Can't write record with length=0");
+  @Override
+  public long append(@NotNull ByteBufferWriter writer,
+                     int recordSize) throws IOException {
+    if (recordSize < 0) {
+      throw new IllegalArgumentException("Can't write record with length<0");
     }
-    int totalRecordLength = data.length + RecordLayout.RECORD_HEADER_SIZE;
+    int totalRecordLength = recordSize + RecordLayout.RECORD_HEADER_SIZE;
     long recordOffsetInFile = allocateSpaceForRecord(totalRecordLength);
 
     Page page = storage.pageByOffset(recordOffsetInFile);
     int offsetInPage = storage.toOffsetInPage(recordOffsetInFile);
-    RecordLayout.putDataRecord(page.rawPageBuffer(), offsetInPage, data);
+    RecordLayout.putDataRecord(page.rawPageBuffer(), offsetInPage, recordSize, writer);
 
     tryCommitRecord(recordOffsetInFile, totalRecordLength);
 
     return recordOffsetToId(recordOffsetInFile);
   }
 
-  public <T> T readRecord(long recordId,
-                          @NotNull ByteBufferReader<T> reader) throws IOException {
+  //MAYBE RC: Implementation below is a bit faster than default version (no lambda, no buffer slice).
+  //          Dut does it worth it?
+  //@Override
+  //public long append(byte[] data) throws IOException {
+  //  if (data.length == 0) {
+  //    throw new IllegalArgumentException("Can't write record with length=0");
+  //  }
+  //  int totalRecordLength = data.length + RecordLayout.RECORD_HEADER_SIZE;
+  //  long recordOffsetInFile = allocateSpaceForRecord(totalRecordLength);
+  //
+  //  Page page = storage.pageByOffset(recordOffsetInFile);
+  //  int offsetInPage = storage.toOffsetInPage(recordOffsetInFile);
+  //  RecordLayout.putDataRecord(page.rawPageBuffer(), offsetInPage, data);
+  //
+  //  tryCommitRecord(recordOffsetInFile, totalRecordLength);
+  //
+  //  return recordOffsetToId(recordOffsetInFile);
+  //}
+
+  @Override
+  public <T> T read(long recordId,
+                    @NotNull ByteBufferReader<T> reader) throws IOException {
     long recordOffsetInFile = recordIdToOffset(recordId);
-    long recordsCommittedUpTo = nextRecordToBeCommittedOffset.get();
-    if (recordOffsetInFile >= recordsCommittedUpTo) {
+
+    //FIXME RC: if we check offset against 'committed' cursor, we prohibit reading just-written
+    //          record if there are uncommitted records behind it. This is bad from API-consistency
+    //          PoV: if append() returns an id -- that id must be valid for read(id). So I changed
+    //          check to ( offset < allocated ).
+    //          ...But that creates another consistency issue then: .forEachRecord() unable to read
+    //          records above 'committed' cursor since it relies on .recordLength in a header, and
+    //          some headers in uncommitted region are not committed yet. So some records that could
+    //          be accessed by id -- won't be reported by .forEachRecord(), which is also bad.
+    //          ...Ideally, we should reconsider record writing/committing protocol: recordLength
+    //          should be separated from 'committed/uncommitted' mark -- recordLength is written
+    //          initially, before record content, but with 'uncommitted' mark => the record content
+    //          can't be read yet, but the record could be traversed through.
+
+    long recordsAllocatedUpTo = nextRecordToBeAllocatedOffset.get();
+    if (recordOffsetInFile >= recordsAllocatedUpTo) {
       throw new IllegalArgumentException(
         "Can't read recordId(=" + recordId + ", offset: " + recordOffsetInFile + "]: " +
-        "outside of committed region [<" + recordsCommittedUpTo + "]");
+        "outside of allocated region [<" + recordsAllocatedUpTo + "]");
     }
+
 
     Page page = storage.pageByOffset(recordOffsetInFile);
     int recordOffsetInPage = storage.toOffsetInPage(recordOffsetInFile);
     ByteBuffer pageBuffer = page.rawPageBuffer();
     ByteBuffer recordDataSlice = RecordLayout.recordDataAsSlice(pageBuffer, recordOffsetInPage);
     return reader.read(recordDataSlice);
+  }
+
+  @Override
+  public boolean forEachRecord(@NotNull RecordReader reader) throws IOException {
+    int pageSize = storage.pageSize();
+    for (long offset = HeaderLayout.HEADER_SIZE; offset < nextRecordToBeCommittedOffset.get(); ) {
+      Page page = storage.pageByOffset(offset);
+      int recordOffsetInPage = storage.toOffsetInPage(offset);
+      ByteBuffer pageBuffer = page.rawPageBuffer();
+
+      if (pageSize - recordOffsetInPage <= RecordLayout.RECORD_HEADER_SIZE) {
+        offset += (pageSize - recordOffsetInPage);
+        continue;
+      }
+
+      if (RecordLayout.isDataRecord(pageBuffer, recordOffsetInPage)) {
+        ByteBuffer recordDataSlice = RecordLayout.recordDataAsSlice(pageBuffer, recordOffsetInPage);
+        int dataLength = recordDataSlice.remaining();
+        long recordId = recordOffsetToId(offset);
+        boolean shouldContinue = reader.read(recordId, recordDataSlice);
+        if (!shouldContinue) {
+          return false;
+        }
+        offset += dataLength + RecordLayout.RECORD_HEADER_SIZE;
+      }
+      else if (RecordLayout.isPaddingRecord(pageBuffer, recordOffsetInPage)) {
+        int paddingRecordLength = RecordLayout.recordLength(pageBuffer, recordOffsetInPage);
+        offset += paddingRecordLength;
+      }
+      else {
+        //before 'committed' cursor all records must be finalized -- i.e. header != 0
+        throw new AssertionError("offset(" + offset + "): nor padding, nor data record");
+      }
+    }
+
+    //MAYBE: there could be some finalized records in [committed, allocated), but with current scheme
+    // it is impossible to know there such record(s) starts
+    return true;
   }
 
   public void clear() throws IOException {
@@ -347,7 +433,7 @@ public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
       }
     }
     finally {
-      //TODO RC: probably an overkill -- better delay flush?
+      //MAYBE RC: probably an overkill -- better delay flush?
       flush();
     }
   }
@@ -364,12 +450,6 @@ public class AppendOnlyLogOverMMappedFile implements AutoCloseable {
     }
     //no room on the current page even for the record header => jump to the next page:
     return nextPageStartingOffset(nextRecordOffset, pageSize);
-
-    //Edge case: if there is exactly RECORD_HEADER_SIZE remains on the page -- there is enough room
-    //    for PaddingRecord header. But we can't put PaddingRecord with length=0 because we can't
-    //    recognize such a record afterward -- 0 is the default value of yet-not-written file content,
-    //    record with length=0 is indistinguishable from not yet allocated space. We're forced to
-    //    use PaddingRecord(length>0)
   }
 
   private static long nextPageStartingOffset(long recordOffsetInFile, int pageSize) {

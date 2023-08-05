@@ -84,7 +84,7 @@ public final class FSRecordsImpl {
   private static final Logger LOG = Logger.getInstance(FSRecordsImpl.class);
 
   //@formatter:off
-  static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-storage", false);
+  static final boolean USE_FAST_NAMES_IMPLEMENTATION = getBooleanProperty("vfs.use-fast-names-enumerator", false);
   public static final boolean USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION = getBooleanProperty("vfs.use-streamlined-attributes-storage", true);
   public static final boolean USE_RAW_ACCESS_TO_READ_CHILDREN = getBooleanProperty("vfs.use-raw-access-to-read-children", true);
   //@formatter:on

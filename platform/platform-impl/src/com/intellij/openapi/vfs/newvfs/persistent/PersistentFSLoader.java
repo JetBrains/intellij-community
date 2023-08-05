@@ -6,7 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.OffsetBasedNonStrictStringsEnumerator;
+import com.intellij.openapi.vfs.newvfs.persistent.dev.StringPersistentEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.LargeSizeStreamlinedBlobStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.SpaceAllocationStrategy;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorage;
@@ -616,15 +616,8 @@ public final class PersistentFSLoader {
 
   public static @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
     if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-      LOG.info("VFS uses non-strict names enumerator");
-      final ResizeableMappedFile mappedFile = new ResizeableMappedFile(
-        namesFile,
-        10 * IOUtil.MiB,
-        PERSISTENT_FS_STORAGE_CONTEXT,
-        IOUtil.MiB,
-        false
-      );
-      return new OffsetBasedNonStrictStringsEnumerator(mappedFile);
+      LOG.info("VFS uses fast names enumerator");
+      return new StringPersistentEnumerator(namesFile);
     }
     else {
       LOG.info("VFS uses strict names enumerator");

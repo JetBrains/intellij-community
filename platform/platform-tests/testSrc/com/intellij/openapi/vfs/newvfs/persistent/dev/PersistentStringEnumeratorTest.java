@@ -20,30 +20,28 @@ import static org.junit.Assert.assertTrue;
 /**
  * Just to compare 'classic' strict enumerator against non-strict
  */
-public class PersistentStringEnumeratorTest extends NonStrictStringsEnumeratorTestBase<PersistentStringEnumerator>{
+public class PersistentStringEnumeratorTest extends StringEnumeratorTestBase<PersistentStringEnumerator> {
   @Override
   protected PersistentStringEnumerator openEnumerator(final @NotNull Path storagePath) throws IOException {
     return new PersistentStringEnumerator(storagePath);
   }
 
-  @SuppressWarnings("ConstantValue")
   @Test
-  public void testLongStringsEnumeration() throws Exception {
-    int minSize = 4000;
-    int maxSize = 7000;
-    assertTrue(minSize < AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE);
-    assertTrue(maxSize > AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE);
-    String[] strings = generateValues(10000, minSize, maxSize);
+  public void stringsAboutTheSizeOfAppendBuffer_AreStillEnumeratedCorrectly() throws Exception {
+    int minSize = AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE - 10;
+    int maxSize = AppendableStorageBackedByResizableMappedFile.APPEND_BUFFER_SIZE * 2;
 
-    for (String string : strings) {
+    String[] largeStrings = generateValues(10_000, minSize, maxSize);
+
+    //check serialized strings are indeed all >minSize
+    for (String string : largeStrings) {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       EnumeratorStringDescriptor.INSTANCE.save(new DataOutputStream(baos), string);
       assertTrue(baos.size() > minSize);
     }
 
-
     Int2ObjectMap<String> enumeratorSnapshot = new Int2ObjectOpenHashMap<>();
-    for (String string : strings) {
+    for (String string : largeStrings) {
       int id = enumerator.enumerate(string);
       enumeratorSnapshot.put(id, string);
     }
@@ -53,9 +51,6 @@ public class PersistentStringEnumeratorTest extends NonStrictStringsEnumeratorTe
       String value = entry.getValue();
 
       String actualValue = enumerator.valueOf(id);
-      if (actualValue == null) {
-        System.out.println("123");
-      }
       assertEquals("id = " + id, value, actualValue);
     }
 

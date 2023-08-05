@@ -23,6 +23,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.hash.ContentHashEnumerator;
+import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.ScannableDataEnumeratorEx;
 import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.StorageLockContext;
@@ -63,7 +64,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class PersistentFSConnection {
   private static final Logger LOG = Logger.getInstance(PersistentFSConnection.class);
 
-  static final int RESERVED_ATTR_ID = 0;
+  static final int RESERVED_ATTR_ID = DataEnumeratorEx.NULL_ID;
   static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
 
   private static final boolean USE_GENTLE_FLUSHER = getBooleanProperty("vfs.flushing.use-gentle-flusher", true);
