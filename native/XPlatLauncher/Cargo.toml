@@ -38,4 +38,4 @@ cargo-deny = "0.13.9" # checks licenses / vulns
 cargo-about = "0.5.6" # generates license report
 
 [dev-dependencies]
-tempfile = "3.7.0"
+tempfile = "3"
