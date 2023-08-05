@@ -170,19 +170,11 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            frame: JFrame,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup>? {
-  // enforce the "always-visible" flag for all main menu items
-  // without forcing everyone to employ custom groups in their plugin.xml files.
-  val adjustedGroup = object : ActionGroupWrapper(mainActionGroup) {
-    override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
-      return super.getChildren(e).onEach { it.templatePresentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, true) }
-    }
-  }
-
   try {
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
       val targetComponent = serviceAsync<WindowManager>().getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
-      Utils.expandActionGroupAsync(group = adjustedGroup,
+      Utils.expandActionGroupAsync(group = mainActionGroup,
                                    presentationFactory = presentationFactory,
                                    context = dataContext,
                                    place = ActionPlaces.MAIN_MENU,
@@ -201,6 +193,16 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
 }
 
 internal suspend fun getMainMenuActionGroup(frame: JFrame): ActionGroup? {
-  val group = (frame.rootPane as? IdeRootPane)?.mainMenuActionGroup
-  return group ?: CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU)
+  (frame.rootPane as? IdeRootPane)?.mainMenuActionGroup?.let {
+    return it
+  }
+
+  val group = CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU) ?: return null
+  // enforce the "always-visible" flag for all main menu items
+  // without forcing everyone to employ custom groups in their plugin.xml files.
+  return object : ActionGroupWrapper(group) {
+    override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
+      return super.getChildren(e).onEach { it.templatePresentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, true) }
+    }
+  }
 }
