@@ -15,6 +15,7 @@ import com.intellij.openapi.actionSystem.impl.ActionMenu.Companion.isAlignedInGr
 import com.intellij.openapi.actionSystem.util.ActionSystem
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
@@ -172,7 +173,7 @@ object Utils {
                              fastTrack: Boolean): CancellablePromise<List<AnAction>> {
     val async = isAsyncDataContext(context)
     if (!async) {
-      throw AssertionError("Async data context required in '" + place + "': " + dumpDataContextClass(context))
+      throw AssertionError("Async data context required in '$place': ${dumpDataContextClass(context)}")
     }
     val edtExecutor = if (fastTrack) {
       newFastTrackAwareExecutor(group = group, place = place, context = context, checkMainMenuOrToolbarFirstTime = true)
@@ -180,8 +181,14 @@ object Utils {
     else {
       null
     }
-    val updater = ActionUpdater(presentationFactory, context, place, ActionPlaces.isPopupPlace(place), isToolbarAction, edtExecutor, null)
-    val promise = updater.expandActionGroupAsync(group, group is CompactActionGroup)
+    val updater = ActionUpdater(presentationFactory = presentationFactory,
+                                dataContext = context,
+                                place = place,
+                                contextMenuAction = ActionPlaces.isPopupPlace(place),
+                                toolbarAction = isToolbarAction,
+                                edtExecutor = edtExecutor,
+                                eventTransform = null)
+    val promise = updater.expandActionGroupAsync(group = group, hideDisabled = group is CompactActionGroup)
     edtExecutor?.waitForFastTrack(promise)
     return promise
   }
@@ -1052,7 +1059,7 @@ object Utils {
         queue.offer(runnable)
       }
       else {
-        ActionUpdateEdtExecutor.EDT_EXECUTOR.execute(runnable)
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
       }
     }
 
@@ -1071,7 +1078,9 @@ object Utils {
         fastTrack = false
       }
       if (result == null) {
-        queue.forEach(ActionUpdateEdtExecutor.EDT_EXECUTOR::execute)
+        for (runnable in queue) {
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+        }
         queue.clear()
       }
       LOG.assertTrue(queue.isEmpty(), "fast-track queue is not empty")

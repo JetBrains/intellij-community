@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditExitAction extends DumbAwareAction implements LightEditCompatible {
+public final class LightEditExitAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditExitAction() {
     super(ActionsBundle.messagePointer("action.LightEditExitAction.text"));
   }

@@ -10,7 +10,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class LightEditSaveAsAction extends DumbAwareAction implements LightEditCompatible {
+public final class LightEditSaveAsAction extends DumbAwareAction implements LightEditCompatible {
   public LightEditSaveAsAction() {
     super(ActionsBundle.messagePointer("action.SaveAs.text"));
   }

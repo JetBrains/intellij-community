@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.openapi.application.Application;
@@ -22,8 +22,7 @@ import java.util.function.Supplier;
 
 @ApiStatus.Internal
 public final class ActionUpdateEdtExecutor {
-
-  static final Executor EDT_EXECUTOR = runnable ->
+  private static final Executor EDT_EXECUTOR = runnable ->
     ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any());
 
   /**
@@ -36,8 +35,7 @@ public final class ActionUpdateEdtExecutor {
     return computeOnEdt(supplier, null);
   }
 
-  static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier,
-                            @Nullable Executor edtExecutor) {
+  static <T> T computeOnEdt(@NotNull Supplier<? extends T> supplier, @Nullable Executor edtExecutor) {
     Application application = ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       return supplier.get();

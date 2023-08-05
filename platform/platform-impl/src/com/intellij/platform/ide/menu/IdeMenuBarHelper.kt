@@ -171,8 +171,9 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup>? {
   try {
+    val windowManager = serviceAsync<WindowManager>()
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
-      val targetComponent = serviceAsync<WindowManager>().getFocusedComponent(frame) ?: menuBar
+      val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
       val dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(targetComponent))
       Utils.expandActionGroupAsync(group = mainActionGroup,
                                    presentationFactory = presentationFactory,
