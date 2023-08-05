@@ -80,23 +80,28 @@ open class ITNReporter(private val newThreadPostUrl: String = NEW_THREAD_POST_UR
 }
 
 private fun submit(project: Project?, errorBean: ErrorBean, parentComponent: Component, newThreadPostUrl: String, callback: (SubmittedReportInfo) -> Unit): Boolean {
-  var credentials = ErrorReportConfigurable.getCredentials()
-  if (credentials.hasOnlyUserName()) {
-    credentials = askJBAccountCredentials(parentComponent, project)
-    if (credentials == null) return false
+  val credentialsLazy = suspend {
+    var credentials = ErrorReportConfigurable.getCredentials()
+    if (credentials.hasOnlyUserName()) {
+      credentials = withContext(Dispatchers.EDT) {
+        askJBAccountCredentials(parentComponent, project)
+      }
+    }
+    credentials
   }
-  submit(project, credentials, errorBean, parentComponent, newThreadPostUrl, callback)
+  submit(project, credentialsLazy, errorBean, parentComponent, newThreadPostUrl, callback)
   return true
 }
 
 private fun submit(project: Project?,
-                   credentials: Credentials?,
+                   credentialsLazy: suspend () -> Credentials?,
                    errorBean: ErrorBean,
                    parentComponent: Component,
                    newThreadPostUrl: String,
                    callback: (SubmittedReportInfo) -> Unit) {
   ITNProxy.cs.launch {
     try {
+      val credentials = credentialsLazy()
       val threadId = if (project != null) {
         withBackgroundProgress(project, DiagnosticBundle.message("title.submitting.error.report")) {
           ITNProxy.sendError(credentials?.userName, credentials?.getPasswordAsString(), errorBean, newThreadPostUrl)
@@ -154,7 +159,7 @@ private suspend fun onError(project: Project?,
     else if (e is NoSuchEAPUserException) {
       val credentials = askJBAccountCredentials(parentComponent, project, true)
       if (credentials != null) {
-        submit(project, credentials, errorBean, parentComponent, newThreadPostUrl, callback)
+        submit(project, { credentials }, errorBean, parentComponent, newThreadPostUrl, callback)
       }
       else {
         callback(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))

@@ -27,10 +27,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.OptionAction
+import com.intellij.openapi.ui.*
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
@@ -41,7 +38,7 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.util.ExceptionUtil
-import com.intellij.util.Function
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBFont
@@ -56,6 +53,7 @@ import java.awt.event.ItemEvent
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
+import java.util.*
 import java.util.function.Predicate
 import java.util.zip.CRC32
 import javax.swing.*
@@ -63,10 +61,11 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
 
-open class IdeErrorsDialog internal constructor(
+open class IdeErrorsDialog @JvmOverloads internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
-  defaultMessage: LogMessage?
+  defaultMessage: LogMessage?,
+  private var updateControlsJob: Job = SupervisorJob()
 ) : DialogWrapper(myProject, true), MessagePoolListener, DataProvider {
 
   private val myAssigneeVisible: Boolean =
@@ -77,7 +76,7 @@ open class IdeErrorsDialog internal constructor(
   private var myIndex: Int
   private var myLastIndex = -1
   private var myDevListTimestamp: Long = 0
-  private val myLoadingDeveloperListDeferred: Deferred<*>?
+  private val myLoadingDeveloperListJob: Job?
 
   private lateinit var myCountLabel: JLabel
   private lateinit var myInfoLabel: JTextComponent
@@ -91,15 +90,17 @@ open class IdeErrorsDialog internal constructor(
   private lateinit var myAssigneeCombo: ComboBox<Developer>
   private lateinit var myCredentialLabel: JTextComponent
 
+  private lateinit var loadingDecorator: LoadingDecorator
+
   init {
     title = DiagnosticBundle.message("error.list.title")
     isModal = false
     @Suppress("LeakingThis")
     init()
     setCancelButtonText(CommonBundle.message("close.action.name"))
-    myLoadingDeveloperListDeferred = if (myAssigneeVisible) loadDevelopersList() else null
+    myLoadingDeveloperListJob = if (myAssigneeVisible) loadDevelopersList() else null
     val rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "")
-    myAcceptedNotices = LinkedHashSet(rawValue.split(ACCEPTED_NOTICES_SEPARATOR))
+    myAcceptedNotices = Collections.synchronizedSet(LinkedHashSet (rawValue.split(ACCEPTED_NOTICES_SEPARATOR)))
     updateMessages()
     myIndex = selectMessage(defaultMessage)
     updateControls()
@@ -107,12 +108,12 @@ open class IdeErrorsDialog internal constructor(
     myMessagePool.addListener(this)
   }
 
-  private fun loadDevelopersList(): Deferred<*>? {
+  private fun loadDevelopersList(): Job? {
     val configurable = ErrorReportConfigurable.getInstance()
     val developers = configurable.developerList
     setDevelopers(developers)
     return if (developers.isUpToDateAt()) null
-    else ITNProxy.cs.async {
+    else ITNProxy.cs.launch {
       runCatching {
         val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
         withContext(Dispatchers.EDT) {
@@ -126,6 +127,33 @@ open class IdeErrorsDialog internal constructor(
           is HttpRequests.HttpStatusException -> LOG.warn(e.toString())
           else -> LOG.warn(e)
         }
+      }
+    }
+  }
+
+  private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
+    val account = submitter.reporterAccount
+    withContext(Dispatchers.EDT) {
+      if (account != null) {
+        myCredentialLabel.isVisible = true
+        myCredentialLabel.text = if (account.isEmpty()) {
+          DiagnosticBundle.message("error.dialog.submit.anonymous")
+        }
+        else {
+          DiagnosticBundle.message("error.dialog.submit.named", account)
+        }
+      }
+    }
+  }
+
+  private suspend fun loadPrivacyNoticeText(submitter: ErrorReportSubmitter) = withContext(ITNProxy.dispatcher) {
+    val notice = submitter.privacyNoticeText
+    withContext(Dispatchers.EDT) {
+      if (notice != null) {
+        myPrivacyNotice.panel.isVisible = true
+        val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
+        myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
+        myPrivacyNotice.setPrivacyPolicy(notice)
       }
     }
   }
@@ -185,6 +213,11 @@ open class IdeErrorsDialog internal constructor(
     return panel
   }
 
+  private fun enableOkButtonIfReady() {
+    val cluster = selectedCluster()
+    isOKActionEnabled = cluster.canSubmit() && !cluster.detailsText.isNullOrBlank() && updateControlsJob.isCompleted
+  }
+
   override fun createCenterPanel(): JComponent? {
     myCommentArea = JBTextArea(5, 0)
     myCommentArea.emptyText.setText(DiagnosticBundle.message("error.dialog.comment.prompt"))
@@ -230,7 +263,7 @@ open class IdeErrorsDialog internal constructor(
           val detailsText = myAttachmentArea.text
           val cluster = selectedCluster()
           cluster.detailsText = detailsText
-          isOKActionEnabled = cluster.canSubmit() && !detailsText.isNullOrBlank()
+          enableOkButtonIfReady()
         }
       }
     })
@@ -248,7 +281,7 @@ open class IdeErrorsDialog internal constructor(
       myAssigneePanel.add(JBLabel(DiagnosticBundle.message("label.assignee")))
       myAssigneePanel.add(myAssigneeCombo)
     }
-    @NlsSafe val heightSample = "height sample"
+    @NlsSafe val heightSample = " "
     myCredentialLabel = htmlComponent(heightSample, null, null, null, false) { e: HyperlinkEvent ->
       if (e.eventType == HyperlinkEvent.EventType.ACTIVATED) {
         val submitter = selectedCluster().submitter
@@ -288,7 +321,9 @@ open class IdeErrorsDialog internal constructor(
     rootPanel.add(commentPanel, BorderLayout.NORTH)
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER)
     rootPanel.add(bottomRow, BorderLayout.SOUTH)
-    return rootPanel
+
+    loadingDecorator = LoadingDecorator(rootPanel, disposable, 100)
+    return loadingDecorator.component
   }
 
   override fun createActions(): Array<Action> {
@@ -321,7 +356,8 @@ open class IdeErrorsDialog internal constructor(
 
   override fun dispose() {
     myMessagePool.removeListener(this)
-    myLoadingDeveloperListDeferred?.cancel()
+    myLoadingDeveloperListJob?.cancel()
+    updateControlsJob.cancel()
     super.dispose()
   }
 
@@ -341,19 +377,28 @@ open class IdeErrorsDialog internal constructor(
     myMessageClusters.addAll(clusters.values)
   }
 
+  @RequiresEdt
   private fun updateControls() {
-    val cluster = selectedCluster()
-    val submitter = cluster.submitter
-    cluster.messages.forEach { it.isRead = true }
-    updateLabels(cluster)
-    updateDetails(cluster)
-    if (myAssigneeVisible) {
-      updateAssigneePanel(cluster)
+    loadingDecorator.startLoading(false)
+    updateControlsJob.cancel(null)
+    updateControlsJob = ITNProxy.cs.launch(Dispatchers.EDT) {
+      val cluster = selectedCluster()
+      val submitter = cluster.submitter
+      cluster.messages.forEach { it.isRead = true }
+      updateLabels(cluster)
+      updateDetails(cluster)
+      if (myAssigneeVisible) {
+        updateAssigneePanel(cluster)
+      }
+      updateCredentialsPanel(submitter)
+      isOKActionEnabled = cluster.canSubmit()
+      setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
+      setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
+      loadingDecorator.stopLoading()
     }
-    updateCredentialsPanel(submitter)
-    isOKActionEnabled = cluster.canSubmit()
-    setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
-    setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
+    updateControlsJob.invokeOnCompletion {
+      enableOkButtonIfReady()
+    }
   }
 
   private fun setDefaultReportActionText(text: @NlsContexts.Button String) {
@@ -376,7 +421,7 @@ open class IdeErrorsDialog internal constructor(
     }
   }
 
-  private fun updateLabels(cluster: MessageCluster) {
+  private suspend fun updateLabels(cluster: MessageCluster) {
     val message = cluster.first
     myCountLabel.text = DiagnosticBundle.message("error.list.message.index.count", myIndex + 1, myMessageClusters.size)
     val t = message.throwable
@@ -385,7 +430,6 @@ open class IdeErrorsDialog internal constructor(
       myDetailsLabel.isVisible = false
       myForeignPluginWarningLabel.isVisible = false
       myPrivacyNotice.panel.isVisible = false
-      return
     }
     val pluginId = cluster.pluginId
     val plugin = cluster.plugin
@@ -456,15 +500,9 @@ open class IdeErrorsDialog internal constructor(
     else {
       myForeignPluginWarningLabel.isVisible = false
     }
-    val notice = submitter?.privacyNoticeText
-    if (notice != null) {
-      myPrivacyNotice.panel.isVisible = true
-      val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
-      myPrivacyNotice.expanded = !myAcceptedNotices.contains(hash)
-      myPrivacyNotice.setPrivacyPolicy(notice)
-    }
-    else {
-      myPrivacyNotice.panel.isVisible = false
+    myPrivacyNotice.panel.isVisible = false
+    if (submitter != null) {
+      loadPrivacyNoticeText(submitter)
     }
   }
 
@@ -513,19 +551,10 @@ open class IdeErrorsDialog internal constructor(
   private fun getAssigneeIndex(assigneeId: Int): Int =
     (0 until myAssigneeCombo.itemCount).firstOrNull { assigneeId == myAssigneeCombo.getItemAt(it).id } ?: -1
  
-  private fun updateCredentialsPanel(submitter: ErrorReportSubmitter?) {
-    val account = submitter?.reporterAccount
-    if (account != null) {
-      myCredentialLabel.isVisible = true
-      if (!account.isEmpty()) {
-        myCredentialLabel.text = DiagnosticBundle.message("error.dialog.submit.named", account)
-      }
-      else {
-        myCredentialLabel.text = DiagnosticBundle.message("error.dialog.submit.anonymous")
-      }
-    }
-    else {
-      myCredentialLabel.isVisible = false
+  private suspend fun updateCredentialsPanel(submitter: ErrorReportSubmitter?) {
+    myCredentialLabel.isVisible = false
+    if (submitter != null) {
+      loadCredentialsPanel(submitter)
     }
   }
 
@@ -535,13 +564,17 @@ open class IdeErrorsDialog internal constructor(
     message.isAssigneeVisible = myAssigneeVisible
     message.devListTimestamp = myDevListTimestamp
     message.isSubmitting = true
-    val notice = submitter.privacyNoticeText
-    if (notice != null) {
-      val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
-      if (myAcceptedNotices.add(hash)) {
-        PropertiesComponent.getInstance().setValue(ACCEPTED_NOTICES_KEY, myAcceptedNotices.joinToString(ACCEPTED_NOTICES_SEPARATOR))
+
+    ITNProxy.cs.launch {
+      val notice = submitter.privacyNoticeText
+      if (notice != null) {
+        val hash = Integer.toHexString(Strings.stringHashCodeIgnoreWhitespaces(notice))
+        if (myAcceptedNotices.add(hash)) {
+          PropertiesComponent.getInstance().setValue(ACCEPTED_NOTICES_KEY, myAcceptedNotices.joinToString(ACCEPTED_NOTICES_SEPARATOR))
+        }
       }
     }
+
     val (userMessage, stacktrace) = cluster.decouple()
     val events = arrayOf<IdeaLoggingEvent>(IdeaReportingEvent(message, userMessage, stacktrace, cluster.plugin))
     var parentComponent: Container = rootPane
@@ -817,12 +850,12 @@ open class IdeErrorsDialog internal constructor(
     return reportingStarted
   }
 
-  private enum class ReportAction(private val myActionProducer: Function<in IdeErrorsDialog, out Action>) {
-    DEFAULT(Function<IdeErrorsDialog, Action> { dialog: IdeErrorsDialog -> dialog.DefaultReportAction() }),
-    REPORT_ALL(Function<IdeErrorsDialog, Action> { dialog: IdeErrorsDialog -> dialog.ReportAllAction() }),
-    REPORT_AND_CLEAR_ALL(Function<IdeErrorsDialog, Action> { dialog: IdeErrorsDialog -> dialog.ReportAndClearAllAction() });
+  private enum class ReportAction(private val myActionProducer: (IdeErrorsDialog) -> Action) {
+    DEFAULT({ dialog: IdeErrorsDialog -> dialog.DefaultReportAction() }),
+    REPORT_ALL({ dialog: IdeErrorsDialog -> dialog.ReportAllAction() }),
+    REPORT_AND_CLEAR_ALL({ dialog: IdeErrorsDialog -> dialog.ReportAndClearAllAction() });
 
-    fun getAction(dialog: IdeErrorsDialog): Action = myActionProducer.`fun`(dialog)
+    fun getAction(dialog: IdeErrorsDialog): Action = myActionProducer(dialog)
 
     companion object {
       fun findOrDefault(name: String?): ReportAction {
