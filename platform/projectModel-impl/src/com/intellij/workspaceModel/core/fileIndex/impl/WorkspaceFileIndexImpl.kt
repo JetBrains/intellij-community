@@ -4,6 +4,7 @@ package com.intellij.workspaceModel.core.fileIndex.impl
 import com.intellij.injected.editor.VirtualFileWindow
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.thisLogger
@@ -13,6 +14,7 @@ import com.intellij.openapi.roots.ContentIteratorEx
 import com.intellij.openapi.roots.impl.CustomEntityProjectModelInfoProvider
 import com.intellij.openapi.roots.impl.DirectoryIndexImpl
 import com.intellij.openapi.roots.impl.RootFileSupplier
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.LowMemoryWatcher
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
@@ -117,9 +119,13 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
                                              numberOfExcludedParentDirectories: Int): Boolean {
     val visitor = object : VirtualFileVisitor<Void?>() {
       override fun visitFileEx(file: VirtualFile): Result {
-        val fileInfo = runReadAction {
-            getFileInfo(file, true, true, false, false)
-        }
+        val fileInfo = ApplicationManager.getApplication().runReadAction(Computable {
+          getFileInfo(file = file,
+                      honorExclusion = true,
+                      includeContentSets = true,
+                      includeExternalSets = false,
+                      includeExternalSourceSets = false)
+        })
         if (file.isDirectory && fileInfo is NonWorkspace) {
           return when (fileInfo) {
             NonWorkspace.EXCLUDED, NonWorkspace.NOT_UNDER_ROOTS -> {
@@ -131,9 +137,9 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
             }
           }
         }
-        val accepted = runReadAction {
+        val accepted = ApplicationManager.getApplication().runReadAction(Computable {
           fileInfo.findFileSet(fileSetFilter) != null && (customFilter == null || customFilter.accept(file))
-        }
+        })
         val status = if (accepted) processor.processFileEx(file) else TreeNodeProcessingResult.CONTINUE
         return when (status) {
           TreeNodeProcessingResult.CONTINUE -> CONTINUE
@@ -157,7 +163,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
       /* 
          It seems improbable that there are more than 5 alternations between excluded and non-excluded directories, so it seems that this 
          is an infinite recursion.
-         However, such cases should be caught by check in VirtualFileVisitor.allowVisitChildren, so report the details and skip processing.  
+         However, check should catch such cases in VirtualFileVisitor.allowVisitChildren, so report the details and skip processing.
       */
       reportInfiniteRecursion(dir, this)
       return VirtualFileVisitor.SKIP_CHILDREN
@@ -255,11 +261,11 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     var data = indexData
     when (data) {
       EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {
-        if (!project.isDefault) {
-          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded.")
+        if (project.isDefault) {
+          thisLogger().warn("WorkspaceFileIndex must not be queried for the default project")
         }
         else {
-          thisLogger().warn("WorkspaceFileIndex must not be queried for the default project")
+          thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded.")
         }
       }
       EmptyWorkspaceFileIndexData.RESET -> {
