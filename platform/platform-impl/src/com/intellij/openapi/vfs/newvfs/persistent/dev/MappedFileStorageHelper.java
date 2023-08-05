@@ -57,6 +57,13 @@ public class MappedFileStorageHelper implements Closeable {
   public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
                                                             @NotNull String storageName,
                                                             int bytesPerRow) throws IOException {
+    return openHelper(vfs, storageName, bytesPerRow, true);
+  }
+
+  public static @NotNull MappedFileStorageHelper openHelper(@NotNull FSRecordsImpl vfs,
+                                                            @NotNull String storageName,
+                                                            int bytesPerRow,
+                                                            boolean checkFileIdsBelowMax) throws IOException {
     if (bytesPerRow <= 0) {
       throw new IllegalArgumentException("bytesPerRow(=" + bytesPerRow + ") must be >0");
     }
@@ -86,7 +93,12 @@ public class MappedFileStorageHelper implements Closeable {
         return alreadyExistingHelper;
       }
 
-      MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(storage, bytesPerRow, recordsStorage::maxAllocatedID);
+      MappedFileStorageHelper storageHelper = new MappedFileStorageHelper(
+        storage,
+        bytesPerRow,
+        recordsStorage::maxAllocatedID,
+        checkFileIdsBelowMax
+      );
       storagesRegistry.put(storagePath, storageHelper);
       return storageHelper;
     }
@@ -96,7 +108,15 @@ public class MappedFileStorageHelper implements Closeable {
                                                                              @NotNull String storageName,
                                                                              int storageFormatVersion,
                                                                              int bytesPerRow) throws IOException {
-    MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow);
+    return openHelperAndVerifyVersions(vfs, storageName, storageFormatVersion, bytesPerRow, true);
+  }
+
+  public static @NotNull MappedFileStorageHelper openHelperAndVerifyVersions(@NotNull FSRecordsImpl vfs,
+                                                                             @NotNull String storageName,
+                                                                             int storageFormatVersion,
+                                                                             int bytesPerRow,
+                                                                             boolean checkFileIdBelowMax) throws IOException {
+    MappedFileStorageHelper helper = openHelper(vfs, storageName, bytesPerRow, checkFileIdBelowMax);
 
     verifyTagsAndVersions(helper, vfs.getCreationTimestamp(), storageFormatVersion);
 
@@ -167,9 +187,19 @@ public class MappedFileStorageHelper implements Closeable {
 
   private final @NotNull IntSupplier maxAllocatedFileIdSupplier;
 
+  /**
+   * If true, fileId arg of every method is checked to be in (0..maxId].
+   * If false, fileId arg is checked only to be >0 (negative fileId ruins addressing schema).
+   * FIXME RC: it MUST be set true all the time -- it should _never_ be _any_ fileId in use outside (0..maxAllocatedId].
+   *           False is a temporary backward compatibility option: it seems like in some use-cases somehow
+   *           the constraint is violated, but we have no time/hands to to find out why.
+   */
+  private final boolean checkFileIdsBelowMax;
+
   private MappedFileStorageHelper(@NotNull MMappedFileStorage storage,
                                   int bytesPerRow,
-                                  @NotNull IntSupplier maxRowsSupplier) throws IOException {
+                                  @NotNull IntSupplier maxRowsSupplier,
+                                  boolean checkFileIdsBelowMax) throws IOException {
     if (storage.pageSize() % bytesPerRow != 0) {
       throw new IllegalArgumentException(
         "bytesPerRow(=" + bytesPerRow + ") is not aligned with pageSize(=" + storage.pageSize() + "): rows must be page-aligned");
@@ -178,6 +208,7 @@ public class MappedFileStorageHelper implements Closeable {
     this.storage = storage;
     this.bytesPerRow = bytesPerRow;
     maxAllocatedFileIdSupplier = maxRowsSupplier;
+    this.checkFileIdsBelowMax = checkFileIdsBelowMax;
   }
 
   public int getVersion() throws IOException {
@@ -459,10 +490,18 @@ public class MappedFileStorageHelper implements Closeable {
   }
 
   private void checkFileIdValid(int fileId) {
-    int maxAllocatedID = maxAllocatedFileID();
-    if (fileId < FSRecords.ROOT_FILE_ID || fileId > maxAllocatedID) {
-      throw new IllegalArgumentException(
-        "fileId[#" + fileId + "] is outside of allocated range [" + FSRecords.ROOT_FILE_ID + ".." + maxAllocatedID + "]");
+    if (checkFileIdsBelowMax) {
+      int maxAllocatedID = maxAllocatedFileID();
+      if (fileId < FSRecords.ROOT_FILE_ID || fileId > maxAllocatedID) {
+        throw new IllegalArgumentException(
+          "fileId[#" + fileId + "] is outside of allocated range [" + FSRecords.ROOT_FILE_ID + ".." + maxAllocatedID + "]");
+      }
+    }
+    else {
+      if (fileId < FSRecords.ROOT_FILE_ID) {
+        throw new IllegalArgumentException(
+          "fileId[#" + fileId + "] is invalid, must be >=" + FSRecords.ROOT_FILE_ID);
+      }
     }
   }
 

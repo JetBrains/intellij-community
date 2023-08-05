@@ -453,9 +453,20 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
    * that really important here.
    */
   private static class ForwardIndexFileControllerOverMappedFile implements IndexDataController.ForwardIndexFileController {
+
     private static final String STORAGE_NAME = "filetype.index";
+    private static final int BINARY_FORMAT_VERSION = 1;
+
+    private static final int FIELD_WIDTH = Short.BYTES;
     private static final int FIELD_OFFSET = 0;
-    
+
+    /**
+     * FIXME RC: it MUST be set true all the time -- it should _never_ be _any_ fileId in use outside (0..maxAllocatedId].
+     * False is a temporary backward compatibility option: it seems like in some use-cases somehow the constraint
+     * is violated, but we have no time/hands to to find out why. Investigate, fix, and remove the flag
+     */
+    public static final boolean CHECK_FILE_ID_BELOW_MAX = getBooleanProperty("MappedFileTypeIndex.CHECK_FILE_ID_BELOW_MAX", false);
+
     private final MappedFileStorageHelper storage;
 
     private final AtomicLong modificationsCounter = new AtomicLong(0);
@@ -465,8 +476,9 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
         storage = MappedFileStorageHelper.openHelperAndVerifyVersions(
           FSRecords.getInstance(),
           STORAGE_NAME,
-          /* formatVersion: */ 1,
-          Short.BYTES
+          BINARY_FORMAT_VERSION,
+          FIELD_WIDTH,
+          CHECK_FILE_ID_BELOW_MAX
         );
       }
       catch (IOException e) {
