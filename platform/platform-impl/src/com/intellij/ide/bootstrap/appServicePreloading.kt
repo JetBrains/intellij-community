@@ -4,7 +4,6 @@ package com.intellij.ide.bootstrap
 import com.intellij.diagnostic.DebugLogManager
 import com.intellij.diagnostic.PerformanceWatcher
 import com.intellij.diagnostic.PluginException
-import com.intellij.diagnostic.span
 import com.intellij.history.LocalHistory
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ScreenReaderStateManager
@@ -27,6 +26,7 @@ import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.util.childScope
 import com.intellij.util.indexing.FileBasedIndex
 import kotlinx.coroutines.*

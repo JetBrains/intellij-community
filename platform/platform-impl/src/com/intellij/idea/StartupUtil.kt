@@ -29,6 +29,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryConfigurator
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
+import com.intellij.platform.diagnostic.telemetry.impl.rootTask
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
@@ -98,11 +100,11 @@ fun CoroutineScope.startApplication(args: List<String>,
                                     mainScope: CoroutineScope,
                                     busyThread: Thread) {
   CoroutineTracerShim.coroutineTracer = object : CoroutineTracerShim {
-    override suspend fun getTraceActivity() = com.intellij.diagnostic.getTraceActivity()
+    override suspend fun getTraceActivity() = com.intellij.platform.diagnostic.telemetry.impl.getTraceActivity()
     override fun rootTrace(): CoroutineContext = rootTask()
 
     override suspend fun <T> span(name: String, context: CoroutineContext, action: suspend CoroutineScope.() -> T): T {
-      return com.intellij.diagnostic.span(name = name, context = context, action = action)
+      return com.intellij.platform.diagnostic.telemetry.impl.span(name = name, context = context, action = action)
     }
   }
 

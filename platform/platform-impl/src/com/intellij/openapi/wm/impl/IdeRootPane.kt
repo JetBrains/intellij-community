@@ -4,8 +4,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.accessibility.AccessibilityUtils
-import com.intellij.diagnostic.rootTask
-import com.intellij.diagnostic.span
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.actions.DistractionFreeModeController
 import com.intellij.ide.ui.UISettings
@@ -41,6 +39,8 @@ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
 import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
+import com.intellij.platform.diagnostic.telemetry.impl.rootTask
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.menu.ActionAwareIdeMenuBar
 import com.intellij.platform.ide.menu.createMacMenuBar
 import com.intellij.toolWindow.ToolWindowButtonManager

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea
 
-import com.intellij.diagnostic.span
 import com.intellij.ide.gdpr.ConsentOptions
 import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.ide.gdpr.showDataSharingAgreement
@@ -9,6 +8,7 @@ import com.intellij.ide.gdpr.showEndUserAndDataSharingAgreements
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import kotlinx.coroutines.*
 import javax.swing.UIManager
 

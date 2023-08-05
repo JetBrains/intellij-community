@@ -2,7 +2,6 @@
 package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.rootTask
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.lang.Language
@@ -23,6 +22,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.childScope

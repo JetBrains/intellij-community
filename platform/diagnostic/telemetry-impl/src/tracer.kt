@@ -1,9 +1,11 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:OptIn(DelicateCoroutinesApi::class, ExperimentalCoroutinesApi::class)
 
-package com.intellij.diagnostic
+package com.intellij.platform.diagnostic.telemetry.impl
 
-import com.intellij.platform.diagnostic.telemetry.impl.TraceReporter
+import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.StartUpMeasurer
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles

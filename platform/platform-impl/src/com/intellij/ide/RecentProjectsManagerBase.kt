@@ -4,7 +4,6 @@
 package com.intellij.ide
 
 import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.span
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.impl.ProjectUtil.isSameProject
@@ -37,6 +36,7 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.ProjectSelfieUtil
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.project.stateStore
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PathUtilRt

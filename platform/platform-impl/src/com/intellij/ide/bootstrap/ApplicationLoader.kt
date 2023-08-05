@@ -5,7 +5,10 @@
 
 package com.intellij.ide.bootstrap
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.COROUTINE_DUMP_HEADER
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.dumpCoroutines
+import com.intellij.diagnostic.enableCoroutineDump
 import com.intellij.icons.AllIcons
 import com.intellij.ide.*
 import com.intellij.ide.gdpr.EndUserAgreement
@@ -37,6 +40,7 @@ import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils

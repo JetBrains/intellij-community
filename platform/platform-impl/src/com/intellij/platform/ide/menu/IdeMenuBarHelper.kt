@@ -2,7 +2,6 @@
 package com.intellij.platform.ide.menu
 
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.rootTask
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
@@ -22,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeMenuBarState
 import com.intellij.openapi.wm.impl.IdeRootPane
+import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow

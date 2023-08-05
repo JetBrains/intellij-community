@@ -5,7 +5,6 @@ package com.intellij.ide.bootstrap
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.runActivity
-import com.intellij.diagnostic.span
 import com.intellij.ide.AssertiveRepaintManager
 import com.intellij.ide.BootstrapBundle
 import com.intellij.ide.IdeEventQueue
@@ -22,6 +21,7 @@ import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.WeakFocusStackManager
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.IconManager
 import com.intellij.ui.JreHiDpiUtil

@@ -3,7 +3,6 @@ package com.intellij.idea
 
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.diagnostic.span
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -11,6 +10,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.FrameBoundsConverter
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.Splash
 import com.intellij.ui.loadSplashImage
 import com.intellij.util.ui.StartupUiUtil

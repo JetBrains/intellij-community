@@ -5,7 +5,6 @@ package com.intellij.openapi.wm.impl.status
 
 import com.intellij.accessibility.AccessibilityUtils
 import com.intellij.codeWithMe.ClientId
-import com.intellij.diagnostic.span
 import com.intellij.ide.HelpTooltipManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger.StatusBarPopupShown
@@ -40,6 +39,7 @@ import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
+import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
