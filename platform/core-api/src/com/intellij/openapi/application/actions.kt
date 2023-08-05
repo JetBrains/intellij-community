@@ -3,6 +3,7 @@ package com.intellij.openapi.application
 
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.util.Computable
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -31,12 +32,8 @@ fun <T> runReadAction(runnable: () -> T): T {
   return ApplicationManager.getApplication().runReadAction(Computable(runnable))
 }
 
-fun assertReadAccessAllowed() {
-  ApplicationManager.getApplication().assertReadAccessAllowed()
-}
-
 fun assertWriteAccessAllowed() {
-  ApplicationManager.getApplication().assertWriteAccessAllowed()
+  ThreadingAssertions.assertWriteAccess()
 }
 
 /**

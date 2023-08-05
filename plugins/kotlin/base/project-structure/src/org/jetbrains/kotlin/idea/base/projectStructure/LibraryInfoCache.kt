@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.projectStructure
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.assertReadAccessAllowed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -12,15 +11,16 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.SimpleModificationTracker
-import com.intellij.platform.workspace.storage.VersionedStorageChange
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleDependencyItem
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.messages.Topic
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.platforms.detectLibraryKind
@@ -31,11 +31,7 @@ import org.jetbrains.kotlin.idea.base.util.caching.SynchronizedFineGrainedEntity
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
-import org.jetbrains.kotlin.platform.impl.CommonIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JsIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.NativeIdePlatformKind
-import org.jetbrains.kotlin.platform.impl.WasmIdePlatformKind
+import org.jetbrains.kotlin.platform.impl.*
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -52,102 +48,102 @@ class LibraryInfoCache(project: Project) : Disposable {
     private class LibraryInfoInnerCache(project: Project) :
         SynchronizedFineGrainedEntityCache<LibraryEx, List<LibraryInfo>>(project) {
 
-        val removedLibraryInfoTracker = SimpleModificationTracker()
+      val removedLibraryInfoTracker = SimpleModificationTracker()
 
-        private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
+      private val deduplicationCache = hashMapOf<String, MutableList<LibraryEx>>()
 
-        init {
-          initialize()
-        }
+      init {
+        initialize()
+      }
 
-        override fun subscribe() {
-            project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
-        }
+      override fun subscribe() {
+        project.messageBus.connect(this).subscribe(WorkspaceModelTopics.CHANGED, ModelChangeListener(project))
+      }
 
-        override fun doInvalidate(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
-            super.doInvalidate(cache)
-            deduplicationCache.clear()
-        }
+      override fun doInvalidate(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
+        super.doInvalidate(cache)
+        deduplicationCache.clear()
+      }
 
-        override fun get(key: LibraryEx): List<LibraryInfo> {
-            assertReadAccessAllowed()
-            checkKeyAndDisposeIllegalEntry(key)
-
-            /**
-             * Project model could provide different instances of libraries
-             * those have the same content (roots + excluded roots) but different names
-             * e.g. module level library has `null` name while project level library has smth like `kotlin-stdlib-1.5.10`.
-             *
-             * When it is needed to check equality (e.g. to eliminate duplicates) of LibraryInfo we have to
-             * check roots of underlying library.
-             *
-             * To have faster equality checks we need to deduplicate libraries: [deduplicationCache] is used to address it.
-             * It uses first root of a library as a key.
-             * Values are only unique (in terms of content) libraries those are used in some LibraryInfo.
-             *
-             * if we have two different instances of the same (in terms of content) library
-             * we ALWAYS have the same instance of libraryInfo.
-             *
-             * It even allows to perform equality check based on object identity.
-             */
-
-            getCachedOrPutNewValue(key, newValue = null)?.let { return it }
-
-            ProgressManager.checkCanceled()
-
-            val newValue = calculate(key)
-
-            if (isValidityChecksEnabled) {
-                checkValueValidity(newValue)
-            }
-
-            getCachedOrPutNewValue(key, newValue)?.let { return it }
-
-            postProcessNewValue(key, newValue)
-
-            return newValue
-        }
+      override fun get(key: LibraryEx): List<LibraryInfo> {
+        ThreadingAssertions.softAssertReadAccess()
+        checkKeyAndDisposeIllegalEntry(key)
 
         /**
-         * @return cached value or null
+         * Project model could provide different instances of libraries
+         * those have the same content (roots + excluded roots) but different names
+         * e.g. module level library has `null` name while project level library has smth like `kotlin-stdlib-1.5.10`.
+         *
+         * When it is needed to check equality (e.g. to eliminate duplicates) of LibraryInfo we have to
+         * check roots of underlying library.
+         *
+         * To have faster equality checks we need to deduplicate libraries: [deduplicationCache] is used to address it.
+         * It uses first root of a library as a key.
+         * Values are only unique (in terms of content) libraries those are used in some LibraryInfo.
+         *
+         * if we have two different instances of the same (in terms of content) library
+         * we ALWAYS have the same instance of libraryInfo.
+         *
+         * It even allows to perform equality check based on object identity.
          */
-        private fun getCachedOrPutNewValue(key: LibraryEx, newValue: List<LibraryInfo>?): List<LibraryInfo>? = useCache { cache ->
-            checkEntitiesIfRequired(cache)
 
-            cache[key]?.let { return@useCache it }
+        getCachedOrPutNewValue(key, newValue = null)?.let { return it }
 
-            val root = key.firstRoot()
-            val deduplicatedValue = cachedDeduplicatedValue(cache, key, root)
-            val resultValue = deduplicatedValue ?: newValue ?: return@useCache null
-            addEntryToCache(cache, key, root, resultValue)
+        ProgressManager.checkCanceled()
 
-            deduplicatedValue
+        val newValue = calculate(key)
+
+        if (isValidityChecksEnabled) {
+          checkValueValidity(newValue)
         }
 
-        private fun addEntryToCache(
-            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
-            key: LibraryEx,
-            root: String,
-            value: List<LibraryInfo>,
-        ) {
-            cache[key] = value
-            deduplicationCache.getOrPut(root) { mutableListOf() } += key
-        }
+        getCachedOrPutNewValue(key, newValue)?.let { return it }
 
-        private fun cachedDeduplicatedValue(
-            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
-            key: LibraryEx,
-            root: String,
-        ): List<LibraryInfo>? {
-            val deduplicatedLibraries = deduplicationCache[root]
-            if (deduplicatedLibraries.isNullOrEmpty()) return null
+        postProcessNewValue(key, newValue)
 
-            val keyUrlsByType = key.urlsByType()
-            val deduplicatedLibrary = deduplicatedLibraries.find { keyUrlsByType.rootEquals(it) } ?: return null
-            val cachedValue = cache[deduplicatedLibrary]
-            if (cachedValue == null) {
-                val exception = KotlinExceptionWithAttachments(
-                    """
+        return newValue
+      }
+
+      /**
+       * @return cached value or null
+       */
+      private fun getCachedOrPutNewValue(key: LibraryEx, newValue: List<LibraryInfo>?): List<LibraryInfo>? = useCache { cache ->
+        checkEntitiesIfRequired(cache)
+
+        cache[key]?.let { return@useCache it }
+
+        val root = key.firstRoot()
+        val deduplicatedValue = cachedDeduplicatedValue(cache, key, root)
+        val resultValue = deduplicatedValue ?: newValue ?: return@useCache null
+        addEntryToCache(cache, key, root, resultValue)
+
+        deduplicatedValue
+      }
+
+      private fun addEntryToCache(
+        cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+        key: LibraryEx,
+        root: String,
+        value: List<LibraryInfo>,
+      ) {
+        cache[key] = value
+        deduplicationCache.getOrPut(root) { mutableListOf() } += key
+      }
+
+      private fun cachedDeduplicatedValue(
+        cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+        key: LibraryEx,
+        root: String,
+      ): List<LibraryInfo>? {
+        val deduplicatedLibraries = deduplicationCache[root]
+        if (deduplicatedLibraries.isNullOrEmpty()) return null
+
+        val keyUrlsByType = key.urlsByType()
+        val deduplicatedLibrary = deduplicatedLibraries.find { keyUrlsByType.rootEquals(it) } ?: return null
+        val cachedValue = cache[deduplicatedLibrary]
+        if (cachedValue == null) {
+          val exception = KotlinExceptionWithAttachments(
+            """
                         inconsistent state:
                         is the same key: ${deduplicatedLibrary === key}
                         root consistent: ${key.firstRoot() == root}
@@ -155,204 +151,206 @@ class LibraryInfoCache(project: Project) : Disposable {
                         key name: ${key.presentableName}
                         deduplicated key name: ${deduplicatedLibrary.presentableName}
                     """.trimIndent()
-                )
-                    .withAttachment("key.txt", key.toString())
-                    .withAttachment("deduplicated.txt", deduplicatedLibrary.toString())
-                    .withAttachment("librariesBefore.txt", deduplicatedLibraries.joinToString(separator = "\n"))
+          )
+            .withAttachment("key.txt", key.toString())
+            .withAttachment("deduplicated.txt", deduplicatedLibrary.toString())
+            .withAttachment("librariesBefore.txt", deduplicatedLibraries.joinToString(separator = "\n"))
 
-                deduplicatedLibraries -= deduplicatedLibrary
-                exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.joinToString(separator = "\n"))
-                logger.error(exception)
+          deduplicatedLibraries -= deduplicatedLibrary
+          exception.withAttachment("librariesAfter.txt", deduplicatedLibraries.joinToString(separator = "\n"))
+          logger.error(exception)
 
-                return cachedDeduplicatedValue(cache, key, root)
+          return cachedDeduplicatedValue(cache, key, root)
+        }
+
+        return cachedValue
+      }
+
+      private fun LibraryEx.firstRoot() = getUrls(OrderRootType.CLASSES).firstOrNull() ?: ""
+
+      override fun checkKeyValidity(key: LibraryEx) {
+        key.checkValidity()
+      }
+
+      override fun checkKeyConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
+        super.checkKeyConsistency(cache, key)
+        checkCacheConsistency(cache, key)
+      }
+
+      private fun checkCacheConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
+        val isCached = key in cache
+        val isDeduplicated = deduplicationCache[key.firstRoot()]?.contains(key) == true
+        if (isCached != isDeduplicated) {
+          error("inconsistent state ${key.presentableName}: is cached: $isCached, is deduplicated: $isDeduplicated")
+        }
+      }
+
+      override fun additionalEntitiesCheck(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
+        for (values in deduplicationCache.values) {
+          val iterator = values.iterator()
+          while (iterator.hasNext()) {
+            val library = iterator.next()
+            try {
+              checkCacheConsistency(cache, library)
             }
-
-            return cachedValue
-        }
-
-        private fun LibraryEx.firstRoot() = getUrls(OrderRootType.CLASSES).firstOrNull() ?: ""
-
-        override fun checkKeyValidity(key: LibraryEx) {
-            key.checkValidity()
-        }
-
-        override fun checkKeyConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
-            super.checkKeyConsistency(cache, key)
-            checkCacheConsistency(cache, key)
-        }
-
-        private fun checkCacheConsistency(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
-            val isCached = key in cache
-            val isDeduplicated = deduplicationCache[key.firstRoot()]?.contains(key) == true
-            if (isCached != isDeduplicated) {
-                error("inconsistent state ${key.presentableName}: is cached: $isCached, is deduplicated: $isDeduplicated")
+            catch (e: Throwable) {
+              iterator.remove()
+              cache.remove(library)
+              logger.error(e)
             }
+          }
         }
+      }
 
-        override fun additionalEntitiesCheck(cache: MutableMap<LibraryEx, List<LibraryInfo>>) {
-            for (values in deduplicationCache.values) {
-                val iterator = values.iterator()
-                while (iterator.hasNext()) {
-                    val library = iterator.next()
-                    try {
-                        checkCacheConsistency(cache, library)
-                    } catch (e: Throwable) {
-                        iterator.remove()
-                        cache.remove(library)
-                        logger.error(e)
-                    }
-                }
+      override fun disposeIllegalEntry(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
+        super.disposeIllegalEntry(cache, key)
+        dropDisposedKey(key)
+      }
+
+      override fun disposeEntry(
+        cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+        entry: MutableMap.MutableEntry<LibraryEx, List<LibraryInfo>>,
+      ) {
+        dropDisposedKey(entry.key)
+
+        val libInfoKey = entry.value.first().library
+        if (libInfoKey == entry.key) return
+
+        val iterator = cache.iterator()
+        while (iterator.hasNext()) {
+          val cacheEntry = iterator.next()
+          if (cacheEntry.value.first().library == libInfoKey) {
+            iterator.remove()
+            dropDisposedKey(cacheEntry.key)
+          }
+        }
+      }
+
+      private fun dropDisposedKey(key: LibraryEx) {
+        for (values in deduplicationCache.values) {
+          if (values.remove(key)) break
+        }
+      }
+
+      override fun checkValueValidity(value: List<LibraryInfo>) {
+        value.forEach(LibraryInfo::checkValidity)
+      }
+
+      override fun calculate(key: LibraryEx): List<LibraryInfo> = when (val platformKind = getPlatform(key).idePlatformKind) {
+        is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
+        is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
+        is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
+        is WasmIdePlatformKind -> createLibraryInfos(key, platformKind, ::WasmKlibLibraryInfo, ::WasmMetadataLibraryInfo)
+        is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
+        else -> error("Unexpected platform kind: $platformKind")
+      }.also {
+        require(it.isNotEmpty()) { "Must be not empty for consistency with LibraryInfoCache#deduplicatedLibrary" }
+      }
+
+      override fun postProcessNewValue(key: LibraryEx, value: List<LibraryInfo>) {
+        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosAdded(value)
+      }
+
+      override fun doInvalidateKeysAndGetOutdatedValues(
+        keys: Collection<LibraryEx>,
+        cache: MutableMap<LibraryEx, List<LibraryInfo>>,
+      ): Collection<List<LibraryInfo>> {
+        val outdatedValues = mutableListOf<List<LibraryInfo>>()
+        for ((root, invalidatedLibraries) in keys.groupBy { it.firstRoot() }) {
+          val deduplicatedLibraries = deduplicationCache[root] ?: continue
+          if (deduplicatedLibraries.isEmpty()) continue
+          deduplicatedLibraries.removeAll(invalidatedLibraries)
+
+          for (invalidatedLibrary in invalidatedLibraries) {
+            val anchorInfo = cache.remove(invalidatedLibrary)?.takeIf { it.first().library == invalidatedLibrary } ?: continue
+            outdatedValues += anchorInfo
+
+            if (deduplicatedLibraries.isEmpty()) continue
+            val invalidatedLibraryUrlsByType = invalidatedLibrary.urlsByType()
+            val deduplicatedLibrariesIterator = deduplicatedLibraries.iterator()
+            while (deduplicatedLibrariesIterator.hasNext()) {
+              val deduplicatedLibrary = deduplicatedLibrariesIterator.next()
+              if (invalidatedLibraryUrlsByType.rootEquals(deduplicatedLibrary)) {
+                deduplicatedLibrariesIterator.remove()
+                cache.remove(deduplicatedLibrary)
+              }
             }
+          }
         }
 
-        override fun disposeIllegalEntry(cache: MutableMap<LibraryEx, List<LibraryInfo>>, key: LibraryEx) {
-            super.disposeIllegalEntry(cache, key)
-            dropDisposedKey(key)
+        return outdatedValues
+      }
+
+      private fun createLibraryInfos(
+        library: LibraryEx,
+        platformKind: IdePlatformKind,
+        klibLibraryInfoFactory: (Project, LibraryEx, String) -> LibraryInfo,
+        metadataLibraryInfoFactory: ((Project, LibraryEx) -> LibraryInfo)
+      ): List<LibraryInfo> {
+        val defaultPlatform = platformKind.defaultPlatform
+        val klibFiles = library.getFiles(OrderRootType.CLASSES).filter {
+          it.isKlibLibraryRootForPlatform(defaultPlatform)
         }
 
-        override fun disposeEntry(
-            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
-            entry: MutableMap.MutableEntry<LibraryEx, List<LibraryInfo>>,
-        ) {
-            dropDisposedKey(entry.key)
+        if (klibFiles.isEmpty()) {
+          return listOf(metadataLibraryInfoFactory(project, library))
+        }
 
-            val libInfoKey = entry.value.first().library
-            if (libInfoKey == entry.key) return
+        return ArrayList<LibraryInfo>(klibFiles.size).apply {
+          for (file in klibFiles) {
+            val path = PathUtil.getLocalPath(file) ?: continue
+            add(klibLibraryInfoFactory(project, library, path))
+          }
+        }
+      }
 
-            val iterator = cache.iterator()
-            while (iterator.hasNext()) {
-                val cacheEntry = iterator.next()
-                if (cacheEntry.value.first().library == libInfoKey) {
-                    iterator.remove()
-                    dropDisposedKey(cacheEntry.key)
-                }
+      private fun getPlatform(library: LibraryEx): TargetPlatform =
+        if (!library.isDisposed) {
+          detectLibraryKind(library, project).platform
+        }
+        else {
+          JvmPlatforms.defaultJvmPlatform
+        }
+
+      inner class ModelChangeListener(project: Project) : WorkspaceModelChangeListener {
+        override fun beforeChanged(event: VersionedStorageChange) {
+          val storageBefore = event.storageBefore
+          val libraryChanges = event.getChanges(LibraryEntity::class.java)
+          val moduleChanges = event.getChanges(ModuleEntity::class.java)
+
+          if (libraryChanges.none() && moduleChanges.none()) return
+
+          val outdatedLibraries: MutableList<Library> = libraryChanges
+            .mapNotNull { it.oldEntity?.findLibraryBridge(storageBefore) }
+            .toMutableList()
+
+          val oldLibDependencies = moduleChanges.mapNotNull {
+            it.oldEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+          }.flatten().associateBy { it.library }
+
+          val newLibDependencies = moduleChanges.mapNotNull {
+            it.newEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
+          }.flatten().associateBy { it.library }
+
+          for (entry in oldLibDependencies.entries) {
+            val value = entry.value
+            if (value != newLibDependencies[entry.key]) {
+              val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
+              outdatedLibraries.addIfNotNull(libraryBridge)
             }
-        }
+          }
 
-        private fun dropDisposedKey(key: LibraryEx) {
-            for (values in deduplicationCache.values) {
-                if (values.remove(key)) break
+          if (outdatedLibraries.isNotEmpty()) {
+            val droppedLibraryInfos =
+              invalidateKeysAndGetOutdatedValues(outdatedLibraries.map { it as LibraryEx }).flattenTo(hashSetOf())
+
+            if (droppedLibraryInfos.isNotEmpty()) {
+              removedLibraryInfoTracker.incModificationCount()
+              project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
             }
+          }
         }
-
-        override fun checkValueValidity(value: List<LibraryInfo>) {
-            value.forEach(LibraryInfo::checkValidity)
-        }
-
-        override fun calculate(key: LibraryEx): List<LibraryInfo> = when (val platformKind = getPlatform(key).idePlatformKind) {
-            is JvmIdePlatformKind -> listOf(JvmLibraryInfo(project, key))
-            is CommonIdePlatformKind -> createLibraryInfos(key, platformKind, ::CommonKlibLibraryInfo, ::CommonMetadataLibraryInfo)
-            is JsIdePlatformKind -> createLibraryInfos(key, platformKind, ::JsKlibLibraryInfo, ::JsMetadataLibraryInfo)
-            is WasmIdePlatformKind -> createLibraryInfos(key, platformKind, ::WasmKlibLibraryInfo, ::WasmMetadataLibraryInfo)
-            is NativeIdePlatformKind -> createLibraryInfos(key, platformKind, ::NativeKlibLibraryInfo, ::NativeMetadataLibraryInfo)
-            else -> error("Unexpected platform kind: $platformKind")
-        }.also {
-            require(it.isNotEmpty()) { "Must be not empty for consistency with LibraryInfoCache#deduplicatedLibrary" }
-        }
-
-        override fun postProcessNewValue(key: LibraryEx, value: List<LibraryInfo>) {
-            project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosAdded(value)
-        }
-
-        override fun doInvalidateKeysAndGetOutdatedValues(
-            keys: Collection<LibraryEx>,
-            cache: MutableMap<LibraryEx, List<LibraryInfo>>,
-        ): Collection<List<LibraryInfo>> {
-            val outdatedValues = mutableListOf<List<LibraryInfo>>()
-            for ((root, invalidatedLibraries) in keys.groupBy { it.firstRoot() }) {
-                val deduplicatedLibraries = deduplicationCache[root] ?: continue
-                if (deduplicatedLibraries.isEmpty()) continue
-                deduplicatedLibraries.removeAll(invalidatedLibraries)
-
-                for (invalidatedLibrary in invalidatedLibraries) {
-                    val anchorInfo = cache.remove(invalidatedLibrary)?.takeIf { it.first().library == invalidatedLibrary } ?: continue
-                    outdatedValues += anchorInfo
-
-                    if (deduplicatedLibraries.isEmpty()) continue
-                    val invalidatedLibraryUrlsByType = invalidatedLibrary.urlsByType()
-                    val deduplicatedLibrariesIterator = deduplicatedLibraries.iterator()
-                    while (deduplicatedLibrariesIterator.hasNext()) {
-                        val deduplicatedLibrary = deduplicatedLibrariesIterator.next()
-                        if (invalidatedLibraryUrlsByType.rootEquals(deduplicatedLibrary)) {
-                            deduplicatedLibrariesIterator.remove()
-                            cache.remove(deduplicatedLibrary)
-                        }
-                    }
-                }
-            }
-
-            return outdatedValues
-        }
-
-        private fun createLibraryInfos(
-            library: LibraryEx,
-            platformKind: IdePlatformKind,
-            klibLibraryInfoFactory: (Project, LibraryEx, String) -> LibraryInfo,
-            metadataLibraryInfoFactory: ((Project, LibraryEx) -> LibraryInfo)
-        ): List<LibraryInfo> {
-            val defaultPlatform = platformKind.defaultPlatform
-            val klibFiles = library.getFiles(OrderRootType.CLASSES).filter {
-                it.isKlibLibraryRootForPlatform(defaultPlatform)
-            }
-
-            if (klibFiles.isEmpty()) {
-                return listOf(metadataLibraryInfoFactory(project, library))
-            }
-
-            return ArrayList<LibraryInfo>(klibFiles.size).apply {
-                for (file in klibFiles) {
-                    val path = PathUtil.getLocalPath(file) ?: continue
-                    add(klibLibraryInfoFactory(project, library, path))
-                }
-            }
-        }
-
-        private fun getPlatform(library: LibraryEx): TargetPlatform =
-            if (!library.isDisposed) {
-                detectLibraryKind(library, project).platform
-            } else {
-                JvmPlatforms.defaultJvmPlatform
-            }
-
-        inner class ModelChangeListener(project: Project) : WorkspaceModelChangeListener {
-            override fun beforeChanged(event: VersionedStorageChange) {
-                val storageBefore = event.storageBefore
-                val libraryChanges = event.getChanges(LibraryEntity::class.java)
-                val moduleChanges = event.getChanges(ModuleEntity::class.java)
-
-                if (libraryChanges.none() && moduleChanges.none()) return
-
-                val outdatedLibraries: MutableList<Library> = libraryChanges
-                  .mapNotNull { it.oldEntity?.findLibraryBridge(storageBefore) }
-                  .toMutableList()
-
-                val oldLibDependencies = moduleChanges.mapNotNull {
-                    it.oldEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
-                }.flatten().associateBy { it.library }
-
-                val newLibDependencies = moduleChanges.mapNotNull {
-                    it.newEntity?.dependencies?.filterIsInstance<ModuleDependencyItem.Exportable.LibraryDependency>()
-                }.flatten().associateBy { it.library }
-
-                for (entry in oldLibDependencies.entries) {
-                    val value = entry.value
-                    if (value != newLibDependencies[entry.key]) {
-                        val libraryBridge = value.library.findLibraryBridge(storageBefore, project)
-                        outdatedLibraries.addIfNotNull(libraryBridge)
-                    }
-                }
-
-                if (outdatedLibraries.isNotEmpty()) {
-                    val droppedLibraryInfos =
-                      invalidateKeysAndGetOutdatedValues(outdatedLibraries.map { it as LibraryEx }).flattenTo(hashSetOf())
-
-                    if (droppedLibraryInfos.isNotEmpty()) {
-                        removedLibraryInfoTracker.incModificationCount()
-                        project.messageBus.syncPublisher(LibraryInfoListener.TOPIC).libraryInfosRemoved(droppedLibraryInfos)
-                    }
-                }
-            }
-        }
+      }
     }
 
     operator fun get(key: Library): List<LibraryInfo> {
