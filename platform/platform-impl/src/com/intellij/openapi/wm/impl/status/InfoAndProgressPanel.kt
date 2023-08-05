@@ -53,6 +53,7 @@ import com.intellij.util.ui.StartupUiUtil.getCenterPoint
 import it.unimi.dsi.fastutil.ints.IntArrays
 import it.unimi.dsi.fastutil.ints.IntComparator
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
+import kotlinx.collections.immutable.persistentHashMapOf
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -100,7 +101,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
   private val originals = ArrayList<ProgressIndicatorEx>()
   private val infos = ArrayList<TaskInfo>()
-  private val inlineToOriginal = HashMap<MyInlineProgressIndicator, ProgressIndicatorEx>()
+  private var inlineToOriginal = persistentHashMapOf<MyInlineProgressIndicator, ProgressIndicatorEx>()
   private val originalToInlines = HashMap<ProgressIndicatorEx, MutableSet<MyInlineProgressIndicator>>()
   private var shouldClosePopupAndOnProcessFinish = false
   private var currentRequestor: String? = null
@@ -172,7 +173,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   private fun queueProgressUpdateForIndicators() {
-    for (indicator in synchronized(inlineToOriginal) { inlineToOriginal.keys.toList() }) {
+    for (indicator in inlineToOriginal.keys) {
       if (indicator.canCheckPowerSaveMode()) {
         indicator.queueProgressUpdate()
       }
@@ -198,7 +199,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       for (indicator in inlineToOriginal.keys) {
         Disposer.dispose(indicator)
       }
-      inlineToOriginal.clear()
+      inlineToOriginal = inlineToOriginal.clear()
       originalToInlines.clear()
       disposed = true
       infos.clear()
@@ -297,7 +298,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
   private fun removeFromMaps(progress: MyInlineProgressIndicator): ProgressIndicatorEx? {
     val original = inlineToOriginal.get(progress)
-    inlineToOriginal.remove(progress)
+    inlineToOriginal = inlineToOriginal.remove(progress)
     synchronized(dirtyIndicators) { dirtyIndicators.remove(progress) }
     var set = originalToInlines.get(original)
     if (set != null) {
@@ -438,7 +439,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       }
     }
     val inline = if (compact) MyInlineProgressIndicator(info, original) else ProgressPanelProgressIndicator(info, original)
-    inlineToOriginal.put(inline, original)
+    inlineToOriginal = inlineToOriginal.put(inline, original)
     inlines.add(inline)
     if (compact) {
       inline.component.addMouseListener(object : MouseAdapter() {
@@ -865,7 +866,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   private fun runQuery() {
-    val indicators = synchronized(originals) { inlineToOriginal.keys.toList() }
+    val indicators = inlineToOriginal.keys
     if (indicators.isEmpty()) {
       return
     }
