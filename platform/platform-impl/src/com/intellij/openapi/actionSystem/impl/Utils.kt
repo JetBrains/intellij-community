@@ -52,6 +52,7 @@ import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.StartupUiUtil.isUnderDarcula
 import com.intellij.util.ui.UIUtil
 import io.opentelemetry.api.OpenTelemetry
@@ -246,7 +247,13 @@ object Utils {
     val wrapped = wrapDataContext(context)
     val async = isAsyncDataContext(wrapped) && !isUnitTestMode
     val edtExecutor = if (async) newFastTrackAwareExecutor(group, place, context, false) else null
-    val updater = ActionUpdater(presentationFactory, wrapped, place, isContextMenu, false, edtExecutor, null)
+    val updater = ActionUpdater(presentationFactory = presentationFactory,
+                                dataContext = wrapped,
+                                place = place,
+                                contextMenuAction = isContextMenu,
+                                toolbarAction = false,
+                                edtExecutor = edtExecutor,
+                                eventTransform = null)
     var list: List<AnAction>?
     if (async) {
       if (isContextMenu) {
@@ -326,11 +333,13 @@ object Utils {
                                         place: String,
                                         context: DataContext,
                                         checkMainMenuOrToolbarFirstTime: Boolean): FastTrackAwareEdtExecutor? {
-    if (!ActionGroupExpander.getInstance().allowsFastUpdate(
-        CommonDataKeys.PROJECT.getData(context), group, place)) {
+    if (!ActionGroupExpander.getInstance().allowsFastUpdate(CommonDataKeys.PROJECT.getData(context), group, place)) {
       return null
     }
-    val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime && (ActionPlaces.MAIN_MENU == place || ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place)
+
+
+    val mainMenuOrToolbarFirstTime = checkMainMenuOrToolbarFirstTime &&
+                                     (ActionPlaces.MAIN_MENU == place || (ExperimentalUI.isNewUI() && ActionPlaces.MAIN_TOOLBAR == place))
     val maxTime = if (mainMenuOrToolbarFirstTime) 5000 else Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 50)
     return if (maxTime < 1) null else FastTrackAwareEdtExecutor(maxTime)
   }
@@ -633,10 +642,10 @@ object Utils {
     var c: Class<*> = action.javaClass
     val sb = StringBuilder(200)
     if (!op.isNullOrEmpty()) {
-      sb.append("#").append(op)
+      sb.append('#').append(op)
     }
     if (!place.isNullOrEmpty()) {
-      sb.append("@").append(place)
+      sb.append('@').append(place)
     }
     sb.append(" (")
     var x = action
@@ -764,7 +773,7 @@ object Utils {
       }
 
       override fun paintComponent(g: Graphics) {
-        if (isUnderDarcula || UIUtil.isUnderWin10LookAndFeel()) {
+        if (isUnderDarcula || StartupUiUtil.isUnderWin10LookAndFeel()) {
           g.color = parent.getBackground()
           g.fillRect(0, 0, width, height)
         }
@@ -932,7 +941,7 @@ object Utils {
       }
       try {
         ourInUpdateSessionForInputEventEDTLoop = true
-        result = runLoopAndWaitForFuture(promise, null, false) {
+        result = runLoopAndWaitForFuture(promise = promise, defValue = null, rethrowCancellation = false) {
           val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
           runnable?.run()
           parentIndicator?.checkCanceled()
@@ -981,111 +990,112 @@ object Utils {
       }
     }
   }
+}
 
-  private fun <T> runLoopAndWaitForFuture(promise: Future<out T?>,
-                                          defValue: T?,
-                                          rethrowCancellation: Boolean,
-                                          eventPump: () -> Boolean): T? {
-    while (!promise.isDone) {
-      try {
-        if (!eventPump()) {
-          return null
-        }
-      }
-      catch (ignore: ProcessCanceledException) {
-      }
-      catch (e: Throwable) {
-        LOG.error(e)
-      }
-    }
+private fun <T> runLoopAndWaitForFuture(promise: Future<out T?>,
+                                        defValue: T?,
+                                        rethrowCancellation: Boolean,
+                                        eventPump: () -> Boolean): T? {
+  while (!promise.isDone) {
     try {
-      return if (promise.isCancelled) defValue else promise.get()
-    }
-    catch (ex: Throwable) {
-      val pce = ExceptionUtilRt.findCause(ex, ProcessCanceledException::class.java)
-      if (pce == null) {
-        LOG.error(ex)
-      }
-      else if (rethrowCancellation) {
-        throw pce
+      if (!eventPump()) {
+        return null
       }
     }
-    return defValue
+    catch (ignore: ProcessCanceledException) {
+    }
+    catch (e: Throwable) {
+      LOG.error(e)
+    }
+  }
+  try {
+    return if (promise.isCancelled) defValue else promise.get()
+  }
+  catch (ex: Throwable) {
+    val pce = ExceptionUtilRt.findCause(ex, ProcessCanceledException::class.java)
+    if (pce == null) {
+      LOG.error(ex)
+    }
+    else if (rethrowCancellation) {
+      throw pce
+    }
+  }
+  return defValue
+}
+
+@RequiresEdt
+private fun <T> computeWithRetries(expire: (() -> Boolean)?, onProcessed: (() -> Unit)?, computable: () -> T): T {
+  var lastCancellation: ProcessCanceledWithReasonException? = null
+  val retries = max(1.0, Registry.intValue("actionSystem.update.actions.max.retries", 20).toDouble()).toInt()
+  for (i in 0 until retries) {
+    try {
+      SlowOperations.startSection(SlowOperations.RESET).use {
+        return computable()
+      }
+    }
+    catch (ex: ProcessCanceledWithReasonException) {
+      lastCancellation = ex
+      if (canRetryOnThisException(ex) && (expire == null || !expire())) {
+        continue
+      }
+      throw ex
+    }
+    catch (e: Throwable) {
+      throw e
+    }
+    finally {
+      onProcessed?.invoke()
+    }
+  }
+  if (retries > 1) {
+    LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation!!.reason)
+  }
+  throw lastCancellation!!
+}
+
+private fun canRetryOnThisException(ex: Throwable): Boolean {
+  val reason = if (ex is ProcessCanceledWithReasonException) ex.reason else null
+  val reasonStr = if (reason is String) reason else ""
+  return reasonStr.contains("write-action") || reasonStr.contains("fast-track") && reasonStr.contains("toolbar", ignoreCase = true)
+}
+
+private class FastTrackAwareEdtExecutor(val maxTime: Int) : Executor {
+  private val queue = LinkedBlockingQueue<Runnable>()
+
+  @Volatile
+  private var fastTrack: Boolean = true
+
+  override fun execute(runnable: Runnable) {
+    if (fastTrack) {
+      queue.offer(runnable)
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
+    }
   }
 
-  @RequiresEdt
-  private fun <T> computeWithRetries(expire: (() -> Boolean)?, onProcessed: (() -> Unit)?, computable: () -> T): T {
-    var lastCancellation: ProcessCanceledWithReasonException? = null
-    val retries = max(1.0, Registry.intValue("actionSystem.update.actions.max.retries", 20).toDouble()).toInt()
-    for (i in 0 until retries) {
-      try {
-        SlowOperations.startSection(SlowOperations.RESET).use {
-          return computable()
-        }
-      }
-      catch (ex: ProcessCanceledWithReasonException) {
-        lastCancellation = ex
-        if (canRetryOnThisException(ex) && (expire == null || !expire())) {
-          continue
-        }
-        throw ex
-      }
-      catch (e: Throwable) {
-        throw e
-      }
-      finally {
-        onProcessed?.invoke()
+  fun <T> waitForFastTrack(promise: Future<out T>): T? {
+    val result: T?
+    val start = System.nanoTime()
+    try {
+      fastTrack = true
+      result = runLoopAndWaitForFuture(promise = promise, defValue = null, rethrowCancellation = false) {
+        val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
+        runnable?.run()
+        TimeoutUtil.getDurationMillis(start) < maxTime
       }
     }
-    if (retries > 1) {
-      LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation!!.reason)
+    finally {
+      fastTrack = false
     }
-    throw lastCancellation!!
-  }
-
-  private fun canRetryOnThisException(ex: Throwable): Boolean {
-    val reason = if (ex is ProcessCanceledWithReasonException) ex.reason else null
-    val reasonStr = if (reason is String) reason else ""
-    return reasonStr.contains("write-action") || reasonStr.contains("fast-track") && reasonStr.contains("toolbar", ignoreCase = true)
-  }
-
-  private class FastTrackAwareEdtExecutor(val maxTime: Int) : Executor {
-    val queue: LinkedBlockingQueue<Runnable> = LinkedBlockingQueue()
-
-    @Volatile
-    var fastTrack: Boolean = true
-    override fun execute(runnable: Runnable) {
-      if (fastTrack) {
-        queue.offer(runnable)
-      }
-      else {
+    if (result == null) {
+      for (runnable in queue) {
         ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
       }
+      queue.clear()
     }
-
-    fun <T> waitForFastTrack(promise: Future<out T>): T? {
-      val result: T?
-      val start = System.nanoTime()
-      try {
-        fastTrack = true
-        result = runLoopAndWaitForFuture(promise, null, false) {
-          val runnable = queue.poll(1, TimeUnit.MILLISECONDS)
-          runnable?.run()
-          TimeoutUtil.getDurationMillis(start) < maxTime
-        }
-      }
-      finally {
-        fastTrack = false
-      }
-      if (result == null) {
-        for (runnable in queue) {
-          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.any())
-        }
-        queue.clear()
-      }
-      LOG.assertTrue(queue.isEmpty(), "fast-track queue is not empty")
-      return result
-    }
+    LOG.assertTrue(queue.isEmpty(), "fast-track queue is not empty")
+    return result
   }
 }
 

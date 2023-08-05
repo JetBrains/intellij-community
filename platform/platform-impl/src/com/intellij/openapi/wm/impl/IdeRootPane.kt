@@ -267,7 +267,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       border = UIManager.getBorder("Window.border")
     }
 
-    helper.init(frame, this, parentDisposable)
+    helper.init(frame = frame, pane = this, parentDisposable = parentDisposable)
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
@@ -275,9 +275,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         toolbar = createToolbar(coroutineScope.childScope(), frame)
         withContext(Dispatchers.EDT) {
           northPanel.add(toolbar, 0)
-          toolbar!!.isVisible = isToolbarVisible(
-            mainToolbarActionSupplier = { computeMainActionGroups() }
-          )
+          toolbar!!.isVisible = isToolbarVisible(mainToolbarActionSupplier = { computeMainActionGroups() })
         }
 
         if (!isLightEdit) {
@@ -293,10 +291,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
     }
 
-    if (isLightEdit) {
-      if (ExperimentalUI.isNewUI()) {
-        updateToolbar()
-      }
+    if (isLightEdit && ExperimentalUI.isNewUI()) {
+      updateToolbar()
     }
 
     if (SystemInfoRt.isMac && JdkEx.isTabbingModeAvailable()) {
@@ -318,9 +314,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       get() = SystemInfoRt.isXWindow && ExperimentalUI.isNewUI() && !UISettings.shadowInstance.separateMainMenu && !hideNativeLinuxTitle
 
     internal val hideNativeLinuxTitle: Boolean
-      get() = hideNativeLinuxTitleAvailable
-              && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
-              && hideNativeLinuxTitleSupported
+      get() = hideNativeLinuxTitleAvailable && hideNativeLinuxTitleSupported && UISettings.shadowInstance.mergeMainMenuWithWindowTitle
 
     internal val hideNativeLinuxTitleSupported: Boolean
       get() = SystemInfoRt.isXWindow
@@ -346,14 +340,16 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       }
     }
 
-    // Workaround for JBR-5777, should be removed after JBR-5777 is fixed
+    // Workaround for JBR-5777, it should be removed after JBR-5777 is fixed
     fun jbr5777Workaround(): Boolean {
       return GraphicsEnvironment.getLocalGraphicsEnvironment().javaClass.getName().equals("sun.awt.X11GraphicsEnvironment")
     }
   }
 
   internal fun createDecorator(): IdeFrameDecorator? {
-    return IdeFrameDecorator.decorate(frame, rootPane.glassPane as IdeGlassPane, coroutineScope.childScope())
+    return IdeFrameDecorator.decorate(frame = frame,
+                                      glassPane = rootPane.glassPane as IdeGlassPane,
+                                      coroutineScope = coroutineScope.childScope())
   }
 
   @Suppress("unused")
@@ -577,6 +573,10 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
   }
 
   private fun updateMainMenuVisibility() {
+    if (menuBar == null) {
+      return
+    }
+
     // don't show swing-menu when a global (system) menu presented
     val visible = SystemInfo.isMacSystemMenu
                   || fullScreen
@@ -585,10 +585,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
                       && UISettings.shadowInstance.showMainMenu
                       && (!isMenuButtonInToolbar || isCompactHeader {
       computeMainActionGroups(CustomActionsSchema.getInstance())
-    } && ExperimentalUI.isNewUI())
-                      && !hideNativeLinuxTitle)
-
-    if (menuBar != null && visible != menuBar.isVisible) {
+    } && ExperimentalUI.isNewUI()) && !hideNativeLinuxTitle)
+    if (visible != menuBar.isVisible) {
       menuBar.isVisible = visible
     }
   }
@@ -658,19 +656,6 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         val component = extension.createComponent(/* project = */ project, /* isDocked = */ false) ?: return@withContext
         component.putClientProperty(EXTENSION_KEY, key)
         northPanel.add(component)
-      }
-    }
-  }
-
-  internal fun deinstallNorthComponents(project: Project) {
-    if (isLightEdit) {
-      return
-    }
-
-    val count = northPanel.componentCount
-    for (i in count - 1 downTo 0) {
-      if (northPanel.getComponent(i) !== toolbar) {
-        northPanel.remove(i)
       }
     }
   }
