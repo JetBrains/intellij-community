@@ -100,7 +100,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
 
   private val originals = ArrayList<ProgressIndicatorEx>()
   private val infos = ArrayList<TaskInfo>()
-  private val inlineToOriginal = HashMap<InlineProgressIndicator, ProgressIndicatorEx>()
+  private val inlineToOriginal = HashMap<MyInlineProgressIndicator, ProgressIndicatorEx>()
   private val originalToInlines = HashMap<ProgressIndicatorEx, MutableSet<MyInlineProgressIndicator>>()
   private var shouldClosePopupAndOnProcessFinish = false
   private var currentRequestor: String? = null
@@ -121,7 +121,22 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   }
 
   init {
-    runOnProgressRelatedChange(runnable = { updateProgressIcon() }, coroutineScope = coroutineScope, powerSaveMode = true)
+    val connection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope = coroutineScope)
+    connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener {
+      EdtInvocationManager.invokeLaterIfNeeded(::updateProgressIcon)
+      queueProgressUpdateForIndicators()
+    })
+    connection.subscribe(ProgressSuspender.TOPIC, object : SuspenderListener {
+      override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
+        EdtInvocationManager.invokeLaterIfNeeded(::updateProgressIcon)
+        queueProgressUpdateForIndicators()
+      }
+
+      override fun suspendedStatusChanged(suspender: ProgressSuspender) {
+        EdtInvocationManager.invokeLaterIfNeeded(::updateProgressIcon)
+        queueProgressUpdateForIndicators()
+      }
+    })
 
     coroutineScope.launch {
       runQueryRequests
@@ -156,25 +171,11 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
   }
 
-  private fun runOnProgressRelatedChange(runnable: () -> Unit, coroutineScope: CoroutineScope, powerSaveMode: Boolean) {
-    synchronized(originals) {
-      if (disposed) {
-        return
+  private fun queueProgressUpdateForIndicators() {
+    for (indicator in synchronized(inlineToOriginal) { inlineToOriginal.keys.toList() }) {
+      if (indicator.canCheckPowerSaveMode()) {
+        indicator.queueProgressUpdate()
       }
-
-      val connection = ApplicationManager.getApplication().getMessageBus().connect(coroutineScope)
-      if (powerSaveMode) {
-        connection.subscribe(PowerSaveMode.TOPIC, PowerSaveMode.Listener { EdtInvocationManager.invokeLaterIfNeeded(runnable) })
-      }
-      connection.subscribe(ProgressSuspender.TOPIC, object : SuspenderListener {
-        override fun suspendableProgressAppeared(suspender: ProgressSuspender) {
-          EdtInvocationManager.invokeLaterIfNeeded(runnable)
-        }
-
-        override fun suspendedStatusChanged(suspender: ProgressSuspender) {
-          EdtInvocationManager.invokeLaterIfNeeded(runnable)
-        }
-      })
     }
   }
 
@@ -496,6 +497,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     private val refreshAndInfoPanel = JPanel()
     val inlinePanel: InlineProgressPanel = InlineProgressPanel(host)
     private var centralComponent: JComponent? = null
+
     // see also: `VfsRefreshIndicatorWidgetFactory#myAvailable`
     var showNavBar: Boolean
 
@@ -693,10 +695,13 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
   internal open inner class MyInlineProgressIndicator(compact: Boolean, task: TaskInfo, original: ProgressIndicatorEx)
     : InlineProgressIndicator(compact, task), TitledIndicator {
     private var original: ProgressIndicatorEx?
+
     @JvmField
     var presentationModeProgressPanel: PresentationModeProgressPanel? = null
+
     @JvmField
     var presentationModeBalloon: Balloon? = null
+
     @JvmField
     var presentationModeShowBalloon: Boolean = false
 
@@ -712,10 +717,6 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
           queueProgressUpdate()
         }
       })
-      @Suppress("LeakingThis")
-      runOnProgressRelatedChange(runnable = ::queueProgressUpdate,
-                                 coroutineScope = coroutineScope,
-                                 powerSaveMode = canCheckPowerSaveMode())
     }
 
     override fun createCompactTextAndProgress(component: JPanel) {
@@ -727,7 +728,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       (progress.parent as JComponent).setBorder(JBUI.Borders.empty(0, 8, 0, 4))
     }
 
-    protected open fun canCheckPowerSaveMode(): Boolean = true
+    open fun canCheckPowerSaveMode(): Boolean = true
 
     override fun getText(): String {
       val text = (super.getText() ?: "")
@@ -843,7 +844,7 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
       original!!.cancel()
     }
 
-    override fun queueProgressUpdate() {
+    public override fun queueProgressUpdate() {
       synchronized(dirtyIndicators) { dirtyIndicators.add(this) }
       check(updateRequests.tryEmit(Unit))
     }
@@ -863,21 +864,14 @@ class InfoAndProgressPanel internal constructor(private val statusBar: IdeStatus
     }
   }
 
-  private suspend fun runQuery() {
+  private fun runQuery() {
     val indicators = synchronized(originals) { inlineToOriginal.keys.toList() }
     if (indicators.isEmpty()) {
       return
     }
 
     for (each in indicators) {
-      if (each is MyInlineProgressIndicator) {
-        (each as InlineProgressIndicator).queueProgressUpdate()
-      }
-      else {
-        withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
-          each.queueProgressUpdate()
-        }
-      }
+      each.queueProgressUpdate()
     }
     check(runQueryRequests.tryEmit(Unit))
   }
