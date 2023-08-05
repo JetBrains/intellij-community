@@ -507,7 +507,7 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       }
       int lastIndex = statements.length - 1;
       if (ContainerUtil.exists(statements,
-                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiContinueStatement.class, PsiBreakStatement.class).isEmpty())) {
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiContinueStatement.class, PsiBreakStatement.class, PsiYieldStatement.class).isEmpty())) {
         return null;
       }
       PsiReturnStatement returnStmt = tryCast(statements[lastIndex], PsiReturnStatement.class);
@@ -729,6 +729,15 @@ public class EnhancedSwitchMigrationInspection extends AbstractBaseJavaLocalInsp
       PsiStatement[] statements = branch.getStatements();
       if (branch.isFallthrough() && statements.length == 0) continue;
       if (statements.length == 0) return null;
+      if (ContainerUtil.exists(statements,
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiContinueStatement.class,
+                                                                        PsiYieldStatement.class, PsiReturnStatement.class).isEmpty())) {
+        return null;
+      }
+      if (ContainerUtil.exists(Arrays.stream(statements).toList().subList(0, statements.length - 1),
+                               st -> !PsiTreeUtil.findChildrenOfAnyType(st, PsiBreakStatement.class).isEmpty())) {
+        return null;
+      }
       if (statements.length > maxNumberStatementsForExpression) {
         isInfo = true;
       }
