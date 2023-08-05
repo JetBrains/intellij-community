@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
@@ -274,10 +275,13 @@ public class RenameDialog extends RefactoringDialog implements RenameRefactoring
     List<AutomaticRenamerFactory> applicableAutoRenameFactories = ActionUtil.underModalProgress(
       myProject,
       RefactoringBundle.message("rename.finding.auto.rename.options.modal.title"),
-      () -> ContainerUtil.filter(
-        AutomaticRenamerFactory.EP_NAME.getExtensionList(),
-        renamerFactory -> renamerFactory.isApplicable(myPsiElement) && renamerFactory.getOptionName() != null
-      )
+      () -> {
+        ProgressManager.checkCanceled();
+        return ContainerUtil.filter(
+          AutomaticRenamerFactory.EP_NAME.getExtensionList(),
+          renamerFactory -> renamerFactory.isApplicable(myPsiElement) && renamerFactory.getOptionName() != null
+        );
+      }
     );
 
     for(AutomaticRenamerFactory factory : applicableAutoRenameFactories) {
