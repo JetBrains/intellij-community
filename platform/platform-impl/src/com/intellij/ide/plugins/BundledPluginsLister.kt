@@ -4,7 +4,6 @@ package com.intellij.ide.plugins
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.openapi.application.ModernApplicationStarter
-import com.intellij.openapi.application.impl.exitAppOrExitProcess
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.PlainTextLikeFileType
@@ -74,7 +73,7 @@ private class BundledPluginsLister : ModernApplicationStarter() {
       exitProcess(1)
     }
 
-    exitAppOrExitProcess()
+    exitProcess(0)
   }
 }
 

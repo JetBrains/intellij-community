@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.search;
 
 import com.intellij.application.options.OptionsContainingConfigurable;
@@ -17,8 +17,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.ApplicationStarter;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
@@ -88,8 +86,8 @@ public final class TraverseUIStarter implements ApplicationStarter {
   public void main(@NotNull List<String> args) {
     try {
       startup(Path.of(OUTPUT_PATH), SPLIT_BY_RESOURCE_PATH, I18N_OPTION);
-      ApplicationManagerEx.getApplicationEx().exit(ApplicationEx.FORCE_EXIT | ApplicationEx.EXIT_CONFIRMED);
       System.out.println("Searchable options index builder completed");
+      System.exit(0);
     }
     catch (Throwable e) {
       try {
