@@ -32,24 +32,18 @@ static HOOK_NAME: &str = "vfprintf";
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
 #[no_mangle]
-extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: *const c_void) -> jint {
+extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList) -> jint {
     extern "C" {
-        fn vfprintf(fp: *const c_void, format: *const c_char, args: *const c_void) -> c_int;
-        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: *const c_void) -> c_int;
+        fn vfprintf(fp: *const c_void, format: *const c_char, args: va_list::VaList) -> c_int;
+        fn vsnprintf(s: *mut c_char, n: usize, format: *const c_char, args: va_list::VaList) -> c_int;
     }
 
     match &mut *HOOK_MESSAGES.lock().unwrap() {
         None => unsafe { vfprintf(fp, format, args) },
         Some(messages) => {
-            let required_len = unsafe { vsnprintf(std::ptr::null_mut(), 0, format, args) };
-            let message = if required_len <= 0 {
-                (unsafe { CStr::from_ptr(format) }).to_string_lossy().to_string()
-            } else {
-                let len = required_len as usize + 1;
-                let mut buffer = Vec::<c_char>::with_capacity(len);
-                let _ = unsafe { vsnprintf(buffer.as_mut_ptr(), len, format, args) };
-                (unsafe { CStr::from_ptr(buffer.as_ptr()) }).to_string_lossy().to_string()
-            };
+            let mut buffer = [0; 4096];
+            let _ = unsafe { vsnprintf(buffer.as_mut_ptr(), buffer.len(), format, args) };
+            let message = unsafe { CStr::from_ptr(buffer.as_ptr()) }.to_string_lossy().to_string();
             debug!("[JVM] vfprintf_hook: {:?}", message);
             messages.push(message);
             0  // because nothing was actually printed
@@ -203,7 +197,7 @@ fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArg
 
     jni_options.push(jni::sys::JavaVMOption {
         optionString: CString::new(HOOK_NAME)?.into_raw(),
-        extraInfo: unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, *const c_void) -> jint, *mut c_void>(vfprintf_hook) },
+        extraInfo: unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) },
     });
 
     for opt in vm_options {

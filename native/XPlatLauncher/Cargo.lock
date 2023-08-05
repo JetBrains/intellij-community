@@ -3138,6 +3138,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
 
 [[package]]
+name = "va_list"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "350bd5ef744f978a387cd08ce514be4e3766746496f355d59d68af36f52d36da"
+
+[[package]]
 name = "vcpkg"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3541,6 +3547,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "va_list",
  "windows",
 ]
 
