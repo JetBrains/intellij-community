@@ -130,7 +130,7 @@ envs {
   }
 
 
-  createPython("py36", python36version, ["django", "behave-django", "behave", "pytest", "untangle"],
+  createPython("py36_django_latest", python36version, ["django", "behave-django", "behave", "pytest", "untangle"],
                "python3.6\ndjango\ndjango20\nbehave\nbehave-django\ndjango2\npytest\nuntangle", true)
   if (djangoTrunkOnly) {
     return
@@ -214,7 +214,7 @@ task prepare(type: Delete) {
   dependsOn killPythonWindows
 
   doFirst {
-    new File(envs.bootstrapDirectory, "django_latest").with { djangoLatestFolder ->
+    new File(envs.bootstrapDirectory, "py36_django_latest").with { djangoLatestFolder ->
       //     if (djangoLatestFolder.exists() && djangoLatestFolder.lastModified() < System.currentTimeMillis() - 24 * 60 * 60 * 1000) {
       // older then a day
       println "Cleaning django_latest at" + djangoLatestFolder
