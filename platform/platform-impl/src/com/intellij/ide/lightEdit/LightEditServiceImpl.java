@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.lightEdit;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -90,7 +90,7 @@ public final class LightEditServiceImpl implements LightEditService,
       boolean notify = false;
       if (myFrameWrapper == null) {
         mySaveSession = restoreSession;
-        myFrameWrapper = LightEditFrameWrapper.Companion.allocate(project, myConfiguration.frameInfo, () -> closeEditorWindow());
+        myFrameWrapper = LightEditFrameWrapperKt.allocateLightEditFrame(project, myConfiguration.frameInfo);
         LOG.info("Frame created");
         if (restoreSession) {
           restoreSession();

@@ -512,7 +512,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
-  open fun updateNorthComponents() {
+  fun updateNorthComponents() {
+    if (isLightEdit) {
+      return
+    }
+
     val componentCount = northPanel.componentCount
     if (componentCount == 0 || (componentCount == 1 && northPanel.getComponent(0) === toolbar)) {
       return
@@ -613,7 +617,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     component.addMouseMotionListener(listener)
   }
 
-  protected open suspend fun installNorthComponents(project: Project) {
+  protected suspend fun installNorthComponents(project: Project) {
+    if (isLightEdit) {
+      return
+    }
+
     val northExtensions = IdeRootPaneNorthExtension.EP_NAME.extensionList
     if (northExtensions.isEmpty()) {
       return
@@ -654,7 +662,11 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
-  internal open fun deinstallNorthComponents(project: Project) {
+  internal fun deinstallNorthComponents(project: Project) {
+    if (isLightEdit) {
+      return
+    }
+
     val count = northPanel.componentCount
     for (i in count - 1 downTo 0) {
       if (northPanel.getComponent(i) !== toolbar) {

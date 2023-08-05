@@ -3,11 +3,10 @@ package com.intellij.ide.lightEdit
 
 import com.apple.eawt.event.FullScreenEvent
 import com.intellij.diagnostic.IdeMessagePanel
-import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper
+import com.intellij.ide.lightEdit.menuBar.getLightEditMainMenuActionGroup
 import com.intellij.ide.lightEdit.project.LightEditFileEditorManagerImpl
 import com.intellij.ide.lightEdit.statusBar.*
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
@@ -37,103 +36,28 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.awt.Component
 import java.awt.Dimension
-import java.util.function.BooleanSupplier
 import javax.swing.JFrame
+
+
+@RequiresEdt
+internal fun allocateLightEditFrame(project: Project, frameInfo: FrameInfo?): LightEditFrameWrapper {
+  return runBlockingModalWithRawProgressReporter(project, "") {
+    withContext(Dispatchers.EDT) {
+      val wrapper = allocateLightEditFrame(project) { frame ->
+        LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create())
+      } as LightEditFrameWrapper
+      (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
+      wrapper
+    }
+  }
+}
 
 internal class LightEditFrameWrapper(
   private val project: Project,
-  frame: IdeFrameImpl,
-  private val closeHandler: BooleanSupplier
+  frame: IdeFrameImpl
 ) : ProjectFrameHelper(frame = frame), Disposable, LightEditFrame {
   private var editPanel: LightEditPanel? = null
   private var frameTitleUpdateEnabled = true
-
-  companion object {
-    @RequiresEdt
-    fun allocate(project: Project, frameInfo: FrameInfo?, closeHandler: BooleanSupplier): LightEditFrameWrapper {
-      return runBlockingModalWithRawProgressReporter(project, "") {
-        withContext(Dispatchers.EDT) {
-          val wrapper = allocateLightEditFrame(project) { frame ->
-            LightEditFrameWrapper(project = project, frame = frame ?: createNewProjectFrameProducer(frameInfo).create(),
-                                  closeHandler = closeHandler)
-          } as LightEditFrameWrapper
-          (FileEditorManager.getInstance(project) as LightEditFileEditorManagerImpl).internalInit()
-          wrapper
-        }
-      }
-    }
-
-    /**
-     * This method is not used in a normal conditions. Only for light edit.
-     */
-    private suspend fun allocateLightEditFrame(project: Project,
-                                               projectFrameHelperFactory: (IdeFrameImpl?) -> ProjectFrameHelper): ProjectFrameHelper {
-      val windowManager = WindowManager.getInstance() as WindowManagerImpl
-      windowManager.getFrameHelper(project)?.let {
-        return it
-      }
-
-      windowManager.removeAndGetRootFrame()?.let { frame ->
-        val frameHelper = projectFrameHelperFactory(frame)
-        windowManager.lightFrameAssign(project, frameHelper)
-        return frameHelper
-      }
-
-      val frame = projectFrameHelperFactory(null)
-      frame.init()
-      var frameInfo: FrameInfo? = null
-      val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let(windowManager::getFrameHelper)
-      if (lastFocusedProjectFrame != null) {
-        frameInfo = getFrameInfoByFrameHelper(lastFocusedProjectFrame)
-        if (frameInfo.bounds == null) {
-          frameInfo = windowManager.defaultFrameInfoHelper.info
-        }
-      }
-
-      if (frameInfo?.bounds != null) {
-        // update default frame info - newly opened project frame should be the same as last opened
-        if (frameInfo !== windowManager.defaultFrameInfoHelper.info) {
-          windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
-        }
-        frameInfo.bounds?.let {
-          applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
-        }
-      }
-
-      if (SystemInfoRt.isMac) {
-        val decorator = frame.getDecorator()
-        if (decorator is MacMainFrameDecorator) {
-          decorator.dispatcher.addListener(object : FSAdapter() {
-            override fun windowEnteringFullScreen(e: FullScreenEvent?) {
-              MacFullScreenControlsManager.configureForLightEdit(true)
-            }
-
-            override fun windowExitedFullScreen(e: FullScreenEvent?) {
-              MacFullScreenControlsManager.configureForLightEdit(false)
-            }
-          })
-        }
-      }
-
-      windowManager.lightFrameAssign(project, frame)
-      val uiFrame = frame.frame
-      if (frameInfo != null) {
-        uiFrame.extendedState = frameInfo.extendedState
-      }
-      uiFrame.isVisible = true
-      if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
-        frame.toggleFullScreen(true)
-      }
-      uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
-      installAppMenuIfNeeded(uiFrame)
-
-      @Suppress("DEPRECATION")
-      project.coroutineScope.launch {
-        ProjectManagerImpl.dispatchEarlyNotifications()
-      }
-      return frame
-    }
-  }
 
   override fun getProject(): Project = project
 
@@ -208,8 +132,7 @@ internal class LightEditFrameWrapper(
       throw IllegalStateException("Tool windows are unavailable in LightEdit")
     }
 
-    override val mainMenuActionGroup: ActionGroup
-      get() = LightEditMainMenuHelper.getMainMenuActionGroup()
+    override val mainMenuActionGroup by lazy { getLightEditMainMenuActionGroup() }
 
     @Suppress("DEPRECATION")
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {
@@ -221,12 +144,6 @@ internal class LightEditFrameWrapper(
         override fun getPreferredSize(): Dimension = LightEditStatusBarUI.withHeight(super.getPreferredSize())
       }
     }
-
-    override fun updateNorthComponents() {}
-
-    override suspend fun installNorthComponents(project: Project) {}
-
-    override fun deinstallNorthComponents(project: Project) {}
   }
 
   fun setFrameTitleUpdateEnabled(frameTitleUpdateEnabled: Boolean) {
@@ -238,4 +155,75 @@ internal class LightEditFrameWrapper(
       super.setFrameTitle(text)
     }
   }
+}
+
+/**
+ * This method is not used in a normal conditions. Only for light edit.
+ */
+private suspend fun allocateLightEditFrame(project: Project,
+                                           projectFrameHelperFactory: (IdeFrameImpl?) -> ProjectFrameHelper): ProjectFrameHelper {
+  val windowManager = WindowManager.getInstance() as WindowManagerImpl
+  windowManager.getFrameHelper(project)?.let {
+    return it
+  }
+
+  windowManager.removeAndGetRootFrame()?.let { frame ->
+    val frameHelper = projectFrameHelperFactory(frame)
+    windowManager.lightFrameAssign(project, frameHelper)
+    return frameHelper
+  }
+
+  val frame = projectFrameHelperFactory(null)
+  frame.init()
+  var frameInfo: FrameInfo? = null
+  val lastFocusedProjectFrame = IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project?.let(windowManager::getFrameHelper)
+  if (lastFocusedProjectFrame != null) {
+    frameInfo = getFrameInfoByFrameHelper(lastFocusedProjectFrame)
+    if (frameInfo.bounds == null) {
+      frameInfo = windowManager.defaultFrameInfoHelper.info
+    }
+  }
+
+  if (frameInfo?.bounds != null) {
+    // update default frame info - newly opened project frame should be the same as last opened
+    if (frameInfo !== windowManager.defaultFrameInfoHelper.info) {
+      windowManager.defaultFrameInfoHelper.copyFrom(frameInfo)
+    }
+    frameInfo.bounds?.let {
+      applyBoundsOrDefault(frame.frame, FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(it)?.first)
+    }
+  }
+
+  if (SystemInfoRt.isMac) {
+    val decorator = frame.getDecorator()
+    if (decorator is MacMainFrameDecorator) {
+      decorator.dispatcher.addListener(object : FSAdapter() {
+        override fun windowEnteringFullScreen(e: FullScreenEvent?) {
+          MacFullScreenControlsManager.configureForLightEdit(true)
+        }
+
+        override fun windowExitedFullScreen(e: FullScreenEvent?) {
+          MacFullScreenControlsManager.configureForLightEdit(false)
+        }
+      })
+    }
+  }
+
+  windowManager.lightFrameAssign(project, frame)
+  val uiFrame = frame.frame
+  if (frameInfo != null) {
+    uiFrame.extendedState = frameInfo.extendedState
+  }
+  uiFrame.isVisible = true
+  if (isFullScreenSupportedInCurrentOs() && frameInfo != null && frameInfo.fullScreen) {
+    frame.toggleFullScreen(true)
+  }
+  uiFrame.addComponentListener(FrameStateListener(windowManager.defaultFrameInfoHelper))
+  installAppMenuIfNeeded(uiFrame)
+
+  @Suppress("DEPRECATION")
+  project.coroutineScope.launch {
+    ProjectManagerImpl.dispatchEarlyNotifications()
+  }
+  return frame
 }
