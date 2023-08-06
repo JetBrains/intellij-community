@@ -114,15 +114,15 @@ class SetupStatsCollectorStep(private val experimentGroup: Int?,
 
   private fun registerFeatureProvidersIfNeeded() {
     contextFeatureProvider = CCEContextFeatureProvider(logLocationAndTextItem)
-    //ContextFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, contextFeatureProvider)
+    ContextFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, contextFeatureProvider)
     if (!logLocationAndTextItem) return
     elementFeatureProvider = CCEElementFeatureProvider()
-    //ElementFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, elementFeatureProvider)
+    ElementFeatureProvider.EP_NAME.addExplicitExtension(Language.ANY, elementFeatureProvider)
   }
 
   private fun unregisterFeatureProviders() {
-    //ContextFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, contextFeatureProvider)
+    ContextFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, contextFeatureProvider)
     if (!logLocationAndTextItem) return
-  //  ElementFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, elementFeatureProvider)
+    ElementFeatureProvider.EP_NAME.removeExplicitExtension(Language.ANY, elementFeatureProvider)
   }
 }
