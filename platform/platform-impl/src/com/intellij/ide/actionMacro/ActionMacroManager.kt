@@ -1,228 +1,205 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.actionMacro;
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ui.customization.ActionUrl;
-import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
-import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.SettingsCategory;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageDialogBuilder;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.playback.PlaybackContext;
-import com.intellij.openapi.ui.playback.PlaybackRunner;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsActions.ActionText;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.StatusBar;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.AnimatedIcon.Recording;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.ui.*;
-import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+package com.intellij.ide.actionMacro
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseEvent;
-import java.util.*;
+import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeEventQueue
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomActionsSchema.Companion.setCustomizationSchemaForCurrentProjects
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.*
+import com.intellij.openapi.diagnostic.thisLogger
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.playback.PlaybackContext
+import com.intellij.openapi.ui.playback.PlaybackRunner
+import com.intellij.openapi.ui.playback.PlaybackRunner.StatusCallback
+import com.intellij.openapi.ui.playback.PlaybackRunner.StatusCallback.Edt
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.ui.popup.JBPopupListener
+import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.CustomStatusBarWidget
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.ui.AnimatedIcon
+import com.intellij.ui.awt.RelativePoint
+import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.Consumer
+import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.ui.BaseButtonBehavior
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.PositionTracker
+import com.intellij.util.ui.UIUtil
+import org.jdom.Element
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
+import java.awt.AWTEvent
+import java.awt.BorderLayout
+import java.awt.Point
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
+import java.util.function.BiConsumer
+import javax.swing.*
 
-@State(name = "ActionMacroManager", storages = @Storage("macros.xml"), category = SettingsCategory.UI)
-public final class ActionMacroManager implements PersistentStateComponent<Element>, Disposable {
-  private static final Logger LOG = Logger.getInstance(ActionMacroManager.class);
+@Suppress("SpellCheckingInspection")
+private const val TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW"
+private const val ELEMENT_MACRO: @NonNls String = "macro"
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
-  public static final String NO_NAME_NAME = "<noname>";
+@State(name = "ActionMacroManager", storages = [Storage("macros.xml")], category = SettingsCategory.UI)
+class ActionMacroManager internal constructor() : PersistentStateComponent<Element?>, Disposable {
+  var isRecording: Boolean = false
+    private set
+  private var lastMacro: ActionMacro? = null
+  private var recordingMacro: ActionMacro? = null
+  private var macros = ArrayList<ActionMacro>()
+  private var lastMacroName: String? = null
+  var isPlaying: Boolean = false
+    private set
+  private val keyProcessor: IdeEventQueue.EventDispatcher
+  private val lastActionInputEvent = HashSet<InputEvent>()
+  private var widget: Widget? = null
+  private var lastTyping = ""
 
-  private boolean myIsRecording;
-  private ActionMacro myLastMacro;
-  private ActionMacro myRecordingMacro;
-  private ArrayList<ActionMacro> myMacros = new ArrayList<>();
-  private String myLastMacroName = null;
-  private boolean myIsPlaying = false;
-  @NonNls
-  private static final String ELEMENT_MACRO = "macro";
-  private final IdeEventQueue.EventDispatcher myKeyProcessor;
+  companion object {
+    const val NO_NAME_NAME: String = "<noname>"
 
-  private final Set<InputEvent> myLastActionInputEvent = new HashSet<>();
-  private ActionMacroManager.Widget myWidget;
+    @JvmStatic
+    fun getInstance(): ActionMacroManager = service<ActionMacroManager>()
+  }
 
-  private String myLastTyping = "";
-
-  ActionMacroManager() {
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
-      @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
-        String id = ActionManager.getInstance().getId(action);
-        if (id == null) {
-          return;
-        }
-
-        if ("StartStopMacroRecording".equals(id)) {
-          myLastActionInputEvent.add(event.getInputEvent());
-        }
-        else if (myIsRecording) {
-          myRecordingMacro.appendAction(id);
-          String shortcut = null;
-          if (event.getInputEvent() instanceof KeyEvent) {
-            shortcut = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event.getInputEvent()));
+  init {
+    ApplicationManager.getApplication().getMessageBus().connect(this)
+      .subscribe<AnActionListener>(AnActionListener.TOPIC, object : AnActionListener {
+        override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
+          val id = ActionManager.getInstance().getId(action) ?: return
+          if ("StartStopMacroRecording" == id) {
+            event.inputEvent?.let { lastActionInputEvent.add(it) }
           }
-          notifyUser(id + (shortcut != null ? " (" + shortcut + ")" : ""), false);
-          myLastActionInputEvent.add(event.getInputEvent());
+          else if (isRecording) {
+            recordingMacro!!.appendAction(id)
+            var shortcut: String? = null
+            if (event.inputEvent is KeyEvent) {
+              shortcut = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(event.inputEvent as KeyEvent?))
+            }
+            notifyUser(text = "$id${if (shortcut == null) "" else " ($shortcut)"}", typing = false)
+            event.inputEvent?.let { lastActionInputEvent.add(it) }
+          }
         }
-      }
-    });
-
-    myKeyProcessor = new KeyPostProcessor();
-    IdeEventQueue.getInstance().addPostprocessor(myKeyProcessor, (Disposable)null);
+      })
+    keyProcessor = KeyPostProcessor()
+    IdeEventQueue.getInstance().addPostprocessor(keyProcessor, null as Disposable?)
   }
 
-  static final class MyActionTuner implements ActionConfigurationCustomizer {
-    @Override
-    public void customize(@NotNull ActionManager actionManager) {
+  internal class MyActionTuner : ActionConfigurationCustomizer {
+    override fun customize(actionManager: ActionManager) {
       // load state will call ActionManager, but ActionManager is not yet ready, so, postpone
-      NonUrgentExecutor.getInstance().execute(() -> getInstance());
+      NonUrgentExecutor.getInstance().execute(Runnable { getInstance() })
     }
   }
 
-  @Override
-  public void loadState(@NotNull Element state) {
-    myMacros = new ArrayList<>();
-    for (Element macroElement : state.getChildren(ELEMENT_MACRO)) {
-      ActionMacro macro = new ActionMacro();
-      macro.readExternal(macroElement);
-      myMacros.add(macro);
+  override fun loadState(state: Element) {
+    macros = ArrayList()
+    for (macroElement in state.getChildren(ELEMENT_MACRO)) {
+      val macro = ActionMacro()
+      macro.readExternal(macroElement)
+      macros.add(macro)
     }
-
-    registerActions(ActionManager.getInstance());
+    registerActions(ActionManager.getInstance())
   }
 
-  @NotNull
-  @Override
-  public Element getState() {
-    Element element = new Element("state");
-    for (ActionMacro macro : myMacros) {
-      Element macroElement = new Element(ELEMENT_MACRO);
-      macro.writeExternal(macroElement);
-      element.addContent(macroElement);
+  override fun getState(): Element {
+    val element = Element("state")
+    for (macro in macros) {
+      val macroElement = Element(ELEMENT_MACRO)
+      macro.writeExternal(macroElement)
+      element.addContent(macroElement)
     }
-    return element;
+    return element
   }
 
-  public static ActionMacroManager getInstance() {
-    return ApplicationManager.getApplication().getService(ActionMacroManager.class);
-  }
-
-  public void startRecording(Project project, String macroName) {
-    LOG.assertTrue(!myIsRecording);
-    myIsRecording = true;
-    myRecordingMacro = new ActionMacro(macroName);
-
-    IdeFrame frame = WindowManager.getInstance().getIdeFrame(project);
+  fun startRecording(project: Project?, macroName: String?) {
+    thisLogger().assertTrue(!isRecording)
+    isRecording = true
+    recordingMacro = ActionMacro(macroName)
+    val frame = WindowManager.getInstance().getIdeFrame(project)
     if (frame == null) {
-      LOG.warn("Cannot start macro recording: ide frame not found");
-      return;
+      thisLogger().warn("Cannot start macro recording: ide frame not found")
+      return
     }
-    StatusBar statusBar = frame.getStatusBar();
+
+    val statusBar = frame.getStatusBar()
     if (statusBar == null) {
-      LOG.warn("Cannot start macro recording: status bar not found");
-      return;
+      thisLogger().warn("Cannot start macro recording: status bar not found")
+      return
     }
-    myWidget = new Widget(statusBar);
-    //noinspection deprecation
-    statusBar.addWidget(myWidget);
+
+    widget = Widget(statusBar)
+    statusBar.addWidget(widget!!)
   }
 
-  private final class Widget implements CustomStatusBarWidget, Consumer<MouseEvent> {
-    private final AnimatedIcon myIcon = new AnimatedIcon("Macro recording",
-                                                         Recording.ICONS.toArray(new Icon[0]),
+  private inner class Widget(private val statusBar: StatusBar) : CustomStatusBarWidget, Consumer<MouseEvent> {
+    private val icon = com.intellij.util.ui.AnimatedIcon("Macro recording",
+                                                         AnimatedIcon.Recording.ICONS.toTypedArray(),
                                                          AllIcons.Ide.Macro.Recording_1,
-                                                         Recording.DELAY * Recording.ICONS.size());
-    private final StatusBar myStatusBar;
-    private final WidgetPresentation myPresentation;
+                                                           AnimatedIcon.Recording.DELAY * AnimatedIcon.Recording.ICONS.size)
+    private val presentation: StatusBarWidget.WidgetPresentation
+    private val balloonComponent: JPanel
+    private var balloon: Balloon? = null
+    private val myText: JLabel
 
-    private final JPanel myBalloonComponent;
-    private Balloon myBalloon;
-    private final JLabel myText;
+    init {
+      icon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder())
+      presentation = object : StatusBarWidget.WidgetPresentation {
+        override fun getTooltipText(): String = IdeBundle.message("tooltip.macro.is.being.recorded.now")
 
-    private Widget(StatusBar statusBar) {
-      myStatusBar = statusBar;
-      myIcon.setBorder(JBUI.CurrentTheme.StatusBar.Widget.iconBorder());
-      myPresentation = new WidgetPresentation() {
-        @Override
-        public String getTooltipText() {
-          return IdeBundle.message("tooltip.macro.is.being.recorded.now");
-        }
-
-        @Override
-        public Consumer<MouseEvent> getClickConsumer() {
-          return Widget.this;
-        }
-      };
-
-
-      BaseButtonBehavior behavior = new BaseButtonBehavior(myIcon, (Void)null) {
-        @Override
-        protected void execute(MouseEvent e) {
-          showBalloon();
-        }
-      };
-      behavior.setupListeners();
-
-      myBalloonComponent = new NonOpaquePanel(new BorderLayout());
-
-      final AnAction stopAction = ActionManager.getInstance().getAction("StartStopMacroRecording");
-      final DefaultActionGroup group = new DefaultActionGroup();
-      group.add(stopAction);
-      final ActionToolbar tb = ActionManager.getInstance().createActionToolbar(ActionPlaces.STATUS_BAR_PLACE, group, true);
-      tb.setMiniMode(true);
-
-      final NonOpaquePanel top = new NonOpaquePanel(new BorderLayout());
-      top.add(tb.getComponent(), BorderLayout.WEST);
-      myText = new JLabel(IdeBundle.message("status.bar.text.macro.recorded", "..." + TYPING_SAMPLE), SwingConstants.LEFT);
-      final Dimension preferredSize = myText.getPreferredSize();
-      myText.setPreferredSize(preferredSize);
-      myText.setText(IdeBundle.message("label.macro.recording.started"));
-      myLastTyping = "";
-      top.add(myText, BorderLayout.CENTER);
-      myBalloonComponent.add(top, BorderLayout.CENTER);
-    }
-
-    private void showBalloon() {
-      if (myBalloon != null) {
-        Disposer.dispose(myBalloon);
-        return;
+        override fun getClickConsumer() = this@Widget
       }
 
-      myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(myBalloonComponent)
+      val behavior = object : BaseButtonBehavior(icon, null as Void?) {
+        override fun execute(e: MouseEvent) {
+          showBalloon()
+        }
+      }
+      behavior.setupListeners()
+      balloonComponent = NonOpaquePanel(BorderLayout())
+      val actionManager = ActionManager.getInstance()
+      val stopAction = actionManager.getAction("StartStopMacroRecording")
+      val group = DefaultActionGroup()
+      group.add(stopAction)
+      val tb = actionManager.createActionToolbar(ActionPlaces.STATUS_BAR_PLACE, group, true)
+      tb.setMiniMode(true)
+      val top = NonOpaquePanel(BorderLayout())
+      top.add(tb.getComponent(), BorderLayout.WEST)
+      myText = JLabel(IdeBundle.message("status.bar.text.macro.recorded", "..." + TYPING_SAMPLE), SwingConstants.LEFT)
+      val preferredSize = myText.getPreferredSize()
+      myText.preferredSize = preferredSize
+      myText.setText(IdeBundle.message("label.macro.recording.started"))
+      lastTyping = ""
+      top.add(myText, BorderLayout.CENTER)
+      balloonComponent.add(top, BorderLayout.CENTER)
+    }
+
+    private fun showBalloon() {
+      balloon?.let {
+        Disposer.dispose(it)
+        return
+      }
+
+      balloon = JBPopupFactory.getInstance().createBalloonBuilder(balloonComponent)
         .setAnimationCycle(200)
         .setCloseButtonEnabled(true)
         .setHideOnAction(false)
@@ -231,389 +208,328 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
         .setHideOnKeyOutside(false)
         .setSmallVariant(true)
         .setShadow(true)
-        .createBalloon();
-
-      Disposer.register(myBalloon, new Disposable() {
-        @Override
-        public void dispose() {
-          myBalloon = null;
-        }
-      });
-
-      myBalloon.addListener(new JBPopupListener() {
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          if (myBalloon != null) {
-            Disposer.dispose(myBalloon);
+        .createBalloon()
+      Disposer.register(balloon!!) { balloon = null }
+      balloon!!.addListener(object : JBPopupListener {
+        override fun onClosed(event: LightweightWindowEvent) {
+          if (balloon != null) {
+            Disposer.dispose(balloon!!)
           }
         }
-      });
-
-      myBalloon.show(new PositionTracker<>(myIcon) {
-        @Override
-        public RelativePoint recalculateLocation(@NotNull Balloon object) {
-          return new RelativePoint(myIcon, new Point(myIcon.getSize().width / 2, 4));
+      })
+      balloon!!.show(object : PositionTracker<Balloon?>(icon) {
+        override fun recalculateLocation(`object`: Balloon): RelativePoint {
+          return RelativePoint(icon, Point(icon.size.width / 2, 4))
         }
-      }, Balloon.Position.above);
+      }, Balloon.Position.above)
     }
 
-    @Override
-    public JComponent getComponent() {
-      return myIcon;
+    override fun getComponent(): JComponent = icon
+
+    override fun ID(): String = "MacroRecording"
+
+    override fun consume(mouseEvent: MouseEvent) {}
+
+    override fun getPresentation() = presentation
+
+    override fun install(statusBar: StatusBar) {
+      showBalloon()
     }
 
-    @NotNull
-    @Override
-    public String ID() {
-      return "MacroRecording";
-    }
-
-    @Override
-    public void consume(MouseEvent mouseEvent) {
-    }
-
-    @Override
-    public WidgetPresentation getPresentation() {
-      return myPresentation;
-    }
-
-    @Override
-    public void install(@NotNull StatusBar statusBar) {
-      showBalloon();
-    }
-
-    @Override
-    public void dispose() {
-      myIcon.dispose();
-      if (myBalloon != null) {
-        Disposer.dispose(myBalloon);
+    override fun dispose() {
+      @Suppress("SSBasedInspection")
+      icon.dispose()
+      balloon?.let {
+        Disposer.dispose(it)
       }
     }
 
-    public void delete() {
-      if (myBalloon != null) {
-        Disposer.dispose(myBalloon);
+    fun delete() {
+      balloon?.let {
+        Disposer.dispose(it)
       }
-      myStatusBar.removeWidget(ID());
+      statusBar.removeWidget(ID())
     }
 
-    public void notifyUser(@Nls String text) {
-      myText.setText(text);
-      myText.revalidate();
-      myText.repaint();
+    fun notifyUser(text: @Nls String?) {
+      myText.setText(text)
+      myText.revalidate()
+      myText.repaint()
     }
   }
 
-  public void stopRecording(@Nullable Project project) {
-    LOG.assertTrue(myIsRecording);
-
-    if (myWidget != null) {
-      myWidget.delete();
-      myWidget = null;
+  fun stopRecording(project: Project?) {
+    thisLogger().assertTrue(isRecording)
+    if (widget != null) {
+      widget!!.delete()
+      widget = null
     }
 
-    myIsRecording = false;
-    myLastActionInputEvent.clear();
-    String macroName = "";
+    isRecording = false
+    lastActionInputEvent.clear()
+    var macroName: String? = ""
     do {
       macroName = Messages.showInputDialog(project,
                                            IdeBundle.message("prompt.enter.macro.name"),
                                            IdeBundle.message("title.enter.macro.name"),
-                                           Messages.getQuestionIcon(), macroName, null);
+                                           Messages.getQuestionIcon(), macroName, null)
       if (macroName == null) {
-        myRecordingMacro = null;
-        return;
+        recordingMacro = null
+        return
       }
-
-      if (macroName.isEmpty()) macroName = null;
+      if (macroName.isEmpty()) {
+        macroName = null
+      }
     }
-    while (macroName != null && !checkCanCreateMacro(project, macroName));
-
-    myLastMacro = myRecordingMacro;
-    addRecordedMacroWithName(macroName);
-    registerActions(ActionManager.getInstance());
+    while (macroName != null && !checkCanCreateMacro(project, macroName))
+    lastMacro = recordingMacro
+    addRecordedMacroWithName(macroName)
+    registerActions(ActionManager.getInstance())
   }
 
-  private void addRecordedMacroWithName(@Nullable String macroName) {
+  private fun addRecordedMacroWithName(macroName: String?) {
     if (macroName != null) {
-      myRecordingMacro.setName(macroName);
-      myMacros.add(myRecordingMacro);
-      myRecordingMacro = null;
+      recordingMacro!!.name = macroName
+      macros.add(recordingMacro!!)
+      recordingMacro = null
     }
     else {
-      for (int i = 0; i < myMacros.size(); i++) {
-        ActionMacro macro = myMacros.get(i);
-        if (NO_NAME_NAME.equals(macro.getName())) {
-          myMacros.set(i, myRecordingMacro);
-          myRecordingMacro = null;
-          break;
+      for (i in macros.indices) {
+        val macro = macros[i]
+        if (NO_NAME_NAME == macro.name) {
+          macros.set(i, recordingMacro!!)
+          recordingMacro = null
+          break
         }
       }
-      if (myRecordingMacro != null) {
-        myMacros.add(myRecordingMacro);
-        myRecordingMacro = null;
+      if (recordingMacro != null) {
+        macros.add(recordingMacro!!)
+        recordingMacro = null
       }
     }
   }
 
-  public void playbackLastMacro() {
-    if (myLastMacro != null) {
-      playbackMacro(myLastMacro);
+  fun playbackLastMacro() {
+    if (lastMacro != null) {
+      playbackMacro(lastMacro)
     }
   }
 
-  private void playbackMacro(ActionMacro macro) {
-    final IdeFrame frame = WindowManager.getInstance().getIdeFrame(null);
-    assert frame != null;
-
-    StringBuffer script = new StringBuffer();
-    ActionMacro.ActionDescriptor[] actions = macro.getActions();
-    for (ActionMacro.ActionDescriptor each : actions) {
-      each.generateTo(script);
+  private fun playbackMacro(macro: ActionMacro?) {
+    val frame = WindowManager.getInstance().getIdeFrame(null)!!
+    val script = StringBuffer()
+    val actions = macro!!.actions
+    for (each in actions) {
+      each.generateTo(script)
     }
-
-    final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
-      @Override
-      public void messageEdt(PlaybackContext context, @NlsContexts.StatusBarText String text, Type type) {
-        if (type == Type.message || type == Type.error) {
-          StatusBar statusBar = frame.getStatusBar();
+    val runner = PlaybackRunner(script.toString(), object : Edt() {
+      override fun messageEdt(context: PlaybackContext?, text: @NlsContexts.StatusBarText String?, type: StatusCallback.Type) {
+        var text = text
+        if (type == StatusCallback.Type.message || type == StatusCallback.Type.error) {
+          val statusBar = frame.getStatusBar()
           if (statusBar != null) {
             if (context != null) {
-              text = IdeBundle.message("status.bar.message.at.line", context.getCurrentLine(), text);
+              text = IdeBundle.message("status.bar.message.at.line", context.currentLine, text)
             }
-            statusBar.setInfo(text);
+            statusBar.setInfo(text)
           }
         }
       }
-    }, Registry.is("actionSystem.playback.useDirectActionCall"), true, Registry.is("actionSystem.playback.useTypingTargets"));
-
-    myIsPlaying = true;
-
+    }, Registry.`is`("actionSystem.playback.useDirectActionCall"), true, Registry.`is`("actionSystem.playback.useTypingTargets"))
+    isPlaying = true
     runner.run()
-      .thenRun(() -> {
-        StatusBar statusBar = frame.getStatusBar();
-        assert statusBar != null;
-        statusBar.setInfo(IdeBundle.message("status.bar.text.script.execution.finished"));
+      .thenRun(Runnable {
+        val statusBar = frame.getStatusBar()!!
+        statusBar.setInfo(IdeBundle.message("status.bar.text.script.execution.finished"))
       })
-      .whenComplete((unused, throwable) -> myIsPlaying = false);
+      .whenComplete(BiConsumer { unused: Void?, throwable: Throwable? -> isPlaying = false })
   }
 
-  public boolean isRecording() {
-    return myIsRecording;
+  override fun dispose() {
+    IdeEventQueue.getInstance().removePostprocessor(keyProcessor)
   }
 
-  @Override
-  public void dispose() {
-    IdeEventQueue.getInstance().removePostprocessor(myKeyProcessor);
-  }
+  val allMacros: Array<ActionMacro>
+    get() = macros.toTypedArray()
 
-  public ActionMacro[] getAllMacros() {
-    return myMacros.toArray(new ActionMacro[0]);
-  }
-
-  public void removeAllMacros() {
-    if (myLastMacro != null) {
-      myLastMacroName = myLastMacro.getName();
-      myLastMacro = null;
+  fun removeAllMacros() {
+    if (lastMacro != null) {
+      lastMacroName = lastMacro!!.name
+      lastMacro = null
     }
-    myMacros = new ArrayList<>();
+    macros = ArrayList()
   }
 
-  public void addMacro(ActionMacro macro) {
-    myMacros.add(macro);
-    if (myLastMacroName != null && myLastMacroName.equals(macro.getName())) {
-      myLastMacro = macro;
-      myLastMacroName = null;
+  fun addMacro(macro: ActionMacro) {
+    macros.add(macro)
+    if (lastMacroName != null && lastMacroName == macro.name) {
+      lastMacro = macro
+      lastMacroName = null
     }
   }
 
-  public void playMacro(ActionMacro macro) {
-    playbackMacro(macro);
-    myLastMacro = macro;
+  fun playMacro(macro: ActionMacro?) {
+    playbackMacro(macro)
+    lastMacro = macro
   }
 
-  public boolean hasRecentMacro() {
-    return myLastMacro != null;
+  fun hasRecentMacro(): Boolean {
+    return lastMacro != null
   }
 
-  public void registerActions(@NotNull ActionManager actionManager) {
-    registerActions(actionManager, Collections.emptyMap());
-  }
-
-  public void registerActions(@NotNull ActionManager actionManager, @NotNull Map<String, String> renamingMap) {
+  @JvmOverloads
+  fun registerActions(actionManager: ActionManager, renamingMap: Map<String, String> = emptyMap()) {
     // unregister Tool actions
-    Map<String, Icon> icons = new HashMap<>();
-    for (String oldId : actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX)) {
-      final AnAction action = actionManager.getAction(oldId);
+    val icons = HashMap<String, Icon>()
+    for (oldId in actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX)) {
+      val action = actionManager.getAction(oldId)
       if (action != null) {
-        final Icon icon = action.getTemplatePresentation().getIcon();
+        val icon = action.getTemplatePresentation().icon
         if (icon != null) {
-          final String newId = renamingMap.get(oldId);
-          icons.put((newId == null) ? oldId : newId, icon);
+          val newId = renamingMap.get(oldId)
+          icons.put(newId ?: oldId, icon)
         }
       }
-      actionManager.unregisterAction(oldId);
+      actionManager.unregisterAction(oldId)
     }
 
     // to prevent exception if 2 or more targets have the same name
-    Set<String> registeredIds = new HashSet<>();
-
-    for (ActionMacro macro : getAllMacros()) {
-      String actionId = macro.getActionId();
+    val registeredIds = HashSet<String>()
+    for (macro in allMacros) {
+      val actionId = macro.actionId
       if (!registeredIds.contains(actionId)) {
-        registeredIds.add(actionId);
-        final InvokeMacroAction action = new InvokeMacroAction(macro);
-        final Icon icon = icons.get(actionId);
+        registeredIds.add(actionId)
+        val action = InvokeMacroAction(macro)
+        val icon = icons.get(actionId)
         if (icon != null) {
-          action.getTemplatePresentation().setIcon(icon);
+          action.getTemplatePresentation().setIcon(icon)
         }
-        actionManager.registerAction(actionId, action);
+        actionManager.registerAction(actionId, action)
       }
     }
 
     // fix references to and icons of renamed macros in the custom actions schema
-    final CustomActionsSchema customActionsSchema = CustomActionsSchema.getInstance();
-    for (ActionUrl actionUrl : customActionsSchema.getActions()) {
-      final String newId = renamingMap.get(actionUrl.getComponent());
+    val customActionsSchema = CustomActionsSchema.getInstance()
+    for (actionUrl in customActionsSchema.getActions()) {
+      val newId = renamingMap.get(actionUrl.component)
       if (newId != null) {
-        actionUrl.setComponent(newId);
+        actionUrl.component = newId
       }
     }
-    for (Map.Entry<String, String> entry : renamingMap.entrySet()) {
-      final String oldId = entry.getKey();
-      final String path = customActionsSchema.getIconPath(oldId);
+    for ((oldId, newId) in renamingMap) {
+      val path = customActionsSchema.getIconPath(oldId)
       if (!path.isEmpty()) {
-        final String newId = entry.getValue();
-        customActionsSchema.removeIconCustomization(oldId);
-        customActionsSchema.addIconCustomization(newId, path);
+        customActionsSchema.removeIconCustomization(oldId)
+        customActionsSchema.addIconCustomization(newId, path)
       }
     }
-    if (!renamingMap.isEmpty()) CustomActionsSchema.setCustomizationSchemaForCurrentProjects();
+    if (!renamingMap.isEmpty()) {
+      setCustomizationSchemaForCurrentProjects()
+    }
   }
 
-  private boolean checkCanCreateMacro(Project project, String name) {
-    final ActionManagerEx actionManager = (ActionManagerEx)ActionManager.getInstance();
-    final String actionId = ActionMacro.MACRO_ACTION_PREFIX + name;
+  private fun checkCanCreateMacro(project: Project?, name: String): Boolean {
+    val actionManager = ActionManager.getInstance()
+    val actionId = ActionMacro.MACRO_ACTION_PREFIX + name
     if (actionManager.getAction(actionId) != null) {
-      if (!MessageDialogBuilder.yesNo(IdeBundle.message("title.macro.name.already.used"), IdeBundle.message("message.macro.exists", name))
-            .icon(Messages.getWarningIcon()).ask(project)) {
-        return false;
+      if (!yesNo(IdeBundle.message("title.macro.name.already.used"), IdeBundle.message("message.macro.exists", name))
+          .icon(Messages.getWarningIcon()).ask(project)) {
+        return false
       }
-      actionManager.unregisterAction(actionId);
-      removeMacro(name);
+      actionManager.unregisterAction(actionId)
+      removeMacro(name)
     }
-
-    return true;
+    return true
   }
 
-  private void removeMacro(String name) {
-    for (int i = 0; i < myMacros.size(); i++) {
-      ActionMacro macro = myMacros.get(i);
-      if (name.equals(macro.getName())) {
-        myMacros.remove(i);
-        break;
+  private fun removeMacro(name: String) {
+    for (i in macros.indices) {
+      val macro = macros[i]
+      if (name == macro.name) {
+        macros.removeAt(i)
+        break
       }
-    }
-  }
-
-  public boolean isPlaying() {
-    return myIsPlaying;
-  }
-
-  private static class InvokeMacroAction extends AnAction {
-    private final ActionMacro myMacro;
-
-    InvokeMacroAction(ActionMacro macro) {
-      myMacro = macro;
-      getTemplatePresentation().setText(macro.getName(), false);
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      IdeEventQueue.getInstance().doWhenReady(() -> getInstance().playMacro(myMacro));
-    }
-
-    @Override
-    public @NotNull ActionUpdateThread getActionUpdateThread() {
-      return ActionUpdateThread.BGT;
-    }
-
-
-    @Override
-    public void update(@NotNull AnActionEvent e) {
-      e.getPresentation().setEnabled(!getInstance().isPlaying());
-    }
-
-    @ActionText
-    @Nullable
-    @Override
-    public String getTemplateText() {
-      return IdeBundle.message("action.invoke.macro.text");
     }
   }
 
-  private final class KeyPostProcessor implements IdeEventQueue.EventDispatcher {
-    @Override
-    public boolean dispatch(@NotNull AWTEvent e) {
-      if (isRecording() && e instanceof KeyEvent) {
-        postProcessKeyEvent((KeyEvent)e);
-      }
-      return false;
+  private class InvokeMacroAction(private val macro: ActionMacro) : AnAction() {
+    init {
+      getTemplatePresentation().setText(macro.name, false)
     }
 
-    public void postProcessKeyEvent(KeyEvent e) {
-      if (e.getID() != KeyEvent.KEY_PRESSED) return;
-      if (myLastActionInputEvent.contains(e)) {
-        myLastActionInputEvent.remove(e);
-        return;
+    override fun actionPerformed(e: AnActionEvent) {
+      IdeEventQueue.getInstance().doWhenReady(Runnable { getInstance().playMacro(macro) })
+    }
+
+    override fun getActionUpdateThread() = ActionUpdateThread.BGT
+
+    override fun update(e: AnActionEvent) {
+      e.presentation.setEnabled(!getInstance().isPlaying)
+    }
+
+    override fun getTemplateText() = IdeBundle.message("action.invoke.macro.text")
+  }
+
+  private inner class KeyPostProcessor : IdeEventQueue.EventDispatcher {
+    override fun dispatch(e: AWTEvent): Boolean {
+      if (isRecording && e is KeyEvent) {
+        postProcessKeyEvent(e)
       }
-      final boolean modifierKeyIsPressed = e.getKeyCode() == KeyEvent.VK_CONTROL ||
-                                           e.getKeyCode() == KeyEvent.VK_ALT ||
-                                           e.getKeyCode() == KeyEvent.VK_META ||
-                                           e.getKeyCode() == KeyEvent.VK_SHIFT;
-      if (modifierKeyIsPressed) return;
+      return false
+    }
 
-      final boolean ready = IdeEventQueue.getInstance().getKeyEventDispatcher().isReady();
-      final boolean isChar = UIUtil.isReallyTypedEvent(e);
-      final boolean hasActionModifiers = e.isAltDown() || e.isControlDown() || e.isMetaDown();
-      final boolean plainType = isChar && !hasActionModifiers;
-      final boolean isEnter = e.getKeyCode() == KeyEvent.VK_ENTER;
+    fun postProcessKeyEvent(e: KeyEvent) {
+      if (e.id != KeyEvent.KEY_PRESSED) {
+        return
+      }
 
+      if (lastActionInputEvent.contains(e)) {
+        lastActionInputEvent.remove(e)
+        return
+      }
+
+      val modifierKeyIsPressed = e.keyCode == KeyEvent.VK_CONTROL ||
+                                 e.keyCode == KeyEvent.VK_ALT ||
+                                 e.keyCode == KeyEvent.VK_META ||
+                                 e.keyCode == KeyEvent.VK_SHIFT
+      if (modifierKeyIsPressed) {
+        return
+      }
+
+      val ready = IdeEventQueue.getInstance().keyEventDispatcher.isReady
+      val isChar = UIUtil.isReallyTypedEvent(e)
+      val hasActionModifiers = e.isAltDown || e.isControlDown || e.isMetaDown
+      val plainType = isChar && !hasActionModifiers
+      val isEnter = e.keyCode == KeyEvent.VK_ENTER
       if (plainType && ready && !isEnter) {
-        //noinspection MagicConstant,deprecation
-        myRecordingMacro.appendKeyPressed(e.getKeyChar(), e.getKeyCode(), e.getModifiers());
-        notifyUser(Character.valueOf(e.getKeyChar()).toString(), true);
+        recordingMacro!!.appendKeyPressed(e.keyChar, e.keyCode, e.modifiers)
+        notifyUser(Character.valueOf(e.keyChar).toString(), true)
       }
-      else if ((!plainType && ready) || isEnter) {
-        final String stroke = KeyStroke.getKeyStrokeForEvent(e).toString();
-
-        final int pressed = stroke.indexOf("pressed");
-        String key = stroke.substring(pressed + "pressed".length());
-        String modifiers = stroke.substring(0, pressed);
-
-        String shortcut = (modifiers.replaceAll("ctrl", "control").trim() + " " + key.trim()).trim();
-
-        myRecordingMacro.appendShortcut(shortcut);
-        notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false);
+      else if (!plainType && ready || isEnter) {
+        val stroke = KeyStroke.getKeyStrokeForEvent(e).toString()
+        val pressed = stroke.indexOf("pressed")
+        val key = stroke.substring(pressed + "pressed".length)
+        val modifiers = stroke.substring(0, pressed)
+        val shortcut = (modifiers.replace("ctrl", "control").trim() + " " + key.trim()).trim()
+        recordingMacro!!.appendShortcut(shortcut)
+        notifyUser(KeymapUtil.getKeystrokeText(KeyStroke.getKeyStrokeForEvent(e)), false)
       }
     }
   }
 
-  private void notifyUser(String text, boolean typing) {
-    String actualText = text;
+  private fun notifyUser(text: String, typing: Boolean) {
+    var actualText = text
     if (typing) {
-      int maxLength = TYPING_SAMPLE.length();
-      myLastTyping += text;
-      if (myLastTyping.length() > maxLength) {
-        myLastTyping = "..." + myLastTyping.substring(myLastTyping.length() - maxLength);
+      val maxLength = TYPING_SAMPLE.length
+      lastTyping += text
+      if (lastTyping.length > maxLength) {
+        lastTyping = "..." + lastTyping.substring(lastTyping.length - maxLength)
       }
-      actualText = myLastTyping;
-    } else {
-      myLastTyping = "";
+      actualText = lastTyping
     }
-
-    if (myWidget != null) {
-      myWidget.notifyUser(IdeBundle.message("status.bar.text.macro.recorded", actualText));
+    else {
+      lastTyping = ""
     }
+    widget?.notifyUser(IdeBundle.message("status.bar.text.macro.recorded", actualText))
   }
 }
