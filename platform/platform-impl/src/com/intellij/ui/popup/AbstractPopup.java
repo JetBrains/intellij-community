@@ -2425,7 +2425,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
    * @return the first frame (or dialog) ancestor of the component; or {@code null}
    *         if the component is not a frame (or dialog) and is not contained inside a frame (or dialog)
    *
-   * @see UIUtil#getWindow
+   * @see ComponentUtil#getWindow
    */
   private static Component getFrameOrDialog(Component component) {
     while (component != null) {

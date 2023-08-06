@@ -784,7 +784,7 @@ public abstract class DialogWrapper {
       button = action instanceof DialogWrapperAction ? new JButton(action) : new JButton(action) {
         @Override
         protected void fireActionPerformed(ActionEvent event) {
-          Window window = UIUtil.getWindow(this);
+          Window window = ComponentUtil.getWindow(this);
           DialogWrapper wrapper = window instanceof DialogWrapperDialog dwd ? dwd.getDialogWrapper() : null;
           if (wrapper != null && (wrapper.myClosed || wrapper.myPerformAction)) return;
           if (wrapper != null) wrapper.myPerformAction = true;

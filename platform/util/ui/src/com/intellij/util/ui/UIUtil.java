@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.*;
 import com.intellij.ui.icons.HiDPIImage;
@@ -152,7 +153,7 @@ public final class UIUtil {
     }
 
     if (isUnderAquaBasedLookAndFeel()) {
-      c.putClientProperty("JComponent.sizeVariant", StringUtil.toLowerCase(componentStyle.name()));
+      c.putClientProperty("JComponent.sizeVariant", Strings.toLowerCase(componentStyle.name()));
     }
     FontSize fontSize;
     if (componentStyle == ComponentStyle.MINI) {
@@ -1156,8 +1157,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Insets getListViewportPadding(boolean listWithAdvertiser) {
-    return listWithAdvertiser ? new JBInsets(4, 0, 8 , 0)
-                              : JBInsets.create(4, 0);
+    return listWithAdvertiser ? new JBInsets(4, 0, 8 , 0) : JBInsets.create(4, 0);
   }
 
   public static boolean isToUseDottedCellBorder() {
@@ -1738,7 +1738,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Color getBgFillColor(@NotNull Component c) {
-    final Component parent = findNearestOpaque(c);
+    Component parent = findNearestOpaque(c);
     return parent == null ? c.getBackground() : parent.getBackground();
   }
 
@@ -1909,7 +1909,9 @@ public final class UIUtil {
   @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
     HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder();
-    if(!noGapsBetweenParagraphs) builder.withGapsBetweenParagraphs();
+    if (!noGapsBetweenParagraphs) {
+      builder.withGapsBetweenParagraphs();
+    }
     return builder.build();
   }
 
@@ -1962,9 +1964,9 @@ public final class UIUtil {
 
   //Escape error-prone HTML data (if any) when we use it in renderers, see IDEA-170768
   public static <T> T htmlInjectionGuard(T toRender) {
-    if (toRender instanceof String && StringUtil.toLowerCase((String)toRender).startsWith("<html>")) {
+    if (toRender instanceof String && Strings.toLowerCase((String)toRender).startsWith("<html>")) {
       //noinspection unchecked
-      return (T) ("<html>" + StringUtil.escapeXmlEntities((String)toRender));
+      return (T) ("<html>" + Strings.escapeXmlEntities((String)toRender));
     }
     return toRender;
   }
@@ -2322,7 +2324,7 @@ public final class UIUtil {
           }
 
           g.drawString(text, x, yOffset[0]);
-          if (!StringUtil.isEmpty(shortcut)) {
+          if (!Strings.isEmpty(shortcut)) {
             Color oldColor1 = g.getColor();
             g.setColor(JBColor.namedColor("Editor.shortcutForeground", new JBColor(new Color(82, 99, 155), new Color(88, 157, 246))));
             g.drawString(shortcut, x + fm.stringWidth(text + (StartupUiUtil.isUnderDarcula() ? " " : "")), yOffset[0]);
@@ -2574,7 +2576,7 @@ public final class UIUtil {
     if (component instanceof JLabel) candidate = ((JLabel)component).getText();
     if (component instanceof JTextComponent) candidate = ((JTextComponent)component).getText();
     if (component instanceof AbstractButton) candidate = ((AbstractButton)component).getText();
-    if (StringUtil.isNotEmpty(candidate)) {
+    if (Strings.isNotEmpty(candidate)) {
       candidate = candidate.replaceAll("<a href=\"#inspection/[^)]+\\)", "");
       if (!builder.isEmpty()) {
         builder.append(' ');
@@ -2662,14 +2664,6 @@ public final class UIUtil {
     textField.setColumns(4);
   }
 
-  /**
-   * Returns the first window ancestor of the component.
-   * Note that this method returns the component itself if it is a window.
-   *
-   * @param component the component used to find corresponding window
-   * @return the first window ancestor of the component; or {@code null}
-   *         if the component is not a window and is not contained inside a window
-   */
   public static @Nullable Window getWindow(@Nullable Component component) {
     return ComponentUtil.getWindow(component);
   }

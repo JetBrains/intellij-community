@@ -12,11 +12,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,7 +65,8 @@ public final class MergeAllWindowsAction extends IdeDependentAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    Window window = Objects.requireNonNull(UIUtil.getWindow(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT)));
+    @Nullable Component component = e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT);
+    Window window = Objects.requireNonNull(ComponentUtil.getWindow(component));
 
     mergeAllWindows(window, true);
   }

@@ -272,7 +272,7 @@ public final class WindowTabsComponent extends JBTabsImpl {
         int border = JBUI.scale(1);
 
         if (info.getObject() == myNativeWindow) {
-          Window window = UIUtil.getWindow(WindowTabsComponent.this);
+          Window window = ComponentUtil.getWindow(WindowTabsComponent.this);
           Color tabColor = JBUI.CurrentTheme.MainWindow.Tab.background(true, window != null && !window.isActive(), false);
           myTabPainter.paintTab(tabs.getTabsPosition(), g2d, rect, tabs.getBorderThickness(), tabColor, true, false);
 

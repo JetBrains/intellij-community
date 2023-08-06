@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
@@ -22,21 +22,21 @@ import java.util.*;
 public final class ActionMacroConfigurationPanel implements Disposable {
   private static final String SPLITTER_PROPORTION = "ActionMacroConfigurationPanel.SPLITTER_PROPORTION";
   private Splitter mySplitter;
-  private final JList<ActionMacro> myMacrosList;
+  private final JList<ActionMacro> macroList;
   private final JList<ActionMacro.ActionDescriptor> myMacroActionsList;
   final DefaultListModel<ActionMacro> myMacrosModel = new DefaultListModel<>();
   private final Map<String, String> myRenamingMap = new HashMap<>();
 
   public ActionMacroConfigurationPanel() {
-    myMacrosList = new JBList<>();
+    macroList = new JBList<>();
     myMacroActionsList = new JBList<>();
-    myMacrosList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    macroList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myMacroActionsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    myMacrosList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    macroList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        final int selIndex = myMacrosList.getSelectedIndex();
+        final int selIndex = macroList.getSelectedIndex();
         if (selIndex == -1) {
           ((DefaultListModel<ActionMacro.ActionDescriptor>)myMacroActionsList.getModel()).removeAllElements();
         }
@@ -48,12 +48,11 @@ public final class ActionMacroConfigurationPanel implements Disposable {
   }
 
   public void reset() {
-    final ActionMacro[] allMacros = ActionMacroManager.getInstance().getAllMacros();
-    for (ActionMacro macro : allMacros) {
+    for (ActionMacro macro : ActionMacroManager.getInstance().getAllMacros()) {
       myMacrosModel.addElement(macro.clone());
     }
-    myMacrosList.setModel(myMacrosModel);
-    ScrollingUtil.ensureSelectionExists(myMacrosList);
+    macroList.setModel(myMacrosModel);
+    ScrollingUtil.ensureSelectionExists(macroList);
   }
 
   public void apply() {
@@ -70,15 +69,15 @@ public final class ActionMacroConfigurationPanel implements Disposable {
       }
     }
 
-    final ActionMacroManager manager = ActionMacroManager.getInstance();
-    HashSet<String> removedIds = new HashSet<>();
+    ActionMacroManager manager = ActionMacroManager.getInstance();
+    Set<String> removedIds = new HashSet<>();
     for (ActionMacro macro : manager.getAllMacros()) {
       removedIds.add(macro.getActionId());
     }
 
     manager.removeAllMacros();
 
-    final Enumeration<ActionMacro> newMacros = myMacrosModel.elements();
+    Enumeration<ActionMacro> newMacros = myMacrosModel.elements();
     while (newMacros.hasMoreElements()) {
       ActionMacro macro = newMacros.nextElement();
       manager.addMacro(macro);
@@ -94,10 +93,12 @@ public final class ActionMacroConfigurationPanel implements Disposable {
   }
 
   public boolean isModified() {
-    final ActionMacro[] allMacros = ActionMacroManager.getInstance().getAllMacros();
-    if (allMacros.length != myMacrosModel.getSize()) return true;
-    for (int i = 0; i < allMacros.length; i++) {
-      ActionMacro macro = allMacros[i];
+    List<ActionMacro> allMacros = ActionMacroManager.getInstance().getAllMacros();
+    if (allMacros.size() != myMacrosModel.getSize()) {
+      return true;
+    }
+    for (int i = 0; i < allMacros.size(); i++) {
+      ActionMacro macro = allMacros.get(i);
       ActionMacro newMacro = myMacrosModel.get(i);
       if (!macro.equals(newMacro)) return true;
     }
@@ -123,11 +124,11 @@ public final class ActionMacroConfigurationPanel implements Disposable {
       }
 
       mySplitter.setFirstComponent(
-        ToolbarDecorator.createDecorator(myMacrosList)
+        ToolbarDecorator.createDecorator(macroList)
           .setEditAction(new AnActionButtonRunnable() {
             @Override
             public void run(AnActionButton button) {
-              final int selIndex = myMacrosList.getSelectedIndex();
+              final int selIndex = macroList.getSelectedIndex();
               if (selIndex == -1) return;
               final ActionMacro macro = myMacrosModel.getElementAt(selIndex);
               String newName;
@@ -141,7 +142,7 @@ public final class ActionMacroConfigurationPanel implements Disposable {
 
               myRenamingMap.put(ActionMacro.MACRO_ACTION_PREFIX + macro.getName(), ActionMacro.MACRO_ACTION_PREFIX + newName);
               macro.setName(newName);
-              myMacrosList.repaint();
+              macroList.repaint();
             }
 
             private boolean canRenameMacro(final String name) {
@@ -167,7 +168,7 @@ public final class ActionMacroConfigurationPanel implements Disposable {
           .setRemoveAction(new AnActionButtonRunnable() {
             @Override
             public void run(AnActionButton button) {
-              final int macrosSelectedIndex = myMacrosList.getSelectedIndex();
+              final int macrosSelectedIndex = macroList.getSelectedIndex();
               if (macrosSelectedIndex != -1) {
                 final ActionMacro macro = myMacrosModel.getElementAt(macrosSelectedIndex);
                 macro.deleteAction(myMacroActionsList.getSelectedIndex());

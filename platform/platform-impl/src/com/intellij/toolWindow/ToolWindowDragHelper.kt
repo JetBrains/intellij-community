@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.HelpTooltip
@@ -286,7 +286,7 @@ internal class ToolWindowDragHelper(parent: Disposable, @JvmField val dragSource
 
   private fun relocate(event: MouseEvent) {
     if (dragMoreButton != null) {
-      val bounds = Rectangle(Point(), UIUtil.getWindow(myDragComponent)!!.size)
+      val bounds = Rectangle(Point(), ComponentUtil.getWindow(myDragComponent)!!.size)
       if (event.x > bounds.width / 2) {
         bounds.x = 1 + 2 * bounds.width / 3
         dragMoreButtonNewSide = RIGHT
