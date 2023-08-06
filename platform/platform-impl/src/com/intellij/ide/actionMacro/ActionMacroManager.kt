@@ -38,11 +38,11 @@ import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.Consumer
-import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.ui.BaseButtonBehavior
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.PositionTracker
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.launch
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -107,7 +107,10 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
   internal class MyActionTuner : ActionConfigurationCustomizer {
     override fun customize(actionManager: ActionManager) {
       // load state will call ActionManager, but ActionManager is not yet ready, so, postpone
-      NonUrgentExecutor.getInstance().execute(Runnable { getInstance() })
+      @Suppress("DEPRECATION")
+      ApplicationManager.getApplication().coroutineScope.launch {
+        getInstance()
+      }
     }
   }
 
