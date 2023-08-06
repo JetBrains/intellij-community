@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.Disposable;
@@ -170,8 +170,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public Collection<String> getTestModulesByMethodName(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
+  public @NotNull Collection<String> getTestModulesByMethodName(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testClassName, testMethodName, frameworkId));
     if (testId != 0) {
       return myTestModuleIndex.getTestRunModules(testId);
@@ -209,8 +208,7 @@ public final class DiscoveredTestDataHolder {
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByFile(@NotNull String relativePath, byte frameworkId) throws IOException {
+  public @NotNull MultiMap<String, String> getTestsByFile(@NotNull String relativePath, byte frameworkId) throws IOException {
     int fileId = myPathEnumerator.tryEnumerate(relativePath);
     if (fileId == 0) return MultiMap.empty();
     try {
@@ -225,8 +223,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) throws IOException {
+  public @NotNull MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) throws IOException {
     int classId = myClassEnumerator.tryEnumerate(classFQName);
     if (classId == 0) return MultiMap.empty();
     try {
@@ -241,8 +238,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
+  public @NotNull MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) throws IOException {
     int methodId = myMethodEnumerator.tryEnumerate(methodName);
     if (methodId == 0) return MultiMap.empty();
     int classId = myClassEnumerator.tryEnumerate(classFQName);
@@ -260,8 +256,7 @@ public final class DiscoveredTestDataHolder {
     }
   }
 
-  @NotNull
-  public Collection<String> getAffectedFiles(@NotNull Couple<String> testQName, byte frameworkId) throws IOException {
+  public @NotNull Collection<String> getAffectedFiles(@NotNull Couple<String> testQName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testQName.getFirst(), testQName.getSecond(), frameworkId));
     if (testId == 0) return Collections.emptySet();
     Collection<Integer> affectedFiles = myTestFilesIndex.getTestDataFor(testId);
@@ -282,13 +277,11 @@ public final class DiscoveredTestDataHolder {
     return myDisposed;
   }
 
-  @NotNull
-  static Path getVersionFile(Path path) {
+  static @NotNull Path getVersionFile(Path path) {
     return path.resolve("index.version");
   }
 
-  @NotNull
-  private TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
+  private @NotNull TestId createTestId(String className, String methodName, byte frameworkPrefix) throws IOException {
     return new TestId(myClassEnumerator.enumerate(className), myMethodEnumerator.enumerate(methodName), frameworkPrefix);
   }
 
