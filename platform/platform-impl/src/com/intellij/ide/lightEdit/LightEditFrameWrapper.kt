@@ -119,7 +119,10 @@ internal class LightEditFrameWrapper(
     super.dispose()
   }
 
-  private inner class LightEditRootPane(frame: IdeFrameImpl) : IdeRootPane(frame = frame, loadingState = null), LightEditCompatible {
+  private inner class LightEditRootPane(frame: IdeFrameImpl)
+    : IdeRootPane(frame = frame,
+                  loadingState = null,
+                  mainMenuActionGroup = getLightEditMainMenuActionGroup()), LightEditCompatible {
     override val isLightEdit: Boolean
       get() = true
 
@@ -132,8 +135,6 @@ internal class LightEditFrameWrapper(
     override fun getToolWindowPane(): ToolWindowPane {
       throw IllegalStateException("Tool windows are unavailable in LightEdit")
     }
-
-    override val mainMenuActionGroup by lazy { getLightEditMainMenuActionGroup() }
 
     @Suppress("DEPRECATION")
     override fun createStatusBar(frameHelper: ProjectFrameHelper): IdeStatusBarImpl {

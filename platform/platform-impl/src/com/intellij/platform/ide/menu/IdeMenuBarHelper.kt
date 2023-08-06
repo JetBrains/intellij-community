@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.IdeMenuBarState
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
@@ -193,11 +192,7 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
   }
 }
 
-internal suspend fun getMainMenuActionGroup(frame: JFrame): ActionGroup? {
-  (frame.rootPane as? IdeRootPane)?.mainMenuActionGroup?.let {
-    return it
-  }
-
+internal suspend fun getAndWrapMainMenuActionGroup(): ActionGroup? {
   val group = CustomActionsSchema.getInstanceAsync().getCorrectedActionAsync(IdeActions.GROUP_MAIN_MENU) ?: return null
   // enforce the "always-visible" flag for all main menu items
   // without forcing everyone to employ custom groups in their plugin.xml files.

@@ -16,7 +16,7 @@ internal fun createMacMenuBar(
   coroutineScope: CoroutineScope,
   component: JComponent,
   frame: JFrame,
-  mainMenuActionGroupProvider: suspend () -> ActionGroup? = { getMainMenuActionGroup(frame) },
+  mainMenuActionGroupProvider: suspend () -> ActionGroup?,
 ): ActionAwareIdeMenuBar {
   val flavor = object : IdeMenuFlavor {
     override fun updateAppMenu() {

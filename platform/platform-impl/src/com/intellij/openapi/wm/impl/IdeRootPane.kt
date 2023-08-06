@@ -43,6 +43,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.rootTask
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.menu.ActionAwareIdeMenuBar
 import com.intellij.platform.ide.menu.createMacMenuBar
+import com.intellij.platform.ide.menu.getAndWrapMainMenuActionGroup
 import com.intellij.toolWindow.ToolWindowButtonManager
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.toolWindow.ToolWindowPaneNewButtonManager
@@ -81,7 +82,11 @@ internal val isFloatingMenuBarSupported: Boolean
 @Suppress("LeakingThis")
 @ApiStatus.Internal
 open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
-                                            loadingState: FrameLoadingState?) : JRootPane(), UISettingsListener {
+                                            loadingState: FrameLoadingState?,
+                                            /**
+                                             * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
+                                             */
+                                            mainMenuActionGroup: ActionGroup? = null) : JRootPane(), UISettingsListener {
   @JvmField
   internal val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default + CoroutineName("IdeRootPane"))
 
@@ -171,7 +176,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     val isDecoratedMenu = isDecoratedMenu
     val isFloatingMenuBarSupported = isFloatingMenuBarSupported
     if (!isDecoratedMenu && !isFloatingMenuBarSupported) {
-      createMacAwareMenuBar(frame = frame, component = this, coroutineScope.childScope())
+      createMacAwareMenuBar(frame = frame, component = this, mainMenuActionGroup = mainMenuActionGroup, coroutineScope.childScope())
       helper = UndecoratedHelper(isFloatingMenuBarSupported = false)
     }
     else {
@@ -180,7 +185,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         val ideMenu: ActionAwareIdeMenuBar
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
           selectedEditorFilePath = null
-          ideMenu = createMacAwareMenuBar(frame = frame, component = this, coroutineScope.childScope())
+          ideMenu = createMacAwareMenuBar(frame = frame, component = this, mainMenuActionGroup = mainMenuActionGroup, coroutineScope.childScope())
           if (SystemInfoRt.isMac) {
             MacToolbarFrameHeader(coroutineScope = coroutineScope.childScope(), frame = frame, rootPane = this)
           }
@@ -371,12 +376,6 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       installLinuxBorder()
     }
   }
-
-  /**
-   * @return not-null action group or null to use [IdeActions.GROUP_MAIN_MENU] action group
-   */
-  open val mainMenuActionGroup: ActionGroup?
-    get() = null
 
   protected open fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
     val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
@@ -615,7 +614,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     component.addMouseMotionListener(listener)
   }
 
-  protected suspend fun installNorthComponents(project: Project) {
+  private suspend fun installNorthComponents(project: Project) {
     if (isLightEdit) {
       return
     }
@@ -818,13 +817,19 @@ private fun disposeIfNeeded(component: JComponent) {
   }
 }
 
-private fun createMacAwareMenuBar(frame: JFrame, component: JComponent, coroutineScope: CoroutineScope): ActionAwareIdeMenuBar {
+private fun createMacAwareMenuBar(frame: JFrame,
+                                  component: JComponent,
+                                  mainMenuActionGroup: ActionGroup? = null,
+                                  coroutineScope: CoroutineScope): ActionAwareIdeMenuBar {
   if (SystemInfoRt.isMac) {
     val ideMenu = if (Menu.isJbScreenMenuEnabled()) {
-      createMacMenuBar(coroutineScope = coroutineScope, component = component, frame = frame)
+      createMacMenuBar(coroutineScope = coroutineScope,
+                       component = component,
+                       frame = frame,
+                       mainMenuActionGroupProvider = { mainMenuActionGroup ?: getAndWrapMainMenuActionGroup() })
     }
     else {
-      val menuBar = IdeMenuBar(coroutineScope = coroutineScope, frame = frame)
+      val menuBar = IdeMenuBar(coroutineScope = coroutineScope, frame = frame, explicitMainMenuActionGroup = mainMenuActionGroup)
       // if -DjbScreenMenuBar.enabled=false
       frame.jMenuBar = menuBar
       menuBar

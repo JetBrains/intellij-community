@@ -38,7 +38,8 @@ internal enum class IdeMenuBarState {
 
 @Suppress("LeakingThis")
 open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope: CoroutineScope,
-                                           @JvmField internal val frame: JFrame) : JMenuBar(), ActionAwareIdeMenuBar {
+                                           @JvmField internal val frame: JFrame,
+                                           private val explicitMainMenuActionGroup: ActionGroup? = null) : JMenuBar(), ActionAwareIdeMenuBar {
   private val menuBarHelper: IdeMenuBarHelper
 
   init {
@@ -67,7 +68,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
         this@IdeMenuBar.updateGlobalMenuRoots()
       }
 
-      override suspend fun getMainMenuActionGroup(): ActionGroup? = this@IdeMenuBar.getMainMenuActionGroup()
+      override suspend fun getMainMenuActionGroup(): ActionGroup? = explicitMainMenuActionGroup ?: this@IdeMenuBar.getMainMenuActionGroup()
     }
 
     menuBarHelper = JMenuBasedIdeMenuBarHelper(flavor = flavor, menuBar = facade)
@@ -184,7 +185,7 @@ open class IdeMenuBar internal constructor(@JvmField internal val coroutineScope
     }
   }
 
-  open suspend fun getMainMenuActionGroup(): ActionGroup? = getMainMenuActionGroup(frame)
+  open suspend fun getMainMenuActionGroup(): ActionGroup? = explicitMainMenuActionGroup ?: getAndWrapMainMenuActionGroup()
 
   override fun getMenuCount(): Int {
     @Suppress("IfThenToElvis", "SENSELESS_COMPARISON")
