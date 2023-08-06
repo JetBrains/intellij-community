@@ -5,6 +5,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.idea.AppMode
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.impl.ActionMenu
@@ -170,6 +171,10 @@ internal suspend fun expandMainActionGroup(mainActionGroup: ActionGroup,
                                            presentationFactory: PresentationFactory,
                                            isFirstUpdate: Boolean): List<ActionGroup>? {
   try {
+    if (AppMode.isLightEdit()) {
+      return mainActionGroup.getChildren(null).filterIsInstance<ActionGroup>()
+    }
+
     val windowManager = serviceAsync<WindowManager>()
     return withContext(CoroutineName("expandMainActionGroup") + Dispatchers.EDT) {
       val targetComponent = windowManager.getFocusedComponent(frame) ?: menuBar
