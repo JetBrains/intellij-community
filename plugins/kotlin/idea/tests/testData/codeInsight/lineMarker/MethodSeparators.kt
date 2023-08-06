@@ -1,8 +1,5 @@
 // METHOD_SEPARATORS
 
-// KTIJ-26470
-// IGNORE_FIR
-
 class Foo {
     object BarObj {
     }
