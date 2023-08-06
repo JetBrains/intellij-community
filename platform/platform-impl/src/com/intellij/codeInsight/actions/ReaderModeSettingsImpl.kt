@@ -9,8 +9,9 @@ import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope
 
 @State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
-class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>, ReaderModeSettings {
-  private var myState = State()
+class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>,
+                                                                            ReaderModeSettings {
+  private var state = State()
 
   class State : BaseState() {
     class SchemeState : BaseState() {
@@ -97,10 +98,10 @@ class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : Pers
       state.mode = value
     }
 
-  override fun getState(): State = myState
+  override fun getState(): State = state
 
   override fun loadState(state: State) {
-    myState = state
+    this.state = state
   }
 
   override fun getStateModificationCount(): Long = state.modificationCount
