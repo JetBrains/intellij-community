@@ -102,7 +102,7 @@ public class InconsistentTextBlockIndentInspection extends AbstractBaseJavaLocal
       if (indentModel == null) return;
       String newTextBlock = indentModel.indentWith(myDesiredIndentType, myTabSize);
       if (newTextBlock == null) return;
-      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(project, literalExpression, "\"\"\"\n" + newTextBlock + "\"\"\"");
+      TrailingWhitespacesInTextBlockInspection.replaceTextBlock(literalExpression, "\"\"\"\n" + newTextBlock + "\"\"\"");
     }
   }
 
