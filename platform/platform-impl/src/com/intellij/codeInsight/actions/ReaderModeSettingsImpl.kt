@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
@@ -8,10 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.psi.codeStyle.CodeStyleScheme
 import kotlinx.coroutines.CoroutineScope
 
-@State(name = "ReaderModeSettings", storages = [
-  Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  Storage(StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-])
+@State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class ReaderModeSettingsImpl(override val coroutineScope: CoroutineScope) : PersistentStateComponentWithModificationTracker<ReaderModeSettingsImpl.State>, ReaderModeSettings {
   private var myState = State()
 
