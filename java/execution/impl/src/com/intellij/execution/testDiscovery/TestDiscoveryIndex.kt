@@ -1,164 +1,162 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.testDiscovery;
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.execution.testDiscovery
 
-import com.intellij.execution.testDiscovery.indices.DiscoveredTestDataHolder;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.openapi.util.Couple;
-import com.intellij.serviceContainer.NonInjectable;
-import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.concurrency.NonUrgentExecutor;
-import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.PathKt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.execution.testDiscovery.TestDiscoveryIndex
+import com.intellij.execution.testDiscovery.indices.DiscoveredTestDataHolder
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.Couple
+import com.intellij.serviceContainer.NonInjectable
+import com.intellij.util.ThrowableConvertor
+import com.intellij.util.concurrency.NonUrgentExecutor
+import com.intellij.util.containers.MultiMap
+import com.intellij.util.io.delete
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+@Service(Service.Level.PROJECT)
+class TestDiscoveryIndex @NonInjectable constructor(basePath: Path) : Disposable {
+  @Volatile
+  private var myHolder: DiscoveredTestDataHolder? = null
+  private val myLock = Any()
+  private val basePath: Path?
 
-@Service
-public final class TestDiscoveryIndex implements Disposable {
-  static final Logger LOG = Logger.getInstance(TestDiscoveryIndex.class);
+  @Suppress("unused")
+  internal constructor(project: Project) : this(TestDiscoveryExtension.baseTestDiscoveryPathForProject(project))
 
-  private volatile DiscoveredTestDataHolder myHolder;
-  private final Object myLock = new Object();
-  private final Path basePath;
-
-  public static TestDiscoveryIndex getInstance(@NotNull Project project) {
-    return project.getService(TestDiscoveryIndex.class);
+  init {
+    this.basePath = basePath
   }
 
-  @SuppressWarnings("unused")
-  TestDiscoveryIndex(@NotNull Project project) {
-    this(TestDiscoveryExtension.baseTestDiscoveryPathForProject(project));
-  }
-
-  @NonInjectable
-  public TestDiscoveryIndex(@NotNull Path basePath) {
-    this.basePath = basePath;
-  }
-
-  final static class MyPostStartUpActivity implements StartupActivity.DumbAware {
-    @Override
-    public void runActivity(@NotNull Project project) {
+  internal class MyPostStartUpActivity : StartupActivity.DumbAware {
+    override fun runActivity(project: Project) {
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        return;
+        return
       }
-
-      NonUrgentExecutor.getInstance().execute(() -> {
-        TestDiscoveryIndex service = getInstance(project);
+      NonUrgentExecutor.getInstance().execute(Runnable {
+        val service = getInstance(project)
         if (!Files.exists(service.basePath)) {
-          return;
+          return@execute
         }
 
         // proactively init with maybe io costly compact
-        service.getHolder();
-      });
+        service.holder
+      })
     }
   }
 
-  public boolean hasTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) {
-    Boolean result = executeUnderLock(holder -> holder.hasTestTrace(testClassName, testMethodName, frameworkId));
-    return result == Boolean.TRUE;
+  fun hasTestTrace(testClassName: String, testMethodName: String, frameworkId: Byte): Boolean {
+    val result = executeUnderLock(
+      ThrowableConvertor { holder: DiscoveredTestDataHolder -> holder.hasTestTrace(testClassName, testMethodName, frameworkId) })!!
+    return result === java.lang.Boolean.TRUE
   }
 
-  public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) {
-    executeUnderLock(holder -> {
-      holder.removeTestTrace(testClassName, testMethodName, frameworkId);
-      return null;
-    });
+  fun removeTestTrace(testClassName: String, testMethodName: String, frameworkId: Byte) {
+    executeUnderLock(ThrowableConvertor<DiscoveredTestDataHolder, Any?, IOException> { holder: DiscoveredTestDataHolder ->
+      holder.removeTestTrace(testClassName, testMethodName, frameworkId)
+      null
+    })
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByFile(String relativePath, byte frameworkId) {
-    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByFile(relativePath, frameworkId));
-    return map == null ? MultiMap.empty() : map;
+  fun getTestsByFile(relativePath: String?, frameworkId: Byte): MultiMap<String, String> {
+    val map = executeUnderLock(
+      ThrowableConvertor { holder: DiscoveredTestDataHolder ->
+        holder.getTestsByFile(
+          relativePath!!, frameworkId)
+      })
+    return map ?: MultiMap.empty()
   }
 
-
-  @NotNull
-  public MultiMap<String, String> getTestsByClassName(@NotNull String classFQName, byte frameworkId) {
-    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByClassName(classFQName, frameworkId));
-    return map == null ? MultiMap.empty() : map;
+  fun getTestsByClassName(classFQName: String, frameworkId: Byte): MultiMap<String, String> {
+    val map = executeUnderLock(
+      ThrowableConvertor { holder: DiscoveredTestDataHolder -> holder.getTestsByClassName(classFQName, frameworkId) })
+    return map ?: MultiMap.empty()
   }
 
-  @NotNull
-  public MultiMap<String, String> getTestsByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) {
-    MultiMap<String, String> map = executeUnderLock(holder -> holder.getTestsByMethodName(classFQName, methodName, frameworkId));
-    return map == null ? MultiMap.empty() : map;
+  fun getTestsByMethodName(classFQName: String, methodName: String, frameworkId: Byte): MultiMap<String, String> {
+    val map = executeUnderLock(
+      ThrowableConvertor { holder: DiscoveredTestDataHolder -> holder.getTestsByMethodName(classFQName, methodName, frameworkId) })
+    return map ?: MultiMap.empty()
   }
 
-  @NotNull
-  public Collection<String> getTestModulesByMethodName(@NotNull String classFQName, @NotNull String methodName, byte frameworkId) {
-    Collection<String> modules = executeUnderLock(holder -> holder.getTestModulesByMethodName(classFQName, methodName, frameworkId));
-    return modules == null ? Collections.emptySet() : modules;
+  fun getTestModulesByMethodName(classFQName: String, methodName: String, frameworkId: Byte): Collection<String> {
+    val modules = executeUnderLock(
+      ThrowableConvertor { holder: DiscoveredTestDataHolder -> holder.getTestModulesByMethodName(classFQName, methodName, frameworkId) })
+    return modules ?: emptySet()
   }
 
-  @NotNull
-  public Collection<String> getAffectedFiles(Couple<String> testQName, byte frameworkId) {
-    Collection<String> files = executeUnderLock(holder -> holder.getAffectedFiles(testQName, frameworkId));
-    return files == null ? Collections.emptySet() : files;
+  fun getAffectedFiles(testQName: Couple<String?>?, frameworkId: Byte): Collection<String> {
+    val files = executeUnderLock(
+      ThrowableConvertor { holder: DiscoveredTestDataHolder ->
+        holder.getAffectedFiles(
+          testQName!!, frameworkId)
+      })
+    return files ?: emptySet()
   }
 
-  @Override
-  public void dispose() {
-    synchronized (myLock) {
-      DiscoveredTestDataHolder holder = myHolder;
+  override fun dispose() {
+    synchronized(myLock) {
+      val holder = myHolder
       if (holder != null) {
-        holder.dispose();
-        myHolder = null;
+        holder.dispose()
+        myHolder = null
       }
     }
   }
 
-  public void updateTestData(@NotNull String testClassName,
-                             @NotNull String testMethodName,
-                             @NotNull MultiMap<String, String> usedMethods,
-                             @NotNull List<String> usedFiles,
-                             @Nullable String moduleName,
-                             byte frameworkId) {
-    executeUnderLock(holder -> {
-      holder.updateTestData(testClassName, testMethodName, usedMethods, usedFiles, moduleName, frameworkId);
-      return null;
-    });
+  fun updateTestData(testClassName: String,
+                     testMethodName: String,
+                     usedMethods: MultiMap<String?, String?>,
+                     usedFiles: List<String?>,
+                     moduleName: String?,
+                     frameworkId: Byte) {
+    executeUnderLock(ThrowableConvertor<DiscoveredTestDataHolder, Any?, IOException> { holder: DiscoveredTestDataHolder ->
+      holder.updateTestData(testClassName, testMethodName, usedMethods, usedFiles, moduleName, frameworkId)
+      null
+    })
   }
 
-  private DiscoveredTestDataHolder getHolder() {
-    DiscoveredTestDataHolder holder = myHolder;
-
-    if (holder == null) {
-      synchronized (myLock) {
-        holder = myHolder;
-        if (holder == null && basePath != null) {
-          myHolder = holder = new DiscoveredTestDataHolder(basePath);
+  private val holder: DiscoveredTestDataHolder?
+    get() {
+      var holder = myHolder
+      if (holder == null) {
+        synchronized(myLock) {
+          holder = myHolder
+          if (holder == null && basePath != null) {
+            holder = DiscoveredTestDataHolder(basePath)
+            myHolder = holder
+          }
         }
       }
+      return holder
     }
-    return holder;
+
+  private fun <R> executeUnderLock(action: ThrowableConvertor<DiscoveredTestDataHolder, R, IOException>): R? {
+    synchronized(myLock) {
+      val holder = holder
+      if (holder == null || holder.isDisposed) return null
+      try {
+        return action.convert(holder)
+      }
+      catch (throwable: Throwable) {
+        LOG.error("Unexpected problem", throwable)
+        holder.dispose()
+        basePath!!.delete()
+        myHolder = null
+      }
+      return null
+    }
   }
 
-  private <R> R executeUnderLock(ThrowableConvertor<DiscoveredTestDataHolder, R, IOException> action) {
-    synchronized (myLock) {
-      DiscoveredTestDataHolder holder = getHolder();
-      if (holder == null || holder.isDisposed()) return null;
-      try {
-        return action.convert(holder);
-      }
-      catch (Throwable throwable) {
-        LOG.error("Unexpected problem", throwable);
-        holder.dispose();
-        PathKt.delete(basePath);
-        myHolder = null;
-      }
-      return null;
+  companion object {
+    val LOG: Logger = Logger.getInstance(TestDiscoveryIndex::class.java)
+    fun getInstance(project: Project): TestDiscoveryIndex {
+      return project.getService(TestDiscoveryIndex::class.java)
     }
   }
 }
