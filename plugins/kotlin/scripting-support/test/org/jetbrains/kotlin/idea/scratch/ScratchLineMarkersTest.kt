@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.codeInsight.AbstractLineMarkersTest
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.AbstractScratchRunActionTest.Companion.configureOptions
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 
 abstract class AbstractScratchLineMarkersTest : FileEditorManagerTestCase() {
@@ -53,7 +54,9 @@ abstract class AbstractScratchLineMarkersTest : FileEditorManagerTestCase() {
 
         PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-        doAndCheckHighlighting(document, data, File(path))
+        val markers = doAndCheckHighlighting(document, data, File(path))
+
+        AbstractLineMarkersTest.assertNavigationElements(myFixture.project, myFixture.file as KtFile, myFixture.editor, markers)
     }
 
     override fun tearDown() {
@@ -72,7 +75,7 @@ abstract class AbstractScratchLineMarkersTest : FileEditorManagerTestCase() {
     ): List<LineMarkerInfo<*>> {
         myFixture.doHighlighting()
 
-        return AbstractLineMarkersTest.checkHighlighting(project, myFixture.file, documentToAnalyze, expectedHighlighting, expectedFile)
+        return AbstractLineMarkersTest.checkHighlighting(myFixture.file, documentToAnalyze, expectedHighlighting, expectedFile)
     }
 
 }

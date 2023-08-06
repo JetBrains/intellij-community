@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.k2.codeInsight.lineMarkers.test;
 
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
 import org.jetbrains.kotlin.idea.base.test.TestRoot;
 import org.junit.runner.RunWith;
@@ -17,455 +16,427 @@ import org.junit.runner.RunWith;
 @TestRoot("code-insight/line-markers")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class LineMarkersK2TestGenerated extends AbstractLineMarkersK2Test {
+public abstract class LineMarkerTestGenerated extends AbstractLineMarkerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/recursive")
-    public static class Recursive extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class Recursive extends AbstractLineMarkerTest {
         @TestMetadata("backticksInName.kt")
         public void testBackticksInName() throws Exception {
-            runTest("testData/recursive/backticksInName.kt");
+            performTest();
         }
 
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
-            runTest("testData/recursive/callableReference.kt");
+            performTest();
         }
 
         @TestMetadata("companionInvoke.kt")
         public void testCompanionInvoke() throws Exception {
-            runTest("testData/recursive/companionInvoke.kt");
+            performTest();
         }
 
         @TestMetadata("conventions.kt")
         public void testConventions() throws Exception {
-            runTest("testData/recursive/conventions.kt");
+            performTest();
         }
 
         @TestMetadata("defaultValue.kt")
         public void testDefaultValue() throws Exception {
-            runTest("testData/recursive/defaultValue.kt");
+            performTest();
         }
 
         @TestMetadata("dispatchExtensionReceivers.kt")
         public void testDispatchExtensionReceivers() throws Exception {
-            runTest("testData/recursive/dispatchExtensionReceivers.kt");
+            performTest();
         }
 
         @TestMetadata("dispatchReceiver.kt")
         public void testDispatchReceiver() throws Exception {
-            runTest("testData/recursive/dispatchReceiver.kt");
+            performTest();
         }
 
         @TestMetadata("extensionReceiver.kt")
         public void testExtensionReceiver() throws Exception {
-            runTest("testData/recursive/extensionReceiver.kt");
+            performTest();
         }
 
         @TestMetadata("functionLiteral.kt")
         public void testFunctionLiteral() throws Exception {
-            runTest("testData/recursive/functionLiteral.kt");
+            performTest();
         }
 
         @TestMetadata("generic.kt")
         public void testGeneric() throws Exception {
-            runTest("testData/recursive/generic.kt");
+            performTest();
         }
 
         @TestMetadata("inlineLambda.kt")
         public void testInlineLambda() throws Exception {
-            runTest("testData/recursive/inlineLambda.kt");
+            performTest();
         }
 
         @TestMetadata("insideLambda.kt")
         public void testInsideLambda() throws Exception {
-            runTest("testData/recursive/insideLambda.kt");
+            performTest();
         }
 
         @TestMetadata("localClass.kt")
         public void testLocalClass() throws Exception {
-            runTest("testData/recursive/localClass.kt");
+            performTest();
         }
 
         @TestMetadata("localFunction.kt")
         public void testLocalFunction() throws Exception {
-            runTest("testData/recursive/localFunction.kt");
+            performTest();
         }
 
         @TestMetadata("propertyAccessors.kt")
         public void testPropertyAccessors() throws Exception {
-            runTest("testData/recursive/propertyAccessors.kt");
+            performTest();
         }
 
         @TestMetadata("sameLine.kt")
         public void testSameLine() throws Exception {
-            runTest("testData/recursive/sameLine.kt");
+            performTest();
         }
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
-            runTest("testData/recursive/simple.kt");
+            performTest();
         }
 
         @TestMetadata("super.kt")
         public void testSuper() throws Exception {
-            runTest("testData/recursive/super.kt");
+            performTest();
         }
 
         @TestMetadata("with.kt")
         public void testWith() throws Exception {
-            runTest("testData/recursive/with.kt");
+            performTest();
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/suspend")
-    public static class Suspend extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class Suspend extends AbstractLineMarkerTest {
         @TestMetadata("callChain.kt")
         public void testCallChain() throws Exception {
-            runTest("testData/suspend/callChain.kt");
+            performTest();
         }
 
         @TestMetadata("callableReference.kt")
         public void testCallableReference() throws Exception {
-            runTest("testData/suspend/callableReference.kt");
+            performTest();
         }
 
         @TestMetadata("coroutineContext.kt")
         public void testCoroutineContext() throws Exception {
-            runTest("testData/suspend/coroutineContext.kt");
+            performTest();
         }
 
         @TestMetadata("forLoop.kt")
         public void testForLoop() throws Exception {
-            runTest("testData/suspend/forLoop.kt");
+            performTest();
         }
 
         @TestMetadata("implicitReceiver.kt")
         public void testImplicitReceiver() throws Exception {
-            runTest("testData/suspend/implicitReceiver.kt");
+            performTest();
         }
 
         @TestMetadata("import.kt")
         public void testImport() throws Exception {
-            runTest("testData/suspend/import.kt");
+            performTest();
         }
 
         @TestMetadata("infix.kt")
         public void testInfix() throws Exception {
-            runTest("testData/suspend/infix.kt");
+            performTest();
         }
 
         @TestMetadata("insideSuspendLambda.kt")
         public void testInsideSuspendLambda() throws Exception {
-            runTest("testData/suspend/insideSuspendLambda.kt");
+            performTest();
         }
 
         @TestMetadata("invalidCall.kt")
         public void testInvalidCall() throws Exception {
-            runTest("testData/suspend/invalidCall.kt");
+            performTest();
         }
 
         @TestMetadata("notSuspend.kt")
         public void testNotSuspend() throws Exception {
-            runTest("testData/suspend/notSuspend.kt");
+            performTest();
         }
 
         @TestMetadata("parameter.kt")
         public void testParameter() throws Exception {
-            runTest("testData/suspend/parameter.kt");
+            performTest();
         }
 
         @TestMetadata("plusOperator.kt")
         public void testPlusOperator() throws Exception {
-            runTest("testData/suspend/plusOperator.kt");
+            performTest();
         }
 
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
-            runTest("testData/suspend/simple.kt");
+            performTest();
         }
 
         @TestMetadata("variable.kt")
         public void testVariable() throws Exception {
-            runTest("testData/suspend/variable.kt");
+            performTest();
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement")
-    public static class OverrideImplement extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class OverrideImplement extends AbstractLineMarkerTest {
         @TestMetadata("AbstractClass.kt")
         public void testAbstractClass() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/AbstractClass.kt");
+            performTest();
         }
 
         @TestMetadata("BadCodeNoExceptions.kt")
         public void testBadCodeNoExceptions() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/BadCodeNoExceptions.kt");
+            performTest();
         }
 
         @TestMetadata("Class.kt")
         public void testClass() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/Class.kt");
+            performTest();
         }
 
         @TestMetadata("ClassAndProperties.kt")
         public void testClassAndProperties() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/ClassAndProperties.kt");
+            performTest();
         }
 
         @TestMetadata("ClassObjectInStaticNestedClass.kt")
         public void testClassObjectInStaticNestedClass() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/ClassObjectInStaticNestedClass.kt");
+            performTest();
         }
 
         @TestMetadata("DelegatedFun.kt")
         public void testDelegatedFun() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/DelegatedFun.kt");
+            performTest();
         }
 
         @TestMetadata("DelegatedProperty.kt")
         public void testDelegatedProperty() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/DelegatedProperty.kt");
+            performTest();
         }
 
         @TestMetadata("EnumEntry.kt")
         public void testEnumEntry() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/EnumEntry.kt");
+            performTest();
         }
 
         @TestMetadata("FakeOverrideForClasses.kt")
         public void testFakeOverrideForClasses() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/FakeOverrideForClasses.kt");
+            performTest();
         }
 
         @TestMetadata("FakeOverrideFun.kt")
         public void testFakeOverrideFun() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/FakeOverrideFun.kt");
+            performTest();
         }
 
         @TestMetadata("FakeOverrideFunWithMostRelevantImplementation.kt")
         public void testFakeOverrideFunWithMostRelevantImplementation() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/FakeOverrideFunWithMostRelevantImplementation.kt");
+            performTest();
         }
 
         @TestMetadata("FakeOverrideProperty.kt")
         public void testFakeOverrideProperty() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/FakeOverrideProperty.kt");
+            performTest();
         }
 
         @TestMetadata("FakeOverrideToStringInInterface.kt")
         public void testFakeOverrideToStringInInterface() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/FakeOverrideToStringInInterface.kt");
+            performTest();
         }
 
         @TestMetadata("FakeOverridesForInterfaceFunWithImpl.kt")
         public void testFakeOverridesForInterfaceFunWithImpl() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/FakeOverridesForInterfaceFunWithImpl.kt");
+            performTest();
         }
 
         @TestMetadata("ImplementedAndOverriddenPropertiesInCtr.kt")
         public void testImplementedAndOverriddenPropertiesInCtr() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/ImplementedAndOverriddenPropertiesInCtr.kt");
+            performTest();
         }
 
         @TestMetadata("Interface.kt")
         public void testInterface() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/Interface.kt");
+            performTest();
         }
 
         @TestMetadata("InterfaceDisabledImplOption.kt")
         public void testInterfaceDisabledImplOption() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/InterfaceDisabledImplOption.kt");
+            performTest();
         }
 
         @TestMetadata("NavigateFromPrivateAbstractClass.kt")
         public void testNavigateFromPrivateAbstractClass() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/NavigateFromPrivateAbstractClass.kt");
+            performTest();
         }
 
         @TestMetadata("NavigateToSeveralSuperElements.kt")
         public void testNavigateToSeveralSuperElements() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/NavigateToSeveralSuperElements.kt");
+            performTest();
         }
 
         @TestMetadata("NoOverridingMarkerOnDefaultInterfaceImpl.kt")
         public void testNoOverridingMarkerOnDefaultInterfaceImpl() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/NoOverridingMarkerOnDefaultInterfaceImpl.kt");
+            performTest();
         }
 
         @TestMetadata("Overloads.kt")
         public void testOverloads() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/Overloads.kt");
+            performTest();
         }
 
         @TestMetadata("OverrideFunction.kt")
         public void testOverrideFunction() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/OverrideFunction.kt");
+            performTest();
         }
 
         @TestMetadata("OverrideFunctionInJava.kt")
         public void testOverrideFunctionInJava() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/OverrideFunctionInJava.kt");
+            performTest();
         }
 
         @TestMetadata("OverrideIconForOverloadMethodBug.kt")
         public void testOverrideIconForOverloadMethodBug() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/OverrideIconForOverloadMethodBug.kt");
+            performTest();
         }
 
         @TestMetadata("OverrideMemberOfAbstractClass.kt")
         public void testOverrideMemberOfAbstractClass() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/OverrideMemberOfAbstractClass.kt");
+            performTest();
         }
 
         @TestMetadata("OverridenInterfaceDeclarations.kt")
         public void testOverridenInterfaceDeclarations() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/OverridenInterfaceDeclarations.kt");
+            performTest();
         }
 
         @TestMetadata("OverridingTooltipOnDefaultInterfaceImpl.kt")
         public void testOverridingTooltipOnDefaultInterfaceImpl() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/OverridingTooltipOnDefaultInterfaceImpl.kt");
+            performTest();
         }
 
         @TestMetadata("PrimaryConstructorOpen.kt")
         public void testPrimaryConstructorOpen() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/PrimaryConstructorOpen.kt");
+            performTest();
         }
 
         @TestMetadata("PrimaryConstructorOverride.kt")
         public void testPrimaryConstructorOverride() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/PrimaryConstructorOverride.kt");
+            performTest();
         }
 
         @TestMetadata("PropertiesImplementedInCtr.kt")
         public void testPropertiesImplementedInCtr() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/PropertiesImplementedInCtr.kt");
+            performTest();
         }
 
         @TestMetadata("PropertiesOverriddenInCtr.kt")
         public void testPropertiesOverriddenInCtr() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/PropertiesOverriddenInCtr.kt");
+            performTest();
         }
 
         @TestMetadata("PropertyOverride.kt")
         public void testPropertyOverride() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/PropertyOverride.kt");
+            performTest();
         }
 
         @TestMetadata("SealedClass.kt")
         public void testSealedClass() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/SealedClass.kt");
+            performTest();
         }
 
         @TestMetadata("ToStringInInterface.kt")
         public void testToStringInInterface() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/ToStringInInterface.kt");
+            performTest();
         }
 
         @TestMetadata("WithJavaAnonymousInheritor.kt")
         public void testWithJavaAnonymousInheritor() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/WithJavaAnonymousInheritor.kt");
+            performTest();
         }
 
         @TestMetadata("WithJavaInheritor.kt")
         public void testWithJavaInheritor() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritor.kt");
+            performTest();
         }
 
         @TestMetadata("WithJavaInheritorProperty.kt")
         public void testWithJavaInheritorProperty() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/overrideImplement/WithJavaInheritorProperty.kt");
+            performTest();
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/dslMarker")
-    public static class DslMarker extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class DslMarker extends AbstractLineMarkerTest {
         @TestMetadata("markerAnnotationDeclaration.kt")
         public void testMarkerAnnotationDeclaration() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/dslMarker/markerAnnotationDeclaration.kt");
+            performTest();
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/main")
-    public static class Main extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class Main extends AbstractLineMarkerTest {
         @TestMetadata("main.kt")
         public void testMain() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/main/main.kt");
+            performTest();
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/runMarkers")
-    public static class RunMarkers extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class RunMarkers extends AbstractLineMarkerTest {
         @TestMetadata("jUnit3TestFile.kt")
         public void testJUnit3TestFile() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnit3TestFile.kt");
+            performTest();
         }
 
         @TestMetadata("jUnit3TestFileWithJUnit4.kt")
         public void testJUnit3TestFileWithJUnit4() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnit3TestFileWithJUnit4.kt");
+            performTest();
         }
 
         @TestMetadata("jUnit4TestFile.kt")
         public void testJUnit4TestFile() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnit4TestFile.kt");
+            performTest();
         }
 
         @TestMetadata("jUnit5TestFile.kt")
         public void testJUnit5TestFile() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnit5TestFile.kt");
+            performTest();
         }
 
         @TestMetadata("jUnitTestClassWithSubclasses.kt")
         public void testJUnitTestClassWithSubclasses() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/jUnitTestClassWithSubclasses.kt");
+            performTest();
         }
 
         @TestMetadata("testNGTestClassWithSubclasses.kt")
         public void testTestNGTestClassWithSubclasses() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/runMarkers/testNGTestClassWithSubclasses.kt");
+            performTest();
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/codeInsight/lineMarker/methodSeparators")
-    public static class MethodSeparators extends AbstractLineMarkersK2Test {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
+    public static class MethodSeparators extends AbstractLineMarkerTest {
         @TestMetadata("MethodSeparators.kt")
         public void testMethodSeparators() throws Exception {
-            runTest("../../idea/tests/testData/codeInsight/lineMarker/methodSeparators/MethodSeparators.kt");
+            performTest();
         }
     }
 }
