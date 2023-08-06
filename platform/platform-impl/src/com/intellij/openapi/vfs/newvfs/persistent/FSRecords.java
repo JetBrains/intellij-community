@@ -5,7 +5,6 @@ import com.intellij.ide.startup.ServiceNotReadyException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ThrottledLogger;
-import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
@@ -21,7 +20,6 @@ import com.intellij.util.SystemProperties;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.*;
 
-import java.io.DataInputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.Collections;
@@ -94,12 +92,24 @@ public final class FSRecords {
 
   //========== lifecycle: =====================================================
 
-  static synchronized FSRecordsImpl connect() throws UncheckedIOException {
+  /**
+   * This method creates new {@link FSRecordsImpl} instance, and <b>set it as default instance, available
+   * through {@link #getInstance()}</b>.
+   * If you want 'private' VFS instance -- e.g. for testing -- use {@link FSRecordsImpl#connect(Path, List, boolean, FSRecordsImpl.ErrorHandler)}
+   * method(s) instead, because this method changes global state, hence could affect the tests following current.
+   */
+  public static synchronized FSRecordsImpl connect() throws UncheckedIOException {
     return connect(VfsLog.isVfsTrackingEnabled(), FSRecordsImpl.getDefaultErrorHandler());
   }
 
-  static synchronized FSRecordsImpl connect(boolean enableVfsLog,
-                                            @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
+  /**
+   * This method creates new {@link FSRecordsImpl} instance, and set it as default instance, available
+   * through {@link #getInstance()}.
+   * If you want 'private' VFS instance -- e.g. for testing -- use {@link FSRecordsImpl#connect(Path, List, boolean, FSRecordsImpl.ErrorHandler)}
+   * method(s) instead, because this method changes global state, hence could affect the tests following current.
+   */
+  public static synchronized FSRecordsImpl connect(boolean enableVfsLog,
+                                                   @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
     FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), Collections.emptyList(), enableVfsLog, errorHandler);
     impl = _impl;
     return _impl;
@@ -194,21 +204,8 @@ public final class FSRecords {
     return implOrFail().listIds(fileId);
   }
 
-  /**
-   * @return child infos (sorted by id) without (potentially expensive) name (or without even nameId if `loadNameId` is false)
-   */
-  @NotNull
-  static ListResult list(int parentId) {
-    return implOrFail().list(parentId);
-  }
-
   public static @NotNull @Unmodifiable List<CharSequence> listNames(int parentId) {
     return implOrFail().listNames(parentId);
-  }
-
-  static void moveChildren(int fromParentId,
-                           int toParentId) {
-    implOrFail().moveChildren(fromParentId, toParentId);
   }
 
   //========== file name iterations: ========================================
@@ -229,28 +226,6 @@ public final class FSRecords {
   @Deprecated(forRemoval = true)
   public static int getParent(int fileId) {
     return implOrFail().getParent(fileId);
-  }
-
-  /** @deprecated replace with apt FSRecords.getInstance() instance method */
-  @Deprecated(forRemoval = true)
-  static void setParent(int id,
-                        int parentId) {
-    implOrFail().setParent(id, parentId);
-  }
-
-  //MAYBE RC: this method is used to look up files by name, but with future non-strict enumerator this
-  //          approach becomes 'non-strict' also: nameId returned could be the new nameId, never used
-  //          before in any file record, even though the name was already registered for some file(s)
-  static int getNameId(@NotNull String name) {
-    return implOrFail().getNameId(name);
-  }
-
-  public static @NotNull String getName(int fileId) {
-    return implOrFail().getName(fileId);
-  }
-
-  static CharSequence getNameByNameId(int nameId) {
-    return implOrFail().getNameByNameId(nameId);
   }
 
   @ApiStatus.Internal
@@ -314,18 +289,6 @@ public final class FSRecords {
                                        FileAttribute attribute,
                                        ByteBufferWriter writer) {
     implOrFail().writeAttributeRaw(fileId, attribute, writer);
-  }
-
-  //========== file content accessors: ======================================
-
-  static @Nullable DataInputStream readContent(int fileId) {
-    return implOrFail().readContent(fileId);
-  }
-
-  static void writeContent(int fileId,
-                           @NotNull ByteArraySequence bytes,
-                           boolean fixedSize) {
-    implOrFail().writeContent(fileId, bytes, fixedSize);
   }
 
   //========== aux: ========================================================

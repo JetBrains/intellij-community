@@ -13,7 +13,7 @@ import java.util.ArrayList;
 
 /**
  * In-memory (not persistent) implementation of {@linkplain ScannableDataEnumeratorEx} for
- * arbitrary data type. Useful as a building block for more elaborate impls, and for tests.
+ * an arbitrary data type. Useful as a building block for more elaborate impls, and for tests.
  * <br/>
  * <b>Not thread safe</b> -- external synchronization required for use in multithreaded environment.
  */

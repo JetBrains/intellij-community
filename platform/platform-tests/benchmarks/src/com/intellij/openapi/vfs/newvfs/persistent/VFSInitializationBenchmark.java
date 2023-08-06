@@ -106,8 +106,7 @@ public class VFSInitializationBenchmark {
       PersistentFSConnection connection = initVFS(cachesDir, version);
       
       NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = FSRecordsImpl.asyncFillInvertedNameIndex(
-        connection,
-        AppExecutorUtil.getAppExecutorService()
+        AppExecutorUtil.getAppExecutorService(), connection.getRecords()
       );
 
       int maxAllocatedID = connection.getRecords().maxAllocatedID();

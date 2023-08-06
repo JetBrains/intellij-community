@@ -1029,14 +1029,14 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     int id = ((VirtualFileWithId)vFile).getId();
     vFile.contentsToByteArray();
 
-    DataInputStream stream = FSRecords.readContent(id);
+    DataInputStream stream = FSRecords.getInstance().readContent(id);
     assertNotNull(stream);
     byte[] bytes = stream.readNBytes(initialContent.length);
     assertArrayEquals(initialContent, bytes);
-    DataInputStream stream2 = FSRecords.readContent(id);
+    DataInputStream stream2 = FSRecords.getInstance().readContent(id);
     byte[] portion1 = stream2.readNBytes(40);
-    FSRecords.writeContent(id, ByteArraySequence.EMPTY, true);
-    DataInputStream stream3 = FSRecords.readContent(id);
+    FSRecords.getInstance().writeContent(id, ByteArraySequence.EMPTY, true);
+    DataInputStream stream3 = FSRecords.getInstance().readContent(id);
     assertEquals(-1, stream3.read());
     byte[] portion2 = stream2.readNBytes(initialContent.length - 40);
     assertArrayEquals(initialContent, ArrayUtil.mergeArrays(portion1, portion2));

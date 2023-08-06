@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.ArrayUtil;
@@ -122,7 +122,7 @@ class FilePartNode {
 
   @NotNull
   static CharSequence fromNameId(int nameId) {
-    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FileNameCache.getVFileName(nameId);
+    return nameId == JAR_SEPARATOR_NAME_ID ? JarFileSystem.JAR_SEPARATOR : FSRecords.getInstance().getNameByNameId(nameId);
   }
 
   @NotNull

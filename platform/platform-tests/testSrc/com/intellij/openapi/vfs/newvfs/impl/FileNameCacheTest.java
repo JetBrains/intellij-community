@@ -3,27 +3,48 @@ package com.intellij.openapi.vfs.newvfs.impl;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
-import com.intellij.testFramework.HeavyPlatformTestCase;
+import com.intellij.openapi.vfs.newvfs.persistent.SLRUFileNameCache;
+import com.intellij.util.io.InMemoryEnumerator;
 import org.jetbrains.annotations.NotNull;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-public class FileNameCacheTest extends HeavyPlatformTestCase {
+import java.io.IOException;
 
-  public void testAssertShortFileNameWithWindowsUNC() {
+import static org.junit.jupiter.api.Assertions.fail;
+
+public class FileNameCacheTest {
+
+  private FileNameCache cache;
+
+  @BeforeEach
+  public void setUp() throws Exception {
+    cache = new SLRUFileNameCache(new InMemoryEnumerator<>());
+  }
+
+  @AfterEach
+  public void disposeVFS() throws Exception {
+  }
+
+  @Test
+  public void testAssertShortFileNameWithWindowsUNC() throws IOException {
     final boolean isValidName = SystemInfo.isWindows;
     checkFileName("//wsl$/Ubuntu", isValidName); // valid for Windows, invalid in other case
     checkFileName("//wsl$//Ubuntu", false);
   }
 
-  private static void checkFileName(@NotNull String name, boolean isValid) {
+  private void checkFileName(@NotNull String name, boolean isValid) throws IOException {
     if (isValid) {
-      FileNameCache.storeName(name);
+      cache.enumerate(name);
     }
     else {
       try {
-        FileNameCache.storeName(name);
+        cache.enumerate(name);
         fail();
       }
-      catch (Exception expected) {}
+      catch (Exception expected) {
+      }
     }
   }
 }

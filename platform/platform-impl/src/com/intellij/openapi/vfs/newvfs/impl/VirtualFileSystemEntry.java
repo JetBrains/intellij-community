@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.ExceptionUtil;
@@ -88,7 +88,6 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   private volatile CachedFileType myFileType;
 
   static {
-    //noinspection ConstantValue
     assert ~ALL_FLAGS_MASK == LocalTimeCounter.TIME_MASK;
   }
 
@@ -156,7 +155,11 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public @NotNull CharSequence getNameSequence() {
-    return FileNameCache.getVFileName(getNameId());
+    PersistentFSImpl fs = (PersistentFSImpl)ManagingFS.getInstanceOrNull();
+    if (fs == null) {
+      return "<FS-is-disposed>";//shutdown-safe
+    }
+    return fs.getNameByNameId(getNameId());
   }
 
   public final int getNameId() {
@@ -429,7 +432,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
     VirtualDirectoryImpl parent = getParent();
     parent.removeChild(this);
-    getSegment().setNameId(myId, FileNameCache.storeName(newName));
+    getSegment().setNameId(myId, FSRecords.getInstance().getNameId(newName));
     parent.addChild(this);
     ((PersistentFSImpl)getPersistence()).incStructuralModificationCount();
   }

@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.impl.VirtualFileManagerImpl;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.RefreshSession;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -73,11 +72,11 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
 
   @Override
   public @NotNull CharSequence getVFileName(int nameId) {
-    return FileNameCache.getVFileName(nameId);
+    return FSRecords.getInstance().getNameByNameId(nameId);
   }
 
   @Override
   public int storeName(@NotNull String name) {
-    return FileNameCache.storeName(name);
+    return FSRecords.getInstance().getNameId(name);
   }
 }

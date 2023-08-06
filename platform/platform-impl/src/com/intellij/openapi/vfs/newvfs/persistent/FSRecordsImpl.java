@@ -40,10 +40,7 @@ import org.jetbrains.annotations.*;
 
 import java.io.*;
 import java.nio.file.Path;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -148,6 +145,14 @@ public final class FSRecordsImpl {
   private final @NotNull NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy;
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
 
+  /**
+   * Caching wrapper around {@link PersistentFSConnection#myNames} names enumerator
+   * TODO RC: ideally this caching wrapper should be created inside connection, and connection.getNames()
+   *          should return already wrapped (caching) enumerator -- so it is an implementation detail
+   *          noone needs to know about
+   */
+  private final FileNameCache fileNameCache;
+
 
   /** VFS implementation version */
   private final int currentVersion;
@@ -202,19 +207,19 @@ public final class FSRecordsImpl {
    *
    * @param storagesDirectoryPath directory there to put all FS-records files ('caches' directory)
    */
-  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath) throws UncheckedIOException {
+  public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath) throws UncheckedIOException {
     return connect(storagesDirectoryPath, Collections.emptyList());
   }
 
-  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                               @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
+  public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
+                                      @NotNull List<ConnectionInterceptor> connectionInterceptors) throws UncheckedIOException {
     return connect(storagesDirectoryPath, connectionInterceptors, VfsLog.isVfsTrackingEnabled(), getDefaultErrorHandler());
   }
 
-  static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
-                               @NotNull List<ConnectionInterceptor> connectionInterceptors,
-                               boolean enableVfsLog,
-                               @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
+  public static FSRecordsImpl connect(@NotNull Path storagesDirectoryPath,
+                                      @NotNull List<ConnectionInterceptor> connectionInterceptors,
+                                      boolean enableVfsLog,
+                                      @NotNull ErrorHandler errorHandler) throws UncheckedIOException {
     if (IOUtil.isSharedCachesEnabled()) {
       IOUtil.OVERRIDE_BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER_PROP.set(false);
     }
@@ -230,8 +235,7 @@ public final class FSRecordsImpl {
       PersistentFSConnection connection = initializationResult.connection;
 
       NotNullLazyValue<InvertedNameIndex> invertedNameIndexLazy = asyncFillInvertedNameIndex(
-        connection,
-        AppExecutorUtil.getAppExecutorService()
+        AppExecutorUtil.getAppExecutorService(), connection.getRecords()
       );
 
 
@@ -304,11 +308,13 @@ public final class FSRecordsImpl {
 
     this.currentVersion = currentVersion;
     this.initializationResult = initializationResult;
+
+    this.fileNameCache = new SLRUFileNameCache(connection.getNames());
   }
 
   //========== lifecycle: ========================================
 
-  synchronized void dispose() {
+  public synchronized void dispose() {
     if (!disposed) {
       disposed = true;
       Exception stackTraceEx = new Exception("FSRecordsImpl dispose stacktrace");
@@ -501,7 +507,7 @@ public final class FSRecordsImpl {
     }
   }
 
-  void forEachRoot(@NotNull ObjIntConsumer<String> rootConsumer) {
+  void forEachRoot(@NotNull ObjIntConsumer<? super String> rootConsumer) {
     try {
       treeAccessor.forEachRoot((rootId, rootUrlId) -> {
         String rootUrl = getNameByNameId(rootUrlId).toString();
@@ -779,8 +785,25 @@ public final class FSRecordsImpl {
 
   boolean processFilesWithNames(@NotNull Set<String> names,
                                 @NotNull IntPredicate processor) {
-    if (names.isEmpty()) return true;
-    return invertedNameIndexLazy.getValue().processFilesWithNames(names, processor);
+    try {
+      checkNotDisposed();
+
+      if (names.isEmpty()) {
+        return true;
+      }
+
+      IntList nameIds = new IntArrayList(names.size());
+      for (String name : names) {
+        int nameId = fileNameCache.tryEnumerate(name);
+        if (nameId != NULL_NAME_ID) {
+          nameIds.add(nameId);
+        }
+      }
+      return invertedNameIndexLazy.getValue().processFilesWithNames(nameIds, processor);
+    }
+    catch (IOException e) {
+      throw handleError(e);
+    }
   }
 
 
@@ -850,30 +873,26 @@ public final class FSRecordsImpl {
 
 
   /**
-   * TODO RC: this method is used to look up files by name, but with (future) non-strict enumerator
-   * this approach becomes 'non-strict' also: nameId returned could be the new nameId, never used
-   * before, hence in any file record, even though name was already registered for some file(s)
+   * Registers name in file-name enumerator (='enumerates' the name), and return unique id
+   * assigned by enumerator to that name.
+   * This method changes VFS content (if name is a new one)!
    */
-  int getNameId(@NotNull String name) {
+  public int getNameId(@NotNull String name) {
     try {
       checkNotDisposed();
-      return connection.getNames().enumerate(name);
+      return fileNameCache.enumerate(name);
     }
     catch (Throwable e) {
       throw handleError(e);
     }
   }
 
+  /** @return name by fileId, using FileNameCache */
   public @NotNull String getName(int fileId) {
-    return getNameSequence(fileId).toString();
-  }
-
-  @NotNull CharSequence getNameSequence(int fileId) {
-    //TODO RC: I don't see any profit of CharSequence method since under the hood it is always a String
     try {
       checkNotDisposed();
       int nameId = connection.getRecords().getNameId(fileId);
-      return nameId == NULL_NAME_ID ? "" : FileNameCache.getVFileName(nameId);
+      return nameId == NULL_NAME_ID ? "" : fileNameCache.valueOf(nameId);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -890,11 +909,12 @@ public final class FSRecordsImpl {
     }
   }
 
-  CharSequence getNameByNameId(int nameId) {
+  /** @return name from file-names enumerator (using cache) */
+  public String getNameByNameId(int nameId) {
     assert nameId >= NULL_NAME_ID : "nameId(=" + nameId + ") must be positive";
+    checkNotDisposed();
     try {
-      checkNotDisposed();
-      return nameId == NULL_NAME_ID ? "" : connection.getNames().valueOf(nameId);
+      return nameId == NULL_NAME_ID ? "" : fileNameCache.valueOf(nameId);
     }
     catch (IOException e) {
       throw handleError(e);
@@ -1277,7 +1297,7 @@ public final class FSRecordsImpl {
     //    open to be called from VfsData.
     int parentId = getParent(fileId);
     String description = "fileId=" + fileId +
-                         "; nameId=" + nameId + "(" + FileNameCache.getVFileName(nameId) + ")" +
+                         "; nameId=" + nameId + "(" + getNameByNameId(nameId) + ")" +
                          "; parentId=" + parentId;
     if (parentId > 0) {
       description += "; parent.name=" + getName(parentId)
@@ -1315,16 +1335,15 @@ public final class FSRecordsImpl {
 
 
   @VisibleForTesting
-  public static @NotNull NotNullLazyValue<InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull PersistentFSConnection connection,
-                                                                                        @NotNull ExecutorService pool) {
+  public static @NotNull NotNullLazyValue<InvertedNameIndex> asyncFillInvertedNameIndex(@NotNull ExecutorService pool,
+                                                                                        @NotNull PersistentFSRecordsStorage recordsStorage) {
     Future<InvertedNameIndex> fillUpInvertedNameIndexTask = pool.submit(() -> {
       InvertedNameIndex invertedNameIndex = new InvertedNameIndex();
       //fill up nameId->fileId index:
-      PersistentFSRecordsStorage records = connection.getRecords();
-      int maxAllocatedID = records.maxAllocatedID();
+      int maxAllocatedID = recordsStorage.maxAllocatedID();
       for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
-        int flags = records.getFlags(fileId);
-        int nameId = records.getNameId(fileId);
+        int flags = recordsStorage.getFlags(fileId);
+        int nameId = recordsStorage.getNameId(fileId);
         if (!hasDeletedFlag(flags) && nameId != NULL_NAME_ID) {
           invertedNameIndex.updateDataInner(fileId, nameId);
         }

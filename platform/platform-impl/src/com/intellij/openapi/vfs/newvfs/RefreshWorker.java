@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.monitoring.VfsUsageCollector;
 import com.intellij.openapi.vfs.newvfs.persistent.BatchingFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.MathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.TimeoutUtil;
@@ -393,7 +394,8 @@ final class RefreshWorker {
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(child);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(child) : null;
     myIoTime.addAndGet(System.nanoTime() - t);
-    return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    int nameId = ((PersistentFSImpl)myPersistence).peer().getNameId(name);
+    return new ChildInfoImpl(nameId, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   private static void generateDeleteEvents(List<VFileEvent> events,
@@ -542,7 +544,8 @@ final class RefreshWorker {
   private ChildInfo @Nullable [] scanChildren(Path root, List<Path> excluded, NewVirtualFile currentDir) {
     // the stack contains a list of children found so far in the current directory
     Stack<List<ChildInfo>> stack = new Stack<>();
-    ChildInfo fakeRoot = new ChildInfoImpl("", null, null, null);
+    int nameId = ((PersistentFSImpl)myPersistence).peer().getNameId("");
+    ChildInfo fakeRoot = new ChildInfoImpl(nameId, null, null, null);
     stack.push(new SmartList<>(fakeRoot));
     FileVisitor<Path> visitor = new SimpleFileVisitor<>() {
       private int checkCanceledCount;
@@ -572,7 +575,8 @@ final class RefreshWorker {
         }
         FileAttributes attributes = FileAttributes.fromNio(file, attrs);
         String symLinkTarget = attrs.isSymbolicLink() ? FileUtil.toSystemIndependentName(file.toRealPath().toString()) : null;
-        ChildInfo info = new ChildInfoImpl(file.getFileName().toString(), attributes, null, symLinkTarget);
+        int nameId = ((PersistentFSImpl)myPersistence).peer().getNameId(file.getFileName().toString());
+        ChildInfo info = new ChildInfoImpl(nameId, attributes, null, symLinkTarget);
         stack.peek().add(info);
         return FileVisitResult.CONTINUE;
       }

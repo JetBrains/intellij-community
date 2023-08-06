@@ -22,7 +22,7 @@ import com.intellij.history.core.Paths;
 import com.intellij.history.core.revisions.Difference;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,13 +62,13 @@ public abstract class Entry {
   protected static int toNameId(@NonNls String name) {
     if (name == null) return NULL_NAME_ID;
     if (name.isEmpty()) return EMPTY_NAME_ID;
-    return FileNameCache.storeName(name);
+    return FSRecords.getInstance().getNameId(name);
   }
 
   private static CharSequence fromNameId(int nameId) {
     if (nameId == NULL_NAME_ID) return null;
     if (nameId == EMPTY_NAME_ID) return "";
-    return FileNameCache.getVFileName(nameId);
+    return FSRecords.getInstance().getNameByNameId(nameId);
   }
 
   public Entry(DataInput in) throws IOException {
@@ -115,7 +115,7 @@ public abstract class Entry {
     Entry parent = e.getParent();
     buildPath(parent, builder);
     String pName = parent == null ? "" : parent.getName();
-    if (builder.length() > 0 && (pName.length() != 1 || pName.charAt(0) != Paths.DELIM)) {
+    if (!builder.isEmpty() && (pName.length() != 1 || pName.charAt(0) != Paths.DELIM)) {
       builder.append(Paths.DELIM);
     }
     builder.append(e.getNameSequence());

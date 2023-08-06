@@ -194,7 +194,7 @@ public final class PersistentFSConnection {
     return myAttributesStorage;
   }
 
-  @NotNull ScannableDataEnumeratorEx<String> getNames() {
+  public @NotNull ScannableDataEnumeratorEx<String> getNames() {
     return myNames;
   }
 

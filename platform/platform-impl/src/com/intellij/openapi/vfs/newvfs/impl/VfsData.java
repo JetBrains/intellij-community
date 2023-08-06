@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
-import com.intellij.openapi.vfs.newvfs.persistent.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.testFramework.TestModeFlags;
@@ -217,8 +216,10 @@ public final class VfsData {
   }
 
   @NotNull
-  CharSequence getNameByFileId(int id) {
-    return FileNameCache.getVFileName(getNameId(id));
+  CharSequence getNameByFileId(int fileId) {
+    PersistentFSImpl persistentFS = (PersistentFSImpl)PersistentFS.getInstance();
+    int nameId = getNameId(fileId);
+    return persistentFS.getNameByNameId(nameId);
   }
 
   int getNameId(int id) {

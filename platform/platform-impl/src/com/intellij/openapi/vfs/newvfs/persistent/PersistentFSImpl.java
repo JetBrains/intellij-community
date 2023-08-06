@@ -163,7 +163,6 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
         listener.beforeConnectionClosed();
       }
       // TODO make sure we don't have files in memory
-      FileNameCache.drop();
       myRoots.clear();
       myIdToDirCache.clear();
       long ms = System.currentTimeMillis();
@@ -232,6 +231,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   public VirtualFileSystemEntry getCachedDir(int id) {
     return myIdToDirCache.getCachedDir(id);
+  }
+
+  @ApiStatus.Internal
+  public CharSequence getNameByNameId(int nameId) {
+    return vfsPeer.getNameByNameId(nameId);
   }
 
   private static @NotNull NewVirtualFileSystem getFileSystem(@NotNull VirtualFile file) {
@@ -415,7 +419,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     //    persistence, but  we don't want to really overwrite root fields every time -- so
     //    we skip it here by comparing names?
     if (!name.isEmpty()) {
-      if (Comparing.equal(name, vfsPeer.getNameSequence(id), cs)) return -1; // TODO: Handle root attributes change.
+      if (Comparing.equal(name, vfsPeer.getName(id), cs)) return -1; // TODO: Handle root attributes change.
     }
     else {
       if (areChildrenLoaded(id)) return -1; // TODO: hack
@@ -540,18 +544,16 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       return null;
     }
     // fast path, check that some child has the same `nameId` as a given name - to avoid an overhead on retrieving names of non-cached children
-    int nameId = vfsPeer.getNameId(childName);
+    FSRecordsImpl vfs = vfsPeer;
+    int nameId = vfs.getNameId(childName);
     for (ChildInfo info : children) {
       if (nameId == info.getNameId()) {
         return info;
       }
     }
-    //FIXME RC: above check is 'strict' only if nameId is a unique identifier for a name. We're going to change that, hence
-    //          the code below should be run not only for caseSensitive systems, but for all them, as 'slow path'
-    // for case-sensitive systems, the above check is exhaustive in consistent state of VFS
     if (!parent.isCaseSensitive()) {
       for (ChildInfo info : children) {
-        if (Comparing.equal(childName, FileNameCache.getVFileName(info.getNameId()), false)) {
+        if (Comparing.equal(childName, vfs.getNameByNameId(info.getNameId()), false)) {
           return info;
         }
       }
@@ -1529,7 +1531,8 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int rootId = vfsPeer.findOrCreateRootRecord(rootUrl);
     vfsPeer.loadRootData(rootId, path, fs);
 
-    int rootNameId = FileNameCache.storeName(rootName);
+
+    int rootNameId = vfsPeer.getNameId(rootName);//FileNameCache.storeName(rootName);
     boolean mark;
     VirtualFileSystemEntry newRoot;
     synchronized (myRoots) {
@@ -1981,7 +1984,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
     int childId = childInfo.getId();
     assert parent instanceof VirtualDirectoryImpl : parent;
     VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
-    VirtualFileSystemEntry child = dir.createChild(name, childId, fileAttributesToFlags(childData.first), isEmptyDirectory);
+    int nameId = vfsPeer.getNameId(name);
+    VirtualFileSystemEntry child = dir.createChild(childId, nameId, fileAttributesToFlags(childData.first), isEmptyDirectory
+    );
     if (isEmptyDirectory) {
       // When creating an empty directory, we need to make sure every file created inside will fire a "file-created" event,
       // in order to `VirtualFilePointerManager` get those events to update its pointers properly
@@ -2201,9 +2206,9 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   @Override
-  public @NotNull String getName(int id) {
-    assert id > 0;
-    return vfsPeer.getName(id);
+  public @NotNull String getName(int fileId) {
+    assert fileId > 0;
+    return vfsPeer.getName(fileId);
   }
 
   @TestOnly
@@ -2243,6 +2248,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
   private static @Nullable VfsLogEx getVfsLogEx() {
     return FSRecords.getVfsLog();
+  }
+
+  @ApiStatus.Internal
+  public FSRecordsImpl peer(){
+    return vfsPeer;
   }
 
   @TestOnly

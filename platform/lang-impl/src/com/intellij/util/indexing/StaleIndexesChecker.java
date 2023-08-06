@@ -74,8 +74,8 @@ public final class StaleIndexesChecker {
   }
 
   private static String getRecordPath(int record) {
-    StringBuilder name = new StringBuilder(FSRecords.getName(record));
     FSRecordsImpl vfs = FSRecords.getInstance();
+    StringBuilder name = new StringBuilder(vfs.getName(record));
     int parent = vfs.getParent(record);
     while (parent > 0) {
       name.insert(0, vfs.getName(parent) + "/");
