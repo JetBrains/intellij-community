@@ -27,6 +27,8 @@ import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -65,7 +67,7 @@ public final class TogglePresentationModeAction extends AnAction implements Dumb
 
     Job callback = project == null ? CompletableDeferredKt.CompletableDeferred(Unit.INSTANCE) : tweakFrameFullScreen(project, inPresentation);
     callback.invokeOnCompletion(__ -> {
-      restoreToolWindows(project);
+      SwingUtilities.invokeLater(() -> restoreToolWindows(project));
       return Unit.INSTANCE;
     });
   }
