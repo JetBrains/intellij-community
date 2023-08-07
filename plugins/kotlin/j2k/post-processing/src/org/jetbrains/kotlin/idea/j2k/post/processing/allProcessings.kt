@@ -48,7 +48,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),
         Errors.NON_FINAL_MEMBER_IN_FINAL_CLASS, Errors.NON_FINAL_MEMBER_IN_OBJECT
     ),
-    diagnosticBasedProcessing(
+    exposedVisibilityDiagnosticBasedProcessing(
         ChangeVisibilityOnExposureFactory,
         Errors.EXPOSED_FUNCTION_RETURN_TYPE,
         Errors.EXPOSED_PARAMETER_TYPE,
@@ -57,7 +57,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR.warningFactory,
         Errors.EXPOSED_RECEIVER_TYPE,
         Errors.EXPOSED_SUPER_CLASS,
-        Errors.EXPOSED_SUPER_INTERFACE
+        Errors.EXPOSED_SUPER_INTERFACE,
+        Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     fixValToVarDiagnosticBasedProcessing,
     fixTypeMismatchDiagnosticBasedProcessing

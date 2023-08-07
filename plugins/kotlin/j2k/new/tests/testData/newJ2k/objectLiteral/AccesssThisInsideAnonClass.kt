@@ -1,5 +1,4 @@
-// ERROR: 'public' function exposes its 'internal' parameter type Foo
-internal interface Foo
+interface Foo
 class Bar {
     fun test() {
         object : Foo {

@@ -119,3 +119,16 @@ internal fun invisibleMemberDiagnosticBasedProcessing(fixFactory: QuickFixFactor
             }
         }
     }
+
+internal fun exposedVisibilityDiagnosticBasedProcessing(fixFactory: QuickFixFactory, vararg diagnosticFactory: DiagnosticFactory<*>) =
+    object : DiagnosticBasedProcessing {
+        override val diagnosticFactories = diagnosticFactory.toList()
+
+        override fun fix(diagnostic: Diagnostic) {
+            val actionFactory = fixFactory.asKotlinIntentionActionsFactory()
+            val changeToPublicFix = runReadAction { actionFactory.createActions(diagnostic).find { it is ChangeToPublicFix } } ?: return
+            runUndoTransparentActionInEdt(inWriteAction = true) {
+                changeToPublicFix.invoke(diagnostic.psiElement.project, null, diagnostic.psiFile)
+            }
+        }
+    }

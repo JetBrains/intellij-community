@@ -5865,6 +5865,51 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("exposedInternalSupertypeByPublic.java")
+        public void testExposedInternalSupertypeByPublic() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedInternalSupertypeByPublic.java");
+        }
+
+        @TestMetadata("exposedParameterType.java")
+        public void testExposedParameterType() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedParameterType.java");
+        }
+
+        @TestMetadata("exposedPrivateSupertypeByProtected.java")
+        public void testExposedPrivateSupertypeByProtected() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedPrivateSupertypeByProtected.java");
+        }
+
+        @TestMetadata("exposedPrivateSupertypeByPublic.java")
+        public void testExposedPrivateSupertypeByPublic() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedPrivateSupertypeByPublic.java");
+        }
+
+        @TestMetadata("exposedPropertyType.java")
+        public void testExposedPropertyType() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedPropertyType.java");
+        }
+
+        @TestMetadata("exposedPropertyTypeInConstructor.java")
+        public void testExposedPropertyTypeInConstructor() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedPropertyTypeInConstructor.java");
+        }
+
+        @TestMetadata("exposedReturnType.java")
+        public void testExposedReturnType() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedReturnType.java");
+        }
+
+        @TestMetadata("exposedSuperInterface.java")
+        public void testExposedSuperInterface() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedSuperInterface.java");
+        }
+
+        @TestMetadata("exposedTypeParameterBound.java")
+        public void testExposedTypeParameterBound() throws Exception {
+            runTest("testData/newJ2k/visibility/exposedTypeParameterBound.java");
+        }
+
         @TestMetadata("nestedClassPrivateConstructor.java")
         public void testNestedClassPrivateConstructor() throws Exception {
             runTest("testData/newJ2k/visibility/nestedClassPrivateConstructor.java");
