@@ -522,28 +522,41 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
       }
       buttonConsumer(button)
 
-      val buttonComponent: JComponent = if (secondaryButtonText != null) {
-        val buttonPanel = JPanel().apply { isOpaque = false }
-        buttonPanel.layout = BoxLayout(buttonPanel, BoxLayout.X_AXIS)
-        buttonPanel.add(button)
-        buttonPanel.add(Box.createHorizontalStrut(JBUIScale.scale(16)))
+      val secondaryButton = secondaryButtonText?.let { buttonText: @Nls String ->
+        val link = createLinkLabel(buttonText,
+                                   JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors),
+                                   isExternal = false)
+        link.isFocusable = requestFocus
+        secondaryButtonConsumer(link)
+        link
+      }
 
-        val secondaryButton = createLinkLabel(secondaryButtonText!!,
-                                              JBUI.CurrentTheme.GotItTooltip.stepForeground(useContrastColors),
-                                              isExternal = false)
-        secondaryButtonConsumer(secondaryButton)
-
-        buttonPanel.add(secondaryButton)
-        buttonPanel
+      val buttonComponent: JComponent = if (secondaryButton != null) {
+        JPanel().apply {
+          isOpaque = false
+          layout = BoxLayout(this, BoxLayout.X_AXIS)
+          add(button)
+          add(Box.createHorizontalStrut(JBUIScale.scale(16)))
+          add(secondaryButton)
+        }
       }
       else button
 
       if (requestFocus) {
         // Needed to provide right component to focus in com.intellij.ui.BalloonImpl.getContentToFocus
+        panel.isFocusCycleRoot = true
         panel.isFocusTraversalPolicyProvider = true
         panel.focusTraversalPolicy = object : SortingFocusTraversalPolicy(Comparator { _, _ -> 0 }) {
           override fun getDefaultComponent(aContainer: Container?): Component {
             return button
+          }
+
+          override fun getComponentAfter(aContainer: Container?, aComponent: Component?): Component {
+            return if (aComponent == button && secondaryButton != null) secondaryButton else button
+          }
+
+          override fun getComponentBefore(aContainer: Container?, aComponent: Component?): Component {
+            return getComponentAfter(aContainer, aComponent)
           }
         }
       }
