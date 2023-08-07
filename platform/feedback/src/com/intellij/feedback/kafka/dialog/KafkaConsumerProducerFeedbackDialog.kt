@@ -18,14 +18,14 @@ abstract class KafkaConsumerProducerFeedbackDialog(
 ) : BlockBasedFeedbackDialogWithEmail<CommonFeedbackSystemInfoData>(project, forTest) {
 
   /** Increase the additional number when feedback format is changed */
-  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 1
+  override val myFeedbackJsonVersion: Int = super.myFeedbackJsonVersion + 2
 
   override val zendeskTicketTitle: String = "Kafka in-IDE Feedback"
   override val zendeskFeedbackType: String = "Kafka Consumer in-IDE Feedback"
   override val myFeedbackReportId: String = "kafka_consumer_feedback"
 
   override val myTitle: String = KafkaFeedbackBundle.message("dialog.top.title")
-  private val featureSource: List<String> = listOf("blog_post", "product_documentation", "saw_button")
+  private val featureSource: List<String> = listOf("blog_post", "product_documentation", "saw_button", "saw_spring_gutter")
   private val goalOfUsing: List<String> = listOf("debug_streaming", "debug_cluster", "view_cluster")
 
 
@@ -47,6 +47,10 @@ abstract class KafkaConsumerProducerFeedbackDialog(
           KafkaFeedbackBundle.message("find.feature.2.label"),
           featureSource[2]
         ),
+        CheckBoxItemData(
+          KafkaFeedbackBundle.message("find.feature.3.label"),
+          featureSource[3]
+        )
       ),
       "find_about_source"
     ).addOtherTextField(),
