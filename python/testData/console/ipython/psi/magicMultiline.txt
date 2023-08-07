@@ -1,8 +1,6 @@
 PyFile:magicMultiline.py
   PyEmptyExpression
-    PsiElement(Py:PERC)('%')
-    PsiElement(Py:PERC)('%')
-    PsiElement(Py:IDENTIFIER)('bash')
+    PsiElement(Py:MAGIC_COMMAND_LINE)('%%bash')
     PsiWhiteSpace('\n')
     PsiElement(Py:IDENTIFIER)('echo')
     PsiWhiteSpace(' ')

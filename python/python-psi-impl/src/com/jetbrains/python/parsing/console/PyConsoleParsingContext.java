@@ -10,6 +10,7 @@ import com.jetbrains.python.parsing.ParsingContext;
 import com.jetbrains.python.parsing.StatementParsing;
 import com.jetbrains.python.psi.LanguageLevel;
 
+import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.MAGIC_COMMAND_LINE;
 import static com.jetbrains.python.parsing.console.PyConsoleTokenTypes.SHELL_COMMAND;
 
 public class PyConsoleParsingContext extends ParsingContext {
@@ -201,7 +202,7 @@ public class PyConsoleParsingContext extends ParsingContext {
     }
 
     private boolean parseIPythonCaptureExpression() {
-      if (myBuilder.getTokenType() == SHELL_COMMAND) {
+      if (myBuilder.getTokenType() == SHELL_COMMAND || myBuilder.getTokenType() == MAGIC_COMMAND_LINE) {
         captureIPythonExpression();
         return true;
       }

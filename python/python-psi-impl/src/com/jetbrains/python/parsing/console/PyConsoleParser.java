@@ -29,6 +29,7 @@ public class PyConsoleParser extends PyParser {
     PyConsoleTokenTypes.PLING,
     PyConsoleTokenTypes.QUESTION_MARK,
     PyConsoleTokenTypes.SHELL_COMMAND,
+    PyConsoleTokenTypes.MAGIC_COMMAND_LINE,
     PyTokenTypes.COMMA,
     PyTokenTypes.DIV,
     PyTokenTypes.PERC,
