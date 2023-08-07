@@ -34,6 +34,7 @@ public final class X11UiUtil {
   private static final int FORMAT_BYTE = 8;
   private static final int FORMAT_LONG = 32;
   private static final long EVENT_MASK = (3L << 19);
+  private static final long NET_WM_STATE_REMOVE = 0;
   private static final long NET_WM_STATE_ADD = 1;
   private static final long NET_WM_STATE_TOGGLE = 2;
 
@@ -296,6 +297,17 @@ public final class X11UiUtil {
   public static void toggleFullScreenMode(JFrame frame) {
     if (X11 == null) return;
     X11.sendClientMessage(frame, "toggle mode", X11.NET_WM_STATE, NET_WM_STATE_TOGGLE, X11.NET_WM_STATE_FULLSCREEN);
+  }
+
+  public static void setFullScreenMode(JFrame frame, boolean fullScreen) {
+    if (X11 == null) return;
+
+    if (fullScreen) {
+      X11.sendClientMessage(frame, "set FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_ADD, X11.NET_WM_STATE_FULLSCREEN);
+    }
+    else {
+      X11.sendClientMessage(frame, "reset FullScreen mode", X11.NET_WM_STATE, NET_WM_STATE_REMOVE, X11.NET_WM_STATE_FULLSCREEN);
+    }
   }
 
   /**
