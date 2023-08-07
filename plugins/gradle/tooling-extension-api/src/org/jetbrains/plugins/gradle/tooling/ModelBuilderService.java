@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
 
@@ -26,11 +27,11 @@ import java.io.Serializable;
 public interface ModelBuilderService extends Serializable {
 
   /**
-   * A {@link ParameterizedToolingModelBuilder}'s parameter interface to be used when requesting
+   * A {@link org.gradle.tooling.provider.model.ParameterizedToolingModelBuilder}'s parameter interface to be used when requesting
    * a parametrized model provided by an implementation of {@link ModelBuilderService.Ex}.
-   *
+   * <p>
    * The string value set via {@link Parameter#setValue(String)} will be passed to the model builder
-   * via the {@link ModelBuilderContext#getParameter()}.
+   * via the method arguments in {@link ParameterizedModelBuilderService}
    */
   interface Parameter {
     String getValue();
@@ -39,6 +40,10 @@ public interface ModelBuilderService extends Serializable {
 
   interface Ex extends ModelBuilderService {
     Object buildAll(String modelName, Project project, @NotNull ModelBuilderContext context);
+  }
+
+  interface ParameterizedModelBuilderService extends ModelBuilderService {
+    Object buildAll(String modelName, Project project, @NotNull ModelBuilderContext context, @Nullable Parameter parameter);
   }
 
   boolean canBuild(String modelName);
