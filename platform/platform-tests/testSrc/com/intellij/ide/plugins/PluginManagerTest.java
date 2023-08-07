@@ -229,7 +229,7 @@ public class PluginManagerTest {
   private static void assertPluginPreInstalled(@NotNull PluginId expectedPluginId,
                                                IdeaPluginDescriptorImpl... descriptors) {
     PluginLoadingResult loadingResult = createPluginLoadingResult();
-    loadingResult.addAll(Arrays.asList(descriptors), false, BuildNumber.fromString("2042.42"));
+    loadingResult.addAll(List.of(descriptors));
     assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(expectedPluginId));
   }
 
@@ -409,7 +409,7 @@ public class PluginManagerTest {
     }
     parentContext.close();
     PluginLoadingResult result = new PluginLoadingResult(false);
-    result.addAll(list, /* overrideUseIfCompatible = */ false, parentContext.productBuildNumber.invoke());
+    result.addAll(list);
     return PluginManagerCore.INSTANCE.initializePlugins(parentContext, result, PluginManagerTest.class.getClassLoader(), /* checkEssentialPlugins = */ false, null);
   }
 

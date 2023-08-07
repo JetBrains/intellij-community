@@ -27,30 +27,34 @@ class PluginSetTestBuilder(private val path: Path) {
     this.productBuildNumber = productBuildNumber
   }
 
-  fun withLoadingContext() = apply {
-    context = DescriptorListLoadingContext(
-      disabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
-      expiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
-      brokenPluginVersions = emptyMap(),
-      productBuildNumber = { productBuildNumber },
-    )
+  fun withLoadingContext(): PluginSetTestBuilder {
+    return apply {
+      context = DescriptorListLoadingContext(
+        disabledPlugins = PluginManagerCore.toPluginIds(disabledPluginIds),
+        expiredPlugins = PluginManagerCore.toPluginIds(expiredPluginIds),
+        brokenPluginVersions = emptyMap(),
+        productBuildNumber = { productBuildNumber },
+      )
+    }
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
   val loadingContext: DescriptorListLoadingContext
     get() = context ?: withLoadingContext().context!!
 
-  fun withLoadingResult() = apply {
-    result = PluginLoadingResult(checkModuleDependencies = false)
-    // constant order in tests
-    val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
-    loadingContext.use {
-      runBlocking {
-        result!!.addAll(
-          descriptors = paths.map { loadDescriptor(it, loadingContext) },
-          overrideUseIfCompatible = false,
-          productBuildNumber = loadingContext.productBuildNumber(),
-        )
+  fun withLoadingResult(): PluginSetTestBuilder {
+    return apply {
+      result = PluginLoadingResult(checkModuleDependencies = false)
+      // constant order in tests
+      val paths: List<Path> = path.directoryStreamIfExists { it.sorted() }!!
+      loadingContext.use {
+        runBlocking {
+          result!!.addAll(
+            descriptors = paths.asSequence().mapNotNull { loadDescriptor(it, loadingContext) },
+            overrideUseIfCompatible = false,
+            productBuildNumber = loadingContext.productBuildNumber(),
+          )
+        }
       }
     }
   }
