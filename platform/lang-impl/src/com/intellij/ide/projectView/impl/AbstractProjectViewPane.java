@@ -1062,12 +1062,18 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Nullable
     @Override
     public Pair<Image, Point> createDraggedImage(DnDAction action, Point dragOrigin, @NotNull DnDDragStartBean bean) {
-      final TreePath[] paths = getSelectionPaths();
-      var tree = getTree();
-      if (tree == null || paths == null || paths.length == 0) return null;
-      var dragImageRows = createDragImageRows(tree, paths);
-      BufferedImage image = paintDragImageRows(tree, dragImageRows);
-      return new Pair<>(image, new Point());
+      try {
+        ProjectViewRendererKt.setGrayedTextPaintingEnabled(false);
+        final TreePath[] paths = getSelectionPaths();
+        var tree = getTree();
+        if (tree == null || paths == null || paths.length == 0) return null;
+        var dragImageRows = createDragImageRows(tree, paths);
+        BufferedImage image = paintDragImageRows(tree, dragImageRows);
+        return new Pair<>(image, new Point());
+      }
+      finally {
+        ProjectViewRendererKt.setGrayedTextPaintingEnabled(true);
+      }
     }
 
     @NotNull
