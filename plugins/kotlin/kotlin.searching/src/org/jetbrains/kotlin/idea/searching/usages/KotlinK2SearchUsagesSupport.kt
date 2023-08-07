@@ -134,9 +134,8 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
             val symbol = declaration.getSymbol() as? KtCallableSymbol ?: return false
              containerSymbol(symbol)?.psi?.originalElement ?: return false
         }
-        return reference.unwrappedTargets.filterIsInstance<KtDeclaration>().any { candidateDeclaration ->
+        return reference.unwrappedTargets.filterIsInstance<KtFunction>().any { candidateDeclaration ->
             if (candidateDeclaration == declaration) return@any false
-            if (candidateDeclaration !is KtCallableDeclaration) return@any false
             if (candidateDeclaration.receiverTypeReference == null && candidateDeclaration.containingFile != container.containingFile) {
                 return@any false
             }

@@ -170,6 +170,7 @@ fun PsiReference.isUsageInContainingDeclaration(declaration: KtNamedDeclaration)
     val descriptor = declaration.descriptor ?: return false
     return checkUsageVsOriginalDescriptor(descriptor) { usageDescriptor, targetDescriptor ->
         usageDescriptor != targetDescriptor
+                && usageDescriptor is FunctionDescriptor
                 && usageDescriptor.containingDeclaration == targetDescriptor.containingDeclaration
     }
 }
