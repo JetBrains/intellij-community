@@ -112,7 +112,9 @@ public class ProgramParametersConfigurator {
 
   private DataContext projectContext(Project project, Module module) {
     return dataId -> {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return project.getBaseDir();
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
+      if (PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY.is(dataId)) return project.getBaseDir();
       if (PlatformCoreDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
       if (VALIDATION_MODE.is(dataId)) return myValidation;
       return null;
@@ -138,17 +140,17 @@ public class ProgramParametersConfigurator {
     return ParametersListUtil.parse(expandedParametersString);
   }
 
-  private static String expandMacros(String path, DataContext dataContext, boolean applyParameterEscaping) {
+  private static String expandMacros(String path, DataContext fallbackDataContext, boolean applyParameterEscaping) {
     if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
 
     DataContext threadContext = ExecutionUtil.getThreadContext();
-    DataContext context = threadContext == null ? dataContext : new DataContext() {
+    DataContext context = threadContext == null ? fallbackDataContext : new DataContext() {
       @Override
       public @Nullable Object getData(@NotNull String dataId) {
-        Object data = dataContext.getData(dataId);
-        return data != null ? data : threadContext.getData(dataId);
+        Object data = threadContext.getData(dataId);
+        return data != null ? data : fallbackDataContext.getData(dataId);
       }
     };
     for (Macro macro : MacroManager.getInstance().getMacros()) {
