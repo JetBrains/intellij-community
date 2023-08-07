@@ -2,6 +2,7 @@
 import polars as pl
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
+MAX_COLWIDTH = 100000
 
 
 def get_type(table):
@@ -44,7 +45,10 @@ def display_data(table, start, end):
 
 def __create_config():
     # type: () -> pl.Config
-    return pl.Config(fmt_str_lengths=2000, set_tbl_cols=-1)
+    cfg = pl.Config()
+    cfg.set_tbl_cols(-1)  # Unlimited
+    cfg.set_fmt_str_lengths(MAX_COLWIDTH)  # No option to set unlimited, so it's 100_000
+    return cfg
 
 
 def get_column_descriptions(table):

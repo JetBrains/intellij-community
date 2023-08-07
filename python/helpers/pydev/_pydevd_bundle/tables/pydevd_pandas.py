@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
+MAX_COLWIDTH_PYTHON_2 = 100000
 
 
 def get_type(table):
@@ -155,5 +156,5 @@ def __get_tables_display_options():
     # type: () -> Tuple[None, Union[int, None]
     import sys
     if sys.version_info < (3, 0):
-        return None, 2000
+        return None, MAX_COLWIDTH_PYTHON_2
     return None, None
