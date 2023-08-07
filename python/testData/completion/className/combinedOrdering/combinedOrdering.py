@@ -1,3 +1,3 @@
-path = "something"
+path1 = "something"
 
 pat<caret>

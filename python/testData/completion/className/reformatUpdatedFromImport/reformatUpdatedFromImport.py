@@ -1,3 +1,3 @@
 from module import Foo
 
-print(Foo(), Ba<caret>)
+print(Foo(), UniqueBa<caret>)
