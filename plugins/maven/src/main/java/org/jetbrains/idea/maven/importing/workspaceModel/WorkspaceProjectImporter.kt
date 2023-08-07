@@ -525,7 +525,6 @@ internal class WorkspaceProjectImporter(
     if (e is CancellationException) {
       throw e
     }
-    if (myProject.isDisposed) return
     MavenLog.LOG.error("Exception in MavenWorkspaceConfigurator.$methodName, skipping it.", e)
   }
 
