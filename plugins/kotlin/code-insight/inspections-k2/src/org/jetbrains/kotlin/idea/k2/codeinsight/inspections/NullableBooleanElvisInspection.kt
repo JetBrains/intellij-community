@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.AbstractKotlinApplicableInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.KotlinApplicabilityRange
-import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
+import org.jetbrains.kotlin.idea.codeinsight.api.applicators.applicabilityRange
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
@@ -24,7 +24,9 @@ internal class NullableBooleanElvisInspection : AbstractKotlinApplicableInspecti
     override fun getProblemDescription(element: KtBinaryExpression): String = KotlinBundle.message("inspection.nullable.boolean.elvis.display.name")
     override fun getActionFamilyName(): String = KotlinBundle.message("inspection.nullable.boolean.elvis.action.name")
 
-    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = ApplicabilityRanges.SELF
+    override fun getApplicabilityRange(): KotlinApplicabilityRange<KtExpression> = applicabilityRange { expr ->
+        (expr as? KtBinaryExpression)?.operationReference?.textRangeInParent
+    }
 
     override fun isApplicableByPsi(element: KtBinaryExpression): Boolean = element.isTargetOfNullableBooleanElvisInspection()
 
