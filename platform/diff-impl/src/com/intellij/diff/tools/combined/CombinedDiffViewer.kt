@@ -269,6 +269,10 @@ class CombinedDiffViewer(
     val delta = CombinedDiffRegistry.getPreloadedBlocksCount()
     val viewRect = scrollPane.viewport.viewRect
 
+    if (viewRect.height == 0) {
+      return
+    }
+
     val beforeViewport = arrayOfNulls<CombinedBlockId>(delta)
     val afterViewport = arrayOfNulls<CombinedBlockId>(delta)
     val blocksInViewport = arrayListOf<CombinedBlockId>()
@@ -338,7 +342,8 @@ class CombinedDiffViewer(
     val showBorder = viewRect.minY > block.component.bounds.minY
     stickyHeaderPanel.setContent(stickyHeader)
     stickyHeaderPanel.setBounds(0, stickyHeaderY, block.component.width, headerHeight)
-    stickyHeaderPanel.border = JBUI.Borders.customLineBottom(if (!showBorder) CombinedDiffUI.MAIN_HEADER_BACKGROUND else CombinedDiffUI.EDITOR_BORDER_COLOR)
+    stickyHeaderPanel.border = JBUI.Borders.customLineBottom(
+      if (!showBorder) CombinedDiffUI.MAIN_HEADER_BACKGROUND else CombinedDiffUI.EDITOR_BORDER_COLOR)
     stickyHeaderPanel.repaint()
   }
 
@@ -616,7 +621,7 @@ private fun runPreservingViewportContent(scroll: JBScrollPane, blocksPanel: Comb
     val minY = block.minY
     val maxY = block.maxY
 
-    if (maxY < viewRect.minY) {
+    if (!viewRect.intersects(block)) {
       // full block before the viewport
       continue
     }
@@ -687,8 +692,8 @@ private fun removeAdditionalLines(viewer: DiffViewer) {
 }
 
 private fun Rectangle.intersects(bb: BlockBounds): Boolean =
-  (bb.minY >= minY && bb.minY <= maxY) ||
-  (bb.maxY >= minY && bb.maxY <= maxY) ||
+  (bb.minY >= minY && bb.minY < maxY) ||
+  (bb.maxY > minY && bb.maxY <= maxY) ||
   (bb.minY <= minY && bb.maxY >= maxY)
 
 interface BlockListener : EventListener {
