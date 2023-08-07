@@ -16,12 +16,6 @@ public interface ModelBuilderContext extends MessageReporter {
   Gradle getRootGradle();
 
   /**
-   * @return the value of the parameter passed to the builder, if the parametrized version of {@link BuildController#getModel} is used.
-   */
-  @Nullable
-  String getParameter();
-
-  /**
    * @return cached data if it's already created, newly created data otherwise
    */
   @NotNull

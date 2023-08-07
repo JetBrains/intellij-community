@@ -97,12 +97,14 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       Gradle rootGradle = getRootGradle(project.getGradle());
       myModelBuilderContext = new MyModelBuilderContext(rootGradle);
     }
-    myModelBuilderContext.setParameter(parameter);
 
     for (ModelBuilderService service : modelBuilderServices) {
       if (service.canBuild(modelName)) {
         final long startTime = System.currentTimeMillis();
         try {
+          if (service instanceof ModelBuilderService.ParameterizedModelBuilderService)
+            return ((ModelBuilderService.ParameterizedModelBuilderService)service)
+              .buildAll(modelName, project, myModelBuilderContext, parameter);
           if (service instanceof ModelBuilderService.Ex)
             return ((ModelBuilderService.Ex)service).buildAll(modelName, project, myModelBuilderContext);
           else {
@@ -172,15 +174,6 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
       return myGradle;
     }
 
-    @Nullable
-    @Override
-    public String getParameter() {
-      return myParameter != null ? myParameter.getValue() : null;
-    }
-
-    private void setParameter(@Nullable ModelBuilderService.Parameter parameter) {
-      myParameter = parameter;
-    }
 
     @NotNull
     @Override
