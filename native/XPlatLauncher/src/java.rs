@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-use std::{env, mem, thread};
-use std::ffi::{c_void, c_int, CString};
+use std::{env, thread};
+use std::ffi::{c_void, CString};
 use std::path::Path;
 use std::sync::Mutex;
 use std::thread::JoinHandle;
@@ -20,6 +20,9 @@ use {
     core_foundation::runloop::{CFRunLoopAddTimer, CFRunLoopGetCurrent, CFRunLoopRunInMode, CFRunLoopTimerCreate,
                                CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
 };
+
+#[cfg(target_family = "unix")]
+use std::ffi::c_int;
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 use std::ffi::{c_char, CStr};
@@ -57,7 +60,7 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_l
 
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 fn get_vfprintf_hook_pointer() -> *mut c_void {
-    unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) }
+    unsafe { std::mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) }
 }
 
 #[cfg(all(target_os = "windows", target_arch = "aarch64"))]
@@ -135,7 +138,7 @@ pub fn run_jvm_and_event_loop(jre_home: &Path, vm_options: Vec<String>, main_cla
 #[cfg(target_family = "unix")]
 fn reset_signal_handler(signal: c_int) -> Result<()> {
     unsafe {
-        let mut action: libc::sigaction = mem::zeroed();
+        let mut action: libc::sigaction = std::mem::zeroed();
         action.sa_sigaction = libc::SIG_DFL;
         match libc::sigaction(signal, &action, std::ptr::null_mut()) {
             0 => Ok(()),
