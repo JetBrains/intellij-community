@@ -3,11 +3,14 @@ package com.intellij.codeInsight.inline.completion.render
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionElement
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.EditorCustomElementRenderer
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
 import com.intellij.openapi.editor.ex.util.addActionAvailabilityHint
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
+import java.awt.Graphics
 import java.awt.Rectangle
 
 @ApiStatus.Experimental
@@ -30,9 +33,9 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
   override fun render(proposal: InlineCompletionElement, offset: Int) {
     if (proposal.text.isEmpty()) return
     val lines = proposal.text.lines()
-    renderSuffix(editor, lines.first(), offset)
+    renderSuffix(editor, lines, offset)
     if (lines.size > 1) {
-      renderBlock(lines.stream().skip(1).toList(), editor, offset)
+      renderBlock(lines.drop(1), editor, offset)
     }
   }
 
@@ -55,7 +58,16 @@ class EditorInlineInlineCompletion(private val editor: Editor) : InlineCompletio
     reset()
   }
 
-  private fun renderSuffix(editor: Editor, line: String, offset: Int) {
+  private fun renderSuffix(editor: Editor, lines: List<String>, offset: Int) {
+    val line = lines.first()
+    if (line.isBlank()) {
+      suffixInlay = editor.inlayModel.addInlineElement(editor.caretModel.offset, object: EditorCustomElementRenderer {
+        override fun calcWidthInPixels(inlay: Inlay<*>) = 1
+        override fun calcHeightInPixels(inlay: Inlay<*>) = 1
+        override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {}
+      })
+      return
+    }
     editor.inlayModel.execute(true) {
       // wrapping into a batch to notify inlay listeners after the hint is added
       val element = editor.inlayModel.addInlineElement(offset, true, InlineSuffixRenderer(editor, line)) ?: return@execute

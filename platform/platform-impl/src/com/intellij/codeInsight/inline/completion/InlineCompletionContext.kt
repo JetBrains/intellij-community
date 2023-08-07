@@ -37,7 +37,7 @@ class InlineCompletionContext private constructor(val editor: Editor) : Disposab
     if (!inlay.isEmpty) {
       inlay.reset()
     }
-    if (!text.isEmpty() && editor is EditorImpl) {
+    if (text.isNotBlank() && editor is EditorImpl) {
       inlay.render(proposal, offset)
       if (!inlay.isEmpty) {
         Disposer.register(this, inlay)
