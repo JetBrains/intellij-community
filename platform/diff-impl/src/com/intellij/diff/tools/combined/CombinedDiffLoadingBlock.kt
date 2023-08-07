@@ -10,7 +10,7 @@ import java.awt.Dimension
 import javax.swing.JComponent
 
 internal class CombinedDiffLoadingBlock(size: Dimension? = null) : DiffViewer {
-  private val loadingPanel: JBLoadingPanel = object : JBLoadingPanel(BorderLayout(), this) {
+  private val loadingPanel: JBLoadingPanel = object : JBLoadingPanel(BorderLayout(), this, CombinedDiffUI.LOADING_BLOCK_PROGRESS_DELAY) {
     init {
       background = CombinedDiffUI.LOADING_BLOCK_BACKGROUND
     }

@@ -23,4 +23,6 @@ internal object CombinedDiffUI {
   val EDITOR_BORDER_COLOR: Color = JBColor.lazy {
     JBUI.CurrentTheme.Editor.BORDER_COLOR
   }
+
+  val LOADING_BLOCK_PROGRESS_DELAY = 200
 }
