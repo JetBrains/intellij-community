@@ -3,7 +3,6 @@ package org.jetbrains.plugins.gradle.tooling;
 
 import org.gradle.api.invocation.Gradle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Vladislav.Soroka
@@ -14,12 +13,6 @@ public interface ModelBuilderContext extends MessageReporter {
    */
   @NotNull
   Gradle getRootGradle();
-
-  /**
-   * @return the value of the parameter passed to the builder, if the parametrized version of {@link BuildController#getModel} is used.
-   */
-  @Nullable
-  String getParameter();
 
   /**
    * @return cached data if it's already created, newly created data otherwise

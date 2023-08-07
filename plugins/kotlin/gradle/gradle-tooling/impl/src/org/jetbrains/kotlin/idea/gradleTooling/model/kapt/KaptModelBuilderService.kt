@@ -47,7 +47,7 @@ class KaptGradleModelImpl(
 ) : KaptGradleModel
 
 
-class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.Ex  {
+class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilderService.ParameterizedModelBuilderService  {
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder.create(project, e, "Gradle import errors")
             .withDescription("Unable to build kotlin-kapt plugin configuration")
@@ -56,15 +56,15 @@ class KaptModelBuilderService : AbstractKotlinGradleModelBuilder(), ModelBuilder
     override fun canBuild(modelName: String?): Boolean = modelName == KaptGradleModel::class.java.name
 
     override fun buildAll(modelName: String?, project: Project): KaptGradleModelImpl? {
-        return buildAll(project, null)
+        return buildAll(project, builderContext = null, parameter = null)
     }
 
-    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KaptGradleModelImpl? {
-        return buildAll(project, builderContext)
+    override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
+        return buildAll(project, builderContext, parameter)
     }
 
-    private fun buildAll(project: Project, builderContext: ModelBuilderContext?): KaptGradleModelImpl? {
-        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, builderContext?.parameter)
+    private fun buildAll(project: Project, builderContext: ModelBuilderContext?, parameter: ModelBuilderService.Parameter?): KaptGradleModelImpl? {
+        val androidVariantRequest = AndroidAwareGradleModelProvider.parseParameter(project, parameter?.value)
         if (androidVariantRequest.shouldSkipBuildAllCall()) return null
 
         val kaptPlugin: Plugin<*>? = project.plugins.findPlugin("kotlin-kapt")
