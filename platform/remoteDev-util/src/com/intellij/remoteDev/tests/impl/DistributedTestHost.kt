@@ -43,6 +43,10 @@ import java.io.File
 import java.net.InetAddress
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
@@ -267,7 +271,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
           app.exit(true, true, false)
         }
 
-        session.makeScreenshot.set(SynchronousScheduler, SynchronousScheduler) { fileName ->
+        session.makeScreenshot.set { fileName ->
           return@set makeScreenshot(fileName)
         }
 
@@ -335,32 +339,51 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       return File(PathManager.getLogPath()).resolve(fileName)
     }
 
-    fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
-      LOG.info("Making screenshot of ${component}")
-      val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-      component.printAll(img.createGraphics())
-      ApplicationManager.getApplication().executeOnPooledThread {
-        try {
-          ImageIO.write(img, "png", screenshotFile)
-          LOG.info("Screenshot is saved at: $screenshotFile")
-        }
-        catch (t: Throwable) {
-          LOG.warn("Exception while writing screenshot image to file", t)
+    val result = CompletableFuture<Boolean>()
+    ApplicationManager.getApplication().invokeLater {
+      fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
+        LOG.info("Making screenshot of ${component}")
+        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+        component.printAll(img.createGraphics())
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            ImageIO.write(img, "png", screenshotFile)
+            LOG.info("Screenshot is saved at: $screenshotFile")
+          }
+          catch (t: Throwable) {
+            LOG.warn("Exception while writing screenshot image to file", t)
+          }
         }
       }
+
+      val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
+      windows.forEachIndexed { index, window ->
+        val screenshotFile = if (window.isFocusAncestor()) {
+          screenshotFile("_${index}_focusedWindow")
+        }
+        else {
+          screenshotFile("_$index")
+        }
+        makeScreenshotOfComponent(screenshotFile, window)
+      }
+      result.complete(true)
     }
 
-    val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
-    windows.forEachIndexed { index, window ->
-      val screenshotFile = if (window.isFocusAncestor()) {
-        screenshotFile("_${index}_focusedWindow")
-      }
-      else {
-        screenshotFile("_$index")
-      }
-      makeScreenshotOfComponent(screenshotFile, window)
+    IdeEventQueue.getInstance().flushQueue()
+
+    try {
+      result[45, TimeUnit.SECONDS]
     }
-    return true
+    catch (e: Throwable) {
+      when (e) {
+        is InterruptedException, is ExecutionException, is TimeoutException -> LOG.info(e)
+        else -> {
+          LOG.warn("Test action 'makeScreenshot' hasn't finished successfully", e)
+          return false
+        }
+      }
+    }
+    return result.get()
   }
 }
 
