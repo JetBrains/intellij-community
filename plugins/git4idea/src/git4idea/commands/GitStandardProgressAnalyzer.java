@@ -28,6 +28,7 @@ public final class GitStandardProgressAnalyzer implements GitProgressAnalyzer {
       public void onLineAvailable(String line, Key outputType) {
         final double fraction = progressAnalyzer.analyzeProgress(line);
         if (fraction >= 0) {
+          indicator.setIndeterminate(false);
           indicator.setFraction(fraction);
           indicator.setText2(line);
         }
