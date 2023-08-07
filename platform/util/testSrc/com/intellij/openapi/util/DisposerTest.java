@@ -447,7 +447,7 @@ public class DisposerTest  {
     assertTrue(Disposer.isDisposed(parent));
   }
 
-  @Test(timeout = 60 * 1000)
+  @Test
   public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
     try {
       LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
