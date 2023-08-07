@@ -34,12 +34,12 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * all methods delegate to it.
  * <p>
  * Current policy: avoid use of this class outside of VFS impl code, inside VFS impl code migrate to use
- * the {@link FSRecordsImpl} _instance_ obtained by {@link #getInstance()}, or {@link #connect(List)}, if
+ * the {@link FSRecordsImpl} _instance_ obtained by {@link #getInstance()}, or {@link #connect()}, if
  * you want new instance -- mostly applicable for tests.
  * <p>
  * This is very low-level API, intended to be used only by VFS implementation code only -- mainly
  * {@link PersistentFSImpl}. Inside VFS implementation all the calls should go through the instance
- * obtained by {@link #connect(List)}. Current usages of static methods should be gradually migrated.
+ * obtained by {@link #connect()}. Current usages of static methods should be gradually migrated.
  * {@link FSRecords#getInstance()} method could be used to help with migration.
  * <p>
  * At the end I plan to convert {@link FSRecordsImpl} a regular {@link com.intellij.openapi.components.Service},
@@ -76,10 +76,6 @@ public final class FSRecords {
   /** singleton instance */
   private static volatile FSRecordsImpl impl;
 
-  /** Holds stacktrace of the disconnect call */
-  private static volatile Exception disconnectLocationStackTrace;
-
-
   /** @return path to the directory there all VFS files are located */
   public static @NotNull String getCachesDir() {
     String dir = System.getProperty("caches_dir");
@@ -110,6 +106,15 @@ public final class FSRecords {
    */
   public static synchronized FSRecordsImpl connect(boolean enableVfsLog,
                                                    @NotNull FSRecordsImpl.ErrorHandler errorHandler) throws UncheckedIOException {
+    FSRecordsImpl oldImpl = impl;
+    if (oldImpl != null && !oldImpl.isDisposed()) {
+      //MAYBE RC: provide reconnect()
+      throw new IllegalStateException(
+        "Can't connect default VFS instance -- default VFS instance is already set up" +
+        " and not yet disposed. " +
+        "Current instance: " + oldImpl
+      );
+    }
     FSRecordsImpl _impl = FSRecordsImpl.connect(Path.of(getCachesDir()), Collections.emptyList(), enableVfsLog, errorHandler);
     impl = _impl;
     return _impl;
