@@ -204,6 +204,17 @@ class DecompressorTest {
     assertThat(dir.resolve("rogue")).isSymbolicLink().hasSameBinaryContentAs(rogueTarget.toPath())
   }
 
+  @Test fun tarHardlinks() {
+    val tar = tempDir.newFile("test.tar")
+    TarArchiveOutputStream(FileOutputStream(tar)).use {
+      writeEntry(it, "hardlink", link = "hardlink", type = TarArchiveEntry.LF_LINK)
+    }
+    val dir = tempDir.newDirectory("unpacked").toPath()
+    Decompressor.Tar(tar).extract(dir)
+
+    assertThat(dir.resolve("hardlink")).doesNotExist()
+  }
+
   @Test fun zipSymlinks() {
     assumeSymLinkCreationIsSupported()
 
@@ -502,9 +513,9 @@ class DecompressorTest {
     zip.closeEntry()
   }
 
-  private fun writeEntry(tar: TarArchiveOutputStream, name: String, mode: Int = 0, link: String? = null) {
+  private fun writeEntry(tar: TarArchiveOutputStream, name: String, mode: Int = 0, link: String? = null, type: Byte = TarArchiveEntry.LF_SYMLINK) {
     if (link != null) {
-      val entry = TarArchiveEntry(name, TarArchiveEntry.LF_SYMLINK)
+      val entry = TarArchiveEntry(name, type)
       entry.modTime = Date()
       entry.linkName = link
       entry.size = 0
