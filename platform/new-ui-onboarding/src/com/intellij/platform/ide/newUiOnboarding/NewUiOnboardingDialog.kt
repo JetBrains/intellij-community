@@ -7,10 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.ui.ClientProperty
-import com.intellij.ui.JBColor
-import com.intellij.ui.PopupBorder
-import com.intellij.ui.WindowRoundedCornersManager
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
@@ -47,10 +44,10 @@ class NewUiOnboardingDialog(project: Project)
     val contentGaps = UnscaledGaps(28, 32, 22, 32)
 
     val panel = panel {
-      panel {
-        row {
-          icon(banner).customize(UnscaledGaps.EMPTY)
-        }
+      row {
+        icon(banner)
+          .customize(UnscaledGaps.EMPTY)
+          .applyToComponent { WindowMoveListener(this).installTo(this) }
       }
       panel {
         row {
