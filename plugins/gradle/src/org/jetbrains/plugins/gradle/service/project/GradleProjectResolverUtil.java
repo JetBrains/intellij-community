@@ -896,7 +896,7 @@ public final class GradleProjectResolverUtil {
     return GradleLocalCacheHelper.findAdjacentComponents(cachedArtifactRoot, requestedComponents);
   }
 
-  private static boolean isTestSourceSet(@NotNull ExternalSourceSet sourceSet) {
+  public static boolean isTestSourceSet(@NotNull ExternalSourceSet sourceSet) {
     if (sourceSet.getSources().isEmpty()) return false;
     return sourceSet.getSources().keySet().stream().allMatch(IExternalSystemSourceType::isTest);
   }

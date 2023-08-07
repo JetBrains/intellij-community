@@ -523,7 +523,7 @@ public class GradleCompositeImportingTest extends GradleImportingTestCase {
                   "project-a.main", "project-a.test", "project-a.util",
                   "project-b", "project-b.main", "project-b.test");
 
-    assertModuleModuleDeps("project-b.main", "project-a.util", "project-a.main");
+    assertModuleModuleDeps("project-b.main",  "project-a.main", "project-a.util");
   }
 
   @Test
