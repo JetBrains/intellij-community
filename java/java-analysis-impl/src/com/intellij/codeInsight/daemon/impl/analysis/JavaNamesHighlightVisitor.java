@@ -17,11 +17,13 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-// java "decorative" highlighting:
-// - color names, like "reassigned variables"/fields/statics etc.
-// - soft keywords
-// NO COMPILATION ERRORS
-// for other highlighting errors see HighlightVisitorImpl
+/**
+ * java "decorative" highlighting:
+ * - color names, like "reassigned variables"/fields/statics etc.
+ * - soft keywords
+ * NO COMPILATION ERRORS
+ * for other highlighting errors see {@link HighlightVisitorImpl}
+ */
 class JavaNamesHighlightVisitor extends JavaElementVisitor implements HighlightVisitor {
   private HighlightInfoHolder myHolder;
   private PsiFile myFile;
