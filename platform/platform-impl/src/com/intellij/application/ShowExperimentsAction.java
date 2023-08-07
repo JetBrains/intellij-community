@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -19,8 +19,7 @@ final class ShowExperimentsAction extends DumbAwareAction implements LightEditCo
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    boolean hasExperimentalFeatures = Experiments.EP_NAME.getExtensions().length > 0;
-    e.getPresentation().setEnabledAndVisible(hasExperimentalFeatures);
+    e.getPresentation().setEnabledAndVisible(Experiments.EP_NAME.hasAnyExtensions());
   }
 
   @Override
