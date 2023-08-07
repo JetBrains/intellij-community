@@ -91,7 +91,7 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
     PsiVariable psiVariable = getVariable(element);
     if (psiVariable == null || psiVariable instanceof PsiResourceVariable) return false;
     if (psiVariable.getLanguage() != JavaLanguage.INSTANCE) return false;
@@ -126,7 +126,7 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiVariable var = getVariable(element);
     LOG.assertTrue(var != null);
 
@@ -238,7 +238,7 @@ public class ConvertFieldToAtomicIntention extends BaseElementAtCaretIntentionAc
     }
 
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
       return getVariable(element) != null;
     }
 

@@ -17,12 +17,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class AddJavadocIntention extends BaseElementAtCaretIntentionAction implements LowPriorityAction {
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, final @NotNull Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     FixDocCommentAction.generateOrFixComment(element, project, editor);
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull PsiElement element) {
+  public boolean isAvailable(@NotNull final Project project, final @NotNull Editor editor, @NotNull PsiElement element) {
     if (element instanceof PsiIdentifier ||
         element instanceof PsiJavaCodeReferenceElement ||
         element instanceof PsiJavaModuleReferenceElement) {

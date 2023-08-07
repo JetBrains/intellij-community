@@ -62,7 +62,7 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public final boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement node) {
+  public final boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement node) {
     final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(node);
     if (annotation == null) return false;
     final String annotationText = annotation.getText();
@@ -82,7 +82,7 @@ public class AnnotateOverriddenMethodsIntention extends BaseElementAtCaretIntent
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element){
+  public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element){
     final PsiAnnotation annotation = (PsiAnnotation)findMatchingElement(element);
     if (annotation == null) return;
     final String annotationName = annotation.getQualifiedName();

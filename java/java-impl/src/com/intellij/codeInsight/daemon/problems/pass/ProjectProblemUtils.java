@@ -160,12 +160,12 @@ public final class ProjectProblemUtils {
 
   private static final class ShowRelatedProblemsAction extends BaseElementAtCaretIntentionAction {
     @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+    public boolean isAvailable(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) {
       return ProjectProblemCodeVisionProviderKt.isCodeVisionEnabled(project);
     }
 
     @Override
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+    public void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
       PsiMember member = PsiTreeUtil.getParentOfType(element, PsiMember.class);
       if (member == null) return;
       showProblems(editor, member);
