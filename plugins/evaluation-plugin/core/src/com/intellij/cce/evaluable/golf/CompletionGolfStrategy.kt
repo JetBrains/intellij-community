@@ -10,7 +10,6 @@ import com.intellij.cce.filter.EvaluationFilter
 /**
  * @param checkLine Check if expected line starts with suggestion from completion
  * @param invokeOnEachChar Close popup after unsuccessful completion and invoke again
- * @param checkToken In case first token in suggestion equals to first token in expected string, we can pick only first token from suggestion.
 
 If completion suggest only one token - this option is useless (see checkLine ↑). Suitable for full line or multiple token completions
  * @param source Take suggestions, with specific source
@@ -28,7 +27,6 @@ data class CompletionGolfStrategy(
   val checkLine: Boolean,
   val invokeOnEachChar: Boolean,
 
-  val checkToken: Boolean,
   val source: SuggestionSource?,
   var topN: Int,
 
@@ -47,7 +45,6 @@ data class CompletionGolfStrategy(
     var checkLine: Boolean = true
     var invokeOnEachChar: Boolean = false
 
-    var checkToken: Boolean = true
     var source: SuggestionSource? = null
     var topN: Int = -1
 
@@ -59,7 +56,6 @@ data class CompletionGolfStrategy(
       mode = mode,
       checkLine = checkLine,
       invokeOnEachChar = invokeOnEachChar,
-      checkToken = checkToken,
       source = source,
       topN = topN,
       suggestionsProvider = suggestionsProvider,
