@@ -5,6 +5,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -37,12 +38,11 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
       get() = getFrames().firstOrNull { it.isActive }
   }
 
-  private var linuxComponentListener: LinuxComponentListener? = null
+  private var linuxFullScreenSynchronizer: LinuxFullScreenSynchronizer? = null
 
   init {
     if (SystemInfoRt.isXWindow) {
-      linuxComponentListener = LinuxComponentListener(this)
-      addComponentListener(linuxComponentListener)
+      linuxFullScreenSynchronizer = LinuxFullScreenSynchronizer(this)
     }
 
     if (IDE_FRAME_EVENT_LOG.isDebugEnabled) {
@@ -129,12 +129,6 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
   override fun isInFullScreen(): Boolean = frameHelper?.isInFullScreen ?: false
 
   override fun dispose() {
-    linuxComponentListener?.let {
-      removeComponentListener(it)
-      it.dispose()
-      linuxComponentListener = null
-    }
-
     val frameHelper = frameHelper
     if (frameHelper == null) {
       doDispose()
@@ -148,6 +142,12 @@ class IdeFrameImpl : JFrame(), IdeFrame, DataProvider {
     EdtInvocationManager.invokeLaterIfNeeded {
       // must be called in addition to the `dispose`, otherwise not removed from `Window.allWindows` list.
       isVisible = false
+
+      linuxFullScreenSynchronizer?.let {
+        it.dispose()
+        linuxFullScreenSynchronizer = null
+      }
+
       super.dispose()
     }
   }
@@ -211,20 +211,23 @@ private class EventLogger(private val frame: IdeFrameImpl, private val log: Logg
   }
 }
 
-private class LinuxComponentListener(private val frame: IdeFrameImpl): ComponentAdapter() {
+/**
+ * Linux unexpectedly turns on FullScreen for undecorated maximized frame on secondary monitor (without taskbar and other system widgets).
+ * For example, it happens with some delay in the following cases:
+ * * frame moved from one monitor to a secondary monitor via keyboard shortcuts
+ * * IDE is started on secondary monitor
+ */
+private class LinuxFullScreenSynchronizer(private val frame: IdeFrameImpl) {
+
+  companion object {
+    val LOG = logger<LinuxFullScreenSynchronizer>()
+    const val DELAY_MS = 500
+  }
 
   private val alarm = Alarm()
-  private var gc = frame.graphicsConfiguration
 
-  override fun componentMoved(e: ComponentEvent?) {
-    val newGc = frame.graphicsConfiguration
-    if (gc !== newGc) {
-      gc = newGc
-      // Ubuntu unexpectedly turns on FullScreen when maximized IDE is moved from one monitor to a secondary monitor via keyboard shortcuts.
-      // It happens with some delay, so schedule synchronize FullScreen mode with OS
-      alarm.cancelAllRequests()
-      alarm.addRequest(::syncFullScreen, 300)
-    }
+  init {
+    alarm.addRequest(::syncFullScreen, DELAY_MS)
   }
 
   fun dispose() {
@@ -232,8 +235,10 @@ private class LinuxComponentListener(private val frame: IdeFrameImpl): Component
   }
 
   private fun syncFullScreen() {
-    if (frame.isInFullScreen != X11UiUtil.isInFullScreenMode(frame)) {
-      X11UiUtil.toggleFullScreenMode(frame)
+    if (frame.isShowing && !frame.isInFullScreen && X11UiUtil.isInFullScreenMode(frame)) {
+      LOG.info("Looks like Linux unexpectedly turned on FullScreen mode. Resetting it")
+      X11UiUtil.setFullScreenMode(frame, false)
     }
+    alarm.addRequest(::syncFullScreen, DELAY_MS)
   }
 }
