@@ -118,6 +118,19 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect")
+    public static class ActualAnnotationsNotMatchExpect extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("removeFromExpect")
+        public void testRemoveFromExpect() throws Exception {
+            runTest("testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpect/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/addDependency")
     public static class AddDependency extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {

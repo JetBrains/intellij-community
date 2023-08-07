@@ -270,6 +270,9 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerApplicators(OptInFixFactories.optInFixFactories)
     }
 
+    private val multiplatform = KtQuickFixesListBuilder.registerPsiQuickFix {
+        registerApplicator(ActualAnnotationsNotMatchExpectFixFactory.factory)
+    }
 
     override val list: KotlinQuickFixesList = KotlinQuickFixesList.createCombined(
         keywords,
@@ -287,6 +290,7 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         vararg,
         visibility,
         other,
-        optIn
+        optIn,
+        multiplatform,
     )
 }
