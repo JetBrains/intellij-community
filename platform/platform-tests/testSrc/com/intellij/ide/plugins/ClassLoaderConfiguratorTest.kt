@@ -85,10 +85,18 @@ internal class ClassLoaderConfiguratorTest {
 
   @Test
   fun regularPluginClassLoaderIsUsedIfPackageSpecified() {
-    val plugin = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
+    val loadingResult = loadPlugins(modulePackage = "com.example.extraSupportedFeature")
+    val plugin = loadingResult
       .enabledPlugins
       .get(1)
     assertThat(plugin.content.modules.get(0).requireDescriptor().pluginClassLoader).isInstanceOf(PluginAwareClassLoader::class.java)
+
+    val scope = createPluginDependencyAndContentBasedScope(plugin, PluginSetBuilder(
+      loadingResult.enabledPlugins).createPluginSetWithEnabledModulesMap())!!
+    assertThat(scope.isDefinitelyAlienClass(name = "dd", packagePrefix = "dd", force = false)).isNull()
+    assertThat(scope.isDefinitelyAlienClass(name = "com.example.extraSupportedFeature.Foo", packagePrefix = "com.example.extraSupportedFeature.", force = false))
+      .isEqualToIgnoringWhitespace("Class com.example.extraSupportedFeature.Foo must not be requested from main classloader of p_dependent_1baqcnx plugin. " +
+                 "Matches content module (packagePrefix=com.example.extraSupportedFeature., moduleName=com.example.sub).")
   }
 
   @Test
