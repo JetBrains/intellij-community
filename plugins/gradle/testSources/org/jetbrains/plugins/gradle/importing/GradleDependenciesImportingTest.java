@@ -1642,15 +1642,12 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
   @TargetVersions("2.12 <=> 6.9")
   public void testNonTransitiveConfiguration() throws Exception {
     importProject(
-      """
-        apply plugin: 'java'
-        configurations {
-          compile.transitive = false
-        }
-
-        dependencies {
-          compile 'junit:junit:4.11'
-        }"""
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withMavenCentral()
+        .addPrefix("configurations { compile.transitive = false }")
+        .addImplementationDependency("junit:junit:4.11")
+        .generate()
     );
 
     assertModules("project", "project.main", "project.test");
