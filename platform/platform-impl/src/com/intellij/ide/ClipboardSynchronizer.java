@@ -143,7 +143,7 @@ public final class ClipboardSynchronizer implements Disposable {
         LOG.debug("ClipboardHandler class: " + getClass().getName());
         try {
           String text = (String) contents.getTransferData(DataFlavor.stringFlavor);
-          text = text.substring(0, Math.min(text.length(), 256)).replace(System.lineSeparator(), " ");
+          text = text.substring(0, Math.min(text.length(), 256)).replaceAll("\\R", " ");
           LOG.debug("Transferable contents: " + text);
         } catch (Exception e) {
           LOG.debug(e);
