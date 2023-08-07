@@ -24,6 +24,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.containers.MultiMap
+import com.intellij.util.system.CpuArch
+import com.intellij.util.system.OS
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
@@ -55,7 +57,9 @@ sealed interface PluginAdvertiserService {
     fun getIde(ideCode: String?): SuggestedIde? = ides[ideCode]
 
     @Suppress("HardCodedStringLiteral")
-    val ideaUltimate: SuggestedIde = SuggestedIde("IntelliJ IDEA Ultimate", "https://www.jetbrains.com/idea/download/")
+    val ideaUltimate: SuggestedIde = SuggestedIde("IntelliJ IDEA Ultimate",
+                                                  "https://www.jetbrains.com/idea/download/",
+                                                  "https://www.jetbrains.com/idea/download/download-thanks.html?platform={type}")
 
     @Suppress("HardCodedStringLiteral", "DialogTitleCapitalization")
     private val pyCharmProfessional = SuggestedIde("PyCharm Professional", "https://www.jetbrains.com/pycharm/download/")
@@ -555,4 +559,41 @@ open class HeadlessPluginAdvertiserServiceImpl : PluginAdvertiserService {
   final override fun rescanDependencies(block: suspend CoroutineScope.() -> Unit) {}
 }
 
-data class SuggestedIde(@NlsContexts.DialogMessage val name: String, val downloadUrl: String)
+data class SuggestedIde(
+  @NlsContexts.DialogMessage
+  val name: String,
+  val defaultDownloadUrl: String,
+  val platformSpecificDownloadUrlTemplate: String? = null
+) {
+  val downloadUrl: String
+    get() {
+      return platformSpecificDownloadUrlTemplate?.let { OsArchMapper.getDownloadUrl(it) }
+             ?: defaultDownloadUrl
+    }
+}
+
+private object OsArchMapper {
+  const val OS_ARCH_PARAMETER: String = "{type}"
+
+  val DOWNLOAD_OS_ARCH_MAPPING: Map<Pair<OS, CpuArch>, String> = mapOf(
+    (OS.Windows to CpuArch.X86_64) to "windows",
+    (OS.Windows to CpuArch.ARM64) to "windowsARM64",
+    (OS.macOS to CpuArch.ARM64) to "macM1",
+    (OS.macOS to CpuArch.X86_64) to "mac",
+    (OS.Linux to CpuArch.X86_64) to "linux",
+    (OS.Linux to CpuArch.ARM64) to "linuxARM64",
+  )
+
+  fun getDownloadUrl(downloadUrlTemplate: String): String? {
+    val os = OS.CURRENT
+    val arch = CpuArch.CURRENT
+
+    val osArchType = DOWNLOAD_OS_ARCH_MAPPING[(os to arch)] ?: return null
+    if (downloadUrlTemplate.contains(OS_ARCH_PARAMETER)) {
+      return downloadUrlTemplate.replace(OS_ARCH_PARAMETER, osArchType)
+    }
+    else {
+      return downloadUrlTemplate + osArchType
+    }
+  }
+}
