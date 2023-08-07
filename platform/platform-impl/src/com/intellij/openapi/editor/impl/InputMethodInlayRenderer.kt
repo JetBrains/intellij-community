@@ -2,11 +2,10 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.ide.ui.AntialiasingType
-import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
-import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.editor.Inlay
+import com.intellij.openapi.editor.impl.view.EditorPainter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.LinePainter2D
 import java.awt.*
@@ -22,15 +21,16 @@ class InputMethodInlayRenderer(val text: String) : EditorCustomElementRenderer {
     val editor = inlay.editor
     val metrics = getFontMetrics(editor)
 
-    g.color = editor.colorsScheme.getAttributes(HighlighterColors.TEXT).foregroundColor
+    g.color = textAttributes.foregroundColor
     g.font = metrics.font
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(true))
-    g.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, UISettings.editorFractionalMetricsHint)
 
     val y = targetRegion.y + editor.ascent
     g.drawString(text, targetRegion.x.toFloat(), y.toFloat())
 
     val lineY = y + 1
+    g.stroke = EditorPainter.IME_COMPOSED_TEXT_UNDERLINE_STROKE
+    g.color = editor.colorsScheme.defaultForeground
     LinePainter2D.paint(g, targetRegion.minX, lineY, targetRegion.maxX, lineY)
   }
 
