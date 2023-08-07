@@ -36,6 +36,7 @@ public class MavenCompatibilityProjectImportingTest extends MavenImportingTestCa
   public static List<String[]> getMavenVersions() {
     return Arrays.asList(
       new String[]{"4.0.0-alpha-7"},
+      new String[]{"3.9.4"},
       new String[]{"3.9.3"},
       new String[]{"3.9.2"},
       new String[]{"3.9.1"},
