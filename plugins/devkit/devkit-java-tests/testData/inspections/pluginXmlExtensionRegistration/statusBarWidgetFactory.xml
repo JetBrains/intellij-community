@@ -7,7 +7,7 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <<warning descr="Define 'id' attribute matching StatusBarWidgetFactory.getId() implementation">statusBarWidgetFactory</warning> />
+    <<warning descr="Define 'id' attribute matching 'StatusBarWidgetFactory.getId()' implementation">statusBarWidgetFactory</warning> />
 
     <statusBarWidgetFactory id="validId"/>
   </extensions>
