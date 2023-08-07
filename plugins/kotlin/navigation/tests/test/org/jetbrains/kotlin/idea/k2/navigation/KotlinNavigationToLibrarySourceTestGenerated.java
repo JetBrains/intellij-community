@@ -49,6 +49,11 @@ public abstract class KotlinNavigationToLibrarySourceTestGenerated extends Abstr
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/class.kt");
             }
 
+            @TestMetadata("enumEntry.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/enumEntry.kt");
+            }
+
             @TestMetadata("unnamedCompanion.kt")
             public void testUnnamedCompanion() throws Exception {
                 runTest("testData/navigationToLibrarySourcePolicy/resolveToStdlib/classfiers/unnamedCompanion.kt");
