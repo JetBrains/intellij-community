@@ -21,11 +21,8 @@ use {
                                CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
 };
 
-#[cfg(target_family = "unix")]
-use std::ffi::c_int;
-
 #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
-use std::ffi::{c_char, CStr};
+use std::ffi::{c_char, CStr, c_int};
 
 #[cfg(target_os = "windows")]
 const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
