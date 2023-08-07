@@ -233,7 +233,7 @@ public final class JBCefScrollbarsHelper {
     Color color = ObjectUtils.notNull(colorsScheme.getColor(key), key.getDefaultColor());
     double alpha = ObjectUtils.notNull(getScrollbarAlpha(key), color.getAlpha()) / 255.0;
 
-    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getBlue(), color.getBlue(), alpha);
+    return String.format(Locale.ROOT, "rgba(%d, %d, %d, %f)", color.getRed(), color.getGreen(), color.getBlue(), alpha);
   }
 
   private static @NotNull String readResource(@NotNull String path) {
