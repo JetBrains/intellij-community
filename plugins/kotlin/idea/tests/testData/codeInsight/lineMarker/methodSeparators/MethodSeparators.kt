@@ -1,8 +1,5 @@
 // METHOD_SEPARATORS
 
-// KTIJ-26470
-// IGNORE_FIR
-
 class Foo {
     object BarObj {
     }
@@ -47,3 +44,7 @@ class Foo {
         const val C = 1
     }
 }
+
+fun foo() {}
+
+<lineMarker descr="null">fun</lineMarker> bar() {}
