@@ -7,8 +7,8 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +44,10 @@ public final class JavaTestUtil {
       Sdk jdk = internalJdk;
       if (!internalJdk.getName().equals(finalJdkName)) {
         try {
-          ProjectJdkImpl copy = (ProjectJdkImpl)internalJdk.clone();
-          copy.setName(finalJdkName);
+          Sdk copy = (Sdk)internalJdk.clone();
+          SdkModificator modificator = copy.getSdkModificator();
+          modificator.setName(finalJdkName);
+          modificator.commitChanges();
           jdk = copy;
         }
         catch (CloneNotSupportedException e) {
