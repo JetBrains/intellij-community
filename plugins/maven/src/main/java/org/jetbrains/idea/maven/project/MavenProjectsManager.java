@@ -257,10 +257,10 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void doActivate() {
+    fireActivated();
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
-      fireActivated();
       listenForExternalChanges();
+      MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
     }
   }
 
