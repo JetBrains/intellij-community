@@ -35,6 +35,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionListener
+import java.awt.event.KeyEvent
 import java.awt.geom.Path2D
 import java.awt.geom.RoundRectangle2D
 import java.io.StringReader
@@ -497,6 +498,14 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     if (showButton) {
       val button = JButton(buttonLabel).apply {
         isFocusable = requestFocus
+        if (requestFocus) {
+          val inputMap = getInputMap(JComponent.WHEN_FOCUSED)
+          val pressedKeystroke = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)
+          if (inputMap[pressedKeystroke] == null) {
+            inputMap.put(pressedKeystroke, "pressed")
+            inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, true), "released")
+          }
+        }
         isOpaque = false
         foreground = JBUI.CurrentTheme.GotItTooltip.buttonForeground()
         putClientProperty("gotItButton", true)
