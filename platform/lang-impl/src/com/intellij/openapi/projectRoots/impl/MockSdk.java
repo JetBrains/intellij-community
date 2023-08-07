@@ -44,20 +44,12 @@ public class MockSdk implements Sdk, SdkModificator {
                  @NotNull String homePath,
                  @NotNull String versionString,
                  @NotNull MultiMap<OrderRootType, VirtualFile> roots,
-                 @NotNull Supplier<? extends SdkTypeId> sdkType) {
+                 @NotNull SdkTypeId sdkType) {
     myName = name;
     myHomePath = homePath;
     myVersionString = versionString;
     myRoots = roots;
-    mySdkType = sdkType;
-  }
-
-  public MockSdk(@NotNull String name,
-                 @NotNull String homePath,
-                 @NotNull String versionString,
-                 @NotNull MultiMap<OrderRootType, VirtualFile> roots,
-                 @NotNull SdkTypeId sdkType) {
-    this(name, homePath, versionString, roots, () -> sdkType);
+    mySdkType = () -> sdkType;
   }
 
   @NotNull

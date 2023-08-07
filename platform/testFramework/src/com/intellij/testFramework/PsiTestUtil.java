@@ -554,7 +554,9 @@ public final class PsiTestUtil {
     }
     SdkModificator sdkModificator = clone.getSdkModificator();
     modifier.accept(sdkModificator);
-    sdkModificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return clone;
   }
 
