@@ -58,6 +58,7 @@ import java.nio.file.attribute.PosixFilePermission
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.*
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiConsumer
 import java.util.function.BiFunction
@@ -187,7 +188,7 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   if (!isHeadless) {
-    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args)
+    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args, logDeferred = logDeferred)
 
     launch {
       lockSystemDirsJob.join()
@@ -348,14 +349,25 @@ private fun CoroutineScope.loadSystemLibsAndLogInfoAndInitMacApp(logDeferred: De
   }
 }
 
-private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job, appInfoDeferred: Deferred<ApplicationInfoEx>, args: List<String>) {
+private fun CoroutineScope.showSplashIfNeeded(initUiDeferred: Job,
+                                              appInfoDeferred: Deferred<ApplicationInfoEx>,
+                                              args: List<String>,
+                                              logDeferred: Deferred<Logger>) {
   if (AppMode.isLightEdit()) {
     return
   }
 
   launch(CoroutineName("showSplashIfNeeded")) {
     if (CommandLineArgs.isSplashNeeded(args)) {
-      showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
+      try {
+        showSplashIfNeeded(initUiDeferred = initUiDeferred, appInfoDeferred = appInfoDeferred)
+      }
+      catch (e: CancellationException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        logDeferred.await().warn("Cannot show splash", e)
+      }
     }
   }
 }
