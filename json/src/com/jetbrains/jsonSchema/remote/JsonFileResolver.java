@@ -4,6 +4,7 @@ package com.jetbrains.jsonSchema.remote;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -26,6 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public final class JsonFileResolver {
+
+  private static final Key<Boolean> DOWNLOAD_STARTED = Key.create("DOWNLOAD_STARTED");
+
   public static boolean isRemoteEnabled(Project project) {
     return !ApplicationManager.getApplication().isUnitTestMode() &&
            JsonSchemaCatalogProjectConfiguration.getInstance(project).isRemoteActivityEnabled();
@@ -97,7 +101,10 @@ public final class JsonFileResolver {
 
     RemoteFileInfo info = ((HttpVirtualFile)path).getFileInfo();
     if (info == null || info.getState() == RemoteFileState.DOWNLOADING_NOT_STARTED) {
-      path.refresh(true, false);
+      if (path.getUserData(DOWNLOAD_STARTED) != Boolean.TRUE) {
+        path.putUserData(DOWNLOAD_STARTED, Boolean.TRUE);
+        path.refresh(true, false);
+      }
     }
   }
 
