@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" />
+    <orderEntry type="module" module-name="intellij.platform.statistics" />
   </component>
 </module>

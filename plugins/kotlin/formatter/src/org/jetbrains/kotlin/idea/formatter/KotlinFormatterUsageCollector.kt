@@ -7,14 +7,13 @@ import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
-import com.intellij.internal.statistic.utils.getPluginInfoById
+import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.base.util.containsNonScriptKotlinFile
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinIdePlugin
 import org.jetbrains.kotlin.idea.formatter.KotlinFormatterUsageCollector.KotlinFormatterKind.*
 
 class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
@@ -30,7 +29,7 @@ class KotlinFormatterUsageCollector : ProjectUsagesCollector() {
         return setOf(
             settingsEvent.metric(
                 value1 = getKotlinFormatterKind(project),
-                value2 = getPluginInfoById(KotlinIdePlugin.id),
+                value2 = getPluginInfo(KotlinFormatterUsageCollector::class.java),
             )
         )
     }
