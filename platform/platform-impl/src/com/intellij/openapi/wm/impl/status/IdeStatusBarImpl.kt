@@ -847,6 +847,7 @@ private fun wrap(widget: StatusBarWidget): JComponent {
   else {
     createComponentByWidgetPresentation(widget)
   }
+  ToolTipManager.sharedInstance().registerComponent(result)
   ClientProperty.put(result, WIDGET_ID, widget.ID())
   result.putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, true)
   return result
