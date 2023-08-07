@@ -1,3 +1,7 @@
+plugins {
+    alias(libs.plugins.composeDesktop) apply false
+}
+
 tasks {
     val check by registering {
         group = "verification"

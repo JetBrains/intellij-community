@@ -1,5 +1,5 @@
 [versions]
-composeDesktop = "1.5.0-dev1082"
+composeDesktop = "1.5.0-dev1136"
 coroutines = "1.6.4"
 detekt = "1.22.0"
 idea = "223.8617.56"
