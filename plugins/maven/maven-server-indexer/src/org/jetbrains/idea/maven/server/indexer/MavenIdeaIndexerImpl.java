@@ -126,9 +126,11 @@ public class MavenIdeaIndexerImpl extends MavenRemoteObject implements MavenServ
 
   @Override
   public void updateIndex(MavenIndexId mavenIndexId,
-                          final MavenServerProgressIndicator indicator, MavenToken token)
+                          final MavenServerProgressIndicator remoteIndicator,
+                          MavenToken token)
     throws RemoteException, MavenServerIndexerException, MavenServerProcessCanceledException {
     MavenServerUtil.checkToken(token);
+    MavenServerProgressIndicator indicator = new MavenServerSideCancelledThrottler(remoteIndicator);
     try {
       final IndexingContext context = getIndex(mavenIndexId);
       synchronized (context) {
