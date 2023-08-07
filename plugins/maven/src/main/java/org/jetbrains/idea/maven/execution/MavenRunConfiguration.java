@@ -77,6 +77,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -538,7 +539,7 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       processHandler.addProcessListener(new BuildToolConsoleProcessAdapter(eventProcessor, true));
       DefaultExecutionResult res = new DefaultExecutionResult(consoleView, processHandler, new DefaultActionGroup());
-      addRestartAction(res);
+      res.setRestartActions(new JvmToggleAutoTestAction());
       return res;
     }
 
@@ -567,17 +568,16 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
 
       AnAction[] actions = new AnAction[]{BuildTreeFilters.createFilteringActionsGroup(buildView)};
       DefaultExecutionResult res = new DefaultExecutionResult(buildView, processHandler, actions);
+      List<AnAction> restartActions = new ArrayList<>();
+      restartActions.add(new JvmToggleAutoTestAction());
+
       if (MavenResumeAction.isApplicable(getEnvironment().getProject(), getJavaParameters(), myConfiguration)) {
         MavenResumeAction resumeAction =
           new MavenResumeAction(res.getProcessHandler(), runner, getEnvironment(), eventProcessor.getParsingContext());
-        res.setRestartActions(resumeAction);
+        restartActions.add(resumeAction);
       }
-      addRestartAction(res);
+      res.setRestartActions(restartActions.toArray(new AnAction[0]));
       return res;
-    }
-
-    private static void addRestartAction(DefaultExecutionResult res) {
-      res.setRestartActions(new JvmToggleAutoTestAction());
     }
 
     @NotNull
