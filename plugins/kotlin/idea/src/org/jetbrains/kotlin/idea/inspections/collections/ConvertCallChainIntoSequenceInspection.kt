@@ -29,9 +29,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
 class ConvertCallChainIntoSequenceInspection : AbstractKotlinInspection() {
-
     private val defaultCallChainLength = 5
-
     private var callChainLength = defaultCallChainLength
 
     // Used for serialization
@@ -79,7 +77,7 @@ private class ConvertCallChainIntoSequenceFix : LocalQuickFix {
         val lastCall = calls.lastOrNull() ?: return
         val first = firstCall.getQualifiedExpressionForSelector() ?: firstCall
         val last = lastCall.getQualifiedExpressionForSelector() ?: return
-        val endWithTermination = lastCall.calleeText() in terminations ||
+        val endsWithTermination = lastCall.calleeText() in terminations ||
                 (lastCall.parent.parent as? KtQualifiedExpression)?.callExpression?.calleeText() in terminations
 
         val psiFactory = KtPsiFactory(project)
@@ -105,7 +103,7 @@ private class ConvertCallChainIntoSequenceFix : LocalQuickFix {
         )
         firstCommentSaver.restore(firstReplaced)
 
-        if (!endWithTermination) {
+        if (!endsWithTermination) {
             val lastCommentSaver = CommentSaver(last)
             val lastReplaced = last.replace(
                 psiFactory.buildExpression {
@@ -196,7 +194,7 @@ private fun KtCallExpression.hasReturn(): Boolean = valueArguments.any { arg ->
 
 private fun KtCallExpression.calleeText(): String? = calleeExpression?.text
 
-internal val collectionTransformationFunctionNames = listOf(
+internal val collectionTransformationFunctionNames: List<String> = listOf(
     "chunked",
     "distinct",
     "distinctBy",
@@ -240,9 +238,10 @@ internal val collectionTransformationFunctionNames = listOf(
 )
 
 @NonNls
-private val transformations = collectionTransformationFunctionNames.associateWith { FqName("kotlin.collections.$it") }
+private val transformations: Map<String, FqName> =
+    collectionTransformationFunctionNames.associateWith { FqName("kotlin.collections.$it") }
 
-internal val collectionTerminationFunctionNames = listOf(
+internal val collectionTerminationFunctionNames: List<String> = listOf(
     "all",
     "any",
     "asIterable",
@@ -324,9 +323,9 @@ internal val collectionTerminationFunctionNames = listOf(
 )
 
 @NonNls
-private val terminations = collectionTerminationFunctionNames.associateWith {
+private val terminations: Map<String, FqName> = collectionTerminationFunctionNames.associateWith {
     val pkg = if (it in listOf("contains", "indexOf", "lastIndexOf")) "kotlin.collections.List" else "kotlin.collections"
     FqName("$pkg.$it")
 }
 
-private val transformationAndTerminations = transformations + terminations
+private val transformationAndTerminations: Map<String, FqName> = transformations + terminations
