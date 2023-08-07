@@ -9,9 +9,12 @@ import com.intellij.codeInspection.restriction.AnnotationContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiType
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.InheritanceUtil.*
+import com.intellij.psi.util.InheritanceUtil.isInheritor
 import com.intellij.uast.UastHintedVisitorAdapter
 import com.siyeh.InspectionGadgetsBundle
 import com.siyeh.ig.psiutils.MethodMatcher
@@ -91,6 +94,9 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
 
   @JvmField
   var showUnsafeObject: Boolean = true
+
+  @JvmField
+  var depthInside: Int = 5
 
   var checkedTypes: MutableList<String?> = mutableListOf("java.lang.String")
   override fun getOptionsPane(): OptPane {
@@ -185,9 +191,11 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex"))
         .comment(JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.check.warn.if.complex.comment")),
 
-      OptPane.stringList("checkedTypes", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.checked.types"))
-      ,
+      OptPane.stringList("checkedTypes", JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.checked.types")),
 
+      OptPane.number("depthInside",
+                     JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.depth.inside"),
+                     1, 100),
 
       OptPane.checkbox("showUnknownObject",
                        JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.show.unknown.object")),
@@ -209,17 +217,20 @@ class SourceToSinkFlowInspection : AbstractBaseUastLocalInspectionTool() {
       return PsiElementVisitor.EMPTY_VISITOR
     }
 
-    val configuration = UntaintedConfiguration(taintedAnnotations = taintedAnnotations,
-                                               unTaintedAnnotations = untaintedAnnotations,
-                                               firstAnnotation = firstAnnotation,
-                                               methodClass = myUntaintedMethodMatcher.classNames,
-                                               methodNames = myUntaintedMethodMatcher.methodNamePatterns,
-                                               fieldClass = myUntaintedFieldClasses,
-                                               fieldNames = myUntaintedFieldNames,
-                                               processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
-                                               processInnerMethodAsQualifierAndArguments = false,
-                                               skipClasses = skipClasses,
-                                               parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted).copy()
+    val configuration = UntaintedConfiguration(
+      taintedAnnotations = taintedAnnotations,
+      unTaintedAnnotations = untaintedAnnotations,
+      firstAnnotation = firstAnnotation,
+      methodClass = myUntaintedMethodMatcher.classNames,
+      methodNames = myUntaintedMethodMatcher.methodNamePatterns,
+      fieldClass = myUntaintedFieldClasses,
+      fieldNames = myUntaintedFieldNames,
+      processOuterMethodAsQualifierAndArguments = processOuterMethodAsQualifierAndArguments,
+      processInnerMethodAsQualifierAndArguments = false,
+      skipClasses = skipClasses,
+      parameterOfPrivateMethodIsUntainted = parameterOfPrivateMethodIsUntainted,
+      depthInside = depthInside
+    ).copy()
 
     val factory = TaintValueFactory(configuration).also {
 

@@ -43,7 +43,7 @@ class TaintAnalyzer(private val myTaintValueFactory: TaintValueFactory) {
       processOnlyConstant = false,
       depthOutside = 1,
       parts = 20,
-      depthInside = 5,
+      depthInside = myTaintValueFactory.getConfiguration().depthInside,
       depthNestedMethods = 1,
       next = true,
       untilTaintValue = untilTaintValue,

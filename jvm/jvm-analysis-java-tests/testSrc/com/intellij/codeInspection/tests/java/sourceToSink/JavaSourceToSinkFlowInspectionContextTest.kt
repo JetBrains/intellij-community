@@ -17,6 +17,7 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
       untaintedParameterWithPlacePlaceClass.add("com.example.sqlinjection.Complete.HttpServletResponse")
       untaintedParameterWithPlacePlaceMethod.add("getWriter")
       checkedTypes.add("java.util.List")
+      depthInside = 10
     }
 
   override fun getBasePath(): String {
@@ -28,5 +29,9 @@ class JavaSourceToSinkFlowInspectionContextTest : SourceToSinkFlowInspectionTest
   }
   fun `test for not string as a parameter`() {
     myFixture.testHighlighting("SimpleObject.java")
+  }
+  fun `test depth`() {
+    prepareCheckFramework()
+    myFixture.testHighlighting("TaintDepth.java")
   }
 }
