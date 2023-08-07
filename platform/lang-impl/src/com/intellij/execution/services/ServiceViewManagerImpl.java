@@ -105,7 +105,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
 
     ServiceViewItem eventRoot = ContainerUtil.find(myModel.getRoots(), root -> e.contributorClass.isInstance(root.getRootContributor()));
-    ServiceViewContributor<?> notInitializedContributor = findNotIntializedContributor(e.contributorClass, eventRoot);
+    ServiceViewContributor<?> notInitializedContributor = findNotInitializedContributor(e.contributorClass, eventRoot);
     boolean initialized = notInitializedContributor == null;
     if (!initialized &&
         (e.type == ServiceEventListener.EventType.RESET || e.type == ServiceEventListener.EventType.UNLOAD_SYNC_RESET)) {
@@ -122,7 +122,7 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
     }
   }
 
-  private @Nullable ServiceViewContributor<?> findNotIntializedContributor(Class<?> contributorClass, ServiceViewItem eventRoot) {
+  private @Nullable ServiceViewContributor<?> findNotInitializedContributor(Class<?> contributorClass, ServiceViewItem eventRoot) {
     if (eventRoot != null) {
       return myNotInitializedContributors.contains(eventRoot.getRootContributor()) ? eventRoot.getRootContributor() : null;
     }
