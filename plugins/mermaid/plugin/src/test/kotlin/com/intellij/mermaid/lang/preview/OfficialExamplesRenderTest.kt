@@ -5,6 +5,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.readText
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.rules.ProjectModelExtension
@@ -33,8 +37,8 @@ class OfficialExamplesRenderTest {
 
   @TestTemplate
   @ExtendWith(OfficialDocumentationExamplesContext::class)
-  fun testDiagram(path: Path) {
-    val diagramContent = path.readText()
+  fun testDiagram(file: VirtualFile) {
+    val diagramContent = VfsUtil.loadText(file)
     runBlocking(Dispatchers.EDT) {
       val preview = MermaidDiagramPreviewComponent(project)
       Disposer.register(disposable, preview)

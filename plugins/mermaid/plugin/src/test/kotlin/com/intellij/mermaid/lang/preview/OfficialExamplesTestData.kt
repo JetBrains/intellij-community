@@ -1,5 +1,8 @@
 package com.intellij.mermaid.lang.preview
 
+import com.intellij.mermaid.test.OfficialDocumentationExamples
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.DynamicContainer
 import org.junit.jupiter.api.DynamicNode
@@ -11,17 +14,24 @@ import kotlin.io.path.name
 import kotlin.io.path.nameWithoutExtension
 
 internal object OfficialExamplesTestData {
-  private val systemProperty: String?
-    get() = System.getProperty("example.test.data.path")
-
-  val testDataPath: Path
-    get() = Path(systemProperty!!)
-
   fun assumeAvailable() {
-    Assumptions.assumeTrue(
-      { systemProperty != null },
-      "'example.test.data.path' system property was not defined"
-    )
+    Assumptions.assumeTrue({ obtainBasePath() != null }, "Could not obtain base data path")
+  }
+
+  fun obtainExamples(): Map<String, List<VirtualFile>> {
+    val base = obtainBasePath()
+    checkNotNull(base) { "Failed to obtain base data path" }
+    val diagrams = base.children
+    return buildMap {
+      for (diagram in diagrams) {
+        put(diagram.name, diagram.children.toList())
+      }
+    }
+  }
+
+  private fun obtainBasePath(): VirtualFile? {
+    val basePath = OfficialDocumentationExamples.obtainBasePath()
+    return VfsUtil.findFileByURL(basePath)
   }
 
   fun generateDynamicTests(

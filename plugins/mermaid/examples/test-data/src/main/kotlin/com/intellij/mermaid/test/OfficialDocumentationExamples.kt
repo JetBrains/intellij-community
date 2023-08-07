@@ -14,13 +14,4 @@ object OfficialDocumentationExamples {
     checkNotNull(url) { "Failed to obtain examples directory url" }
     return url
   }
-
-  @TestOnly
-  fun obtainExamples(block: (List<Path>) -> Unit) {
-    val uri = obtainBasePath().toURI()
-    val fileSystem = FileSystems.newFileSystem(uri, mutableMapOf<String, Any>())
-    fileSystem.use {
-      block(uri.toPath().listDirectoryEntries())
-    }
-  }
 }

@@ -154,13 +154,6 @@ tasks {
     jvmArgs = commonJvmArgs
   }
 
-  fun Test.withExampleTestData() {
-    jvmArgumentProviders.add {
-      val path = configurations.exampleTestDataImplementation.get().resolve().single()
-      listOf("-Dexample.test.data.path=$path")
-    }
-  }
-
   val modernTests by registering(Test::class) {
     useJUnitPlatform {
       excludeTags("PreviewTest")
@@ -204,7 +197,6 @@ tasks {
         TestLogEvent.STANDARD_OUT
       )
     }
-    withExampleTestData()
     afterSuite { descriptor, result ->
       if (descriptor.parent == null) {
         logger.lifecycle(result.createResultMessage())

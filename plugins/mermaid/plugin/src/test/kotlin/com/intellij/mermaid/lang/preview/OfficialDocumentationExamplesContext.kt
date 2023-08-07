@@ -1,5 +1,8 @@
 package com.intellij.mermaid.lang.preview
 
+import com.intellij.mermaid.test.OfficialDocumentationExamples
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.junit.jupiter.api.extension.*
 import java.nio.file.Path
 import java.util.stream.Stream
@@ -13,15 +16,15 @@ internal class OfficialDocumentationExamplesContext: TestTemplateInvocationConte
 
   override fun provideTestTemplateInvocationContexts(context: ExtensionContext): Stream<TestTemplateInvocationContext> {
     OfficialExamplesTestData.assumeAvailable()
-    val examples = OfficialExamplesTestData.testDataPath.listDirectoryEntries()
-    val files = examples.flatMap { it.listDirectoryEntries() }
+    val examples = OfficialExamplesTestData.obtainExamples()
+    val files = examples.values.asSequence().flatten()
     val contexts = files.map { ExampleDiagramPathContext(it.nameWithoutExtension, it) }
-    return (contexts as List<TestTemplateInvocationContext>).stream()
+    return (contexts.toList() as List<TestTemplateInvocationContext>).stream()
   }
 
   private class ExampleDiagramPathContext(
     private val name: String,
-    private val path: Path
+    private val path: VirtualFile
   ): TestTemplateInvocationContext {
     override fun getDisplayName(invocationIndex: Int): String {
       return name
@@ -31,9 +34,9 @@ internal class OfficialDocumentationExamplesContext: TestTemplateInvocationConte
       return listOf(Resolver(path))
     }
 
-    private class Resolver(private val path: Path): ParameterResolver {
+    private class Resolver(private val path: VirtualFile): ParameterResolver {
       override fun supportsParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Boolean {
-        return parameterContext.parameter.type == Path::class.java
+        return parameterContext.parameter.type == VirtualFile::class.java
       }
 
       override fun resolveParameter(parameterContext: ParameterContext, extensionContext: ExtensionContext): Any {
