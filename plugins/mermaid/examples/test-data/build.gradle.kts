@@ -8,7 +8,7 @@ import kotlin.io.path.listDirectoryEntries
 plugins {
   java
   kotlin("jvm")
-  `example-test-data`
+  id("example-test-data")
   id("de.undercouch.download") version "5.4.0"
   id("example-extractor")
 }

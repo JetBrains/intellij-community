@@ -15,7 +15,6 @@ import java.util.*
 plugins {
   java
   `javascript-binaries`
-  `example-test-data`
   kotlin("jvm")
   id("org.jetbrains.intellij") version "1.13.3"
   id("org.jetbrains.changelog") version "1.3.1"
@@ -36,7 +35,6 @@ dependencies {
   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
   testRuntimeOnly("org.junit.platform:junit-platform-launcher")
   testImplementation(project(":examples:test-data"))
-  exampleTestDataImplementation(project(":examples:test-data", configurations.exampleTestData))
 }
 
 val generatedGrammarSourcesPath

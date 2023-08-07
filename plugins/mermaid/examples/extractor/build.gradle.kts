@@ -27,11 +27,6 @@ tasks {
       apiVersion = "1.7"
     }
   }
-
-  // processResources {
-  //   dependsOn(mermaidExtensionBuildResults)
-  //   inputs.files(mermaidExtensionBuildResults.map { it.outputs })
-  // }
 }
 
 gradlePlugin {
