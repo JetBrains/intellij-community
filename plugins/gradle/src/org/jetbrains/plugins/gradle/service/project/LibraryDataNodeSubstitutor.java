@@ -22,8 +22,7 @@ import java.io.File;
 import java.util.*;
 
 import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.find;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachGradleSdkSources;
-import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.attachSourcesAndJavadocFromGradleCacheIfNeeded;
+import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
  * {@link LibraryDataNodeSubstitutor} provides the facility to replace library dependencies with the related module dependencies
@@ -70,7 +69,7 @@ public class LibraryDataNodeSubstitutor {
       return;
     }
 
-    boolean shouldKeepTransitiveDependencies = libraryPaths.size() > 0 && !libraryDependencyDataNode.getChildren().isEmpty();
+    boolean shouldKeepTransitiveDependencies = !libraryPaths.isEmpty() && !libraryDependencyDataNode.getChildren().isEmpty();
 
     final ArrayDeque<String> unprocessedPaths = new ArrayDeque<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
@@ -99,35 +98,15 @@ public class LibraryDataNodeSubstitutor {
 
       final ModuleData moduleData = pair.first.getData();
       if (targetModuleOutputPaths == null) {
-        final Set<String> compileSet = new HashSet<>();
-        MultiMap<ExternalSystemSourceType, String> gradleOutputs = pair.first.getUserData(GradleProjectResolver.GRADLE_OUTPUTS);
-        if (gradleOutputs != null) {
-          ContainerUtil.addAllNotNull(compileSet,
-                                      gradleOutputs.get(ExternalSystemSourceType.SOURCE));
-          ContainerUtil.addAllNotNull(compileSet,
-                                      gradleOutputs.get(ExternalSystemSourceType.RESOURCE));
-        }
-        if (!compileSet.isEmpty() && ContainerUtil.intersects(libraryPaths, compileSet)) {
-          targetModuleOutputPaths = compileSet;
-        }
-        else {
-          final Set<String> testSet = new HashSet<>();
-          if (gradleOutputs != null) {
-            ContainerUtil.addAllNotNull(testSet,
-                                        gradleOutputs.get(ExternalSystemSourceType.TEST));
-            ContainerUtil.addAllNotNull(testSet,
-                                        gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
-          }
-          if (!testSet.isEmpty() && ContainerUtil.intersects(libraryPaths, testSet)) {
-            targetModuleOutputPaths = testSet;
-          }
-        }
+        targetModuleOutputPaths = collectTargetModuleOutputPaths(libraryPaths,
+                                                                 pair.first.getUserData(GradleProjectResolver.GRADLE_OUTPUTS));
       }
 
       final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
       final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, moduleData);
       moduleDependencyData.setScope(libraryDependencyData.getScope());
-      if ("test".equals(pair.second.getName())) {
+      moduleDependencyData.setOrder(libraryDependencyData.getOrder());
+      if (isTestSourceSet(pair.second)) {
         moduleDependencyData.setProductionOnTestDependency(true);
       }
       final DataNode<ModuleDependencyData> found = find(
@@ -211,5 +190,31 @@ public class LibraryDataNodeSubstitutor {
         }
       }
     }
+  }
+
+  private static @Nullable Set<String> collectTargetModuleOutputPaths(@NotNull Set<String> libraryPaths,
+                                                                      @Nullable MultiMap<ExternalSystemSourceType, String> gradleOutputs) {
+    if (gradleOutputs == null) {
+      return null;
+    }
+
+    final Set<String> compileSet = new HashSet<>();
+    ContainerUtil.addAllNotNull(compileSet,
+                                gradleOutputs.get(ExternalSystemSourceType.SOURCE));
+    ContainerUtil.addAllNotNull(compileSet,
+                                gradleOutputs.get(ExternalSystemSourceType.RESOURCE));
+    if (ContainerUtil.intersects(libraryPaths, compileSet)) {
+      return compileSet;
+    }
+
+    final Set<String> testSet = new HashSet<>();
+    ContainerUtil.addAllNotNull(testSet,
+                                gradleOutputs.get(ExternalSystemSourceType.TEST));
+    ContainerUtil.addAllNotNull(testSet,
+                                gradleOutputs.get(ExternalSystemSourceType.TEST_RESOURCE));
+    if (ContainerUtil.intersects(libraryPaths, testSet)) {
+      return testSet;
+    }
+    return null;
   }
 }
