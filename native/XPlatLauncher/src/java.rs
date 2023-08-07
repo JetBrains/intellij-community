@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 use std::{env, mem, thread};
-use std::ffi::{c_char, c_void, c_int, CString, CStr};
+use std::ffi::{c_void, c_int, CString};
 use std::path::Path;
 use std::sync::Mutex;
 use std::thread::JoinHandle;
@@ -21,6 +21,9 @@ use {
                                CFRunLoopTimerRef, kCFRunLoopDefaultMode, kCFRunLoopRunFinished}
 };
 
+#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
+use std::ffi::{c_char, CStr};
+
 #[cfg(target_os = "windows")]
 const LIBJVM_REL_PATH: &str = "bin\\server\\jvm.dll";
 #[cfg(target_os = "macos")]
@@ -31,6 +34,7 @@ const LIBJVM_REL_PATH: &str = "lib/server/libjvm.so";
 static HOOK_NAME: &str = "vfprintf";
 static HOOK_MESSAGES: Mutex<Option<Vec<String>>> = Mutex::new(None);
 
+#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
 #[no_mangle]
 extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_list::VaList) -> jint {
     extern "C" {
@@ -49,6 +53,16 @@ extern "C" fn vfprintf_hook(fp: *const c_void, format: *const c_char, args: va_l
             0  // because nothing was actually printed
         }
     }
+}
+
+#[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
+fn get_vfprintf_hook_pointer() -> *mut c_void {
+    unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) }
+}
+
+#[cfg(all(target_os = "windows", target_arch = "aarch64"))]
+fn get_vfprintf_hook_pointer() -> *mut c_void {
+    std::ptr::null_mut()
 }
 
 const MAIN_METHOD_NAME: &str = "main";
@@ -195,10 +209,13 @@ fn load_libjvm(_jre_home: &Path, libjvm_path: &Path) -> Result<libloading::Libra
 fn get_jvm_init_args(vm_options: Vec<String>) -> Result<(jni::sys::JavaVMInitArgs, Vec<jni::sys::JavaVMOption>)> {
     let mut jni_options = Vec::with_capacity(vm_options.len() + 1);
 
-    jni_options.push(jni::sys::JavaVMOption {
-        optionString: CString::new(HOOK_NAME)?.into_raw(),
-        extraInfo: unsafe { mem::transmute::<extern "C" fn(*const c_void, *const c_char, va_list::VaList) -> jint, *mut c_void>(vfprintf_hook) },
-    });
+    let hook_pointer = get_vfprintf_hook_pointer();
+    if hook_pointer != std::ptr::null_mut() {
+        jni_options.push(jni::sys::JavaVMOption {
+            optionString: CString::new(HOOK_NAME)?.into_raw(),
+            extraInfo: hook_pointer,
+        });
+    }
 
     for opt in vm_options {
         jni_options.push(jni::sys::JavaVMOption {
