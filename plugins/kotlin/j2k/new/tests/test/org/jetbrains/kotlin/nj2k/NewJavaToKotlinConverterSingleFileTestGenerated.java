@@ -2114,6 +2114,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/equals/Equals4.java");
         }
 
+        @TestMetadata("EqualsFloatingPoint.java")
+        public void testEqualsFloatingPoint() throws Exception {
+            runTest("testData/newJ2k/equals/EqualsFloatingPoint.java");
+        }
+
         @TestMetadata("ObjectsEquals.java")
         public void testObjectsEquals() throws Exception {
             runTest("testData/newJ2k/equals/ObjectsEquals.java");

@@ -280,30 +280,6 @@ internal class PrivateVarToValProcessing : InspectionLikeProcessingForElement<Kt
     }
 }
 
-internal class JavaObjectEqualsToEqOperatorProcessing : InspectionLikeProcessingForElement<KtCallExpression>(KtCallExpression::class.java) {
-    companion object {
-        val CALL_FQ_NAME = FqName("java.util.Objects.equals")
-    }
-
-    override fun isApplicableTo(element: KtCallExpression, settings: ConverterSettings?): Boolean {
-        if (element.calleeExpression?.text != CALL_FQ_NAME.shortName().identifier) return false
-        if (element.valueArguments.size != 2) return false
-        if (element.valueArguments.any { it.getArgumentExpression() == null }) return false
-        return element.isCalling(CALL_FQ_NAME)
-    }
-
-    override fun apply(element: KtCallExpression) {
-        val psiFactory = KtPsiFactory(element.project)
-        element.getQualifiedExpressionForSelectorOrThis().replace(
-            psiFactory.createExpressionByPattern(
-                "($0 == $1)",
-                element.valueArguments[0].getArgumentExpression() ?: return,
-                element.valueArguments[1].getArgumentExpression() ?: return
-            )
-        )
-    }
-}
-
 internal class RemoveForExpressionLoopParameterTypeProcessing :
     InspectionLikeProcessingForElement<KtForExpression>(KtForExpression::class.java) {
     override fun isApplicableTo(element: KtForExpression, settings: ConverterSettings?): Boolean {

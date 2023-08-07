@@ -13,7 +13,6 @@ import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.BITWISE_LOGICAL_
 import org.jetbrains.kotlin.nj2k.tree.JKOperatorToken.Companion.SHIFT_OPERATORS
 import org.jetbrains.kotlin.nj2k.types.*
 
-import org.jetbrains.kotlin.resolve.jvm.JvmPrimitiveType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplicableConversionBase(context) {
@@ -191,15 +190,6 @@ class ImplicitCastsConversion(context: NewJ2kConverterContext) : RecursiveApplic
         val lastArrayType = realParameterTypes.lastOrNull()?.arrayInnerType() ?: return realParameterTypes
         return realParameterTypes.subList(0, realParameterTypes.lastIndex) + lastArrayType
     }
-
-    private fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
-    private fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
-    private fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
-    private fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
-    private fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
-
-    private fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
-        this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
 }
 
 private val compoundAssignmentMap: Map<JKOperatorToken, JKOperatorToken> = mapOf(

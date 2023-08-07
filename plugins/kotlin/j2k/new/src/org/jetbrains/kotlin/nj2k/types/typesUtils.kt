@@ -164,11 +164,19 @@ fun JKType.asPrimitiveType(): JKJavaPrimitiveType? =
         else -> null
     }
 
-fun JKJavaPrimitiveType.isNumberType() =
+internal fun JKJavaPrimitiveType.isNumberType() =
     this == JKJavaPrimitiveType.INT ||
             this == JKJavaPrimitiveType.LONG ||
             this == JKJavaPrimitiveType.FLOAT ||
             this == JKJavaPrimitiveType.DOUBLE
+
+internal fun JKJavaPrimitiveType.isBoolean() = jvmPrimitiveType == JvmPrimitiveType.BOOLEAN
+internal fun JKJavaPrimitiveType.isChar() = jvmPrimitiveType == JvmPrimitiveType.CHAR
+internal fun JKJavaPrimitiveType.isLong() = jvmPrimitiveType == JvmPrimitiveType.LONG
+internal fun JKJavaPrimitiveType.isByte(): Boolean = this == JKJavaPrimitiveType.BYTE
+internal fun JKJavaPrimitiveType.isShort(): Boolean = this == JKJavaPrimitiveType.SHORT
+internal fun JKJavaPrimitiveType.isFloatingPoint(): Boolean =
+    this == JKJavaPrimitiveType.FLOAT || this == JKJavaPrimitiveType.DOUBLE
 
 fun JKJavaPrimitiveType.kotlinName() =
     jvmPrimitiveType.javaKeywordName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.US) else it.toString() }
