@@ -140,6 +140,9 @@ sealed class GitExecutable {
         options.isExecuteCommandInShell = false
         options.isPassEnvVarsUsingInterop = true
       }
+      else {
+        options.isExecuteCommandInLoginShell = Registry.`is`("git.wsl.exe.executable.login.shell")
+      }
       distribution.patchCommandLine(commandLine, project, options)
     }
   }
