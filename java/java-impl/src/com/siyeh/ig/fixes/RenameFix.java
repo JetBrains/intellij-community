@@ -80,7 +80,7 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
 
   @NotNull
   @Override
-  public RefactoringActionHandler getHandler(DataContext context) {
+  public RefactoringActionHandler getHandler(@NotNull DataContext context) {
     RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
     return renameHandler != null ? renameHandler : getHandler();
   }

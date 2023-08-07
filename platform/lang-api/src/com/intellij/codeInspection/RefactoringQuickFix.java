@@ -33,7 +33,7 @@ public interface RefactoringQuickFix extends LocalQuickFix {
    * Override if preferred handler can be chosen based on context
    */
   @NotNull
-  default RefactoringActionHandler getHandler(DataContext context) {
+  default RefactoringActionHandler getHandler(@NotNull DataContext context) {
     return getHandler();
   }
 
