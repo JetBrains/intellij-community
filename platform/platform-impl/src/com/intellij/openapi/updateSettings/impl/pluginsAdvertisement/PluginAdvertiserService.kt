@@ -324,7 +324,7 @@ open class PluginAdvertiserServiceImpl(
         NotificationAction.createSimpleExpiring(IdeBundle.message("plugins.advertiser.action.configure.plugins")) {
           FUSEventSource.NOTIFICATION.logConfigurePlugins(project)
 
-          PluginManagerConfigurable.showSuggestedPlugins(project)
+          PluginManagerConfigurable.showSuggestedPlugins(project, FUSEventSource.NOTIFICATION)
         }
       }
       else {
