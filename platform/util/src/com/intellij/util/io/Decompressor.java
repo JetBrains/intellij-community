@@ -62,7 +62,10 @@ public abstract class Decompressor {
     @Override
     protected Entry nextEntry() throws IOException {
       TarArchiveEntry te;
-      while ((te = myStream.getNextTarEntry()) != null && !(te.isFile() || te.isDirectory() || te.isSymbolicLink())) /* skipping unsupported */;
+      while ((te = myStream.getNextTarEntry()) != null &&
+             !((te.isFile() && !te.isLink()) // ignore hardlink
+               || te.isDirectory()
+               || te.isSymbolicLink())) /* skipping unsupported */;
       if (te == null) return null;
       if (!SystemInfo.isWindows) return new Entry(te.getName(), type(te), te.getMode(), te.getLinkName(), te.getSize());
       // UNIX permissions are ignored on Windows
