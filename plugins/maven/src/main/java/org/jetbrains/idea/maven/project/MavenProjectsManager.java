@@ -70,8 +70,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.jetbrains.idea.maven.project.MavenHomeKt.staticOrBundled;
-
 @State(name = "MavenProjectsManager")
 public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
   implements PersistentStateComponent<MavenProjectsManagerState>, SettingsSavingComponentJavaAdapter, Disposable, MavenAsyncProjectsManager {
@@ -249,22 +247,26 @@ public abstract class MavenProjectsManager extends MavenSimpleProjectComponent
       listenForProjectsTreeChanges();
       registerSyncConsoleListener();
       updateTabTitles();
+      if (isNew) {
+        doActivate();
+      }
     }
     finally {
       initLock.unlock();
     }
   }
 
-  protected void onProjectStartup() {
+  private void doActivate() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!isInitialized()) {
-        tryInit();
-      }
-      if (isInitialized()) {
-        MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
-        fireActivated();
-        listenForExternalChanges();
-      }
+      MavenIndicesManager.getInstance(myProject).scheduleUpdateIndicesList(null);
+      fireActivated();
+      listenForExternalChanges();
+    }
+  }
+
+  protected void onProjectStartup() {
+    if (isInitialized()) {
+      doActivate();
     }
   }
 
