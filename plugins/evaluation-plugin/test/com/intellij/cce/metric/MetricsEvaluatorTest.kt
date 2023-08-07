@@ -137,7 +137,8 @@ class MetricsEvaluatorTest {
             expected,
             "",
             suggestions.map { Suggestion(it, "", SuggestionSource.STANDARD)},
-            0
+            0,
+            comparator = { generated, expected_ -> !(generated.isEmpty() || !expected_.startsWith(generated))}
           )
         )
       )
@@ -145,7 +146,8 @@ class MetricsEvaluatorTest {
   }
 
   private fun createLookup(expected: Int?, total: Int): Lookup =
-    Lookup.fromExpectedText(EXPECTED, "", createSuggestions(total, expected), 0)
+    Lookup.fromExpectedText(EXPECTED, "", createSuggestions(total, expected), 0,
+                            comparator = { generated, expected_ -> !(generated.isEmpty() || !expected_.startsWith(generated))})
 
   private fun createSuggestions(total: Int, expected: Int?): List<Suggestion> =
     (0 until total).map {

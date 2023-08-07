@@ -27,20 +27,7 @@ data class Lookup(
       selectedPosition = calculateSelectedPosition(suggestions),
       isNew = isNew
       )
-  //val selectedPosition: Int
-  //  get() {
-  //    val maxLength = suggestions.filter { it.isRelevant }.maxOfOrNull { it.text.length }
-  //    return suggestions.indexOfFirst { it.isRelevant && it.text.length == maxLength }
-  //      .let { if (it < 0) -1 else it }
-  //  }
-  //
-  //fun filterSuggestions(f: (Suggestion) -> Boolean) {
-  //  suggestions = suggestions.filter { f(it) }
-  //}
-  //
-  //fun takeTopNSuggestions(n: Int) {
-  //  suggestions = suggestions.take(n)
-  //}
+
   fun clearFeatures() {
     features = null
   }
@@ -59,11 +46,9 @@ data class Lookup(
       latency: Long,
       features: Features? = null,
       isNew: Boolean = false,
-      caretPosition: Int = 0
+      caretPosition: Int = 0,
+      comparator: (String, String) -> Boolean
     ): Lookup {
-      fun comparator(generated: String, expected: String): Boolean {
-        return !(generated.isEmpty() || !expected.startsWith(generated))
-      }
       suggestions.forEach { it.isRelevant = comparator(it.text, expectedText.substring(caretPosition - prefix.length)) }
 
       return Lookup(

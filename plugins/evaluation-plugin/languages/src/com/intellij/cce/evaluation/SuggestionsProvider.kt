@@ -9,7 +9,8 @@ import com.intellij.openapi.project.Project
 
 interface SuggestionsProvider {
   val name: String
-  fun getSuggestions(expectedText: String, editor: Editor, language: Language): Lookup
+  fun getSuggestions(expectedText: String, editor: Editor, language: Language,
+                     comparator: (String, String) -> Boolean): Lookup
 
   companion object {
     private val EP_NAME = ExtensionPointName.create<SuggestionsProvider>("com.intellij.cce.suggestionsProvider")
