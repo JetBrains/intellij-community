@@ -264,11 +264,20 @@ public final class IdeaTestUtil {
     Assert.assertNotNull(sdk);
     String oldVersionString = sdk.getVersionString();
 
-    // hack
-    ((SdkModificator)sdk).setVersionString(testVersion.getDescription());
+    setSdkVersion(sdk, testVersion.getDescription());
 
     Assert.assertSame(testVersion, JavaSdk.getInstance().getVersion(sdk));
-    Disposer.register(parentDisposable, () -> ((SdkModificator)sdk).setVersionString(oldVersionString));
+    Disposer.register(parentDisposable, () -> {
+      setSdkVersion(sdk, oldVersionString);
+    });
+  }
+
+  private static void setSdkVersion(@NotNull Sdk sdk, @Nullable String sdkVersion) {
+    SdkModificator sdkModificator = sdk.getSdkModificator();
+    sdkModificator.setVersionString(sdkVersion);
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
   }
 
   public static @NotNull String requireRealJdkHome() {
