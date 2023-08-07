@@ -14,13 +14,9 @@ import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 
 /**
- * Provides basic functionality for extended completion.
- *
- * Extended code completion is actually a basic code completion that shows the names of classes, functions, modules and variables.
- *
- * To provide variants for extended completion override [doFillCompletionVariants]
+ * Provides basic functionality for providing completion variants that should add an import statement or be expanded into a qualified name.
  */
-abstract class PyExtendedCompletionContributor : CompletionContributor(), DumbAware {
+abstract class PyImportableNameCompletionContributor : CompletionContributor(), DumbAware {
 
   protected val importingInsertHandler: InsertHandler<LookupElement> = InsertHandler { context, item ->
     addImportForLookupElement(context, item, context.tailOffset - 1)
@@ -70,10 +66,6 @@ abstract class PyExtendedCompletionContributor : CompletionContributor(), DumbAw
   protected abstract fun doFillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet)
 
   private fun shouldDoCompletion(parameters: CompletionParameters, result: CompletionResultSet): Boolean {
-    if (!parameters.isExtendedCompletion) {
-      return false
-    }
-
     if (result.prefixMatcher.prefix.isEmpty()) {
       result.restartCompletionOnPrefixChange(StandardPatterns.string().longerThan(0))
       return false

@@ -1,6 +1,6 @@
 from module import (
     Foo,
-    Bar,
+    UniqueBar,
 )
 
-print(Foo(), Bar)
+print(Foo(), UniqueBar)

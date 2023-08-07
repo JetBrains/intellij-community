@@ -1984,7 +1984,7 @@ def foo(param: str | int) -> TypeGuard[str]:
 
   // PY-55044
   public void testTypedDictKwargsArgument() {
-    doTestByText("""
+    doTestByText("""  
                    from typing import TypedDict, Unpack
                    
                    class Movie(TypedDict):

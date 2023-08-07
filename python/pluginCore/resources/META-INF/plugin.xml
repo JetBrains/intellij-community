@@ -361,6 +361,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <editorSmartKeysConfigurable instance="com.jetbrains.python.codeInsight.PySmartKeysOptions" id="editor.preferences.pyOptions"
                                  bundle="messages.PyBundle"
                                  key="configurable.PySmartKeysOptions.display.name"/>
+    <codeCompletionConfigurable instance="com.jetbrains.python.codeInsight.completion.PythonCodeCompletionConfigurable"/>
 
 
     <psi.referenceContributor implementation="com.jetbrains.python.codeInsight.PyConsoleFileReferenceContributor" language="Python"

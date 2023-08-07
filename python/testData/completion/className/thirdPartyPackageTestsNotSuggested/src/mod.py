@@ -1,2 +1,2 @@
-def func():
+def test_func():
     pass

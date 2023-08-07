@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
@@ -19,10 +20,7 @@ import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
@@ -241,9 +239,11 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   }
 
   public void testStarImport() {
-    myFixture.configureByFiles("starImport/starImport.py", "starImport/importSource.py");
-    myFixture.completeBasic();
-    assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
+    runWithImportableNamesInBasicCompletionDisabled(() -> {
+      myFixture.configureByFiles("starImport/starImport.py", "starImport/importSource.py");
+      myFixture.completeBasic();
+      assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
+    });
   }
 
   // PY-1211, PY-29232
@@ -1678,10 +1678,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-8302
   public void testBeforeImport() {
-    myFixture.configureByFiles("beforeImport/beforeImport.py", "beforeImport/source.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertDoesntContain(suggested, "my_foo", "my_bar");
+    runWithImportableNamesInBasicCompletionDisabled(() -> {
+      myFixture.configureByFiles("beforeImport/beforeImport.py", "beforeImport/source.py");
+      myFixture.completeBasic();
+      List<String> suggested = myFixture.getLookupElementStrings();
+      assertDoesntContain(suggested, "my_foo", "my_bar");
+    });
   }
 
   // PY-8302
@@ -1694,10 +1696,12 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
 
   // PY-8302
   public void testBeforeStarImport() {
-    myFixture.configureByFiles("beforeImport/beforeStarImport.py", "beforeImport/source.py");
-    myFixture.completeBasic();
-    List<String> suggested = myFixture.getLookupElementStrings();
-    assertDoesntContain(suggested, "my_foo", "my_bar");
+    runWithImportableNamesInBasicCompletionDisabled(() -> {
+      myFixture.configureByFiles("beforeImport/beforeStarImport.py", "beforeImport/source.py");
+      myFixture.completeBasic();
+      List<String> suggested = myFixture.getLookupElementStrings();
+      assertDoesntContain(suggested, "my_foo", "my_bar");
+    });
   }
 
   // PY-8302
@@ -2165,6 +2169,101 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
         assertContainsElements(lookupStrings, "foo", "bar", "baz");
       });
     });
+  }
+
+  // PY-62208
+  public void testImportableNamesNotSuggestedImmediatelyInsideClassBody() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testImportableNamesSuggestedInsideOtherStatementsInsideClassBody() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testImportableNamesNotSuggestedImmediatelyInsideMatchStatement() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsAndVariablesNotSuggestedInsideTypeHints() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsFromTypingSuggestedInsideTypeHints() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableVariablesFromTypingSuggestedInsideTypeHints() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-62208
+  public void testImportableFunctionsAndVariablesNotSuggestedInsidePatterns() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("a.py");
+      myFixture.complete(CompletionType.BASIC, 1);
+      List<String> variants = myFixture.getLookupElementStrings();
+      // TODO Use regular doMultiFileTest once PY-73173 is fixed
+      assertDoesntContain(variants, "unique_var", "unique_func");
+      assertContainsElements(variants, "unique_class");
+    });
+  }
+
+  // PY-62208
+  public void testNotReExportedNamesFromPrivateModulesNotSuggested() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testReExportedNamesFromPrivateModulesAreSuggested() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testAlreadyImportedNamesNotSuggestedTwice() {
+    doMultiFileTest();
+  }
+
+  // PY-62208
+  public void testAlreadyImportedNamesNotSuggestedTwiceInsidePatterns() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      myFixture.configureByFile("a.py");
+      myFixture.complete(CompletionType.BASIC, 1);
+      List<String> variants = myFixture.getLookupElementStrings();
+      // TODO Use regular doMultiFileTest once PY-73173 is fixed
+      assertEquals(1, Collections.frequency(variants, "MyClass"));
+    });
+  }
+
+  // PY-62208
+  public void testTooCommonImportableNamesNotSuggested() {
+    doMultiFileTest();
+  }
+
+  private static void runWithImportableNamesInBasicCompletionDisabled(@NotNull Runnable action) {
+    PyCodeInsightSettings settings = PyCodeInsightSettings.getInstance();
+    boolean old = settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION;
+    settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = false;
+    try {
+      action.run();
+    }
+    finally {
+      settings.INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = old;
+    }
   }
 
   @Override
