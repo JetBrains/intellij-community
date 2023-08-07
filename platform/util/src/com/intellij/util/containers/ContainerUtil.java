@@ -899,21 +899,21 @@ public final class ContainerUtil {
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(T @NotNull [] collection,
-                                                            @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
+                                                            @NotNull Function<? super T, ? extends @Nullable Pair<? extends K, ? extends V>> mapper) {
     return map2MapNotNull(Arrays.asList(collection), mapper);
   }
 
   @Contract(pure = true)
   public static @NotNull <T, K, V> Map<K, V> map2MapNotNull(@NotNull Collection<? extends T> collection,
-                                                            @NotNull Function<? super T, ? extends Pair<? extends K, ? extends V>> mapper) {
-    Map<K, V> set = new HashMap<>(collection.size());
+                                                            @NotNull Function<? super T, ? extends @Nullable Pair<? extends K, ? extends V>> mapper) {
+    Map<K, V> result = new HashMap<>(collection.size());
     for (T t : collection) {
       Pair<? extends K, ? extends V> pair = mapper.fun(t);
       if (pair != null) {
-        set.put(pair.first, pair.second);
+        result.put(pair.first, pair.second);
       }
     }
-    return set;
+    return result;
   }
 
   @Contract(pure = true)
@@ -1956,7 +1956,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<@NotNull V> mapNotNull(T @NotNull [] array,
-                                                            @NotNull Function<? super T, ? extends @Nullable V> mapping) {
+                                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     if (array.length == 0) {
       return emptyList();
     }
@@ -2002,7 +2002,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Iterable<? extends T> iterable,
-                                                            @NotNull Function<? super T, ? extends @Nullable V> mapping) {
+                                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     List<V> result = new ArrayList<>();
     for (T t : iterable) {
       V o = mapping.fun(t);
@@ -2020,7 +2020,7 @@ public final class ContainerUtil {
    */
   @Contract(pure = true)
   public static @Unmodifiable @NotNull <T, V> List<@NotNull V> mapNotNull(@NotNull Collection<? extends T> collection,
-                                                            @NotNull Function<? super T, ? extends @Nullable V> mapping) {
+                                                                          @NotNull Function<? super T, ? extends @Nullable V> mapping) {
     if (collection.isEmpty()) {
       return emptyList();
     }
@@ -2724,7 +2724,7 @@ public final class ContainerUtil {
    * @return read-only set consisting of not null results of {@code mapper.fun} for each element in {@code collection}
    */
   @Contract(pure = true)
-  public static @Unmodifiable @NotNull <T, V> Set<V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
+  public static @Unmodifiable @NotNull <T, V> Set<@NotNull V> map2SetNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<? super T, ? extends V> mapper) {
     if (collection.isEmpty()) return Collections.emptySet();
     Set <V> set = new HashSet<>(collection.size());
     for (T t : collection) {
