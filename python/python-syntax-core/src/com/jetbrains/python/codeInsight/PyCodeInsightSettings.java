@@ -35,6 +35,7 @@ public class PyCodeInsightSettings implements PersistentStateComponent<PyCodeIns
   public boolean INSERT_TYPE_DOCSTUB;
 
   public boolean PARENTHESISE_ON_ENTER = true;
+  public boolean INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION = true;
 
   @Override
   public PyCodeInsightSettings getState() {

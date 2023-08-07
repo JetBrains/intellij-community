@@ -7,135 +7,234 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.StubIndex;
-import com.intellij.psi.stubs.StubIndexKey;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
-import com.jetbrains.python.psi.stubs.PyClassNameIndex;
-import com.jetbrains.python.psi.stubs.PyFunctionNameIndex;
-import com.jetbrains.python.psi.stubs.PyVariableNameIndex;
+import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
+import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.pyi.PyiFileType;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.function.Function;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * Adds completion variants for Python classes, functions and variables.
  */
-public final class PyClassNameCompletionContributor extends PyExtendedCompletionContributor {
+public final class PyClassNameCompletionContributor extends PyImportableNameCompletionContributor {
+  // See https://plugins.jetbrains.com/plugin/18465-sputnik
+  private static final boolean TRACING_WITH_SPUTNIK_ENABLED = false;
+  private static final Logger LOG = Logger.getInstance(PyClassNameCompletionContributor.class);
+  private static final Set<String> TOO_COMMON_NAMES = Set.of("main", "test");
+
+  public PyClassNameCompletionContributor() {
+    if (TRACING_WITH_SPUTNIK_ENABLED) {
+      //noinspection UseOfSystemOutOrSystemErr
+      System.out.println("\01hr('Importable names completion')");
+    }
+  }
 
   @Override
   protected void doFillCompletionVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    final PsiFile originalFile = parameters.getOriginalFile();
-    final PsiElement element = parameters.getPosition();
-    final PsiElement parent = element.getParent();
-    final ScopeOwner originalScope = ScopeUtil.getScopeOwner(parameters.getOriginalPosition());
-    final Condition<PsiElement> fromAnotherScope = e -> ScopeUtil.getScopeOwner(e) != originalScope;
+    if (!PyCodeInsightSettings.getInstance().INCLUDE_IMPORTABLE_NAMES_IN_BASIC_COMPLETION && !parameters.isExtendedCompletion()) {
+      return;
+    }
+    PsiFile originalFile = parameters.getOriginalFile();
+    PsiElement position = parameters.getPosition();
+    PyReferenceExpression refExpr = as(position.getParent(), PyReferenceExpression.class);
+    PyTargetExpression targetExpr = as(position.getParent(), PyTargetExpression.class);
+    boolean insideUnqualifiedReference = refExpr != null && !refExpr.isQualified();
+    boolean insidePattern = targetExpr != null && position.getParent().getParent() instanceof PyCapturePattern;
+    boolean insideStringLiteralInExtendedCompletion = position instanceof PyStringElement && parameters.isExtendedCompletion();
+    if (!(insideUnqualifiedReference || insidePattern || insideStringLiteralInExtendedCompletion)) {
+      return;
+    }
 
-    addVariantsFromIndex(result,
-                         originalFile,
-                         PyClassNameIndex.KEY,
-                         parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
-                         // TODO: implement autocompletion for inner classes
-                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
-                         PyClass.class,
-                         createClassElementHandler(originalFile));
+    // Directly inside the class body scope, it's rarely needed to have expression statements
+    // TODO apply the same logic for completion of importable module and package names
+    if (refExpr != null &&
+        (isDirectlyInsideClassBody(refExpr) || isInsideErrorElement(refExpr))) {
+      return;
+    }
+    // TODO Use another method to collect already visible names
+    // Candidates: PyExtractMethodValidator, IntroduceValidator.isDefinedInScope
+    PsiReference refUnderCaret = refExpr != null ? refExpr.getReference() :
+                                 targetExpr != null ? targetExpr.getReference() :
+                                 null;
+    Set<String> namesInScope = refUnderCaret == null ? Collections.emptySet() : StreamEx.of(refUnderCaret.getVariants())
+      .select(LookupElement.class)
+      .map(LookupElement::getLookupString)
+      .toSet();
+    Project project = originalFile.getProject();
+    TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(project, originalFile);
+    int maxVariants = Registry.intValue("ide.completion.variant.limit");
+    Counters counters = new Counters();
+    StubIndex stubIndex = StubIndex.getInstance();
+    TimeoutUtil.run(() -> {
+      GlobalSearchScope scope = createScope(originalFile);
+      Set<QualifiedName> alreadySuggested = new HashSet<>();
+      StubIndex.getInstance().processAllKeys(PyExportedModuleAttributeIndex.KEY, elementName -> {
+        ProgressManager.checkCanceled();
+        counters.scannedNames++;
+        if (TOO_COMMON_NAMES.contains(elementName)) return true;
+        if (!result.getPrefixMatcher().isStartMatch(elementName)) return true;
+        return stubIndex.processElements(PyExportedModuleAttributeIndex.KEY, elementName, project, scope, PyElement.class, exported -> {
+          ProgressManager.checkCanceled();
+          String name = exported.getName();
+          if (name == null || namesInScope.contains(name)) return true;
+          QualifiedName fqn = getFullyQualifiedName(exported);
+          if (!isApplicableInInsertionContext(exported, fqn, position, typeEvalContext)) {
+            counters.notApplicableInContext++;
+            return true;
+          }
+          if (alreadySuggested.add(fqn)) {
+            if (isPrivateDefinition(fqn, exported, originalFile)) {
+              counters.privateNames++;
+              return true;
+            }
+            LookupElementBuilder lookupElement = LookupElementBuilder
+              .createWithSmartPointer(name, exported)
+              .withIcon(exported.getIcon(0))
+              .withExpensiveRenderer(new LookupElementRenderer<>() {
+                @Override
+                public void renderElement(LookupElement element, LookupElementPresentation presentation) {
+                  presentation.setItemText(element.getLookupString());
+                  presentation.setIcon(exported.getIcon(0));
+                  QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(exported, originalFile);
+                  if (importPath == null) return;
+                  presentation.setTypeText(importPath.toString());
+                }
+              })
+              .withInsertHandler(getInsertHandler(exported, position));
+            result.addElement(PrioritizedLookupElement.withPriority(lookupElement, PythonCompletionWeigher.NOT_IMPORTED_MODULE_WEIGHT));
+            counters.totalVariants++;
+            if (counters.totalVariants >= maxVariants) return false;
+          }
+          return true;
+        });
+      }, scope);
+    }, duration -> {
+      LOG.debug(counters + " computed in " + duration + " ms");
+      if (TRACING_WITH_SPUTNIK_ENABLED) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("\1h('Importable names completion','%d')".formatted((duration / 10) * 10));
+      }
+    });
+  }
 
-    addVariantsFromIndex(result,
-                         originalFile,
-                         PyFunctionNameIndex.KEY,
-                         getFunctionInsertHandler(parent),
-                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
-                         PyFunction.class,
-                         Function.identity());
+  private static boolean isApplicableInInsertionContext(@NotNull PyElement definition,
+                                                        @NotNull QualifiedName fqn, @NotNull PsiElement position,
+                                                        @NotNull TypeEvalContext context) {
+    if (PyTypingTypeProvider.isInsideTypeHint(position, context)) {
+      // Not all names from typing.py are defined as classes
+      return definition instanceof PyClass || ArrayUtil.contains(fqn.getFirstComponent(), "typing", "typing_extensions");
+    }
+    if (PsiTreeUtil.getParentOfType(position, PyPattern.class, false) != null) {
+      return definition instanceof PyClass;
+    }
+    return true;
+  }
 
-    addVariantsFromIndex(result,
-                         originalFile,
-                         PyVariableNameIndex.KEY,
-                         parent instanceof PyStringLiteralExpression ? getStringLiteralInsertHandler() : getImportingInsertHandler(),
-                         Conditions.and(fromAnotherScope, PyUtil::isTopLevel),
-                         PyTargetExpression.class,
-                         Function.identity());
+  private static boolean isInsideErrorElement(@NotNull PyReferenceExpression referenceExpression) {
+    return PsiTreeUtil.getParentOfType(referenceExpression, PsiErrorElement.class) != null;
+  }
+
+  private static boolean isDirectlyInsideClassBody(@NotNull PyReferenceExpression referenceExpression) {
+    return referenceExpression.getParent() instanceof PyExpressionStatement statement &&
+           ScopeUtil.getScopeOwner(statement) instanceof PyClass;
+  }
+
+  private static @NotNull QualifiedName getFullyQualifiedName(@NotNull PyElement exported) {
+    String shortName = StringUtil.notNullize(exported.getName());
+    String qualifiedName = exported instanceof PyQualifiedNameOwner qNameOwner ? qNameOwner.getQualifiedName() : null;
+    return QualifiedName.fromDottedString(qualifiedName != null ? qualifiedName : shortName);
+  }
+
+  private static boolean isPrivateDefinition(@NotNull QualifiedName fqn, @NotNull PyElement exported, PsiFile originalFile) {
+    if (containsPrivateComponents(fqn)) {
+      QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(exported, originalFile);
+      return importPath != null && containsPrivateComponents(importPath);
+    }
+    return false;
+  }
+
+  private static boolean containsPrivateComponents(@NotNull QualifiedName fqn) {
+    return ContainerUtil.exists(fqn.getComponents(), c -> c.startsWith("_"));
   }
 
   @NotNull
-  private static Function<LookupElement, LookupElement> createClassElementHandler(@NotNull PsiFile file) {
-    final PyFile pyFile = PyUtil.as(file, PyFile.class);
-    if (pyFile == null) return Function.identity();
+  private static GlobalSearchScope createScope(@NotNull PsiFile originalFile) {
+    class HavingLegalImportPathScope extends QualifiedNameFinder.QualifiedNameBasedScope {
+      private HavingLegalImportPathScope(@NotNull Project project) {
+        super(project);
+      }
 
-    final Set<QualifiedName> sourceQNames =
-      ContainerUtil.map2SetNotNull(pyFile.getFromImports(), PyFromImportStatement::getImportSourceQName);
+      @Override
+      protected boolean containsQualifiedNameInRoot(@NotNull VirtualFile root, @NotNull QualifiedName qName) {
+        return ContainerUtil.all(qName.getComponents(), PyNames::isIdentifier) && !qName.equals(QualifiedName.fromComponents("__future__"));
+      }
+    }
 
-    return le -> {
-      final PyClass cls = PyUtil.as(le.getPsiElement(), PyClass.class);
-      if (cls == null) return le;
-
-      final String clsQName = cls.getQualifiedName();
-      if (clsQName == null) return le;
-
-      if (!sourceQNames.contains(QualifiedName.fromDottedString(clsQName).removeLastComponent())) return le;
-
-      return PrioritizedLookupElement.withPriority(le, PythonCompletionWeigher.PRIORITY_WEIGHT);
-    };
+    Project project = originalFile.getProject();
+    var pyiStubsScope = GlobalSearchScope.getScopeRestrictedByFileTypes(GlobalSearchScope.everythingScope(project), PyiFileType.INSTANCE);
+    return PySearchUtilBase.defaultSuggestionScope(originalFile)
+      .intersectWith(GlobalSearchScope.notScope(pyiStubsScope))
+      .intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(originalFile)))
+      .intersectWith(new HavingLegalImportPathScope(project));
   }
 
-  private InsertHandler<LookupElement> getFunctionInsertHandler(PsiElement parent) {
-    if (parent instanceof PyStringLiteralExpression) {
+  private @NotNull InsertHandler<LookupElement> getInsertHandler(@NotNull PyElement exported,
+                                                                 @NotNull PsiElement position) {
+    if (position.getParent() instanceof PyStringLiteralExpression) {
       return getStringLiteralInsertHandler();
     }
-    if (parent.getParent() instanceof PyDecorator) {
-      return getImportingInsertHandler();
+    else if (exported instanceof PyFunction && !(position.getParent().getParent() instanceof PyDecorator)) {
+      return getFunctionInsertHandler();
     }
-    return getFunctionInsertHandler();
+    return getImportingInsertHandler();
   }
 
-  private static <T extends PsiNamedElement> void addVariantsFromIndex(@NotNull CompletionResultSet resultSet,
-                                                                       @NotNull PsiFile targetFile,
-                                                                       @NotNull StubIndexKey<String, T> indexKey,
-                                                                       @NotNull InsertHandler<LookupElement> insertHandler,
-                                                                       @NotNull Condition<? super T> condition,
-                                                                       @NotNull Class<T> elementClass,
-                                                                       @NotNull Function<LookupElement, LookupElement> elementHandler) {
-    final Project project = targetFile.getProject();
-    final GlobalSearchScope scope = PySearchUtilBase.defaultSuggestionScope(targetFile);
-    final Set<String> alreadySuggested = new HashSet<>();
+  private static class Counters {
+    int scannedNames;
+    int privateNames;
+    int totalVariants;
+    int notApplicableInContext;
 
-    StubIndex stubIndex = StubIndex.getInstance();
-    final Collection<String> allKeys = stubIndex.getAllKeys(indexKey, project);
-    for (String elementName : resultSet.getPrefixMatcher().sortMatching(allKeys)) {
-      stubIndex.processElements(indexKey, elementName, project, scope, elementClass, (element) -> {
-        ProgressManager.checkCanceled();
-        if (!condition.value(element)) return true;
-        String name = element.getName();
-        if (name == null) return true;
-        QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(element, targetFile);
-        if (importPath == null) return true;
-        String qualifiedName = importPath + "." + name;
-        if (alreadySuggested.add(qualifiedName)) {
-          LookupElementBuilder lookupElement = LookupElementBuilder
-            .createWithSmartPointer(name, element)
-            .withIcon(element.getIcon(0))
-            .withTailText(" (" + importPath + ")", true)
-            .withInsertHandler(insertHandler);
-          resultSet.addElement(elementHandler.apply(lookupElement));
-        }
-        return true;
-      });
+    @Override
+    public String toString() {
+      return "Counters{" +
+             "scannedNames=" + scannedNames +
+             ", privateNames=" + privateNames +
+             ", totalVariants=" + totalVariants +
+             ", notApplicableInContext=" + notApplicableInContext +
+             '}';
     }
   }
 }

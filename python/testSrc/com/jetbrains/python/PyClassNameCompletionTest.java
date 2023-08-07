@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -124,11 +123,6 @@ public class PyClassNameCompletionTest extends PyTestCase {
   }
 
   // PY-20976
-  public void testOrderingUnderscoreInPath() {
-    doTestCompletionOrder("b.foo", "_a.foo");
-  }
-
-  // PY-20976
   public void testOrderingSymbolBeforeModule() {
     doTestCompletionOrder("b.foo", "a.foo");
   }
@@ -153,13 +147,8 @@ public class PyClassNameCompletionTest extends PyTestCase {
     runWithAdditionalFileInLibDir(
       "sys.py",
       "path = 10",
-      (__) -> doTestCompletionOrder("combinedOrdering.path", "first.foo.path", "sys.path", "_second.bar.path")
+      (__) -> doTestCompletionOrder("combinedOrdering.path1", "first.foo.path", "sys.path")
     );
-  }
-
-  // PY-20976
-  public void testOrderingUnderscoreInName() {
-    doTestCompletionOrder("c.foo", "b._foo", "a.__foo__");
   }
 
   // PY-44586
@@ -167,7 +156,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
     doExtendedCompletion();
     List<String> allVariants = myFixture.getLookupElementStrings();
     assertNotNull(allVariants);
-    assertEquals(1, Collections.frequency(allVariants, "my_func"));
+    assertEquals(1, Collections.frequency(allVariants, "func"));
   }
 
   // PY-45541
@@ -176,12 +165,12 @@ public class PyClassNameCompletionTest extends PyTestCase {
     LookupElement reexportedFunc = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("my_func"));
     assertNotNull(reexportedFunc);
     TestLookupElementPresentation funcPresentation = TestLookupElementPresentation.renderReal(reexportedFunc);
-    assertEquals(" (pkg)", funcPresentation.getTailText());
+    assertEquals("pkg", funcPresentation.getTypeText());
 
     LookupElement notExportedVar = ContainerUtil.find(lookupElements, variant -> variant.getLookupString().equals("my_var"));
     assertNotNull(notExportedVar);
     TestLookupElementPresentation varPresentation = TestLookupElementPresentation.renderReal(notExportedVar);
-    assertEquals(" (pkg.mod)", varPresentation.getTailText());
+    assertEquals("pkg.mod", varPresentation.getTypeText());
   }
 
   // PY-45566
@@ -208,7 +197,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
       assertNotNull(variants);
       List<String> variantQNames = ContainerUtil.mapNotNull(variants, PyClassNameCompletionTest::getElementQualifiedName);
       assertDoesntContain(variantQNames, "mypkg.test.test_mod.test_func");
-      assertContainsElements(variantQNames, "mod.func", "tests.test_func", "mypkg.mod.func");
+      assertContainsElements(variantQNames, "mod.test_func", "tests.test_func", "mypkg.mod.test_func");
     });
   }
 
