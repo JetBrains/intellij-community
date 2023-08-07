@@ -246,7 +246,7 @@ private class SvgIconData(private val file: Path, iconSize: Int = unscaledProjec
     return JBImageIcon(loadWithSizes(sizes = listOf(iconSize), data = Files.readAllBytes(file), scale = pixScale).first())
   }
 
-  override fun toString() = file.toString()
+  override fun toString() = "SvgIconData(file=$file, iconSize=$iconSize)"
 }
 
 private class PngIconData(private val sourceImage: BufferedImage, iconSize: Int = unscaledProjectIconSize()) : IconData(iconSize) {
