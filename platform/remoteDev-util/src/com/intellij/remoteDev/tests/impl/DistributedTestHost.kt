@@ -41,6 +41,8 @@ import java.awt.Window
 import java.awt.image.BufferedImage
 import java.io.File
 import java.net.InetAddress
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import javax.imageio.ImageIO
 import kotlin.reflect.full.createInstance
 import kotlin.time.Duration.Companion.milliseconds
@@ -49,9 +51,6 @@ import kotlin.time.Duration.Companion.milliseconds
 open class DistributedTestHost(coroutineScope: CoroutineScope) {
   companion object {
     private val LOG = logger<DistributedTestHost>()
-
-    @Suppress("ConstPropertyName")
-    const val screenshotOnFailureFileName: String = "ScreenshotOnFailure"
 
     fun getDistributedTestPort(): Int? =
       System.getProperty(AgentConstants.protocolPortPropertyName)?.toIntOrNull()
@@ -208,7 +207,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               val msg = "${session.agentInfo.id}: ${actionTitle.let { "'$it' " }.orEmpty()}hasn't finished successfully"
               LOG.warn(msg, ex)
               if (!app.isHeadlessEnvironment) {
-                makeScreenshot("${actionTitle}_$screenshotOnFailureFileName")
+                makeScreenshot(actionTitle)
               }
               return RdTask.faulted(AssertionError(msg, ex))
             }
@@ -313,11 +312,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       error("Don't try making screenshots on application in headless mode.")
     }
 
+    val timeNow = LocalDateTime.now()
+    val buildStartTimeString = timeNow.format(DateTimeFormatter.ofPattern("HHmmss"))
+    val maxActionLength = 30
+
     fun screenshotFile(suffix: String? = null): File {
-      var fileName = actionName.replace("[^a-zA-Z.]".toRegex(), "_").replace("_+".toRegex(), "_")
+      var fileName =
+        actionName
+          .replace("[^a-zA-Z.]".toRegex(), "_")
+          .replace("_+".toRegex(), "_")
+          .take(maxActionLength)
+
       if (suffix != null) {
         fileName += suffix
       }
+
+      fileName += "_at_$buildStartTimeString"
+
       if (!fileName.endsWith(".png")) {
         fileName += ".png"
       }
