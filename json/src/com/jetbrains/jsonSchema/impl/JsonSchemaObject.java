@@ -71,6 +71,7 @@ public final class JsonSchemaObject {
 
   @Nullable private JsonSchemaType myType;
   @Nullable private Object myDefault;
+  @Nullable private Map<String, Object> myExample;
   @Nullable private String myRef;
   private boolean myRefIsRecursive;
   private boolean myIsRecursiveAnchor;
@@ -323,6 +324,7 @@ public final class JsonSchemaObject {
     myType = mergeTypes(myType, other.myType, other.myTypeVariants);
 
     if (other.myDefault != null) myDefault = other.myDefault;
+    if (other.myExample != null) myExample = other.myExample;
     if (other.myRef != null) myRef = other.myRef;
     if (other.myFormat != null) myFormat = other.myFormat;
     myTypeVariants = mergeTypeVariantSets(myTypeVariants, other.myTypeVariants);
@@ -829,6 +831,14 @@ public final class JsonSchemaObject {
 
   public void setDefault(@Nullable Object aDefault) {
     myDefault = aDefault;
+  }
+
+  public @Nullable Map<String, Object> getExample() {
+    return myExample;
+  }
+
+  public void setExample(@Nullable Map<String, Object> example) {
+    myExample = example;
   }
 
   @Nullable

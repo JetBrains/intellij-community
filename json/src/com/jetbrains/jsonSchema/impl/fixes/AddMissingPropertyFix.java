@@ -1,6 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl.fixes;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -10,10 +15,10 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
 import com.intellij.codeInspection.*;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -119,7 +124,7 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
         = ContainerUtil.reverse(new ArrayList<>(myData.myMissingPropertyIssues));
       for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
         Object defaultValueObject = issue.defaultValue;
-        String defaultValue = formatDefaultValue(defaultValueObject);
+        String defaultValue = formatDefaultValue(defaultValueObject, element.getLanguage());
         PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
                                                                                    ? myQuickFixAdapter
                                                                                      .getDefaultValueFromType(issue.propertyType)
@@ -152,9 +157,12 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
   }
 
   @Nullable
-  @Contract("null -> null")
-  public String formatDefaultValue(@Nullable Object defaultValueObject) {
-    if (defaultValueObject instanceof String) {
+  @Contract("null, _ -> null")
+  public String formatDefaultValue(@Nullable Object defaultValueObject, @NotNull Language targetLanguage) {
+    if (defaultValueObject instanceof JsonNode jsonNode) {
+      return convertToYamlIfNeeded(targetLanguage, jsonNode);
+    }
+    else if (defaultValueObject instanceof String) {
       return StringUtil.wrapWithDoubleQuote(defaultValueObject.toString());
     }
     else if (defaultValueObject instanceof Boolean) {
@@ -167,6 +175,29 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
       return ((PsiElement)defaultValueObject).getText();
     }
     return null;
+  }
+
+  @Nullable
+  private static String convertToYamlIfNeeded(@NotNull Language language, JsonNode jsonNode) {
+    JsonFactory jacksonFactory;
+    if (language.is(JsonLanguage.INSTANCE))
+      jacksonFactory = new JsonFactory();
+    else
+      jacksonFactory = new YAMLFactory();
+
+    try {
+      String exampleInTargetLanguage = new ObjectMapper(jacksonFactory)
+        .writerWithDefaultPrettyPrinter()
+        .writeValueAsString(jsonNode);
+      // Yaml parser seems to have no setting for disabling dashes at the beginning of a document
+      if (exampleInTargetLanguage.startsWith("---"))
+        return exampleInTargetLanguage.substring("---".length()).trim();
+      else
+        return exampleInTargetLanguage;
+    }
+    catch (JsonProcessingException e) {
+      return null;
+    }
   }
 
   @Override

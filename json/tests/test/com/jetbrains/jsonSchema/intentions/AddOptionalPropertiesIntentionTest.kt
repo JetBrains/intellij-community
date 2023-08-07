@@ -14,6 +14,7 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
       myFixture,
       """
         {
+          "${"$"}schema":"http://json-schema.org/draft-04/schema#", 
           "properties": {
             "a": {
               "type": "object",
@@ -33,6 +34,21 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
             },
             "e": {
               "type": "object"
+              "example": {
+                "f": {
+                  "g": 12345
+                }
+              },
+              "properties": {
+                "f": {
+                  "type": "object",
+                  "properties": {
+                    "g": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -116,5 +132,26 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
       }
     """.trimIndent())
     Assert.assertNull(myFixture.getAvailableIntention (AddOptionalPropertiesIntention().text))
+  }
+
+  fun `test add example from schema as default value`() {
+    doTest(
+      """
+        {
+          "e": {
+            <caret>
+          }
+        }
+      """.trimIndent(),
+      """
+        {
+          "e": {
+            "f": {
+              "g": 12345
+            }
+          }
+        }
+      """.trimIndent()
+    )
   }
 }

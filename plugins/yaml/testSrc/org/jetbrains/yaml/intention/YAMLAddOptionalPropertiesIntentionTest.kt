@@ -15,6 +15,7 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
       myFixture,
       """
         {
+          "${"$"}schema":"http://json-schema.org/draft-04/schema#", 
           "properties": {
             "aa": {
               "type": "object",
@@ -34,6 +35,21 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
             },
             "ee": {
               "type": "object"
+              "example": {
+                "ff": {
+                  "gg": 12345
+                }
+              },
+              "properties": {
+                "ff": {
+                  "type": "object",
+                  "properties": {
+                    "gg": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
             }
           }
         }
@@ -98,5 +114,20 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
       a<caret>a:
     """.trimIndent())
     Assert.assertNull(myFixture.getAvailableIntention(AddOptionalPropertiesIntention().text))
+  }
+
+  fun `test add example from schema as default value`() {
+    doTest(
+      """
+        ee:
+          some<caret>thing:
+      """.trimIndent(),
+      """
+        ee:
+          ff:
+            gg: 12345
+          something:
+      """.trimIndent()
+    )
   }
 }

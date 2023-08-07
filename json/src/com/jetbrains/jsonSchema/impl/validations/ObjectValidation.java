@@ -127,6 +127,10 @@ public class ObjectValidation implements JsonSchemaValidation {
     for (String req : requiredNames) {
       JsonSchemaObject propertySchema = resolvePropertySchema(schema, req);
       Object defaultValue = propertySchema == null ? null : propertySchema.getDefault();
+      if (defaultValue == null) {
+        var example = schema.getExample();
+        defaultValue = example == null ? null : example.get(req);
+      }
       Ref<Integer> enumCount = Ref.create(0);
 
       JsonSchemaType type = null;
