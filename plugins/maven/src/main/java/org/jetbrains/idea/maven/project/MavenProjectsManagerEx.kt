@@ -448,7 +448,6 @@ open class MavenProjectsManagerEx(project: Project) : MavenProjectsManager(proje
     if (e is CancellationException) {
       throw e
     }
-    if (myProject.isDisposed) return
     showServerException(e)
     if (ExceptionUtil.causedBy(e, BuildIssueException::class.java)) {
       MavenLog.LOG.info(e)
