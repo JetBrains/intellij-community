@@ -19,7 +19,8 @@ import com.intellij.openapi.project.waitForSmartMode
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.kotlin.config.KotlinFacetSettingsProvider
@@ -215,13 +216,10 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
      * It is guaranteed that the [runnable]s are executed in the same order as they are submitted.
      */
     internal fun runEventLogger(runnable: suspend KotlinOnboardingJ2KSessionService.() -> Unit) {
-        coroutineScope.launch(start = CoroutineStart.UNDISPATCHED) {
+        coroutineScope.launch {
             // This (almost) ensures that we have a FIFO behaviour of events.
             sessionMutex.withLock {
-                // Switch back to main context because we do not want to use the main thread
-                withContext(Dispatchers.Default) {
-                    runnable()
-                }
+                runnable()
             }
         }
     }
@@ -312,7 +310,9 @@ class KotlinOnboardingJ2KSessionService(private val project: Project, private va
             return existingValue
         }
         project.waitForSmartMode()
-        val newValue = project.modules.any { it.hasKotlinPluginEnabled() }
+        val newValue = readAction {
+            project.modules.any { it.hasKotlinPluginEnabled() }
+        }
         hasKotlinPlugin = newValue
         return newValue
     }
