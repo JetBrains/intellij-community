@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.vfs.newvfs.persistent;
+package com.intellij.openapi.vfs.newvfs.persistent.namecache;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.IntSLRUCache;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.DataEnumeratorEx;
 import com.intellij.util.io.URLUtil;
@@ -13,16 +15,18 @@ import io.opentelemetry.api.metrics.Meter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
+import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 @ApiStatus.Internal
 public final class SLRUFileNameCache implements FileNameCache {
-  private static final boolean TRACK_STATS = SystemProperties.getBooleanProperty("vfs.name-cache.track-stats", true);
+  private static final boolean TRACK_STATS = getBooleanProperty("vfs.name-cache.track-stats", true);
 
   private static final AtomicInteger requestsCount = new AtomicInteger();
   private static final AtomicInteger fastCacheMissesCount = new AtomicInteger();
@@ -46,13 +50,22 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   private final @NotNull DataEnumeratorEx<String> namesEnumerator;
 
+  private final boolean checkFileNamesSanity;
+
   public SLRUFileNameCache(@NotNull DataEnumeratorEx<String> namesEnumerator) {
+    this(namesEnumerator, isFileNameSanityCheckEnabledByDefault());
+  }
+
+
+  public SLRUFileNameCache(@NotNull DataEnumeratorEx<String> namesEnumerator,
+                           boolean checkFileNamesSanity) {
     this.namesEnumerator = namesEnumerator;
     int protectedSize = PROTECTED_SEGMENTS_TOTAL_SIZE / cacheSegments.length;
     int probationalSize = PROBATION_SEGMENTS_TOTAL_SIZE / cacheSegments.length;
     for (int i = 0; i < cacheSegments.length; ++i) {
       cacheSegments[i] = new IntSLRUCache<>(protectedSize, probationalSize);
     }
+    this.checkFileNamesSanity = checkFileNamesSanity;
   }
 
   @Override
@@ -67,7 +80,9 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   @Override
   public int enumerate(@NotNull String name) throws IOException {
-    assertShortFileName(name);
+    if (checkFileNamesSanity) {
+      assertShortFileName(name);
+    }
 
     int nameId = namesEnumerator.enumerate(name);
     cacheData(name, nameId, calcStripeIdFromNameId(nameId));
@@ -137,11 +152,20 @@ public final class SLRUFileNameCache implements FileNameCache {
 
   private static final String FS_SEPARATORS = "/" + (File.separatorChar == '/' ? "" : File.separatorChar);
 
-  private static void assertShortFileName(@NotNull String name) {
+  @VisibleForTesting
+  static void assertShortFileName(@NotNull String name) throws IllegalArgumentException {
+    //TODO RC: those verification rules are very wierd, they seems to be just cherry-picked to solve
+    //         specific problems. We should either abandon verification altogether, or formulate simple
+    //         and consistent rules.
     if (name.length() <= 1) return;
     int start = 0;
     int end = name.length();
-    if (SystemInfo.isWindows && name.startsWith("//")) {  // Windows UNC: //Network/Ubuntu
+    if (SystemInfo.isWindows && name.startsWith("//")) {
+      // Windows UNC: '//Network/Ubuntu'
+      // We allow paths <=2 segments. i.e.
+      // '//Network'            -> ok
+      // '//Network/Ubuntu'     -> ok
+      // '//Network/Ubuntu/bin' -> NOT OK
       final int idx = name.indexOf('/', 2);
       start = idx == -1 ? 2 : idx + 1;
     }
@@ -155,6 +179,17 @@ public final class SLRUFileNameCache implements FileNameCache {
       throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
     }
   }
+
+  /** Generally, I see this check as assistance in testing */
+  private static boolean isFileNameSanityCheckEnabledByDefault() {
+    boolean enabled = ApplicationManagerEx.isInIntegrationTest();
+    Application app = ApplicationManager.getApplication();
+    if (app != null) {
+      enabled = app.isUnitTestMode() || app.isEAP() || app.isInternal();
+    }
+    return getBooleanProperty("vfs.name-cache.check-names", enabled);
+  }
+
 
   private static void setupReportingToOpenTelemetry() {
     final Meter meter = TelemetryManager.getInstance().getMeter(VFS);
