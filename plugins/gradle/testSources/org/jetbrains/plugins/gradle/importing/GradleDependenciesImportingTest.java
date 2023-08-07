@@ -250,17 +250,17 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
                          """);
 
     importProject(
-      """
-        project(':project1') {
-          apply plugin: 'java'
-          dependencies {
-            compile 'junit:junit:4.11'
-          }
-        }
-
-        project(':project2') {
-          apply plugin: 'java'
-          dependencies.ext.strict = { projectPath ->
+      createBuildScriptBuilder()
+        .subprojects(it -> {
+          it.withJavaPlugin()
+            .withMavenCentral();
+        })
+        .project(":project1", it -> {
+          it.addImplementationDependency("junit:junit:4.11");
+        })
+        .project(":project2", it -> {
+          it.addPostfix("""
+            dependencies.ext.strict = { projectPath ->
             dependencies.compile dependencies.project(path: projectPath, transitive: false)
             dependencies.runtime dependencies.project(path: projectPath, transitive: true)
             dependencies.testRuntime dependencies.project(path: projectPath, transitive: true)
@@ -269,8 +269,8 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
           dependencies {
             strict ':project1'
           }
-        }
-        """
+          """);})
+        .generate()
     );
 
     assertModules("project",
