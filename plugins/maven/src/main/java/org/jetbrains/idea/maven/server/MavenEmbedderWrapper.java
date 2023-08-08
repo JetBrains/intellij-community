@@ -91,7 +91,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public String evaluateEffectivePom(@NotNull VirtualFile file,
                                      @NotNull Collection<String> activeProfiles,
                                      @NotNull Collection<String> inactiveProfiles) throws MavenProcessCanceledException {
-    return evaluateEffectivePom(new File(file.getPath()), activeProfiles, inactiveProfiles);
+    return evaluateEffectivePom(new File(file.getPath()), new ArrayList<>(activeProfiles), new ArrayList<>(inactiveProfiles));
   }
 
   @Nullable
@@ -119,7 +119,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                                               @Nullable MavenSyncConsole syncConsole,
                                               @Nullable MavenConsole console) throws MavenProcessCanceledException {
     return runLongRunningTask(
-      (embedder, taskId) -> embedder.resolveArtifacts(taskId, requests, ourToken), indicator, syncConsole, console
+      (embedder, taskId) -> embedder.resolveArtifacts(taskId, new ArrayList<>(requests), ourToken), indicator, syncConsole, console
     );
   }
 
@@ -133,14 +133,14 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
 
     return performCancelable(
-      () -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken)).mavenResolvedArtifacts;
+      () -> getOrCreateWrappee().resolveArtifactsTransitively(new ArrayList<>(artifacts), new ArrayList<>(remoteRepositories), ourToken)).mavenResolvedArtifacts;
   }
 
   @NotNull
   public MavenArtifactResolveResult resolveArtifactTransitively(
     @NotNull final List<MavenArtifactInfo> artifacts,
     @NotNull final List<MavenRemoteRepository> remoteRepositories) throws MavenProcessCanceledException {
-    return performCancelable(() -> getOrCreateWrappee().resolveArtifactsTransitively(artifacts, remoteRepositories, ourToken));
+    return performCancelable(() -> getOrCreateWrappee().resolveArtifactsTransitively(new ArrayList<>(artifacts), new ArrayList<>(remoteRepositories), ourToken));
   }
 
   public List<PluginResolutionResponse> resolvePlugins(@NotNull Collection<Pair<MavenId, NativeMavenProjectHolder>> mavenPluginRequests,
@@ -187,12 +187,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
     var indicator = null == progressIndicator ? null : progressIndicator.getIndicator();
     var syncConsole = null == progressIndicator ? null : progressIndicator.getSyncConsole();
     return runLongRunningTask(
-      (embedder, taskId) -> embedder.executeGoal(taskId, requests, goal, ourToken), indicator, syncConsole, console);
+      (embedder, taskId) -> embedder.executeGoal(taskId, new ArrayList<>(requests), goal, ourToken), indicator, syncConsole, console);
   }
 
   @NotNull
   public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories) {
-    return perform(() -> getOrCreateWrappee().resolveRepositories(repositories, ourToken));
+    return perform(() -> getOrCreateWrappee().resolveRepositories( new ArrayList<>(repositories), ourToken));
   }
 
   public Collection<MavenArchetype> getInnerArchetypes(@NotNull Path catalogPath) {
@@ -207,7 +207,7 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
   public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
                                                               @NotNull List<MavenRemoteRepository> repositories,
                                                               @Nullable String url) {
-    return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, repositories, url, ourToken));
+    return perform(() -> getOrCreateWrappee().resolveAndGetArchetypeDescriptor(groupId, artifactId, version, new ArrayList<>(repositories), url, ourToken));
   }
 
 
