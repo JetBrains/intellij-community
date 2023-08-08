@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.utils.printer.prettyPrint
-import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo
+import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -159,7 +159,7 @@ class ImportQuickFix(
         }
 
         override fun execute(): Boolean {
-            KotlinAddImportActionInfo.executeListener?.onExecute(importVariants)
+            file.executeListener?.onExecute(importVariants)
             when (importVariants.size) {
                 1 -> {
                     addImport(importVariants.single())

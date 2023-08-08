@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
 import org.jetbrains.kotlin.idea.KotlinDescriptorIconProvider
+import org.jetbrains.kotlin.idea.actions.KotlinAddImportActionInfo.executeListener
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
@@ -179,7 +180,7 @@ class KotlinAddImportAction internal constructor(
         if (!element.isValid) return false
 
         val variantsList = variantsList()
-        KotlinAddImportActionInfo.executeListener?.onExecute(variantsList)
+        element.containingKtFile.executeListener?.onExecute(variantsList)
 
         if (variantsList.isEmpty()) return false
 
