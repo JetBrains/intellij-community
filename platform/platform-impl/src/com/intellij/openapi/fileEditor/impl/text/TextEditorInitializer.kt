@@ -31,6 +31,8 @@ internal class HighlighterTextEditorInitializer : TextEditorInitializer {
     val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
     val highlighter = readAction {
       val highlighter = editorHighlighterFactory.createEditorHighlighter(file, scheme, project)
+      // editor.highlighter also sets text, but we set it here to avoid executing related work in EDT
+      // (the document text is compared, so, double work is not performed)
       highlighter.setText(document.immutableCharSequence)
       highlighter
     }
