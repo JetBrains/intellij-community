@@ -24,7 +24,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder;
 
 import java.io.File;
 import java.io.IOException;

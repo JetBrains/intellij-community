@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.idea.projectModel.*
 import org.jetbrains.kotlin.tooling.core.Interner
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 interface HasDependencyResolver {

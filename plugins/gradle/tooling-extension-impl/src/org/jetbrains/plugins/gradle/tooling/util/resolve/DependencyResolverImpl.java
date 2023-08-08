@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.model.*;
 import org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.Supplier;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

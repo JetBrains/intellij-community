@@ -22,7 +22,7 @@ import org.jetbrains.plugins.gradle.tooling.internal.ear.EarConfigurationImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarModelImpl
 import org.jetbrains.plugins.gradle.tooling.internal.ear.EarResourceImpl
 import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import static org.jetbrains.plugins.gradle.tooling.internal.ExtraModelBuilder.reportModelBuilderFailure

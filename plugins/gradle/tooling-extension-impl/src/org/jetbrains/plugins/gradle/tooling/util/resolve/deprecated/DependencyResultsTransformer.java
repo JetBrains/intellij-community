@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalDependency;
 import org.jetbrains.plugins.gradle.model.*;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder;
 
 import java.io.File;
 import java.lang.reflect.Method;

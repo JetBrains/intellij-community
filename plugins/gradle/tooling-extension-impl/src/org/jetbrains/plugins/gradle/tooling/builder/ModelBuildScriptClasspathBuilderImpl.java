@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.internal.BuildScriptClasspathModelImpl;
 import org.jetbrains.plugins.gradle.tooling.internal.ClasspathEntryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.DependencyTraverser;
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;

@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.MessageReporter
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
-import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import com.intellij.gradle.toolingExtension.impl.modelBuilder.SourceSetCachedFinder
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 import java.lang.reflect.InvocationTargetException
