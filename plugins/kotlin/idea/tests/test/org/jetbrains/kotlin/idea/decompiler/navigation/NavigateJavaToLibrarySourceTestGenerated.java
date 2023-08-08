@@ -83,6 +83,11 @@ public class NavigateJavaToLibrarySourceTestGenerated extends AbstractNavigateJa
         runTest("testData/decompiler/navigation/userJavaCode/OverloadedFun.java");
     }
 
+    @TestMetadata("PropertyFunctionOverload.java")
+    public void testPropertyFunctionOverload() throws Exception {
+        runTest("testData/decompiler/navigation/userJavaCode/PropertyFunctionOverload.java");
+    }
+
     @TestMetadata("RenamedElements.java")
     public void testRenamedElements() throws Exception {
         runTest("testData/decompiler/navigation/userJavaCode/RenamedElements.java");
