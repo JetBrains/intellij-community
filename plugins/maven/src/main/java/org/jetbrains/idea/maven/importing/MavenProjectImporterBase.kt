@@ -28,11 +28,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
                                         @JvmField protected val myImportingSettings: MavenImportingSettings,
                                         @JvmField protected val myIdeModifiableModelsProvider: IdeModifiableModelsProvider) : MavenProjectImporter {
   @JvmField
-  protected val myModelsProvider: IdeModifiableModelsProvider
-
-  init {
-    myModelsProvider = myIdeModifiableModelsProvider
-  }
+  protected val myModelsProvider: IdeModifiableModelsProvider = myIdeModifiableModelsProvider
 
   protected fun selectProjectsToImport(originalProjects: Collection<MavenProject>): Set<MavenProject> {
     val result: MutableSet<MavenProject> = HashSet()
@@ -65,32 +61,27 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
 
   companion object {
     @JvmStatic
-    fun importExtensions(project: Project?,
+    fun importExtensions(project: Project,
                          modifiableModelsProvider: IdeModifiableModelsProvider?,
                          extensionImporters: List<ExtensionImporter>,
                          postTasks: List<MavenProjectsProcessorTask>,
                          activity: StructuredIdeActivity?,
                          isWorkspaceImport: Boolean) {
-      val importers = extensionImporters.filter({ it: ExtensionImporter -> !it.isModuleDisposed })
+      val importers = extensionImporters.filter { !it.isModuleDisposed }
       if (importers.isEmpty()) return
       val beforeBridgesCreation = System.nanoTime()
-      val provider: IdeModifiableModelsProvider
-      provider = // commit does nothing for this provider, so it should be reused
-        modifiableModelsProvider as? IdeUIModifiableModelsProvider ?: ProjectDataManager.getInstance().createModifiableModelsProvider(
-          project!!)
+      // commit does nothing for this provider, so it should be reused
+      val provider = modifiableModelsProvider as? IdeUIModifiableModelsProvider
+                     ?: ProjectDataManager.getInstance().createModifiableModelsProvider(project)
       var bridgesCreationNano = System.nanoTime() - beforeBridgesCreation
       try {
         val beforeInitInit = System.nanoTime()
-        importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.init(provider) })
+        importers.forEach(Consumer { importer: ExtensionImporter -> importer.init(provider) })
         bridgesCreationNano += System.nanoTime() - beforeInitInit
         val counters: MutableMap<Class<out MavenImporter?>, CountAndTime> = HashMap()
-        importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.preConfig(isWorkspaceImport, counters) })
-        importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.config(isWorkspaceImport, postTasks, counters) })
-        importers.forEach(
-          Consumer { importer: ExtensionImporter -> importer.postConfig(isWorkspaceImport, counters) })
+        importers.forEach(Consumer { it.preConfig(isWorkspaceImport, counters) })
+        importers.forEach(Consumer { it.config(isWorkspaceImport, postTasks, counters) })
+        importers.forEach(Consumer { it.postConfig(isWorkspaceImport, counters) })
         for ((key, value) in counters) {
           MavenImportCollector.IMPORTER_RUN.log(project,
                                                 MavenImportCollector.ACTIVITY_ID.with(activity!!),
@@ -102,16 +93,15 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
       }
       finally {
         val beforeCommit = System.nanoTime()
-        MavenUtil.invokeAndWaitWriteAction(project!!) {
+        MavenUtil.invokeAndWaitWriteAction(project) {
           ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring { provider.commit() }
         }
         val afterCommit = System.nanoTime()
-        MavenImportCollector.LEGACY_IMPORTERS_STATS.log(project,
-                                                        MavenImportCollector.ACTIVITY_ID.with(activity!!),
-                                                        MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(
-                                                          TimeUnit.NANOSECONDS.toMillis(bridgesCreationNano)),
-                                                        MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(
-                                                          TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)))
+        MavenImportCollector.LEGACY_IMPORTERS_STATS.log(
+          project,
+          MavenImportCollector.ACTIVITY_ID.with(activity!!),
+          MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(TimeUnit.NANOSECONDS.toMillis(bridgesCreationNano)),
+          MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)))
       }
     }
 
@@ -149,8 +139,8 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
       javacOptions.ADDITIONAL_OPTIONS_STRING = options
     }
 
-    protected fun doRefreshFiles(files: Set<File>?) {
-      LocalFileSystem.getInstance().refreshIoFiles(files!!)
+    protected fun doRefreshFiles(files: Set<File>) {
+      LocalFileSystem.getInstance().refreshIoFiles(files)
     }
   }
 }
