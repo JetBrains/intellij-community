@@ -11,6 +11,7 @@ import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.types.KtFlexibleType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeNullability
@@ -251,6 +252,9 @@ class KtSymbolFromIndexProvider private constructor(private val project: Project
 
     context(KtAnalysisSession)
     private fun findAllNamesForType(type: KtType): Set<String> = buildSet {
+        if (type is KtFlexibleType) {
+            addAll(findAllNamesForType(type.lowerBound))
+        }
         if (type !is KtNonErrorClassType) return@buildSet
 
         val typeName = type.classId.shortClassName.let {
