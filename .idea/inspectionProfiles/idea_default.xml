@@ -1362,10 +1362,6 @@
       <replaceConfiguration name="new String(byte[]) is default locale dependent; use new String(byte[], Charset) instead" text="new String($b$)" recursive="false" caseInsensitive="true" type="JAVA" reformatAccordingToStyle="true" shortenFQN="true" replacement="new String($b$, java.nio.charset.StandardCharsets.UTF_8)">
         <constraint name="b" nameOfExprType="byte\[\]" exprTypeWithinHierarchy="true" within="" contains="" />
       </replaceConfiguration>
-      <replaceConfiguration name="new String(byte[]) is default locale dependent; use new String(byte[], Charset) instead" text="String($b$)" recursive="false" caseInsensitive="true" type="Kotlin" pattern_context="default" reformatAccordingToStyle="true" shortenFQN="true" replacement="String($b$, java.nio.charset.StandardCharsets.UTF_8)">
-        <constraint name="b" nameOfExprType="ByteArray|Array&lt;Byte&gt;" exprTypeWithinHierarchy="true" within="" contains="" />
-        <constraint name="__context__" within="" contains="" />
-      </replaceConfiguration>
       <searchConfiguration name="non-static JamAnnotationMeta" text="class $Class$ {&#10;  $Type$ $Variable$ = $Init$;&#10;}" recursive="false" caseInsensitive="true" type="JAVA" pattern_context="default">
         <constraint name="Class" within="" contains="" />
         <constraint name="Type" regexp="JamAnnotationMeta" within="" contains="" />
