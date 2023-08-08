@@ -55,7 +55,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test found@1 metric`() {
-    val metric = SelectedAtMetric(1)
+    val metric = RecallAtMetric(false, 1)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1, sessionTop3)))
     Assertions.assertEquals(0.25, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5, sessionNone)))
@@ -64,7 +64,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test found@5 metric`() {
-    val metric = SelectedAtMetric(5)
+    val metric = RecallAtMetric(false, 5)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1)))
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1, sessionTop3)))
     Assertions.assertEquals(0.75, metric.evaluate(listOf(sessionTop1, sessionTop3, sessionTop5, sessionNone)))
@@ -73,7 +73,7 @@ class MetricsEvaluatorTest {
 
   @Test
   fun `test HasMatch@1 metric`() {
-    val metric = RecallAt(showByDefault = false, n = 1)
+    val metric = RecallAtMetric(showByDefault = false, n = 1)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoTop1Custom)))

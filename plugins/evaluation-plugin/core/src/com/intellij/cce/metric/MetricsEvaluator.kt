@@ -21,8 +21,8 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
   private val metrics = mutableListOf<Metric>()
 
   fun registerDefaultMetrics() {
-    registerMetric(SelectedAtMetric(1))
-    registerMetric(SelectedAtMetric(5))
+    registerMetric(RecallAtMetric(true, 1))
+    registerMetric(RecallAtMetric(true, 5))
     registerMetric(RecallMetric())
     registerMetric(MeanLatencyMetric())
     registerMetric(MaxLatencyMetric())

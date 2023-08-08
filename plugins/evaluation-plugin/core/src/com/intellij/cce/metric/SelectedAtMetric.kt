@@ -4,7 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-class SelectedAtMetric(private val n: Int) : Metric {
+class SelectedAtMetric(override val showByDefault: Boolean, private val n: Int) : Metric {
   private val sample = Sample()
   override val name = NAME_PREFIX + n
   override val description: String = "Ratio of invocations with selected proposal in top-$n"
