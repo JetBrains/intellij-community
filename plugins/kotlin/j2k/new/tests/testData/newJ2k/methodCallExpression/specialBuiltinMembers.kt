@@ -1,5 +1,3 @@
-// ERROR: None of the following functions can be called with the arguments supplied:  public open fun parseInt(p0: String!): Int defined in java.lang.Integer public open fun parseInt(p0: String!, p1: Int): Int defined in java.lang.Integer
-// ERROR: None of the following functions can be called with the arguments supplied:  public open fun parseLong(p0: String!): Long defined in java.lang.Long public open fun parseLong(p0: String!, p1: Int): Long defined in java.lang.Long
 internal enum class E {
     A,
     B,
@@ -66,9 +64,6 @@ internal class A {
         str.toLong()
         str.toLong(i)
         str.toLong(i)
-
-        // These functions were added in JDK 9, hence the error on test JDK 8 (None of the following functions can be called...)
-        // Also, they have no equivalent in Kotlin stdlib
         Integer.parseInt(str, i, i, i)
         java.lang.Long.parseLong(str, i, i, i)
         str.toFloat()
