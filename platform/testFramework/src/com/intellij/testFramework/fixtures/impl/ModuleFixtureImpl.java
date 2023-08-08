@@ -33,10 +33,6 @@ public class ModuleFixtureImpl extends BaseFixture implements ModuleFixture {
   @Override
   public void tearDown() throws Exception {
     myModule = null;
-    ProjectJdkTable projectJdkTable = ProjectJdkTable.getInstance();
-    for (Sdk sdk : projectJdkTable.getAllJdks()) {
-      projectJdkTable.removeJdk(sdk);
-    }
     super.tearDown();
   }
 }

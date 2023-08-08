@@ -35,6 +35,7 @@ public abstract class AbstractCompilerAwareTest extends JavaCodeInsightFixtureTe
   protected void tearDown() throws Exception {
     myCompilerTester = null;
     super.tearDown();
+    // TODO Use myCompilerTester.terDown() and locale saving there
     CompilerTestUtil.saveApplicationSettings();
   }
 
