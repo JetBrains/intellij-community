@@ -148,7 +148,7 @@ public final class FSRecordsImpl {
   private final AtomicLong invertedNameIndexModCount = new AtomicLong();
 
   /**
-   * Caching wrapper around {@link PersistentFSConnection#myNames} names enumerator
+   * Caching wrapper around {@link PersistentFSConnection#namesEnumerator} 
    * TODO RC: ideally this caching wrapper should be created inside connection, and connection.getNames()
    *          should return already wrapped (caching) enumerator -- so it is an implementation detail
    *          noone needs to know about
@@ -244,7 +244,7 @@ public final class FSRecordsImpl {
       LOG.info("VFS initialized: " + NANOSECONDS.toMillis(initializationResult.totalInitializationDurationNs) + " ms, " +
                initializationResult.attemptsFailures.size() + " failed attempts");
 
-      PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(/*USE_CONTENT_HASHES*/true, connection);
+      PersistentFSContentAccessor contentAccessor = new PersistentFSContentAccessor(/*USE_CONTENT_HASHES*/ connection);
       PersistentFSAttributeAccessor attributeAccessor = new PersistentFSAttributeAccessor(connection);
       PersistentFSRecordAccessor recordAccessor = new PersistentFSRecordAccessor(contentAccessor, attributeAccessor, connection);
       PersistentFSTreeAccessor treeAccessor = attributeAccessor.supportsRawAccess() && USE_RAW_ACCESS_TO_READ_CHILDREN ?

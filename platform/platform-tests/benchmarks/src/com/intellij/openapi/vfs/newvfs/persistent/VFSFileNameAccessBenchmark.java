@@ -8,14 +8,13 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.concurrent.ThreadLocalRandom;
 
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
- * Benchmark for FileNameCache
+ * Benchmarks cost of access to fileName in VFS: file name by fileId, file name by nameId
  */
 @BenchmarkMode({Mode.AverageTime/*, Mode.SampleTime*/})
 @OutputTimeUnit(NANOSECONDS)
@@ -23,7 +22,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Measurement(iterations = 5, time = 5, timeUnit = SECONDS)
 @Fork(1)
 @Threads(4)
-public class VFSFileNameCacheBenchmark {
+public class VFSFileNameAccessBenchmark {
 
   @State(Scope.Benchmark)
   public static class Context {
@@ -46,15 +45,6 @@ public class VFSFileNameCacheBenchmark {
         records.setNameId(fileId, vfs.getNameId("fileName" + i));
       }
       maxFileId = records.maxAllocatedID();
-
-
-      //FIXME: FileNameCache is static now, and uses static FSRecords.getInstance() instance as a underlying source
-      //       of names -- so we must set this static FSRecords.impl for benchmark now, but it is much better to
-      //       get rid of static FileNameCache, and make it an instance, and a part of FSRecordsImpl instance.
-
-      Field implField = FSRecords.class.getDeclaredField("impl");
-      implField.setAccessible(true);
-      implField.set(null, vfs); //Basically: FSRecords.impl = vfs;
     }
 
     private int generateFileId(ThreadLocalRandom rnd) {
@@ -90,7 +80,7 @@ public class VFSFileNameCacheBenchmark {
       //.warmupIterations(1000)
       //.warmupBatchSize(1000)
       //.measurementIterations(1000)
-      .include("\\W" + VFSFileNameCacheBenchmark.class.getSimpleName() + "\\..*")
+      .include("\\W" + VFSFileNameAccessBenchmark.class.getSimpleName() + "\\..*")
       .build();
 
     new Runner(opt).run();

@@ -81,25 +81,25 @@ public final class PersistentFSConnection {
   private final NotNullLazyValue<IntList> freeRecords;
 
   @NotNull
-  private final PersistentFSPaths myPersistentFSPaths;
+  private final PersistentFSPaths persistentFSPaths;
 
-  private final @NotNull AbstractAttributesStorage myAttributesStorage;
-  private final @NotNull RefCountingContentStorage myContents;
+  private final @NotNull AbstractAttributesStorage attributesStorage;
+  private final @NotNull RefCountingContentStorage contentStorage;
 
-  private final @NotNull PersistentFSRecordsStorage myRecords;
+  private final @NotNull PersistentFSRecordsStorage records;
 
-  private final @Nullable ContentHashEnumerator myContentHashesEnumerator;
-  private final @NotNull ScannableDataEnumeratorEx<String> myNames;
+  private final @Nullable ContentHashEnumerator contentHashesEnumerator;
+  private final @NotNull ScannableDataEnumeratorEx<String> namesEnumerator;
   /**
    * Enumerator for repeating strings used in attributes. Used to support
    * {@link AttributeInputStream#readEnumeratedString()}
    * {@link AttributeOutputStream#writeEnumeratedString(String)}
    */
-  private final @NotNull SimpleStringPersistentEnumerator myEnumeratedAttributes;
+  private final @NotNull SimpleStringPersistentEnumerator enumeratedAttributes;
 
-  private final @Nullable VfsLogEx myVfsLog;
+  private final @Nullable VfsLogEx vfsLog;
 
-  private volatile boolean myDirty;
+  private volatile boolean dirty;
 
   private final @Nullable Closeable flushingTask;
 
@@ -126,15 +126,15 @@ public final class PersistentFSConnection {
       //    different names impls -- after we'll decide which impl is the best, explicit type could be specified here
       throw new IllegalArgumentException("names(" + names + ") must implement Forceable & Closeable");
     }
-    myRecords = wrapRecords(records, interceptors);
-    myNames = names;
-    myAttributesStorage = wrapAttributes(attributes, interceptors);
-    myContents = wrapContents(contents, interceptors);
-    myContentHashesEnumerator = contentHashesEnumerator;
-    myVfsLog = vfsLog;
-    myPersistentFSPaths = paths;
+    this.records = wrapRecords(records, interceptors);
+    namesEnumerator = names;
+    attributesStorage = wrapAttributes(attributes, interceptors);
+    contentStorage = wrapContents(contents, interceptors);
+    this.contentHashesEnumerator = contentHashesEnumerator;
+    this.vfsLog = vfsLog;
+    persistentFSPaths = paths;
     this.freeRecords = freeRecords;
-    myEnumeratedAttributes = enumeratedAttributes;
+    this.enumeratedAttributes = enumeratedAttributes;
     recoveryInfo = info;
 
     if (FSRecords.BACKGROUND_VFS_FLUSH) {
@@ -173,33 +173,33 @@ public final class PersistentFSConnection {
     return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
   }
 
-  @Nullable VfsLogEx getVfsLog() { return myVfsLog; }
+  @Nullable VfsLogEx getVfsLog() { return vfsLog; }
 
   @NotNull("Vfs must be initialized")
   SimpleStringPersistentEnumerator getEnumeratedAttributes() {
-    return myEnumeratedAttributes;
+    return enumeratedAttributes;
   }
 
   @NotNull
   ContentHashEnumerator getContentHashesEnumerator() {
-    return Objects.requireNonNull(myContentHashesEnumerator, "Content hash enumerator must be initialized");
+    return Objects.requireNonNull(contentHashesEnumerator, "Content hash enumerator must be initialized");
   }
 
 
   @NotNull RefCountingContentStorage getContents() {
-    return myContents;
+    return contentStorage;
   }
 
   @NotNull AbstractAttributesStorage getAttributes() {
-    return myAttributesStorage;
+    return attributesStorage;
   }
 
   public @NotNull ScannableDataEnumeratorEx<String> getNames() {
-    return myNames;
+    return namesEnumerator;
   }
 
   public @NotNull PersistentFSRecordsStorage getRecords() {
-    return myRecords;
+    return records;
   }
 
   @NotNull
@@ -210,7 +210,7 @@ public final class PersistentFSConnection {
   }
 
   long getTimestamp() throws IOException {
-    return myRecords.getTimestamp();
+    return records.getTimestamp();
   }
 
   /**
@@ -230,36 +230,36 @@ public final class PersistentFSConnection {
 
   @TestOnly
   int getPersistentModCount() {
-    return myRecords.getGlobalModCount();
+    return records.getGlobalModCount();
   }
 
   void markDirty() throws IOException {
-    if (!myDirty) {
-      myDirty = true;
-      myRecords.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
+    if (!dirty) {
+      dirty = true;
+      records.setConnectionStatus(PersistentFSHeaders.CONNECTED_MAGIC);
     }
   }
 
   int getModificationCount() {
-    return myRecords.getGlobalModCount();
+    return records.getGlobalModCount();
   }
 
   void doForce() throws IOException {
-    if (myNames instanceof Forceable) {
-      ((Forceable)myNames).force();
+    if (namesEnumerator instanceof Forceable) {
+      ((Forceable)namesEnumerator).force();
     }
-    myAttributesStorage.force();
-    myContents.force();
-    if (myContentHashesEnumerator != null) {
-      myContentHashesEnumerator.force();
+    attributesStorage.force();
+    contentStorage.force();
+    if (contentHashesEnumerator != null) {
+      contentHashesEnumerator.force();
     }
     writeConnectionState();
-    myRecords.force();
+    records.force();
   }
 
   public boolean isDirty() {
-    return myDirty || ((Forceable)myNames).isDirty() || myAttributesStorage.isDirty() || myContents.isDirty() || myRecords.isDirty() ||
-           myContentHashesEnumerator != null && myContentHashesEnumerator.isDirty();
+    return dirty || ((Forceable)namesEnumerator).isDirty() || attributesStorage.isDirty() || contentStorage.isDirty() || records.isDirty() ||
+           contentHashesEnumerator != null && contentHashesEnumerator.isDirty();
   }
 
   int corruptionsDetected() {
@@ -279,17 +279,17 @@ public final class PersistentFSConnection {
       //not an issue on close, but could provide some insights
       LOG.info("Free records loading is failed", freeRecordsLoadingError);
     }
-    closeStorages(myRecords,
-                  myNames,
-                  myAttributesStorage,
-                  myContentHashesEnumerator,
-                  myContents,
-                  myVfsLog);
+    closeStorages(records,
+                  namesEnumerator,
+                  attributesStorage,
+                  contentHashesEnumerator,
+                  contentStorage,
+                  vfsLog);
   }
 
 
   public @NotNull PersistentFSPaths getPersistentFSPaths() {
-    return myPersistentFSPaths;
+    return persistentFSPaths;
   }
 
   /**
@@ -335,21 +335,21 @@ public final class PersistentFSConnection {
 
   private void writeConnectionState() throws IOException {
     // no synchronization, it's ok to have race here
-    if (myDirty) {
-      myDirty = false;
-      myRecords.setConnectionStatus(corruptionsDetected.get() > 0 ?
-                                    PersistentFSHeaders.CORRUPTED_MAGIC :
-                                    PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
+    if (dirty) {
+      dirty = false;
+      records.setConnectionStatus(corruptionsDetected.get() > 0 ?
+                                  PersistentFSHeaders.CORRUPTED_MAGIC :
+                                  PersistentFSHeaders.SAFELY_CLOSED_MAGIC);
     }
   }
 
   int getAttributeId(@NotNull String attributeId) {
-    int enumeratedAttributeId = myEnumeratedAttributes.enumerate(attributeId);
+    int enumeratedAttributeId = enumeratedAttributes.enumerate(attributeId);
     if (enumeratedAttributeId > AbstractAttributesStorage.MAX_ATTRIBUTE_ID) {
       throw new IllegalStateException(
         "attribute[" + attributeId + "] assigned id[" + enumeratedAttributeId + "] which is above max " +
         AbstractAttributesStorage.MAX_ATTRIBUTE_ID +
-        ". Current list of attributes: " + myEnumeratedAttributes.dumpToString()
+        ". Current list of attributes: " + enumeratedAttributes.dumpToString()
       );
     }
     return enumeratedAttributeId;
@@ -358,7 +358,7 @@ public final class PersistentFSConnection {
   void markAsCorruptedAndScheduleRebuild(@NotNull Throwable cause) throws RuntimeException, Error {
     try {
       int corruptions = corruptionsDetected.incrementAndGet();
-      myRecords.setErrorsAccumulated(corruptions);
+      records.setErrorsAccumulated(corruptions);
       if (corruptions == 1) {
         if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
           showCorruptionNotification(/*insist: */ false);
@@ -392,7 +392,7 @@ public final class PersistentFSConnection {
     }
 
     try {
-      final Path brokenMarker = myPersistentFSPaths.getCorruptionMarkerFile();
+      final Path brokenMarker = persistentFSPaths.getCorruptionMarkerFile();
       final ByteArrayOutputStream out = new ByteArrayOutputStream();
       try (PrintStream stream = new PrintStream(out, false, UTF_8)) {
         stream.println("VFS files are corrupted and must be rebuilt from the scratch on next startup");
@@ -415,11 +415,11 @@ public final class PersistentFSConnection {
 
 
   static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
-    boolean myAttrPageRequested;
+    boolean attrPageRequested;
 
     @Override
     public int calculateCapacity(int requiredLength) {   // 20% for growth
-      return Math.max(myAttrPageRequested ? 8 : 32, Math.min((int)(requiredLength * 1.2), (requiredLength / 1024 + 1) * 1024));
+      return Math.max(attrPageRequested ? 8 : 32, Math.min((int)(requiredLength * 1.2), (requiredLength / 1024 + 1) * 1024));
     }
   }
 
@@ -472,7 +472,7 @@ public final class PersistentFSConnection {
 
     @Override
     public void run() {
-      if (lastModCount == myRecords.getGlobalModCount()) {
+      if (lastModCount == records.getGlobalModCount()) {
         if (isDirty() && !HeavyProcessLatch.INSTANCE.isRunning()) {
           try {
             doForce();
@@ -484,7 +484,7 @@ public final class PersistentFSConnection {
           }
         }
       }
-      lastModCount = myRecords.getGlobalModCount();
+      lastModCount = records.getGlobalModCount();
     }
 
     @Override
@@ -527,7 +527,7 @@ public final class PersistentFSConnection {
       //    them -- and (regular) flush is less important than e.g. a current UI task. So we
       //    attempt to flush only if there were _no updates_ in VFS since the last invocation
       //    of this method:
-      final int currentModCount = myRecords.getGlobalModCount();
+      final int currentModCount = records.getGlobalModCount();
       if (lastModCount != currentModCount) {
         lastModCount = currentModCount;
         return true;
@@ -554,8 +554,8 @@ public final class PersistentFSConnection {
 
         //RC: code below is a copy of doFlush() method, but interleaved with contention quota checking:
 
-        if (myNames instanceof Forceable) {
-          ((Forceable)myNames).force();
+        if (namesEnumerator instanceof Forceable) {
+          ((Forceable)namesEnumerator).force();
 
           unspentContentionQuota -= competingThreads();
           if (unspentContentionQuota < 0) {
@@ -563,22 +563,22 @@ public final class PersistentFSConnection {
           }
         }
 
-        myAttributesStorage.force();
+        attributesStorage.force();
 
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        myContents.force();
+        contentStorage.force();
 
         unspentContentionQuota -= competingThreads();
         if (unspentContentionQuota < 0) {
           return FlushResult.HAS_MORE_TO_FLUSH;
         }
 
-        if (myContentHashesEnumerator != null) {
-          myContentHashesEnumerator.force();
+        if (contentHashesEnumerator != null) {
+          contentHashesEnumerator.force();
 
           unspentContentionQuota -= competingThreads();
           if (unspentContentionQuota < 0) {
@@ -587,7 +587,7 @@ public final class PersistentFSConnection {
         }
 
         writeConnectionState();
-        myRecords.force();
+        records.force();
 
         unspentContentionQuota -= competingThreads();
 

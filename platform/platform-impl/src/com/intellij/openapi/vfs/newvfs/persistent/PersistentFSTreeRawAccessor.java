@@ -26,7 +26,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
                               @NotNull PersistentFSConnection connection) {
     super(attributeAccessor, recordAccessor, connection);
     
-    if (!myAttributeAccessor.supportsRawAccess()) {
+    if (!this.attributeAccessor.supportsRawAccess()) {
       throw new IllegalArgumentException("attributesAccessor must .supportsRawAccess(): " + attributeAccessor);
     }
   }
@@ -59,7 +59,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
     //}
 
     final int parentModCount = records.getModCount(parentId);
-    final ListResult result = myAttributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+    final ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
       final int maxID = connection.getRecords().maxAllocatedID();
@@ -88,7 +88,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
         "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
     }
 
-    final int[] childrenIds = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+    final int[] childrenIds = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       final int[] result = ArrayUtil.newIntArray(count);
       int prevId = fileId;
@@ -115,7 +115,7 @@ public class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor {
       );
     }
 
-    final Boolean hasChildren = myAttributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+    final Boolean hasChildren = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
       final int count = DataInputOutputUtil.readINT(buffer);
       return Boolean.valueOf(count != 0);
     });
