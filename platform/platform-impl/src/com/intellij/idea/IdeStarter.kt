@@ -155,7 +155,7 @@ open class IdeStarter : ModernApplicationStarter() {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
     @Suppress("DEPRECATION")
     ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
-      showWelcomeFrameTask.run()
+      showWelcomeFrameTask()
       lifecyclePublisher.welcomeScreenDisplayed()
     }
     return false

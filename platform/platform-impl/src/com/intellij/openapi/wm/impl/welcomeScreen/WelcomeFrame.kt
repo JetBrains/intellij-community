@@ -142,17 +142,17 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
 
     @JvmStatic
     fun showNow() {
-      prepareToShow()?.run()
+      prepareToShow()?.invoke()
     }
 
-    fun prepareToShow(): Runnable? {
+    fun prepareToShow(): (() -> Unit)? {
       if (instance != null) {
         return null
       }
 
-      return Runnable {
+      return task@{
         if (instance != null) {
-          return@Runnable
+          return@task
         }
 
         val frame = EP.lazySequence().mapNotNull { it.createFrame() }.firstOrNull()
@@ -193,7 +193,7 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
           val windowManager = WindowManager.getInstance() as WindowManagerImpl
           windowManager.disposeRootFrame()
           if (windowManager.projectFrameHelpers.isEmpty()) {
-            show.run()
+            show()
             lifecyclePublisher?.welcomeScreenDisplayed()
           }
         }
