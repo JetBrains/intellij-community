@@ -62,7 +62,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.impl.ZipHandler
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.FrameLoadingState
 import com.intellij.openapi.wm.impl.WindowManagerImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.PlatformProjectOpenProcessor
@@ -704,7 +703,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
         failedToOpenProject(frameAllocator = frameAllocator, exception = null, options = options)
       }
 
-      if (e.message == FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER) {
+      if (e is ProjectLoadingCancelled) {
         return null
       }
       else {
@@ -876,7 +875,7 @@ open class ProjectManagerImpl : ProjectManagerEx(), Disposable {
           conversionService.convert(projectStoreBaseDir)
         }
         if (conversionResult.openingIsCanceled()) {
-          throw CancellationException("ConversionResult.openingIsCanceled() returned true")
+          throw ProjectLoadingCancelled("ConversionResult.openingIsCanceled() returned true")
         }
       }
     }
@@ -1389,3 +1388,5 @@ private suspend fun checkTrustedState(projectStoreBaseDir: Path): Boolean {
     IdeBundle.message("untrusted.project.open.dialog.cancel.button")
   )
 }
+
+internal class ProjectLoadingCancelled(reason: String) : CancellationException(reason)

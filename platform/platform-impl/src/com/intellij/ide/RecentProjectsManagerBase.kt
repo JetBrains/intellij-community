@@ -557,19 +557,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
     val projectManager = ProjectManagerEx.getInstanceEx()
     for ((path, options) in taskList) {
-      try {
-        projectManager.openProjectAsync(path, options)
-      }
-      catch (e: CancellationException) {
-        // we must catch it here because as we create a project frame before calling `openProjectAsync`,
-        // it is possible that a user will cancel the loading before ProjectManagerImpl will be able to catch and handle the error
-        if (e.message == FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER) {
-          LOG.info("Reopening project cancelled (path=$path)")
-        }
-        else {
-          throw e
-        }
-      }
+      projectManager.openProjectAsync(path, options)
     }
     return true
   }

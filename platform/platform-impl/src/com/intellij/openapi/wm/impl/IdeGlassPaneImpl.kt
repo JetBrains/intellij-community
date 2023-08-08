@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.project.impl.ProjectLoadingCancelled
 import com.intellij.openapi.ui.AbstractPainter
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.Painter
@@ -620,7 +621,7 @@ private class IdePaneLoadingLayer(pane: JComponent,
       is KeyEvent -> {
         @Suppress("DEPRECATION")
         if (event.getID() == KeyEvent.KEY_PRESSED && event.keyCode == KeyEvent.VK_ESCAPE && event.modifiers == 0) {
-          loadingJob.cancel(FrameLoadingState.PROJECT_LOADING_CANCELLED_BY_USER)
+          loadingJob.cancel(ProjectLoadingCancelled("ESC key pressed"))
         }
 
         event.consume()
@@ -632,10 +633,6 @@ private class IdePaneLoadingLayer(pane: JComponent,
 }
 
 interface FrameLoadingState {
-  companion object {
-    internal const val PROJECT_LOADING_CANCELLED_BY_USER: String = "PROJECT_LOADING_CANCELLED_BY_USER"
-  }
-
   val done: Job
 }
 
