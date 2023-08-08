@@ -2,16 +2,16 @@
 package com.intellij.workspaceModel.ide
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.platform.workspace.storage.EntitySource
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
 import com.intellij.platform.workspace.storage.testEntities.entities.SampleEntity2
 import com.intellij.platform.workspace.storage.tests.SerializationRoundTripChecker
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
-import com.intellij.platform.workspace.storage.EntitySource
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -47,7 +47,7 @@ class ImlSerializationTest {
     checkSerializationSize(bytes, expectedSize, 2_000)
 
     @Suppress("KotlinConstantConditions")
-    assertTrue("v52" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
+    assertTrue("v53" == EntityStorageSerializerImpl.SERIALIZER_VERSION,
                "This assertion is a reminder. Have you updated the serializer? Update the serializer version!")
   }
 

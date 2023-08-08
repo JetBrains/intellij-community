@@ -14,10 +14,18 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.jps.JpsImportedEntitySource
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
+import com.intellij.platform.workspace.jps.entities.FacetEntity
+import com.intellij.platform.workspace.jps.entities.LibraryEntity
+import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.serialization.impl.FileInDirectorySourceNames
 import com.intellij.platform.workspace.jps.serialization.impl.JpsProjectSerializersImpl
+import com.intellij.platform.workspace.storage.EntityStorageSerializer
+import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.OpenProjectTaskBuilder
@@ -25,20 +33,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.testFramework.rules.TempDirectory
 import com.intellij.util.io.readText
-import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.getJpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.JpsProjectUrlRelativizer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheSerializer
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
-import com.intellij.platform.workspace.storage.EntityStorageSerializer
-import com.intellij.platform.workspace.storage.EntityStorageSnapshot
-import com.intellij.platform.workspace.storage.MutableEntityStorage
-import com.intellij.platform.workspace.jps.entities.FacetEntity
-import com.intellij.platform.workspace.jps.entities.LibraryEntity
-import com.intellij.platform.workspace.jps.entities.ModuleEntity
-import com.intellij.platform.workspace.storage.impl.EntityStorageSerializerImpl
-import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -63,13 +63,11 @@ class DelayedProjectSynchronizerTest {
   val tempDirectory = TempDirectory()
 
   private lateinit var virtualFileManager: VirtualFileUrlManager
-  private lateinit var serializer: EntityStorageSerializer
 
   @Before
   fun setUp() {
     WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
-    serializer = EntityStorageSerializerImpl(WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver, virtualFileManager)
     registerFacetType(MockFacetType(), disposableRule.disposable)
     registerFacetType(AnotherMockFacetType(), disposableRule.disposable)
   }
@@ -83,7 +81,7 @@ class DelayedProjectSynchronizerTest {
   fun `test just loading with existing cache`() {
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
-    saveToCache(projectData.storage)
+    saveToCache(projectData)
 
     val project = runBlocking { loadProject(projectData.projectDir) }
 
@@ -109,7 +107,7 @@ class DelayedProjectSynchronizerTest {
 
     assertTrue("xxx" !in storage.entities(ModuleEntity::class.java).map { it.name })
 
-    saveToCache(storage)
+    saveToCache(projectData)
 
     val (afterProjectFiles, _) = copyProjectFiles(projectFileAfter)
     val project = runBlocking { loadProject(afterProjectFiles) }
@@ -125,7 +123,7 @@ class DelayedProjectSynchronizerTest {
   @Test
   fun `add library to project loaded from cache`() {
     val projectData = copyAndLoadProject(sampleDirBasedProjectFile, virtualFileManager)
-    saveToCache(projectData.storage)
+    saveToCache(projectData)
 
     //we reset 'nextId' property to emulate JVM restart; after we decouple serialization logic from IDE classes (as part of IDEA-252970),
     //it'll be possible to create a proper tests which prepares the cache in a separate JVM process
@@ -222,7 +220,10 @@ class DelayedProjectSynchronizerTest {
   }
 
 
-  private fun saveToCache(storage: EntityStorageSnapshot) {
+  private fun saveToCache(projectData: LoadedProjectData) {
+    val storage = projectData.storage
+    val serializer = getSerializerForProjectData(projectData)
+
     val cacheFile = tempDirectory.newFile("cache.data").toPath()
     WorkspaceModelCacheImpl.testCacheFile = cacheFile
     serializer.serializeCache(cacheFile, storage)
@@ -243,6 +244,15 @@ class DelayedProjectSynchronizerTest {
       if (action()) return
     }
     fail(message)
+  }
+
+  private fun getSerializerForProjectData(projectData: LoadedProjectData): EntityStorageSerializer {
+    val currentProject = PlatformTestUtil.loadAndOpenProject(projectData.projectDir.toPath(), disposableRule.disposable)
+    return EntityStorageSerializerImpl(
+      WorkspaceModelCacheSerializer.PluginAwareEntityTypesResolver,
+      virtualFileManager,
+      urlRelativizer = JpsProjectUrlRelativizer(currentProject)
+    )
   }
 
   companion object {

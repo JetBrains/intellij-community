@@ -13,12 +13,12 @@ import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.backend.workspace.WorkspaceModelCache
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.*
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.EntityStorageSnapshot
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.impl.isConsistent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getInstance
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -44,7 +44,7 @@ class WorkspaceModelCacheImpl(private val project: Project, coroutineScope: Coro
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate") }
 
   private val urlRelativizer =
-    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
       JpsProjectUrlRelativizer(project)
     } else {
       null

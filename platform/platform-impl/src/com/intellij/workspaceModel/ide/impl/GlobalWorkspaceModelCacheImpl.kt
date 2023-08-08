@@ -7,10 +7,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache
-import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.impl.isConsistent
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.workspaceModel.ide.getGlobalInstance
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -25,7 +25,7 @@ internal class GlobalWorkspaceModelCacheImpl(coroutineScope: CoroutineScope) : G
   private val cacheFile by lazy { PathManager.getSystemDir().resolve("$DATA_DIR_NAME/cache.data") }
 
   private val urlRelativizer =
-    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", false)) {
+    if (Registry.`is`("ide.workspace.model.store.relative.paths.in.cache", true)) {
       ApplicationLevelUrlRelativizer()
     } else {
       null

@@ -90,7 +90,7 @@ public class EntityStorageSerializerImpl(
   private val urlRelativizer: UrlRelativizer? = null
 ) : EntityStorageSerializer {
   public companion object {
-    public const val SERIALIZER_VERSION: String = "v52"
+    public const val SERIALIZER_VERSION: String = "v53"
   }
 
   private val interner = HashSetInterner<SerializableEntityId>()
