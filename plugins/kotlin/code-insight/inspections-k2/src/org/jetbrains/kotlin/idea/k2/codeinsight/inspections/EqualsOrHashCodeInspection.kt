@@ -120,7 +120,7 @@ internal class EqualsOrHashCodeInspection : AbstractKotlinInspection() {
 
     context(KtAnalysisSession)
     private fun getPropertiesToUseInGeneratedMember(classOrObject: KtClassOrObject): List<KtNamedDeclaration> =
-        buildList {
+        buildList<KtNamedDeclaration> {
             classOrObject.primaryConstructorParameters.filterTo(this) { it.hasValOrVar() }
             classOrObject.declarations.asSequence().filterIsInstance<KtProperty>().filterTo(this) {
                 it.getVariableSymbol() is KtPropertySymbol
