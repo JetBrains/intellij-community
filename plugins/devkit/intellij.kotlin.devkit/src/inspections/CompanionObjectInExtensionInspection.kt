@@ -22,9 +22,9 @@ import org.jetbrains.kotlin.analysis.api.KtAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.toLightClass
+import org.jetbrains.kotlin.idea.base.codeInsight.KotlinDeclarationNameValidator
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
-import org.jetbrains.kotlin.idea.base.fe10.codeInsight.newDeclaration.Fe10KotlinNewDeclarationNameValidator
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringEventListener
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveDeclarationDelegate
 import org.jetbrains.kotlin.idea.refactoring.move.KotlinMoveSource
@@ -133,27 +133,27 @@ private class CreateObjectAndMoveProhibitedDeclarationsQuickFix(
   }
 
   private fun createObject(project: Project, companionObject: KtObjectDeclaration): KtObjectDeclaration? {
-    val nameSuggestions = suggestNamesForObjectInstance(companionObject)
-
-    val psiFactory = KtPsiFactory(project)
-
     if (!FileModificationService.getInstance().prepareFileForWrite(companionObject.containingFile)) return null
+    val nameSuggestion =  suggestNameForObjectInstance(companionObject)
 
     return ApplicationManager.getApplication().runWriteAction(
       Computable {
-        val createdObject = psiFactory.createObject("object ${nameSuggestions.first()} {\n}")
+        val psiFactory = KtPsiFactory(project)
+        val createdObject = psiFactory.createObject("object ${nameSuggestion} {\n}")
         companionObject.parent.addBefore(createdObject, companionObject) as KtObjectDeclaration
       }
     )
   }
 
-  private fun suggestNamesForObjectInstance(companionObject: KtObjectDeclaration): Sequence<String> {
+  private fun suggestNameForObjectInstance(companionObject: KtObjectDeclaration): String {
     val containingClass = companionObject.containingClass()!!
-    return KotlinNameSuggester.getCamelNames(
-      DEFAULT_OBJECT_NAME,
-      Fe10KotlinNewDeclarationNameValidator(containingClass, null, KotlinNameSuggestionProvider.ValidatorTarget.CLASS),
-      false
-    )
+    analyze(containingClass) {
+      return KotlinNameSuggester.getCamelNames(
+        DEFAULT_OBJECT_NAME,
+        KotlinDeclarationNameValidator(containingClass, true, KotlinNameSuggestionProvider.ValidatorTarget.CLASS, analysisSession),
+        false
+      ).first()
+    }
   }
 
   private fun moveProhibitedDeclarations(project: Project, companionObject: KtObjectDeclaration, createdObject: KtObjectDeclaration) {

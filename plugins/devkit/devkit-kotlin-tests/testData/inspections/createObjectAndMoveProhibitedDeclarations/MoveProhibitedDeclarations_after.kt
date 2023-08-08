@@ -1,8 +1,9 @@
 import com.intellij.openapi.diagnostic.Logger
 
 class MyExtensionImpl : MyExtension {
+    object Util
 
-    object Util {
+    object Util1 {
         // test properties' moving
         val s
           get() = ""
@@ -35,6 +36,6 @@ class MyExtensionImpl : MyExtension {
 
 fun main() {
   // test references
-    MyExtensionImpl.Util.foo()
-    MyExtensionImpl.Util.a
+    MyExtensionImpl.Util1.foo()
+    MyExtensionImpl.Util1.a
 }
