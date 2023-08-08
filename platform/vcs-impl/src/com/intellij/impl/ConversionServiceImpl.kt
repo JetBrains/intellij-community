@@ -80,12 +80,11 @@ internal class ConversionServiceImpl : ConversionService() {
       return ConversionResultImpl.CONVERSION_NOT_NEEDED
     }
 
-    val result: ConversionResultImpl
-    if (ApplicationManagerEx.isInIntegrationTest()) {
-      result = ConversionResultImpl(converters)
+    val result = if (ApplicationManagerEx.isInIntegrationTest()) {
+      ConversionResultImpl(converters)
     }
     else {
-      result = withContext(Dispatchers.EDT) {
+      withContext(Dispatchers.EDT) {
         val dialog = ConvertProjectDialog(context, converters)
         dialog.show()
         if (dialog.isConverted) {
