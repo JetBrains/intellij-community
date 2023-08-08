@@ -6,7 +6,11 @@ import com.intellij.collaboration.async.collectBatches
 import com.intellij.collaboration.async.modelFlow
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.actions.VcsContextFactory
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.childScope
+import com.intellij.vcsUtil.VcsFileUtil
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApi
@@ -68,6 +72,9 @@ interface GitLabMergeRequest : GitLabMergeRequestDiscussionsContainer {
   suspend fun setReviewers(reviewers: List<GitLabUserDTO>)
 
   suspend fun reviewerRereview(reviewers: Collection<GitLabReviewerDTO>)
+
+  // not the best place for it
+  fun getRelativeFilePath(virtualFile: VirtualFile): FilePath?
 }
 
 internal class LoadedGitLabMergeRequest(
@@ -304,4 +311,14 @@ internal class LoadedGitLabMergeRequest(
   override suspend fun addNote(position: GitLabDiffPositionInput, body: String) = discussionsContainer.addNote(position, body)
 
   override suspend fun submitDraftNotes() = discussionsContainer.submitDraftNotes()
+
+  override fun getRelativeFilePath(virtualFile: VirtualFile): FilePath? {
+    val path = try {
+      VcsFileUtil.relativePath(projectMapping.remote.repository.root, virtualFile)
+    }
+    catch (iae: IllegalArgumentException) {
+      return null
+    }
+    return VcsContextFactory.getInstance().createFilePath(path, false)
+  }
 }

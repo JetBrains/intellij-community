@@ -800,6 +800,7 @@
     <extensionPoint interface="git4idea.fetch.GitFetchHandler" name="gitFetchHandler" dynamic="true"/>
     <extensionPoint interface="git4idea.config.GitProtectedBranchProvider" name="gitProtectedBranchProvider" dynamic="true"/>
     <extensionPoint interface="git4idea.update.GitPostUpdateHandler" name="gitPostUpdateHandler" dynamic="true"/>
+    <extensionPoint interface="git4idea.ui.branch.GitCurrentBranchPresenter" name="gitCurrentBranchPresenter" dynamic="true"/>
   </extensionPoints>
 
   <projectListeners>

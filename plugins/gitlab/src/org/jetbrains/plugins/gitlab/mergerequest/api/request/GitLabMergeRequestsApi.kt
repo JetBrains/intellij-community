@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gitlab.mergerequest.api.request
 
+import com.intellij.collaboration.api.dto.GraphQLConnectionDTO
+import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
 import com.intellij.collaboration.api.graphql.loadResponse
 import com.intellij.collaboration.api.json.loadJsonList
 import com.intellij.collaboration.api.json.loadJsonValue
@@ -41,6 +43,21 @@ suspend fun GitLabApi.GraphQL.loadMergeRequest(
     loadResponse(request, "project", "mergeRequest")
   }
 }
+
+suspend fun GitLabApi.GraphQL.findMergeRequestsByBranch(project: GitLabProjectCoordinates, branch: String)
+  : HttpResponse<out GraphQLConnectionDTO<GitLabMergeRequestId>?> {
+  val parameters = mapOf(
+    "projectId" to project.projectPath.fullPath(),
+    "branch" to branch
+  )
+  val request = gitLabQuery(project.serverPath, GitLabGQLQuery.FIND_MERGE_REQUESTS, parameters)
+  return withErrorStats(project.serverPath, GitLabGQLQuery.FIND_MERGE_REQUESTS) {
+    loadResponse<MergeRequestsConnection>(request, "project", "mergeRequests")
+  }
+}
+
+private class MergeRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GitLabMergeRequestId.Simple>)
+  : GraphQLConnectionDTO<GitLabMergeRequestId.Simple>(pageInfo, nodes)
 
 fun getMergeRequestStateEventsUri(project: GitLabProjectCoordinates, mr: GitLabMergeRequestId): URI =
   project.restApiUri.resolveRelative("merge_requests").resolveRelative(mr.iid).resolveRelative("resource_state_events")

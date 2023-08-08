@@ -30,6 +30,7 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions
 import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_LENGTH_DELTA
 import git4idea.ui.branch.GitBranchPopupActions.BRANCH_NAME_SUFFIX_LENGTH
+import git4idea.ui.branch.GitCurrentBranchPresenter
 import git4idea.ui.branch.popup.GitBranchesTreePopup
 import icons.DvcsImplIcons
 import javax.swing.Icon
@@ -126,9 +127,18 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
         val repo = state.repository
         with(e.presentation) {
           isEnabledAndVisible = true
-          text = calcText(project, repo)
-          icon = repo.calcIcon()
-          description = repo.calcTooltip()
+
+          val customPresentation = GitCurrentBranchPresenter.getPresentation(repo)
+          if (customPresentation == null) {
+            text = calcText(project, repo)
+            icon = repo.calcIcon()
+            description = repo.calcTooltip()
+          }
+          else {
+            text = customPresentation.text
+            icon = customPresentation.icon
+            description = customPresentation.description
+          }
         }
       }
     }

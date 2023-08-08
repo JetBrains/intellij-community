@@ -18,6 +18,7 @@ import org.jetbrains.plugins.gitlab.api.GitLabApi
 import org.jetbrains.plugins.gitlab.api.GitLabProjectCoordinates
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.mergerequest.api.dto.GitLabMergeRequestDTO
+import org.jetbrains.plugins.gitlab.mergerequest.api.request.findMergeRequestsByBranch
 import org.jetbrains.plugins.gitlab.mergerequest.api.request.loadMergeRequest
 import org.jetbrains.plugins.gitlab.mergerequest.data.loaders.GitLabMergeRequestsListLoader
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
@@ -42,6 +43,11 @@ interface GitLabProjectMergeRequestsStore {
    * Update shared merge request
    */
   suspend fun reloadMergeRequest(id: GitLabMergeRequestId)
+
+  /**
+   * Find merge requests on a remote branch with name [branchName]
+   */
+  suspend fun findByBranch(branchName: String): Set<GitLabMergeRequestId>
 }
 
 class CachingGitLabProjectMergeRequestsStore(private val project: Project,
@@ -89,6 +95,11 @@ class CachingGitLabProjectMergeRequestsStore(private val project: Project,
       // this the model will only be alive while it's needed
     }
   }
+
+  override suspend fun findByBranch(branchName: String): Set<GitLabMergeRequestId> =
+    withContext(Dispatchers.IO) {
+      api.graphQL.findMergeRequestsByBranch(projectMapping.repository, branchName).body()!!.nodes.toSet()
+    }
 
   override fun findCachedDetails(id: GitLabMergeRequestId): GitLabMergeRequestDetails? = detailsCache.getIfPresent(id)
 

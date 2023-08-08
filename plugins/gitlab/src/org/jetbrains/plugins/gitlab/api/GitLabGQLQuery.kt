@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gitlab.api
 enum class GitLabGQLQuery(val filePath: String) {
   GET_CURRENT_USER("graphql/query/getCurrentUser.graphql"),
   GET_MERGE_REQUEST("graphql/query/getMergeRequest.graphql"),
+  FIND_MERGE_REQUESTS("graphql/query/findProjectMergeRequests.graphql"),
   GET_MERGE_REQUEST_DISCUSSIONS("graphql/query/getMergeRequestDiscussions.graphql"),
   GET_PROJECT_LABELS("graphql/query/getProjectLabels.graphql"),
   GET_MEMBER_PROJECTS("graphql/query/getMemberProjects.graphql"),

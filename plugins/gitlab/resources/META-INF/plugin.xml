@@ -85,6 +85,8 @@
   <extensions defaultExtensionNs="Git4Idea">
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabSilentHttpAuthDataProvider"/>
     <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.gitlab.git.http.GitLabHttpAuthDataProvider"/>
+    <gitCurrentBranchPresenter
+      implementation="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$BranchPresenter"/>
   </extensions>
 
   <actions>
@@ -188,5 +190,11 @@
       <override-text place="CopyReferencePopup"/>
       <add-to-group group-id="Git.Hosting.Copy.Link.Group"/>
     </group>
+
+    <action id="GitLab.Show.In.Toolwindow"
+            class="org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestOnCurrentBranchService$ShowAction"
+            icon="org.jetbrains.plugins.gitlab.GitlabIcons.GitLabLogo">
+      <add-to-group group-id="Git.Branches.List"/>
+    </action>
   </actions>
 </idea-plugin>
