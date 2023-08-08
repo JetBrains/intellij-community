@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.events
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.use
 import org.gradle.tooling.LongRunningOperation
 import org.gradle.tooling.events.ProgressListener
 import org.gradle.util.GradleVersion
@@ -640,9 +641,9 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
   }
 
   @ParameterizedTest
+  @TargetVersions("4.7+")
   @AllGradleVersionsSource
   fun `test test task execution with additional gradle listeners`(gradleVersion: GradleVersion) {
-    assumeThatGradleIsAtLeast(gradleVersion, "3.5")
     val extension = object : GradleOperationHelperExtension {
       override fun prepareForSync(operation: LongRunningOperation, resolverCtx: ProjectResolverContext) = Unit
       override fun prepareForExecution(id: ExternalSystemTaskId,
@@ -651,8 +652,6 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         operation.addProgressListener(ProgressListener {})
       }
     }
-    val testDisposable = Disposer.newDisposable()
-    GradleOperationHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
     testJunit5Project(gradleVersion) {
       writeText("src/test/java/org/example/AppTest.java", """
         |package org.example;
@@ -661,7 +660,10 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         |   @Test public void test1() {}
         |}
       """.trimMargin())
-      executeTasks(":test", isRunAsTest = true)
+      Disposer.newDisposable().use { testDisposable ->
+        GradleOperationHelperExtension.EP_NAME.point.registerExtension(extension, testDisposable)
+        executeTasks(":test", isRunAsTest = true)
+      }
       assertTestTreeView {
         assertNode("AppTest") {
           assertNode("test1")
@@ -689,6 +691,5 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
         }
       }
     }
-    Disposer.dispose(testDisposable)
   }
 }
