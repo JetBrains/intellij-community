@@ -626,17 +626,17 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-    EditorColorsScheme colorsScheme = myState.colorScheme != null ? mySchemeManager.findSchemeByName(myState.colorScheme) : null;
-    if (colorsScheme == null) {
-      if (myState.colorScheme != null) {
-        LOG.warn(myState.colorScheme + " color scheme is missing");
+    EditorColorsScheme colorScheme = state.colorScheme == null ? null : mySchemeManager.findSchemeByName(state.colorScheme);
+    if (colorScheme == null) {
+      if (state.colorScheme != null) {
+        LOG.warn(state.colorScheme + " color scheme is missing");
       }
       noStateLoaded();
     }
     else {
       themeIsCustomized = true;
-      Ref<EditorColorsScheme> schemeRef = Ref.create(colorsScheme);
-      String schemeName = colorsScheme.getName();
+      Ref<EditorColorsScheme> schemeRef = new Ref<>(colorScheme);
+      String schemeName = colorScheme.getName();
       //todo[kb] remove after 23.1 EAPs
       // New Dark RC is renamed to Dark, switch the scheme accordingly
       if (ExperimentalUI.isNewUI() && (schemeName.equals("_@user_New Dark RC") || schemeName.equals("New Dark RC"))) {
@@ -648,7 +648,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
         });
       }
       setGlobalSchemeLoadedFromConfiguration(schemeRef.get());
-      notifyAboutSolarizedColorSchemeDeprecationIfSet(colorsScheme);
+      notifyAboutSolarizedColorSchemeDeprecationIfSet(colorScheme);
     }
   }
 

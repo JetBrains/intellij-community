@@ -552,14 +552,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     return when {
       getDefaultLightLaf().className == className -> getDefaultLightLaf()
       getDefaultDarkLaf().className == className -> getDefaultDarkLaf()
-      else -> {
-        for (l in lafList) {
-          if (l !is UIThemeBasedLookAndFeelInfo && className == l.className) {
-            return l
-          }
-        }
-        null
-      }
+      else -> lafList.firstOrNull { it !is UIThemeBasedLookAndFeelInfo && className == it.className }
     }
   }
 
@@ -567,7 +560,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
    * Sets current LAF. The method doesn't update component hierarchy.
    */
   override fun setCurrentLookAndFeel(lookAndFeelInfo: LookAndFeelInfo, lockEditorScheme: Boolean) {
-    setLookAndFeelImpl(lookAndFeelInfo, !lockEditorScheme, true)
+    setLookAndFeelImpl(lookAndFeelInfo = lookAndFeelInfo, installEditorScheme = !lockEditorScheme, processChangeSynchronously = true)
   }
 
   /**
