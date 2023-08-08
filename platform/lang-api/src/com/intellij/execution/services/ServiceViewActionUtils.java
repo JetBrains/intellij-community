@@ -16,6 +16,7 @@ import java.util.Set;
 public final class ServiceViewActionUtils {
   public static final DataKey<Set<ServiceViewContributor>> CONTRIBUTORS_KEY = DataKey.create("serviceViewContributors");
   public static final DataKey<ServiceViewOptions> OPTIONS_KEY = DataKey.create("ServiceViewTreeOptions");
+  public static final DataKey<Boolean> IS_FROM_TREE_KEY = DataKey.create("IsFromTreeSource");
 
   private ServiceViewActionUtils() {
   }

@@ -151,6 +151,7 @@ final class ServiceModel implements Disposable, InvokerSupplier {
         case SERVICE_ADDED -> addService(e);
         case SERVICE_REMOVED -> removeService(e);
         case SERVICE_CHANGED -> serviceChanged(e);
+        case SERVICE_CHILDREN_CHANGED -> serviceChildrenChanged(e);
         case SERVICE_STRUCTURE_CHANGED -> serviceStructureChanged(e);
         case SERVICE_GROUP_CHANGED -> serviceGroupChanged(e);
         case GROUP_CHANGED -> groupChanged(e);
@@ -320,6 +321,12 @@ final class ServiceModel implements Disposable, InvokerSupplier {
     ((ServiceViewItem)node).setViewDescriptor(viewDescriptor);
   }
 
+  private void serviceChildrenChanged(ServiceEvent e) {
+    ServiceViewItem item = findItem(e.target, e.contributorClass);
+    if (item instanceof ServiceNode node) {
+      node.reloadChildren();
+    }
+  }
   private void serviceStructureChanged(ServiceEvent e) {
     ServiceViewItem item = findItem(e.target, e.contributorClass);
     if (item instanceof ServiceNode node) {
