@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -31,7 +31,7 @@ import java.awt.*;
 
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull JComponent splitters, @NotNull Graphics g) {
-    if (!Registry.is("editor.paint.empty.text", true)) {
+    if (!isEnabled()) {
       return;
     }
 
@@ -114,5 +114,9 @@ public class EditorEmptyTextPainter {
       .withLineSpacing(1.8f)
       .withColor(JBColor.namedColor("Editor.foreground", new JBColor(Gray._80, Gray._160)))
       .withFont(JBUI.Fonts.label(16f));
+  }
+
+  static boolean isEnabled() {
+    return Registry.is("editor.paint.empty.text", true);
   }
 }

@@ -3,6 +3,8 @@
 
 package com.intellij.openapi.fileEditor.impl
 
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.DistractionFreeModeController
@@ -586,6 +588,7 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         }
         if (disposeIfNeeded && tabCount == 0) {
           removeFromSplitter()
+          logEmptyStateIfMainSplitter(cause = EmptyStateCause.ALL_TABS_CLOSED)
         }
         else {
           panel.revalidate()
@@ -609,6 +612,13 @@ class EditorWindow internal constructor(val owner: EditorsSplitters, private val
         }
         owner.afterFileClosed(file)
       }
+    }
+  }
+
+  fun logEmptyStateIfMainSplitter(cause: EmptyStateCause) {
+    require(tabCount == 0) { "Tab count expected to be zero" }
+    if (EditorEmptyTextPainter.isEnabled() && panel.parent === manager.mainSplitters) {
+      FileEditorCollector.logEditorEmptyState(manager.project, cause)
     }
   }
 

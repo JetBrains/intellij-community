@@ -8,6 +8,7 @@ import com.intellij.codeWithMe.ClientId.Companion.isLocal
 import com.intellij.diagnostic.Activity
 import com.intellij.diagnostic.ActivityCategory
 import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.featureStatistics.fusCollectors.FileEditorCollector.EmptyStateCause
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -289,6 +290,7 @@ open class EditorsSplitters internal constructor(
         // clear empty splitters
         if (window.tabCount == 0) {
           window.removeFromSplitter()
+          window.logEmptyStateIfMainSplitter(cause = EmptyStateCause.CONTEXT_RESTORED)
         }
         else {
           (window.tabbedPane.tabs as JBTabsImpl).revalidateAndRepaint()
