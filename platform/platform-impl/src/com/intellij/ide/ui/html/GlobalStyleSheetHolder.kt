@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.html
 
-import com.intellij.diagnostic.runActivity
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.application.ModalityState
@@ -9,11 +8,8 @@ import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsListener
-import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.impl.FontFamilyService
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -58,15 +54,16 @@ object GlobalStyleSheetHolder {
   /**
    * Populate global stylesheet with LAF-based overrides
    */
-  private fun updateGlobalStyleSheet() {
-    runActivity("global styleSheet updating") {
+  private suspend fun updateGlobalStyleSheet() {
+    val newStyle = StyleSheet()
+    newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
+    newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
+
+    withContext(RawSwingDispatcher + ModalityState.any().asContextElement()) {
       currentLafStyleSheet?.let {
         globalStyleSheet.removeStyleSheet(it)
       }
 
-      val newStyle = StyleSheet()
-      newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
-      newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
       currentLafStyleSheet = newStyle
       globalStyleSheet.addStyleSheet(newStyle)
     }
@@ -82,11 +79,7 @@ object GlobalStyleSheetHolder {
         updateRequests
           .debounce(5.milliseconds)
           .collectLatest {
-            coroutineScope {
-              launch { serviceAsync<EditorColorsManager>() }
-              launch { serviceAsync<FontFamilyService>() }
-            }
-            withContext(RawSwingDispatcher + ModalityState.any().asContextElement()) {
+            withContext(CoroutineName("global styleSheet updating")) {
               updateGlobalStyleSheet()
             }
           }

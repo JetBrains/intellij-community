@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("CssInvalidPropertyValue", "CssUnknownProperty", "CssUnusedSymbol")
 
 package com.intellij.ide.ui.html
 
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.ui.ColorUtil
@@ -38,8 +39,8 @@ internal object LafCssProvider {
   /**
    * Get custom editor styles
    */
-  fun getCssForCurrentEditorScheme(): String {
-    val editorColorScheme = EditorColorsManager.getInstance().globalScheme
+  suspend fun getCssForCurrentEditorScheme(): String {
+    val editorColorScheme = serviceAsync<EditorColorsManager>().globalScheme
     return editorCss
       .replace(EDITOR_FONT_FAMILY_STUB, editorColorScheme.getFont(EditorFontType.PLAIN).family)
       .replace(EDITOR_FOREGROUND_STUB, ColorUtil.toHtmlColor(editorColorScheme.defaultForeground))
