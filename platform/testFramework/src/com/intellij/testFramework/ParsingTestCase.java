@@ -2,6 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -139,6 +140,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     // That's for reparse routines
     project.registerService(PomModel.class, new PomModelImpl(project));
     Registry.markAsLoaded();
+    LoadingState.setCurrentState(LoadingState.PROJECT_OPENED);
   }
 
   protected final void registerParserDefinition(@NotNull ParserDefinition definition) {
