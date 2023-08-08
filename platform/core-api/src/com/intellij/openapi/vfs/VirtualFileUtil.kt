@@ -61,7 +61,7 @@ private fun VirtualFile.relativizeToClosestAncestor(
   val basePath = path.toNioPath()
   val (normalizedBasePath, normalizedRelativePath) = basePath.relativizeToClosestAncestor(relativePath)
   var baseVirtualFile = this
-  for (i in normalizedBasePath.nameCount until basePath.nameCount) {
+  repeat(basePath.nameCount - normalizedBasePath.nameCount) {
     baseVirtualFile = checkNotNull(baseVirtualFile.parent) {
       """
         |Cannot resolve base virtual file for $baseVirtualFile
