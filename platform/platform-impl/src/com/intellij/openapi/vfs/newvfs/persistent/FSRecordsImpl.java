@@ -58,25 +58,19 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
- * This is an attempt to convert FSRecords into a self-containing _object_, not a set of static
- * methods.
- * The plan is: FSRecordsImpl is FSRecords, re-implemented as an object, with all fields being
- * instance fields. Old FSRecords become a single 'volatile FSRecordsImpl impl' holder, all the
- * methods delegated to it.
+ * Facade of VFS persistence layer -- contains VFS storages and auxiliary objects.
  * <p>
- * Benefits:
- * 1. Simplify state: since all fields are initialized in ctor and final -- there are much fewer
- * checks for 'ourConnection!=null' in the code -- .ourConnection can't be null since ctor
- * checks it.
- * 2. clearer separation API methods from implementation -- implementation methods are in FSRecordsImpl,
- * FSRecords contains only API
- * 3. Simplify testing/benchmarking: separate instance of FSRecordsImpl could be created for
- * test/benchmark, and thrown away afterward, without compromising the JVM-wide state.
- * 4. Simplify change of implementation: it is easy to extract interface from FSRecordsImpl, and
- * make another impl, and there is only a single place to switch between impls.
+ * Formerly {@link FSRecords} static methods served that role, now they are obsolete, and we transition to
+ * use {@link FSRecordsImpl} _object_ for that.
+ * Overarching plan is: for access VFS persistance one need to have {@link FSRecordsImpl} _object_, and not
+ * rely on {@link FSRecords#getInstance()} or static {@link FSRecords} methods.
  * <p>
- * TODO RC: maybe FSRecordsImpl methods should throw exceptions, and try...catch{handleError} should
- * be in FSRecords?
+ * Still, {@link FSRecords} static helper will remain for a while supporting its current uses, and it also
+ * simplifies transition with 'default' {@link FSRecords#getInstance() instance} of {@link FSRecordsImpl}.
+ * We're getting rid of all those helpers step by step.
+ * <p/>
+ * At the end I plan to convert {@link FSRecordsImpl} a regular {@link com.intellij.openapi.components.Service},
+ * with a usual .getInstance() method.
  */
 @ApiStatus.Internal
 public final class FSRecordsImpl {

@@ -32,15 +32,19 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 /**
  * This class is just an 'instance holder' -- actual implementation is an {@link FSRecordsImpl} instance,
  * all methods delegate to it.
- * <p>
- * Current policy: avoid use of this class outside of VFS impl code, inside VFS impl code migrate to use
- * the {@link FSRecordsImpl} _instance_ obtained by {@link #getInstance()}, or {@link #connect()}, if
- * you want new instance -- mostly applicable for tests.
- * <p>
  * This is very low-level API, intended to be used only by VFS implementation code only -- mainly
  * {@link PersistentFSImpl}. Inside VFS implementation all the calls should go through the instance
  * obtained by {@link #connect()}. Current usages of static methods should be gradually migrated.
- * {@link FSRecords#getInstance()} method could be used to help with migration.
+ * {@link FSRecords#getInstance()} method intended to help with migration.
+ * <p>
+ * Avoid use of this class outside of VFS impl code, inside VFS impl code migrate to use the
+ * {@link FSRecordsImpl} _instance_. Instance should be obtained by {@link #connect()} somewhere
+ * up the stack, and passed through everywhere needed. Static {@link #getInstance()} method helps
+ * transition to use instance in cases there calling code doesn't supply apt {@link FSRecordsImpl} instance.
+ * <p>
+ * If you want a new and independent {@link FSRecordsImpl} instance (e.g. for tests) -- use
+ * {@link FSRecordsImpl#connect(Path)} methods. {@link FSRecords#connect()} methods install 'default'
+ * shared instance available for everyone via {@link FSRecords#getInstance()}.
  * <p>
  * At the end I plan to convert {@link FSRecordsImpl} a regular {@link com.intellij.openapi.components.Service},
  * with a usual .getInstance() method.
