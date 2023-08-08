@@ -1023,34 +1023,42 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     return this.entityDataById(reference.id)?.createEntity(this) as? T
   }
 
-  override fun <Child : WorkspaceEntity> extractOneToAbstractOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
-    val parentId = parent.asBase().id
-    val childId = refs.getAbstractOneToOneChildren(connectionId, parentId.asParent())?.id
-    return childId?.let {
-      @Suppress("UNCHECKED_CAST")
-      entityDataByIdOrDie(it).createEntity(this) as Child
+  override fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity? {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> {
+        return refs.getOneToOneChild(connectionId, parent.asBase().id.arrayId) {
+          entityDataByIdOrDie(createEntityId(it, connectionId.childClass)).createEntity(this)
+        }
+      }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+        val parentId = parent.asBase().id
+        val childId = refs.getAbstractOneToOneChildren(connectionId, parentId.asParent())?.id ?: return null
+        return entityDataByIdOrDie(childId).createEntity(this)
+      }
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY, ConnectionId.ConnectionType.ONE_TO_MANY -> {
+        error("This function works only with one-to-one connections")
+      }
     }
   }
 
-  override fun <Child : WorkspaceEntity> extractOneToManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<Child> {
-    val parentId = parent.asBase().id
-    val entitiesList = entitiesByType[connectionId.childClass] ?: return emptySequence()
-    return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map {
-      val entityData = entitiesList[it]
-      if (entityData == null) {
-        if (!brokenConsistency) {
-          error(
-            """Cannot resolve entity.
-          |Connection id: $connectionId
-          |Unresolved array id: $it
-          |All child array ids: ${refs.getOneToManyChildren(connectionId, parentId.arrayId)?.toArray()}
-        """.trimMargin()
-          )
-        }
-        null
+  override fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity> {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_MANY -> {
+        val parentId = parent.asBase().id
+        return refs.getOneToManyChildren(connectionId, parentId.arrayId)
+                 ?.map { entityDataByIdOrDie(createEntityId(it, connectionId.childClass)) }
+                 ?.map { it.createEntity(this) } ?: emptySequence()
       }
-      else entityData.createEntity(this)
-    }?.filterNotNull() as? Sequence<Child> ?: emptySequence()
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+        return refs.getOneToAbstractManyChildren(connectionId, parent.asBase().id.asParent())
+                 ?.asSequence()
+                 ?.map { entityDataByIdOrDie(it.id) }
+                 ?.map { it.createEntity(this) } ?: emptySequence()
+      }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE, ConnectionId.ConnectionType.ONE_TO_ONE -> {
+        error("This function works only with one-to-many connections")
+      }
+    }
   }
 
   companion object {

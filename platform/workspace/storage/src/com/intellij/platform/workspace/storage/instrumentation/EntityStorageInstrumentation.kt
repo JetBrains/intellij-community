@@ -21,8 +21,8 @@ interface EntityStorageInstrumentation : EntityStorage {
   fun <T: WorkspaceEntity> initializeEntity(entityId: EntityId, newInstance: (() -> T)): T
   fun <T : WorkspaceEntity> resolveReference(reference: EntityReference<T>): T?
 
-  fun <Child : WorkspaceEntity> extractOneToAbstractOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child?
-  fun <Child : WorkspaceEntity> extractOneToManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<Child>
+  fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity?
+  fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
 }
 
 @EntityStorageInstrumentationApi

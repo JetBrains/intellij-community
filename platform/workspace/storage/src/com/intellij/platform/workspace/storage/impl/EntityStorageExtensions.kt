@@ -8,7 +8,6 @@ import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 
 // ------------------------- Updating references ------------------------
 
-@Suppress("unused")
 fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
                                                   parent: WorkspaceEntity,
                                                   children: List<WorkspaceEntity>) {
@@ -113,7 +112,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToOneParentOfChild(connect
   val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
   val childId = (childEntity as WorkspaceEntityBase).id
   if (!connectionId.isParentNullable && parentId != null) {
-    // A very important thing. If we replace a field in one-to-one connection, the previous entity is automatically removed.
+    // If we replace a field in one-to-one connection, the previous entity is automatically removed.
     val existingChild = extractOneToOneChild<WorkspaceEntityBase>(connectionId, parentEntity)
     if (existingChild != null && existingChild != childEntity) {
       removeEntity(existingChild)
@@ -135,8 +134,8 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractOneParentOfChild
   val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
   val childId = (childEntity as WorkspaceEntityBase).id.asChild()
   if (!connectionId.isParentNullable && parentId != null) {
-    // A very important thing. If we replace a field in one-to-one connection, the previous entity is automatically removed.
-    val existingChild = extractOneToAbstractOneChild<WorkspaceEntityBase>(connectionId, parentEntity)
+    // If we replace a field in one-to-one connection, the previous entity is automatically removed.
+    val existingChild = getOneChild(connectionId, parentEntity)
     if (existingChild != null && existingChild != childEntity) {
       removeEntity(existingChild)
     }
@@ -157,7 +156,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractOneParentOfChild
                                     "com.intellij.platform.workspace.storage.instrumentation.instrumentation"))
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToManyChildren(connectionId: ConnectionId,
                                                                      parent: WorkspaceEntity): Sequence<Child> {
-  return this.instrumentation.extractOneToManyChildren(connectionId, parent)
+  return this.instrumentation.getManyChildren(connectionId, parent) as Sequence<Child>
 }
 
 internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: ConnectionId, parentId: EntityId): Sequence<EntityId> {
@@ -168,18 +167,11 @@ internal fun AbstractEntityStorage.extractOneToOneChildIds(connectionId: Connect
   return refs.getOneToOneChild(connectionId, parentId.arrayId)?.let { createEntityId(it, connectionId.childClass) } ?: return null
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 @Suppress("unused")
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
                                                                              parent: WorkspaceEntity): Sequence<Child> {
-  return (this as AbstractEntityStorage).extractOneToAbstractManyChildren(connectionId, (parent as WorkspaceEntityBase).id.asParent())
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
-                                                                                              parentId: ParentEntityId): Sequence<Child> {
-  return refs.getOneToAbstractManyChildren(connectionId, parentId)?.asSequence()?.map { pid ->
-    entityDataByIdOrDie(pid.id).createEntity(this)
-  } as? Sequence<Child> ?: emptySequence()
+  return this.instrumentation.getManyChildren(connectionId, parent) as Sequence<Child>
 }
 
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractManyParent(
@@ -202,28 +194,18 @@ internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstra
 
 @OptIn(EntityStorageInstrumentationApi::class)
 @Deprecated("Please use direct call to instrumentation level API",
-            ReplaceWith("this.instrumentation.extractOneToAbstractOneChild(connectionId, parent)",
+            ReplaceWith("this.instrumentation.getOneChild(connectionId, parent)",
                                     "com.intellij.platform.workspace.storage.instrumentation.instrumentation"))
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractOneChild(connectionId: ConnectionId,
                                                                          parent: WorkspaceEntity): Child? {
-  return this.instrumentation.extractOneToAbstractOneChild(connectionId, parent)
+  @Suppress("UNCHECKED_CAST")
+  return this.instrumentation.getOneChild(connectionId, parent) as Child?
 }
 
-@Suppress("unused")
-fun <Child : WorkspaceEntity> EntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
-                                                                         parent: WorkspaceEntity): Child? {
-  return (this as AbstractEntityStorage).extractAbstractOneToOneChild(connectionId, (parent as WorkspaceEntityBase).id.asParent())
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractAbstractOneToOneChild(connectionId: ConnectionId,
-                                                                                          parentId: ParentEntityId): Child? {
-  return refs.getAbstractOneToOneChildren(connectionId, parentId)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Child }
-}
-
+@OptIn(EntityStorageInstrumentationApi::class)
 @Suppress("unused")
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
-  return (this as AbstractEntityStorage).extractOneToOneChild(connectionId, (parent as WorkspaceEntityBase).id)
+  return this.instrumentation.getOneChild(connectionId, parent) as? Child
 }
 
 @Suppress("UNCHECKED_CAST")
