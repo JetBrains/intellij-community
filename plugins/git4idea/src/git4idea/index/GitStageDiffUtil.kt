@@ -180,12 +180,44 @@ private class UnStagedProducer constructor(private val project: Project, file: G
   override fun processImpl(): DiffRequest {
     return compareStagedWithLocal(project, statusNode.root, statusNode.status)
   }
+
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+
+    o as UnStagedProducer
+    val statusNode1 = statusNode
+    val statusNode2 = o.statusNode
+    return equalsWithoutStatusCode(statusNode1, statusNode2) &&
+           statusNode1.has(ContentVersion.LOCAL) == statusNode2.has(ContentVersion.LOCAL) &&
+           statusNode1.has(ContentVersion.STAGED) == statusNode2.has(ContentVersion.STAGED)
+  }
+
+  override fun hashCode(): Int {
+    return hashCodeWithoutStatusCode(statusNode)
+  }
 }
 
 private class StagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
   @Throws(VcsException::class, IOException::class)
   override fun processImpl(): DiffRequest {
     return compareHeadWithStaged(project, statusNode.root, statusNode.status)
+  }
+
+  override fun equals(o: Any?): Boolean {
+    if (this === o) return true
+    if (o == null || javaClass != o.javaClass) return false
+
+    o as StagedProducer
+    val statusNode1 = statusNode
+    val statusNode2 = o.statusNode
+    return equalsWithoutStatusCode(statusNode1, statusNode2) &&
+           statusNode1.has(ContentVersion.HEAD) == statusNode2.has(ContentVersion.HEAD) &&
+           statusNode1.has(ContentVersion.STAGED) == statusNode2.has(ContentVersion.STAGED)
+  }
+
+  override fun hashCode(): Int {
+    return hashCodeWithoutStatusCode(statusNode)
   }
 }
 
@@ -290,6 +322,24 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
 
   override fun hashCode(): Int {
     return statusNode.hashCode()
+  }
+
+  companion object {
+    internal fun equalsWithoutStatusCode(statusNode1: GitFileStatusNode, statusNode2: GitFileStatusNode): Boolean {
+      return statusNode1.root == statusNode2.root &&
+             statusNode1.kind == statusNode2.kind &&
+             statusNode1.filePath == statusNode2.filePath &&
+             statusNode1.origPath == statusNode2.origPath
+
+    }
+
+    internal fun hashCodeWithoutStatusCode(statusNode: GitFileStatusNode): Int {
+      var result = statusNode.root.hashCode()
+      result = 31 * result + statusNode.kind.hashCode()
+      result = 31 * result + statusNode.filePath.hashCode()
+      result = 31 * result + statusNode.origPath.hashCode()
+      return result
+    }
   }
 }
 
