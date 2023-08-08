@@ -129,7 +129,8 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
       style = LcrTextInitParams.Style.GRAYED
     }
 
-    renderer { list, value, index, isSelected, cellHasFocus, rowParams ->
+    renderer {
+      val value = this.value
       val background = rowParams.background ?: JBUI.CurrentTheme.List.BACKGROUND
       icon.icon = when (value) {
                        is VcsRef -> LabelIcon(list, JBUI.scale(16), background, listOf(value.type.backgroundColor))

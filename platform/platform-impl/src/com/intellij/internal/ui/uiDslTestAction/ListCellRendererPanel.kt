@@ -21,7 +21,7 @@ internal class ListCellRendererPanel {
       row {
         jbList(listOf("First", "Second", "Last"), textListCellRenderer { it })
         jbList((1..100).map { "Item $it" }, textListCellRenderer { it })
-        jbList((1..100).map { "Item $it" }, iconListCellRenderer {
+        jbList((1..100).map { "Item $it" }, iconListCellRenderer { icon, text ->
           icon.icon = if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear
           text.text = value
         })
@@ -40,7 +40,7 @@ internal class ListCellRendererPanel {
         comboBox(listOf("First", "Second", "Last"), textListCellRenderer { it })
       }
       row("Items with icon:") {
-        comboBox((1..100).map { "Item $it" }, iconListCellRenderer {
+        comboBox((1..100).map { "Item $it" }, iconListCellRenderer { icon, text ->
           icon.icon = if (index % 2 == 0) AllIcons.General.Add else AllIcons.General.Gear
           text.text = value
         })

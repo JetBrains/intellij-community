@@ -9,6 +9,7 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.*
+import com.intellij.ui.dsl.listCellRenderer.RenderContext
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -24,7 +25,7 @@ private const val HORIZONTAL_GAP = 4
 @ApiStatus.Internal
 internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
 
-  private lateinit var _renderer: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean, rowParams: RowParams) -> Unit
+  private lateinit var _renderer: RenderContext<T>.() -> Unit
   private val selectablePanel = SelectablePanel()
 
   /**
@@ -84,15 +85,11 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     return result
   }
 
-  override fun renderer(init: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean, rowParams: RowParams) -> Unit) {
+  override fun renderer(init: RenderContext<T>.() -> Unit) {
     if (this::_renderer.isInitialized) {
       throw UiDslException("Only one renderer is allowed")
     }
     _renderer = init
-  }
-
-  override fun renderer(init: (value: T) -> Unit) {
-    renderer { _, value, _, _, _, _ -> init(value) }
   }
 
   fun onInitFinished() {
@@ -130,7 +127,8 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
       cell.init(list, isSelected, cellHasFocus)
     }
 
-    _renderer.invoke(list, value, index, isSelected, cellHasFocus, RowParamsImpl(selectablePanel))
+    val rendererContext = RenderContextImpl(list, value, index, isSelected, cellHasFocus, RowParamsImpl(selectablePanel))
+    rendererContext._renderer()
 
     selectablePanel.accessibleContext.accessibleName = getAccessibleName()
 
@@ -160,3 +158,10 @@ private fun isBaselineComponent(component: JComponent): Boolean {
   return component is JLabel ||
          component is SimpleColoredComponent
 }
+
+private data class RenderContextImpl<T>(override val list: JList<out T>,
+                                        override val value: T,
+                                        override val index: Int,
+                                        override val isSelected: Boolean,
+                                        override val cellHasFocus: Boolean,
+                                        override val rowParams: RowParams) : RenderContext<T>

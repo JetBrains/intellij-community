@@ -5,10 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import javax.swing.JList
 
 @ApiStatus.Experimental
-interface IconTextRenderer<T> {
-
-  val icon: LcrIcon
-  val text: LcrText
+interface RenderContext<T> {
 
   val list: JList<out T>
   val value: T

@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.listCellRenderer
 
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
-import javax.swing.JList
 
 @ApiStatus.Experimental
 @LcrDslMarker
@@ -30,10 +29,6 @@ interface LcrRow<T> {
    * * The renderer should configure cells, defined by [icon] and [text] methods
    * * The initial state for all cells are set before every render invocation
    */
-  fun renderer(init: (list: JList<out T>, value: T, index: Int, isSelected: Boolean, cellHasFocus: Boolean, rowParams: RowParams) -> Unit)
+  fun renderer(init: RenderContext<T>.() -> Unit)
 
-  /**
-   * Simplified version of overloaded method
-   */
-  fun renderer(init: (value: T) -> Unit)
 }
