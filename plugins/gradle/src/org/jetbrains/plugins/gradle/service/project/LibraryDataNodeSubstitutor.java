@@ -61,6 +61,7 @@ public class LibraryDataNodeSubstitutor {
     final LibraryData libraryData = libraryDependencyData.getTarget();
     final Set<String> libraryPaths = libraryData.getPaths(LibraryPathType.BINARY);
     if (libraryPaths.isEmpty()) return;
+
     if (StringUtil.isNotEmpty(libraryData.getExternalName())) {
       if (gradleUserHomeDir != null) {
         attachSourcesAndJavadocFromGradleCacheIfNeeded(resolverContext, gradleUserHomeDir, libraryData);
@@ -69,7 +70,9 @@ public class LibraryDataNodeSubstitutor {
     }
 
     boolean shouldKeepTransitiveDependencies = !libraryPaths.isEmpty() && !libraryDependencyDataNode.getChildren().isEmpty();
+    Collection<AbstractDependencyData<?>> dependenciesToShift = collectDependenciesOrderedAfter(libraryNodeParent, libraryDependencyData.getOrder());
 
+    int classpathOrderShift = -1;
     final ArrayDeque<String> unprocessedPaths = new ArrayDeque<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
       final String path = unprocessedPaths.remove();
@@ -78,15 +81,19 @@ public class LibraryDataNodeSubstitutor {
         continue;
       }
 
-      createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, lookupResult, libraryPaths,
+      if (createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, lookupResult, libraryPaths,
                                               shouldKeepTransitiveDependencies,
-                                              unprocessedPaths, path);
+                                              unprocessedPaths, path)) {
+        classpathOrderShift++;
+      }
 
       if (libraryPaths.isEmpty()) {
         libraryDependencyDataNode.clear(true);
         break;
       }
     }
+
+    applyClasspathShift(dependenciesToShift, classpathOrderShift);
 
     if (libraryDependencyDataNode.getParent() != null) {
       if (libraryPaths.size() > 1) {
@@ -112,6 +119,15 @@ public class LibraryDataNodeSubstitutor {
         }
       }
     }
+  }
+
+  private static Collection<AbstractDependencyData<?>> collectDependenciesOrderedAfter(@NotNull DataNode<?> parent, int order) {
+    return ContainerUtil.mapNotNull(parent.getChildren(), it -> {
+        if (it.getData() instanceof AbstractDependencyData<?> depData && depData.getOrder() > order) {
+          return depData;
+        }
+        return null;
+    });
   }
 
   private static boolean createAndMaybeAttachNewModuleDependency(@NotNull DataNode<LibraryDependencyData> libraryDependencyDataNode,
@@ -216,6 +232,16 @@ public class LibraryDataNodeSubstitutor {
       return null;
     }
     return new ModuleLookupResult(targetModuleOutputPaths, pair.first, pair.second);
+  }
+
+
+  private static void applyClasspathShift(@NotNull Collection<AbstractDependencyData<?>> dependenciesToMove, int shift) {
+    if (shift > 0) {
+      dependenciesToMove.forEach(data -> {
+        int order = data.getOrder();
+        data.setOrder(order + shift);
+      });
+    }
   }
 
   private static @Nullable Set<String> collectTargetModuleOutputPaths(@NotNull Set<String> libraryPaths,
