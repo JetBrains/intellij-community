@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -23,6 +24,7 @@ import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.util.ui.EDT
@@ -58,8 +60,7 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
   desktop.setPreferencesHandler {
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
       val project = getProject(true)!!
-      @Suppress("DEPRECATION")
-      submit("Settings", ApplicationManager.getApplication().coroutineScope) {
+      submit("Settings", service<CoreUiCoroutineScopeHolder>().coroutineScope) {
         ShowSettingsAction.perform(project)
         ActionsCollector.getInstance().record(project, ActionManager.getInstance().getAction("ShowSettings"), null, null)
       }
@@ -83,8 +84,7 @@ internal fun initMacApplication(mainScope: CoroutineScope) {
     val list = files.map(File::toPath)
     if (LoadingState.COMPONENTS_LOADED.isOccurred) {
       val project = getProject(useDefault = false)
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().coroutineScope.launch {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         ProjectUtil.openOrImportFilesAsync(list = list, location = "MacMenu", projectToClose = project)
       }
     }

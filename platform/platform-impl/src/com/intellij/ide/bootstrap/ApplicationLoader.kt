@@ -26,6 +26,7 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
@@ -41,6 +42,7 @@ import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.TelemetryManagerImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
@@ -391,8 +393,7 @@ private fun addActivateAndWindowsCliListeners() {
   addExternalInstanceListener { rawArgs ->
     LOG.info("External instance command received")
     val (args, currentDirectory) = if (rawArgs.isEmpty()) emptyList<String>() to null else rawArgs.subList(1, rawArgs.size) to rawArgs[0]
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.async {
+    service<CoreUiCoroutineScopeHolder>().coroutineScope.async {
       handleExternalCommand(args, currentDirectory).future.await()
     }
   }

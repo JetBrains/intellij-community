@@ -5,14 +5,15 @@ package com.intellij.ui
 
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.NotificationCollector
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.Companion.getFrameHelper
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.toolWindow.ToolWindowPane
 import com.intellij.util.childScope
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -61,8 +62,7 @@ internal open class BalloonLayoutImpl(private val parent: JRootPane, insets: Ins
 
   private val listeners = ArrayList<Runnable>()
 
-  @Suppress("DEPRECATION")
-  private val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
+  private val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope()
 
   init {
     layeredPane = parent.layeredPane

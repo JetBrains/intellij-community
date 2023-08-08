@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.platform.diagnostic.telemetry.impl.span
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.ui.updateAppWindowIcon
 import com.intellij.util.io.URLUtil.SCHEME_SEPARATOR
@@ -151,10 +152,9 @@ open class IdeStarter : ModernApplicationStarter() {
     }
   }
 
-  private fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
+  private suspend fun showWelcomeFrame(lifecyclePublisher: AppLifecycleListener): Boolean {
     val showWelcomeFrameTask = WelcomeFrame.prepareToShow() ?: return true
-    @Suppress("DEPRECATION")
-    ApplicationManager.getApplication().coroutineScope.launch(Dispatchers.EDT) {
+    serviceAsync<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       showWelcomeFrameTask()
       lifecyclePublisher.welcomeScreenDisplayed()
     }

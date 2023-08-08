@@ -14,9 +14,13 @@ import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.notification.impl.NotificationFullContent
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.Application
+import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ModalTaskOwner
 import com.intellij.openapi.progress.TaskCancellation
@@ -25,6 +29,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.util.SystemProperties
 import com.intellij.util.lang.JavaVersion
 import com.intellij.util.system.CpuArch
@@ -348,8 +353,7 @@ private fun startDiskSpaceMonitoring() {
     return
   }
 
-  @Suppress("DEPRECATION")
-  monitorDiskSpace(ApplicationManager.getApplication().coroutineScope, dir, store, initialDelay = 1.seconds)
+  monitorDiskSpace(scope = service<CoreUiCoroutineScopeHolder>().coroutineScope, dir = dir, store = store, initialDelay = 1.seconds)
 }
 
 private fun monitorDiskSpace(scope: CoroutineScope, dir: Path, store: FileStore, initialDelay: Duration) {

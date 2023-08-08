@@ -16,6 +16,7 @@ import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -34,6 +35,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
 import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.platform.ide.menu.createMacMenuBar
 import com.intellij.ui.*
 import com.intellij.ui.components.JBList
@@ -80,8 +82,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   private var isDisposed = false
   private var header: DefaultFrameHeader? = null
 
-  @Suppress("DEPRECATION")
-  private val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
+  private val coroutineScope = service<CoreUiCoroutineScopeHolder>().coroutineScope.childScope()
 
   companion object {
     @JvmField
@@ -347,7 +348,7 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
           val transferable = e.transferable
           val list = FileCopyPasteUtil.getFiles(transferable)
           if (list != null && list.size > 0) {
-            ApplicationManager.getApplication().coroutineScope.launch {
+            frame.coroutineScope.launch {
               ProjectUtil.openOrImportFilesAsync(list, "WelcomeFrame")
             }
             e.dropComplete(true)

@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.CustomStatusBarWidget
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -107,8 +108,7 @@ class ActionMacroManager internal constructor() : PersistentStateComponent<Eleme
   internal class MyActionTuner : ActionConfigurationCustomizer {
     override fun customize(actionManager: ActionManager) {
       // load state will call ActionManager, but ActionManager is not yet ready, so, postpone
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().coroutineScope.launch {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         getInstance()
       }
     }
