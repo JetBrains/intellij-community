@@ -1,13 +1,14 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide
+package com.intellij.idea
 
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.process.UnixProcessManager
+import com.intellij.ide.BrowserUtil
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.EditCustomVmOptionsAction
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.idea.shellEnvDeferred
 import com.intellij.jna.JnaLoader
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
