@@ -557,7 +557,7 @@ public final class ConfigImportHelper {
            Character.isDigit(name.charAt(strictPrefix.length()));
   }
 
-  public static String getNameWithVersion(Path configDir) {
+  private static String getNameWithVersion(Path configDir) {
     String name = configDir.getFileName().toString();
     if (CONFIG.equals(name)) {
       name = Strings.trimStart(configDir.getParent().getFileName().toString(), ".");
