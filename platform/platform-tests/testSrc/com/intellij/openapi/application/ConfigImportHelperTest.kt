@@ -170,7 +170,6 @@ class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
     options.importSettings = object : ConfigImportSettings {
-      override fun importFinished(newConfigPath: Path, pathSelectorOfOtherIde: String?) {}
       override fun shouldSkipPath(path: Path) = path.endsWith("file1.txt")
     }
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldConfigDir.resolve("plugins"), newConfigDir.resolve("plugins"), options)
