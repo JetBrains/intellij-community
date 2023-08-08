@@ -125,7 +125,6 @@ class CombinedDiffViewer(
   init {
     blockListeners.listeners.add(blockListener)
     selectDiffBlock(blockState.currentBlock, true)
-    notifyVisibleBlocksChanged()
   }
 
   internal fun updateBlockContent(newContent: CombinedDiffBlockContent) {
@@ -312,6 +311,9 @@ class CombinedDiffViewer(
     val totalVisible = inViewport + afterViewport + beforeViewport
     if (totalVisible.isNotEmpty()) {
       blockListeners.multicaster.blocksVisible(totalVisible)
+      if (context.getUserData(DISABLE_LOADING_BLOCKS) == true) {
+        return
+      }
 
       totalVisible.forEach {
         if (diffViewers[it] != null) return
