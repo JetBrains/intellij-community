@@ -95,4 +95,14 @@ class ExtensionTest {
 
     assertNotNull(parent.child)
   }
+
+  @Test
+  fun `access by extension to one-to-one abstract parent`() {
+    val builder = createEmptyBuilder()
+    val child = builder addEntity SpecificChildWithLinkToParentEntity("Info", MySource) {
+      this.parent = ParentWithLinkToAbstractChild("data", MySource)
+    }
+
+    assertNotNull(child.parent)
+  }
 }

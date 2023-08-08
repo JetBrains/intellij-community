@@ -53,9 +53,9 @@ abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
         ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.getParent(connectionId, this)
           ?.let { sequenceOf(it) }
           ?: emptySequence()
-        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> mySnapshot.getParent(connectionId, this)?.let {
           sequenceOf(it)
-        } ?: */emptySequence()
+        } ?: emptySequence()
       } as Sequence<R>
     }
     return emptySequence()
