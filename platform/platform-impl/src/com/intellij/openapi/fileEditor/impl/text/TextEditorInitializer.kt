@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor.impl.text
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
@@ -26,8 +27,8 @@ interface TextEditorInitializer {
 
 internal class HighlighterTextEditorInitializer : TextEditorInitializer {
   override suspend fun init(project: Project, file: VirtualFile, document: Document, editorSupplier: suspend () -> EditorEx) {
-    val scheme = EditorColorsManager.getInstance().globalScheme
-    val editorHighlighterFactory = EditorHighlighterFactory.getInstance()
+    val scheme = serviceAsync<EditorColorsManager>().globalScheme
+    val editorHighlighterFactory = serviceAsync<EditorHighlighterFactory>()
     val highlighter = readAction {
       val highlighter = editorHighlighterFactory.createEditorHighlighter(file, scheme, project)
       highlighter.setText(document.immutableCharSequence)
