@@ -9,6 +9,8 @@ import com.intellij.testFramework.utils.io.deleteRecursively
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.CsvSource
 import java.io.IOException
 import kotlin.io.path.extension
 
@@ -160,49 +162,23 @@ class NioPathUtilTest : NioPathUtilTestCase() {
     }
   }
 
-  @Test
-  fun `test base and relative paths normalization`() {
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths("a/b/c")
-      Assertions.assertEquals("/1/2/3/4/5".toNioPath(), basePath)
-      Assertions.assertEquals("a/b/c".toNioPath(), relativePath)
-    }
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths("../../a/b/c")
-      Assertions.assertEquals("/1/2/3".toNioPath(), basePath)
-      Assertions.assertEquals("a/b/c".toNioPath(), relativePath)
-    }
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths("../..")
-      Assertions.assertEquals("/1/2/3".toNioPath(), basePath)
-      Assertions.assertEquals("".toNioPath(), relativePath)
-    }
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths("a/../b")
-      Assertions.assertEquals("/1/2/3/4/5".toNioPath(), basePath)
-      Assertions.assertEquals("b".toNioPath(), relativePath)
-    }
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths("a/b/..")
-      Assertions.assertEquals("/1/2/3/4/5".toNioPath(), basePath)
-      Assertions.assertEquals("a".toNioPath(), relativePath)
-    }
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths(".")
-      Assertions.assertEquals("/1/2/3/4/5".toNioPath(), basePath)
-      Assertions.assertEquals("".toNioPath(), relativePath)
-    }
-    run {
-      val (basePath, relativePath) = "/1/2/3/4/5".toNioPath()
-        .getNormalizedBaseAndRelativePaths("./a/b")
-      Assertions.assertEquals("/1/2/3/4/5".toNioPath(), basePath)
-      Assertions.assertEquals("a/b".toNioPath(), relativePath)
-    }
+  @ParameterizedTest
+  @CsvSource(
+    "/1/2/3/4/5, a/b/c,        /1/2/3/4/5, a/b/c",
+    "/1/2/3/4/5, ../../a/b/c,  /1/2/3,     a/b/c",
+    "/1/2/3/4/5, ../..,        /1/2/3,     ''",
+    "/1/2/3/4/5, a/../b,       /1/2/3/4/5, b",
+    "/1/2/3/4/5, a/b/..,       /1/2/3/4/5, a",
+    "/1/2/3/4/5, .,            /1/2/3/4/5, ''",
+    "/1/2/3/4/5, ./a/b,        /1/2/3/4/5, a/b"
+  )
+  fun `test base and relative paths normalization`(
+    basePath: String, relativePath: String,
+    expectedBasePath: String, expectedRelativePath: String
+  ) {
+    val (actualBasePath, actualRelativePath) = basePath.toNioPath()
+      .getNormalizedBaseAndRelativePaths(relativePath)
+    Assertions.assertEquals(expectedBasePath.toNioPath(), actualBasePath)
+    Assertions.assertEquals(expectedRelativePath.toNioPath(), actualRelativePath)
   }
 }
