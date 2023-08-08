@@ -12,4 +12,11 @@ class BundledGroovyClassFinder(project: Project) : NonClasspathClassFinder(proje
     val root = bundledGroovyJarRoot.get() ?: return emptyList()
     return listOf(root)
   }
+
+  override fun clearCache() {
+    super.clearCache()
+    bundledGroovyVersion.drop()
+    bundledGroovyFile.drop()
+    bundledGroovyJarRoot.drop()
+  }
 }
