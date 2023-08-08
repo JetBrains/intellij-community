@@ -151,7 +151,7 @@ internal class MacMainFrameDecorator(frame: IdeFrameImpl,
       })
     }
     if (!ExperimentalUI.isNewUI()) {
-      glassPane.addMousePreprocessor(object : MouseAdapter() {
+      glassPane.addMouseListener(object : MouseAdapter() {
         override fun mouseClicked(e: MouseEvent) {
           if (e.clickCount == 2 && e.y <= UIUtil.getTransparentTitleBarHeight(frame.rootPane)) {
             val appleActionOnDoubleClick = CoreFoundation.CFStringRef.createCFString("AppleActionOnDoubleClick")

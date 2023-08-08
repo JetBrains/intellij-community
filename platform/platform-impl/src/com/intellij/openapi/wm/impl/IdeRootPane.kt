@@ -121,7 +121,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     val ideMenu: ActionAwareIdeMenuBar?
     val isFloatingMenuBarSupported: Boolean
 
-    fun init(frame: JFrame, pane: JRootPane, parentDisposable: Disposable) {
+    fun init(frame: JFrame, pane: JRootPane, coroutineScope: CoroutineScope) {
     }
   }
 
@@ -132,11 +132,15 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     override val ideMenu: ActionAwareIdeMenuBar?
       get() = null
 
-    override fun init(frame: JFrame, pane: JRootPane, parentDisposable: Disposable) {
+    override fun init(frame: JFrame, pane: JRootPane, coroutineScope: CoroutineScope) {
       ToolbarService.getInstance().setCustomTitleBar(
         window = frame,
         rootPane = pane,
-        onDispose = { runnable -> Disposer.register(parentDisposable, Disposable { runnable.run() }) },
+        onDispose = { runnable ->
+          coroutineScope.coroutineContext.job.invokeOnCompletion {
+            runnable.run()
+          }
+        },
       )
     }
   }
@@ -185,7 +189,8 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
         val ideMenu: ActionAwareIdeMenuBar
         val customFrameTitlePane = if (ExperimentalUI.isNewUI()) {
           selectedEditorFilePath = null
-          ideMenu = createMacAwareMenuBar(frame = frame, component = this, mainMenuActionGroup = mainMenuActionGroup, coroutineScope.childScope())
+          ideMenu = createMacAwareMenuBar(frame = frame, component = this, mainMenuActionGroup = mainMenuActionGroup,
+                                          coroutineScope.childScope())
           if (SystemInfoRt.isMac) {
             MacToolbarFrameHeader(coroutineScope = coroutineScope.childScope(), frame = frame, rootPane = this)
           }
@@ -251,14 +256,13 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     setGlassPane(glassPane)
     glassPaneInitialized = true
 
-    val parentDisposable = Disposer.newDisposable()
-    coroutineScope.coroutineContext.job.invokeOnCompletion { Disposer.dispose(parentDisposable) }
-
     if (hideNativeLinuxTitle) {
-      WindowResizeListenerEx(glassPane, frame, JBUI.insets(4), null).apply {
-        install(parentDisposable)
-        setLeftMouseButtonOnly(true)
-      }
+      val windowResizeListener = WindowResizeListenerEx(glassPane = glassPane,
+                                                        content = frame,
+                                                        border = JBUI.insets(4),
+                                                        corner = null)
+      windowResizeListener.install(coroutineScope)
+      windowResizeListener.setLeftMouseButtonOnly(true)
     }
 
     putClientProperty(UIUtil.NO_BORDER_UNDER_WINDOW_TITLE_KEY, true)
@@ -272,7 +276,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
       border = UIManager.getBorder("Window.border")
     }
 
-    helper.init(frame = frame, pane = this, parentDisposable = parentDisposable)
+    helper.init(frame = frame, pane = this, coroutineScope = coroutineScope)
     updateMainMenuVisibility()
 
     if (helper.toolbarHolder == null) {
@@ -308,7 +312,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
 
     @Suppress("LeakingThis")
-    contentPane.add(createCenterComponent(frame, parentDisposable), BorderLayout.CENTER)
+    contentPane.add(createCenterComponent(frame), BorderLayout.CENTER)
   }
 
   companion object {
@@ -377,7 +381,7 @@ open class IdeRootPane internal constructor(private val frame: IdeFrameImpl,
     }
   }
 
-  protected open fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
+  protected open fun createCenterComponent(frame: JFrame): Component {
     val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
     val toolWindowButtonManager: ToolWindowButtonManager
     if (ExperimentalUI.isNewUI()) {

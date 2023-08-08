@@ -461,7 +461,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
     doAddListener(listener, parent)
   }
 
-  override fun addMousePreprocessor(listener: MouseListener, coroutineScope: CoroutineScope) {
+  override fun addMouseListener(listener: MouseListener, coroutineScope: CoroutineScope) {
     mouseListeners.add(listener)
     executeOnCancelInEdt(coroutineScope) { removeListener(listener) }
     updateSortedList()

@@ -126,7 +126,7 @@ internal class LightEditFrameWrapper(
     override val isLightEdit: Boolean
       get() = true
 
-    override fun createCenterComponent(frame: JFrame, parentDisposable: Disposable): Component {
+    override fun createCenterComponent(frame: JFrame): Component {
       val panel = LightEditPanel(LightEditUtil.requireProject())
       editPanel = panel
       return panel

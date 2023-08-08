@@ -15,7 +15,10 @@ import java.awt.event.MouseMotionListener;
 public interface IdeGlassPane {
   void addMousePreprocessor(@NotNull MouseListener listener, @NotNull Disposable parent);
 
-  void addMousePreprocessor(@NotNull MouseListener listener, @NotNull CoroutineScope coroutineScope);
+  /**
+   * Applicable for both MouseListener and MouseMotionListener.
+   */
+  void addMouseListener(@NotNull MouseListener listener, @NotNull CoroutineScope coroutineScope);
 
   void addMouseMotionPreprocessor(@NotNull MouseMotionListener listener, @NotNull Disposable parent);
 

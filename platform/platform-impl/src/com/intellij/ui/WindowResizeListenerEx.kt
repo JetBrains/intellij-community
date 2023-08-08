@@ -4,6 +4,7 @@ package com.intellij.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.wm.IdeGlassPane
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
+import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Cursor
@@ -37,6 +38,11 @@ class WindowResizeListenerEx(private val glassPane: IdeGlassPane, content: Compo
   fun install(parent: Disposable): WindowResizeListenerEx {
     glassPane.addMousePreprocessor(this, parent)
     glassPane.addMouseMotionPreprocessor(this, parent)
+    return this
+  }
+
+  fun install(coroutineScope: CoroutineScope): WindowResizeListenerEx {
+    glassPane.addMouseListener(this, coroutineScope)
     return this
   }
 
