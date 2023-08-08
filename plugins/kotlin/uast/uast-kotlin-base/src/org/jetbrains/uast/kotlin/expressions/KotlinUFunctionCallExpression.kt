@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin
 
@@ -244,11 +244,16 @@ class KotlinUFunctionCallExpression(
     private fun collectAliasedNamesForName(
         ktFile: KtFile,
         actualNames: Collection<String>,
-    ): Set<String> = buildSet {
-        for (importDirective in ktFile.importDirectives) {
-            val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString() ?: continue
-            if (importedName in actualNames) {
-                importDirective.aliasName?.let(::add)
+    ): Set<String> {
+        if (ktFile.importDirectives.all { it.alias == null }) return emptySet()
+
+        return buildSet {
+            for (importDirective in ktFile.importDirectives) {
+                val aliasName = importDirective.aliasName ?: continue
+                val importedName = importDirective.importedFqName?.pathSegments()?.lastOrNull()?.asString() ?: continue
+                if (importedName in actualNames) {
+                    add(aliasName)
+                }
             }
         }
     }
