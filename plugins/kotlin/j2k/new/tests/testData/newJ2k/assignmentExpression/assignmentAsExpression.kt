@@ -6,8 +6,7 @@ class AssignmentAsExpression {
         val v = field
         field2 = value
         field = field2
-        val j: Int
-        j = 0
+        val j = 0
         val i = j
     }
 }

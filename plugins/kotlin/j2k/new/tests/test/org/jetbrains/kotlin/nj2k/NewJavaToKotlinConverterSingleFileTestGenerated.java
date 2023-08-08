@@ -4946,6 +4946,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/java8MapForEachWithFullJdk.java");
         }
 
+        @TestMetadata("JoinDeclarationAndAssignment.java")
+        public void testJoinDeclarationAndAssignment() throws Exception {
+            runTest("testData/newJ2k/postProcessing/JoinDeclarationAndAssignment.java");
+        }
+
         @TestMetadata("LiftAssignmentComplex.java")
         public void testLiftAssignmentComplex() throws Exception {
             runTest("testData/newJ2k/postProcessing/LiftAssignmentComplex.java");

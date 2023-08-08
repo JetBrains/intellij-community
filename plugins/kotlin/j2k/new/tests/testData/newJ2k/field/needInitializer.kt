@@ -5,11 +5,9 @@ class Init {
     var field4: Int = 0
 
     init {
-        val prop1: String
-        prop1 = "aaa"
+        val prop1 = "aaa"
         var prop2: String
-        val prop3: Int
-        prop3 = 1
+        val prop3 = 1
         var prop4: Int
     }
 }
