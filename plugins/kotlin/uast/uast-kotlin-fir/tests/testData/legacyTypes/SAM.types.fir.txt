@@ -85,10 +85,11 @@ UFile (package = ) [import java.lang.Thread...]
                             USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread) [<init>] : PsiType:Thread
                             ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                                 UBlockExpression [{...}] : PsiType:Unit
-                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : PsiType:Unit
-                                        UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                        USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
-                                        ULiteralExpression (value = "hello1") ["hello1"] : PsiType:String
+                                    UReturnExpression [return println("hello1")]
+                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello1")] : PsiType:Unit
+                                            UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                                            ULiteralExpression (value = "hello1") ["hello1"] : PsiType:String
         UMethod (name = test2) [public static final fun test2() : void {...}]
             UBlockExpression [{...}] : PsiType:void
                 UDeclarationsExpression [var thread2: java.lang.Thread = <init>(Runnable({ ...}))]
@@ -101,10 +102,11 @@ UFile (package = ) [import java.lang.Thread...]
                                 USimpleNameReferenceExpression (identifier = Runnable, resolvesTo = PsiClass: Runnable) [Runnable] : PsiType:Runnable
                                 ULambdaExpression [{ ...}] : PsiType:Function0<? extends Unit>
                                     UBlockExpression [{...}] : PsiType:Unit
-                                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : PsiType:Unit
-                                            UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
-                                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
-                                            ULiteralExpression (value = "hello2") ["hello2"] : PsiType:String
+                                        UReturnExpression [return println("hello2")]
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println("hello2")] : PsiType:Unit
+                                                UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
+                                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null) [println] : PsiType:Unit
+                                                ULiteralExpression (value = "hello2") ["hello2"] : PsiType:String
         UMethod (name = test3) [public static final fun test3() : void {...}]
             UBlockExpression [{...}] : PsiType:String
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [ambiguousSamAcceptor(Supplier({ ...}))] : PsiType:String

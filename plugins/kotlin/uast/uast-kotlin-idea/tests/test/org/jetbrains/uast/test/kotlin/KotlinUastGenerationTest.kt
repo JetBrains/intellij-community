@@ -99,13 +99,14 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UParameter (name = b)
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UBlockExpression
-                    UQualifiedReferenceExpression
+                    UReturnExpression
                         UQualifiedReferenceExpression
-                            USimpleNameReferenceExpression (identifier = System)
-                            USimpleNameReferenceExpression (identifier = out)
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
-                            UIdentifier (Identifier (println))
-                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = System)
+                                USimpleNameReferenceExpression (identifier = out)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                UIdentifier (Identifier (println))
+                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
                 """.trimIndent(), lambda.putIntoFunctionBody().asRecursiveLogString().trim())
     }
 
@@ -149,13 +150,14 @@ class KotlinUastGenerationTest : AbstractKotlinUastGenerationTest() {
                 UParameter (name = b)
                     UAnnotation (fqName = org.jetbrains.annotations.NotNull)
                 UBlockExpression
-                    UQualifiedReferenceExpression
+                    UReturnExpression
                         UQualifiedReferenceExpression
-                            USimpleNameReferenceExpression (identifier = System)
-                            USimpleNameReferenceExpression (identifier = out)
-                        UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
-                            UIdentifier (Identifier (println))
-                            USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
+                            UQualifiedReferenceExpression
+                                USimpleNameReferenceExpression (identifier = System)
+                                USimpleNameReferenceExpression (identifier = out)
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
+                                UIdentifier (Identifier (println))
+                                USimpleNameReferenceExpression (identifier = println, resolvesTo = null)
         """.trimIndent(), lambda.putIntoFunctionBody().asRecursiveLogString().trim())
     }
 

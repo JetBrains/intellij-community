@@ -117,22 +117,6 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         }
     }
 
-    override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
-        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
-        // Skip _explicit_ return.
-        if (lastExpression is KtReturnExpression) return null
-        analyzeForUast(ktLambdaExpression) {
-            // TODO: Should check an explicit, expected return type as well
-            //  e.g., val y: () -> Unit = { 1 } // the lambda return type is Int, but we won't add an implicit return here.
-            val returnType = ktLambdaExpression.functionLiteral.getAnonymousFunctionSymbol().returnType
-            val returnUnitOrNothing = returnType.isUnit || returnType.isNothing
-            return if (returnUnitOrNothing) null else
-                KotlinUImplicitReturnExpression(parent).apply {
-                    returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
-                }
-        }
-    }
-
     override fun getImplicitParameters(
         ktLambdaExpression: KtLambdaExpression,
         parent: UElement,

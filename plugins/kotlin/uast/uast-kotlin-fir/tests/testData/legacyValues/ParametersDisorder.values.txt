@@ -24,7 +24,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
             UBlockExpression [{...}] = Undetermined
         UMethod (name = call) [public static final fun call() : void {...}]
             UBlockExpression [{...}] = external with(<init>(), {
-    "def".with2Receivers(8, 7.0)
+    return "def".with2Receivers(8, 7.0)
 })(external <init>()(), Undetermined)
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [global(2.2, 2)] = external global(2.2, 2)((float)2.200000047683716, 2)
                     UIdentifier (Identifier (global)) [UIdentifier (Identifier (global))]
@@ -126,24 +126,25 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                                 UIdentifier (Identifier (toTypedArray)) [UIdentifier (Identifier (toTypedArray))]
                                 USimpleNameReferenceExpression (identifier = toTypedArray, resolvesTo = null) [toTypedArray] = external toTypedArray()()
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with(<init>(), { ...})] = external with(<init>(), {
-    "def".with2Receivers(8, 7.0)
+    return "def".with2Receivers(8, 7.0)
 })(external <init>()(), Undetermined)
                     UIdentifier (Identifier (with)) [UIdentifier (Identifier (with))]
                     USimpleNameReferenceExpression (identifier = with, resolvesTo = null) [with] = external with(<init>(), {
-    "def".with2Receivers(8, 7.0)
+    return "def".with2Receivers(8, 7.0)
 })(external <init>()(), Undetermined)
                     UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [<init>()] = external <init>()()
                         UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
                         USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A) [<init>] = external <init>()()
                     ULambdaExpression [{ ...}] = Undetermined
-                        UBlockExpression [{...}] = external with2Receivers(8, 7.0)(8, (float)7.0)
-                            UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] = external with2Receivers(8, 7.0)(8, (float)7.0)
-                                ULiteralExpression (value = "def") ["def"] = "def"
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] = external with2Receivers(8, 7.0)(8, (float)7.0)
-                                    UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
-                                    USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] = external with2Receivers(8, 7.0)(8, (float)7.0)
-                                    ULiteralExpression (value = 8) [8] = 8
-                                    ULiteralExpression (value = 7.0) [7.0] = (float)7.0
+                        UBlockExpression [{...}] = Nothing
+                            UReturnExpression [return "def".with2Receivers(8, 7.0)] = Nothing
+                                UQualifiedReferenceExpression ["def".with2Receivers(8, 7.0)] = external with2Receivers(8, 7.0)(8, (float)7.0)
+                                    ULiteralExpression (value = "def") ["def"] = "def"
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [with2Receivers(8, 7.0)] = external with2Receivers(8, 7.0)(8, (float)7.0)
+                                        UIdentifier (Identifier (with2Receivers)) [UIdentifier (Identifier (with2Receivers))]
+                                        USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null) [with2Receivers] = external with2Receivers(8, 7.0)(8, (float)7.0)
+                                        ULiteralExpression (value = 8) [8] = 8
+                                        ULiteralExpression (value = 7.0) [7.0] = (float)7.0
         UMethod (name = objectLiteral) [public static final fun objectLiteral() : void {...}]
             UBlockExpression [{...}] = Undetermined
                 UObjectLiteralExpression [anonymous object : Parent(b = 1, a = "foo") { }] = Undetermined

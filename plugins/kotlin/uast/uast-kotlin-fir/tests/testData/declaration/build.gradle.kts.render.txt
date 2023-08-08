@@ -12,22 +12,22 @@ public final class Build_gradle {
                 <anonymous class>(23)
                 applicationId = "com.example.kotlingradle"
                 versionCode = 1
-                versionName = "1.0"
+                return versionName = "1.0"
             })
-            <anonymous class>({
-                <anonymous class>("release", {
+            return <anonymous class>({
+                return <anonymous class>("release", {
                     isMinifyEnabled = false
-                    <anonymous class>("proguard-rules.pro")
+                    return <anonymous class>("proguard-rules.pro")
                 })
             })
         })
         <anonymous class>({
             <anonymous class>("com.android.support:appcompat-v7:23.4.0")
             <anonymous class>("com.android.support.constraint:constraint-layout:1.0.0-alpha8")
-            <anonymous class>(<anonymous class>("stdlib", "1.1.51"))
+            return <anonymous class>(<anonymous class>("stdlib", "1.1.51"))
         })
         <anonymous class>({
-            <anonymous class>()
+            return <anonymous class>()
         })
     }
     public static final fun main(args: java.lang.String[]) : void = UastEmptyExpression

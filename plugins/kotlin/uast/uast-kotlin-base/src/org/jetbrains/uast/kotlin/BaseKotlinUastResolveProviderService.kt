@@ -34,7 +34,44 @@ interface BaseKotlinUastResolveProviderService {
 
     fun getArgumentForParameter(ktCallElement: KtCallElement, index: Int, parent: UElement): UExpression?
 
-    fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression?
+    fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
+        val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
+        // Skip _explicit_ return.
+        if (lastExpression is KtReturnExpression || lastExpression is KtThrowExpression) return null
+
+        /**
+         * This is not fully correct in the case of lambda with [Unit] return type and non-[Unit] return type of the last statement:
+         * ```kotlin
+         * fun foo() {
+         *     42.apply {
+         *         "str"
+         *     }
+         * }
+         * ```
+         * Because here [apply] has [Unit] return type, so we shouldn't have the implicit return here,
+         * but we will create it anyway.
+         * So effectively, this code will mean:
+         * ```kotlin
+         * fun foo() {
+         *     42.apply {
+         *         return@apply "str"
+         *     }
+         * }
+         * ```
+         * in terms of UAST what is wrong, but we agree with this behavior because such real type checks are too expensive.
+         * But it is correct in the case of [Unit] as a return type of the last statement
+         * ```kotlin
+         * fun foo() {
+         *     42.apply {
+         *         return@apply println(this)
+         *     }
+         * }
+         * ```
+         */
+        return KotlinUImplicitReturnExpression(parent).apply {
+            returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
+        }
+    }
 
     fun getImplicitParameters(
         ktLambdaExpression: KtLambdaExpression,

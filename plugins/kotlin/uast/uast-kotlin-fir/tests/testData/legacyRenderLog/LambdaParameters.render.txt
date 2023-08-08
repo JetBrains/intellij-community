@@ -1,7 +1,7 @@
 public final class LambdaParametersKt {
     public static final fun lambdaWithRecivier() : void {
         buildString({
-            append("a")
+            return append("a")
         })
     }
     public static final fun itParameter() : void {

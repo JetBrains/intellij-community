@@ -131,13 +131,14 @@ UFile (package = )
                         USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: A)
                     ULambdaExpression
                         UBlockExpression
-                            UQualifiedReferenceExpression
-                                ULiteralExpression (value = "def")
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
-                                    UIdentifier (Identifier (with2Receivers))
-                                    USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null)
-                                    ULiteralExpression (value = 8)
-                                    ULiteralExpression (value = 7.0)
+                            UReturnExpression
+                                UQualifiedReferenceExpression
+                                    ULiteralExpression (value = "def")
+                                    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))
+                                        UIdentifier (Identifier (with2Receivers))
+                                        USimpleNameReferenceExpression (identifier = with2Receivers, resolvesTo = null)
+                                        ULiteralExpression (value = 8)
+                                        ULiteralExpression (value = 7.0)
         UMethod (name = objectLiteral)
             UBlockExpression
                 UObjectLiteralExpression
