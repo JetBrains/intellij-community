@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.builtins.PrimitiveType
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester.Case.CAMEL
+import org.jetbrains.kotlin.idea.base.psi.getCallElement
 import org.jetbrains.kotlin.idea.base.psi.unquoteKotlinIdentifier
 import org.jetbrains.kotlin.lexer.KotlinLexer
 import org.jetbrains.kotlin.lexer.KtKeywordToken
@@ -25,9 +26,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getOutermostParenthesizerOrThis
 import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
-import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.*
-import org.jetbrains.kotlin.util.match
 
 @DslMarker
 private annotation class NameSuggesterDsl
@@ -172,14 +171,6 @@ class KotlinNameSuggester(
         if (!resolvedCall.symbol.hasStableParameterNames) return emptySequence()
         val parameter = resolvedCall.argumentMapping[valueArgument.getArgumentExpression()]?.symbol ?: return emptySequence()
         return suggestNameByValidIdentifierName(parameter.name.asString(), validator)?.let { sequenceOf(it) } ?: emptySequence()
-    }
-
-    private fun getCallElement(valueArgument: KtValueArgument): KtCallElement? {
-        return if (valueArgument is KtLambdaArgument) {
-            valueArgument.parent as? KtCallElement
-        } else {
-            valueArgument.parents.match(KtValueArgumentList::class, last = KtCallElement::class)
-        }
     }
 
     /**

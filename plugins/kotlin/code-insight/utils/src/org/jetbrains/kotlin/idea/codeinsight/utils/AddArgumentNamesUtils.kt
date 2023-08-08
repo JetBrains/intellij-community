@@ -9,15 +9,14 @@ import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.base.psi.getCallElement
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtLambdaArgument
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
-import org.jetbrains.kotlin.psi.psiUtil.parents
-import org.jetbrains.kotlin.util.match
 
 object AddArgumentNamesUtils {
     fun addArgumentName(element: KtValueArgument, argumentName: Name) {
@@ -83,9 +82,14 @@ object AddArgumentNamesUtils {
             .mapKeys { it.key.createSmartPointer() }
     }
 
+    /**
+     * Returns the name of the value argument if it can be used for calls.
+     * The method also works for [KtValueArgument] that is [KtLambdaArgument], since
+     * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
+     */
     context(KtAnalysisSession)
     fun KtValueArgument.getValueArgumentName(): Name? {
-        val callElement = parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
+        val callElement = getCallElement(this) ?: return null
         val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
         if (!resolvedCall.symbol.hasStableParameterNames) return null
         return getArgumentNameIfCanBeUsedForCalls(this, resolvedCall)
