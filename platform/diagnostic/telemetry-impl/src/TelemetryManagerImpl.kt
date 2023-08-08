@@ -1,7 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.diagnostic.telemetry.impl
 
-import com.intellij.diagnostic.*
+import com.intellij.diagnostic.ActivityImpl
+import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
@@ -16,6 +17,8 @@ import com.intellij.platform.diagnostic.telemetry.impl.otExporters.OpenTelemetry
 import com.intellij.util.childScope
 import io.opentelemetry.api.OpenTelemetry
 import io.opentelemetry.api.metrics.Meter
+import io.opentelemetry.api.trace.propagation.W3CTraceContextPropagator
+import io.opentelemetry.context.propagation.ContextPropagators
 import io.opentelemetry.sdk.OpenTelemetrySdk
 import io.opentelemetry.sdk.resources.Resource
 import io.opentelemetry.semconv.resource.attributes.ResourceAttributes
@@ -54,7 +57,10 @@ class TelemetryManagerImpl(app: Application) : TelemetryManager {
     val spanExporters = createSpanExporters(configurator.resource)
     hasSpanExporters = !spanExporters.isEmpty()
     configurator.registerSpanExporters(spanExporters = spanExporters)
+
+    // W3CTraceContextPropagator is needed to make backend/client spans properly synced, issue: RDCT-408
     sdk = configurator.getConfiguredSdkBuilder()
+      .setPropagators(ContextPropagators.create(W3CTraceContextPropagator.getInstance()))
       .buildAndRegisterGlobal()
   }
 
