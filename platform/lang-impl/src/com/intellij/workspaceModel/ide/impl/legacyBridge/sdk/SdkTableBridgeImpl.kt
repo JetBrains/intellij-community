@@ -1,9 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.sdk
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.OrderRootType
@@ -21,9 +20,9 @@ import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
-import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
 import org.jdom.Element
+import org.jetbrains.annotations.TestOnly
 
 //TODO::
 // [] Different tag name for library root and SDK roots e.g sources, classes
@@ -117,6 +116,11 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       }
       (originalSdk as SdkBridgeImpl).applyChangesFrom(modifiedSdk)
     }
+  }
+
+  @TestOnly
+  override fun saveOnDisk() {
+    ApplicationManager.getApplication().saveAll()
   }
 
   companion object {

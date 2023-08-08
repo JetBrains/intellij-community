@@ -12,6 +12,7 @@ import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkTableBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.GlobalSdkTableBridge
 import com.intellij.workspaceModel.ide.legacyBridge.sdk.SdkTableImplementationDelegate
+import org.jetbrains.annotations.TestOnly
 
 open class ProjectJdkTableImpl: ProjectJdkTable() {
 
@@ -89,6 +90,9 @@ open class ProjectJdkTableImpl: ProjectJdkTable() {
   }
 
   override fun createSdk(name: String, sdkType: SdkTypeId): Sdk = delegate.createSdk(name, sdkType, null)
+
+  @TestOnly
+  override fun saveOnDisk(): Unit = delegate.saveOnDisk()
 
   override fun getDefaultSdkType(): SdkTypeId = UnknownSdkType.getInstance("")
 

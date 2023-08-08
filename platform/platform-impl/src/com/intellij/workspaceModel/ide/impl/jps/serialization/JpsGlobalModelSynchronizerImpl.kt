@@ -50,7 +50,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope) : JpsGlobalModelSynchronizer {
   private var loadedFromDisk: Boolean = false
-  private val prohibited: Boolean
+  private val isLibSerializationProhibited: Boolean
     get() = !forceEnableLoading && ApplicationManager.getApplication().isUnitTestMode
 
   override fun loadInitialState(mutableStorage: MutableEntityStorage, initialEntityStorage: VersionedEntityStorage,
@@ -121,9 +121,8 @@ class JpsGlobalModelSynchronizerImpl(private val coroutineScope: CoroutineScope)
   }
 
   private fun createSerializers(): List<JpsFileEntitiesSerializer<WorkspaceEntity>> {
-    if (prohibited) return emptyList()
-
-    return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance())
+    return JpsGlobalEntitiesSerializers.createApplicationSerializers(VirtualFileUrlManager.getGlobalInstance(),
+                                                                     !isLibSerializationProhibited)
   }
 
   private fun bridgesInitializationCallback(mutableStorage: MutableEntityStorage,

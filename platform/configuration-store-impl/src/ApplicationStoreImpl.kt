@@ -53,7 +53,7 @@ open class ApplicationStoreImpl(private val app: Application)
 
   override suspend fun doSave(result: SaveResult, forceSavingAllSettings: Boolean) {
     val saveSessionManager = createSaveSessionProducerManager()
-    if (GlobalLibraryTableBridge.isEnabled() ||GlobalSdkTableBridge.isEnabled()) {
+    if (GlobalLibraryTableBridge.isEnabled() || GlobalSdkTableBridge.isEnabled()) {
       blockingContext {
         (JpsGlobalModelSynchronizer.getInstance() as JpsGlobalModelSynchronizerImpl).saveGlobalEntities(AppStorageContentWriter(saveSessionManager))
       }

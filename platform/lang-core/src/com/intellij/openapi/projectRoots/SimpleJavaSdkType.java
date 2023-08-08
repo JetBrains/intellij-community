@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import com.intellij.openapi.util.Comparing;
@@ -34,7 +35,9 @@ public class SimpleJavaSdkType extends SdkType implements JavaSdkType {
     Sdk jdk = ProjectJdkTable.getInstance().createSdk(jdkName, this);
     SdkModificator sdkModificator = jdk.getSdkModificator();
     sdkModificator.setHomePath(FileUtil.toSystemIndependentName(home));
-    sdkModificator.commitChanges();
+    ApplicationManager.getApplication().runWriteAction(() -> {
+      sdkModificator.commitChanges();
+    });
     return jdk;
   }
 

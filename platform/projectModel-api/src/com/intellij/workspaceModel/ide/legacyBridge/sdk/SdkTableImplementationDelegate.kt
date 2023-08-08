@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkTypeId
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 
 @ApiStatus.Internal
 interface SdkTableImplementationDelegate {
@@ -19,6 +20,9 @@ interface SdkTableImplementationDelegate {
   fun getAllSdks(): List<Sdk>
 
   fun findSdkByName(name: String): Sdk?
+
+  @TestOnly
+  fun saveOnDisk()
 
   companion object {
     fun getInstance(): SdkTableImplementationDelegate {

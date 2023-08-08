@@ -5,10 +5,8 @@ import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.impl.stores.IComponentStore;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -32,7 +30,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.VisibleForTesting;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
@@ -251,5 +249,12 @@ public class LegacyProjectJdkTableDelegate implements SdkTableImplementationDele
       }
     }
     return element;
+  }
+
+  @Override
+  @TestOnly
+  public void saveOnDisk() {
+    IComponentStore store = ServiceKt.getStateStore(ApplicationManager.getApplication());
+    store.saveComponent(this);
   }
 }
