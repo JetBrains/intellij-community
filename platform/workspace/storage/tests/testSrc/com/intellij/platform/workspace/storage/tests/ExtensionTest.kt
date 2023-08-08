@@ -4,6 +4,7 @@ package com.intellij.platform.workspace.storage.tests
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class ExtensionTest {
@@ -83,5 +84,15 @@ class ExtensionTest {
     val ref = entity.child!!
     val children = ref.ref
     assertEquals("123", children.x)
+  }
+
+  @Test
+  fun `access by extension to one-to-one abstract child`() {
+    val builder = createEmptyBuilder()
+    val parent = builder addEntity ParentWithExtensionEntity("info", MySource) {
+      this.child = SpecificChildEntity("data", MySource)
+    }
+
+    assertNotNull(parent.child)
   }
 }

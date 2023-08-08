@@ -29,16 +29,16 @@ abstract class WorkspaceEntityBase : WorkspaceEntity, Any() {
     var connectionId = mySnapshot.refs.findConnectionId(getEntityInterface(), entityClass)
     if (connectionId != null) {
       val entitiesSequence = when (connectionId.connectionType) {
-        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.getManyChildren(connectionId, this) as Sequence<R>
+        ConnectionId.ConnectionType.ONE_TO_MANY -> mySnapshot.getManyChildren(connectionId, this)
         ConnectionId.ConnectionType.ONE_TO_ONE -> mySnapshot.getOneChild(connectionId, this)
-          ?.let { sequenceOf(it as R) }
+          ?.let { sequenceOf(it) }
           ?: emptySequence()
-        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.getManyChildren(connectionId, this) as Sequence<R>
-        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> /*mySnapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+        ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> mySnapshot.getManyChildren(connectionId, this)
+        ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> mySnapshot.getOneChild(connectionId, this)?.let {
           sequenceOf(it)
-        } ?: */emptySequence()
-      }
-      // If resulting sequence is empty, and it's connection between two entities of the same type we should continue search
+        } ?: emptySequence()
+      } as Sequence<R>
+      // If the resulting sequence is empty, and its connection between two entities of the same type, we should continue search
       if (!checkReversedConnection || entitiesSequence.any() || getEntityInterface() != entityClass) {
         return entitiesSequence
       }
