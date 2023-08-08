@@ -5,18 +5,17 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyle
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.ComponentStyleState
+import com.intellij.openapi.wm.impl.customFrameDecorations.style.HOVER_KEY
 import com.intellij.openapi.wm.impl.customFrameDecorations.style.StyleManager
-import com.intellij.ui.icons.overrideIconScale
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.ui.scale.ScaleType
-import com.intellij.util.IconUtil
-import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.JBUI.CurrentTheme
-import java.awt.*
+import java.awt.Color
+import java.awt.Dimension
+import java.awt.FlowLayout
+import java.awt.Graphics
 import javax.accessibility.AccessibleContext
 import javax.swing.*
-import javax.swing.border.Border
 import javax.swing.plaf.ButtonUI
 import javax.swing.plaf.basic.BasicButtonUI
 
@@ -36,31 +35,13 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   private val baseStyle = ComponentStyle.ComponentStyleBuilder<JComponent> {
     isOpaque = false
     border = Borders.empty()
+    hover = null
   }.apply {
-    fun paintHover(g: Graphics, width: Int, height: Int, color: Color) {
-      g.color = color
-      g.fillRect(0, 0, width, height)
-    }
-
-    class MyBorder(val color: ()-> Color) : Border {
-      override fun getBorderInsets(c: Component?): Insets = JBInsets.emptyInsets()
-
-      override fun isBorderOpaque(): Boolean = false
-
-      override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
-        paintHover(g, width, height, color())
-      }
-    }
-
-    val hoverBorder = MyBorder {CurrentTheme.CustomFrameDecorations.titlePaneButtonHoverBackground()}
-    val pressBorder = MyBorder {CurrentTheme.CustomFrameDecorations.titlePaneButtonPressBackground()}
-
     style(ComponentStyleState.HOVERED) {
-      this.border = hoverBorder
-
+      hover = CurrentTheme.CustomFrameDecorations.titlePaneButtonHoverBackground()
     }
     style(ComponentStyleState.PRESSED) {
-      this.border = pressBorder
+      hover = CurrentTheme.CustomFrameDecorations.titlePaneButtonPressBackground()
     }
   }
 
@@ -151,9 +132,9 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
   }
 
   protected fun createButton(accessibleName: String, action: Action): JButton {
-    val button = object : JButton(){
+    val button = object : JButton() {
       init {
-        super.setUI(BasicButtonUI())
+        super.setUI(HoveredButtonUI())
       }
 
       override fun setUI(ui: ButtonUI?) {
@@ -165,26 +146,39 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     button.text = null
     return button
   }
+}
 
-  private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
-    var isCompactMode = false
-      set(value) {
-        field = value
-        updateScaledPreferredSize()
-      }
+private class HoveredButtonUI : BasicButtonUI() {
+  override fun paint(g: Graphics, c: JComponent) {
+    getHoverColor(c)?.let {
+      g.color = it
+      g.fillRect(0, 0, c.width, c.height)
+    }
+    super.paint(g, c)
+  }
 
-    init {
-      isOpaque = false
+  private fun getHoverColor(c: JComponent): Color? = c.getClientProperty(HOVER_KEY) as? Color
+}
+
+private class TitleButtonsPanel : JPanel(FlowLayout(FlowLayout.LEADING, 0, 0)) {
+  var isCompactMode = false
+    set(value) {
+      field = value
+      updateScaledPreferredSize()
     }
 
-    fun addComponent(component: JComponent) {
-      component.setScaledPreferredSize()
-      add(component, "top")
-    }
+  init {
+    isOpaque = false
+  }
 
-    private fun updateScaledPreferredSize() {
-      components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
-    }
+  fun addComponent(component: JComponent) {
+    component.setScaledPreferredSize()
+    add(component, "top")
+  }
+
+  private fun updateScaledPreferredSize() {
+    components.forEach { (it as? JComponent)?.setScaledPreferredSize() }
+  }
 
   private fun JComponent.setScaledPreferredSize() {
     val size = CurrentTheme.TitlePane.buttonPreferredSize(UISettings.defFontScale).clone() as Dimension
@@ -194,14 +188,13 @@ internal open class CustomFrameTitleButtons(myCloseAction: Action) {
     preferredSize = Dimension(size.width, size.height)
   }
 
-    override fun updateUI() {
-      super.updateUI()
-      components?.forEach { component ->
-        if (component is JComponent) {
-          component.setScaledPreferredSize()
-        }
+  override fun updateUI() {
+    super.updateUI()
+    components?.forEach { component ->
+      if (component is JComponent) {
+        component.setScaledPreferredSize()
       }
     }
   }
-
 }
+
