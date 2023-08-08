@@ -16,6 +16,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 import java.io.File;
 import java.util.*;
@@ -161,7 +162,7 @@ public class LibraryDataNodeSubstitutor {
     moduleDependencyData.setScope(libraryDependencyData.getScope());
     moduleDependencyData.setOrder(libraryDependencyData.getOrder());
 
-    if (isTestSourceSet(targetExternalSourceSet)) {
+    if (targetExternalSourceSet != null && isTestSourceSet(targetExternalSourceSet)) {
       moduleDependencyData.setProductionOnTestDependency(true);
     }
     final DataNode<ModuleDependencyData> found = findChild(
@@ -212,6 +213,19 @@ public class LibraryDataNodeSubstitutor {
 
   private ModuleLookupResult lookupTargetModule(String path) {
     Set<String> targetModuleOutputPaths = null;
+
+    GradleSourceSetData targetModule = Optional.ofNullable(resolverContext.getSettings())
+      .map(GradleExecutionSettings::getExecutionWorkspace)
+      .map(ws -> ws.findModuleDataByArtifacts(Collections.singleton(new File(path))))
+      .filter(md -> md instanceof GradleSourceSetData)
+      .map(GradleSourceSetData.class::cast)
+      .orElse(null);
+
+    if (targetModule != null) {
+      return new ModuleLookupResult(Collections.singleton(path),
+                                    new DataNode<>(GradleSourceSetData.KEY, targetModule, null),
+                                    null);
+    }
 
     final String moduleId;
     final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
@@ -271,6 +285,7 @@ public class LibraryDataNodeSubstitutor {
   }
 }
 
-record ModuleLookupResult(Set<String> targetModuleOutputPaths, DataNode<GradleSourceSetData> sourceSetDataDataNode,
-                          ExternalSourceSet externalSourceSet) {
+record ModuleLookupResult(@Nullable Set<String> targetModuleOutputPaths,
+                          @NotNull DataNode<GradleSourceSetData> sourceSetDataDataNode,
+                          @Nullable ExternalSourceSet externalSourceSet) {
 }
