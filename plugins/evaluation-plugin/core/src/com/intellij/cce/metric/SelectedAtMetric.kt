@@ -4,7 +4,7 @@ package com.intellij.cce.metric
 import com.intellij.cce.core.Session
 import com.intellij.cce.metric.util.Sample
 
-class RecallAtMetric(private val n: Int) : Metric {
+class SelectedAtMetric(private val n: Int) : Metric {
   private val sample = Sample()
   override val name = NAME_PREFIX + n
   override val description: String = "Ratio of invocations with selected proposal in top-$n"
@@ -32,6 +32,6 @@ class RecallAtMetric(private val n: Int) : Metric {
   }
 
   companion object {
-    const val NAME_PREFIX = "RecallAt"
+    const val NAME_PREFIX = "SelectedAt"
   }
 }

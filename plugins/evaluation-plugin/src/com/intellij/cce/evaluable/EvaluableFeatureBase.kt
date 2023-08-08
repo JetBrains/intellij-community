@@ -18,8 +18,8 @@ abstract class EvaluableFeatureBase<T : EvaluationStrategy>(override val name: S
     BasicFileReportGenerator(filterName, comparisonFilterName, featuresStorages, dirs)
 
   override fun getMetrics(): List<Metric> = listOf(
-    RecallAtMetric(1),
-    RecallAtMetric(5),
+    SelectedAtMetric(1),
+    SelectedAtMetric(5),
     RecallMetric(),
     Precision(),
     MeanRankMetric(),
