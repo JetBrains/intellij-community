@@ -1,6 +1,7 @@
 internal class A {
     private fun foo(o: Any?, b: Boolean): String? {
-        return if (b) o as String? else ""
+        if (b) return o as String?
+        return ""
     }
 
     fun bar() {

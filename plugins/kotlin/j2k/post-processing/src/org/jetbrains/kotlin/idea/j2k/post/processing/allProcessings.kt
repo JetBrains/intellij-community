@@ -10,9 +10,6 @@ import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToElv
 import org.jetbrains.kotlin.idea.inspections.branchedTransformations.IfThenToSafeAccessInspection
 import org.jetbrains.kotlin.idea.inspections.conventionNameCalls.ReplaceGetOrSetInspection
 import org.jetbrains.kotlin.idea.intentions.*
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnAsymmetricallyIntention
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions.FoldIfToReturnIntention
-import org.jetbrains.kotlin.idea.intentions.branchedTransformations.isTrivialStatementBody
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.shouldBeTransformed
 import org.jetbrains.kotlin.idea.j2k.post.processing.processings.*
 import org.jetbrains.kotlin.idea.quickfix.*
@@ -97,12 +94,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     RemoveRedundantNullabilityProcessing(),
     inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
     inspectionBasedProcessing(JavaMapForEachInspection()),
-    intentionBasedProcessing(FoldIfToReturnIntention()) { it.then.isTrivialStatementBody() && it.`else`.isTrivialStatementBody() },
-    intentionBasedProcessing(FoldIfToReturnAsymmetricallyIntention()) {
-        it.then.isTrivialStatementBody() && (KtPsiUtil.skipTrailingWhitespacesAndComments(
-            it
-        ) as KtReturnExpression).returnedExpression.isTrivialStatementBody()
-    },
     inspectionBasedProcessing(IfThenToSafeAccessInspection(inlineWithPrompt = false), writeActionNeeded = false) {
         it.shouldBeTransformed()
     },

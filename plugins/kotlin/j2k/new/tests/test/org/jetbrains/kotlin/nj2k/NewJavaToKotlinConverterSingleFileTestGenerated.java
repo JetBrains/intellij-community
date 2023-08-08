@@ -4931,6 +4931,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/postProcessing/IfNullReturnToElvis.java");
         }
 
+        @TestMetadata("IfStatementsChain.java")
+        public void testIfStatementsChain() throws Exception {
+            runTest("testData/newJ2k/postProcessing/IfStatementsChain.java");
+        }
+
         @TestMetadata("IfToElvis.java")
         public void testIfToElvis() throws Exception {
             runTest("testData/newJ2k/postProcessing/IfToElvis.java");

@@ -17,6 +17,7 @@ class Reader {
     }
 
     fun readString(n: Int): String? {
-        return if (n <= 0) null else n.toString()
+        if (n <= 0) return null
+        return n.toString()
     }
 }
