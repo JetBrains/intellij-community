@@ -15,7 +15,7 @@ class ClientVersionUtilTest {
   @TestDisposable
   lateinit var disposable: Disposable
   
-  @ValueSource(strings = ["233.2350", "233.SNAPSHOT", "241.1", "241.SNAPSHOT"])
+  @ValueSource(strings = ["232.9552", "232.9559.2", "232.SNAPSHOT", "233.2350", "233.SNAPSHOT", "241.1", "241.SNAPSHOT"])
   @ParameterizedTest
   fun `separate config supported and enabled`(version: String) {
     assertTrue(isJBCSeparateConfigSupported(version))
@@ -24,7 +24,7 @@ class ClientVersionUtilTest {
     assertEquals("false", computeSeparateConfigEnvVariableValue(version))
   }
 
-  @ValueSource(strings = ["233.172", "232.SNAPSHOT", "232.9999"])
+  @ValueSource(strings = ["233.172", "232.8660", "232.8660.185"])
   @ParameterizedTest
   fun `separate config not supported`(version: String) {
     assertFalse(isJBCSeparateConfigSupported(version))
@@ -33,7 +33,7 @@ class ClientVersionUtilTest {
     assertNull(computeSeparateConfigEnvVariableValue(version))
   }
 
-  @ValueSource(strings = ["233.173", "233.2349"])
+  @ValueSource(strings = ["232.8661", "233.173", "233.2349"])
   @ParameterizedTest
   fun `separate config supported but not enabled`(version: String) {
     assertTrue(isJBCSeparateConfigSupported(version))
