@@ -63,8 +63,10 @@ open class XDebuggerPinToTopManager {
         node.setPresentation(oldIcon, xValuePresentation, !node.isLeaf)
       }
       myActiveNode = null
+      myNodeHoverLifetime = null
     }
     myActiveNode = node
+    myNodeHoverLifetime = changeIconLifetime
 
     myPinToTopIconAlarm.addRequest(
       {
@@ -72,7 +74,6 @@ open class XDebuggerPinToTopManager {
         oldIcon = node.icon //update icon with actual value
         node.setPresentation(PlatformDebuggerImplIcons.PinToTop.UnpinnedItem, xValuePresentation, !node.isLeaf)
       }, DEFAULT_ICON_DELAY)
-    myNodeHoverLifetime = changeIconLifetime
     Disposer.register(lifetimeHolder, changeIconLifetime)
   }
 
