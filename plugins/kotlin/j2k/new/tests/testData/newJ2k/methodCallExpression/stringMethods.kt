@@ -93,6 +93,9 @@ internal class A {
         useSplit(s.split("\\s+".toRegex(), (limit + 5).coerceAtLeast(0)).toTypedArray())
         s.matches("\\w+".toRegex())
         s.trim { it <= ' ' }
+        s.trim()
+        s.trimStart()
+        s.trimEnd()
         "$s another"
         s.toByteArray()
         s.toByteArray(Charset.forName("utf-8"))

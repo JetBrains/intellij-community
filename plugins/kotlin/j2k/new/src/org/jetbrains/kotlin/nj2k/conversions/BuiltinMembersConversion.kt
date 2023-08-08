@@ -408,6 +408,9 @@ private class ConversionsHolder(private val symbolProvider: JKSymbolProvider, pr
     private val stringConversions: List<Conversion> = listOf(
         Method("java.lang.CharSequence.length") convertTo Field("kotlin.String.length"),
         Method("java.lang.CharSequence.charAt") convertTo Method("kotlin.String.get"),
+        Method("java.lang.String.strip") convertTo Method("kotlin.text.trim") withByArgumentsFilter { it.isEmpty() },
+        Method("java.lang.String.stripLeading") convertTo Method("kotlin.text.trimStart") withByArgumentsFilter { it.isEmpty() },
+        Method("java.lang.String.stripTrailing") convertTo Method("kotlin.text.trimEnd") withByArgumentsFilter { it.isEmpty() },
         Method("java.lang.String.indexOf") convertTo Method("kotlin.text.indexOf"),
         Method("java.lang.String.lastIndexOf") convertTo Method("kotlin.text.lastIndexOf"),
         Method("java.lang.String.getBytes") convertTo Method("kotlin.text.toByteArray")
