@@ -193,6 +193,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Contract(pure = true)
+  public static @Nullable Path findAncestor(@NotNull Path path1, @NotNull Path path2) {
+    Path ancestor = path1;
+    while (ancestor != null && !isAncestor(ancestor, path2, false)) {
+      ancestor = ancestor.getParent();
+    }
+    return ancestor;
+  }
+
+  @Contract(pure = true)
   public static @Nullable File getParentFile(@NotNull File file) {
     return FileUtilRt.getParentFile(file);
   }

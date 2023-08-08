@@ -36,18 +36,12 @@ fun Path.getResolvedPath(relativePath: String): Path {
  */
 fun Path.getNormalizedBaseAndRelativePaths(relativePath: String): Pair<Path, Path> {
   val normalizedPath = getResolvedPath(relativePath)
-  var normalizedBasePath = normalize()
-  var normalizedBasePathNameCount = 0
-  for ((baseName, name) in normalizedBasePath.zip(normalizedPath)) {
-    if (baseName != name) {
-      break
-    }
-    normalizedBasePathNameCount++
-  }
-  for (i in normalizedBasePathNameCount until nameCount) {
-    normalizedBasePath = checkNotNull(normalizedBasePath.parent) {
-      "Cannot resolve normalized base path for: $this/$relativePath"
-    }
+  val normalizedBasePath = checkNotNull(FileUtil.findAncestor(this, normalizedPath)) {
+    """
+      |Cannot resolve normalized base path for: $normalizedPath
+      |  basePath = $this
+      |  relativePath = $relativePath
+    """.trimMargin()
   }
   val normalizedRelativePath = normalizedBasePath.relativize(normalizedPath)
   return normalizedBasePath to normalizedRelativePath
