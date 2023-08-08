@@ -31,8 +31,6 @@ open class ToolbarServiceImpl : ToolbarService {
                                       rootPane: JRootPane,
                                       handlerProvider: (() -> FullScreenSupport)?,
                                       onDispose: (Runnable) -> Unit) {
-    @Suppress("NAME_SHADOWING")
-    var onDispose = onDispose
     if (!SystemInfoRt.isMac) {
       return
     }
@@ -73,6 +71,9 @@ open class ToolbarServiceImpl : ToolbarService {
         }
       }
     }
+
+    @Suppress("NAME_SHADOWING")
+    var onDispose = onDispose
     if (handler != null) {
       val onDisposeOld = onDispose
       onDispose = { runnable ->
