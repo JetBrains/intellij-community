@@ -1,9 +1,9 @@
 <component name="libraryTable">
   <library name="Guava" type="repository">
-    <properties jar-repository-id="central-proxy" maven-id="com.google.guava:guava:32.1.1-jre">
+    <properties jar-repository-id="central-proxy" maven-id="com.google.guava:guava:32.1.2-jre">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.1-jre/guava-32.1.1-jre.jar">
-          <sha256sum>91fbba37f1c8b251cf9ea9e7d3a369eb79eb1e6a5df1d4bbf483dd0380740281</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.2-jre/guava-32.1.2-jre.jar">
+          <sha256sum>bc65dea7cfd9e4dacf8419d8af0e741655857d27885bb35d943d7187fc3a8fce</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar">
           <sha256sum>a171ee4c734dd2da837e4b16be9df4661afab72a41adaf31eb84dfdaf936ca26</sha256sum>
@@ -23,13 +23,13 @@
       <root url="file://$PROJECT_DIR$/lib/annotations/guava" />
     </ANNOTATIONS>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.1-jre/guava-32.1.1-jre.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.2-jre/guava-32.1.2-jre.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.1-jre/guava-32.1.1-jre-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/32.1.2-jre/guava-32.1.2-jre-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/com/google/j2objc/j2objc-annotations/2.8/j2objc-annotations-2.8-sources.jar!/" />
     </SOURCES>
