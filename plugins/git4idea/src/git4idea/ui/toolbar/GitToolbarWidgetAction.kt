@@ -35,7 +35,6 @@ import icons.DvcsImplIcons
 import javax.swing.Icon
 import javax.swing.JComponent
 
-private val projectKey = Key.create<Project>("git-widget-project")
 private val repositoryKey = Key.create<GitRepository>("git-widget-repository")
 private val changesKey = Key.create<MyRepoChanges>("git-widget-changes")
 
@@ -102,7 +101,6 @@ internal class GitToolbarWidgetAction : ExpandableComboAction() {
     val gitRepository = GitBranchUtil.guessWidgetRepository(project, e.dataContext)
     val state = getWidgetState(project, gitRepository)
 
-    e.presentation.putClientProperty(projectKey, project)
     if (gitRepository != null && gitRepository != e.presentation.getClientProperty(repositoryKey)) {
       GitVcsSettings.getInstance(project).setRecentRoot(gitRepository.root.path)
     }
