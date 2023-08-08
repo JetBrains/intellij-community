@@ -14,14 +14,13 @@ import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.ExternalSourceDirectorySet;
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet;
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData;
 
 import java.io.File;
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.find;
+import static com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil.findChild;
 import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.*;
 
 /**
@@ -74,95 +73,18 @@ public class LibraryDataNodeSubstitutor {
     final ArrayDeque<String> unprocessedPaths = new ArrayDeque<>(libraryPaths);
     while (!unprocessedPaths.isEmpty()) {
       final String path = unprocessedPaths.remove();
-
-      Set<String> targetModuleOutputPaths = null;
-
-      final String moduleId;
-      final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
-      if (sourceTypePair == null) {
-        ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
-        moduleId = mapping != null ? mapping.getModuleId() : null;
-        if (moduleId != null) {
-          targetModuleOutputPaths = Set.of(path);
-        }
-      }
-      else {
-        moduleId = sourceTypePair.first;
-      }
-      if (moduleId == null) continue;
-
-      final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
-      if (pair == null) {
+      ModuleLookupResult lookupResult = lookupTargetModule(path);
+      if (lookupResult == null) {
         continue;
       }
 
-      final ModuleData moduleData = pair.first.getData();
-      if (targetModuleOutputPaths == null) {
-        targetModuleOutputPaths = collectTargetModuleOutputPaths(libraryPaths,
-                                                                 pair.first.getUserData(GradleProjectResolver.GRADLE_OUTPUTS));
-      }
+      createAndMaybeAttachNewModuleDependency(libraryDependencyDataNode, lookupResult, libraryPaths,
+                                              shouldKeepTransitiveDependencies,
+                                              unprocessedPaths, path);
 
-      final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
-      final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, moduleData);
-      moduleDependencyData.setScope(libraryDependencyData.getScope());
-      moduleDependencyData.setOrder(libraryDependencyData.getOrder());
-      if (isTestSourceSet(pair.second)) {
-        moduleDependencyData.setProductionOnTestDependency(true);
-      }
-      final DataNode<ModuleDependencyData> found = find(
-        libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, node -> {
-          if (moduleDependencyData.getInternalName().equals(node.getData().getInternalName())) {
-            moduleDependencyData.setModuleDependencyArtifacts(node.getData().getModuleDependencyArtifacts());
-          }
-
-          final boolean result;
-          // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
-          if (moduleDependencyData.getScope() == DependencyScope.PROVIDED) {
-            moduleDependencyData.setScope(node.getData().getScope());
-            result = moduleDependencyData.equals(node.getData());
-            moduleDependencyData.setScope(DependencyScope.PROVIDED);
-          }
-          else {
-            result = moduleDependencyData.equals(node.getData());
-          }
-          return result;
-        });
-
-      if (targetModuleOutputPaths != null) {
-        if (found == null) {
-          DataNode<ModuleDependencyData> moduleDependencyNode =
-            libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
-          if (shouldKeepTransitiveDependencies) {
-            for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
-              moduleDependencyNode.addChild(node);
-            }
-          }
-        }
-        libraryPaths.removeAll(targetModuleOutputPaths);
-        unprocessedPaths.removeAll(targetModuleOutputPaths);
-        if (libraryPaths.isEmpty()) {
-          libraryDependencyDataNode.clear(true);
-          break;
-        }
-        continue;
-      }
-      else {
-        // do not add the path as library dependency if another module dependency is already contain the path as one of its output paths
-        if (found != null) {
-          libraryPaths.remove(path);
-          if (libraryPaths.isEmpty()) {
-            libraryDependencyDataNode.clear(true);
-            break;
-          }
-          continue;
-        }
-      }
-
-      final ExternalSourceDirectorySet directorySet = pair.second.getSources().get(sourceTypePair.second);
-      if (directorySet != null) {
-        for (File file : directorySet.getSrcDirs()) {
-          libraryData.addPath(LibraryPathType.SOURCE, file.getPath());
-        }
+      if (libraryPaths.isEmpty()) {
+        libraryDependencyDataNode.clear(true);
+        break;
       }
     }
 
@@ -192,6 +114,110 @@ public class LibraryDataNodeSubstitutor {
     }
   }
 
+  private static boolean createAndMaybeAttachNewModuleDependency(@NotNull DataNode<LibraryDependencyData> libraryDependencyDataNode,
+                                @NotNull ModuleLookupResult lookupResult,
+                                @NotNull Set<String> libraryPaths,
+                                boolean shouldKeepTransitiveDependencies,
+                                @NotNull ArrayDeque<String> unprocessedPaths,
+                                @NotNull String path) {
+
+    boolean addedNewDependency = false;
+    LibraryDependencyData libraryDependencyData = libraryDependencyDataNode.getData();
+    DataNode<?> libraryNodeParent = libraryDependencyDataNode.getParent();
+    if (libraryNodeParent == null) {
+      return addedNewDependency;
+    }
+    Set<String> targetModuleOutputPaths;
+    DataNode<GradleSourceSetData> targetSourceSetNode = lookupResult.sourceSetDataDataNode();
+    ExternalSourceSet targetExternalSourceSet = lookupResult.externalSourceSet();
+    final ModuleData targetModuleData = targetSourceSetNode.getData();
+
+
+    if (lookupResult.targetModuleOutputPaths() != null) {
+      targetModuleOutputPaths = lookupResult.targetModuleOutputPaths();
+    } else {
+      targetModuleOutputPaths = collectTargetModuleOutputPaths(libraryPaths,
+                                                               targetSourceSetNode.getUserData(GradleProjectResolver.GRADLE_OUTPUTS));
+    }
+
+    final ModuleData ownerModule = libraryDependencyData.getOwnerModule();
+    final ModuleDependencyData moduleDependencyData = new ModuleDependencyData(ownerModule, targetModuleData);
+    moduleDependencyData.setScope(libraryDependencyData.getScope());
+    moduleDependencyData.setOrder(libraryDependencyData.getOrder());
+
+    if (isTestSourceSet(targetExternalSourceSet)) {
+      moduleDependencyData.setProductionOnTestDependency(true);
+    }
+    final DataNode<ModuleDependencyData> found = findChild(
+      libraryNodeParent, ProjectKeys.MODULE_DEPENDENCY, node -> {
+        ModuleDependencyData candidateData = node.getData();
+
+        if (!moduleDependencyData.getInternalName().equals(candidateData.getInternalName())) {
+          return false;
+        }
+        // re-use module dependency artifacts even if the rest does not match
+        moduleDependencyData.setModuleDependencyArtifacts(candidateData.getModuleDependencyArtifacts());
+
+        final boolean result;
+        // ignore provided scope during the search since it can be resolved incorrectly for file dependencies on a source set outputs
+        if (moduleDependencyData.getScope() == DependencyScope.PROVIDED) {
+          moduleDependencyData.setScope(candidateData.getScope());
+          result = moduleDependencyData.equals(candidateData);
+          moduleDependencyData.setScope(DependencyScope.PROVIDED);
+        }
+        else {
+          result = moduleDependencyData.equals(candidateData);
+        }
+        return result;
+      });
+
+    if (targetModuleOutputPaths != null) {
+      if (found == null) {
+        DataNode<ModuleDependencyData> moduleDependencyNode =
+          libraryNodeParent.createChild(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData);
+        addedNewDependency = true;
+        if (shouldKeepTransitiveDependencies) {
+          for (DataNode<?> node : libraryDependencyDataNode.getChildren()) {
+            moduleDependencyNode.addChild(node);
+          }
+        }
+      }
+      unprocessedPaths.removeAll(targetModuleOutputPaths);
+      libraryPaths.removeAll(targetModuleOutputPaths);
+    }
+    else {
+      // do not add the path as library dependency if another module dependency is already contain the path as one of its output paths
+      if (found != null) {
+        libraryPaths.remove(path);
+      }
+    }
+    return addedNewDependency;
+  }
+
+  private ModuleLookupResult lookupTargetModule(String path) {
+    Set<String> targetModuleOutputPaths = null;
+
+    final String moduleId;
+    final Pair<String, ExternalSystemSourceType> sourceTypePair = moduleOutputsMap.get(path);
+    if (sourceTypePair == null) {
+      ModuleMappingInfo mapping = artifactsMap.getModuleMapping(path);
+      moduleId = mapping != null ? mapping.getModuleId() : null;
+      if (moduleId != null) {
+        targetModuleOutputPaths = Set.of(path);
+      }
+    }
+    else {
+      moduleId = sourceTypePair.first;
+    }
+    if (moduleId == null) return null;
+
+    final Pair<DataNode<GradleSourceSetData>, ExternalSourceSet> pair = sourceSetMap.get(moduleId);
+    if (pair == null) {
+      return null;
+    }
+    return new ModuleLookupResult(targetModuleOutputPaths, pair.first, pair.second);
+  }
+
   private static @Nullable Set<String> collectTargetModuleOutputPaths(@NotNull Set<String> libraryPaths,
                                                                       @Nullable MultiMap<ExternalSystemSourceType, String> gradleOutputs) {
     if (gradleOutputs == null) {
@@ -217,4 +243,8 @@ public class LibraryDataNodeSubstitutor {
     }
     return null;
   }
+}
+
+record ModuleLookupResult(Set<String> targetModuleOutputPaths, DataNode<GradleSourceSetData> sourceSetDataDataNode,
+                          ExternalSourceSet externalSourceSet) {
 }
