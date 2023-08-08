@@ -1061,6 +1061,31 @@ internal sealed class AbstractEntityStorage : EntityStorageInstrumentation {
     }
   }
 
+  override fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity? {
+    when (connectionId.connectionType) {
+      ConnectionId.ConnectionType.ONE_TO_ONE -> {
+        return refs.getOneToOneParent(connectionId, child.asBase().id.arrayId) {
+          val entityId = createEntityId(it, connectionId.parentClass)
+          entityDataByIdOrDie(entityId).createEntity(this)
+        }
+      }
+      ConnectionId.ConnectionType.ONE_TO_MANY -> {
+        return refs.getOneToManyParent(connectionId, child.asBase().id.arrayId) {
+          val entityId = createEntityId(it, connectionId.parentClass)
+          entityDataByIdOrDie(entityId).createEntity(this)
+        }
+      }
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> {
+        return refs.getOneToAbstractManyParent(connectionId, child.asBase().id.asChild())
+          ?.let { entityDataByIdOrDie(it.id).createEntity(this) }
+      }
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> {
+        return refs.getOneToAbstractOneParent(connectionId, child.asBase().id.asChild())
+          ?.let { entityDataByIdOrDie(it.id).createEntity(this) }
+      }
+    }
+  }
+
   companion object {
     val LOG = logger<AbstractEntityStorage>()
 

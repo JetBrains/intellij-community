@@ -174,22 +174,12 @@ fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractManyChildren(con
   return this.instrumentation.getManyChildren(connectionId, parent) as Sequence<Child>
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractManyParent(
   connectionId: ConnectionId,
   child: WorkspaceEntity
 ): Parent? {
-  return (this as AbstractEntityStorage).extractOneToAbstractManyParent(
-    connectionId,
-    (child as WorkspaceEntityBase).id.asChild()
-  )
-}
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractManyParent(
-  connectionId: ConnectionId,
-  child: ChildEntityId
-): Parent? {
-  return refs.getOneToAbstractManyParent(connectionId, child)?.let { entityDataByIdOrDie(it.id).createEntity(this) as Parent }
+  return this.instrumentation.getParent(connectionId, child) as? Parent
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
@@ -228,76 +218,24 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChil
   }
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
 @Suppress("unused")
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToOneParent(connectionId: ConnectionId,
                                                                    child: WorkspaceEntity): Parent? {
-  return (this as AbstractEntityStorage).extractOneToOneParent(connectionId, (child as WorkspaceEntityBase).id)
+  return this.instrumentation.getParent(connectionId, child) as? Parent
 }
 
-@Suppress("UNCHECKED_CAST")
-internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToOneParent(connectionId: ConnectionId,
-                                                                                    childId: EntityId): Parent? {
-  val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
-  return refs.getOneToOneParent(connectionId, childId.arrayId) {
-    val parentEntityData = entitiesList[it]
-    if (parentEntityData == null) {
-      if (!brokenConsistency) {
-        error("""
-          Consistency issue. Cannot get a parent in one to one connection.
-          Connection id: $connectionId
-          Child id: $childId
-          Parent array id: $it
-        """.trimIndent())
-      }
-      null
-    }
-    else parentEntityData.createEntity(this) as Parent
-  }
-}
-
+@OptIn(EntityStorageInstrumentationApi::class)
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractOneParent(
   connectionId: ConnectionId,
   child: WorkspaceEntity,
 ): Parent? {
-  return (this as AbstractEntityStorage).extractOneToAbstractOneParent(
-    connectionId,
-    (child as WorkspaceEntityBase).id.asChild()
-  )
+  return this.instrumentation.getParent(connectionId, child) as? Parent
 }
 
-@Suppress("UNCHECKED_CAST")
-internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToAbstractOneParent(
-  connectionId: ConnectionId,
-  childId: ChildEntityId
-): Parent? {
-  return refs.getOneToAbstractOneParent(connectionId, childId)
-    ?.let { entityDataByIdOrDie(it.id).createEntity(this) as Parent }
-}
-
+@OptIn(EntityStorageInstrumentationApi::class)
 @Suppress("unused")
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToManyParent(connectionId: ConnectionId,
                                                                     child: WorkspaceEntity): Parent? {
-  return (this as AbstractEntityStorage).extractOneToManyParent(connectionId, (child as WorkspaceEntityBase).id)
+  return this.instrumentation.getParent(connectionId, child) as? Parent
 }
-
-@Suppress("UNCHECKED_CAST")
-internal fun <Parent : WorkspaceEntity> AbstractEntityStorage.extractOneToManyParent(connectionId: ConnectionId,
-                                                                                     childId: EntityId): Parent? {
-  val entitiesList = entitiesByType[connectionId.parentClass] ?: return null
-  return refs.getOneToManyParent(connectionId, childId.arrayId) {
-    val parentEntityData = entitiesList[it]
-    if (parentEntityData == null) {
-      if (!brokenConsistency) {
-        error("""
-          Consistency issue. Cannot get a parent in one to many connection.
-          Connection id: $connectionId
-          Child id: $childId
-          Parent array id: $it
-        """.trimIndent())
-      }
-      null
-    }
-    else parentEntityData.createEntity(this) as Parent
-  }
-}
-

@@ -23,6 +23,8 @@ interface EntityStorageInstrumentation : EntityStorage {
 
   fun getOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): WorkspaceEntity?
   fun getManyChildren(connectionId: ConnectionId, parent: WorkspaceEntity): Sequence<WorkspaceEntity>
+
+  fun getParent(connectionId: ConnectionId, child: WorkspaceEntity): WorkspaceEntity?
 }
 
 @EntityStorageInstrumentationApi
