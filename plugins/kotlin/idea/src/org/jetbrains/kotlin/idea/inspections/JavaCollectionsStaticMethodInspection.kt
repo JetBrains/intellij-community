@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.types.KotlinType
 
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 
+// TODO merge with ReplaceJavaStaticMethodWithKotlinAnalogInspection
 class JavaCollectionsStaticMethodInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
         return dotQualifiedExpressionVisitor(fun(expression) {
