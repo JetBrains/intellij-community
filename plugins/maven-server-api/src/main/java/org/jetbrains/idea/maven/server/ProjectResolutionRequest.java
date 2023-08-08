@@ -23,7 +23,7 @@ public class ProjectResolutionRequest implements Serializable {
                                   @NotNull Collection<String> inactiveProfiles,
                                   @Nullable MavenWorkspaceMap workspaceMap,
                                   boolean updateSnapshots) {
-    this.pomFiles = pomFiles;
+    this.pomFiles = new ArrayList<>(pomFiles);
     this.activeProfiles.addAll(activeProfiles);
     this.inactiveProfiles.addAll(inactiveProfiles);
     this.workspaceMap = workspaceMap;
