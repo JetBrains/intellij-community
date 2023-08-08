@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
-import com.intellij.openapi.util.io.getNormalizedBaseAndRelativePaths
+import com.intellij.openapi.util.io.relativizeToClosestAncestor
 import com.intellij.openapi.util.io.toNioPath
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
@@ -55,12 +55,11 @@ fun VirtualFile.findPsiFile(project: Project): PsiFile? {
   return PsiManager.getInstance(project).findFile(this)
 }
 
-private inline fun VirtualFile.getResolvedVirtualFile(
-  relativePath: String,
-  getChild: VirtualFile.(String, Boolean) -> VirtualFile
-): VirtualFile {
+private fun VirtualFile.relativizeToClosestAncestor(
+  relativePath: String
+): Pair<VirtualFile, Path> {
   val basePath = path.toNioPath()
-  val (normalizedBasePath, normalizedRelativePath) = basePath.getNormalizedBaseAndRelativePaths(relativePath)
+  val (normalizedBasePath, normalizedRelativePath) = basePath.relativizeToClosestAncestor(relativePath)
   var baseVirtualFile = this
   for (i in normalizedBasePath.nameCount until basePath.nameCount) {
     baseVirtualFile = checkNotNull(baseVirtualFile.parent) {
@@ -71,6 +70,14 @@ private inline fun VirtualFile.getResolvedVirtualFile(
       """.trimMargin()
     }
   }
+  return baseVirtualFile to normalizedRelativePath
+}
+
+private inline fun VirtualFile.getResolvedVirtualFile(
+  relativePath: String,
+  getChild: VirtualFile.(String, Boolean) -> VirtualFile
+): VirtualFile {
+  val (baseVirtualFile, normalizedRelativePath) = relativizeToClosestAncestor(relativePath)
   var virtualFile = baseVirtualFile
   if (normalizedRelativePath.pathString.isNotEmpty()) {
     val names = normalizedRelativePath.map { it.pathString }

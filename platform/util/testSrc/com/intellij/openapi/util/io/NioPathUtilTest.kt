@@ -177,7 +177,7 @@ class NioPathUtilTest : NioPathUtilTestCase() {
     expectedBasePath: String, expectedRelativePath: String
   ) {
     val (actualBasePath, actualRelativePath) = basePath.toNioPath()
-      .getNormalizedBaseAndRelativePaths(relativePath)
+      .relativizeToClosestAncestor(relativePath)
     Assertions.assertEquals(expectedBasePath.toNioPath(), actualBasePath)
     Assertions.assertEquals(expectedRelativePath.toNioPath(), actualRelativePath)
   }
