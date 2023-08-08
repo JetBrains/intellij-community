@@ -35,7 +35,7 @@ open class CombinedDiffModelImpl(protected val project: Project,
   private val modelListeners = EventDispatcher.create(CombinedDiffModelListener::class.java)
 
   private val contentLoadingQueue =
-    MergingUpdateQueue("CombinedDiffModel", 200, true, null, ourDisposable, null, Alarm.ThreadToUse.POOLED_THREAD)
+    MergingUpdateQueue("CombinedDiffModel", 0, true, null, ourDisposable, null, Alarm.ThreadToUse.POOLED_THREAD)
 
   private val pendingUpdatesCount = AtomicInteger()
 
