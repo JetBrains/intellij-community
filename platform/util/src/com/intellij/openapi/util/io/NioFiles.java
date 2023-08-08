@@ -101,6 +101,16 @@ public final class NioFiles {
   }
 
   /**
+   * Creates all parent directories of the given path; returns the argument.
+   * Example: {@code Files.newOutputStream(NioFiles.createParentDirectories(file))}.
+   */
+  public static @NotNull Path createParentDirectories(@NotNull Path path) throws IOException {
+    Path parent = path.getParent();
+    if (parent != null) createDirectories(parent);
+    return path;
+  }
+
+  /**
    * Like {@link Files#isWritable}, but interprets {@link SecurityException} as a negative result.
    */
   public static boolean isWritable(@NotNull Path path) {

@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -22,7 +23,6 @@ import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FileCollectionFactory;
-import com.intellij.util.io.PathKt;
 import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.MoreCollectors;
@@ -174,7 +174,7 @@ public final class MavenProjectsTree {
   public void save(@NotNull Path file) throws IOException {
     synchronized (myStateLock) {
       withReadLock(() -> {
-        try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(file)))) {
+        try (var out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(NioFiles.createParentDirectories(file))))) {
           out.writeUTF(STORAGE_VERSION);
           writeCollection(out, myManagedFilesPaths);
           writeCollection(out, myIgnoredFilesPaths);
