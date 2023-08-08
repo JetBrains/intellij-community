@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicReference
 
 @State(name = ProjectFacetManagerImpl.COMPONENT_NAME)
-class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetManagerEx(), PersistentStateComponent<ProjectFacetManagerState?> {
+class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetManager(), PersistentStateComponent<ProjectFacetManagerState?> {
   private var myState = ProjectFacetManagerState()
   private val myIndex = AtomicReference<MultiMap<FacetTypeId<*>, Module>>()
 
