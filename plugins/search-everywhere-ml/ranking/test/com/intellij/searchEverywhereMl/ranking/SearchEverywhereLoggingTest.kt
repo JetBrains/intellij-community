@@ -24,6 +24,10 @@ private fun createSearchEverywhereUI(project: Project): SearchEverywhereUI = Sea
 ))
 
 fun runSearchEverywhereLoggingTest(project: Project, testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
+  // When we mask extension points, the implementation masks the extension point as read only,
+  // so that no other extension can be registered. It also means that attempt to mask the extension point again will fail.
+  // Therefore, we need to create an empty disposable, which we can dispose, which will trigger logic inside the maskAll method
+  // that will unmark the given extension point as read only.
   val emptyDisposable = Disposer.newDisposable()
   Disposer.register(project, emptyDisposable)
 
