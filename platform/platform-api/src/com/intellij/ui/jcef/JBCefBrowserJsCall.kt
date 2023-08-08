@@ -18,9 +18,6 @@ private typealias JsExpression = String
 typealias JsExpressionResult = String?
 private typealias JsExpressionResultDeferred = CompletableDeferred<JsExpressionResult>
 
-class JBCefJsCallExecutionError(message: String) : IllegalStateException(
-  "Error occurred during execution of JavaScript expression:\n $message")
-
 /**
  * ### Obsolescence notice
  * Please use [callJavaScriptExpression] instead
@@ -122,7 +119,7 @@ class JBCefBrowserJsCall(@Language("JavaScript") private val javaScriptExpressio
  * @return The [Deferred] that provides JS execution result or an error.
  * @throws IllegalStateException if the related [this] is not initialized (displayed).
  * @throws IllegalStateException if the related [this] is disposed.
- * @throws JBCefJsCallExecutionError if the execution of [expression] failed inside the browser
+ * @throws IllegalStateException if the execution of [expression] failed
  **/
 suspend fun JBCefBrowser.callJavaScriptExpression(@Language("JavaScript") expression: JsExpression): JsExpressionResult =
   callJavaScriptExpressionImpl(expression).await()
@@ -179,7 +176,7 @@ private fun JBCefBrowser.createErrorHandlerQuery(parentDisposable: Disposable, r
   createQuery(parentDisposable).apply {
     addHandler { errorMessage ->
       resultPromise.completeExceptionally(
-        JBCefJsCallExecutionError(errorMessage ?: "Unknown error")
+        IllegalStateException("Error occurred during execution of JavaScript expression: ${errorMessage ?: "Unknown error"}")
       )
       null
     }
