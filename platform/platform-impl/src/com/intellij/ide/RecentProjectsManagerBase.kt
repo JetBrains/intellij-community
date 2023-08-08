@@ -40,8 +40,8 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.project.stateStore
 import com.intellij.ui.ExperimentalUI
 import com.intellij.util.PathUtilRt
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.systemIndependentPath
-import com.intellij.util.io.write
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -98,7 +98,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   private val disableUpdatingRecentInfo = AtomicBoolean()
 
-  private val nameResolveRequests = MutableSharedFlow<Unit>(replay=1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val nameResolveRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val stateLock = Any()
   private var state = RecentProjectManagerState()
@@ -747,7 +747,9 @@ int32 "extendedState"
     buffer.putInt(frameInfo.extendedState)
 
     buffer.flip()
-    infoFile.write(buffer)
+    Files.newByteChannel(infoFile.createParentDirectories()).use {
+      it.write(buffer)
+    }
   }
 
   fun patchRecentPaths(patcher: (String) -> String?) {

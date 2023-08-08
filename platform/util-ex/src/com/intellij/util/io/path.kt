@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.NioFiles
 import java.io.IOException
 import java.io.InputStream
 import java.io.OutputStream
-import java.nio.ByteBuffer
 import java.nio.channels.Channels
 import java.nio.charset.Charset
 import java.nio.file.*
@@ -13,11 +12,14 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.util.*
 import kotlin.io.path.*
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 
 fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
+
+fun Path.createParentDirectories(): Path = NioFiles.createParentDirectories(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -31,10 +33,7 @@ fun Path.outputStream(append: Boolean = false, vararg options: OpenOption): Outp
   }
 }
 
-fun Path.safeOutputStream(): OutputStream {
-  parent?.createDirectories()
-  return SafeFileOutputStream(this)
-}
+fun Path.safeOutputStream(): OutputStream = SafeFileOutputStream(this.createParentDirectories())
 
 fun Path.inputStreamIfExists(): InputStream? =
   try {
@@ -43,15 +42,6 @@ fun Path.inputStreamIfExists(): InputStream? =
   catch (e: NoSuchFileException) {
     null
   }
-
-/**
- * Opposite to Java, parent directories will be created
- */
-fun Path.createSymbolicLink(target: Path): Path {
-  parent?.createDirectories()
-  Files.createSymbolicLink(this, target)
-  return this
-}
 
 @JvmOverloads
 fun Path.delete(recursively: Boolean = true) = when {
@@ -125,17 +115,6 @@ fun Path.write(data: CharSequence, charset: Charset = Charsets.UTF_8, createPare
   return this
 }
 
-@Throws(IOException::class)
-fun Path.write(data: ByteBuffer, createParentDirs: Boolean = true): Path {
-  if (createParentDirs) {
-    parent?.createDirectories()
-  }
-  Files.newByteChannel(this, HashSet(listOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))).use {
-    it.write(data)
-  }
-  return this
-}
-
 fun Path.basicAttributesIfExists(): BasicFileAttributes? =
   try {
     Files.readAttributes(this, BasicFileAttributes::class.java)
@@ -169,15 +148,6 @@ fun Path.copyRecursively(target: Path) {
       Files.copy(file, target.resolve(this.relativize(file)))
     }
   }
-}
-
-/**
- * Opposite to Java, parent directories will be created
- */
-fun Path.createFile(): Path {
-  parent?.createDirectories()
-  Files.createFile(this)
-  return this
 }
 
 inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? =
@@ -248,4 +218,12 @@ inline fun Path.inputStream(): InputStream = inputStream()
 @Deprecated(message = "Trivial, just inline", ReplaceWith("resolve(relativePath).write(data.toByteArray())")/*, level = DeprecationLevel.ERROR*/)
 @Throws(IOException::class)
 fun Path.writeChild(relativePath: String, data: String): Path = resolve(relativePath).write(data.toByteArray())
+
+@Deprecated(message = "Use `kotlin.io.path.createSymbolicLinkPointingTo` with `com.intellij.util.io.createParentDirectories`"/*, level = DeprecationLevel.ERROR*/)
+@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+inline fun Path.createSymbolicLink(target: Path): Path = this.createParentDirectories().createSymbolicLinkPointingTo(target)
+
+@Deprecated(message = "Use `kotlin.io.path.createFile` with `com.intellij.util.io.createParentDirectories`"/*, level = DeprecationLevel.ERROR*/)
+@Suppress("DeprecatedCallableAddReplaceWith", "NOTHING_TO_INLINE")
+inline fun Path.createFile(): Path = this.createParentDirectories().createFile()
 //</editor-fold>

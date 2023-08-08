@@ -9,7 +9,7 @@ import com.intellij.settingsSync.SettingsSnapshotZipSerializer.serializeSettings
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import com.intellij.settingsSync.plugins.SettingsSyncPluginsStateMerger.mergePluginStates
 import com.intellij.ui.JBAccountInfoService
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.readText
 import com.intellij.util.io.write
 import kotlinx.serialization.encodeToString
@@ -31,6 +31,7 @@ import java.nio.file.Path
 import java.time.Instant
 import java.util.function.Consumer
 import java.util.regex.Pattern
+import kotlin.io.path.createFile
 import kotlin.io.path.div
 import kotlin.io.path.exists
 
@@ -107,7 +108,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   private fun addInitialCommit(repository: Repository) {
-    val gitignore = settingsSyncStorage.resolve(".gitignore").createFile()
+    val gitignore = settingsSyncStorage.resolve(".gitignore").createParentDirectories().createFile()
     gitignore.write("""
           event-log-metadata
           jdbc-drivers

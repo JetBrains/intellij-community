@@ -124,14 +124,14 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertEquals(10L, rr.get(3).getTimestamp());
   }
 
-  public void testTimestampForCurrentRevisionAfterPurgeFromCurrentTimestamp() {
+  public void testTimestampForCurrentRevisionAfterPurgeFromCurrentTimestamp() throws IOException {
     VirtualFile f = createFile("file.txt");
     getVcs().getChangeListInTests().purgeObsolete(0);
 
     assertEquals(f.getTimeStamp(), getRevisionsFor(f).get(0).getTimestamp());
   }
 
-  public void testTimestampForLastRevisionAfterPurge() {
+  public void testTimestampForLastRevisionAfterPurge() throws IOException {
     Clock.setTime(10);
     VirtualFile f = createFile("file1.txt");
 
@@ -254,7 +254,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertContent("content1", e);
   }
 
-  public void testRevisionsIfSomeFilesWereDeletedDuringChangeSet() {
+  public void testRevisionsIfSomeFilesWereDeletedDuringChangeSet() throws IOException {
     VirtualFile dir = createDirectory("dir");
     VirtualFile f = createFile("dir/f.txt");
     getVcs().beginChangeSet();
@@ -296,7 +296,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertContent("two", d.getRight());
   }
 
-  public void testDifferenceForDirectory() {
+  public void testDifferenceForDirectory() throws IOException {
     VirtualFile dir = createDirectory("dir");
     VirtualFile f = createFile("dir/file.txt");
 
@@ -314,7 +314,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertEquals("file.txt", d.getRight().getName());
   }
 
-  public void testNoDifferenceForDirectoryWithEqualContents() {
+  public void testNoDifferenceForDirectoryWithEqualContents() throws IOException {
     VirtualFile dir = createDirectory("dir");
     VirtualFile f = createFile("dir/file.txt");
     delete(f);
@@ -324,7 +324,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertTrue(rr.get(0).getDifferencesWith(rr.get(2)).isEmpty());
   }
 
-  public void testDoesNotIncludeNotModifiedDifferences() {
+  public void testDoesNotIncludeNotModifiedDifferences() throws IOException {
     getVcs().beginChangeSet();
     VirtualFile dir = createDirectory("dir1");
     createFile("dir1/dir2/file.txt");
@@ -345,7 +345,7 @@ public class RevisionsAndDiffsTest extends IntegrationTestCase {
     assertEquals(myRoot.getPath() + "/dir1/dir3/file.txt", d.getRight().getPath());
   }
 
-  public void testFilteredRevisionsDoNotContainLabels() {
+  public void testFilteredRevisionsDoNotContainLabels() throws IOException {
     createFile("foo.txt");
     LocalHistory.getInstance().putSystemLabel(myProject, "1", -1);
     createFile("bar.txt");

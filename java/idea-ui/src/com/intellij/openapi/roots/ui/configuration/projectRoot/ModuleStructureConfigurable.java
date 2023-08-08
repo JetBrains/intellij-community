@@ -41,6 +41,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,7 +49,6 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.ui.navigation.Place;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -57,6 +57,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -1083,7 +1086,12 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
 
       VirtualFile content = LocalFileSystem.getInstance().findFileByNioFile(myComponentPath);
       if (content == null) {
-        PathKt.createFile(myComponentPath);
+        try {
+          Files.createFile(NioFiles.createParentDirectories(myComponentPath));
+        }
+        catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
         content = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(myComponentPath);
       }
       modifiableRootModel.addContentEntry(content);

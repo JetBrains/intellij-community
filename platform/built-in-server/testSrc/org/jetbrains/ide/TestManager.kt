@@ -9,11 +9,12 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.text.nullize
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
+import kotlin.io.path.createFile
 
 private const val EXCLUDED_DIR_NAME = "excludedDir"
 
@@ -41,7 +42,7 @@ class TestManager(private val projectRule: ProjectRule, private val tempDirManag
     if (filePath!! == "_tmp_") {
       val file = tempDirManager.newPath(".txt")
       if (!annotation!!.doNotCreate) {
-        file.createFile()
+        file.createParentDirectories().createFile()
       }
       filePath = file.systemIndependentPath
       return

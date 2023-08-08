@@ -21,7 +21,7 @@ import com.intellij.project.stateStore
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.runInEdtAndWait
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import git4idea.GitUtil
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
@@ -29,6 +29,7 @@ import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertFalse
 import java.io.File
+import kotlin.io.path.createFile
 
 const val OUT = "out"
 const val EXCLUDED = "excluded"
@@ -81,7 +82,7 @@ class GitIgnoredFileTest : GitSingleRepoTest() {
 
     val workspaceFile = project.stateStore.workspacePath
     val workspaceFileExist = try {
-      workspaceFile.createFile()
+      workspaceFile.createParentDirectories().createFile()
       true
     }
     catch (e: FileAlreadyExistsException) {

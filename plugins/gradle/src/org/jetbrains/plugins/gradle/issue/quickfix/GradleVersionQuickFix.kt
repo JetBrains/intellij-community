@@ -22,7 +22,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.util.TimeoutUtil
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.outputStream
 import org.gradle.internal.impldep.com.google.common.base.Charsets
 import org.gradle.internal.util.PropertiesUtils
@@ -40,6 +40,7 @@ import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletableFuture.completedFuture
+import kotlin.io.path.createFile
 import kotlin.io.path.inputStream
 
 /**
@@ -90,7 +91,7 @@ class GradleVersionQuickFix(private val projectPath: String,
       val distributionUrl = "https://services.gradle.org/distributions/gradle-${gradleVersion.version}-bin.zip"
       if (wrapperPropertiesFile == null) {
         val wrapperPropertiesPath = Paths.get(projectPath, "gradle", "wrapper", "gradle-wrapper.properties")
-        wrapperPropertiesPath.createFile()
+        wrapperPropertiesPath.createParentDirectories().createFile()
         wrapperPropertiesFile = wrapperPropertiesPath
         wrapperProperties = Properties()
         wrapperProperties[WrapperExecutor.DISTRIBUTION_URL_PROPERTY] = distributionUrl

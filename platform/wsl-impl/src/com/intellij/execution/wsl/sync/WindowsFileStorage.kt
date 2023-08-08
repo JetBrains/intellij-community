@@ -16,6 +16,7 @@ import java.nio.channels.FileChannel
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
 import java.util.concurrent.CompletableFuture
+import kotlin.io.path.createFile
 import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
@@ -135,7 +136,7 @@ class WindowsFileStorage(dir: Path,
     for (file in files) {
       val filePath = dir.resolve(file.asWindowsPath)
       if (!filePath.exists()) {
-        filePath.createFile()
+        filePath.createParentDirectories().createFile()
       }
     }
   }

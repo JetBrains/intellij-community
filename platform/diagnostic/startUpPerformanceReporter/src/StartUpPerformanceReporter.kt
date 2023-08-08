@@ -18,7 +18,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import com.intellij.util.SystemProperties
-import com.intellij.util.io.write
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.lang.ClassPath
 import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
@@ -157,7 +157,9 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
 
   if (perfFilePath != null) {
     LOG.info("StartUp Measurement report was written to: $perfFilePath")
-    Path.of(perfFilePath).write(currentReport)
+    Files.newByteChannel(Path.of(perfFilePath).createParentDirectories()).use {
+      it.write(currentReport)
+    }
     currentReport.flip()
   }
 

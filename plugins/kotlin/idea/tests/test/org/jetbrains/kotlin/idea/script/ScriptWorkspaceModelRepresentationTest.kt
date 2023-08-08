@@ -4,12 +4,12 @@ package org.jetbrains.kotlin.idea.script
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.util.io.createFile
 import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.platform.workspace.storage.EntityStorage
 import com.intellij.platform.workspace.storage.SymbolicEntityId
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
+import com.intellij.util.io.createParentDirectories
 import org.hamcrest.MatcherAssert.assertThat
 import org.hamcrest.Matchers.*
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts.jetbrainsAnnotations
@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.test.TestMetadataUtil.getTestRoot
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.createFile
 
 @TestRoot("idea/tests")
 class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
@@ -348,11 +349,11 @@ class ScriptWorkspaceModelRepresentationTest : HeavyPlatformTestCase() {
     ): List<E> = map { it.resolve(storage) ?: error("Unresolvable ref: ${it}") }
 
     private fun addScript(fileName: String): String {
-        val projectBasePath = Files.createDirectories(Path.of(project.basePath ?: error("Project basePath doesn't exist")))
-        val scriptFile = projectBasePath.resolve(fileName).createFile().toFile()
+      val projectBasePath = Files.createDirectories(Path.of(project.basePath ?: error("Project basePath doesn't exist")))
+      val scriptFile = projectBasePath.resolve(fileName).createParentDirectories().createFile().toFile()
 
-        refreshDependencies(scriptFile.absolutePath)
-        return scriptFile.absolutePath
+      refreshDependencies(scriptFile.absolutePath)
+      return scriptFile.absolutePath
     }
 
     private fun removeScript(fileName: String) {

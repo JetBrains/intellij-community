@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.platform.util.ArgsParser
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -21,6 +21,7 @@ import java.nio.file.FileAlreadyExistsException
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.absolute
+import kotlin.io.path.createFile
 import kotlin.system.exitProcess
 
 class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
@@ -46,7 +47,7 @@ class EnvironmentKeyStubGenerator : ModernApplicationStarter() {
           println(config.toString(Charsets.UTF_8))
         } else {
           val path = parsedArgs.outputFileName ?: Path(DEFAULT_FILE_NAME)
-          path.createFile().write(config)
+          path.createParentDirectories().createFile().write(config)
           thisLogger().info("Configuration keys are successfully written to ${path.absolute()}")
         }
       }
@@ -152,4 +153,3 @@ private const val DEFAULT_FILE_NAME : String = "environmentKeys.json"
 private const val FILE_ARGUMENT_NAME : String = "file"
 private const val STDOUT_ARGUMENT_NAME : String = "stdout"
 private const val NO_DESCRIPTIONS_ARGUMENT_NAME : String = "no-descriptions"
-

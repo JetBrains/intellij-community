@@ -9,7 +9,7 @@ import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.extensions
 import com.intellij.execution.wsl.sync.WslHashMatcher.Factory.fullname
 import com.intellij.testFramework.fixtures.TestFixtureRule
 import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.io.createFile
+import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.delete
 import com.intellij.util.io.readText
 import org.junit.Assert
@@ -110,7 +110,7 @@ class WslSyncTest(private val linToWin: Boolean) {
     val win = WindowsFileStorage(winRoot, wslRule.wsl)
     val lin = LinuxFileStorage(linRoot, wslRule.wsl)
     if (!linToWin) {
-      winRoot.resolve("target dir").createDirectory().resolve("file.txt").createFile()
+      winRoot.resolve("target dir").createDirectory().resolve("file.txt").createParentDirectories().createFile()
       winRoot.resolve("dir_to_ignore").createDirectory()
       from = win
       to = lin
@@ -147,8 +147,8 @@ class WslSyncTest(private val linToWin: Boolean) {
   fun syncDifferentRegister() {
     val win = winDirRule.newDirectoryPath()
 
-    linuxDirAsPath.resolve("file.txt").createFile()
-    val destFile = win.resolve("File.txt").createFile()
+    linuxDirAsPath.resolve("file.txt").createParentDirectories().createFile()
+    val destFile = win.resolve("File.txt").createParentDirectories().createFile()
     val modTime = destFile.getLastModifiedTime()
 
     Thread.sleep(100)
@@ -228,7 +228,7 @@ class WslSyncTest(private val linToWin: Boolean) {
     val dstDir = if (linToWin) windowsDir else linuxDirAsPath
 
     for (i in (1..5)) {
-      srcDir.resolve("file$i.txt").createFile().writeText("test")
+      srcDir.resolve("file$i.txt").createParentDirectories().createFile().writeText("test")
     }
     WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin)
 
