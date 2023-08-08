@@ -14,6 +14,7 @@ open class Template(val args: Array<String>)
 object TemplateDefinition : ScriptCompilationConfiguration(
     {
         baseClass(Base::class)
+        isStandalone(false)
         ide {
             acceptedLocations(ScriptAcceptedLocation.Everywhere)
         }

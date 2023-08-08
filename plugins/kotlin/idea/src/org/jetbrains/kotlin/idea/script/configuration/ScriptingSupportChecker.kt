@@ -11,11 +11,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.refactoring.move.MoveHandler
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
+import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.compilerAllowsAnyScriptsInSourceRoots
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.hasNoExceptionsToBeUnderSourceRoot
+import org.jetbrains.kotlin.idea.hasUnknownScriptExt
+import org.jetbrains.kotlin.idea.isEnabled
 import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.isNonScript
@@ -25,20 +30,25 @@ import javax.swing.JComponent
 import kotlin.script.experimental.api.ScriptCompilationConfiguration
 import kotlin.script.experimental.api.isStandalone
 
-private const val ANY_SCRIPTS_IN_SOURCE_ROOTS_COMPILER_ARG = "-Xallow-any-scripts-in-source-roots"
 
 class ScriptingSupportChecker: EditorNotificationProvider {
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?>? {
         if (file.isNonScript()) return null
 
-        if (!decideLaterIsOn(project) && !compilerAllowsAnyScriptsInSourceRoots(project)
+        val ktFile = file.toKtFile(project) ?: return null
+        val featureEnabled = LanguageFeature.SkipStandaloneScriptsInSourceRoots.isEnabled(ktFile.module, project)
+        val panelIsOn = featureEnabled || !decideLaterIsOn(project)
+
+        if (panelIsOn && !compilerAllowsAnyScriptsInSourceRoots(project)
             && file.isUnderSourceRoot(project)
             && (file.isStandaloneKotlinScript(project) && file.hasNoExceptionsToBeUnderSourceRoot())
         ) {
             return Function {
                 EditorNotificationPanel(it, EditorNotificationPanel.Status.Warning).apply {
-                    text = KotlinBundle.message("kotlin.script.in.project.sources")
+                    val textKey = if (featureEnabled) "kotlin.script.in.project.sources.1.9" else "kotlin.script.in.project.sources"
+                    text = KotlinBundle.message(textKey)
+
                     createActionLabel(
                         KotlinBundle.message("kotlin.script.warning.more.info"),
                         Runnable {
@@ -47,7 +57,10 @@ class ScriptingSupportChecker: EditorNotificationProvider {
                         false
                     )
                     addMoveOutOfSourceRootAction(file, project)
-                    addDecideLaterAction(file, project)
+
+                    if (!featureEnabled) {
+                        addDecideLaterAction(file, project)
+                    }
                 }
             }
         }
@@ -137,22 +150,10 @@ private fun VirtualFile.isStandaloneKotlinScript(project: Project): Boolean {
     return scriptDefinition.compilationConfiguration[ScriptCompilationConfiguration.isStandalone] == true
 }
 
-private fun VirtualFile.hasNoExceptionsToBeUnderSourceRoot(): Boolean =
-    scriptResidenceExceptionProviders.none { it.isSupportedUnderSourceRoot(this) }
-
-private fun VirtualFile.hasUnknownScriptExt(): Boolean =
-    scriptResidenceExceptionProviders.none { it.isSupportedScriptExtension(this) }
-
 private fun decideLaterIsOn(project: Project): Boolean =
     KotlinScriptingSettings.getInstance(project).decideOnRemainingInSourceRootLater
 
 private fun VirtualFile.isUnderSourceRoot(project: Project): Boolean =
     ProjectRootManager.getInstance(project).fileIndex.isUnderSourceRootOfType(this, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
-
-
-private fun compilerAllowsAnyScriptsInSourceRoots(project: Project): Boolean {
-    val additionalSettings = KotlinCompilerSettings.getInstance(project).settings
-    return additionalSettings.additionalArguments.contains(ANY_SCRIPTS_IN_SOURCE_ROOTS_COMPILER_ARG)
-}
 
 private fun VirtualFile.toKtFile(project: Project): KtFile? = toPsiFile(project) as? KtFile
