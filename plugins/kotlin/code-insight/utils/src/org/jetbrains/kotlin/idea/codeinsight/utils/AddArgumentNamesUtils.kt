@@ -4,14 +4,20 @@ package org.jetbrains.kotlin.idea.codeinsight.utils
 import com.intellij.psi.PsiComment
 import com.intellij.psi.SmartPsiElementPointer
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.calls.KtFunctionCall
 import org.jetbrains.kotlin.analysis.api.calls.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtValueArgument
+import org.jetbrains.kotlin.psi.KtValueArgumentList
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
+import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.util.match
 
 object AddArgumentNamesUtils {
     fun addArgumentName(element: KtValueArgument, argumentName: Name) {
@@ -30,6 +36,30 @@ object AddArgumentNamesUtils {
         for ((argument, name) in argumentNames) {
             addArgumentName(argument, name)
         }
+    }
+
+    private fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
+        val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
+        if (valueParameterSymbol.isVararg) {
+            if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
+                !argument.isSpread
+            ) {
+                return null
+            }
+
+            // We can only add the parameter name for an argument for a vararg parameter if it's the ONLY argument for the parameter. E.g.,
+            //
+            //   fun foo(vararg i: Int) {}
+            //
+            //   foo(1, 2) // Can NOT add `i = ` to either argument
+            //   foo(1)    // Can change to `i = 1`
+            val varargArgumentCount = resolvedCall.argumentMapping.values.count { it.symbol == valueParameterSymbol }
+            if (varargArgumentCount != 1) {
+                return null
+            }
+        }
+
+        return valueParameterSymbol.name
     }
 
     /**
@@ -51,5 +81,13 @@ object AddArgumentNamesUtils {
         return argumentsExcludingPrevious
             .associateWith { getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return null }
             .mapKeys { it.key.createSmartPointer() }
+    }
+
+    context(KtAnalysisSession)
+    fun KtValueArgument.getValueArgumentName(): Name? {
+        val callElement = parents.match(KtValueArgumentList::class, last = KtCallElement::class) ?: return null
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        if (!resolvedCall.symbol.hasStableParameterNames) return null
+        return getArgumentNameIfCanBeUsedForCalls(this, resolvedCall)
     }
 }
