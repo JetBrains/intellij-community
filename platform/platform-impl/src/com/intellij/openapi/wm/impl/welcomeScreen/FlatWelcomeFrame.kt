@@ -32,6 +32,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader
+import com.intellij.openapi.wm.impl.executeOnCancelInEdt
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.JActionLinkPanel
 import com.intellij.platform.ide.menu.createMacMenuBar
 import com.intellij.ui.*
@@ -53,7 +54,10 @@ import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor
 import com.intellij.util.ui.update.UiNotifyConnector
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.job
+import kotlinx.coroutines.launch
 import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.dnd.*
@@ -76,7 +80,8 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   private var isDisposed = false
   private var header: DefaultFrameHeader? = null
 
-  private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+  @Suppress("DEPRECATION")
+  private val coroutineScope = ApplicationManager.getApplication().coroutineScope.childScope()
 
   companion object {
     @JvmField
@@ -109,7 +114,12 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   init {
     val rootPane = getRootPane()
     balloonLayout = WelcomeBalloonLayoutImpl(rootPane, JBUI.insets(8))
+
     screen = suggestedScreen ?: FlatWelcomeScreen(frame = this)
+    executeOnCancelInEdt(coroutineScope) {
+      Disposer.dispose(screen)
+    }
+
     content = Wrapper()
     contentPane = content
     if (IdeFrameDecorator.isCustomDecorationActive()) {
@@ -178,7 +188,9 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
   override fun removeNotify() {
     super.removeNotify()
 
-    coroutineScope.cancel()
+    if (ScreenUtil.isStandardAddRemoveNotify(this)) {
+      coroutineScope.cancel()
+    }
   }
 
   protected open fun setupCloseAction() {
