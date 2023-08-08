@@ -31,7 +31,7 @@ class PythonConfigurationFragmentedEditor(runConfiguration: PythonRunConfigurati
       parametersEditor, SettingsEditorFragmentType.COMMAND_LINE,
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> field.text = config.scriptParameters },
       { config: PythonRunConfiguration, field: RawCommandLineEditor -> config.scriptParameters = field.text.trim() },
-      { config: PythonRunConfiguration -> !config.scriptParameters.trim().isEmpty() })
+      { config: PythonRunConfiguration -> config.scriptParameters?.trim()?.isEmpty() == false })
     MacrosDialog.addMacroSupport(parametersEditor.editorField, MacrosDialog.Filters.ALL) { false }
     scriptParametersFragment.setHint(PyBundle.message("python.run.configuration.fragments.script.parameters.hint"))
     scriptParametersFragment.actionHint = PyBundle.message("python.run.configuration.fragments.script.parameters.hint")
