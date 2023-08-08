@@ -41,7 +41,7 @@ internal class GitLabToolWindowViewModel(
       connection?.let { GitLabToolWindowProjectViewModel(project, accountManager, it) }
     }.stateIn(cs, SharingStarted.Eagerly, null)
 
-  val selectorVm: GitLabRepositoryAndAccountSelectorViewModel by lazy {
+  val selectorVm: GitLabRepositoryAndAccountSelectorViewModel = run {
     val preferences = project.service<GitLabMergeRequestsPreferences>()
     GitLabRepositoryAndAccountSelectorViewModel(
       cs, projectsManager, accountManager,
