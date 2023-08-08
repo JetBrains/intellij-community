@@ -8,7 +8,6 @@ import com.intellij.idea.hideSplashBeforeShow
 import com.intellij.internal.statistic.eventLog.getUiEventLogger
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.*
@@ -149,17 +148,6 @@ class WelcomeFrame : JFrame(), IdeFrame, AccessibleContextAccessor {
     fun prepareToShow(): Runnable? {
       if (instance != null) {
         return null
-      }
-
-      // ActionManager is used on Welcome Frame, but should be initialized in a pooled thread and not in EDT.
-      @Suppress("DEPRECATION")
-      ApplicationManager.getApplication().coroutineScope.launch {
-        blockingContext {
-          ActionManager.getInstance()
-          if (SystemInfoRt.isMac) {
-            TouchbarSupport.initialize()
-          }
-        }
       }
 
       return Runnable {
