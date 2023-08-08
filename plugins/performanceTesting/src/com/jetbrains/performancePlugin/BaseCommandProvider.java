@@ -92,7 +92,8 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(ShowEvaluateExpressionCommand.PREFIX, ShowEvaluateExpressionCommand::new),
       Map.entry(EvaluateExpressionCompletionCommand.PREFIX, EvaluateExpressionCompletionCommand::new),
       Map.entry(CollectFilesNotMarkedAsIndex.PREFIX, CollectFilesNotMarkedAsIndex::new),
-      Map.entry(RemoveBreakpointCommand.PREFIX, RemoveBreakpointCommand::new)
+      Map.entry(RemoveBreakpointCommand.PREFIX, RemoveBreakpointCommand::new),
+      Map.entry(DropErrorCommand.PREFIX, DropErrorCommand::new)
     );
   }
 }
