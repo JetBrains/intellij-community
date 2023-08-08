@@ -69,11 +69,6 @@ object KotlinScriptMarkerFileSystem : DummyFileSystem(), NonPhysicalFileSystem {
 }
 
 class KotlinScriptResolveScopeProvider : ResolveScopeProvider() {
-    companion object {
-        // Used in LivePlugin (that's probably not true anymore)
-        @Deprecated("Declaration is deprecated.", level = DeprecationLevel.ERROR)
-        val USE_NULL_RESOLVE_SCOPE = "USE_NULL_RESOLVE_SCOPE"
-    }
 
     override fun getResolveScope(file: VirtualFile, project: Project): GlobalSearchScope? {
         if (!file.isKotlinFileType()) return null
