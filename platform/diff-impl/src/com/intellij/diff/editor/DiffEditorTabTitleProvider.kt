@@ -36,7 +36,7 @@ private class DiffEditorTabTitleProvider : EditorTabTitleProvider, DumbAware {
       return null
     }
 
-    val supplier = Supplier<@NlsContexts.TabTitle String> {
+    val supplier = Supplier<@NlsContexts.TabTitle String?> {
       FileEditorManager.getInstance(project)
         .getSelectedEditor(file)
         ?.let { it as? DiffRequestProcessorEditor }
