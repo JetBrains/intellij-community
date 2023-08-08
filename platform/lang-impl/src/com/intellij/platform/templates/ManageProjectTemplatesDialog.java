@@ -65,7 +65,7 @@ class ManageProjectTemplatesDialog extends DialogWrapper {
       }
     });
     myTemplatesList.setEmptyText(LangBundle.message("status.text.no.user.defined.project.templates"));
-    myTemplatesList.setCellRenderer(BuilderKt.simpleListCellRenderer(ProjectTemplate::getName));
+    myTemplatesList.setCellRenderer(BuilderKt.textListCellRenderer(ProjectTemplate::getName));
     myTemplatesList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {

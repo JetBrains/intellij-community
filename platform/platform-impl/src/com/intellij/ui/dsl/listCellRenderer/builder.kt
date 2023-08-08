@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.listCellRenderer
 import com.intellij.ui.dsl.listCellRenderer.impl.LcrRowImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import javax.swing.JList
 import javax.swing.ListCellRenderer
 
 @DslMarker
@@ -35,9 +36,33 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
  * Simplified version of [listCellRenderer] with one text cell
  */
 @ApiStatus.Experimental
-fun <T> simpleListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
+fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
   return listCellRenderer {
     val text = text()
     renderer { value -> text.text = textExtractor(value) }
   }
 }
+
+/**
+ * Simplified version of [listCellRenderer] with icon and text
+ */
+@ApiStatus.Experimental
+fun <T> iconListCellRenderer(init: IconTextRenderer<T>.() -> Unit): ListCellRenderer<T> {
+  return listCellRenderer {
+    val icon = icon()
+    val text = text()
+
+    renderer { list, value, index, isSelected, cellHasFocus, rowParams ->
+      IconTextRendererImpl(icon, text, list, value, index, isSelected, cellHasFocus, rowParams).init()
+    }
+  }
+}
+
+private data class IconTextRendererImpl<T>(override val icon: LcrIcon,
+                                           override val text: LcrText,
+                                           override val list: JList<out T>,
+                                           override val value: T,
+                                           override val index: Int,
+                                           override val isSelected: Boolean,
+                                           override val cellHasFocus: Boolean,
+                                           override val rowParams: RowParams) : IconTextRenderer<T>

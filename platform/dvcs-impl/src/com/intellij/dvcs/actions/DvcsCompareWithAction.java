@@ -103,7 +103,7 @@ public abstract class DvcsCompareWithAction<T extends Repository> extends DumbAw
       .setItemChosenCallback(onChosen::accept)
       .setAutoselectOnMouseMove(true)
       .setNamerForFiltering(o -> o)
-      .setRenderer(BuilderKt.simpleListCellRenderer((@NlsSafe var name) -> name))
+      .setRenderer(BuilderKt.textListCellRenderer((@NlsSafe var name) -> name))
       .withFixedRendererSize(new Dimension(JBUI.scale(350), JBUI.CurrentTheme.List.rowHeight())) // do not freeze on huge lists
       .createPopup();
   }

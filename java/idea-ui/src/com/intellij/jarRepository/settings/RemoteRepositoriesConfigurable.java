@@ -210,7 +210,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                                   final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(BuilderKt.simpleListCellRenderer(adapter::toPresentation));
+    list.setCellRenderer(BuilderKt.textListCellRenderer(adapter::toPresentation));
     addButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

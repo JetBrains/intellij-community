@@ -69,7 +69,7 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
 
     myExpressionTypesListModel = JBList.createDefaultListModel();
     myExpressionTypesList = new JBList<>(myExpressionTypesListModel);
-    myExpressionTypesList.setCellRenderer(BuilderKt.simpleListCellRenderer(PostfixTemplateExpressionCondition::getPresentableName));
+    myExpressionTypesList.setCellRenderer(BuilderKt.textListCellRenderer(PostfixTemplateExpressionCondition::getPresentableName));
 
     ToolbarDecorator expressionTypesToolbar = null;
     if (showExpressionTypes) {

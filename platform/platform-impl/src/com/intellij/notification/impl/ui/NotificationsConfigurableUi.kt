@@ -19,7 +19,7 @@ import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.listCellRenderer.simpleListCellRenderer
+import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.ui.layout.selected
 import org.jetbrains.annotations.Nullable
 import javax.swing.JCheckBox
@@ -112,7 +112,7 @@ internal class NotificationsConfigurableUi(settings: NotificationsConfigurationI
       .sortedWith(Comparator { nsw1, nsw2 -> NaturalComparator.INSTANCE.compare(nsw1.toString(), nsw2.toString()) })
       .toTypedArray())
       .apply {
-        cellRenderer = simpleListCellRenderer { it.toString() }
+        cellRenderer = textListCellRenderer { it.toString() }
         selectionModel.addListSelectionListener {
           selectedValue?.let { notificationSettings.updateUi(it) }
         }

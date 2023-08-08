@@ -22,7 +22,7 @@ public class ListModelEditor<T> extends ListModelEditorBase<T> {
     super(itemEditor);
 
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(BuilderKt.simpleListCellRenderer(o -> itemEditor.getName(o)));
+    list.setCellRenderer(BuilderKt.textListCellRenderer(o -> itemEditor.getName(o)));
 
     toolbarDecorator = ToolbarDecorator.createDecorator(list, model)
       .setAddAction(button -> {

@@ -59,6 +59,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     tabbedPane.addTab("Validation API", ValidationPanel(myDisposable).panel)
     tabbedPane.addTab("Validation Refactoring API", ValidationRefactoringPanel(myDisposable).panel)
     tabbedPane.addTab("OnChange", OnChangePanel().panel)
+    tabbedPane.addTab("ListCellRenderer", ListCellRendererPanel().panel)
 
     return panel {
       row {

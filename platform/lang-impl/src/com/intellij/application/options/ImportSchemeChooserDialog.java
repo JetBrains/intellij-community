@@ -51,7 +51,7 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
         return myNames.get(index);
       }
     });
-    mySchemeList.setCellRenderer(BuilderKt.simpleListCellRenderer(
+    mySchemeList.setCellRenderer(BuilderKt.textListCellRenderer(
       value -> value == null ? '<' + ApplicationBundle.message("code.style.scheme.import.unnamed") + '>' : value));
     mySchemeList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     mySchemeList.addListSelectionListener(new ListSelectionListener() {
