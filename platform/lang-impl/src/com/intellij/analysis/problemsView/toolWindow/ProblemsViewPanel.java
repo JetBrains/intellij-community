@@ -482,7 +482,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
   }
 
   protected @NotNull Comparator<Node> createComparator() {
-    return new NodeComparator(
+    return new ProblemsViewNodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
       isNullableOrSelected(getSortBySeverity()),
       isNotNullAndSelected(getSortByName()));

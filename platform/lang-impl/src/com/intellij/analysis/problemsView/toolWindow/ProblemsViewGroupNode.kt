@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 
-internal class GroupNode(val parent: FileNode, val group: String, val problems: Collection<Problem>) : Node(parent) {
+internal class ProblemsViewGroupNode(val parent: FileNode, val group: String, val problems: Collection<Problem>) : Node(parent) {
 
   override fun getLeafState(): LeafState = LeafState.NEVER
 
@@ -22,7 +22,7 @@ internal class GroupNode(val parent: FileNode, val group: String, val problems: 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (this.javaClass != other?.javaClass) return false
-    val that = other as? GroupNode ?: return false
+    val that = other as? ProblemsViewGroupNode ?: return false
     return that.parent == parent && that.group == group
   }
 }

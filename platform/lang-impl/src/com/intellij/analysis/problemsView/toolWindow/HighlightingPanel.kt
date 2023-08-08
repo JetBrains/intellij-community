@@ -99,8 +99,8 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     }.submit(AppExecutorUtil.getAppExecutorService())
   }
 
-  internal val currentRoot: HighlightingFileRoot?
-    get() = treeModel.root as? HighlightingFileRoot
+  internal val currentRoot: ProblemsViewHighlightingFileRoot?
+    get() = treeModel.root as? ProblemsViewHighlightingFileRoot
 
   private fun getCurrentDocument(): Document? = currentRoot?.document
 
@@ -112,7 +112,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     else {
       val (file, document) = pair
       if (currentRoot?.file == file) return
-      treeModel.root = HighlightingFileRoot(this, file, document)
+      treeModel.root = ProblemsViewHighlightingFileRoot(this, file, document)
       TreeUtil.promiseSelectFirstLeaf(tree)
     }
     powerSaveStateChanged()

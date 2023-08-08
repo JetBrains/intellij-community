@@ -10,7 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 
-internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile, val document: Document) : Root(panel) {
+internal class ProblemsViewHighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualFile, val document: Document) : Root(panel) {
 
   private val problems = mutableSetOf<HighlightingProblem>()
   private val filter = ProblemFilter(panel.state)
@@ -19,7 +19,7 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     override val project = panel.project
   }
 
-  private val watcher: HighlightingWatcher = createWatcher(provider, file, document)
+  private val watcher: ProblemsViewHighlightingWatcher = createWatcher(provider, file, document)
 
   init {
     Disposer.register(this, provider)
@@ -44,8 +44,8 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     else -> emptyList()
   }
 
-  private fun createWatcher(provider: ProblemsProvider, file: VirtualFile, document: Document): HighlightingWatcher =
-    HighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
+  private fun createWatcher(provider: ProblemsProvider, file: VirtualFile, document: Document): ProblemsViewHighlightingWatcher =
+    ProblemsViewHighlightingWatcher(provider, this, file, document, HighlightSeverity.TEXT_ATTRIBUTES.myVal + 1)
 
   override fun getOtherProblemCount(): Int = 0
 
@@ -88,7 +88,7 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
       .groupBy { it.group }
       .flatMap { entry ->
         entry.key?.let {
-          listOf(GroupNode(node, it, entry.value))
+          listOf(ProblemsViewGroupNode(node, it, entry.value))
         }
         ?: getNodesForProblems(node, entry.value)
     }

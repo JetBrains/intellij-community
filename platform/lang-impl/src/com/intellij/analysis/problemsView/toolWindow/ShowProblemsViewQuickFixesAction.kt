@@ -28,7 +28,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.isAncestor
 import java.awt.event.MouseEvent
 
-internal class ShowQuickFixesAction : AnAction() {
+internal class ShowProblemsViewQuickFixesAction : AnAction() {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 

@@ -17,7 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.EdtInvocationManager
 import java.util.concurrent.ConcurrentHashMap
 
-internal class HighlightingWatcher(
+internal class ProblemsViewHighlightingWatcher(
   private val provider: ProblemsProvider,
   private val listener: ProblemsListener,
   private val file: VirtualFile,

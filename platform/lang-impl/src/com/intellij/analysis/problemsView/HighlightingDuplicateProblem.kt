@@ -8,4 +8,4 @@ import org.jetbrains.annotations.ApiStatus
  * when similar problems are provided by highlighters.
  */
 @ApiStatus.Experimental
-interface HighlightingDuplicate
+interface HighlightingDuplicateProblem : FileProblem

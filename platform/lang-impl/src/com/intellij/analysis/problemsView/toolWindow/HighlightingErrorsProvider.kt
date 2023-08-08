@@ -19,7 +19,7 @@ open class HighlightingErrorsProvider(final override val project: Project) : Hig
     fun getInstance(project: Project): HighlightingErrorsProvider = project.getService(HighlightingErrorsProvider::class.java)!!
   }
 
-  private val watchers: MutableMap<VirtualFile, HighlightingWatcher> = mutableMapOf()
+  private val watchers: MutableMap<VirtualFile, ProblemsViewHighlightingWatcher> = mutableMapOf()
 
   init {
     project.messageBus.connect(this).subscribe(ProblemListener.TOPIC, this)
@@ -36,7 +36,7 @@ open class HighlightingErrorsProvider(final override val project: Project) : Hig
     if (document == null) return
     synchronized(watchers) {
       watchers.computeIfAbsent(file) { file ->
-        HighlightingWatcher(this, ProblemsCollector.getInstance(project), file, document, ERROR.myVal)
+        ProblemsViewHighlightingWatcher(this, ProblemsCollector.getInstance(project), file, document, ERROR.myVal)
       }
     }
   }
