@@ -34,6 +34,7 @@ class SerializationIDEJsExtension : SerializationJsExtension() {
 
 class SerializationIDEIrExtension : SerializationLoweringExtension() {
     override fun generate(moduleFragment: IrModuleFragment, pluginContext: IrPluginContext) {
+        @OptIn(ObsoleteDescriptorBasedAPI::class)
         runIfEnabledIn(pluginContext.moduleDescriptor) {
             super.generate(moduleFragment, pluginContext)
         }
