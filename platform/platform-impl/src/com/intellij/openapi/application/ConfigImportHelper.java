@@ -120,8 +120,8 @@ public final class ConfigImportHelper {
 
     ConfigImportSettings settings = findCustomConfigImportSettings();
 
-    String pathSelectorOfOtherIde = settings != null ? settings.getProductToImportFrom(args) : null;
-    ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, pathSelectorOfOtherIde, settings);
+    List<String> otherProductPrefixes = settings != null ? settings.getProductsToImportFrom(args) : List.of();
+    ConfigDirsSearchResult guessedOldConfigDirs = findConfigDirectories(newConfigDir, settings, otherProductPrefixes);
     Path tempBackup = null;
     boolean vmOptionFileChanged = false;
     ImportOldConfigsState.InitialImportScenario importScenarioStatistics = null;
@@ -211,7 +211,7 @@ public final class ConfigImportHelper {
       }
 
       if (settings != null) {
-        settings.importFinished(newConfigDir, pathSelectorOfOtherIde);
+        settings.importFinished(newConfigDir, otherProductPrefixes);
       }
 
       ImportOldConfigsState.Companion.getInstance().reportImportScenario(importScenarioStatistics);
@@ -446,12 +446,12 @@ public final class ConfigImportHelper {
   }
 
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir) {
-    return findConfigDirectories(newConfigDir, null, null);
+    return findConfigDirectories(newConfigDir, null, List.of());
   }
 
   static @NotNull ConfigDirsSearchResult findConfigDirectories(@NotNull Path newConfigDir,
-                                                               @Nullable String productPrefixOtherIde,
-                                                               @Nullable ConfigImportSettings settings) {
+                                                               @Nullable ConfigImportSettings settings,
+                                                               @NotNull List<String> otherProductPrefixes) {
     // looking for existing config directories ...
     Set<Path> homes = new HashSet<>();
     homes.add(newConfigDir.getParent());  // ... in the vicinity of the new config directory
@@ -488,19 +488,15 @@ public final class ConfigImportHelper {
         for (Path path : stream) {
           if (!path.equals(newConfigDir) && Files.isDirectory(path)) {
             String name = path.getFileName().toString();
+            String pathPrefix = getPrefixFromSelector(getNameWithVersion(path));
             if (nameMatchesPrefixStrictly(name, prefix, dotted)) {
-              if (settings != null &&
-                  !settings.shouldBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
-                continue;
+              if (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes)) {
+                exactCandidates.add(path);
               }
-              exactCandidates.add(path);
             }
-            else if (exactCandidates.isEmpty() && productPrefixOtherIde != null) {
-              if (nameMatchesPrefixStrictly(name, productPrefixOtherIde, dotted)) {
-                if (settings != null &&
-                    !settings.shouldBeSeenAsImportCandidate(path, getPrefixFromSelector(getNameWithVersion(path)), productPrefixOtherIde)) {
-                  continue;
-                }
+            else if (exactCandidates.isEmpty() &&
+                     ContainerUtil.exists(otherProductPrefixes, other -> nameMatchesPrefixStrictly(name, other, dotted))) {
+              if (settings == null || settings.shouldBeSeenAsImportCandidate(path, pathPrefix, otherProductPrefixes)) {
                 otherPreferredCandidates.add(path);
               }
             }
