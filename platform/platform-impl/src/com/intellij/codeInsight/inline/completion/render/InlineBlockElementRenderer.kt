@@ -21,7 +21,9 @@ class InlineBlockElementRenderer(private val editor: Editor, val lines: List<Str
   }
 
   override fun calcHeightInPixels(inlay: Inlay<*>): Int {
-    return editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).height * lines.size
+    val lineSpacing = editor.getColorsScheme().getLineSpacing()
+    val fontHeight = editor.contentComponent.getFontMetrics(InlineFontUtils.font(editor)).height
+    return (fontHeight * lineSpacing * lines.size).toInt()
   }
 
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
