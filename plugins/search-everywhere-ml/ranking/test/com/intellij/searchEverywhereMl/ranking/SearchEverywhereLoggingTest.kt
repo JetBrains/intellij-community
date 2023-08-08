@@ -51,7 +51,7 @@ fun runSearchEverywhereLoggingTest(project: Project, testProcedure: SearchEveryw
     // we wait for these activities. Without this, session-finished event does not get reported in time
     repeat(3) { SwingUtilities.invokeLater { EmptyRunnable.getInstance() } }
     waitForNonUrgentExecutorExecution()  // Wait till the session-finished event is reported
-  }
+  }.toList()
 }
 
 fun SearchEverywhereUI.type(query: CharSequence) = also { searchEverywhereUI ->
