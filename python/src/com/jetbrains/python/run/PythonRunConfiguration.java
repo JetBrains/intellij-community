@@ -29,7 +29,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 
 
-public class PythonRunConfiguration extends AbstractPythonRunConfiguration
+public class PythonRunConfiguration extends AbstractPythonRunConfiguration<PythonRunConfiguration>
   implements AbstractPythonRunConfigurationParams, PythonRunConfigurationParams, RefactoringListenerProvider, InputRedirectAware {
   public static final String SCRIPT_NAME = "SCRIPT_NAME";
   public static final String PARAMETERS = "PARAMETERS";
@@ -60,7 +60,7 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   }
 
   @Override
-  protected SettingsEditor<? extends RunConfiguration> createConfigurationEditor() {
+  protected SettingsEditor<PythonRunConfiguration> createConfigurationEditor() {
     if (Registry.is("python.new.run.config", false)) {
       return new PythonConfigurationFragmentedEditor(this);
     }
