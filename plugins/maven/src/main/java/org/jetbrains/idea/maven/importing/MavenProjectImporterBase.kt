@@ -62,10 +62,10 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
   companion object {
     @JvmStatic
     fun importExtensions(project: Project,
-                         modifiableModelsProvider: IdeModifiableModelsProvider?,
+                         modifiableModelsProvider: IdeModifiableModelsProvider,
                          extensionImporters: List<ExtensionImporter>,
                          postTasks: List<MavenProjectsProcessorTask>,
-                         activity: StructuredIdeActivity?,
+                         activity: StructuredIdeActivity,
                          isWorkspaceImport: Boolean) {
       val importers = extensionImporters.filter { !it.isModuleDisposed }
       if (importers.isEmpty()) return
@@ -83,12 +83,12 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
         importers.forEach(Consumer { it.config(isWorkspaceImport, postTasks, counters) })
         importers.forEach(Consumer { it.postConfig(isWorkspaceImport, counters) })
         for ((key, value) in counters) {
-          MavenImportCollector.IMPORTER_RUN.log(project,
-                                                MavenImportCollector.ACTIVITY_ID.with(activity!!),
-                                                MavenImportCollector.IMPORTER_CLASS.with(key),
-                                                MavenImportCollector.NUMBER_OF_MODULES.with(value.count),
-                                                MavenImportCollector.TOTAL_DURATION_MS.with(
-                                                  TimeUnit.NANOSECONDS.toMillis(value.timeNano)))
+          MavenImportCollector.IMPORTER_RUN.log(
+            project,
+            MavenImportCollector.ACTIVITY_ID.with(activity),
+            MavenImportCollector.IMPORTER_CLASS.with(key),
+            MavenImportCollector.NUMBER_OF_MODULES.with(value.count),
+            MavenImportCollector.TOTAL_DURATION_MS.with(TimeUnit.NANOSECONDS.toMillis(value.timeNano)))
         }
       }
       finally {
@@ -99,7 +99,7 @@ abstract class MavenProjectImporterBase(@JvmField protected val myProject: Proje
         val afterCommit = System.nanoTime()
         MavenImportCollector.LEGACY_IMPORTERS_STATS.log(
           project,
-          MavenImportCollector.ACTIVITY_ID.with(activity!!),
+          MavenImportCollector.ACTIVITY_ID.with(activity),
           MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_CREATION_MS.with(TimeUnit.NANOSECONDS.toMillis(bridgesCreationNano)),
           MavenImportCollector.DURATION_OF_LEGACY_BRIDGES_COMMIT_MS.with(TimeUnit.NANOSECONDS.toMillis(afterCommit - beforeCommit)))
       }
