@@ -754,7 +754,10 @@ public class UndoManagerImpl extends UndoManager {
       return;
     }
     flushMergers();
-    LOG.assertTrue(state.myCommandLevel == 0, state.myCommandLevel);
+    LOG.assertTrue(
+      state.myCommandLevel == 0,
+      "Level: " + state.myCommandLevel +
+      "\nCommand: " + state.myMerger.getCommandName());
 
     state.myUndoStacksHolder.clearAllStacksInTests();
     state.myRedoStacksHolder.clearAllStacksInTests();
