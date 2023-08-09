@@ -1,6 +1,6 @@
 package org.jetbrains.jewel.foundation.tree
 
-class Tree<T> internal constructor(internal val roots: List<Element<T>>) : Iterable<Tree.Element<T>> {
+class Tree<T> internal constructor(val roots: List<Element<T>>) : Iterable<Tree.Element<T>> {
 
     override fun iterator(): Iterator<Element<T>> = elementIterator(roots.firstOrNull()) { it.next }
 

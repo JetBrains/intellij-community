@@ -75,11 +75,8 @@ class DefaultSelectableLazyColumnPointerEventAction(private val state: Selectabl
     }
 }
 
-class DefaultTreeViewPointerEventAction<T>(
+class DefaultTreeViewPointerEventAction(
     private val treeState: TreeState,
-    private val platformDoubleClickDelay: Long,
-    private val onElementClick: (Tree.Element<T>) -> Unit,
-    private val onElementDoubleClick: (Tree.Element<T>) -> Unit,
 ) : PointerEventScopedActions {
 
     override fun handlePointerEventPress(
@@ -110,16 +107,6 @@ class DefaultTreeViewPointerEventAction<T>(
                 }
 
                 else -> {
-                    val element = treeState.flattenedTree[treeState.delegate.keys.indexOfFirst { it.key == key }]
-                    Log.e(treeState.toString())
-                    @Suppress("UNCHECKED_CAST")
-                    notifyItemClicked(
-                        item = element as Tree.Element<T>,
-                        scope = scope,
-                        doubleClickTimeDelayMillis = platformDoubleClickDelay,
-                        onElementClick = onElementClick,
-                        onElementDoubleClick = onElementDoubleClick
-                    )
                     scope.launch {
                         treeState.delegate.selectSingleKey(key, skipScroll = true)
                     }
@@ -130,7 +117,7 @@ class DefaultTreeViewPointerEventAction<T>(
 
     // todo warning: this is ugly workaround
     // for item click that lose focus and fail to match if a operation is a double-click
-    var elementClickedTmpHolder: Tree.Element<*>? = null
+    private var elementClickedTmpHolder: List<Any>? = null
     internal fun <T> notifyItemClicked(
         item: Tree.Element<T>,
         scope: CoroutineScope,
@@ -138,21 +125,21 @@ class DefaultTreeViewPointerEventAction<T>(
         onElementClick: (Tree.Element<T>) -> Unit,
         onElementDoubleClick: (Tree.Element<T>) -> Unit,
     ) {
-        if (elementClickedTmpHolder?.id == item.id) {
+        if (elementClickedTmpHolder == item.idPath()) {
             // is a double click
             if (item is Tree.Element.Node) {
-                treeState.toggleNode(item)
+                treeState.toggleNode(item.idPath())
             }
             onElementDoubleClick(item)
             elementClickedTmpHolder = null
             Log.d("doubleClicked!")
         } else {
-            elementClickedTmpHolder = item
+            elementClickedTmpHolder = item.idPath()
             // is a single click
             onElementClick(item)
             scope.launch {
                 delay(doubleClickTimeDelayMillis)
-                if (elementClickedTmpHolder == item) elementClickedTmpHolder = null
+                if (elementClickedTmpHolder == item.idPath()) elementClickedTmpHolder = null
             }
 
             Log.d("singleClicked!")
@@ -172,10 +159,6 @@ class DefaultTreeViewKeyActions(treeState: TreeState) : DefaultSelectableLazyCol
             with(actions) {
                 Log.d(keyEvent.key.keyCode.toString())
                 when {
-                    extendSelectionToChild() ?: false -> coroutineScope.launch { onExtendSelectionToChild(focusedIndex) }
-                    extendSelectionToParent() ?: false -> coroutineScope.launch { onExtendSelectionToParent(focusedIndex) }
-                    selectNextSibling() ?: false -> coroutineScope.launch { onSelectNextSibling(focusedIndex) }
-                    selectPreviousSibling() ?: false -> coroutineScope.launch { onSelectPreviousSibling(focusedIndex) }
                     selectParent() ?: false -> coroutineScope.launch { onSelectParent(focusedIndex) }
                     selectChild() ?: false -> coroutineScope.launch { onSelectChild(focusedIndex) }
                     super.handleOnKeyEvent(coroutineScope).invoke(keyEvent, focusedIndex) -> return@lambda true
