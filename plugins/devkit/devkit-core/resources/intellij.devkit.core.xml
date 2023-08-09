@@ -107,7 +107,8 @@
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path"
                      key="inspections.statistics.collector.not.registered.name" groupKey="inspections.group.code" enabledByDefault="false"
-                     level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.StatisticsCollectorNotRegisteredInspection"
                      isInternal="true"/>
     <localInspection language="UAST" shortName="InspectionDescriptionNotFoundInspection"
                      projectType="INTELLIJ_PLUGIN"
@@ -538,18 +539,29 @@
   </extensions>
 
   <extensions defaultExtensionNs="DevKit.lang">
-    <goodCodeRedVisitor language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
-    <cancellationCheckProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
-    <cancellationCheckInLoopsFixProvider language="JAVA" implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
-    <visitorProviderForRBCInspection language="JAVA"
+    <goodCodeRedVisitor
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.internal.JavaGoodCodeRedVisitor"/>
+    <cancellationCheckProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.JavaCancellationCheckProvider"/>
+    <cancellationCheckInLoopsFixProvider
+      language="JAVA"
+      implementationClass="org.jetbrains.idea.devkit.inspections.quickfix.JavaCancellationCheckInLoopsFixProvider"/>
+    <visitorProviderForRBCInspection
+      language="JAVA"
       implementationClass="org.jetbrains.idea.devkit.inspections.CallingMethodShouldBeRequiresBlockingContextInspection$VisitorProviderForJava"/>
-    <extensionClassShouldNotBePublicProvider language="JVM"
+    <extensionClassShouldNotBePublicProvider
+      language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldNotBePublicProviderForJVM"/>
-    <extensionClassShouldBeFinalErrorMessageProvider language="JVM"
+    <extensionClassShouldBeFinalErrorMessageProvider
+      language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ExtensionClassShouldBeFinalErrorMessageProvider"/>
-    <serviceLevelExtractor language="JVM"
+    <serviceLevelExtractor
+      language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.ServiceLevelExtractorForJVM"/>
-    <lightServiceMustBeFinalErrorMessageProvider language="JVM"
+    <lightServiceMustBeFinalErrorMessageProvider
+      language="JVM"
       implementationClass="org.jetbrains.idea.devkit.inspections.LightServiceMustBeFinalErrorMessageProvider"/>
     <appServiceAsStaticFinalFieldOrPropertyFixProvider
       language="JAVA"
@@ -565,7 +577,7 @@
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
                     dynamic="true">
-    <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
+      <with attribute="implementationClass" implements="org.jetbrains.idea.devkit.inspections.CancellationCheckProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="DevKit.lang.cancellationCheckInLoopsFixProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint"
