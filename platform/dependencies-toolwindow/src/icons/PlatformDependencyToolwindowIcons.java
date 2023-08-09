@@ -14,5 +14,5 @@ public final class PlatformDependencyToolwindowIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, PlatformDependencyToolwindowIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 13x13 */ public static final @NotNull Icon ArtifactSmall = load("icons/artifactSmall.svg", 1723057659, 2);
+  /** 13x13 */ public static final @NotNull Icon ArtifactSmall = load("icons/artifactSmall.svg", -501340654, 2);
 }

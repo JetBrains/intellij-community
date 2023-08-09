@@ -14,24 +14,24 @@ public final class CollaborationToolsIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, CollaborationToolsIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon AddEmoji = load("icons/addEmoji.svg", 455525731, 0);
-  /** 16x16 */ public static final @NotNull Icon AddEmojiHovered = load("icons/addEmojiHovered.svg", 174166779, 0);
-  /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", 1335526073, 0);
-  /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", 1331238165, 0);
-  /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", 649985220, 0);
-  /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/fileUnread.svg", 668522743, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/pullRequestClosed.svg", 846263020, 0);
-  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", 1308708793, 0);
+  /** 16x16 */ public static final @NotNull Icon AddEmoji = load("icons/addEmoji.svg", -1387552992, 0);
+  /** 16x16 */ public static final @NotNull Icon AddEmojiHovered = load("icons/addEmojiHovered.svg", 1679333898, 0);
+  /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", 585242443, 0);
+  /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -26771446, 0);
+  /** 16x16 */ public static final @NotNull Icon DeleteHovered = load("icons/deleteHovered.svg", -505177250, 0);
+  /** 16x16 */ public static final @NotNull Icon FileUnread = load("icons/fileUnread.svg", 1909869412, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestClosed = load("icons/pullRequestClosed.svg", 1915762689, 0);
+  /** 16x16 */ public static final @NotNull Icon PullRequestOpen = load("icons/pullRequestOpen.svg", 410240917, 0);
 
   public static final class Review {
-    /** 16x16 */ public static final @NotNull Icon BranchCurrent = load("icons/review/branchCurrent.svg", -646572009, 0);
-    /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/review/commentHovered.svg", 735585407, 0);
-    /** 16x16 */ public static final @NotNull Icon CommentReadMany = load("icons/review/commentReadMany.svg", -1735310916, 2);
-    /** 16x16 */ public static final @NotNull Icon CommentUnread = load("icons/review/commentUnread.svg", 354289283, 0);
-    /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/review/commentUnreadMany.svg", 1838239824, 2);
-    /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/review/commentUnresolved.svg", 514456290, 0);
-    /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", -2063080124, 0);
-    /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", -1457097161, 0);
+    /** 16x16 */ public static final @NotNull Icon BranchCurrent = load("icons/review/branchCurrent.svg", -1058941099, 0);
+    /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/review/commentHovered.svg", 2035016330, 0);
+    /** 16x16 */ public static final @NotNull Icon CommentReadMany = load("icons/review/commentReadMany.svg", -653630789, 2);
+    /** 16x16 */ public static final @NotNull Icon CommentUnread = load("icons/review/commentUnread.svg", 1972289510, 0);
+    /** 16x16 */ public static final @NotNull Icon CommentUnreadMany = load("icons/review/commentUnreadMany.svg", 2062007617, 2);
+    /** 16x16 */ public static final @NotNull Icon CommentUnresolved = load("icons/review/commentUnresolved.svg", 75435315, 0);
+    /** 16x16 */ public static final @NotNull Icon DefaultAvatar = load("icons/review/defaultAvatar.svg", -5156320, 0);
+    /** 16x16 */ public static final @NotNull Icon NonMergeable = load("icons/review/nonMergeable.svg", 717316511, 0);
 
     /** @deprecated use DvcsImplIcons.BranchLabel instead */
     @SuppressWarnings("unused")
@@ -39,6 +39,6 @@ public final class CollaborationToolsIcons {
     public static final @NotNull Icon Branch = load("icons/review/branch.svg", 0, 0);
   }
 
-  /** 16x16 */ public static final @NotNull Icon Send = load("icons/send.svg", -418436367, 0);
-  /** 16x16 */ public static final @NotNull Icon SendHovered = load("icons/sendHovered.svg", 1879326732, 0);
+  /** 16x16 */ public static final @NotNull Icon Send = load("icons/send.svg", 1522034072, 0);
+  /** 16x16 */ public static final @NotNull Icon SendHovered = load("icons/sendHovered.svg", -698602769, 0);
 }

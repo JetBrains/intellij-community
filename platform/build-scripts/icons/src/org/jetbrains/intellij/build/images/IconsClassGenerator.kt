@@ -732,7 +732,7 @@ private fun getPluginPackageIfPossible(module: JpsModule): String? {
 }
 
 private class IconHasher(expectedSize: Int) {
-  private val hashStream = Hashing.komihash4_3().hashStream()
+  private val hashStream = Hashing.komihash5_0().hashStream()
   private val uniqueGuard = IntOpenHashSet(expectedSize)
 
   // grid-layout.svg duplicates grid-view.svg, but grid-layout_dark.svg differs from grid-view_dark.svg
