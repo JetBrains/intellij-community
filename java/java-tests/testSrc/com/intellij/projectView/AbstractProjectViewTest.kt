@@ -54,6 +54,8 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
 
   protected fun waitWhileBusy() = PlatformTestUtil.waitWhileBusy(currentTree)
 
+  private fun waitWhileSelectInServiceBusy() = PlatformTestUtil.waitWhileBusy { isSelectInProjectViewServiceBusy(project) }
+
   protected fun selectProjectPane() = selectProjectViewPane(ProjectViewPane.ID, null)
 
   protected fun selectPackagesPane() = selectProjectViewPane(PackageViewPane.ID, null)
@@ -72,11 +74,13 @@ abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   protected fun selectFile(file: VirtualFile) {
     waitWhileBusy()
     currentPane.select(null, file, false)
+    waitWhileSelectInServiceBusy()
   }
 
   protected fun selectElement(element: PsiElement) {
     waitWhileBusy()
     currentPane.select(element, PsiUtil.getVirtualFile(element), false)
+    waitWhileSelectInServiceBusy()
   }
 
   protected fun deleteElement(element: PsiElement) {

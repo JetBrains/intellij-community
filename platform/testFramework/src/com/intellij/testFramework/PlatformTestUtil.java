@@ -327,11 +327,16 @@ public final class PlatformTestUtil {
   }
 
   public static void waitWhileBusy(@NotNull JTree tree) {
+    waitWhileBusy(() -> isBusy(tree, tree.getModel()));
+  }
+
+  public static void waitWhileBusy(@NotNull Supplier<Boolean> busyCondition) {
     assertDispatchThreadWithoutWriteAccess();
     long startTimeMillis = System.currentTimeMillis();
-    while (isBusy(tree, tree.getModel())) {
+    while (busyCondition.get()) {
       assertMaxWaitTimeSince(startTimeMillis);
       TimeoutUtil.sleep(5);
+      UIUtil.dispatchAllInvocationEvents();
     }
   }
 

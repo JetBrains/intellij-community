@@ -25,7 +25,12 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.OverflowSemaphore
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
+import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Supplier
+
+@VisibleForTesting
+fun isSelectInProjectViewServiceBusy(project: Project):Boolean = project.serviceOrNull<SelectInProjectViewImpl>()?.isBusy == true
 
 @Service
 internal class SelectInProjectViewImpl(
@@ -34,6 +39,8 @@ internal class SelectInProjectViewImpl(
 ) {
 
   private val semaphore = OverflowSemaphore(permits = 1, overflow = BufferOverflow.DROP_OLDEST)
+  private var tasks = AtomicInteger()
+  internal val isBusy: Boolean get() = tasks.get() > 0
 
   // Overload instead of a default value to allow for the last-lambda-outside syntax.
   private fun invokeWithSemaphore(taskName: String, task: suspend () -> Unit) {
@@ -46,13 +53,19 @@ internal class SelectInProjectViewImpl(
       start = CoroutineStart.UNDISPATCHED
     ) {
       try {
+        tasks.incrementAndGet()
         semaphore.withPermit {
           yield() // Ensure the coroutine is redispatched, even if withPermit() didn't suspend, to free the EDT.
           task()
         }
       }
       finally {
-        onDone?.invoke()
+        try {
+          onDone?.invoke()
+        }
+        finally {
+          tasks.decrementAndGet()
+        }
       }
     }
   }
