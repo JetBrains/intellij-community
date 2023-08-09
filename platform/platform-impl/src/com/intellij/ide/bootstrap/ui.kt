@@ -15,7 +15,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.idea.AppExitCodes
 import com.intellij.idea.AppStarter
 import com.intellij.idea.StartupErrorReporter
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.AWTExceptionHandler
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.diagnostic.logger
@@ -40,13 +39,10 @@ import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
 import java.awt.dnd.DragSource
 import java.lang.invoke.MethodHandles
-import java.nio.file.Path
 import javax.swing.JOptionPane
 import javax.swing.RepaintManager
 import javax.swing.UIManager
 import kotlin.system.exitProcess
-
-internal fun getSvgIconCacheFile(): Path = Path.of(PathManager.getSystemPath(), "icon-v14.db")
 
 internal suspend fun initUi(isHeadless: Boolean) {
   if (!isHeadless) {

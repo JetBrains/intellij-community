@@ -34,8 +34,7 @@ import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.ui.*
 import com.intellij.ui.mac.initMacApplication
 import com.intellij.ui.mac.screenmenu.Menu
-import com.intellij.ui.svg.createSvgCacheManager
-import com.intellij.ui.svg.svgCache
+import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.util.*
 import com.intellij.util.lang.ZipFilePool
 import com.jetbrains.JBR
@@ -188,16 +187,16 @@ fun CoroutineScope.startApplication(args: List<String>,
   }
 
   if (!isHeadless) {
-    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args, logDeferred = logDeferred)
-
     launch {
       lockSystemDirsJob.join()
       span("SvgCache creation") {
-        svgCache = createSvgCacheManager(cacheFile = getSvgIconCacheFile())
+        SvgCacheManager.svgCache = SvgCacheManager.createSvgCacheManager()
       }
     }
 
     updateFrameClassAndWindowIconAndPreloadSystemFonts(initLafJob)
+
+    showSplashIfNeeded(initUiDeferred = initLafJob, appInfoDeferred = appInfoDeferred, args = args, logDeferred = logDeferred)
   }
 
   loadSystemLibsAndLogInfoAndInitMacApp(logDeferred, appInfoDeferred, initLafJob, args, mainScope)

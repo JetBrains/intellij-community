@@ -24,7 +24,6 @@
     <orderEntry type="library" name="jbr-api" level="project" />
     <orderEntry type="library" name="jsvg" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
-    <orderEntry type="module" module-name="intellij.platform.sqlite" />
     <orderEntry type="library" name="hash4j" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.diagnostic" />

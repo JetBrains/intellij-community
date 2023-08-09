@@ -34,7 +34,7 @@ private val strokeColors = pairWithDigest(listOf(
 private val strokeColorsForReplacer = pairWithDigest(listOf("white", "#ffffff"))
 
 private fun pairWithDigest(list: List<String>): Pair<List<String>, Long> {
-  return list to Hashing.komihash4_3().hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
+  return list to Hashing.komihash5_0().hashStream().putOrderedIterable(list, HashFunnel.forString()).asLong
 }
 
 fun toStrokeIcon(original: Icon, resultColor: Color): Icon {
