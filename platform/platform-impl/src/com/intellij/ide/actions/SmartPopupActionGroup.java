@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 public class SmartPopupActionGroup extends DefaultActionGroup implements DumbAware {
 
   @Override
-  public final @NotNull ActionUpdateThread getActionUpdateThread() {
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
