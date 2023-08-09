@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.PersistentOrderRootType
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.RootProvider.RootSetChangedListener
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.backend.workspace.virtualFile
@@ -21,7 +21,7 @@ import com.intellij.util.EventDispatcher
 
 // SdkBridgeImpl.clone called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
-class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : ProjectJdk, RootProvider, Sdk {
+class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserDataHolderBase(), ProjectJdk, RootProvider, Sdk {
 
   private val dispatcher = EventDispatcher.create(RootProvider.RootSetChangedListener::class.java)
 
@@ -33,14 +33,6 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : Proje
   //  get() {
   //    return GlobalWorkspaceModel.getInstance().entityStorage.cachedValue(sdkEntityCachedValue)
   //  }
-
-  override fun <T : Any?> getUserData(key: Key<T>): T? {
-    TODO("Not yet implemented")
-  }
-
-  override fun <T : Any?> putUserData(key: Key<T>, value: T?) {
-    TODO("Not yet implemented")
-  }
 
   override fun getSdkType(): SdkTypeId = sdkEntityBuilder.getSdkType()
 

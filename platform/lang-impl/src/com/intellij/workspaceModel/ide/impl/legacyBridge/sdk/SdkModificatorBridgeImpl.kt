@@ -21,8 +21,8 @@ import org.jdom.Element
 class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder) : SdkModificator {
 
   private var isCommitted = false
+  private var additionalData: SdkAdditionalData? = null
   private val modifiedSdkEntity: SdkMainEntity.Builder = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
-  private val modifiedSdk: SdkBridgeImpl = SdkBridgeImpl(modifiedSdkEntity)
 
   init {
     modifiedSdkEntity.applyChangesFrom(originalEntity)
@@ -58,17 +58,19 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
   }
 
   override fun getSdkAdditionalData(): SdkAdditionalData? {
-    val additionalDataElement = JDOMUtil.load(modifiedSdkEntity.additionalData)
-    return modifiedSdkEntity.getSdkType().loadAdditionalData(modifiedSdk, additionalDataElement)
+    return additionalData
+    //val additionalDataElement = JDOMUtil.load(modifiedSdkEntity.additionalData)
+    //return modifiedSdkEntity.getSdkType().loadAdditionalData(modifiedSdk, additionalDataElement)
   }
 
   override fun setSdkAdditionalData(additionalData: SdkAdditionalData?) {
-    val additionalDataAsString = if (additionalData != null) {
-      val additionalDataElement = Element(ELEMENT_ADDITIONAL)
-      modifiedSdkEntity.getSdkType().saveAdditionalData(additionalData, additionalDataElement)
-      JDOMUtil.write(additionalDataElement)
-    } else ""
-    modifiedSdkEntity.additionalData = additionalDataAsString
+    this.additionalData =  additionalData
+    //val additionalDataAsString = if (additionalData != null) {
+    //  val additionalDataElement = Element(ELEMENT_ADDITIONAL)
+    //  modifiedSdkEntity.getSdkType().saveAdditionalData(additionalData, additionalDataElement)
+    //  JDOMUtil.write(additionalDataElement)
+    //} else ""
+    //modifiedSdkEntity.additionalData = additionalDataAsString
   }
 
   override fun getRoots(rootType: OrderRootType): Array<VirtualFile> {
@@ -107,6 +109,13 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     // In some cases we create SDK in air and need to modify it somehow e.g
     // com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.createSdkInternal
     // so it's OK that entity may not be in storage
+
+    modifiedSdkEntity.additionalData = if (additionalData != null) {
+      val additionalDataElement = Element(ELEMENT_ADDITIONAL)
+      modifiedSdkEntity.getSdkType().saveAdditionalData(additionalData!!, additionalDataElement)
+      JDOMUtil.write(additionalDataElement)
+    } else ""
+
     globalWorkspaceModel.currentSnapshot.resolve(originalEntity.symbolicId)?.let { existingEntity ->
       globalWorkspaceModel.updateModel("Modifying SDK ${originalEntity.symbolicId}") {
         it.modifyEntity(existingEntity) {
