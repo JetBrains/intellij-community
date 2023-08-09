@@ -1440,7 +1440,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         }
         TestCase.assertTrue(call is KotlinUFunctionCallExpression)
         val ktCall = call as KotlinUFunctionCallExpression
-        TestCase.assertTrue("expected method name to be one of ${names}", ktCall.methodNameCanBeOneOf(names))
+        TestCase.assertTrue("expected method name to be one of ${names}", ktCall.isMethodNameOneOf(names))
     }
 
     fun checkParentOfParameterOfCatchClause(myFixture: JavaCodeInsightTestFixture) {

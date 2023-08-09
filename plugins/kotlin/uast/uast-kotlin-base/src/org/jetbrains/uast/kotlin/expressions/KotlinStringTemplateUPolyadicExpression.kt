@@ -41,12 +41,19 @@ class KotlinStringTemplateUPolyadicExpression(
         val dotQualifiedExpression = uParent.sourcePsi as? KtDotQualifiedExpression
         if (dotQualifiedExpression != null) {
             val callExpression = dotQualifiedExpression.selectorExpression as? KtCallExpression ?: return this
-            val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
-            if (resolvedFunctionName == "trimIndent" || resolvedFunctionName == "trimMargin")
-                return uParent
+            if (KotlinUFunctionCallExpression.methodNameCanBeOneOf(callExpression, TRIM_METHOD_NAMES)) {
+                val resolvedFunctionName = baseResolveProviderService.resolvedFunctionName(callExpression)
+                if (resolvedFunctionName in TRIM_METHOD_NAMES)
+                    return uParent
+            }
         }
+
         if (uParent is UPolyadicExpression && uParent.operator == UastBinaryOperator.PLUS)
             return uParent
+
         return super.getStringRoomExpression()
     }
 }
+
+
+private val TRIM_METHOD_NAMES: List<String> = listOf("trimIndent", "trimMargin")
