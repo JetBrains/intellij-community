@@ -4,19 +4,19 @@ package com.intellij.facet.impl
 import com.intellij.ProjectTopics
 import com.intellij.facet.*
 import com.intellij.facet.impl.ProjectFacetManagerImpl.ProjectFacetManagerState
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
+import com.intellij.platform.backend.workspace.WorkspaceModel
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Tag
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicReference
@@ -62,26 +62,17 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
     }
 
   private fun createIndex(): MultiMap<FacetTypeId<*>, Module> {
-    return ReadAction.nonBlocking<MultiMap<FacetTypeId<*>, Module>> {
-      val index = MultiMap.createLinkedSet<FacetTypeId<*>, Module>()
-      for (module in ModuleManager.getInstance(myProject).modules) {
-        if (!module.isDisposed) {
-          FacetManager.getInstance(module).getAllFacets()
-            .map { it.typeId }
-            .distinct()
-            .forEach { index.putValue(it, module) }
-        }
-      }
-      index
-    }.executeSynchronously()
+    val index = MultiMap.createLinkedSet<FacetTypeId<*>, Module>()
+    WorkspaceModel.getInstance(myProject).entityStorage.current.facetMapping().forEach { _, facet ->
+      index.putValue(facet.typeId, facet.module)
+    }
+    return index
   }
 
   private fun <F : Facet<*>> getFacets(typeId: FacetTypeId<F>, modules: Collection<Module>): List<F> {
-    return ReadAction.nonBlocking<List<F>> {
-      modules.distinct().filter { !it.isDisposed }.flatMap {
-        FacetManager.getInstance(it).getFacetsByType(typeId)
-      }.toList()
-    }.executeSynchronously()
+    return modules.distinct().filter { !it.isDisposed }.flatMap {
+      FacetManager.getInstance(it).getFacetsByType(typeId)
+    }.toList()
   }
 
   override fun <F : Facet<*>> getFacets(typeId: FacetTypeId<F>): List<F> = getFacets(typeId, index[typeId])
