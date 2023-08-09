@@ -17,7 +17,6 @@ import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
 import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import java.awt.Color
-import java.awt.Dimension
 import javax.swing.*
 
 class TerminalPromptPanel(
@@ -31,9 +30,6 @@ class TerminalPromptPanel(
   private val editor: EditorImpl
   private val promptLabel: JLabel
   private val commandHistoryPresenter: CommandHistoryPresenter
-
-  val charSize: Dimension
-    get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
     val editorTextField = createPromptTextField(session)
@@ -106,10 +102,6 @@ class TerminalPromptPanel(
     label.border = JBUI.Borders.emptyLeft(JBUI.scale(LEFT_INSET))
     label.alignmentX = JComponent.LEFT_ALIGNMENT
     return label
-  }
-
-  fun isFocused(): Boolean {
-    return editor.contentComponent.hasFocus()
   }
 
   override fun getBackground(): Color {

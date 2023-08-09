@@ -4,7 +4,10 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.editor.*
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.EffectType
@@ -66,27 +69,6 @@ class TerminalPanel(project: Project,
     add(editor.component, BorderLayout.CENTER)
 
     updateEditorContent()
-  }
-
-  fun makeReadOnly(done: (Editor) -> Unit) {
-    // remove listening for content changes and forwarding events to terminal process
-    Disposer.dispose(runningDisposable)
-
-    invokeLater {
-      Disposer.dispose(keyEventsForwardingDisposable)
-
-      // remove empty line at the end of output
-      val output = editor.document.text
-      editor.document.setText(output.trimEnd())
-
-      editor.setCaretEnabled(false)
-      editor.isViewer = true
-      done(editor)
-    }
-  }
-
-  fun toggleFullScreen(isFullScreen: Boolean) {
-    border = createBorder(isFullScreen)
   }
 
   private fun createBorder(isFullScreen: Boolean): Border {

@@ -4,43 +4,33 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.project.Project
-import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.jediterm.core.util.TermSize
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import javax.swing.JComponent
 
 class BlockTerminalController(
-  project: Project,
   private val session: TerminalSession,
-  settings: JBTerminalSystemSettingsProviderBase
-) : TerminalContentController, TerminalCommandExecutor, ShellCommandListener {
-  private val blocksComponent: TerminalBlocksComponent
-
+  private val outputController: TerminalOutputController,
+  private val promptController: TerminalPromptController
+) : ShellCommandListener {
   init {
-    blocksComponent = TerminalBlocksComponent(project, session, settings, commandExecutor = this, parentDisposable = this)
-    // Show initial terminal output (prior to the first prompt) in a separate block.
-    // `initialized` event will finish the block.
-    blocksComponent.installRunningPanel()
-    blocksComponent.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) {
-        val newSize = getTerminalSize() ?: return
-        session.postResize(newSize)
-      }
-    })
-
     session.addCommandListener(this)
     session.model.addTerminalListener(object : TerminalModel.TerminalListener {
       override fun onAlternateBufferChanged(enabled: Boolean) {
-        invokeLater {
-          blocksComponent.toggleFullScreen(enabled)
-        }
+        // todo: show separate editor
       }
     })
+
+    // Show initial terminal output (prior to the first prompt) in a separate block.
+    // `initialized` event will finish the block.
+    outputController.startCommandBlock(null)
+    outputController.isFocused = true
+    promptController.promptIsVisible = false
   }
 
-  override fun startCommandExecution(command: String) {
+  fun resize(newSize: TermSize) {
+    session.postResize(newSize)
+  }
+
+  fun startCommandExecution(command: String) {
     ApplicationManager.getApplication().executeOnPooledThread {
       val model = session.model
       if (model.commandExecutionSemaphore.waitFor(3000)) {
@@ -52,26 +42,27 @@ class BlockTerminalController(
       }
 
       invokeLater {
-        blocksComponent.installRunningPanel()
+        outputController.startCommandBlock(command)
+        promptController.promptIsVisible = false
         session.executeCommand(command)
       }
     }
-  }
-
-  override fun initialized() {
-    finishCommandBlock(true)
   }
 
   override fun commandStarted(command: String) {
     session.model.isCommandRunning = true
   }
 
-  override fun commandFinished(command: String, exitCode: Int, duration: Long) {
-    finishCommandBlock(false)
+  override fun initialized() {
+    finishCommandBlock()
   }
 
-  private fun finishCommandBlock(removeIfEmpty: Boolean) {
-    blocksComponent.makeCurrentBlockReadOnly(removeIfEmpty)
+  override fun commandFinished(command: String, exitCode: Int, duration: Long) {
+    finishCommandBlock()
+  }
+
+  private fun finishCommandBlock() {
+    outputController.finishCommandBlock()
 
     val model = session.model
     model.isCommandRunning = false
@@ -84,20 +75,8 @@ class BlockTerminalController(
     model.commandExecutionSemaphore.up()
 
     invokeLater {
-      blocksComponent.resetPromptPanel()
+      promptController.reset()
+      promptController.promptIsVisible = true
     }
   }
-
-  override fun getTerminalSize(): TermSize? = blocksComponent.getTerminalSize()
-
-  override fun isFocused(): Boolean {
-    return blocksComponent.isFocused()
-  }
-
-  override fun dispose() {
-  }
-
-  override fun getComponent(): JComponent = blocksComponent
-
-  override fun getPreferredFocusableComponent(): JComponent = blocksComponent.getPreferredFocusableComponent()
 }

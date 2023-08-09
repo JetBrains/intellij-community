@@ -10,6 +10,7 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlin.properties.Delegates
 
 class TerminalPromptController(
   private val editor: EditorEx,
@@ -22,6 +23,10 @@ class TerminalPromptController(
 
   val commandHistory: List<String>
     get() = commandHistoryManager.history
+
+  var promptIsVisible: Boolean by Delegates.observable(true) { _, oldValue, newValue ->
+    if (newValue != oldValue) listeners.forEach { it.promptVisibilityChanged(newValue) }
+  }
 
   init {
     completionManager = when (session.shellIntegration?.shellType) {
@@ -74,6 +79,7 @@ class TerminalPromptController(
   interface PromptStateListener {
     fun promptLabelChanged(newText: @NlsSafe String) {}
     fun commandHistoryStateChanged(showing: Boolean) {}
+    fun promptVisibilityChanged(visible: Boolean) {}
   }
 
   companion object {

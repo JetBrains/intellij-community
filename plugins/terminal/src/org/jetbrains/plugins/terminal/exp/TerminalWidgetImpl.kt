@@ -54,7 +54,7 @@ class TerminalWidgetImpl(private val project: Project,
     session.shellIntegration = options.shellIntegration
     Disposer.dispose(controller)
     controller = if (options.shellIntegration?.withCommandBlocks == true) {
-      BlockTerminalController(project, session, terminalSettings)
+      BlockTerminalPanel(project, session, terminalSettings)
     }
     else PlainTerminalController(project, session, terminalSettings)
     Disposer.register(this, controller)
