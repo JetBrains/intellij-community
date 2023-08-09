@@ -23,6 +23,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
@@ -449,11 +450,16 @@ public class DisposerTest  {
 
   @Test
   public void testNoLeaksAfterConcurrentDisposeAndRegister() throws Exception {
+    AtomicLong leakHash = new AtomicLong();
     try {
-      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class);
+      LeakHunter.checkLeak(Disposer.getTree(), MyLoggingDisposable.class, leak -> {
+        leakHash.set(System.identityHashCode(leak));
+        return true;
+      });
     }
     catch (AssertionError e) {
-      Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start", e);
+      Assume.assumeNoException("test is ignored because MyLoggingDisposable is already leaking at the test start. " +
+                               "myRoot="+myRoot+"; ihc(myRoot)="+System.identityHashCode(myRoot)+"; leakHash="+leakHash, e);
     }
     ExecutorService executor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(StringUtil.capitalize(name.getMethodName()));
 
