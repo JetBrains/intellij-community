@@ -20,13 +20,6 @@ import org.jetbrains.kotlin.psi.KtFile
 
 abstract class AbstractFirRenameTest : AbstractRenameTest() {
 
-    /**
-     * Rename tests are not 100% stable ATM, so we only run the tests that will definitely pass.
-     *
-     * Use this flag locally to find out which tests might be enabled.
-     */
-    private val onlyRunEnabledTests: Boolean = true
-
     override fun isFirPlugin(): Boolean = true
 
     override fun tearDown() {
@@ -43,14 +36,14 @@ abstract class AbstractFirRenameTest : AbstractRenameTest() {
     @OptIn(KtAllowAnalysisOnEdt::class)
     override fun doTest(path: String) {
         val renameObject = loadTestConfiguration(dataFile())
-        val testIsEnabledInK2 = renameObject.get("enabledInK2")?.asBoolean == true
+        val testIsDisabledInK2 = renameObject.get("enabledInK2")?.asBoolean == false
 
-        if (!testIsEnabledInK2 && onlyRunEnabledTests) return
+        if (testIsDisabledInK2) return
 
         val result = allowAnalysisOnEdt { runCatching { super.doTest(path) } }
         result.fold(
-            onSuccess = { require(testIsEnabledInK2) { "This test passes and should be enabled!" } },
-            onFailure = { exception -> if (testIsEnabledInK2) throw exception }
+            onSuccess = { require(!testIsDisabledInK2) { "This test passes and should be enabled!" } },
+            onFailure = { exception -> if (!testIsDisabledInK2) throw exception }
         )
     }
 

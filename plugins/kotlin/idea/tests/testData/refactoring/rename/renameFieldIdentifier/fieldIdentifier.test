@@ -2,5 +2,6 @@
   "type": "MARKED_ELEMENT",
   "newName": "prop11",
   "mainFile": "test.kt",
-  "checkErrorsAfter": "true"
+  "checkErrorsAfter": "true",
+  "enabledInK2": "false"
 }

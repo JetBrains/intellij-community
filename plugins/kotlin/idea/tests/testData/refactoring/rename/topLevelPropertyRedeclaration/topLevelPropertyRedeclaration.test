@@ -3,6 +3,5 @@
   "mainFile": "test/test.kt",
   "newName": "foo",
   "withRuntime": "true",
-  "hint": "Property 'foo' is already declared in package 'test'",
-  "enabledInK2": "true"
+  "hint": "Property 'foo' is already declared in package 'test'"
 }
