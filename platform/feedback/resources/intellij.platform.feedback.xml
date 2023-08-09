@@ -34,8 +34,6 @@
   <applicationListeners>
     <listener class="com.intellij.platform.feedback.localization.service.LocalizationFeedbackStartupListener"
               topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.platform.feedback.pycharmUi.state.NewUserFirstRunDateTracker"
-              topic="com.intellij.ide.AppLifecycleListener"/>
   </applicationListeners>
 
   <actions>
@@ -49,9 +47,6 @@
               class="com.intellij.platform.feedback.aqua.TestShowAquaNewUserFeedbackAction" internal="true"/>
       <action id="com.intellij.platform.feedback.aqua.TestShowAquaOldUserFeedbackAction"
               class="com.intellij.platform.feedback.aqua.TestShowAquaOldUserFeedbackAction" internal="true"/>
-      <action id="com.intellij.platform.feedback.pycharmUi.TestShowNewUIFeedbackAction"
-              class="com.intellij.platform.feedback.pycharmUi.TestShowNewUIFeedbackAction"
-              internal="true"/>
       <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>

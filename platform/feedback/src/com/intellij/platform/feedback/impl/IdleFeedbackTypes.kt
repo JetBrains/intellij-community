@@ -26,77 +26,12 @@ import com.intellij.platform.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
 import com.intellij.platform.feedback.kafka.dialog.KafkaProducerFeedbackDialog
 import com.intellij.platform.feedback.kafka.state.KafkaConsumerProducerFeedbackService
 import com.intellij.platform.feedback.kafka.state.KafkaConsumerProducerInfoState
-import com.intellij.platform.feedback.pycharmUi.bundle.PyCharmUIFeedbackBundle
-import com.intellij.platform.feedback.pycharmUi.dialog.PyCharmUIFeedbackDialog
-import com.intellij.platform.feedback.pycharmUi.state.PyCharmUIInfoService
-import com.intellij.platform.feedback.pycharmUi.state.PyCharmUIInfoState
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.*
 import java.time.Duration
 import java.time.LocalDateTime
 
 enum class IdleFeedbackTypes {
-  PYCHARM_UI_FEEDBACK {
-    override val fusFeedbackId: String = "pycharm_ui_feedback"
-    override val suitableIdeVersion: String = "2023.1"
-    private val lastDayCollectFeedback = LocalDate(2023, 7, 25)
-    private val maxNumberNotificationShowed = 1
-    private val elapsedMinNumberDaysFromFirstRun = 5
-
-    override fun isSuitable(): Boolean {
-      val state = PyCharmUIInfoService.getInstance().state
-
-      return checkIdeIsSuitable() &&
-             checkIsNoDeadline() &&
-             checkIdeVersionIsSuitable() &&
-             checkFeedbackNotSent(state) &&
-             checkNotificationNumberNotExceeded(state) &&
-             checkNewUserFirstRunBeforeTime(state.newUserFirstRunDate)
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        PyCharmUIFeedbackBundle.message("notification.request.feedback.title"),
-        PyCharmUIFeedbackBundle.message("notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return PyCharmUIFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      PyCharmUIInfoService.getInstance().state.numberNotificationShowed += 1
-    }
-
-    override fun updateStateAfterDialogClosedOk() {
-      PyCharmUIInfoService.getInstance().state.feedbackSent = true
-    }
-
-    private fun checkIdeIsSuitable(): Boolean {
-      return PlatformUtils.isPyCharmCommunity()
-    }
-
-    private fun checkIsNoDeadline(): Boolean {
-      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
-    }
-
-    private fun checkFeedbackNotSent(state: PyCharmUIInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: PyCharmUIInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-
-    private fun checkNewUserFirstRunBeforeTime(newUserFirstRunDate: kotlinx.datetime.LocalDateTime?): Boolean {
-      if (newUserFirstRunDate == null) {
-        return false
-      }
-
-      return Duration.between(newUserFirstRunDate.toJavaLocalDateTime(), LocalDateTime.now()).toDays() >= elapsedMinNumberDaysFromFirstRun
-    }
-  },
   AQUA_NEW_USER_FEEDBACK {
     override val fusFeedbackId: String = "aqua_new_user_feedback"
     override val suitableIdeVersion: String = "" // Not suitable for Aqua, because it is in the permanent Preview version
