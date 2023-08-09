@@ -2405,6 +2405,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/for/multipleInitializersWithvariableDeclarations.java");
         }
 
+        @TestMetadata("mutatedCondition.java")
+        public void testMutatedCondition() throws Exception {
+            runTest("testData/newJ2k/for/mutatedCondition.java");
+        }
+
         @TestMetadata("nameConflict1.java")
         public void testNameConflict1() throws Exception {
             runTest("testData/newJ2k/for/nameConflict1.java");

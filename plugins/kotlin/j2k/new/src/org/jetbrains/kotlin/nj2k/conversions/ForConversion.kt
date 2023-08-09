@@ -72,11 +72,20 @@ private class ForToForeachConverter(
         val loopBodyPsi = loop.body.psi<PsiElement>()
         val loopConditionPsi = loop.condition.psi<PsiElement>()
 
-        if (loopVarPsi.hasWriteAccesses(referenceSearcher, loopBodyPsi) ||
-            loopVarPsi.hasWriteAccesses(referenceSearcher, loopConditionPsi)
-        ) {
-            return null
+        val loopVariableIsMutated = loopVarPsi.hasWriteAccesses(referenceSearcher, loopBodyPsi) ||
+                loopVarPsi.hasWriteAccesses(referenceSearcher, loopConditionPsi)
+        if (loopVariableIsMutated) return null
+
+        var conditionVariablesAreMutated = false
+        condition.right.forEachDescendantOfType<JKFieldAccessExpression> { fieldAccess ->
+            val psi = (fieldAccess.identifier.target as? JKLocalVariable)?.psi<PsiLocalVariable>() ?: return@forEachDescendantOfType
+            if (psi.hasWriteAccesses(referenceSearcher, loopBodyPsi) ||
+                psi.hasWriteAccesses(referenceSearcher, loopConditionPsi)
+            ) {
+                conditionVariablesAreMutated = true
+            }
         }
+        if (conditionVariablesAreMutated) return null
 
         val start = loopVar::initializer.detached()
         val bound = condition::right.detached().parenthesizeIfCompoundExpression()
