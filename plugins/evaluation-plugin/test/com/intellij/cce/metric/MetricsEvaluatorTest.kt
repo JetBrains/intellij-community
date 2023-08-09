@@ -19,6 +19,7 @@ class MetricsEvaluatorTest {
     val sessionTop1Custom = Mockito.mock(Session::class.java)
     val sessionNoTop1Custom = Mockito.mock(Session::class.java)
     val sessionNoneCustom = Mockito.mock(Session::class.java)
+    val sessionNoSuggestionsCustom = Mockito.mock(Session::class.java)
 
     private const val EXPECTED = "expected"
     private const val UNEXPECTED = "unexpected"
@@ -43,6 +44,11 @@ class MetricsEvaluatorTest {
       sessionNoneCustom,
       "expected string",
       listOf("suggestion_1", "suggestion_2", "suggestion_3")
+    )
+    mockSessionCustom(
+      sessionNoSuggestionsCustom,
+      "expected string",
+      listOf()
     )
   }
 
@@ -72,12 +78,29 @@ class MetricsEvaluatorTest {
   }
 
   @Test
-  fun `test HasMatch@1 metric`() {
+  fun `test Recall@1 metric`() {
     val metric = RecallAtMetric(showByDefault = false, n = 1)
     Assertions.assertEquals(1.0, metric.evaluate(listOf(sessionTop1Custom)))
     Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoTop1Custom)))
     Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionNoneCustom)))
+  }
+
+  @Test
+  fun `test Cancelled metric`() {
+    val metric = CancelledMetric(showByDefault = false)
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom)))
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoSuggestionsCustom)))
+    Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoneCustom)))
+  }
+
+  @Test
+  fun `test Cancelled@1 metric`() {
+    val metric = CancelledAtMetric(showByDefault = false, n = 1)
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom)))
+    Assertions.assertEquals(0.5, metric.evaluate(listOf(sessionTop1Custom, sessionNoTop1Custom)))
+    Assertions.assertEquals(0.0, metric.evaluate(listOf(sessionTop1Custom, sessionNoSuggestionsCustom)))
   }
 
   @Test

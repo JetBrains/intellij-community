@@ -32,6 +32,9 @@ fun createBenchmarkMetrics(): List<Metric> =
     PerfectLine(showByDefault = true),
     SelectedAtMetric(false, n = 1),
     SelectedAtMetric(false, n = 5),
+    CancelledMetric(showByDefault = false),
+    CancelledAtMetric(showByDefault = false, n = 1),
+    CancelledAtMetric(showByDefault = false, n = 5),
     MatchedLineLength(),
     FirstPerfectLineSession()
   )
