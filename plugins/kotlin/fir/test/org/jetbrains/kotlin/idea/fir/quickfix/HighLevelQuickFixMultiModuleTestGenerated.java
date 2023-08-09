@@ -124,9 +124,59 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("copyToActualConstExpression")
+        public void testCopyToActualConstExpression() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualConstExpression/");
+        }
+
+        @TestMetadata("copyToActualNoArg")
+        public void testCopyToActualNoArg() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualNoArg/");
+        }
+
+        @TestMetadata("copyToActualPrimaryConstructor")
+        public void testCopyToActualPrimaryConstructor() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualPrimaryConstructor/");
+        }
+
+        @TestMetadata("copyToActualSecondaryConstructor")
+        public void testCopyToActualSecondaryConstructor() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSecondaryConstructor/");
+        }
+
+        @TestMetadata("copyToActualSingleArg")
+        public void testCopyToActualSingleArg() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualSingleArg/");
+        }
+
+        @TestMetadata("copyToActualWithImport")
+        public void testCopyToActualWithImport() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/copyToActualWithImport/");
+        }
+
         @TestMetadata("removeFromExpect")
         public void testRemoveFromExpect() throws Exception {
             runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/removeFromExpect/");
+        }
+
+        @TestMetadata("replaceArgsOnActual")
+        public void testReplaceArgsOnActual() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActual/");
+        }
+
+        @TestMetadata("replaceArgsOnActualDifferentArgsOrder")
+        public void testReplaceArgsOnActualDifferentArgsOrder() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualDifferentArgsOrder/");
+        }
+
+        @TestMetadata("replaceArgsOnActualOverrideEmptyWithNonEmpty")
+        public void testReplaceArgsOnActualOverrideEmptyWithNonEmpty() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideEmptyWithNonEmpty/");
+        }
+
+        @TestMetadata("replaceArgsOnActualOverrideWithEmpty")
+        public void testReplaceArgsOnActualOverrideWithEmpty() throws Exception {
+            runTest("../idea/tests/testData/multiModuleQuickFix/actualAnnotationsNotMatchExpect/replaceArgsOnActualOverrideWithEmpty/");
         }
     }
 

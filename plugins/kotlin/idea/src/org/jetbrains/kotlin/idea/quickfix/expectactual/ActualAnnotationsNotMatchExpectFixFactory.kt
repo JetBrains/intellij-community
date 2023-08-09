@@ -2,12 +2,22 @@
 package org.jetbrains.kotlin.idea.quickfix.expectactual
 
 import com.intellij.codeInsight.intention.IntentionAction
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.calls.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.calls.symbol
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
+import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixActionBase
 import org.jetbrains.kotlin.idea.quickfix.ActualAnnotationsNotMatchExpectFixFactoryCommon
 import org.jetbrains.kotlin.idea.quickfix.KotlinIntentionActionsFactory
+import org.jetbrains.kotlin.load.kotlin.toSourceElement
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
+import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualAnnotationsIncompatibilityType
 import org.jetbrains.kotlin.resolve.source.getPsi
 
 internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActionsFactory() {
@@ -21,7 +31,32 @@ internal object ActualAnnotationsNotMatchExpectFixFactory : KotlinIntentionActio
         val removeAnnotationFix =
             ActualAnnotationsNotMatchExpectFixFactoryCommon.createRemoveAnnotationFromExpectFix(expectAnnotationEntry)
 
-        return listOfNotNull(removeAnnotationFix)
+        return listOfNotNull(removeAnnotationFix) +
+                createCopyAndReplaceAnnotationFixes(expectAnnotationEntry, castedDiagnostic.b, incompatibilityType)
     }
 
+    private fun createCopyAndReplaceAnnotationFixes(
+        expectAnnotationEntry: KtAnnotationEntry,
+        actualDeclarationDescriptor: DeclarationDescriptor,
+        incompatibilityType: ExpectActualAnnotationsIncompatibilityType<AnnotationDescriptor>,
+    ): List<QuickFixActionBase<*>> {
+        val actualDeclaration = actualDeclarationDescriptor.toSourceElement.getPsi() as? KtNamedDeclaration ?: return emptyList()
+        val mappedIncompatibilityType = incompatibilityType.mapAnnotationType {
+            it.source.getPsi() as? KtAnnotationEntry
+        }
+
+        return ActualAnnotationsNotMatchExpectFixFactoryCommon.createCopyAndReplaceAnnotationFixes(
+            actualDeclaration,
+            expectAnnotationEntry,
+            mappedIncompatibilityType,
+            annotationClassIdProvider = { getAnnotationClassId(expectAnnotationEntry) }
+        )
+    }
+
+    private fun getAnnotationClassId(annotationEntry: KtAnnotationEntry): ClassId? {
+        analyze(annotationEntry) {
+            val resolvedExpectAnnotationCall = annotationEntry.resolveCall()?.singleConstructorCallOrNull() ?: return null
+            return resolvedExpectAnnotationCall.symbol.containingClassIdIfNonLocal
+        }
+    }
 }
