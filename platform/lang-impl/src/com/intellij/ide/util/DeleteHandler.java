@@ -132,26 +132,26 @@ public final class DeleteHandler {
 
     final boolean dumb = DumbService.getInstance(project).isDumb();
     if (safeDeleteApplicable && !dumb) {
-      final Ref<Boolean> exit = Ref.create(false);
-      final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
-        @Override
-        public void run(final SafeDeleteDialog dialog) {
-          if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
-
-          SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
-            exit.set(true);
-            dialog.close(DialogWrapper.OK_EXIT_CODE);
-          }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
-
-          processor.run();
-        }
-      }) {
-        @Override
-        protected boolean isDelete() {
-          return true;
-        }
-      };
       if (needConfirmation) {
+        final Ref<Boolean> exit = Ref.create(false);
+        final SafeDeleteDialog dialog = new SafeDeleteDialog(project, elements, new SafeDeleteDialog.Callback() {
+          @Override
+          public void run(final SafeDeleteDialog dialog) {
+            if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
+
+            SafeDeleteProcessor processor = SafeDeleteProcessor.createInstance(project, () -> {
+              exit.set(true);
+              dialog.close(DialogWrapper.OK_EXIT_CODE);
+            }, elements, dialog.isSearchInComments(), dialog.isSearchForTextOccurences(), true);
+
+            processor.run();
+          }
+        }) {
+          @Override
+          protected boolean isDelete() {
+            return true;
+          }
+        };
         dialog.setTitle(RefactoringBundle.message("delete.title"));
         if (!dialog.showAndGet() || exit.get()) {
           return;
