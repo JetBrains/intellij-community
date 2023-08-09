@@ -30,8 +30,16 @@ public class JavaMethodParameterTypesIndex extends StringStubIndexExtension<PsiM
     return JavaStubIndexKeys.METHOD_TYPES;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getMethodParameterTypes(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiMethod> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getMethodParameterTypes(s, project, scope);
+  }
+
+  public Collection<PsiMethod> getMethodParameterTypes(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiMethod.class);
   }
 }

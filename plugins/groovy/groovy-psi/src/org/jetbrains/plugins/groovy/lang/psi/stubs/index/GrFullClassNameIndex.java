@@ -24,9 +24,13 @@ public class GrFullClassNameIndex extends CharSequenceHashStubIndexExtension<Psi
     return KEY;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link StubIndex#getElements(StubIndexKey, Object, Project, GlobalSearchScope, Class)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiClass> get(@NotNull CharSequence name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
-    return StubIndex.getElements(getKey(), name, project, scope, PsiClass.class);
+    return StubIndex.getElements(KEY, name, project, scope, PsiClass.class);
   }
 
   @Override

@@ -17,6 +17,7 @@ class KotlinProbablyNothingPropertyShortNameIndex internal constructor() : Strin
 
     override fun getKey(): StubIndexKey<String, KtProperty> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinProbablyNothingPropertyShortNameIndex[shortName, project, scope]"))
     override fun get(shortName: String, project: Project, scope: GlobalSearchScope): Collection<KtProperty> {
         return Helper[shortName, project, scope]
     }

@@ -1319,7 +1319,7 @@ public final class JavaCompletionContributor extends CompletionContributor imple
         JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
         GlobalSearchScope scope = ProjectScope.getAllScope(project);
         for (String name : index.getAllKeys(project)) {
-          if (!index.get(name, project, scope).isEmpty() && filter.add(name)) {
+          if (!index.getModules(name, project, scope).isEmpty() && filter.add(name)) {
             LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.Nodes.JavaModule);
             if (requires) lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);
             result.addElement(lookup);

@@ -285,7 +285,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @NotNull
   private List<PsiClass> getPossiblyUnresolvedJavaNicknameUsages() {
     List<PsiClass> result = new ArrayList<>();
-    Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().get(StringUtil.getShortName(
+    Collection<PsiAnnotation> annotations = JavaAnnotationIndex.getInstance().getAnnotations(StringUtil.getShortName(
       Jsr305Support.TYPE_QUALIFIER_NICKNAME), myProject, GlobalSearchScope.allScope(myProject));
     for (PsiAnnotation annotation : annotations) {
       PsiElement context = annotation.getContext();

@@ -26,8 +26,16 @@ public class JavaSuperClassNameOccurenceIndex extends StringStubIndexExtension<P
     return JavaStubIndexKeys.SUPER_CLASSES;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getOccurrences(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiReferenceList> get(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
+    return getOccurrences(s, project, scope);
+  }
+
+  public Collection<PsiReferenceList> getOccurrences(@NotNull final String s, @NotNull final Project project, @NotNull final GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), s, project, new JavaSourceFilterScope(scope), PsiReferenceList.class);
   }
 

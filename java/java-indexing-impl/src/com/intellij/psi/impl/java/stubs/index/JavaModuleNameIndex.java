@@ -45,8 +45,16 @@ public class JavaModuleNameIndex extends StringStubIndexExtension<PsiJavaModule>
     return JavaStubIndexKeys.MODULE_NAMES;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link #getModules(String, Project, GlobalSearchScope)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiJavaModule> get(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return getModules(name, project, scope);
+  }
+
+  public Collection<PsiJavaModule> getModules(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     Collection<PsiJavaModule> modules = StubIndex.getElements(getKey(), name, project, new JavaSourceFilterScope(scope, true), PsiJavaModule.class);
     if (modules.size() > 1) {
       modules = filterVersions(project, modules);

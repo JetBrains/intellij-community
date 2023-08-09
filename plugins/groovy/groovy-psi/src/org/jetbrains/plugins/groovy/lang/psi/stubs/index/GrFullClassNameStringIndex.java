@@ -20,6 +20,10 @@ public class GrFullClassNameStringIndex extends StringStubIndexExtension<PsiClas
     return KEY;
   }
 
+  /**
+   * @deprecated Deprecated base method, please use {@link StubIndex#getElements(StubIndexKey, Object, Project, GlobalSearchScope, Class)}
+   */
+  @Deprecated
   @Override
   public Collection<PsiClass> get(@NotNull String name, @NotNull Project project, @NotNull GlobalSearchScope scope) {
     return StubIndex.getElements(getKey(), name, project, scope, PsiClass.class);

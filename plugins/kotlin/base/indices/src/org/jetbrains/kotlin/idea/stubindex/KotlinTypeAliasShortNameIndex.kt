@@ -15,6 +15,7 @@ class KotlinTypeAliasShortNameIndex internal constructor() : StringStubIndexExte
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTypeAliasShortNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
         return Helper[key, project, scope]
     }

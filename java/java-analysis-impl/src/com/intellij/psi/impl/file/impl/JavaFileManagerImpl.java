@@ -78,7 +78,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
   }
 
   private @NotNull List<Pair<PsiClass, VirtualFile>> doFindClasses(@NotNull String qName, @NotNull GlobalSearchScope scope) {
-    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().get(qName, myManager.getProject(), scope);
+    Collection<PsiClass> classes = JavaFullClassNameIndex.getInstance().getClasses(qName, myManager.getProject(), scope);
     if (classes.isEmpty()) return Collections.emptyList();
 
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
@@ -141,7 +141,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     GlobalSearchScope excludingScope = new LibSrcExcludingScope(scope);
 
     Project project = myManager.getProject();
-    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().get(moduleName, project, excludingScope));
+    List<PsiJavaModule> results = new ArrayList<>(JavaModuleNameIndex.getInstance().getModules(moduleName, project, excludingScope));
 
     Set<VirtualFile> shadowedRoots = new HashSet<>();
     for (VirtualFile manifest : JavaSourceModuleNameIndex.getFilesByKey(moduleName, excludingScope)) {

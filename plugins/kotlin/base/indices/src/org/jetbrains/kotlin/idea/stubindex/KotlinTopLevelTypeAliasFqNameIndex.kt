@@ -16,6 +16,7 @@ class KotlinTopLevelTypeAliasFqNameIndex internal constructor() : StringStubInde
 
     override fun getKey(): StubIndexKey<String, KtTypeAlias> = indexKey
 
+    @Deprecated("Base method is deprecated", ReplaceWith("KotlinTopLevelTypeAliasFqNameIndex[key, project, scope]"))
     override fun get(key: String, project: Project, scope: GlobalSearchScope): Collection<KtTypeAlias> {
         return Helper[key, project, scope]
     }

@@ -54,7 +54,7 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
 
     private fun resolveFqNameOfJavaClassByIndex(fqName: FqName): PsiClass? {
         val fqNameString = fqName.asString()
-        return JavaFullClassNameIndex.getInstance()[fqNameString, project, scope]
+        return JavaFullClassNameIndex.getInstance().getClasses(fqNameString, project, scope)
             .firstOrNull {
                 it.qualifiedName == fqNameString
             }

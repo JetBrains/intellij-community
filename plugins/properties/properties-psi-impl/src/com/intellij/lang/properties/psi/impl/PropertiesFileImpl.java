@@ -199,7 +199,7 @@ public final class PropertiesFileImpl extends PsiFileBase implements PropertiesF
   @NotNull
   private Stream<? extends IProperty> propertiesByKey(@NotNull String key) {
     if (shouldReadIndex()) {
-      return PropertyKeyIndex.getInstance().get(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
+      return PropertyKeyIndex.getInstance().getProperties(key, getProject(), GlobalSearchScope.fileScope(this)).stream();
     }
     // see PropertiesElementFactory.createPropertiesFile(Project, Properties, String)
     return getProperties().stream().filter(p -> key.equals(p.getUnescapedKey()));

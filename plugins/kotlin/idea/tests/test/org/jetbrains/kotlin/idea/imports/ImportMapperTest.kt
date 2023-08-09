@@ -18,11 +18,9 @@ import org.jetbrains.kotlin.psi.KtUserType
 class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
 
-    private val javaFullClassNameIndex get() = JavaFullClassNameIndex.getInstance()
-
     private fun findInIndex(fqName: FqName, scope: GlobalSearchScope): PsiElement? =
-        javaFullClassNameIndex.get(fqName.asString(), project, scope)?.firstOrNull()
-            ?: KotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
+        JavaFullClassNameIndex.getInstance().getClasses(fqName.asString(), project, scope)
+            .firstOrNull() ?: KotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
     fun test() {
         val scope = GlobalSearchScope.everythingScope(project)
