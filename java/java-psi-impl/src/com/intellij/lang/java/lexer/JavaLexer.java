@@ -151,7 +151,7 @@ public final class JavaLexer extends LexerBase {
           if (--myBraceCounts[myTemplateDepth] == 0) {
             myTemplateDepth--;
             if (myState == STATE_TEXT_BLOCK_TEMPLATE) {
-              if (locateTextBlockEnd(myBufferIndex + mySymbolLength)) {
+              if (locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.TEXT_BLOCK)) {
                 myTokenType = JavaTokenType.TEXT_BLOCK_TEMPLATE_MID;
               }
               else {
@@ -160,7 +160,7 @@ public final class JavaLexer extends LexerBase {
               }
             }
             else {
-              boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, '"');
+              boolean fragment = locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.STRING);
               myTokenType = fragment ? JavaTokenType.STRING_TEMPLATE_MID : JavaTokenType.STRING_TEMPLATE_END;
             }
             break;
@@ -217,7 +217,7 @@ public final class JavaLexer extends LexerBase {
 
       case '\'':
         myTokenType = JavaTokenType.CHARACTER_LITERAL;
-        locateLiteralEnd(myBufferIndex + mySymbolLength, '\'');
+        locateLiteralEnd(myBufferIndex + mySymbolLength, LiteralType.CHAR);
         break;
 
       case '"':
@@ -225,7 +225,7 @@ public final class JavaLexer extends LexerBase {
         if (myBufferIndex + l1 < myBufferEndOffset && locateCharAt(myBufferIndex + l1) == '"') {
           int l2 = mySymbolLength;
           if (myBufferIndex + l1 + l2 < myBufferEndOffset && locateCharAt(myBufferIndex + l1 + l2) == '"') {
-            boolean fragment = locateTextBlockEnd(myBufferIndex + l1 + l2 + mySymbolLength);
+            boolean fragment = locateLiteralEnd(myBufferIndex + l1 + l2 + mySymbolLength, LiteralType.TEXT_BLOCK);
             if (fragment) {
               myState = STATE_TEXT_BLOCK_TEMPLATE;
               myTokenType = JavaTokenType.TEXT_BLOCK_TEMPLATE_BEGIN;
@@ -240,7 +240,7 @@ public final class JavaLexer extends LexerBase {
           }
         }
         else {
-          boolean fragment = locateLiteralEnd(myBufferIndex + l1, '"');
+          boolean fragment = locateLiteralEnd(myBufferIndex + l1, LiteralType.STRING);
           myTokenType = fragment ? JavaTokenType.STRING_TEMPLATE_BEGIN : JavaTokenType.STRING_LITERAL;
         }
         break;
@@ -277,10 +277,10 @@ public final class JavaLexer extends LexerBase {
 
   /**
    * @param offset  the offset to start.
-   * @param quoteChar  the type of quote the literal should end with.
+   * @param literalType  the type of string literal.
    * @return {@code true} if this is a string template fragment, {@code false} otherwise.
    */
-  private boolean locateLiteralEnd(int offset, char quoteChar) {
+  private boolean locateLiteralEnd(int offset, LiteralType literalType) {
     int pos = offset;
 
     while (pos < myBufferEndOffset) {
@@ -290,7 +290,7 @@ public final class JavaLexer extends LexerBase {
         pos += mySymbolLength;
         // on (encoded) backslash we also need to skip the next symbol (e.g. \\u005c" is translated to \")
         if (pos < myBufferEndOffset) {
-          if (locateCharAt(pos) == '{' && myStringTemplates && quoteChar == '"') {
+          if (locateCharAt(pos) == '{' && myStringTemplates && literalType != LiteralType.CHAR) {
             pos += mySymbolLength;
             myTemplateDepth++;
             if (myTemplateDepth == myBraceCounts.length) {
@@ -302,11 +302,22 @@ public final class JavaLexer extends LexerBase {
           }
         }
       }
-      else if (c == quoteChar) {
-        myTokenEndOffset = pos + mySymbolLength;
-        return false;
+      else if (c == literalType.c) {
+        if (literalType == LiteralType.TEXT_BLOCK) {
+          if ((pos += mySymbolLength) < myBufferEndOffset && locateCharAt(pos) == '"') {
+            if ((pos += mySymbolLength) < myBufferEndOffset && locateCharAt(pos) == '"') {
+              myTokenEndOffset = pos + mySymbolLength;
+              return false;
+            }
+          }
+          continue;
+        }
+        else {
+          myTokenEndOffset = pos + mySymbolLength;
+          return false;
+        }
       }
-      else if ((c == '\n' || c == '\r') && mySymbolLength == 1) {
+      else if ((c == '\n' || c == '\r') && mySymbolLength == 1 && literalType != LiteralType.TEXT_BLOCK) {
         myTokenEndOffset = pos;
         return false;
       }
@@ -338,30 +349,6 @@ public final class JavaLexer extends LexerBase {
     }
 
     return pos;
-  }
-
-  /**
-   * @param offset  the offset to start.
-   * @return {@code true} if this is a string template fragment, {@code false} otherwise.
-   */
-  private boolean locateTextBlockEnd(int offset) {
-    int pos = offset;
-    boolean fragment;
-
-    while (!(fragment = locateLiteralEnd(pos, '"')) && (pos = myTokenEndOffset) < myBufferEndOffset) {
-      char c = locateCharAt(pos);
-      pos += mySymbolLength;
-      if (c == '\\') {
-        locateCharAt(pos); // skip escaped char
-        pos += mySymbolLength;
-      }
-      else if (c == '"' && pos < myBufferEndOffset && locateCharAt(pos) == '"') {
-        myTokenEndOffset = pos + mySymbolLength;
-        return false;
-      }
-    }
-
-    return fragment;
   }
 
   private char charAt(int offset) {
@@ -404,5 +391,14 @@ public final class JavaLexer extends LexerBase {
   @Override
   public int getBufferEnd() {
     return myBufferEndOffset;
+  }
+  
+  enum LiteralType {
+    STRING('"'), CHAR('\''), TEXT_BLOCK('"');
+
+    final char c;
+    LiteralType(char c) {
+      this.c = c;
+    }
   }
 }
