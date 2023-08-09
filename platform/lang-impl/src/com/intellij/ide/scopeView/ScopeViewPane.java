@@ -23,6 +23,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -39,10 +41,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.TreePath;
@@ -235,15 +234,22 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       // not initialized yet
       return;
     }
+    if (file == null) {
+      LOG.warn(new IllegalArgumentException("ScopeViewPane.select: file==null, object=" + object));
+      return; // Filters don't accept null files anyway, so just do nothing.
+    }
 
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
-    NamedScopeFilter current = myTreeModel.getFilter();
-    if (select(element, file, requestFocus, current)) return;
-    for (NamedScopeFilter filter : getFilters()) {
-      if (current != filter && select(element, file, requestFocus, filter)) {
-        return;
+    SmartPsiElementPointer<PsiElement> pointer = null;
+    if (element != null) {
+      if (element.isValid()) {
+        pointer = SmartPointerManager.createPointer(element);
+      }
+      else {
+        LOG.warn("ScopeViewPane.select(object=" + object + ",file=" + file + ",requestFocus=" + requestFocus + "): element invalidated");
       }
     }
+    myProject.getService(SelectInProjectViewImpl.class).selectInScopeViewPane(this, pointer, file, requestFocus);
   }
 
   private void selectScopeView(String subId) {
@@ -253,22 +259,21 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     }
   }
 
-  private boolean select(PsiElement element, VirtualFile file, boolean requestFocus, VirtualFileFilter filter) {
-    if (filter == null || !filter.accept(file)) {
-      return false;
-    }
-
+  @ApiStatus.Internal
+  public void select(@Nullable SmartPsiElementPointer<PsiElement> pointer, VirtualFile file, boolean requestFocus, VirtualFileFilter filter) {
     String subId = filter.toString();
     if (!Objects.equals(subId, getSubId())) {
-      if (!requestFocus) return true;
+      if (!requestFocus) return;
       selectScopeView(subId);
     }
-    LOG.debug("select element: ", element, " in file: ", file);
-    TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
-    if (visitor == null) return true;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("select element: ", (pointer == null ? null : pointer.getElement()), " in file: ", file);
+    }
+    TreeVisitor visitor = AbstractProjectViewPane.createVisitorByPointer(pointer, file);
+    if (visitor == null) return;
     JTree tree = myTree;
     myTreeModel.getUpdater().updateImmediately(() -> TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
-      if (selectPath(tree, path) || element == null || Registry.is("async.project.view.support.extra.select.disabled")) {
+      if (selectPath(tree, path) || pointer == null || Registry.is("async.project.view.support.extra.select.disabled")) {
         promise.setResult(null);
       }
       else {
@@ -280,7 +285,6 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
         });
       }
     })));
-    return true;
   }
 
   private static boolean selectPath(@NotNull JTree tree, TreePath path) {
@@ -371,9 +375,18 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @CalledInAny
   @NotNull
-  Iterable<NamedScopeFilter> getFilters() {
+  @ApiStatus.Internal
+  public Iterable<NamedScopeFilter> getFilters() {
     Map<String, NamedScopeFilter> map = myFilters.get();
     return map == null ? Collections.emptyList() : map.values();
+  }
+
+  @CalledInAny
+  @Nullable
+  @ApiStatus.Internal
+  public NamedScopeFilter getCurrentFilter() {
+    var model = myTreeModel;
+    return model == null ? null : model.getFilter();
   }
 
   @CalledInAny

@@ -1307,4 +1307,13 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     LOG.warn(element != null ? "element invalidated: " + element : "cannot create visitor without element and/or file");
     return null;
   }
+
+  @Nullable
+  @ApiStatus.Internal
+  public static TreeVisitor createVisitorByPointer(@Nullable SmartPsiElementPointer<PsiElement> pointer, @Nullable VirtualFile file) {
+    if (pointer != null) return new ProjectViewNodeVisitor(pointer, file, null);
+    if (file != null) return new ProjectViewFileVisitor(file, null);
+    LOG.warn("cannot create visitor without element and/or file");
+    return null;
+  }
 }

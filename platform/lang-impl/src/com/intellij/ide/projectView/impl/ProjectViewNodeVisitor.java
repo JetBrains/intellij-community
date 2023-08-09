@@ -26,6 +26,14 @@ class ProjectViewNodeVisitor extends AbstractTreeNodeVisitor<PsiElement> {
     LOG.debug("create visitor for element: ", element);
   }
 
+  ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer, @Nullable VirtualFile file, @Nullable Predicate<? super TreePath> predicate) {
+    super(pointer::getElement, predicate);
+    this.file = file;
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("create visitor for element: ", pointer.getElement());
+    }
+  }
+
   ProjectViewNodeVisitor(@NotNull SmartPsiElementPointer<?> pointer) {
     super(pointer::getElement, null);
     this.file = null;

@@ -3,6 +3,7 @@ package com.intellij.ide.projectView.impl
 
 import com.intellij.ide.*
 import com.intellij.ide.projectView.ProjectView
+import com.intellij.ide.scopeView.ScopeViewPane
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
@@ -212,6 +213,32 @@ internal class SelectInProjectViewImpl(
           target.selectIn(context, requestFocus)
         }
         return
+      }
+    }
+  }
+
+  fun selectInScopeViewPane(pane: ScopeViewPane, pointer: SmartPsiElementPointer<PsiElement>?, file: VirtualFile, requestFocus: Boolean) {
+    invokeWithSemaphore("SelectInProjectViewImpl.selectInScopeViewPane(element=$pointer, file=$file, requestFocus=$requestFocus)") {
+      doSelectInScopeViewPane(pane, pointer, file, requestFocus)
+    }
+  }
+
+  private suspend fun doSelectInScopeViewPane(
+    pane: ScopeViewPane,
+    pointer: SmartPsiElementPointer<PsiElement>?,
+    file: VirtualFile,
+    requestFocus: Boolean,
+  ) {
+    val currentFilter = pane.getCurrentFilter()
+    val allFilters = pane.filters.toMutableList()
+    allFilters.remove(currentFilter)
+    allFilters.add(0, currentFilter) // Start with the current filter and then fall back to others.
+    for (filter in allFilters) {
+      if (readAction { filter.accept(file) }) {
+        withContext(Dispatchers.EDT) {
+          pane.select(pointer, file, requestFocus, filter)
+        }
+        break
       }
     }
   }
