@@ -12,7 +12,7 @@ import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotificat
 import com.intellij.util.PlatformUtils
 import kotlinx.datetime.LocalDate
 
-class DemoFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
+class DemoInIdeFeedbackSurveyConfig : InIdeFeedbackSurveyConfig {
 
   override val surveyId: String = "demo_survey"
   override val lastDayOfFeedbackCollection: LocalDate = LocalDate(1999, 6, 11)
