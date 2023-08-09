@@ -1186,18 +1186,16 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     int colsNum = table.getColumnModel().getColumnCount();
 
     int totalWidth = 0;
-    for (int col = 0; col < colsNum - 1; col++) {
+    for (int col = 0; col < colsNum; col++) {
       TableColumn column = table.getColumnModel().getColumn(col);
       int preferred = column.getPreferredWidth();
       int width = Math.max(preferred, columnMaxWidth(table, col));
       totalWidth += width;
-      column.setMinWidth(width);
+      column.setMinWidth(Math.min(ShowUsagesTable.MIN_COLUMN_WIDTH, width));
       column.setMaxWidth(width);
-      column.setWidth(width);
+      column.setWidth(Math.min(ShowUsagesTable.MAX_COLUMN_WIDTH, width));
       column.setPreferredWidth(width);
     }
-
-    totalWidth += columnMaxWidth(table, colsNum - 1);
 
     return totalWidth;
   }

@@ -57,42 +57,4 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
 
   default void update() {
   }
-
-  /**
-   * Retrieves the clipping mode for the current UsageGroup.
-   *
-   * @return the clipping mode for the current object
-   */
-  default ClippingMode getClippingMode() {
-    return ClippingMode.NO_CLIPPING;
-  }
-
-  /**
-   * The ClippingMode enum represents the different strategies used for clipping strings.
-   *
-   * <p>The available modes are:
-   * <ul>
-   *   <li>{@link #NO_CLIPPING} - No clipping is required.</li>
-   *   <li>{@link #NAME_CLIPPING} - Central parts of a string will be replaced with ellipsis when the name is too long.</li>
-   *   <li>{@link #PATH_CLIPPING} - Directories from the central part of a path will be replaced one by one, until the necessary string length is reached.</li>
-   * </ul>
-   * </p>
-   */
-  enum ClippingMode {
-    /**
-     * The NO_CLIPPING mode is used when no cutting is clipping.
-     */
-    NO_CLIPPING,
-
-    /**
-     * The NAME_CLIPPING mode is used for cutting names. Central parts of string will be replaced with ellipsis when name is too long
-     */
-    NAME_CLIPPING,
-
-    /**
-     * The PATH_CLIPPING mode is used for cutting paths. Directories from the central part will be replaced one by one, until necessary
-     * string length is reached
-     */
-    PATH_CLIPPING
-  }
 }

@@ -46,6 +46,9 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
 
+  static final int MAX_COLUMN_WIDTH = 500;
+  static final int MIN_COLUMN_WIDTH = 200;
+
   private final ShowUsagesTableCellRenderer myRenderer;
   private final UsageView myUsageView;
 

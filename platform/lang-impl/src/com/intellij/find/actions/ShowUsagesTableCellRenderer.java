@@ -29,19 +29,14 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 
-import static com.intellij.find.actions.ShowUsagesTableClippingStrategiesKt.getClippingStrategy;
 
 @ApiStatus.Internal
 final class ShowUsagesTableCellRenderer implements TableCellRenderer {
 
   static final int MARGIN = 2;
-  private static final int MAX_PANEL_WIDTH = 500;
-  private static final String CLIPPING_STRATEGY = "cutStrategyKey";
 
   private final @NotNull Predicate<? super Usage> myOriginUsageCheck;
   private final @NotNull AtomicInteger myOutOfScopeUsages;
@@ -118,17 +113,11 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
 
     // want to be able to right-align the "current" word
-    LayoutManager layout = column == USAGE_TEXT_COL
-                           ? new BorderLayout() : new FlowLayout(column == LINE_NUMBER_COL ? FlowLayout.RIGHT : FlowLayout.LEFT, 0, 0) {
-      @Override
-      public void layoutContainer(Container container) {
-        super.layoutContainer(container);
-        for (Component component : container.getComponents()) { // align inner components
-          Rectangle b = component.getBounds();
-          Insets insets = container.getInsets();
-          component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
-        }
-      }
+    LayoutManager layout = switch (column) {
+      case USAGE_TEXT_COL -> new BorderLayout();
+      case LINE_NUMBER_COL -> new MyFlowLayout(FlowLayout.RIGHT, 0, 0);
+      case FILE_GROUP_COL -> new ClippingLayoutWrapper(new MyFlowLayout(FlowLayout.LEFT, 0, 0));
+      default -> new MyFlowLayout(FlowLayout.LEFT, 0, 0);
     };
 
     UsagePresentation presentation = usage.getPresentation();
@@ -172,7 +161,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
       }
       case FILE_GROUP_COL -> {
         appendGroupText(list, (GroupNode)usageNode.getParent(), panel, fileBgColor, isSelected);
-        cutGroupsText(panel, MAX_PANEL_WIDTH);
       }
       case LINE_NUMBER_COL -> {
         SimpleColoredComponent textChunks = new SimpleColoredComponent();
@@ -233,31 +221,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     }
 
     return panel;
-  }
-
-  private static void cutGroupsText(JPanel panel, int maxWidth) {
-    if (panel.getPreferredSize().width <= maxWidth) return;
-
-    List<SimpleColoredComponent> clippingChildren = Arrays.stream(panel.getComponents())
-      .filter(c -> c instanceof SimpleColoredComponent scc &&
-                   scc.getClientProperty(CLIPPING_STRATEGY) != null &&
-                   scc.getClientProperty(CLIPPING_STRATEGY) != UsageGroup.ClippingMode.NO_CLIPPING)
-      .map(c -> (SimpleColoredComponent) c)
-      .toList();
-    if (clippingChildren.isEmpty()) return;
-
-    int componentsCount = clippingChildren.size();
-
-    // Compute the width for each child component
-    int widthPerComponent = maxWidth / componentsCount;
-
-    for (SimpleColoredComponent scc : clippingChildren) {
-      Dimension size = scc.getPreferredSize();
-      if (size.width > widthPerComponent) {
-        UsageGroup.ClippingMode clippingMode = (UsageGroup.ClippingMode) scc.getClientProperty(CLIPPING_STRATEGY);
-        getClippingStrategy(clippingMode).cutText(scc, widthPerComponent);
-      }
-    }
   }
 
   private static @NotNull @NlsSafe String getAccessibleNameForRow(JTable table, int row, boolean isOriginUsage) {
@@ -386,7 +349,6 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     GroupNode parentGroup = (GroupNode)node.getParent();
     appendGroupText(table, parentGroup, panel, fileBgColor, isSelected);
     SimpleColoredComponent renderer = new SimpleColoredComponent();
-    renderer.putClientProperty(CLIPPING_STRATEGY, group.getClippingMode());
     renderer.setOpaque(false);
     renderer.setIcon(group.getIcon());
     SimpleTextAttributes attributes = deriveBgColor(group.getTextAttributes(isSelected), fileBgColor);
@@ -483,5 +445,22 @@ final class ShowUsagesTableCellRenderer implements TableCellRenderer {
     private static JBInsets rectInsets() {
       return JBUI.insets(1, 6);
     }
+  }
+
+  private static class MyFlowLayout extends FlowLayout {
+    public MyFlowLayout(int align, int hgap, int vgap) {
+      super(align, hgap, vgap);
+    }
+
+    @Override
+    public void layoutContainer(Container container) {
+      super.layoutContainer(container);
+      for (Component component : container.getComponents()) { // align inner components
+        Rectangle b = component.getBounds();
+        Insets insets = container.getInsets();
+        component.setBounds(b.x, b.y, b.width, container.getSize().height - insets.top - insets.bottom);
+      }
+    }
+
   }
 }
