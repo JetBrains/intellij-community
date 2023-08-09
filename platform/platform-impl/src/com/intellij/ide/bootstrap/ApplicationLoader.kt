@@ -258,9 +258,7 @@ private suspend fun preInitApp(app: ApplicationImpl,
         AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
         AnimatedIcon.FS()
       }
-    }
 
-    if (!app.isHeadlessEnvironment) {
       asyncScope.launch {
         // preload only when LafManager is ready
         lafJob.join()
