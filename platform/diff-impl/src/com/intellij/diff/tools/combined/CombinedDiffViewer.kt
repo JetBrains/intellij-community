@@ -132,6 +132,7 @@ class CombinedDiffViewer(
     createDiffBlock.updateBlockContent(newContent)
     val newViewer = newContent.viewer
     removeAdditionalLines(newViewer)
+    installCombinedDiffViewer(newViewer, this)
 
     val blockId = newContent.blockId
     diffBlocks[blockId] = createDiffBlock
@@ -691,6 +692,10 @@ private fun removeAdditionalLines(viewer: DiffViewer) {
     editor.settings.additionalLinesCount = 0
     (editor as? EditorImpl)?.resetSizes()
   }
+}
+
+private fun installCombinedDiffViewer(newViewer: DiffViewer, combinedDiffViewer: CombinedDiffViewer) {
+  newViewer.editors.forEach { it.putUserData(COMBINED_DIFF_VIEWER_KEY, combinedDiffViewer) }
 }
 
 private fun Rectangle.intersects(bb: BlockBounds): Boolean =

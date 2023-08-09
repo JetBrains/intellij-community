@@ -13,7 +13,7 @@ abstract class CombinedDiffBaseEditorForEachCaretHandler(private val original: E
     original.isEnabled(editor, caret, dataContext)
 
   final override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val combined = dataContext.diffViewer
+    val combined = editor.diffViewer
     if (CombinedDiffRegistry.isEnabled() && combined != null && caret != null) {
       doExecute(combined, editor, caret, dataContext)
       return
@@ -29,7 +29,7 @@ abstract class CombinedDiffBaseEditorWithSelectionHandler(private val original: 
     original.isEnabled(editor, caret, dataContext)
 
   final override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val combined = dataContext.diffViewer
+    val combined = editor.diffViewer
     if (CombinedDiffRegistry.isEnabled() && combined != null) {
       doExecute(combined, editor, caret, dataContext)
       return
@@ -111,8 +111,8 @@ class CombinedDiffEditorRightHandler(private val original: EditorActionHandler) 
   }
 }
 
-private val DataContext?.diffViewer: CombinedDiffViewer?
-  get() = this?.getData(COMBINED_DIFF_VIEWER)
+private val Editor.diffViewer: CombinedDiffViewer?
+  get() = this.getUserData(COMBINED_DIFF_VIEWER_KEY)
 
 private fun Caret.isOnFirstVisibleLine(): Boolean = visualPosition.line == 0
 
