@@ -115,25 +115,27 @@ internal suspend fun preInitApp(app: ApplicationImpl,
 
     euaTaskDeferred?.await()?.invoke()
 
-    asyncScope.launch {
-      if (!app.isHeadlessEnvironment) {
-        launch(CoroutineName("icons preloading") + Dispatchers.IO) {
-          Disposer.dispose(AsyncProcessIcon.createBig(""))
-          Disposer.dispose(AsyncProcessIcon(""))
-          AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-          AnimatedIcon.FS()
-        }
+    // used by LafManager
+    app.serviceAsync<UISettings>()
+
+    loadIconMapping?.join()
+
+    val lafJob = launch(CoroutineName("laf initialization") + RawSwingDispatcher) {
+      app.serviceAsync<LafManager>()
+    }
+
+    if (!app.isHeadlessEnvironment) {
+      asyncScope.launch(CoroutineName("icons preloading") + Dispatchers.IO) {
+        Disposer.dispose(AsyncProcessIcon.createBig(""))
+        Disposer.dispose(AsyncProcessIcon(""))
+        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+        AnimatedIcon.FS()
       }
 
-      loadIconMapping?.join()
-      // preloaded as a part of preloadCriticalServices, used by LafManager
-      app.serviceAsync<UISettings>()
-      subtask("laf initialization", RawSwingDispatcher) {
-        app.serviceAsync<LafManager>()
-      }
-      if (!app.isHeadlessEnvironment) {
+      asyncScope.launch {
         // preload only when LafManager is ready
-        launch {
+        lafJob.join()
+        subtask("EditorColorsManager preloading") {
           app.serviceAsync<EditorColorsManager>()
         }
       }
