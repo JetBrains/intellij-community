@@ -1,11 +1,6 @@
 package org.jetbrains.jewel
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -23,7 +18,6 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import org.jetbrains.jewel.styling.HorizontalProgressBarStyle
-import kotlin.time.DurationUnit
 
 @Composable
 fun HorizontalProgressBar(
@@ -62,7 +56,7 @@ fun IndeterminateHorizontalProgressBar(
 ) {
     val infiniteTransition = rememberInfiniteTransition()
 
-    val cycleDurationMillis by remember { mutableStateOf(style.indeterminateCycleDuration.toInt(DurationUnit.MILLISECONDS)) }
+    val cycleDurationMillis by remember { mutableStateOf(style.indeterminateCycleDuration.inWholeMilliseconds.toInt()) }
     val animatedProgress by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 2f,
