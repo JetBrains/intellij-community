@@ -17,6 +17,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Title;
 
 @ApiStatus.Internal
 public final class StartupErrorReporter {
+  private static final String STARTUP_ERROR_REPORTING_URL_PROPERTY = "intellij.custom.startup.error.reporting.url"; 
   private static boolean hasGraphics = !ApplicationManagerEx.isInIntegrationTest();
 
   public static void showMessage(@Nls(capitalization = Title) String title, Throwable t) {
@@ -60,7 +61,7 @@ public final class StartupErrorReporter {
   }
 
   private static @NlsSafe String supportUrl() {
-    return AppMode.isDroidFactory() ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors";
+    return System.getProperty(STARTUP_ERROR_REPORTING_URL_PROPERTY, "https://jb.gg/ide/critical-startup-errors");
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr", "ExtractMethodRecommender"})

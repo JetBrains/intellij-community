@@ -62,10 +62,6 @@ public final class AppMode {
     return Boolean.getBoolean("idea.use.dev.build.server");
   }
 
-  public static boolean isDroidFactory() {
-    return "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-  }
-
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
