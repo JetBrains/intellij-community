@@ -45,11 +45,6 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     if (XmlSchemaTagsProcessor.PROCESSING_FLAG.get() != null || context.get(SUPPRESS) != null) {
       return PsiReference.EMPTY_ARRAY;
     }
-    
-    @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
-    if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
-      return PsiReference.EMPTY_ARRAY;
-    }
 
     if (XmlHighlightVisitor.skipValidation(element)) {
       return PsiReference.EMPTY_ARRAY;
@@ -61,16 +56,22 @@ public class XmlEnumeratedValueReferenceProvider<T extends PsiElement> extends P
     }
 
     @SuppressWarnings("unchecked") final Object descriptor = getDescriptor((T)element);
-    if (descriptor instanceof XmlEnumerationDescriptor enumerationDescriptor) {
+    if (!(descriptor instanceof XmlEnumerationDescriptor enumerationDescriptor)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
 
-      if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
-        //noinspection unchecked
-        return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
-      }
-      else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
-        return ContainerUtil.map2Array(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), PsiReference.class,
-                                       reference -> PsiDelegateReference.createSoft(reference, true));
-      }
+    @SuppressWarnings("unchecked") PsiElement host = getHost((T)element);
+    if (host instanceof PsiLanguageInjectionHost && InjectedLanguageUtil.hasInjections((PsiLanguageInjectionHost)host)) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+
+    if (enumerationDescriptor.isFixed() || enumerationDescriptor.isEnumerated((XmlElement)element)) {
+      //noinspection unchecked
+      return enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue);
+    }
+    else if (unquotedValue.equals(enumerationDescriptor.getDefaultValue())) {  // todo case insensitive
+      return ContainerUtil.map2Array(enumerationDescriptor.getValueReferences((XmlElement)element, unquotedValue), PsiReference.class,
+                                     reference -> PsiDelegateReference.createSoft(reference, true));
     }
     return PsiReference.EMPTY_ARRAY;
   }
