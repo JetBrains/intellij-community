@@ -1153,7 +1153,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/code-insight/kotlin.base.fir.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/code-insight/kotlin.base.fir.code-insight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/project-structure/kotlin.base.fir.project-structure.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/project-structure/kotlin.base.fir.project-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/frontend-agnostic/kotlin.base.frontend-agnostic.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/frontend-agnostic/kotlin.base.frontend-agnostic.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/highlighting/kotlin.base.highlighting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/indices/kotlin.base.indices.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/jps/kotlin.base.jps.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/kdoc/kotlin.base.kdoc.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/kdoc/kotlin.base.kdoc.iml" />
@@ -1267,7 +1266,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/tests/kotlin.gradle.gradle-tooling.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle-tooling/tests/kotlin.gradle.gradle-tooling.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/gradle/gradle/tests/kotlin.gradle.gradle.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/gradle/gradle/tests/kotlin.gradle.gradle.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/grazie/kotlin.grazie.iml" filepath="$PROJECT_DIR$/plugins/kotlin/grazie/kotlin.grazie.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/kotlin.highlighting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/kotlin.highlighting.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-k1/kotlin.highlighting.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-k1/kotlin.highlighting.k1.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-k2/kotlin.highlighting.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-k2/kotlin.highlighting.k2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/kotlin.highlighting.shared.iml" filepath="$PROJECT_DIR$/plugins/kotlin/highlighting/highlighting-shared/kotlin.highlighting.shared.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/kotlin.i18n.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/kotlin.i18n.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/i18n/tests/kotlin.i18n.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" filepath="$PROJECT_DIR$/plugins/kotlin/idea/kotlin.idea.iml" />
