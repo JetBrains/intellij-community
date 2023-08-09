@@ -747,13 +747,7 @@ public final class DiffUtil {
 
   @NotNull
   public static List<JComponent> createSyncHeightComponents(@NotNull final List<JComponent> components) {
-    if (!ContainerUtil.exists(components, Conditions.notNull())) return components;
-    List<JComponent> result = new ArrayList<>();
-    for (int i = 0; i < components.size(); i++) {
-      JComponent component = components.get(i);
-      result.add(new SyncHeightComponent(components, component));
-    }
-    return result;
+    return SyncHeightComponent.createSyncHeightComponents(components);
   }
 
   @NotNull
