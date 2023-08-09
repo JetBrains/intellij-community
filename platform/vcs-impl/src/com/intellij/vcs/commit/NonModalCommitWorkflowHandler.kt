@@ -120,7 +120,8 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     isSkipCommitChecks: Boolean
   ): @Nls(capitalization = Nls.Capitalization.Sentence) String {
     val isAmend = amendCommitHandler.isAmendCommitMode
-    val actionText: @Nls String = getActionTextWithoutEllipsis(workflow.vcses, executor, isAmend, isSkipCommitChecks)
+    val actionText: @Nls String = getActionTextWithoutEllipsis(workflow.vcses, executor, isAmend, isSkipCommitChecks,
+                                                               removeMnemonic = true)
     return capitalize(toLowerCase(actionText))
   }
 

@@ -45,7 +45,14 @@ private val LOG = logger<AbstractCommitWorkflow>()
 
 internal fun @Nls String.removeEllipsisSuffix(): @Nls String = StringUtil.removeEllipsisSuffix(this)
 
-internal fun cleanActionText(text: @Nls String): @Nls String = UIUtil.removeMnemonic(text).removeEllipsisSuffix()
+internal fun cleanActionText(text: @Nls String, removeMnemonic: Boolean = true): @Nls String {
+  if (removeMnemonic) {
+    return UIUtil.removeMnemonic(text).removeEllipsisSuffix()
+  }
+  else {
+    return text.removeEllipsisSuffix()
+  }
+}
 
 internal fun @Nls String.dropMnemonic(): @Nls String = this.replace(BundleBase.MNEMONIC_STRING, "")
 
