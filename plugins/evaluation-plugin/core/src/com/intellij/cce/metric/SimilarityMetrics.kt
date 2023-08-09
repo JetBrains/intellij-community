@@ -3,7 +3,6 @@ package com.intellij.cce.metric
 
 import com.intellij.cce.core.Lookup
 import com.intellij.cce.core.Session
-import com.intellij.cce.core.SuggestionKind
 import com.intellij.cce.metric.util.Bootstrap
 import org.apache.commons.lang.StringUtils
 import kotlin.math.max
@@ -53,8 +52,6 @@ class MatchedRatio(showByDefault: Boolean = false) : SimilarityMetric(showByDefa
     if (lookup.selectedPosition == -1)
       return null
     val selected = lookup.suggestions[lookup.selectedPosition]
-    if (selected.kind == SuggestionKind.TOKEN)
-      return null
     return selected.text.length.toDouble() - lookup.prefix.length
   }
 }
