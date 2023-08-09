@@ -39,6 +39,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
+import com.intellij.platform.backend.workspace.WorkspaceModelTopics
+import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.SourceRootEntity
+import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.project.isDirectoryBased
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.ui.ExperimentalUI
@@ -54,11 +59,6 @@ import com.intellij.util.containers.nullize
 import com.intellij.util.containers.toMutableSmartList
 import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.ui.JBUI
-import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
-import com.intellij.platform.backend.workspace.WorkspaceModelTopics
-import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.jps.entities.ContentRootEntity
-import com.intellij.platform.workspace.jps.entities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -97,11 +97,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     fun getInstanceImpl(project: Project): RunManagerImpl = getInstance(project) as RunManagerImpl
 
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
-      return ExecutionUtil.computeWithDataContext(environment) {
-        environment.runnerAndConfigurationSettings?.let {
-          canRunConfiguration(it, environment.executor)
-        } ?: false
-      }
+      return environment.runnerAndConfigurationSettings?.let {
+        canRunConfiguration(it, environment.executor)
+      } ?: false
     }
 
     @JvmStatic
