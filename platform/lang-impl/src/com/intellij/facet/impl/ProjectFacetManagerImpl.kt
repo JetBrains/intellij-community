@@ -84,7 +84,7 @@ class ProjectFacetManagerImpl(private val myProject: Project) : ProjectFacetMana
     }.executeSynchronously()
   }
 
-  override fun <F : Facet<*>> getFacets(typeId: FacetTypeId<F>): List<F> = getFacets(typeId, index.values())
+  override fun <F : Facet<*>> getFacets(typeId: FacetTypeId<F>): List<F> = getFacets(typeId, index[typeId])
 
   override fun <F : Facet<*>> getFacets(typeId: FacetTypeId<F>, modules: Array<Module>)= getFacets(typeId, modules.toList())
 
