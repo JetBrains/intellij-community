@@ -17,8 +17,7 @@ class SelectedAtMetric(override val showByDefault: Boolean, private val n: Int) 
 
     val fileSample = Sample()
     for (lookup in lookups) {
-      val indexOfNecessaryCompletion = lookup.selectedPosition
-      if (indexOfNecessaryCompletion in 0 until n) {
+      if (lookup.selectedPosition in 0 until n) {
         fileSample.add(1.0)
         sample.add(1.0)
       }

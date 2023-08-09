@@ -16,8 +16,8 @@ class RecallAtMetric (override val showByDefault: Boolean, private val n: Int) :
 
     val fileSample = Sample()
     lookups.forEach { lookup ->
-      val indexOfNecessaryCompletion = lookup.suggestions.indexOfFirst { it.isRelevant }
-      if (indexOfNecessaryCompletion in 0 until n) {
+      val indexOfRelevantSuggestion = lookup.suggestions.indexOfFirst { it.isRelevant }
+      if (indexOfRelevantSuggestion in 0 until n) {
         fileSample.add(1.0)
         sample.add(1.0)
       }
