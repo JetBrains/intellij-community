@@ -133,5 +133,6 @@ class NewKotlinFileActionTest : BasePlatformTestCase() {
                 "class $expectedClassName"
             }
         assertEquals(expectedContent, file.text)
+        assertEquals("Create action should not modify predefined template", "", testTemplate.fileName)
     }
 }
