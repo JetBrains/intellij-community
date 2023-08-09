@@ -1,2 +1,9 @@
-<warning descr="Lone semicolons in the import list are not supported in releases since Java 21">;</warning>
-import java.util.*;<warning descr="Lone semicolons in the import list are not supported in releases since Java 21">;</warning>
+package foo;
+
+<warning descr="Redundant semicolons between import statements are prohibited starting from Java 21">;</warning>
+import java.util.List;
+<warning descr="Redundant semicolons between import statements are prohibited starting from Java 21">;</warning>
+import java.util.Date;
+;
+
+class Foo {}

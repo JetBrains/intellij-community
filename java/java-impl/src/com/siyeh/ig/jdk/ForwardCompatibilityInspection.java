@@ -113,6 +113,7 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
         super.visitJavaToken(token);
         if (languageLevel.isLessThan(LanguageLevel.JDK_21) && token.getParent() instanceof PsiImportList && token.getTokenType() == JavaTokenType.SEMICOLON) {
           String message = JavaErrorBundle.message("lone.semicolon.warn");
+          String message = JavaErrorBundle.message("redundant.semicolon.warn");
           holder.registerProblem(token, message, new UnnecessarySemicolonInspection.UnnecessarySemicolonFix());
         }
       }

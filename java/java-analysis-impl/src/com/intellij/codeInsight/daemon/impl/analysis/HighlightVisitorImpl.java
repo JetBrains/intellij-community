@@ -635,7 +635,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         token.getParent() instanceof PsiImportList) {
       add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(token.getTextRange())
-            .descriptionAndTooltip(JavaErrorBundle.message("error.lone.semicolons.not.allowed.in.the.import.table")));
+            .descriptionAndTooltip(JavaErrorBundle.message("error.extra.semicolons.between.import.statements.not.allowed")));
     }
   }
 
