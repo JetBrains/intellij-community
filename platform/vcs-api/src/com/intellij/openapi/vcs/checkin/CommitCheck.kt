@@ -169,7 +169,7 @@ interface CommitInfo {
   val commitMessage: @Nls String
 
   /**
-   * Commit action name, without mnemonics and ellipsis. Ex: 'Amend Commit'.
+   * Commit action name, without ellipsis. May contain mnemonic. Ex: 'Amend Comm&it'.
    */
   val commitActionText: @Nls String
 }
