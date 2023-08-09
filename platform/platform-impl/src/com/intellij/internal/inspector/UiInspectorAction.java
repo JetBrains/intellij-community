@@ -193,6 +193,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
           }
           clickInfo.addAll(findActionsFor(value));
 
+          clickInfo.add(new PropertyBean("List Value", value));
+          clickInfo.add(new PropertyBean("List Value Class", UiInspectorUtil.getClassPresentation(value)));
+
           Component rendererComponent = renderer
             .getListCellRendererComponent(list, value, row, list.getSelectionModel().isSelectedIndex(row),
                                           list.hasFocus());
@@ -234,6 +237,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
             }
           }
 
+          clickInfo.add(new PropertyBean("Cell Value", value));
+          clickInfo.add(new PropertyBean("Cell Value Class", UiInspectorUtil.getClassPresentation(value)));
+
           Component rendererComponent = renderer
             .getTableCellRendererComponent(table, value, table.getSelectionModel().isSelectedIndex(row),
                                            table.hasFocus(), row, column);
@@ -261,6 +267,9 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
               mutableTreeNode.getUserObject() instanceof UiInspectorContextProvider contextProvider) {
             clickInfo.addAll(contextProvider.getUiInspectorContext());
           }
+
+          clickInfo.add(new PropertyBean("Tree Node", value));
+          clickInfo.add(new PropertyBean("Tree Node Class", UiInspectorUtil.getClassPresentation(value)));
 
           Component rendererComponent = renderer.getTreeCellRendererComponent(
             tree, value, tree.getSelectionModel().isPathSelected(path),
@@ -292,10 +301,10 @@ public final class UiInspectorAction extends UiMouseAction implements LightEditC
         if (quickFix != null) {
           return findActionsFor(quickFix);
         }
-        return Collections.singletonList(new PropertyBean("intention action", object.getClass().getName(), true));
+        return Collections.singletonList(new PropertyBean("intention action", UiInspectorUtil.getClassPresentation(object), true));
       }
       else if (object instanceof QuickFix) {
-        return Collections.singletonList(new PropertyBean("quick fix", object.getClass().getName(), true));
+        return Collections.singletonList(new PropertyBean("quick fix", UiInspectorUtil.getClassPresentation(object), true));
       }
 
       return Collections.emptyList();
