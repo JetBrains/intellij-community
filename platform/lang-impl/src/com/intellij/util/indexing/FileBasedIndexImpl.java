@@ -1480,8 +1480,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         for (ID<?, ?> indexId : currentIndexedStates) {
           ProgressManager.checkCanceled();
-          LOG.assertTrue(fc == null || getIndexingState(fc, indexId) != FileIndexingState.NOT_INDEXED,
-                         "getAppliedIndexes returned index ID that in fact was not applied. IndexId=" + indexId);
           SingleIndexValueRemover remover = createSingleIndexRemover(indexId, file, fc, inputId, writeIndexSeparately);
           if (remover == null) {
             setIndexedStatus.set(Boolean.FALSE);

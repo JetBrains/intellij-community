@@ -255,8 +255,6 @@ final class UnindexedFilesFinder {
 
         // remove unneeded data from indexes
         for (ID<?, ?> indexId : appliedIndexes) {
-          LOG.assertTrue(myFileBasedIndex.getIndexingState(indexedFile, indexId) != FileIndexingState.NOT_INDEXED,
-                         "getAppliedIndexes returned index ID that in fact was not applied. IndexId=" + indexId);
           removeIndexedValue(indexedFile, inputId, indexId, fileStatusBuilder);
         }
 
