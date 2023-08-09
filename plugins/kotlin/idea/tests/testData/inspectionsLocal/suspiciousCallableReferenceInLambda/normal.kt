@@ -1,5 +1,5 @@
 // WITH_STDLIB
 
 fun foo() {
-    listOf(1,2,3).map {<caret> Int::toString }
+    val x = listOf(1,2,3).map {<caret> Int::toString }
 }

@@ -15633,6 +15633,26 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/explicitThisReceiver.kt");
         }
 
+        @TestMetadata("hasExplicitType.kt")
+        public void testHasExplicitType() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType.kt");
+        }
+
+        @TestMetadata("hasExplicitType2.kt")
+        public void testHasExplicitType2() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType2.kt");
+        }
+
+        @TestMetadata("hasExplicitType3.kt")
+        public void testHasExplicitType3() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType3.kt");
+        }
+
+        @TestMetadata("hasExplicitType4.kt")
+        public void testHasExplicitType4() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/hasExplicitType4.kt");
+        }
+
         @TestMetadata("implicitThisReceiver.kt")
         public void testImplicitThisReceiver() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/implicitThisReceiver.kt");
@@ -15716,6 +15736,21 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("parameterOuter.kt")
         public void testParameterOuter() throws Exception {
             runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameterOuter.kt");
+        }
+
+        @TestMetadata("usedAsParameter.kt")
+        public void testUsedAsParameter() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/usedAsParameter.kt");
+        }
+
+        @TestMetadata("usedAsReceiver.kt")
+        public void testUsedAsReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/usedAsReceiver.kt");
+        }
+
+        @TestMetadata("usedAsReturn.kt")
+        public void testUsedAsReturn() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/usedAsReturn.kt");
         }
 
         @TestMetadata("variableReceiver.kt")
