@@ -24,6 +24,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap
 import it.unimi.dsi.fastutil.objects.Object2LongMap
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -31,6 +32,7 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -158,8 +160,10 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
 
   if (perfFilePath != null) {
     LOG.info("StartUp Measurement report was written to: $perfFilePath")
-    Files.newByteChannel(Path.of(perfFilePath).createParentDirectories(), StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
-      it.write(currentReport)
+    withContext(Dispatchers.IO) {
+      Files.newByteChannel(Path.of(perfFilePath).createParentDirectories(), StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
+        it.write(currentReport)
+      }
     }
     currentReport.flip()
   }
