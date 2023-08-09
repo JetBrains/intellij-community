@@ -113,7 +113,7 @@
     <dependency>
       <groupId>org.jetbrains.teamcity</groupId>
       <artifactId>serviceMessages</artifactId>
-      <version>2019.1.4</version>
+      <version>2023.07</version>
     </dependency>
     <dependency>
       <groupId>org.junit.jupiter</groupId>
