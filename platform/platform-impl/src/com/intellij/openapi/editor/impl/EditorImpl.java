@@ -2137,7 +2137,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private boolean composedTextExists() {
     return myInputMethodRequestsHandler != null &&
-           myInputMethodRequestsHandler.composedRangeMarker != null;
+           (myInputMethodRequestsHandler.composedRangeMarker != null ||
+            myInputMethodRequestsHandler.inlayLeft != null ||
+            myInputMethodRequestsHandler.inlayRight != null);
   }
 
   @Override
@@ -3668,7 +3670,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   private class MyInputMethodHandler implements InputMethodRequests {
     private RangeMarker composedRangeMarker;
-    private Inlay<?> inlay;
+    private Inlay<?> inlayLeft, inlayRight;
 
     private @Nullable ProperTextRange getRange() {
       if (myUseInputMethodInlay || composedRangeMarker == null) return null;
@@ -3859,9 +3861,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       // old composed text deletion
       final Document doc = getDocument();
 
-      if (inlay != null) {
-        Disposer.dispose(inlay);
-        inlay = null;
+      if (inlayLeft != null) {
+        Disposer.dispose(inlayLeft);
+        inlayLeft = null;
+      }
+      if (inlayRight != null) {
+        Disposer.dispose(inlayRight);
+        inlayRight = null;
       }
       if (composedRangeMarker != null) {
         if (!myUseInputMethodInlay && !isViewer() && doc.isWritable()) {
@@ -3904,8 +3910,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
             String composedString = createComposedString(composedTextIndex, text);
             if (myUseInputMethodInlay) {
               var offset = getCaretModel().getPrimaryCaret().getOffset();
-              inlay = getInlayModel().addInlineElement(offset, new InputMethodInlayRenderer(composedString));
-              composedRangeMarker = myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset(), true);
+              var caret = e.getCaret();
+              var leftLength = caret != null ? caret.getInsertionIndex() : 0;
+              if (leftLength > 0) {
+                inlayLeft = getInlayModel().addInlineElement(offset, false,
+                                                             new InputMethodInlayRenderer(composedString.substring(0, leftLength)));
+              }
+              if (leftLength < composedString.length()) {
+                inlayRight = getInlayModel().addInlineElement(offset, true,
+                                                              new InputMethodInlayRenderer(composedString.substring(leftLength)));
+              }
             } else {
               runUndoTransparent(() -> EditorModificationUtilEx.insertStringAtCaret(EditorImpl.this, composedString, false, false));
               composedRangeMarker = myDocument.createRangeMarker(getCaretModel().getOffset(), getCaretModel().getOffset() + composedString.length(), true);
