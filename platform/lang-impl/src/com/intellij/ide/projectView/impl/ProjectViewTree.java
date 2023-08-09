@@ -3,13 +3,12 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
 import com.intellij.toolWindow.InternalDecoratorImpl;
@@ -76,7 +75,7 @@ public class ProjectViewTree extends DnDAwareTree implements SpeedSearchSupply.S
     });
     ClientProperty.put(this, DefaultTreeUI.AUTO_EXPAND_FILTER, node -> {
       var obj = TreeUtil.getUserObject(node);
-      if (obj instanceof ProjectViewNode<?> pvNode) {
+      if (obj instanceof BasePsiNode<?> pvNode) {
         var file = pvNode.getVirtualFile();
         return file != null && !file.isDirectory(); // true means "don't expand", so we only auto-expand directories
       }
