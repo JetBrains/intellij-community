@@ -2,10 +2,10 @@
 package com.intellij.platform.feedback
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.platform.feedback.impl.notification.RequestFeedbackNotification
 import kotlinx.datetime.LocalDate
+import org.jetbrains.annotations.Nls
 
 /**
  * Represents the base config for feedback survey.
@@ -62,7 +62,7 @@ interface FeedbackSurveyConfig {
   /**
    * Returns the label for the response action that will be shown in the notification.
    */
-  @NlsSafe
+  @Nls
   fun getRespondNotificationActionLabel(): String {
     return CommonFeedbackBundle.message("notification.request.feedback.action.respond.text")
   }
@@ -70,7 +70,7 @@ interface FeedbackSurveyConfig {
   /**
    * Returns the label for the `Don't show again` action that will be shown in the notification.
    */
-  @NlsSafe
+  @Nls
   fun getCancelNotificationActionLabel(): String {
     return CommonFeedbackBundle.message("notification.request.feedback.action.dont.show.text")
   }

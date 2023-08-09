@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.feedback.impl
 
+import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -14,18 +15,20 @@ import kotlin.random.Random
 class IdleFeedbackResolver {
   companion object {
     @JvmStatic
-    fun getInstance(): IdleFeedbackResolver = service()
+    internal fun getInstance(): IdleFeedbackResolver = service()
 
     private val IDLE_FEEDBACK_SURVEY = ExtensionPointName<FeedbackSurvey>("com.intellij.feedback.idleFeedbackSurvey")
 
-    fun getJbIdleFeedbackSurveyExtensionList(): List<FeedbackSurvey> {
+    internal fun getJbIdleFeedbackSurveyExtensionList(): List<FeedbackSurvey> {
       return IDLE_FEEDBACK_SURVEY.extensionList.filter {
-        it.getPluginDescriptor()?.vendor?.equals("JetBrains") ?: true
+        val pluginDescriptor = it.getPluginDescriptor() ?: return@filter false
+        val pluginInfo = getPluginInfoByDescriptor(pluginDescriptor)
+        pluginInfo.isDevelopedByJetBrains()
       }
     }
   }
 
-  fun showFeedbackNotification(project: Project?) {
+  internal fun showFeedbackNotification(project: Project?) {
     if (!DontShowAgainFeedbackService.checkIsAllowedToShowFeedback() ||
         !Registry.`is`("platform.feedback", true) ||
         project == null) {

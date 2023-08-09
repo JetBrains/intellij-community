@@ -23,19 +23,19 @@ abstract class FeedbackSurvey : PluginAware {
     this.pluginDescriptor = pluginDescriptor
   }
 
-  fun getFeedbackSurveyId(): String {
+  internal fun getFeedbackSurveyId(): String {
     return feedbackSurveyType.getFeedbackSurveyId()
   }
 
-  fun getPluginDescriptor(): PluginDescriptor? {
+  internal fun getPluginDescriptor(): PluginDescriptor? {
     return pluginDescriptor
   }
 
-  fun isSuitableToShow(project: Project): Boolean {
+  internal fun isSuitableToShow(project: Project): Boolean {
     return feedbackSurveyType.isSuitableToShow(project)
   }
 
-  fun showNotification(project: Project, forTest: Boolean = false) {
+  internal fun showNotification(project: Project, forTest: Boolean = false) {
     feedbackSurveyType.showNotification(project, forTest)
   }
 }
