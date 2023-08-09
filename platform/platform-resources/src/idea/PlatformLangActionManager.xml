@@ -74,7 +74,7 @@
       <action id="ProblemsView.QuickFixes"
               icon="AllIcons.Actions.IntentionBulb"
               use-shortcut-of="ShowIntentionActions"
-              class="com.intellij.analysis.problemsView.toolWindow.ShowQuickFixesAction"/>
+              class="com.intellij.analysis.problemsView.toolWindow.ShowProblemsViewQuickFixesAction"/>
       <reference ref="ProblemsView.ShowPreview"/>
       <reference ref="ExpandAll"/>
       <reference ref="CollapseAll"/>
