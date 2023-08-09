@@ -598,8 +598,12 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
 
   @Override
   public void onModelChanged() {
+    boolean updateEmptyModel = myListModel.getSize() == 0;
     myListModel.syncModel();
-    selectFirstSelectableItem();
+    if (updateEmptyModel) {
+      selectFirstSelectableItem();
+      pack(true, true);
+    }
   }
 
   private enum ExtendMode {
