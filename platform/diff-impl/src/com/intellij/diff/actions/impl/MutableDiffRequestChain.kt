@@ -124,6 +124,7 @@ class MutableDiffRequestChain(
           chain.baseTitle = title
         }
       }
+      chain.windowTitle = null
     }
 
     fun fireRequestUpdated() {
