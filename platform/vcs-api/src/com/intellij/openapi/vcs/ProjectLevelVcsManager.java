@@ -63,7 +63,7 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract boolean checkAllFilesAreUnder(AbstractVcs abstractVcs, VirtualFile[] files);
 
-  public abstract @NotNull @NlsSafe String getShortNameForVcsRoot(@Nullable VirtualFile file);
+  public abstract @NotNull @NlsSafe String getShortNameForVcsRoot(@NotNull VirtualFile file);
 
   /**
    * Returns the VCS managing the specified file.
