@@ -10,6 +10,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
@@ -137,6 +138,7 @@ public abstract class MavenImporter {
   /**
    * Import pre process callback.
    */
+  @RequiresWriteLock
   public void preProcess(Module module,
                          MavenProject mavenProject,
                          MavenProjectChanges changes,
@@ -147,6 +149,7 @@ public abstract class MavenImporter {
    *
    * @param postTasks is deprecated, use {@link org.jetbrains.idea.maven.project.MavenImportListener} instead
    */
+  @RequiresWriteLock
   public void process(@NotNull IdeModifiableModelsProvider modifiableModelsProvider,
                       @NotNull Module module,
                       @NotNull MavenRootModelAdapter rootModel,
@@ -160,6 +163,7 @@ public abstract class MavenImporter {
   /**
    * Import post process callback.
    */
+  @RequiresWriteLock
   public void postProcess(Module module,
                           MavenProject mavenProject,
                           MavenProjectChanges changes,

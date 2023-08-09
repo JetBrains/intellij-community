@@ -8,15 +8,12 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.readAction
-import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -91,17 +88,8 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         changes: MavenProjectChanges,
         modifiableModelsProvider: IdeModifiableModelsProvider
     ) {
-        if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-            // We are in legacy import mode, under write action.
-            KotlinJpsPluginSettings.getInstance(module.project).dropExplicitVersion()
-        } else {
-            // We are in workspace import mode, on BGT.
-            runBlockingCancellable {
-                writeAction {
-                    KotlinJpsPluginSettings.getInstance(module.project).dropExplicitVersion()
-                }
-            }
-        }
+        KotlinJpsPluginSettings.getInstance(module.project).dropExplicitVersion()
+
         module.project.putUserData(KOTLIN_JVM_TARGET_6_NOTIFICATION_DISPLAYED, null)
         module.project.putUserData(KOTLIN_JPS_VERSION_ACCUMULATOR, null)
     }
@@ -197,8 +185,10 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         val toBeDownloaded = artifacts.filter { it.libraryName in libraryNames }
 
         if (toBeDownloaded.isNotEmpty()) {
-            MavenProjectsManager.getInstance(module.project)
-                .downloadArtifactsSync(listOf(mavenProject), toBeDownloaded, true, false)
+            val manager = MavenProjectsManager.getInstance(module.project)
+            ApplicationManager.getApplication().executeOnPooledThread {
+                manager.downloadArtifactsSync(listOf(mavenProject), toBeDownloaded, true, false)
+            }
         }
     }
 
@@ -508,32 +498,14 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         }.distinct()
 
     private fun setImplementedModuleName(kotlinFacet: KotlinFacet, mavenProject: MavenProject, module: Module) {
-        if (ApplicationManager.getApplication().isWriteAccessAllowed) {
-            // We are in legacy import mode, under write action.
-            if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) {
-                kotlinFacet.configuration.settings.implementedModuleNames = emptyList()
-            } else {
-                val manager = MavenProjectsManager.getInstance(module.project)
-                val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
-                val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
-
-                kotlinFacet.configuration.settings.implementedModuleNames = implemented.map { manager.findModule(it)?.name ?: it.displayName }
-            }
+        if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) {
+            kotlinFacet.configuration.settings.implementedModuleNames = emptyList()
         } else {
-            // We are in workspace import mode, on BGT.
-            runBlockingCancellable {
-                val names = readAction {
-                    if (kotlinFacet.configuration.settings.targetPlatform.isCommon()) return@readAction emptyList()
-                    val manager = MavenProjectsManager.getInstance(module.project)
-                    val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
-                    val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
-                    implemented.map { manager.findModule(it)?.name ?: it.displayName }
-                }
+            val manager = MavenProjectsManager.getInstance(module.project)
+            val mavenDependencies = mavenProject.dependencies.mapNotNull { manager?.findProject(it) }
+            val implemented = mavenDependencies.filter { detectPlatformByExecutions(it).isCommon }
 
-                writeAction {
-                    kotlinFacet.configuration.settings.implementedModuleNames = names
-                }
-            }
+            kotlinFacet.configuration.settings.implementedModuleNames = implemented.map { manager.findModule(it)?.name ?: it.displayName }
         }
     }
 }
