@@ -34,8 +34,8 @@ import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggestionProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.psi.moveInsideParenthesesAndReplaceWith
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.utils.AddArgumentNamesUtils.getValueArgumentName
 import org.jetbrains.kotlin.idea.codeinsight.utils.ConvertToBlockBodyUtils
+import org.jetbrains.kotlin.idea.codeinsight.utils.NamedArgumentUtils
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.introduce.IntroduceRefactoringException
@@ -88,7 +88,7 @@ object KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     val functionLiteralArgument = expressionToReplace.getStrictParentOfType<KtLambdaArgument>()!!
                     val argumentName =
                         analyzeInModalWindow(expressionToReplace, KotlinBundle.message("find.usages.prepare.dialog.progress")) {
-                            functionLiteralArgument.getValueArgumentName()
+                            NamedArgumentUtils.getStableNameFor(functionLiteralArgument)
                         }
                     val newCallExpression = functionLiteralArgument.moveInsideParenthesesAndReplaceWith(replacement, argumentName)
                     newCallExpression.valueArguments.last().getArgumentExpression()!!

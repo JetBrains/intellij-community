@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getPrevSiblingIgnoringWhitespace
 
-object AddArgumentNamesUtils {
+object NamedArgumentUtils {
     fun addArgumentName(element: KtValueArgument, argumentName: Name) {
         val argumentExpression = element.getArgumentExpression() ?: return
 
@@ -37,7 +37,41 @@ object AddArgumentNamesUtils {
         }
     }
 
-    private fun getArgumentNameIfCanBeUsedForCalls(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
+    /**
+     * Associates each argument of [call] with its argument name if `argumentName = argument` is valid for all arguments. Optionally,
+     * starts at [startArgument] if it's not `null`.
+     */
+    context(KtAnalysisSession)
+    fun associateArgumentNamesStartingAt(
+        call: KtCallElement,
+        startArgument: KtValueArgument?
+    ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
+        val resolvedCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        if (!resolvedCall.symbol.hasStableParameterNames) {
+            return null
+        }
+
+        val arguments = call.valueArgumentList?.arguments ?: return null
+        val argumentsExcludingPrevious = if (startArgument != null) arguments.dropWhile { it != startArgument } else arguments
+        return argumentsExcludingPrevious
+            .associateWith { getNameForNameableArgument(it, resolvedCall) ?: return null }
+            .mapKeys { it.key.createSmartPointer() }
+    }
+
+    /**
+     * Returns the name of the value argument if it can be used for calls.
+     * The method also works for [argument] that is [KtLambdaArgument], since
+     * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
+     */
+    context(KtAnalysisSession)
+    fun getStableNameFor(argument: KtValueArgument): Name? {
+        val callElement = getCallElement(argument) ?: return null
+        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
+        if (!resolvedCall.symbol.hasStableParameterNames) return null
+        return getNameForNameableArgument(argument, resolvedCall)
+    }
+
+    private fun getNameForNameableArgument(argument: KtValueArgument, resolvedCall: KtFunctionCall<*>): Name? {
         val valueParameterSymbol = resolvedCall.argumentMapping[argument.getArgumentExpression()]?.symbol ?: return null
         if (valueParameterSymbol.isVararg) {
             if (argument.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitAssigningSingleElementsToVarargsInNamedForm) &&
@@ -59,39 +93,5 @@ object AddArgumentNamesUtils {
         }
 
         return valueParameterSymbol.name
-    }
-
-    /**
-     * Associates each argument of [call] with its argument name if `argumentName = argument` is valid for all arguments. Optionally,
-     * starts at [startArgument] if it's not `null`.
-     */
-    context(KtAnalysisSession)
-    fun associateArgumentNamesStartingAt(
-        call: KtCallElement,
-        startArgument: KtValueArgument?
-    ): Map<SmartPsiElementPointer<KtValueArgument>, Name>? {
-        val resolvedCall = call.resolveCall()?.singleFunctionCallOrNull() ?: return null
-        if (!resolvedCall.symbol.hasStableParameterNames) {
-            return null
-        }
-
-        val arguments = call.valueArgumentList?.arguments ?: return null
-        val argumentsExcludingPrevious = if (startArgument != null) arguments.dropWhile { it != startArgument } else arguments
-        return argumentsExcludingPrevious
-            .associateWith { getArgumentNameIfCanBeUsedForCalls(it, resolvedCall) ?: return null }
-            .mapKeys { it.key.createSmartPointer() }
-    }
-
-    /**
-     * Returns the name of the value argument if it can be used for calls.
-     * The method also works for [KtValueArgument] that is [KtLambdaArgument], since
-     * the argument name can be used after moving [KtLambdaArgument] inside parentheses.
-     */
-    context(KtAnalysisSession)
-    fun KtValueArgument.getValueArgumentName(): Name? {
-        val callElement = getCallElement(this) ?: return null
-        val resolvedCall = callElement.resolveCall()?.singleFunctionCallOrNull() ?: return null
-        if (!resolvedCall.symbol.hasStableParameterNames) return null
-        return getArgumentNameIfCanBeUsedForCalls(this, resolvedCall)
     }
 }
