@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.listCellRenderer.impl
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.dsl.UiDslException
-import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -62,26 +61,6 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     }
     val result = LcrTextImpl(initParams)
     add(result, initParams, true)
-    return result
-  }
-
-  override fun cell(component: JComponent, init: (LcrCellInitParams.() -> Unit)?): LcrCell {
-    val initParams = LcrCellInitParamsImpl()
-    if (init != null) {
-      initParams.init()
-    }
-
-    if (initParams.stripHorizontalInsets) {
-      stripHorizontalInsets(component)
-    }
-    else {
-      component.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGaps.EMPTY)
-    }
-
-    component.isOpaque = initParams.opaque
-
-    val result = LcrCellImpl(component)
-    add(result, initParams, isBaselineComponent(component))
     return result
   }
 

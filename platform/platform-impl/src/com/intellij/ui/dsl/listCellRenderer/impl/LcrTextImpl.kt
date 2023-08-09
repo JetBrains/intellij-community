@@ -18,8 +18,6 @@ internal class LcrTextImpl(private val initParams: LcrTextInitParamsImpl) : LcrC
   override val component: JLabel = JLabel()
 
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
-    super.init(list, isSelected, cellHasFocus)
-
     // Restore default font, so IDE scaling is applied as well
     component.font = UIManager.getFont("Label.font")
     text = null

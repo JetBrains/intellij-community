@@ -13,8 +13,6 @@ internal class LcrIconImpl : LcrCellBaseImpl(), LcrIcon {
   override val component: JLabel = JLabel()
 
   override fun init(list: JList<*>, isSelected: Boolean, cellHasFocus: Boolean) {
-    super.init(list, isSelected, cellHasFocus)
-
     icon = null
   }
 

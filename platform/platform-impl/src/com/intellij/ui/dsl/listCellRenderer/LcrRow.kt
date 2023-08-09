@@ -2,7 +2,6 @@
 package com.intellij.ui.dsl.listCellRenderer
 
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
 
 @ApiStatus.Experimental
 @LcrDslMarker
@@ -17,11 +16,6 @@ interface LcrRow<T> {
    * Adds a cell with a text
    */
   fun text(init: (LcrTextInitParams.() -> Unit)? = null): LcrText
-
-  /**
-   * Adds a cell with custom component. Should be used only if standard methods like [icon] or [text] don't fit your needs
-   */
-  fun cell(component: JComponent, init: (LcrCellInitParams.() -> Unit)? = null): LcrCell
 
   /**
    * Register a renderer

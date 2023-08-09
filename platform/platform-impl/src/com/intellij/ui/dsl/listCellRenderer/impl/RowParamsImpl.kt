@@ -6,17 +6,9 @@ import com.intellij.ui.dsl.listCellRenderer.RowParams
 import com.intellij.ui.popup.list.SelectablePanel
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
-import java.awt.Component
-import javax.swing.border.Border
 
 @ApiStatus.Internal
 internal class RowParamsImpl(private val selectablePanel: SelectablePanel) : RowParams {
-
-  override var border: Border?
-    get() = selectablePanel.border
-    set(value) {
-      selectablePanel.border = value
-    }
 
   override var background: Color?
     get() = if (ExperimentalUI.isNewUI()) selectablePanel.selectionColor else selectablePanel.background
@@ -27,11 +19,5 @@ internal class RowParamsImpl(private val selectablePanel: SelectablePanel) : Row
       else {
         selectablePanel.background = value
       }
-    }
-
-  override var accessibleContextProvider: Component?
-    get() = selectablePanel.accessibleContextProvider
-    set(value) {
-      selectablePanel.accessibleContextProvider = value
     }
 }
