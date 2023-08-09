@@ -342,6 +342,27 @@ public final class Iterators {
     return (BooleanFunction<T>)NOT_NULL_FILTER;
   }
 
+  public static <T> boolean equals(Iterable<? extends T> s1, Iterable<? extends T> s2) {
+    Iterator<? extends T> it2 = s2.iterator();
+    for (T elem : s1) {
+      if (!it2.hasNext()) {
+        return false;
+      }
+      if (!elem.equals(it2.next())) {
+        return false;
+      }
+    }
+    return !it2.hasNext();
+  }
+
+  public static <T> int hashCode(Iterable<? extends T> s) {
+    int result = 1;
+    for (T elem : s) {
+      result = 31 * result + (elem == null? 0 : elem.hashCode());
+    }
+    return result;
+  }
+
   private static abstract class BaseIterator<T> implements Iterator<T> {
     @Override
     public void remove() {
