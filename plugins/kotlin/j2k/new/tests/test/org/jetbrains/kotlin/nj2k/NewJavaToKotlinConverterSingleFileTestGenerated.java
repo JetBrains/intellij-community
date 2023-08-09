@@ -2850,6 +2850,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/identifier/keywords.java");
         }
 
+        @TestMetadata("underscores.java")
+        public void testUnderscores() throws Exception {
+            runTest("testData/newJ2k/identifier/underscores.java");
+        }
+
         @TestMetadata("withDollar.java")
         public void testWithDollar() throws Exception {
             runTest("testData/newJ2k/identifier/withDollar.java");
