@@ -524,6 +524,7 @@ public final class NewMappings implements Disposable {
       Disposer.dispose(myFilePointerDisposable);
       myMappings = Collections.emptyList();
       myMappedRoots = Collections.emptyList();
+      myMappedRootsMapping = new RootMapping(Collections.emptyList());
       myFilePointerDisposable = Disposer.newDisposable();
       activator = createVcsActivator();
     }
