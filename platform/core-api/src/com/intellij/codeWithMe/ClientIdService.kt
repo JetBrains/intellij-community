@@ -6,7 +6,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceOrNull
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 
+@ScheduledForRemoval
+@Deprecated("The only purpose of this service is `isValid` method this should also be eliminated ASAP")
 interface ClientIdService {
   companion object {
     fun tryGetInstance(): ClientIdService? {
@@ -22,13 +25,5 @@ interface ClientIdService {
     }
   }
 
-  var clientIdValue: String?
-
-  val checkLongActivity: Boolean
-
   fun isValid(clientId: ClientId?): Boolean
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use create a per-client service that implements disposable to get proper disposable associated with the client id")
-  fun toDisposable(clientId: ClientId?): Disposable
 }
