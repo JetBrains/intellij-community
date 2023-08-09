@@ -40,7 +40,7 @@ import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.commit.CommitStatusPanel
 import com.intellij.vcs.commit.CommitWorkflowListener
-import com.intellij.vcs.commit.EditedCommitNode
+import com.intellij.vcs.commit.insertEditedCommitNode
 import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.ProgressStripe
@@ -320,10 +320,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun customizeTreeModel(builder: TreeModelBuilder) {
       super.customizeTreeModel(builder)
 
-      commitPanel.editedCommit?.let {
-        val commitNode = EditedCommitNode(it)
-        builder.insertSubtreeRoot(commitNode)
-        builder.insertChanges(it.commit.changes, commitNode)
+      commitPanel.editedCommit?.let { editedCommit ->
+        insertEditedCommitNode(builder, editedCommit)
       }
     }
 

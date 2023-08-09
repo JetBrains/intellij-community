@@ -14,7 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.DisposableWrapperList
 import com.intellij.util.ui.JBUI.Borders.empty
 import com.intellij.vcs.commit.CommitProgressPanel
-import com.intellij.vcs.commit.EditedCommitDetails
+import com.intellij.vcs.commit.EditedCommitPresentation
 import com.intellij.vcs.commit.NonModalCommitPanel
 import git4idea.i18n.GitBundle
 import git4idea.index.ContentVersion
@@ -54,7 +54,7 @@ class GitStageCommitPanel(project: Project) : NonModalCommitPanel(project) {
   val isCommitAll get() = state.isCommitAll
 
   private val editedCommitListeners = DisposableWrapperList<() -> Unit>()
-  override var editedCommit: EditedCommitDetails? by observable(null) { _, _, _ ->
+  override var editedCommit: EditedCommitPresentation? by observable(null) { _, _, _ ->
     editedCommitListeners.forEach { it() }
   }
 
