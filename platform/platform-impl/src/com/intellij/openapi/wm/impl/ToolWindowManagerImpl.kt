@@ -538,7 +538,7 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
     }
   }
 
-  internal suspend fun initToolWindow(bean: ToolWindowEP, plugin: PluginDescriptor) {
+  suspend fun initToolWindow(bean: ToolWindowEP, plugin: PluginDescriptor) {
     val condition = bean.getCondition(plugin)
     if (condition != null && !condition.value(project)) {
       return
