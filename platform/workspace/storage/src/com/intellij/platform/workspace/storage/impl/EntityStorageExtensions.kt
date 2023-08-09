@@ -9,146 +9,71 @@ import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 // ------------------------- Updating references ------------------------
 
 // This is actually "replace children"
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
                                                   parent: WorkspaceEntity,
                                                   children: List<WorkspaceEntity>) {
-  this as MutableEntityStorageImpl
-  val parentId = (parent as WorkspaceEntityBase).id
-  val childrenIds = children.map { (it as WorkspaceEntityBase).id.asChild() }
-  if (!connectionId.isParentNullable) {
-    val existingChildren = extractOneToManyChildrenIds(connectionId, parentId).toHashSet()
-    childrenIds.forEach {
-      existingChildren.remove(it.id)
-    }
-    existingChildren.forEach { removeEntityByEntityId(it) }
-  }
-
-  childrenIds.forEach { checkCircularDependency(connectionId, it.id.arrayId, parentId.arrayId, this) }
-  refs.replaceOneToManyChildrenOfParent(connectionId, parentId.arrayId, childrenIds)
+  this.mutable.instrumentation.replaceChildren(connectionId, parent, children)
 }
 
 
 // This is actually "replace children"
 // TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
 //    This is probably a bug.
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
                                                           parentEntity: WorkspaceEntity,
                                                           childrenEntity: Sequence<WorkspaceEntity>) {
-  this as MutableEntityStorageImpl
-  val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
-  val childrenIds = childrenEntity.map { (it as WorkspaceEntityBase).id.asChild() }
-  childrenIds.forEach { checkCircularDependency(it.id, parentId.id, this) }
-  refs.replaceOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
+  this.mutable.instrumentation.replaceChildren(connectionId, parentEntity, childrenEntity.toList())
 }
 
-@Suppress("unused")
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun EntityStorage.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId,
                                                       parentEntity: WorkspaceEntity,
                                                       childEntity: WorkspaceEntity?) {
-  this as MutableEntityStorageImpl
-
-  val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
-  val childId = (childEntity as? WorkspaceEntityBase)?.id?.asChild()
-  if (childId != null) {
-    refs.replaceOneToAbstractOneChildOfParent(connectionId, parentId, childId)
-  }
-  else {
-    refs.removeOneToAbstractOneRefByParent(connectionId, parentId)
-  }
+  this.mutable.instrumentation.replaceChildren(connectionId, parentEntity, listOfNotNull(childEntity))
 }
 
-@Suppress("unused")
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parentEntity: WorkspaceEntity,
                                               childEntity: WorkspaceEntity?) {
-  this as MutableEntityStorageImpl
-  val parentId = (parentEntity as WorkspaceEntityBase).id
-  val childId = (childEntity as? WorkspaceEntityBase)?.id?.asChild()
-  val existingChildId = extractOneToOneChildIds(connectionId, parentId)
-  if (!connectionId.isParentNullable && existingChildId != null && (childId == null || childId.id != existingChildId)) {
-    removeEntityByEntityId(existingChildId)
-  }
-  if (childId != null) {
-    checkCircularDependency(connectionId, childId.id.arrayId, parentId.arrayId, this)
-    refs.replaceOneToOneChildOfParent(connectionId, parentId.arrayId, childId)
-  }
-  else {
-    refs.removeOneToOneRefByParent(connectionId, parentId.arrayId)
-  }
+  this.mutable.instrumentation.replaceChildren(connectionId, parentEntity, listOfNotNull(childEntity))
 }
 
-@Suppress("unused")
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.updateOneToManyParentOfChild(connectionId: ConnectionId,
                                                                           childEntity: WorkspaceEntity,
                                                                           parentEntity: Parent?) {
-  this as MutableEntityStorageImpl
-  val childId = (childEntity as WorkspaceEntityBase).id.asChild()
-  val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
-  if (parentId != null) {
-    checkCircularDependency(connectionId, childId.id.arrayId, parentId.id.arrayId, this)
-    refs.replaceOneToManyParentOfChild(connectionId, childId.id.arrayId, parentId)
-  }
-  else {
-    refs.removeOneToManyRefsByChild(connectionId, childId.id.arrayId)
-  }
+  this.mutable.instrumentation.addChild(connectionId, parentEntity, childEntity)
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractManyParentOfChild(connectionId: ConnectionId,
                                                                                   child: WorkspaceEntity,
                                                                                   parent: Parent?) {
-  this as MutableEntityStorageImpl
-  val childId = (child as WorkspaceEntityBase).id.asChild()
-  val parentId = (parent as? WorkspaceEntityBase)?.id?.asParent()
-  if (parentId != null) {
-    checkCircularDependency(childId.id, parentId.id, this)
-    refs.replaceOneToAbstractManyParentOfChild(connectionId, childId, parentId)
-  }
-  else {
-    refs.removeOneToAbstractManyRefsByChild(connectionId, childId)
-  }
+  this.mutable.instrumentation.addChild(connectionId, parent, child)
 }
 
-@Suppress("unused")
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.updateOneToOneParentOfChild(connectionId: ConnectionId,
                                                                          childEntity: WorkspaceEntity,
                                                                          parentEntity: Parent?) {
-  this as MutableEntityStorageImpl
-  val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
-  val childId = (childEntity as WorkspaceEntityBase).id
-  if (!connectionId.isParentNullable && parentId != null) {
-    // If we replace a field in one-to-one connection, the previous entity is automatically removed.
-    val existingChild = extractOneToOneChild<WorkspaceEntityBase>(connectionId, parentEntity)
-    if (existingChild != null && existingChild != childEntity) {
-      removeEntity(existingChild)
-    }
-  }
-  if (parentId != null) {
-    checkCircularDependency(connectionId, childId.arrayId, parentId.id.arrayId, this)
-    refs.replaceOneToOneParentOfChild(connectionId, childId.arrayId, parentId.id)
-  }
-  else {
-    refs.removeOneToOneRefByChild(connectionId, childId.arrayId)
-  }
+  this.mutable.instrumentation.addChild(connectionId, parentEntity, childEntity)
 }
 
+@OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractOneParentOfChild(connectionId: ConnectionId,
                                                                                  childEntity: WorkspaceEntity, parentEntity: Parent?
 ) {
-  this as MutableEntityStorageImpl
-  val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
-  val childId = (childEntity as WorkspaceEntityBase).id.asChild()
-  if (!connectionId.isParentNullable && parentId != null) {
-    // If we replace a field in one-to-one connection, the previous entity is automatically removed.
-    val existingChild = getOneChild(connectionId, parentEntity)
-    if (existingChild != null && existingChild != childEntity) {
-      removeEntity(existingChild)
-    }
-  }
-  if (parentId != null) {
-    refs.replaceOneToAbstractOneParentOfChild(connectionId, childId, parentId)
-  }
-  else {
-    refs.removeOneToAbstractOneRefByChild(connectionId, childId)
-  }
+  this.mutable.instrumentation.addChild(connectionId, parentEntity, childEntity)
 }
 
 // ------------------------- Extracting references references ------------------------
@@ -162,22 +87,15 @@ fun <Child : WorkspaceEntity> EntityStorage.extractOneToManyChildren(connectionI
   return this.instrumentation.getManyChildren(connectionId, parent) as Sequence<Child>
 }
 
-internal fun AbstractEntityStorage.extractOneToManyChildrenIds(connectionId: ConnectionId, parentId: EntityId): Sequence<EntityId> {
-  return refs.getOneToManyChildren(connectionId, parentId.arrayId)?.map { createEntityId(it, connectionId.childClass) } ?: emptySequence()
-}
-
-internal fun AbstractEntityStorage.extractOneToOneChildIds(connectionId: ConnectionId, parentId: EntityId): EntityId? {
-  return refs.getOneToOneChild(connectionId, parentId.arrayId)?.let { createEntityId(it, connectionId.childClass) } ?: return null
-}
-
 @OptIn(EntityStorageInstrumentationApi::class)
-@Suppress("unused")
+@Deprecated("Use the method from the instrumentation API")
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractManyChildren(connectionId: ConnectionId,
                                                                              parent: WorkspaceEntity): Sequence<Child> {
   return this.instrumentation.getManyChildren(connectionId, parent) as Sequence<Child>
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractManyParent(
   connectionId: ConnectionId,
   child: WorkspaceEntity
@@ -196,7 +114,7 @@ fun <Child : WorkspaceEntity> EntityStorage.extractOneToAbstractOneChild(connect
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-@Suppress("unused")
+@Deprecated("Use the method from the instrumentation API")
 fun <Child : WorkspaceEntity> EntityStorage.extractOneToOneChild(connectionId: ConnectionId, parent: WorkspaceEntity): Child? {
   return this.instrumentation.getOneChild(connectionId, parent) as? Child
 }
@@ -222,13 +140,14 @@ internal fun <Child : WorkspaceEntity> AbstractEntityStorage.extractOneToOneChil
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-@Suppress("unused")
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToOneParent(connectionId: ConnectionId,
                                                                    child: WorkspaceEntity): Parent? {
   return this.instrumentation.getParent(connectionId, child) as? Parent
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractOneParent(
   connectionId: ConnectionId,
   child: WorkspaceEntity,
@@ -237,7 +156,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.extractOneToAbstractOneParent(
 }
 
 @OptIn(EntityStorageInstrumentationApi::class)
-@Suppress("unused")
+@Deprecated("Use the method from the instrumentation API")
 fun <Parent : WorkspaceEntity> EntityStorage.extractOneToManyParent(connectionId: ConnectionId,
                                                                     child: WorkspaceEntity): Parent? {
   return this.instrumentation.getParent(connectionId, child) as? Parent
