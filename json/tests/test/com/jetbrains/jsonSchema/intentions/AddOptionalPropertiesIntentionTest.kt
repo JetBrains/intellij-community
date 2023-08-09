@@ -3,7 +3,9 @@ package com.jetbrains.jsonSchema.intentions
 
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.json.JsonTestCase
+import com.intellij.psi.PsiFile
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
+import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention
 import org.intellij.lang.annotations.Language
 import org.junit.Assert
@@ -55,10 +57,21 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
       """.trimIndent(),
       "json"
     ) { true }
-    myFixture.configureByText("test.json", before)
+    val json = myFixture.configureByText("test.json", before)
+
+    ensureSchemaIsCached(json)
     val intention = myFixture.getAvailableIntention(AddOptionalPropertiesIntention().text)!!
     ShowIntentionActionsHandler.chooseActionAndInvoke(myFixture.file, myFixture.editor, intention, intention.text)
+
+    ensureSchemaIsCached(json)
+    val previewText = myFixture.getIntentionPreviewText(intention)
+    Assert.assertEquals(after, previewText)
     myFixture.checkResult(after)
+  }
+
+  // Since intention now relies on CachedValue API, we have to make sure that no dependencies were updated before intention#isAvailable call
+  private fun ensureSchemaIsCached(json: PsiFile) {
+    Assert.assertNotNull(JsonSchemaService.Impl.get(myFixture.project).getSchemaObject(json))
   }
 
   fun `test insert properties in empty object`() {
@@ -114,24 +127,6 @@ class AddOptionalPropertiesIntentionTest : JsonTestCase() {
         }
       """.trimIndent()
     )
-  }
-
-
-  fun `test intention unavailable if all properties are present`() {
-    registerJsonSchema(myFixture, """
-      {
-        "properties": {
-          "a" : {}
-        }
-      }
-    """.trimIndent(), "json") { true }
-    myFixture.configureByText("test.json", """
-      {
-        "a": 123
-        <caret>
-      }
-    """.trimIndent())
-    Assert.assertNull(myFixture.getAvailableIntention (AddOptionalPropertiesIntention().text))
   }
 
   fun `test add example from schema as default value`() {

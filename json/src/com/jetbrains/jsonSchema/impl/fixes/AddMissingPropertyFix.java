@@ -116,44 +116,44 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix {
     if (node == null) return null;
     PsiElement element = node instanceof PsiFile ? node.getFirstChild() : node;
     Ref<PsiElement> newElementRef = Ref.create(null);
+    WriteAction.run(() -> { performFixInner(hadComma, element, newElementRef); });
+    return newElementRef.get();
+  }
 
-    WriteAction.run(() -> {
-      boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
-      PsiElement processedElement = element;
-      List<JsonValidationError.MissingPropertyIssueData> reverseOrder
-        = ContainerUtil.reverse(new ArrayList<>(myData.myMissingPropertyIssues));
-      for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
-        Object defaultValueObject = issue.defaultValue;
-        String defaultValue = formatDefaultValue(defaultValueObject, element.getLanguage());
-        PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
-                                                                                   ? myQuickFixAdapter
-                                                                                     .getDefaultValueFromType(issue.propertyType)
-                                                                                   : defaultValue, element);
-        PsiElement newElement;
-        if (processedElement instanceof LeafPsiElement) {
-          newElement = myQuickFixAdapter.adjustPropertyAnchor((LeafPsiElement)processedElement).addBefore(property, null);
+  public void performFixInner(@NotNull Ref<Boolean> hadComma, PsiElement element, Ref<PsiElement> newElementRef) {
+    boolean isSingle = myData.myMissingPropertyIssues.size() == 1;
+    PsiElement processedElement = element;
+    List<JsonValidationError.MissingPropertyIssueData> reverseOrder
+      = ContainerUtil.reverse(new ArrayList<>(myData.myMissingPropertyIssues));
+    for (JsonValidationError.MissingPropertyIssueData issue: reverseOrder) {
+      Object defaultValueObject = issue.defaultValue;
+      String defaultValue = formatDefaultValue(defaultValueObject, element.getLanguage());
+      PsiElement property = myQuickFixAdapter.createProperty(issue.propertyName, defaultValue == null
+                                                                                 ? myQuickFixAdapter
+                                                                                   .getDefaultValueFromType(issue.propertyType)
+                                                                                 : defaultValue, element);
+      PsiElement newElement;
+      if (processedElement instanceof LeafPsiElement) {
+        newElement = myQuickFixAdapter.adjustPropertyAnchor((LeafPsiElement)processedElement).addBefore(property, null);
+      }
+      else {
+        if (processedElement == element) {
+          newElement = processedElement.addBefore(property, processedElement.getLastChild());
         }
         else {
-          if (processedElement == element) {
-            newElement = processedElement.addBefore(property, processedElement.getLastChild());
-          }
-          else {
-            newElement = processedElement.getParent().addBefore(property, processedElement);
-          }
-        }
-        PsiElement adjusted = myQuickFixAdapter.adjustNewProperty(newElement);
-        hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement)));
-        if (!hadComma.get()) {
-          hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted));
-        }
-        processedElement = adjusted;
-        if (isSingle) {
-          newElementRef.set(adjusted);
+          newElement = processedElement.getParent().addBefore(property, processedElement);
         }
       }
-     });
-
-    return newElementRef.get();
+      PsiElement adjusted = myQuickFixAdapter.adjustNewProperty(newElement);
+      hadComma.set(myQuickFixAdapter.ensureComma(adjusted, PsiTreeUtil.skipWhitespacesAndCommentsForward(newElement)));
+      if (!hadComma.get()) {
+        hadComma.set(processedElement == element && myQuickFixAdapter.ensureComma(PsiTreeUtil.skipWhitespacesAndCommentsBackward(newElement), adjusted));
+      }
+      processedElement = adjusted;
+      if (isSingle) {
+        newElementRef.set(adjusted);
+      }
+    }
   }
 
   @Nullable

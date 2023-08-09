@@ -260,6 +260,11 @@ public final class JsonCachedValues {
     return value == JsonSchemaObject.NULL_OBJ ? null : value;
   }
 
+  public static boolean hasComputedSchemaObjectForFile(@NotNull PsiFile file) {
+    CachedValue<JsonSchemaObject> data = CompletionUtil.getOriginalOrSelf(file).getUserData(OBJECT_FOR_FILE_KEY);
+    return data != null && data.hasUpToDateValue();
+  }
+
   private static @NotNull Pair<PsiFile, JsonSchemaObject> getSchemaFile(@NotNull PsiFile originalFile,
                                                                         @NotNull JsonSchemaService service) {
     VirtualFile virtualFile = originalFile.getVirtualFile();

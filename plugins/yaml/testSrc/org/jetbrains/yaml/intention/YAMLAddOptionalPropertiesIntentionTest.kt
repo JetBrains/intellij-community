@@ -2,8 +2,10 @@
 package org.jetbrains.yaml.intention
 
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
+import com.jetbrains.jsonSchema.ide.JsonSchemaService
 import com.jetbrains.jsonSchema.impl.fixes.AddOptionalPropertiesIntention
 import org.intellij.lang.annotations.Language
 import org.jetbrains.yaml.intentions.YAMLAddOptionalPropertiesIntention
@@ -58,12 +60,22 @@ class YAMLAddOptionalPropertiesIntentionTest : BasePlatformTestCase() {
     ) { true }
   }
 
+  private fun ensureSchemaIsCached(json: PsiFile) {
+    Assert.assertNotNull(JsonSchemaService.Impl.get(myFixture.project).getSchemaObject(json))
+  }
+
   private fun doTest(@Language("yaml") before: String, @Language("yaml") after: String) {
     addSchema()
 
-    myFixture.configureByText("test.yaml", before)
+    val yaml = myFixture.configureByText("test.yaml", before)
+    Assert.assertNotNull(JsonSchemaService.Impl.get(myFixture.project).getSchemaObject(yaml))
+    ensureSchemaIsCached(yaml)
     val intention = myFixture.findSingleIntention(YAMLAddOptionalPropertiesIntention().text)
     ShowIntentionActionsHandler.chooseActionAndInvoke(myFixture.file, myFixture.editor, intention, intention.text)
+
+    ensureSchemaIsCached(yaml)
+    val previewText = myFixture.getIntentionPreviewText(intention)
+    Assert.assertEquals(after, previewText)
     myFixture.checkResult(after)
   }
 
