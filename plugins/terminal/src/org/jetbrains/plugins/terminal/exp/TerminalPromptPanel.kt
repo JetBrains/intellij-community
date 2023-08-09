@@ -1,70 +1,50 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.exp
 
-import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.editor.Document
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.ui.LanguageTextField
-import com.intellij.util.SystemProperties
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.terminal.TerminalProjectOptionsProvider
+import org.jetbrains.plugins.terminal.exp.TerminalPromptController.PromptStateListener
 import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
-import org.jetbrains.plugins.terminal.util.ShellType
 import java.awt.Color
 import java.awt.Dimension
 import javax.swing.*
 
-class TerminalPromptPanel(private val project: Project,
-                          private val settings: JBTerminalSystemSettingsProviderBase,
-                          session: TerminalSession,
-                          private val commandExecutor: TerminalCommandExecutor) : JPanel(), ComponentContainer, ShellCommandListener {
-  private val editorTextField: LanguageTextField
+class TerminalPromptPanel(
+  private val project: Project,
+  private val settings: JBTerminalSystemSettingsProviderBase,
+  session: TerminalSession,
+  commandExecutor: TerminalCommandExecutor
+) : JPanel(), ComponentContainer, PromptStateListener {
+  val controller: TerminalPromptController
+
   private val editor: EditorImpl
-    get() = editorTextField.getEditor(true) as EditorImpl
-  private val document: Document
-    get() = editorTextField.document
-
   private val promptLabel: JLabel
-
-  private val completionManager: TerminalCompletionManager?
-
-  private val commandHistoryManager: CommandHistoryManager
   private val commandHistoryPresenter: CommandHistoryPresenter
 
   val charSize: Dimension
     get() = Dimension(editor.charHeight, editor.lineHeight)
 
   init {
-    editorTextField = createPromptTextField(session)
+    val editorTextField = createPromptTextField(session)
+    editor = editorTextField.getEditor(true) as EditorImpl
+    controller = TerminalPromptController(editor, session, commandExecutor)
+    controller.addListener(this)
 
     promptLabel = createPromptLabel()
-    promptLabel.text = computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
+    promptLabel.text = controller.computePromptText(TerminalProjectOptionsProvider.getInstance(project).startingDirectory ?: "")
 
-    completionManager = when (session.shellIntegration?.shellType) {
-      ShellType.ZSH -> ZshCompletionManager(session)
-      ShellType.BASH -> BashCompletionManager(session)
-      else -> null
-    }
-
-    commandHistoryManager = CommandHistoryManager(session)
     commandHistoryPresenter = CommandHistoryPresenter(project, editor, commandExecutor)
-
-    editor.putUserData(TerminalSession.KEY, session)
-    editor.putUserData(TerminalCompletionManager.KEY, completionManager)
-
-    session.addCommandListener(this)
 
     val innerBorder = JBUI.Borders.customLine(UIUtil.getTextFieldBackground(), 6, 0, 6, 0)
     val outerBorder = JBUI.Borders.customLineTop(JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
@@ -74,6 +54,22 @@ class TerminalPromptPanel(private val project: Project,
     add(promptLabel)
     add(Box.createRigidArea(JBDimension(0, 4)))
     add(editorTextField)
+  }
+
+  override fun promptLabelChanged(newText: @NlsSafe String) {
+    runInEdt { promptLabel.text = newText }
+  }
+
+  override fun commandHistoryStateChanged(showing: Boolean) {
+    if (showing) {
+      val history = controller.commandHistory
+      if (history.isNotEmpty()) {
+        commandHistoryPresenter.showCommandHistory(history)
+      }
+    }
+    else {
+      commandHistoryPresenter.onCommandHistoryClosed()
+    }
   }
 
   private fun createPromptTextField(session: TerminalSession): LanguageTextField {
@@ -100,7 +96,6 @@ class TerminalPromptPanel(private val project: Project,
       lineSpacing = settings.lineSpacing
     }
     editor.settings.isBlockCursor = true
-    editor.putUserData(KEY, this)  // to access this panel from editor action handlers
 
     return textField
   }
@@ -111,41 +106,6 @@ class TerminalPromptPanel(private val project: Project,
     label.border = JBUI.Borders.emptyLeft(JBUI.scale(LEFT_INSET))
     label.alignmentX = JComponent.LEFT_ALIGNMENT
     return label
-  }
-
-  override fun directoryChanged(newDirectory: @NlsSafe String) {
-    invokeLater {
-      promptLabel.text = computePromptText(newDirectory)
-    }
-  }
-
-  private fun computePromptText(directory: String): @NlsSafe String {
-    return if (directory != SystemProperties.getUserHome()) {
-      FileUtil.getLocationRelativeToUserHome(directory)
-    }
-    else "~"
-  }
-
-  @RequiresEdt
-  fun reset() {
-    runWriteAction {
-      document.setText("")
-    }
-  }
-
-  fun handleEnterPressed() {
-    commandExecutor.startCommandExecution(document.text)
-  }
-
-  fun showCommandHistory() {
-    val history = commandHistoryManager.history
-    if (history.isNotEmpty()) {
-      commandHistoryPresenter.showCommandHistory(history)
-    }
-  }
-
-  fun onCommandHistoryClosed() {
-    commandHistoryPresenter.onCommandHistoryClosed()
   }
 
   fun isFocused(): Boolean {
@@ -160,13 +120,9 @@ class TerminalPromptPanel(private val project: Project,
 
   override fun getPreferredFocusableComponent(): JComponent = editor.contentComponent
 
-  override fun dispose() {
-
-  }
+  override fun dispose() {}
 
   companion object {
-    val KEY: Key<TerminalPromptPanel> = Key.create("TerminalPromptPanel")
-
     private const val LEFT_INSET: Int = 7
   }
 }

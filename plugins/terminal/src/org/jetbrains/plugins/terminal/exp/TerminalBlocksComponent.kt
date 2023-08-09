@@ -84,7 +84,7 @@ class TerminalBlocksComponent(private val project: Project,
   fun resetPromptPanel() {
     runningPanel = null
 
-    promptPanel.reset()
+    promptPanel.controller.reset()
     promptPanel.isVisible = true
     revalidate()
     repaint()

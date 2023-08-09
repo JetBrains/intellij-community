@@ -18,7 +18,7 @@ import com.intellij.psi.PsiFile
  */
 class TerminalCompletionAutoPopupHandler : TypedHandlerDelegate() {
   override fun checkAutoPopup(charTyped: Char, project: Project, editor: Editor, file: PsiFile): Result {
-    if (editor.getUserData(TerminalPromptPanel.KEY) == null) {
+    if (editor.getUserData(TerminalPromptController.KEY) == null) {
       return Result.CONTINUE
     }
 

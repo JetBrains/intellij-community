@@ -10,11 +10,11 @@ import com.intellij.openapi.util.TextRange
 
 class TerminalEnterHandler(private val originalHandler: EditorActionHandler) : BaseEnterHandler() {
   override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
-    val promptPanel = editor.getUserData(TerminalPromptPanel.KEY)
-    if (promptPanel != null) {
+    val promptController = editor.getUserData(TerminalPromptController.KEY)
+    if (promptController != null) {
       val offset = editor.caretModel.offset
       if (offset == 0 || editor.document.getText(TextRange(offset - 1, offset)) != "\\") {
-        promptPanel.handleEnterPressed()
+        promptController.handleEnterPressed()
         return
       }
     }
@@ -22,6 +22,6 @@ class TerminalEnterHandler(private val originalHandler: EditorActionHandler) : B
   }
 
   override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
-    return editor.getUserData(TerminalPromptPanel.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
+    return editor.getUserData(TerminalPromptController.KEY) != null || originalHandler.isEnabled(editor, caret, dataContext)
   }
 }
