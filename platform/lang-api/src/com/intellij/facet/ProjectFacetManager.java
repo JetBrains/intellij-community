@@ -3,6 +3,7 @@ package com.intellij.facet;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,9 +17,11 @@ public abstract class ProjectFacetManager {
 
   public abstract boolean hasFacets(@NotNull FacetTypeId<?> typeId);
 
+  @RequiresReadLock
   public abstract <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId, final Module[] modules);
 
   @NotNull
+  @RequiresReadLock
   public abstract <F extends Facet<?>> List<F> getFacets(@NotNull FacetTypeId<F> typeId);
 
   @NotNull
