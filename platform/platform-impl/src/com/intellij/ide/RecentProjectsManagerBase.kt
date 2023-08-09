@@ -55,6 +55,7 @@ import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.LongAdder
@@ -747,7 +748,7 @@ int32 "extendedState"
     buffer.putInt(frameInfo.extendedState)
 
     buffer.flip()
-    Files.newByteChannel(infoFile.createParentDirectories()).use {
+    Files.newByteChannel(infoFile.createParentDirectories(), StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
       it.write(buffer)
     }
   }

@@ -35,6 +35,7 @@ import java.io.File
 import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardOpenOption
 import java.util.concurrent.TimeUnit
 
 private val LOG: Logger
@@ -157,7 +158,7 @@ private suspend fun logAndClearStats(projectName: String, perfFilePath: String?)
 
   if (perfFilePath != null) {
     LOG.info("StartUp Measurement report was written to: $perfFilePath")
-    Files.newByteChannel(Path.of(perfFilePath).createParentDirectories()).use {
+    Files.newByteChannel(Path.of(perfFilePath).createParentDirectories(), StandardOpenOption.WRITE, StandardOpenOption.CREATE).use {
       it.write(currentReport)
     }
     currentReport.flip()
