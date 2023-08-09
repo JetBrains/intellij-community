@@ -48,5 +48,8 @@
     <orderEntry type="module" module-name="kotlin.base.analysis-api.utils" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.project-configuration" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.facet" scope="TEST" />
   </component>
 </module>

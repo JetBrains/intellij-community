@@ -48,9 +48,10 @@ class KotlinFacetModificationTracker(project: Project) :
     override fun dispose() = Unit
 
     companion object {
-        fun FacetEntity.isKotlinFacet() = name == KotlinFacetType.NAME
 
         @JvmStatic
         fun getInstance(project: Project): KotlinFacetModificationTracker = project.service()
     }
 }
+
+fun FacetEntity.isKotlinFacet(): Boolean = name == KotlinFacetType.NAME

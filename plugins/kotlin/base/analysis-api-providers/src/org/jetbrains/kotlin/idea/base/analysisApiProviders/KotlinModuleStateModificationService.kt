@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.platform.workspace.jps.entities.ContentRootEntity
+import com.intellij.platform.workspace.jps.entities.FacetEntity
 import com.intellij.platform.workspace.jps.entities.LibraryEntity
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.SourceRootEntity
@@ -45,6 +46,8 @@ import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKtModule
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKtModulesForModificationEvents
+import org.jetbrains.kotlin.idea.facet.isKotlinFacet
+import org.jetbrains.kotlin.utils.alwaysTrue
 
 open class KotlinModuleStateModificationService(val project: Project) : Disposable {
     protected open fun mayBuiltinsHaveChanged(events: List<VFileEvent>): Boolean { return false }
@@ -173,29 +176,42 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     fun beforeWorkspaceModelChanged(event: VersionedStorageChange) {
         handleLibraryChanges(event)
 
-        // We keep track of the already invalidated modules because we don't need `handleContentRootInModuleChanges` to publish another
-        // module state modification event for the same module.
+        /**
+         * We keep track of the already invalidated modules because we don't need [handleChangesInsideModule] to publish another
+         * module state modification event for the same module.
+         */
         val alreadyInvalidatedModules = handleModuleChanges(event)
-        handleContentRootInModuleChanges(event, alreadyInvalidatedModules)
+        handleChangesInsideModule(event, alreadyInvalidatedModules)
     }
 
-    private fun handleContentRootInModuleChanges(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
-        for (changedModule in event.getChangedModules()) {
+    /**
+     * Handel changes inside a module structure.
+     * All such changes are treated as [UPDATE][KotlinModuleStateModificationKind.UPDATE]
+     *
+     * Some examples: changes in content roots, or in the module facet.
+     */
+    private fun handleChangesInsideModule(event: VersionedStorageChange, alreadyInvalidatedModules: Set<Module>) {
+        for (changedModule in event.getChangesInsideModules()) {
             if (changedModule in alreadyInvalidatedModules) continue
             invalidateSourceModule(changedModule)
         }
     }
 
-    private fun VersionedStorageChange.getChangedModules(): Set<Module> = buildSet {
-        getChanges(ContentRootEntity::class.java).mapNotNullTo(this) {
+    private fun VersionedStorageChange.getChangesInsideModules(): Set<Module> = buildSet {
+        contentRootChanges(this)
+        facetChanges(this)
+    }
+
+    private fun VersionedStorageChange.contentRootChanges(modules: MutableSet<Module>) {
+        getChanges(ContentRootEntity::class.java).mapNotNullTo(modules) {
             getChangedModule(it.oldEntity, it.newEntity)
         }
 
-        getChanges(SourceRootEntity::class.java).mapNotNullTo(this) {
+        getChanges(SourceRootEntity::class.java).mapNotNullTo(modules) {
             getChangedModule(it.oldEntity?.contentRoot, it.newEntity?.contentRoot)
         }
 
-        getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(this) {
+        getChanges(JavaSourceRootPropertiesEntity::class.java).mapNotNullTo(modules) {
             getChangedModule(it.oldEntity?.sourceRoot?.contentRoot, it.newEntity?.sourceRoot?.contentRoot)
         }
     }
@@ -203,14 +219,37 @@ open class KotlinModuleStateModificationService(val project: Project) : Disposab
     private fun VersionedStorageChange.getChangedModule(
         contentRootBefore: ContentRootEntity?,
         contentRootAfter: ContentRootEntity?
+    ): Module? = getChangedModule(
+        contentRootBefore,
+        contentRootAfter,
+        moduleSelector = ContentRootEntity::module,
+    )
+
+    private fun VersionedStorageChange.facetChanges(modules: MutableSet<Module>) {
+        getChanges(FacetEntity::class.java).mapNotNullTo(modules) {
+            getChangedModule(
+                oldEntity = it.oldEntity,
+                newEntity = it.newEntity,
+                entityFilter = FacetEntity::isKotlinFacet,
+                moduleSelector = FacetEntity::module,
+            )
+        }
+    }
+
+    private fun <T : WorkspaceEntity> VersionedStorageChange.getChangedModule(
+        oldEntity: T?,
+        newEntity: T?,
+        entityFilter: (T) -> Boolean = alwaysTrue<T>(),
+        moduleSelector: (T) -> ModuleEntity?,
     ): Module? {
-        val oldModule = contentRootBefore?.module?.findModule(storageBefore)
-        val newModule = contentRootAfter?.module?.findModule(storageAfter)
+        val oldModule = oldEntity?.takeIf(entityFilter)?.let(moduleSelector)?.findModule(storageBefore)
+        val newModule = newEntity?.takeIf(entityFilter)?.let(moduleSelector)?.findModule(storageAfter)
         if (newModule != null && oldModule != null) {
             check(oldModule == newModule) {
                 "$oldModule should be equal to $newModule for ${EntityChange.Replaced::class.java}"
             }
         }
+
         return oldModule ?: newModule
     }
 

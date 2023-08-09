@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.fir.completion
 
@@ -20,7 +20,6 @@ abstract class AbstractK2JvmBasicCompletionTest : AbstractJvmBasicCompletionTest
     override fun fileName(): String = firFileName(super.fileName(), testDataDirectory)
 
     override fun executeTest(test: () -> Unit) {
-        project.invalidateCaches() // TODO: drop this after KTIJ-26142
         IgnoreTests.runTestIfEnabledByFileDirective(dataFile().toPath(), IgnoreTests.DIRECTIVES.FIR_COMPARISON) {
             super.executeTest(test)
             IgnoreTests.cleanUpIdenticalFirTestFile(dataFile())

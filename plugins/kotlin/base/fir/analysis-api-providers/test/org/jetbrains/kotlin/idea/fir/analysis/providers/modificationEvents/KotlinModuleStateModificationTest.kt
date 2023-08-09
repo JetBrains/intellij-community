@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea.fir.analysis.providers.modificationEvents
 
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
@@ -11,6 +12,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinModuleStateModificationListener
 import org.jetbrains.kotlin.analysis.providers.topics.KotlinTopics
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.facet.getOrCreateFacet
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.test.addEmptyClassesRoot
 import org.jetbrains.kotlin.test.util.addDependency
@@ -375,6 +377,23 @@ class KotlinModuleStateModificationTest : AbstractKotlinModuleModificationEventT
         trackerD.assertNotModified("unchanged module D")
 
         disposeTrackers(trackerA, trackerB, trackerC, trackerD)
+    }
+
+    fun `test module facet`() {
+        val moduleA = createModuleInTmpDir("a")
+        val moduleB = createModuleInTmpDir("b")
+
+        val trackerA = createTracker(moduleA)
+        val trackerB = createTracker(moduleB)
+
+        val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(project)
+        moduleA.getOrCreateFacet(modelsProvider, useProjectSettings = false)
+        runWriteAction { modelsProvider.commit() }
+
+        trackerA.assertModifiedOnce("module A with added facet")
+        trackerB.assertNotModified("unchanged module B")
+
+        disposeTrackers(trackerA, trackerB)
     }
 }
 
