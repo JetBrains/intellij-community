@@ -58,6 +58,7 @@ class JpsBootstrapMain(args: Array<String>?) {
   private val additionalSystemPropertiesFromPropertiesFile: Properties
   private val onlyDownloadJdk: Boolean
   private val onlyPrepareArgfileForJar: Boolean
+  private val debugOption: Boolean
 
   init {
     initLogging()
@@ -113,6 +114,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     info("Working directory: $jpsBootstrapWorkDir")
     Files.createDirectories(jpsBootstrapWorkDir)
     buildTargetXmx = if (cmdline.hasOption(OPT_BUILD_TARGET_XMX)) cmdline.getOptionValue(OPT_BUILD_TARGET_XMX) else DEFAULT_BUILD_SCRIPT_XMX
+    debugOption = cmdline.hasOption(OPT_DEBUG)
   }
 
   private fun downloadJdk(): Path {
@@ -253,6 +255,9 @@ class JpsBootstrapMain(args: Array<String>?) {
     val args: MutableList<String> = ArrayList()
     args.add("-ea")
     args.add("-Xmx$buildTargetXmx")
+    if (debugOption) {
+      args.add("-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005")
+    }
     args.addAll(openedPackages)
     args.addAll(convertPropertiesToCommandLineArgs(systemProperties))
     args.add("-classpath")
@@ -330,7 +335,10 @@ class JpsBootstrapMain(args: Array<String>?) {
     private val OPT_JAR_TARGET = Option.builder().longOpt("jar-target").hasArg().desc("Write jar with all dependencies to be used later").build()
     private val OPT_ONLY_PREPARE_ARGFILE_FOR_JAR = Option.builder().longOpt("prepare-argfile-for-jar").desc("Prepare java argfile for jar").build()
     private val OPT_ONLY_DOWNLOAD_JDK = Option.builder().longOpt("download-jdk").desc("Download project JDK and exit").build()
-    private val ALL_OPTIONS = listOf(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET, OPT_JAR_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK, OPT_ONLY_PREPARE_ARGFILE_FOR_JAR)
+    private val OPT_DEBUG = Option.builder().longOpt("debug").desc("Enable debugging").build()
+    private val ALL_OPTIONS = listOf(OPT_HELP, OPT_VERBOSE, OPT_SYSTEM_PROPERTY, OPT_PROPERTIES_FILE, OPT_JAVA_ARGFILE_TARGET,
+                                     OPT_JAR_TARGET, OPT_BUILD_TARGET_XMX, OPT_ONLY_DOWNLOAD_JDK, OPT_ONLY_PREPARE_ARGFILE_FOR_JAR,
+                                     OPT_DEBUG)
     val underTeamCity = isUnderTeamCity
     private fun createCliOptions(): Options {
       val opts = Options()
