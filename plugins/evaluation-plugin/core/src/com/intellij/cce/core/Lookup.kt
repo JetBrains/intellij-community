@@ -38,6 +38,16 @@ data class Lookup(
     return suggestions.getOrNull(selectedPosition)?.text?.drop(prefix.length)?.takeIf { it.isNotEmpty() }
   }
 
+  fun withSuggestions(suggestions_: List<Suggestion>): Lookup {
+    return Lookup(
+      prefix = this.prefix,
+      offset = this.offset,
+      suggestions = suggestions_,
+      latency = this.latency,
+      features = this.features,
+      isNew = this.isNew
+    )
+  }
   companion object {
     fun fromExpectedText(
       expectedText: String,
@@ -65,29 +75,6 @@ data class Lookup(
       val maxLength = suggestions.filter { it.isRelevant }.maxOfOrNull { it.text.length }
       return suggestions.indexOfFirst { it.isRelevant && it.text.length == maxLength }
         .let { if (it < 0) -1 else it }
-    }
-    fun filterSuggestions(lookup: Lookup, f: (Suggestion) -> Boolean): Lookup {
-      val filteredSuggestions = lookup.suggestions.filter { f(it) }
-      return Lookup(
-        prefix = lookup.prefix,
-        offset = lookup.offset,
-        suggestions = filteredSuggestions,
-        latency = lookup.latency,
-        features = lookup.features,
-        isNew = lookup.isNew
-      )
-    }
-
-    fun takeTopNSuggestions(lookup: Lookup, n: Int): Lookup {
-      val topSuggestions = lookup.suggestions.take(n)
-      return Lookup(
-        prefix = lookup.prefix,
-        offset = lookup.offset,
-        suggestions = topSuggestions,
-        latency = lookup.latency,
-        features = lookup.features,
-        isNew = lookup.isNew
-      )
     }
   }
 }
