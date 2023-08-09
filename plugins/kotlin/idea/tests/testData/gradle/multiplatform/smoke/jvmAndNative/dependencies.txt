@@ -213,6 +213,48 @@ project.macosX64Test
     org.jetbrains.kotlinx:atomicfu-macosx64:0.20.2 (TEST)
     org.jetbrains.kotlinx:kotlinx-coroutines-core-macosx64:1.7.1 (TEST)
 
+project.mingwMain
+    commonMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
+    org.jetbrains.kotlinx:atomicfu-mingwx64:0.20.2 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.7.1 (COMPILE)
+
+project.mingwTest
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    mingwMain (friend, TEST)
+    mingwX64Main (friend, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
+    org.jetbrains.kotlinx:atomicfu-mingwx64:0.20.2 (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.7.1 (TEST)
+
+project.mingwX64Main
+    commonMain (refines, COMPILE)
+    mingwMain (refines, COMPILE)
+    nativeMain (refines, COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (COMPILE)
+    org.jetbrains.kotlinx:atomicfu-mingwx64:0.20.2 (COMPILE)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.7.1 (COMPILE)
+
+project.mingwX64Test
+    commonMain (friend, TEST)
+    commonTest (refines, TEST)
+    mingwMain (friend, TEST)
+    mingwTest (refines, TEST)
+    mingwX64Main (friend, TEST)
+    nativeMain (friend, TEST)
+    nativeTest (refines, TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (TEST)
+    org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.20 (TEST)
+    org.jetbrains.kotlinx:atomicfu-mingwx64:0.20.2 (TEST)
+    org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.7.1 (TEST)
+
 project.nativeMain
     commonMain (refines, COMPILE)
     org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.20 (COMPILE)

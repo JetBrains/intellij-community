@@ -12,6 +12,7 @@ kotlin {
     linuxArm64()
     macosArm64()
     macosX64()
+    mingwX64()
 
     sourceSets.commonMain.dependencies {
         implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.1")

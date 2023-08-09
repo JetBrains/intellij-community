@@ -119,7 +119,7 @@ project.nativeTest
     fqName: null
     name: NativeTest
     type: Gradle
-    tasks: [:cleanMacosArm64Test, :macosArm64Test, --tests, "NativeTest"]
+    tasks: [:cleanMingwX64Test, :mingwX64Test, --tests, "NativeTest"]
     scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
@@ -127,7 +127,7 @@ project.nativeTest
     fqName: NativeTest
     name: NativeTest.test - failure
     type: Gradle
-    tasks: [:cleanMacosArm64Test, :macosArm64Test, --tests, "NativeTest.test - failure"]
+    tasks: [:cleanMingwX64Test, :mingwX64Test, --tests, "NativeTest.test - failure"]
     scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
@@ -135,7 +135,7 @@ project.nativeTest
     fqName: NativeTest
     name: NativeTest.test - success
     type: Gradle
-    tasks: [:cleanMacosArm64Test, :macosArm64Test, --tests, "NativeTest.test - success"]
+    tasks: [:cleanMingwX64Test, :mingwX64Test, --tests, "NativeTest.test - success"]
     scriptParameters:
     isDebugAllEnabled: false
     isRunAsTest: true
