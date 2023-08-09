@@ -1,164 +1,148 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.gradle.toolingExtension.impl.modelBuilder
+package com.intellij.gradle.toolingExtension.impl.modelBuilder;
 
-import groovy.transform.CompileStatic
-import org.gradle.api.Project
-import org.gradle.api.file.RegularFile
-import org.gradle.api.initialization.IncludedBuild
-import org.gradle.api.internal.GradleInternal
-import org.gradle.api.invocation.Gradle
-import org.gradle.api.tasks.SourceSet
-import org.gradle.api.tasks.SourceSetContainer
-import org.gradle.api.tasks.bundling.AbstractArchiveTask
-import org.gradle.composite.internal.DefaultIncludedBuild
-import org.gradle.util.GradleVersion
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.gradle.tooling.MessageReporter
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil
-import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil
+import org.gradle.api.Project;
+import org.gradle.api.Task;
+import org.gradle.api.file.RegularFile;
+import org.gradle.api.initialization.IncludedBuild;
+import org.gradle.api.internal.GradleInternal;
+import org.gradle.api.invocation.Gradle;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
+import org.gradle.api.tasks.bundling.AbstractArchiveTask;
+import org.gradle.composite.internal.DefaultIncludedBuild;
+import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
+import org.jetbrains.plugins.gradle.tooling.util.JavaPluginUtil;
+import org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil;
 
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.ConcurrentMap
+import java.io.File;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
-import static java.util.Collections.unmodifiableMap
-import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider
-import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable
+import static java.util.Collections.unmodifiableMap;
+import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
+import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
-/**
- * @author Vladislav.Soroka
- */
-@CompileStatic
-class SourceSetCachedFinder {
-  private static final GradleVersion gradleBaseVersion = GradleVersion.current().baseVersion
-  private static final boolean is51OrBetter = gradleBaseVersion >= GradleVersion.version("5.1")
+public class SourceSetCachedFinder {
 
-  private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER = new DataProvider<ArtifactsMap>() {
-    @NotNull
-    @Override
-    ArtifactsMap create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return createArtifactsMap(gradle)
-    }
-  }
-  private static final DataProvider<ConcurrentMap<String, Set<File>>> SOURCES_DATA_KEY = new DataProvider<ConcurrentMap<String, Set<File>>>() {
-    @NotNull
-    @Override
-    ConcurrentMap<String, Set<File>> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new ConcurrentHashMap<String, Set<File>>()
-    }
+  private static final GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
+  private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
+
+  private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER =
+    (gradle, ___) -> createArtifactsMap(gradle);
+
+  private static final DataProvider<ConcurrentMap<String, Set<File>>> SOURCES_DATA_KEY =
+    (__, ___) -> new ConcurrentHashMap<>();
+
+  private final ArtifactsMap myArtifactsMap;
+  private final ConcurrentMap<String, Set<File>> mySourcesMap;
+
+  public SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
+    myArtifactsMap = context.getData(ARTIFACTS_PROVIDER);
+    mySourcesMap = context.getData(SOURCES_DATA_KEY);
   }
 
-  private ArtifactsMap myArtifactsMap
-  private ConcurrentMap<String, Set<File>> mySourcesMap
-
-  SourceSetCachedFinder(@NotNull ModelBuilderContext context) {
-    init(context)
-  }
-
-  private void init(@NotNull ModelBuilderContext context) {
-    myArtifactsMap = context.getData(ARTIFACTS_PROVIDER)
-    mySourcesMap = context.getData(SOURCES_DATA_KEY)
-  }
-
-  Set<File> findSourcesByArtifact(String path) {
-    def sources = mySourcesMap.get(path)
-    if (sources == null) {
-      def sourceSet = myArtifactsMap.myArtifactsMap[path]
+  public Set<File> findSourcesByArtifact(String path) {
+    if (!mySourcesMap.containsKey(path)) {
+      SourceSet sourceSet = myArtifactsMap.myArtifactsMap.get(path);
       if (sourceSet != null) {
-        sources = sourceSet.getAllJava().getSrcDirs()
-        def calculatedSources = mySourcesMap.putIfAbsent(path, sources)
-        return calculatedSources != null ? calculatedSources : sources
-      } else {
-        return null
+        Set<File> sources = sourceSet.getAllJava().getSrcDirs();
+        Set<File> calculatedSources = mySourcesMap.putIfAbsent(path, sources);
+        return calculatedSources != null ? calculatedSources : sources;
       }
     }
+    return null;
   }
 
-  SourceSet findByArtifact(String artifactPath) {
-    myArtifactsMap.myArtifactsMap[artifactPath]
+  public SourceSet findByArtifact(String artifactPath) {
+    return myArtifactsMap.myArtifactsMap.get(artifactPath);
   }
 
-  String findArtifactBySourceSetOutputDir(String outputPath) {
-    myArtifactsMap.mySourceSetOutputDirsToArtifactsMap[outputPath]
+  public String findArtifactBySourceSetOutputDir(String outputPath) {
+    return myArtifactsMap.mySourceSetOutputDirsToArtifactsMap.get(outputPath);
   }
 
   private static ArtifactsMap createArtifactsMap(@NotNull Gradle gradle) {
-    def artifactsMap = new HashMap<String, SourceSet>()
-    def sourceSetOutputDirsToArtifactsMap = new HashMap<String, String>()
-    def projects = new ArrayList<Project>(gradle.rootProject.allprojects)
-    def isCompositeBuildsSupported = isIsNewDependencyResolutionApplicable() ||
-                                     GradleVersion.current().baseVersion >= GradleVersion.version("3.1")
+    Map<String, SourceSet> artifactsMap = new HashMap<>();
+    Map<String, String> sourceSetOutputDirsToArtifactsMap = new HashMap<>();
+    List<Project> projects = new ArrayList<>(gradle.getRootProject().getAllprojects());
+    boolean isCompositeBuildsSupported = isIsNewDependencyResolutionApplicable() ||
+                                         GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("3.1")) >= 0;
     if (isCompositeBuildsSupported) {
-      projects = exposeIncludedBuilds(gradle, projects)
+      projects.addAll(exposeIncludedBuilds(gradle));
     }
-    for (Project p : projects) {
-      SourceSetContainer sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(p).sourceSetContainer
-      if (sourceSetContainer == null || sourceSetContainer.isEmpty()) continue
+    for (Project project : projects) {
+      SourceSetContainer sourceSetContainer = JavaPluginUtil.getJavaPluginAccessor(project).getSourceSetContainer();
+      if (sourceSetContainer == null || sourceSetContainer.isEmpty()) continue;
 
       for (SourceSet sourceSet : sourceSetContainer) {
-        def task = p.tasks.findByName(sourceSet.getJarTaskName())
+        Task task = project.getTasks().findByName(sourceSet.getJarTaskName());
         if (task instanceof AbstractArchiveTask) {
-          AbstractArchiveTask jarTask = (AbstractArchiveTask)task
-          def archivePath = is51OrBetter ? ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile).asFile : jarTask?.getArchivePath()
-          if (archivePath) {
-            artifactsMap[archivePath.path] = sourceSet
+          AbstractArchiveTask jarTask = (AbstractArchiveTask)task;
+          File archivePath = is51OrBetter ?
+                             ReflectionUtil.reflectiveGetProperty(jarTask, "getArchiveFile", RegularFile.class).getAsFile() :
+                             ReflectionUtil.reflectiveCall(jarTask, "getArchivePath", File.class);
+          if (archivePath != null) {
+            artifactsMap.put(archivePath.getPath(), sourceSet);
             if (isIsNewDependencyResolutionApplicable()) {
-              for (File file : sourceSet.output.classesDirs.files) {
-                sourceSetOutputDirsToArtifactsMap[file.path] = archivePath.path
+              for (File file : sourceSet.getOutput().getClassesDirs().getFiles()) {
+                sourceSetOutputDirsToArtifactsMap.put(file.getPath(), archivePath.getPath());
               }
-              sourceSetOutputDirsToArtifactsMap[sourceSet.output.resourcesDir.path] = archivePath.path
+              File resourcesDir = Objects.requireNonNull(sourceSet.getOutput().getResourcesDir());
+              sourceSetOutputDirsToArtifactsMap.put(resourcesDir.getPath(), archivePath.getPath());
             }
           }
         }
       }
     }
-    return new ArtifactsMap(artifactsMap, sourceSetOutputDirsToArtifactsMap)
+    return new ArtifactsMap(artifactsMap, sourceSetOutputDirsToArtifactsMap);
   }
 
-  private static List<Project> exposeIncludedBuilds(Gradle gradle, List<Project> projects) {
-    for (IncludedBuild includedBuild : gradle.includedBuilds) {
-      def unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild)
+  private static List<Project> exposeIncludedBuilds(Gradle gradle) {
+    List<Project> result = new ArrayList<>();
+    for (IncludedBuild includedBuild : gradle.getIncludedBuilds()) {
+      Object unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild);
       if (unwrapped instanceof DefaultIncludedBuild) {
-        def build = unwrapped as DefaultIncludedBuild
+        DefaultIncludedBuild build = (DefaultIncludedBuild)unwrapped;
         if (is51OrBetter) {
-          projects += build.withState { it.rootProject.allprojects  }
+          result.addAll(build.withState(it -> it.getRootProject().getAllprojects()));
         } else {
-          projects += getProjectsWithReflection(build)
+          result.addAll(getProjectsWithReflection(build));
         }
       }
     }
-    return projects
+    return result;
   }
 
   private static Set<Project> getProjectsWithReflection(DefaultIncludedBuild build) {
-    def method = build.class.getMethod("getConfiguredBuild")
-    GradleInternal gradleInternal = (GradleInternal)method.invoke(build)
-    return gradleInternal.rootProject.allprojects
+    GradleInternal gradleInternal = ReflectionUtil.reflectiveCall(build, "getConfiguredBuild", GradleInternal.class);
+    return gradleInternal.getRootProject().getAllprojects();
   }
 
   private static Object maybeUnwrapIncludedBuildInternal(IncludedBuild includedBuild) {
-    def wrapee = includedBuild
-    Class includedBuildInternalClass = null
+    Class<?> includedBuildInternalClass = null;
     try {
       includedBuildInternalClass = Class.forName("org.gradle.internal.composite.IncludedBuildInternal");
     }
     catch (ClassNotFoundException ignored) {
     }
-    if (includedBuildInternalClass != null &&
-        includedBuildInternalClass.isAssignableFrom(includedBuild.class)) {
-      def method = includedBuild.class.getMethod("getTarget")
-      wrapee = method.invoke(includedBuild)
+    if (includedBuildInternalClass != null && includedBuildInternalClass.isAssignableFrom(includedBuild.getClass())) {
+      return ReflectionUtil.reflectiveCall(includedBuild, "getTarget", Object.class);
     }
-    wrapee
+    return includedBuild;
   }
 
   private static class ArtifactsMap {
-    private final Map<String, SourceSet> myArtifactsMap
-    private final Map<String, String> mySourceSetOutputDirsToArtifactsMap
+
+    public final Map<String, SourceSet> myArtifactsMap;
+    public final Map<String, String> mySourceSetOutputDirsToArtifactsMap;
 
     ArtifactsMap(Map<String, SourceSet> artifactsMap, Map<String, String> sourceSetOutputDirsToArtifactsMap) {
-      myArtifactsMap = unmodifiableMap(artifactsMap)
-      mySourceSetOutputDirsToArtifactsMap = unmodifiableMap(sourceSetOutputDirsToArtifactsMap)
+      myArtifactsMap = unmodifiableMap(artifactsMap);
+      mySourceSetOutputDirsToArtifactsMap = unmodifiableMap(sourceSetOutputDirsToArtifactsMap);
     }
   }
 }
