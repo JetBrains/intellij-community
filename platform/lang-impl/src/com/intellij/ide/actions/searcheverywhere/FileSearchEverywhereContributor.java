@@ -14,6 +14,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,28 +133,23 @@ public class FileSearchEverywhereContributor extends AbstractGotoSEContributor i
     }
 
     if (selected instanceof PsiFile) {
-      ReadAction.nonBlocking(() -> ((PsiFile)selected).getVirtualFile())
-        .finishOnUiThread(ModalityState.nonModal(), file -> {
-          if (file != null && myProject != null) {
-            Pair<Integer, Integer> pos = getLineAndColumn(searchText);
-            OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
-            if (descriptor.canNavigate()) {
-              descriptor.navigate(true);
-              if (pos.first > 0) {
-                FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
-              }
-              return;
+      VirtualFile file = ((PsiFile)selected).getVirtualFile();
+      if (file != null && myProject != null) {
+        Pair<Integer, Integer> pos = getLineAndColumn(searchText);
+        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, file, pos.first, pos.second);
+        if (descriptor.canNavigate()) {
+          ApplicationManager.getApplication().invokeLater(() -> {
+            descriptor.navigate(true);
+            if (pos.first > 0) {
+              FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.file.line");
             }
-          }
-          super.processSelectedItem(selected, modifiers, searchText);
-        })
-        .submit(AppExecutorUtil.getAppExecutorService());
+          });
+          return true;
+        }
+      }
+    }
 
-      return true;
-    }
-    else {
-      return super.processSelectedItem(selected, modifiers, searchText);
-    }
+    return super.processSelectedItem(selected, modifiers, searchText);
   }
 
   @Override
