@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.fir.testGenerator
 
 import org.jetbrains.fir.uast.test.*
+import org.jetbrains.kotlin.copyright.AbstractFirUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.fir.testGenerator.codeinsight.generateK2CodeInsightTests
 import org.jetbrains.kotlin.idea.fir.actions.AbstractK2AddImportActionTest
 import org.jetbrains.kotlin.idea.fir.analysis.providers.AbstractIdeKotlinAnnotationsResolverTest
@@ -368,6 +369,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirLegacyUastValuesTest> {
             model("")
+        }
+    }
+
+    testGroup("copyright/fir-tests", testDataPath = "../../copyright/tests/testData") {
+        testClass<AbstractFirUpdateKotlinCopyrightTest> {
+            model("update", pattern = KT_OR_KTS, testMethodName = "doTest")
         }
     }
 }
