@@ -42,11 +42,16 @@ class GitBranchComparisonResultImpl(private val project: Project,
       commit.parents.count { commitsHashes.contains(it) } <= 1
     }
 
-    if (linearHistory) {
-      initForLinearHistory(commits)
+    try {
+      if (linearHistory) {
+        initForLinearHistory(commits)
+      }
+      else {
+        initForHistoryWithMerges(commits)
+      }
     }
-    else {
-      initForHistoryWithMerges(commits)
+    catch (e: Exception) {
+      throw RuntimeException("Unable to build branch comparison result between $baseSha and $headSha via $mergeBaseSha - ${e.message}", e)
     }
   }
 

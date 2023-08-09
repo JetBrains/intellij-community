@@ -38,7 +38,10 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
 
   fun append(commitSha: String, patch: TextFilePatch) {
     val entry = history[commitSha]
-    assert(entry != null && entry.patch == null)
+    check(entry != null) { "Adding entry for an unknown commit $commitSha. Known commits - $commitHashes" }
+    check(entry.patch == null) { "Entry patch was already recorded for commit $commitSha. " +
+                                 "Existing patch - ${entry.patch?.headerString}. " +
+                                 "New patch - ${patch.headerString}" }
     history[commitSha] = Entry(patch)
   }
 
@@ -88,5 +91,8 @@ class MutableLinearGitFileHistory(private val commitHashes: List<String>) : GitF
   companion object {
     private val TextFilePatch.filePath
       get() = (afterName ?: beforeName)!!
+
+    private val TextFilePatch.headerString
+      get() = """$beforeVersionId $beforeName -> $afterVersionId $afterName"""
   }
 }
