@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -53,6 +54,7 @@ import org.jdom.DataConversionException;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
+import java.io.File;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -157,6 +159,21 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       }
     }
     return true;
+  }
+
+  @Override
+  public @NotNull @NlsSafe String getShortNameForVcsRoot(@Nullable VirtualFile root) {
+    VirtualFile projectDir = myProject.getBaseDir();
+
+    String repositoryPath = root.getPresentableUrl();
+    if (projectDir != null) {
+      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
+      if (relativePath != null) {
+        repositoryPath = relativePath;
+      }
+    }
+
+    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
   }
 
   @Override

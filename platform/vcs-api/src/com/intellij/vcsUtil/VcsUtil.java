@@ -33,7 +33,6 @@ import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.PersistentFSConstants;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
@@ -439,17 +438,7 @@ public final class VcsUtil {
   @NlsSafe
   @NotNull
   public static String getShortVcsRootName(@NotNull Project project, @NotNull VirtualFile root) {
-    VirtualFile projectDir = project.getBaseDir();
-
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
-    }
-
-    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+    return ProjectLevelVcsManager.getInstance(project).getShortNameForVcsRoot(root);
   }
 
   @NotNull
