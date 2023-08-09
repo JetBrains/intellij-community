@@ -11387,6 +11387,11 @@ public abstract class K1IntentionTestGenerated extends AbstractK1IntentionTest {
             runTest("testData/intentions/insertExplicitTypeArguments/notApplicableGenericType.kt");
         }
 
+        @TestMetadata("platformType.kt")
+        public void testPlatformType() throws Exception {
+            runTest("testData/intentions/insertExplicitTypeArguments/platformType.kt");
+        }
+
         @TestMetadata("simpleInsertTypeClass.kt")
         public void testSimpleInsertTypeClass() throws Exception {
             runTest("testData/intentions/insertExplicitTypeArguments/simpleInsertTypeClass.kt");
