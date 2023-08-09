@@ -17,10 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -118,7 +118,7 @@ public class UnnecessarySemicolonInspection extends BaseInspection implements Cl
     private void checkTopLevelSemicolons(PsiElement element) {
       for (PsiElement sibling = element.getFirstChild(); sibling != null; sibling = PsiTreeUtil.skipWhitespacesAndCommentsForward(sibling)) {
         if (sibling instanceof PsiErrorElement) return;
-        if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON)) {
+        if (PsiUtil.isJavaToken(sibling, JavaTokenType.SEMICOLON) && !(sibling.getParent() instanceof PsiImportList && PsiUtil.isFollowedByImport(sibling))) {
           registerError(sibling);
         }
       }
