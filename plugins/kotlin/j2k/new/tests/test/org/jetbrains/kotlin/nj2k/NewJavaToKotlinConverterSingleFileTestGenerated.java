@@ -2380,6 +2380,11 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/for/forWithoutBody.java");
         }
 
+        @TestMetadata("incompatibleRightType.java")
+        public void testIncompatibleRightType() throws Exception {
+            runTest("testData/newJ2k/for/incompatibleRightType.java");
+        }
+
         @TestMetadata("indicesReversed.java")
         public void testIndicesReversed() throws Exception {
             runTest("testData/newJ2k/for/indicesReversed.java");
