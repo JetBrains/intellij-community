@@ -78,7 +78,7 @@ public final class PersistentFSConnection {
   private static final int INSIST_TO_RESTART_AFTER_ERRORS_COUNT = getIntProperty("vfs.insist-to-restart-after-n-errors", 1000);
 
 
-  private final NotNullLazyValue<IntList> freeRecords;
+  private final @NotNull NotNullLazyValue<? extends IntList> freeRecords;
 
   @NotNull
   private final PersistentFSPaths persistentFSPaths;
@@ -116,7 +116,7 @@ public final class PersistentFSConnection {
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
                          @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @Nullable VfsLogEx vfsLog,
-                         @NotNull NotNullLazyValue<IntList> freeRecords,
+                         @NotNull NotNullLazyValue<? extends IntList> freeRecords,
                          @NotNull VFSRecoveryInfo info,
                          @NotNull List<ConnectionInterceptor> interceptors) throws IOException {
     if (!(names instanceof Forceable) || !(names instanceof Closeable)) {

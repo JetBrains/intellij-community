@@ -109,8 +109,6 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
                                                                            boolean nativeBytesOrder,
                                                                            @NotNull PageContentLockingStrategy strategy)
     throws IOException {
-    //TODO RC: remove all that crazyness from ctor. Just plain non-null storageContext, and boolean readOnly.
-    //         It is responsibility of a caller to prepare params!
     // TODO read-only flag should be extracted from PersistentHashMapValueStorage.CreationTimeOptions
     boolean readOnly = PersistentHashMapValueStorage.CreationTimeOptions.READONLY.get() == Boolean.TRUE;
 
