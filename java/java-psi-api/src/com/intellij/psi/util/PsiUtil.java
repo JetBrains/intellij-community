@@ -1446,4 +1446,13 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isJvmLocalVariable(PsiElement variable) {
     return variable instanceof PsiLocalVariable || variable instanceof PsiParameter;
   }
+
+  public static boolean isFollowedByImport(PsiElement element) {
+    PsiElement currentElement = element.getNextSibling();
+    while (!(currentElement instanceof PsiImportStatement)) {
+      if (currentElement == null) return false;
+      currentElement = currentElement.getNextSibling();
+    }
+    return true;
+  }
 }

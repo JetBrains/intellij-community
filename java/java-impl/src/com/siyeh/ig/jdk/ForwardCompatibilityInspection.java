@@ -6,9 +6,9 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -111,8 +111,8 @@ public class ForwardCompatibilityInspection extends AbstractBaseJavaLocalInspect
       @Override
       public void visitJavaToken(@NotNull PsiJavaToken token) {
         super.visitJavaToken(token);
-        if (languageLevel.isLessThan(LanguageLevel.JDK_21) && token.getParent() instanceof PsiImportList && token.getTokenType() == JavaTokenType.SEMICOLON) {
-          String message = JavaErrorBundle.message("lone.semicolon.warn");
+        if (languageLevel.isLessThan(LanguageLevel.JDK_21) && token.getParent() instanceof PsiImportList
+            && token.getTokenType() == JavaTokenType.SEMICOLON && PsiUtil.isFollowedByImport(token)) {
           String message = JavaErrorBundle.message("redundant.semicolon.warn");
           holder.registerProblem(token, message, new UnnecessarySemicolonInspection.UnnecessarySemicolonFix());
         }

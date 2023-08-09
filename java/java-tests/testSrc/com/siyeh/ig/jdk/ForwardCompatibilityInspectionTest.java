@@ -43,7 +43,7 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
 
   public void testRestrictedKeywordWarning() { doTest(); }
 
-  public void testLoneSemicolon() { doTest(); }
+  public void testLoneSemicolon() { withLevel(LanguageLevel.JDK_20, this::doTest); }
 
   public void testModuleInfoWarning() {
     withLevel(LanguageLevel.JDK_1_9, () -> {

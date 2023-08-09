@@ -632,7 +632,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults() &&
         myLanguageLevel.isAtLeast(LanguageLevel.JDK_21) &&
         type == JavaTokenType.SEMICOLON &&
-        token.getParent() instanceof PsiImportList) {
+        token.getParent() instanceof PsiImportList &&
+        PsiUtil.isFollowedByImport(token)) {
       add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
             .range(token.getTextRange())
             .descriptionAndTooltip(JavaErrorBundle.message("error.extra.semicolons.between.import.statements.not.allowed")));
