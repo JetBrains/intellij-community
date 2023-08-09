@@ -37,6 +37,10 @@ class CompletionActionsInvoker(project: Project,
     return session
   }
 
+  override fun comparator(generated: String, expected: String, ): Boolean {
+    return expected == generated
+  }
+
   override fun callFeature(expectedText: String, offset: Int, properties: TokenProperties): Session = readActionInSmartMode(project) {
     val editor = getEditorSafe(project)
     LOG.info("Call completion. Type: $completionType. ${positionToString(editor)}")

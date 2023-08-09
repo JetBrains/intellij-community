@@ -38,6 +38,10 @@ class RenameInvoker(private val project: Project,
     return@readActionInSmartMode createSession(offset, expectedText, properties, lookup)
   }
 
+  override fun comparator(generated: String, expected: String, ): Boolean {
+    return expected == generated
+  }
+
   private fun callRename(expectedText: String, editor: Editor): Lookup {
     val start = System.currentTimeMillis()
 
