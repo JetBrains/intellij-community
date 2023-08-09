@@ -5,6 +5,7 @@ import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.fileEditor.FileEditor
@@ -44,9 +45,18 @@ private class BreadcrumbsInitializingActivity : ProjectActivity {
     FileBreadcrumbsCollector.EP_NAME.getPoint(project).addChangeListener({ reinitBreadcrumbsInAllEditors(project) }, project)
     VirtualFileManager.getInstance().addVirtualFileListener(MyVirtualFileListener(project), project)
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { reinitBreadcrumbsInAllEditors(project) })
-    withContext(Dispatchers.EDT) {
-      blockingContext {
-        reinitBreadcrumbsInAllEditors(project)
+
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
+    val above = isAbove()
+    for (virtualFile in fileEditorManager.openFiles) {
+      for (fileEditor in fileEditorManager.getAllEditors(virtualFile)) {
+        if (fileEditor is TextEditor) {
+          withContext(Dispatchers.EDT) {
+            blockingContext {
+              reinitBreadcrumbComponent(fileEditor = fileEditor, fileEditorManager = fileEditorManager, file = virtualFile, above = above)
+            }
+          }
+        }
       }
     }
   }
@@ -58,14 +68,16 @@ private fun reinitBreadcrumbsInAllEditors(project: Project) {
   }
 
   val fileEditorManager = FileEditorManager.getInstance(project)
+  val above = isAbove()
   for (virtualFile in fileEditorManager.openFiles) {
-    reinitBreadcrumbsComponent(fileEditorManager, virtualFile)
+    reinitBreadcrumbsComponent(fileEditorManager, virtualFile, above)
   }
 }
 
 private class MyFileEditorManagerListener : FileEditorManagerListener {
   override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
-    reinitBreadcrumbsComponent(source, file)
+    val above = isAbove()
+    reinitBreadcrumbsComponent(source, file, above)
   }
 }
 
@@ -75,38 +87,46 @@ private class MyVirtualFileListener(private val myProject: Project) : VirtualFil
       val fileEditorManager = FileEditorManager.getInstance(myProject)
       val file = event.file
       if (fileEditorManager.isFileOpen(file)) {
-        reinitBreadcrumbsComponent(fileEditorManager, file)
+        val above = isAbove()
+        reinitBreadcrumbsComponent(fileEditorManager = fileEditorManager, file = file, above = above)
       }
     }
   }
 }
 
-private fun reinitBreadcrumbsComponent(fileEditorManager: FileEditorManager, file: VirtualFile) {
-  val above = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove
+private fun isAbove() = EditorSettingsExternalizable.getInstance().isBreadcrumbsAbove
+
+private fun reinitBreadcrumbsComponent(fileEditorManager: FileEditorManager, file: VirtualFile, above: Boolean) {
   for (fileEditor in fileEditorManager.getAllEditors(file)) {
     if (fileEditor is TextEditor) {
-      val editor = fileEditor.editor
-      var wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsWrapper(editor)
-      if (isSuitable(fileEditorManager.project, fileEditor, file)) {
-        if (wrapper != null) {
-          if (wrapper.breadcrumbs.above != above) {
-            remove(fileEditorManager, fileEditor, wrapper)
-            wrapper.breadcrumbs.above = above
-            add(fileEditorManager, fileEditor, wrapper)
-          }
-          wrapper.queueUpdate()
-        }
-        else {
-          wrapper = BreadcrumbsXmlWrapper(editor)
-          registerWrapper(fileEditorManager, fileEditor, wrapper)
-        }
-        fileEditorManager.project.messageBus.syncPublisher(BreadcrumbsInitListener.TOPIC)
-          .breadcrumbsInitialized(wrapper, fileEditor, fileEditorManager)
-      }
-      else if (wrapper != null) {
-        disposeWrapper(fileEditorManager, fileEditor, wrapper)
-      }
+      reinitBreadcrumbComponent(fileEditor = fileEditor, fileEditorManager = fileEditorManager, file = file, above = above)
     }
+  }
+}
+
+private fun reinitBreadcrumbComponent(fileEditor: TextEditor, fileEditorManager: FileEditorManager, file: VirtualFile, above: Boolean) {
+  val editor = fileEditor.editor
+  if (isSuitable(fileEditorManager.project, fileEditor, file)) {
+    var wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor)
+    if (wrapper == null) {
+      wrapper = BreadcrumbsXmlWrapper(editor)
+      registerWrapper(fileEditorManager, fileEditor, wrapper)
+    }
+    else {
+      if (wrapper.breadcrumbs.above != above) {
+        remove(fileEditorManager, fileEditor, wrapper)
+        wrapper.breadcrumbs.above = above
+        add(fileEditorManager, fileEditor, wrapper)
+      }
+      wrapper.queueUpdate()
+    }
+    fileEditorManager.project.messageBus.syncPublisher(BreadcrumbsInitListener.TOPIC)
+      .breadcrumbsInitialized(wrapper, fileEditor, fileEditorManager)
+  }
+  else {
+    disposeWrapper(fileEditorManager = fileEditorManager,
+                   fileEditor = fileEditor,
+                   wrapper = BreadcrumbsXmlWrapper.getBreadcrumbWrapper(editor) ?: return)
   }
 }
 
