@@ -572,16 +572,16 @@ public class PagedFileStorageWithRWLockedPageContent implements PagedStorage {
     try {
       executeIdempotentOp(ch -> {
         final int readBytes = ch.read(pageBuffer, pageToLoad.offsetInFile());
+        final int bytesActuallyRead = Math.max(0, readBytes);
         if (readBytes < pageSize) {
-          final int startFrom = Math.max(0, readBytes);
-          fillWithZeroes(pageBuffer, startFrom, pageSize);
+          fillWithZeroes(pageBuffer, bytesActuallyRead, pageSize);
         }
-        statistics.pageRead(readBytes, startedAtNs);
+        statistics.pageRead(bytesActuallyRead, startedAtNs);
         return pageBuffer;
       }, isReadOnly());
     }
     catch (Throwable t) {
-      pageCache.reclaimPageBuffer(pageBuffer);
+      pageCache.reclaimPageBuffer(pageSize, pageBuffer);
       throw t;
     }
     return pageBuffer;

@@ -120,6 +120,7 @@ public class FilePageCacheStatistics {
 
   public void pageRead(final int bytesRead,
                        final long readStartedAtNs) {
+    assert bytesRead >= 0 : "bytesRead must be >=0, " + bytesRead;
     totalBytesRead.addAndGet(bytesRead);
     if (MEASURE_TIMESTAMPS) {
       totalPagesReadNs.addAndGet(System.nanoTime() - readStartedAtNs);
@@ -128,6 +129,7 @@ public class FilePageCacheStatistics {
 
   public void pageWritten(final int bytesWritten,
                           final long writeStartedAtNs) {
+    assert bytesWritten >= 0 : "bytesWritten must be >=0, " + bytesWritten;
     totalPagesWritten.incrementAndGet();
     totalBytesWritten.addAndGet(bytesWritten);
     if (MEASURE_TIMESTAMPS) {

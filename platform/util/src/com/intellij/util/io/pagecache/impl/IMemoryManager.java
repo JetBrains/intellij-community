@@ -25,7 +25,8 @@ public interface IMemoryManager {
   @Nullable ByteBuffer tryAllocate(int bufferSize,
                                    boolean allowAllocateAboveCapacity);
 
-  void releaseBuffer(@NotNull ByteBuffer buffer);
+  void releaseBuffer(int bufferSize,
+                     @NotNull ByteBuffer buffer);
 
   //MAYBE: do we need to expose separate heap/native accounting, or it should be an implementation detail?
 

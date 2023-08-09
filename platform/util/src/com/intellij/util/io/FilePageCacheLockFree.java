@@ -530,15 +530,16 @@ public final class FilePageCacheLockFree implements AutoCloseable {
   void unmapPageAndReclaimBuffer(@NotNull PageImpl pageToReclaim) {
     ByteBuffer pageBuffer = entombPageAndGetPageBuffer(pageToReclaim);
 
-    reclaimPageBuffer(pageBuffer);
+    reclaimPageBuffer(pageToReclaim.pageSize(), pageBuffer);
   }
 
   /**
    * Release the buffer to the pool if it is a direct buffer, or just release it, if it is a heap buffer.
    * Adjust statistical counters accordingly.
    */
-  void reclaimPageBuffer(@NotNull ByteBuffer pageBuffer) {
-    memoryManager.releaseBuffer(pageBuffer);
+  void reclaimPageBuffer(int pageSize,
+                         @NotNull ByteBuffer pageBuffer) {
+    memoryManager.releaseBuffer(pageSize, pageBuffer);
   }
 
   private static @NotNull ByteBuffer entombPageAndGetPageBuffer(@NotNull PageImpl pageToUnmap) {
@@ -659,12 +660,14 @@ public final class FilePageCacheLockFree implements AutoCloseable {
       if (succeed) {
         // > 1 thread could try to reclaim the page, but we win the race:
         ByteBuffer reclaimedBuffer = entombPageAndGetPageBuffer(candidateToReclaim);
-        if (reclaimedBuffer.capacity() == bufferSize) {
+        //'handoff': reuse reclaimed buffer immediately, if it's capacity is enough
+        // (but not too much so we don't waste too much memory using huge buffer for small page)
+        if (bufferSize <= reclaimedBuffer.capacity() && reclaimedBuffer.capacity() <= 2 * bufferSize) {
           reclaimedBuffer.clear().limit(bufferSize);
           return reclaimedBuffer;
         }
         else {
-          reclaimPageBuffer(reclaimedBuffer);
+          reclaimPageBuffer(candidateToReclaim.pageSize(), reclaimedBuffer);
         }
       }
     }

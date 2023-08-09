@@ -88,17 +88,31 @@ public class DefaultMemoryManager implements IMemoryManager {
   }
 
   @Override
-  public void releaseBuffer(@NotNull ByteBuffer buffer) {
-    int bufferSize = buffer.capacity();
-    if (buffer.isDirect()) {
-      DirectByteBufferAllocator.ALLOCATOR.release(buffer);
+  public void releaseBuffer(int bufferSize,
+                            @NotNull ByteBuffer buffer) {
+    //RC: why don't we use buffer.capacity() instead of bufferSize? Because DirectByteBufferAllocator could
+    //    return buffers of capacity > size requested. In tryAllocate() we account only for requested size,
+    //    not actually returned, so must do the same here, otherwise numbers don't check out.
+    //
+    //    This makes sense (kind of): we ask for 1M buffer, and we account for 1M we asked -- we don't care
+    //    if we really receive 2M we didn't ask for. Allocator's responsibility is to manage the actual capacity
+    //    of buffers it allocates -- MemoryManager's responsibility is to manage the capacity it has requested.
 
-      nativeBytesUsed.addAndGet(-bufferSize);
+    if (buffer.isDirect()) {
+      directBufferAllocator.release(buffer);
+
+      long memoryUsed = nativeBytesUsed.addAndGet(-bufferSize);
+      if (memoryUsed < 0) {
+        throw new IllegalStateException("nativeBytesUsed(=" + memoryUsed + ") must be >=0");
+      }
 
       statistics.pageReclaimedNative(bufferSize);
     }
     else {
-      heapBytesUsed.addAndGet(-bufferSize);
+      long memoryUsed = heapBytesUsed.addAndGet(-bufferSize);
+      if (memoryUsed < 0) {
+        throw new IllegalStateException("heapBytesUsed(=" + memoryUsed + ") must be >=0");
+      }
 
       statistics.pageReclaimedHeap(bufferSize);
     }
@@ -133,5 +147,15 @@ public class DefaultMemoryManager implements IMemoryManager {
   @Override
   public boolean hasFreeNativeCapacity(int bufferSize) {
     return nativeBytesUsed.get() + bufferSize <= nativeCapacityBytes;
+  }
+
+  @Override
+  public String toString() {
+    return "DefaultMemoryManager{" +
+           "nativeCapacity: " + nativeCapacityBytes +
+           ", heapCapacity: " + heapCapacityBytes +
+           ", nativeUsed: " + nativeBytesUsed +
+           ", heapUsed: " + heapBytesUsed +
+           '}';
   }
 }
