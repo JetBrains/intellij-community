@@ -316,7 +316,10 @@ object CommunityLibraryLicenses {
       .apache("https://github.com/google/auto/blob/master/LICENSE"),
     LibraryLicense(libraryName = "Gradle", url = "https://gradle.org/", licenseUrl = "https://gradle.org/license")
       .apache("https://github.com/gradle/gradle/blob/master/LICENSE"),
-    LibraryLicense(name = "graphql-java-dataloader", libraryName = "graphql.java.dataloader",
+    LibraryLicense(name = "GraphQL Java", url = "https://github.com/graphql-java/graphql-java",
+                   attachedTo = "intellij.graphql", version = LibraryLicense.CUSTOM_REVISION)
+      .mit("https://github.com/graphql-java/graphql-java/blob/master/LICENSE.md"),
+    LibraryLicense(name = "GraphQL Java Dataloader", libraryName = "graphql.java.dataloader",
                    url = "https://github.com/graphql-java/java-dataloader")
       .apache("https://github.com/graphql-java/java-dataloader/blob/master/LICENSE"),
     LibraryLicense(name = "Grazie AI", libraryName = "ai.grazie.spell.gec.engine.local",
