@@ -63,7 +63,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private final IdeView myIdeView = new IdeViewForProjectViewPane(() -> this);
   private final NamedScopesHolder myDependencyValidationManager;
   private final NamedScopesHolder myNamedScopeManager;
-  private ScopeViewTreeModel myTreeModel;
+  private final @NotNull AtomicReference<ScopeViewTreeModel> myTreeModel = new AtomicReference<>();
   private final AtomicReference<Map<String, NamedScopeFilter>> myFilters = new AtomicReference<>();
   private JScrollPane myScrollPane;
 
@@ -166,12 +166,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @NotNull
   @Override
   public JComponent createComponent() {
-    if (myTreeModel == null) {
+    ScopeViewTreeModel myTreeModel;
+    if (this.myTreeModel.get() == null) {
       myTreeModel = new ScopeViewTreeModel(myProject, new ProjectViewSettings.Delegate(myProject, ID));
       myTreeModel.setStructureProvider(CompoundTreeStructureProvider.get(myProject));
       myTreeModel.setNodeDecorator(CompoundProjectViewNodeDecorator.get(myProject));
       myTreeModel.setFilter(getFilter(getSubId()));
       myTreeModel.setComparator(createComparator());
+      this.myTreeModel.set(myTreeModel);
+    }
+    else {
+      myTreeModel = this.myTreeModel.get();
     }
 
     if (myTree == null) {
@@ -211,13 +216,14 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public @NotNull ActionCallback updateFromRoot(boolean restoreExpandedPaths) {
-    if (myTreeModel == null) {
+    var model = myTreeModel.get();
+    if (model == null) {
       // not initialized yet
       return ActionCallback.REJECTED;
     }
 
     saveExpandedPaths();
-    myTreeModel.invalidate(null);
+    model.invalidate(null);
     restoreExpandedPaths(); // TODO:check
     return ActionCallback.DONE;
   }
@@ -230,7 +236,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public void select(Object object, VirtualFile file, boolean requestFocus) {
-    if (myTreeModel == null) {
+    if (myTreeModel.get() == null) {
       // not initialized yet
       return;
     }
@@ -272,7 +278,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     TreeVisitor visitor = AbstractProjectViewPane.createVisitorByPointer(pointer, file);
     if (visitor == null) return;
     JTree tree = myTree;
-    myTreeModel.getUpdater().updateImmediately(() -> TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
+    myTreeModel.get().getUpdater().updateImmediately(() -> TreeState.expand(tree, promise -> TreeUtil.visit(tree, visitor, path -> {
       if (selectPath(tree, path) || pointer == null || Registry.is("async.project.view.support.extra.select.disabled")) {
         promise.setResult(null);
       }
@@ -339,11 +345,12 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Nullable
   @Override
   public Object getValueFromNode(@Nullable Object node) {
-    if (myTreeModel == null) {
+    var model = myTreeModel.get();
+    if (model == null) {
       // not initialized yet
       return null;
     }
-    return myTreeModel.getContent(node);
+    return model.getContent(node);
   }
 
   @Override
@@ -361,10 +368,11 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   public void updateSelectedScope() {
     // not initialized yet
-    if (myTreeModel == null) {
+    var model = myTreeModel.get();
+    if (model == null) {
       return;
     }
-    myTreeModel.setFilter(getFilter(getSubId()));
+    model.setFilter(getFilter(getSubId()));
   }
 
   @Nullable
@@ -385,7 +393,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Nullable
   @ApiStatus.Internal
   public NamedScopeFilter getCurrentFilter() {
-    var model = myTreeModel;
+    var model = myTreeModel.get();
     return model == null ? null : model.getFilter();
   }
 
