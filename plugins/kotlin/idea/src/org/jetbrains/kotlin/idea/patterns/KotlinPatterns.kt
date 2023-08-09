@@ -2,19 +2,16 @@
 
 package org.jetbrains.kotlin.idea.patterns
 
-import com.intellij.patterns.*
-import com.intellij.psi.PsiElement
-import com.intellij.util.PairProcessor
-import com.intellij.util.ProcessingContext
+import com.intellij.patterns.StandardPatterns
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
+import org.jetbrains.kotlin.idea.base.injection.KotlinFunctionPatternBase
+import org.jetbrains.kotlin.idea.base.injection.KotlinReceiverPattern
+import org.jetbrains.kotlin.idea.base.injection.KtParameterPatternBase
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
-import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 
 // Methods in this class are used through reflection
@@ -32,120 +29,39 @@ object KotlinPatterns : StandardPatterns() {
 
 // Methods in this class are used through reflection during pattern construction
 @Suppress("unused")
-open class KotlinFunctionPattern : PsiElementPattern<KtFunction, KotlinFunctionPattern>(KtFunction::class.java) {
-    fun withParameters(vararg parameterTypes: String): KotlinFunctionPattern {
-        return withPatternCondition("kotlinFunctionPattern-withParameters") { function, _ ->
-            if (function.valueParameters.size != parameterTypes.size) return@withPatternCondition false
+open class KotlinFunctionPattern : KotlinFunctionPatternBase() {
+    override fun KtFunction.matchParameters(vararg parameterTypes: String): Boolean {
+        val descriptor = resolveToDescriptorIfAny() as? FunctionDescriptor ?: return false
+        val valueParameters = descriptor.valueParameters
 
-            val descriptor = function.resolveToDescriptorIfAny() as? FunctionDescriptor ?: return@withPatternCondition false
-            val valueParameters = descriptor.valueParameters
+        if (valueParameters.size != parameterTypes.size) return false
+        for (i in 0..valueParameters.size - 1) {
+            val expectedTypeString = parameterTypes[i]
+            val actualParameterDescriptor = valueParameters[i]
 
-            if (valueParameters.size != parameterTypes.size) return@withPatternCondition false
-            for (i in 0..valueParameters.size - 1) {
-                val expectedTypeString = parameterTypes[i]
-                val actualParameterDescriptor = valueParameters[i]
-
-                if (DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(actualParameterDescriptor.type) != expectedTypeString) {
-                    return@withPatternCondition false
-                }
+            if (DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(actualParameterDescriptor.type) != expectedTypeString) {
+                return false
             }
-
-            true
         }
+
+        return true
     }
 
-    fun withReceiver(receiverFqName: String): KotlinFunctionPattern {
-        return withPatternCondition("kotlinFunctionPattern-withReceiver") { function, _ ->
-            if (function.receiverTypeReference == null) return@withPatternCondition false
-            if (receiverFqName == "?") return@withPatternCondition true
+    override fun KtFunction.matchReceiver(receiverFqName: String): Boolean {
+        val descriptor = resolveToDescriptorIfAny() as? FunctionDescriptor ?: return false
+        val receiver = descriptor.extensionReceiverParameter ?: return false
 
-            val descriptor = function.resolveToDescriptorIfAny() as? FunctionDescriptor ?: return@withPatternCondition false
-            val receiver = descriptor.extensionReceiverParameter ?: return@withPatternCondition false
-
-            DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(receiver.type) == receiverFqName
-        }
-    }
-
-    class DefinedInClassCondition(val fqName: String) : PatternCondition<KtFunction>("kotlinFunctionPattern-definedInClass") {
-        override fun accepts(element: KtFunction, context: ProcessingContext?): Boolean {
-            if (element.parent is KtFile) return false
-            return element.containingClassOrObject?.fqName?.asString() == fqName
-        }
-    }
-
-    fun definedInClass(fqName: String): KotlinFunctionPattern = with(DefinedInClassCondition(fqName))
-
-    fun definedInPackage(packageFqName: String): KotlinFunctionPattern {
-        return withPatternCondition("kotlinFunctionPattern-definedInPackage") { function, _ ->
-            if (function.parent !is KtFile) return@withPatternCondition false
-
-            function.containingKtFile.packageFqName.asString() == packageFqName
-        }
+        return DescriptorRenderer.FQ_NAMES_IN_TYPES.renderType(receiver.type) == receiverFqName
     }
 }
 
 // Methods in this class are used through reflection during pattern construction
 @Suppress("unused")
-class KtParameterPattern : PsiElementPattern<KtParameter, KtParameterPattern>(KtParameter::class.java) {
-    fun ofFunction(index: Int, pattern: ElementPattern<Any>): KtParameterPattern {
-        return with(object : PatternConditionPlus<KtParameter, KtFunction>("KtParameterPattern-ofMethod", pattern) {
-            override fun processValues(
-                ktParameter: KtParameter,
-                context: ProcessingContext,
-                processor: PairProcessor<in KtFunction, in ProcessingContext>
-            ): Boolean {
-                val function = ktParameter.ownerFunction as? KtFunction ?: return true
-                return processor.process(function, context)
-            }
-
-            override fun accepts(ktParameter: KtParameter, context: ProcessingContext): Boolean {
-                val ktFunction = ktParameter.ownerFunction ?: return false
-
-                val parameters = ktFunction.valueParameters
-                if (index < 0 || index >= parameters.size || ktParameter != parameters[index]) return false
-
-                return super.accepts(ktParameter, context)
-            }
-        })
-    }
-
-    fun withAnnotation(fqName: String): KtParameterPattern {
-        return withPatternCondition("KtParameterPattern-withAnnotation") { ktParameter, _ ->
-            if (ktParameter.annotationEntries.isEmpty()) return@withPatternCondition false
-
-            val parameterDescriptor = ktParameter.resolveToParameterDescriptorIfAny()
-            parameterDescriptor is ValueParameterDescriptor && parameterDescriptor.annotations.any { annotation ->
-                annotation.fqName?.asString() == fqName
-            }
+class KtParameterPattern : KtParameterPatternBase() {
+    override fun KtParameter.hasAnnotation(fqName: String): Boolean {
+        val parameterDescriptor = resolveToParameterDescriptorIfAny()
+        return parameterDescriptor is ValueParameterDescriptor && parameterDescriptor.annotations.any { annotation ->
+            annotation.fqName?.asString() == fqName
         }
     }
 }
-
-@Suppress("unused")
-class KotlinReceiverPattern : PsiElementPattern<KtTypeReference, KotlinReceiverPattern>(KtTypeReference::class.java) {
-    fun ofFunction(pattern: ElementPattern<Any>): KotlinReceiverPattern {
-        return with(object : PatternConditionPlus<KtTypeReference, KtFunction>("KtReceiverPattern-ofMethod", pattern) {
-            override fun processValues(
-                typeReference: KtTypeReference,
-                context: ProcessingContext?,
-                processor: PairProcessor<in KtFunction, in ProcessingContext>
-            ): Boolean = processor.process(typeReference.parent as? KtFunction, context)
-
-            override fun accepts(typeReference: KtTypeReference, context: ProcessingContext?): Boolean {
-                val ktFunction = typeReference.parent as? KtFunction ?: return false
-                if (ktFunction.receiverTypeReference != typeReference) return false
-
-                return super.accepts(typeReference, context)
-            }
-        })
-    }
-}
-
-private fun <T : PsiElement, Self : PsiElementPattern<T, Self>> PsiElementPattern<T, Self>.withPatternCondition(
-    debugName: String, condition: (T, ProcessingContext?) -> Boolean
-): Self = with(object : PatternCondition<T>(debugName) {
-    override fun accepts(element: T, context: ProcessingContext?): Boolean {
-        return condition(element, context)
-    }
-})
-

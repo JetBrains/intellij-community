@@ -1158,6 +1158,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/project-model/kotlin.base.project-model.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/project-model/kotlin.base.project-model.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/project-structure/kotlin.base.project-structure.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/project-structure/kotlin.base.project-structure.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/psi/kotlin.base.psi.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/psi/kotlin.base.psi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/injection/kotlin.base.injection.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/injection/kotlin.base.injection.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/resources/kotlin.base.resources.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/resources/kotlin.base.resources.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/scripting/kotlin.base.scripting.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/scripting/kotlin.base.scripting.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/statistics/kotlin.base.statistics.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/statistics/kotlin.base.statistics.iml" />

@@ -1,11 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-package org.jetbrains.kotlin.idea.injection
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.injection
 
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
+import org.jetbrains.annotations.ApiStatus
 
-internal class InjectionInfo(private val languageId: String?, val prefix: String?, val suffix: String?) {
+@ApiStatus.Internal
+class InjectionInfo(private val languageId: String?, val prefix: String?, val suffix: String?) {
     fun toBaseInjection(injectionSupport: LanguageInjectionSupport): BaseInjection? {
         if (languageId == null) return null
 
@@ -30,9 +31,9 @@ internal class InjectionInfo(private val languageId: String?, val prefix: String
             }
 
             return InjectionInfo(
-                baseInjection.injectedLanguageId,
-                baseInjection.prefix,
-                baseInjection.suffix
+              baseInjection.injectedLanguageId,
+              baseInjection.prefix,
+              baseInjection.suffix
             )
         }
     }

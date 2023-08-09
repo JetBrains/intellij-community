@@ -1,23 +1,30 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.injection
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.injection
 
-import com.intellij.codeInsight.intention.impl.QuickEditHandler
-import com.intellij.openapi.util.Key
+import com.intellij.injected.editor.InjectionMeta
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiElement
 import com.intellij.util.SmartList
 import com.intellij.util.text.splitToTextRanges
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.UserDataProperty
 
-internal interface IndentHandler {
+@ApiStatus.Internal
+interface IndentHandler {
     fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange>
 }
 
-internal object NoIndentHandler: IndentHandler {
+internal var PsiElement.trimIndent: String? by UserDataProperty(InjectionMeta.INJECTION_INDENT)
+
+@ApiStatus.Internal
+object NoIndentHandler: IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> = listOf(givenRange)
 }
 
-internal class TrimIndentHandler(private val marginChar: String? = null) : IndentHandler {
+@ApiStatus.Internal
+class TrimIndentHandler(private val marginChar: String? = null) : IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> {
         val text = literal.text
 
@@ -50,7 +57,7 @@ internal class TrimIndentHandler(private val marginChar: String? = null) : Inden
         }
 
         if (ranges.isEmpty()) return listOf(givenRange)
-        
+
         // Dont change the indent if Fragment Editor is open
         minLength = com.intellij.codeInsight.intention.impl.reuseFragmentEditorIndent(literal) { minLength }
 
