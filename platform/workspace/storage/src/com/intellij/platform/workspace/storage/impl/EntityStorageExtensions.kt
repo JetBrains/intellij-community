@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.instrumentation.instrumentation
 
 // ------------------------- Updating references ------------------------
 
+// This is actually "replace children"
 fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
                                                   parent: WorkspaceEntity,
                                                   children: List<WorkspaceEntity>) {
@@ -23,11 +24,13 @@ fun EntityStorage.updateOneToManyChildrenOfParent(connectionId: ConnectionId,
   }
 
   childrenIds.forEach { checkCircularDependency(connectionId, it.id.arrayId, parentId.arrayId, this) }
-  refs.updateOneToManyChildrenOfParent(connectionId, parentId.arrayId, childrenIds)
+  refs.replaceOneToManyChildrenOfParent(connectionId, parentId.arrayId, childrenIds)
 }
 
 
-@Suppress("unused")
+// This is actually "replace children"
+// TODO Why we don't remove old children like in [EntityStorage.updateOneToManyChildrenOfParent]? IDEA-327863
+//    This is probably a bug.
 fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: ConnectionId,
                                                           parentEntity: WorkspaceEntity,
                                                           childrenEntity: Sequence<WorkspaceEntity>) {
@@ -35,7 +38,7 @@ fun EntityStorage.updateOneToAbstractManyChildrenOfParent(connectionId: Connecti
   val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
   val childrenIds = childrenEntity.map { (it as WorkspaceEntityBase).id.asChild() }
   childrenIds.forEach { checkCircularDependency(it.id, parentId.id, this) }
-  refs.updateOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
+  refs.replaceOneToAbstractManyChildrenOfParent(connectionId, parentId, childrenIds)
 }
 
 @Suppress("unused")
@@ -47,7 +50,7 @@ fun EntityStorage.updateOneToAbstractOneChildOfParent(connectionId: ConnectionId
   val parentId = (parentEntity as WorkspaceEntityBase).id.asParent()
   val childId = (childEntity as? WorkspaceEntityBase)?.id?.asChild()
   if (childId != null) {
-    refs.updateOneToAbstractOneChildOfParent(connectionId, parentId, childId)
+    refs.replaceOneToAbstractOneChildOfParent(connectionId, parentId, childId)
   }
   else {
     refs.removeOneToAbstractOneRefByParent(connectionId, parentId)
@@ -66,7 +69,7 @@ fun EntityStorage.updateOneToOneChildOfParent(connectionId: ConnectionId, parent
   }
   if (childId != null) {
     checkCircularDependency(connectionId, childId.id.arrayId, parentId.arrayId, this)
-    refs.updateOneToOneChildOfParent(connectionId, parentId.arrayId, childId)
+    refs.replaceOneToOneChildOfParent(connectionId, parentId.arrayId, childId)
   }
   else {
     refs.removeOneToOneRefByParent(connectionId, parentId.arrayId)
@@ -82,7 +85,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToManyParentOfChild(connec
   val parentId = (parentEntity as? WorkspaceEntityBase)?.id?.asParent()
   if (parentId != null) {
     checkCircularDependency(connectionId, childId.id.arrayId, parentId.id.arrayId, this)
-    refs.updateOneToManyParentOfChild(connectionId, childId.id.arrayId, parentId)
+    refs.replaceOneToManyParentOfChild(connectionId, childId.id.arrayId, parentId)
   }
   else {
     refs.removeOneToManyRefsByChild(connectionId, childId.id.arrayId)
@@ -97,7 +100,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractManyParentOfChil
   val parentId = (parent as? WorkspaceEntityBase)?.id?.asParent()
   if (parentId != null) {
     checkCircularDependency(childId.id, parentId.id, this)
-    refs.updateOneToAbstractManyParentOfChild(connectionId, childId, parentId)
+    refs.replaceOneToAbstractManyParentOfChild(connectionId, childId, parentId)
   }
   else {
     refs.removeOneToAbstractManyRefsByChild(connectionId, childId)
@@ -120,7 +123,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToOneParentOfChild(connect
   }
   if (parentId != null) {
     checkCircularDependency(connectionId, childId.arrayId, parentId.id.arrayId, this)
-    refs.updateOneToOneParentOfChild(connectionId, childId.arrayId, parentId.id)
+    refs.replaceOneToOneParentOfChild(connectionId, childId.arrayId, parentId.id)
   }
   else {
     refs.removeOneToOneRefByChild(connectionId, childId.arrayId)
@@ -141,7 +144,7 @@ fun <Parent : WorkspaceEntity> EntityStorage.updateOneToAbstractOneParentOfChild
     }
   }
   if (parentId != null) {
-    refs.updateOneToAbstractOneParentOfChild(connectionId, childId, parentId)
+    refs.replaceOneToAbstractOneParentOfChild(connectionId, childId, parentId)
   }
   else {
     refs.removeOneToAbstractOneRefByChild(connectionId, childId)

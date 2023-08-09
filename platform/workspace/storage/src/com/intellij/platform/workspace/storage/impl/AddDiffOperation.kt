@@ -156,7 +156,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           }
         }
 
-        target.refs.updateParentOfChild(connectionId, targetEntityId.id.asChild(), targetParentId.id.asParent())
+        target.refs.replaceParentOfChild(connectionId, targetEntityId.id.asChild(), targetParentId.id.asParent())
       }
     }
   }
@@ -187,7 +187,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           }
         }
       }
-      target.refs.updateChildrenOfParent(connectionId, targetEntityId.id.asParent(), targetChildrenIds)
+      target.refs.replaceChildrenOfParent(connectionId, targetEntityId.id.asParent(), targetChildrenIds)
     }
   }
 
@@ -253,7 +253,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
         val sourceChildren = this.diff.refs.getChildrenRefsOfParentBy(sourceEntityId)[connectionId] ?: emptyList()
         val updatedChildren = sourceChildren.mapNotNull { childrenMapper(it) }
         if (updatedChildren != children) {
-          target.refs.updateChildrenOfParent(connectionId, newEntityId, updatedChildren)
+          target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
         }
       }
       else {
@@ -278,7 +278,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
 
         // .... Update if something changed
         if (children.toSet() != mutableChildren) {
-          target.refs.updateChildrenOfParent(connectionId, newEntityId, mutableChildren)
+          target.refs.replaceChildrenOfParent(connectionId, newEntityId, mutableChildren)
         }
       }
       addedChildrenMap.removeAll(connectionId)
@@ -291,7 +291,7 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
     for ((connectionId, children) in addedChildrenMap.asMap()) {
       val updatedChildren = children.mapNotNull { childrenMapper(it) }
 
-      target.refs.updateChildrenOfParent(connectionId, newEntityId, updatedChildren)
+      target.refs.replaceChildrenOfParent(connectionId, newEntityId, updatedChildren)
     }
   }
 
@@ -340,11 +340,11 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
               possibleNewParent = target.entitiesByType.book(newParent.id.clazz).asThis()
               replaceMap[newParent.id.notThis()] = possibleNewParent
             }
-            target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+            target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
           }
           else {
             if (target.entityDataById(newParent.id) != null) {
-              target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), newParent)
+              target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), newParent)
             }
             else {
               if (!connectionId.canRemoveParent()) target.addDiffAndReport("Cannot restore some dependencies; $connectionId",
@@ -366,11 +366,11 @@ internal class AddDiffOperation(val target: MutableEntityStorageImpl, val diff: 
           possibleNewParent = target.entitiesByType.book(parentId.id.clazz).asThis()
           replaceMap[parentId.id.notThis()] = possibleNewParent
         }
-        target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
+        target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), possibleNewParent.id.asParent())
       }
       else {
         if (target.entityDataById(parentId.id) != null) {
-          target.refs.updateParentOfChild(connectionId, newEntityId.asChild(), parentId)
+          target.refs.replaceParentOfChild(connectionId, newEntityId.asChild(), parentId)
         }
       }
     }
