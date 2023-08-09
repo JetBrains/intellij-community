@@ -113,7 +113,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
 }
 
 internal fun SdkMainEntity.Builder.getSdkType(): SdkTypeId {
-  return SdkType.findByName(type) ?: error("SDK type ${type} not found")
+  return ProjectJdkTable.getInstance().getSdkTypeByName(type)
 }
 
 // At serialization, we have access only to `sdkRootName` so our roots contains only this names
