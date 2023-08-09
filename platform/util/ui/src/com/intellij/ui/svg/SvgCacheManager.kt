@@ -5,6 +5,7 @@ package com.intellij.ui.svg
 
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.hasher
 import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.ui.seededHasher
@@ -43,7 +44,7 @@ value class SvgCacheClassifier(internal val key: Int) {
 fun getSvgIconCacheInvalidMarkerFile(file: Path): Path = file.parent.resolve("${file.fileName}.invalidated")
 
 suspend fun createSvgCacheManager(cacheFile: Path): SvgCacheManager? {
-  if (!java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", "true"))) {
+  if (!java.lang.Boolean.parseBoolean(System.getProperty("idea.ui.icons.svg.disk.cache", (!SystemInfoRt.isLinux).toString()))) {
     return null
   }
 
