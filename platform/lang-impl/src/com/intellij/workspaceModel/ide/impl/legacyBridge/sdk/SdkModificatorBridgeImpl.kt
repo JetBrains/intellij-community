@@ -18,7 +18,8 @@ import com.intellij.workspaceModel.ide.getGlobalInstance
 import com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModel
 import org.jdom.Element
 
-class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder) : SdkModificator {
+class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder,
+                               private val originalSdkBridge: SdkBridgeImpl) : SdkModificator {
 
   private var isCommitted = false
   private var additionalData: SdkAdditionalData? = null
@@ -125,6 +126,7 @@ class SdkModificatorBridgeImpl(private val originalEntity: SdkMainEntity.Builder
     }
 
     originalEntity.applyChangesFrom(modifiedSdkEntity)
+    originalSdkBridge.reloadAdditionalData()
     isCommitted = true
   }
 

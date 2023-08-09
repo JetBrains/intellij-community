@@ -59,8 +59,9 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
   }
 
   override fun addNewSdk(sdk: Sdk) {
+    sdk as SdkBridgeImpl
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val existingSdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk as SdkBridgeImpl)
+    val existingSdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk)
 
     if (existingSdkEntity != null) {
       throw IllegalStateException("SDK $sdk is already registered")
@@ -77,13 +78,7 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
       }
     }
 
-    val additionalData = sdk.sdkAdditionalData
-    val additionalDataAsString = if (additionalData != null) {
-      val additionalDataElement = Element(ELEMENT_ADDITIONAL)
-      sdk.sdkType.saveAdditionalData(additionalData, additionalDataElement)
-      JDOMUtil.write(additionalDataElement)
-    } else ""
-
+    val additionalDataAsString = sdk.getRawSdkAdditionalData()
     val sdkEntity = SdkMainEntity(sdk.name, sdk.sdkType.name, homePathVfu, roots, additionalDataAsString, sdkEntitySource) {
       this.version = sdk.versionString
     }

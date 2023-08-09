@@ -23,7 +23,12 @@ import com.intellij.util.EventDispatcher
 // So I need to have such implementation and can't use implementation with SymbolicId and searching in storage
 class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserDataHolderBase(), ProjectJdk, RootProvider, Sdk {
 
-  private val dispatcher = EventDispatcher.create(RootProvider.RootSetChangedListener::class.java)
+  private var additionalData: SdkAdditionalData? = null
+  private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
+
+  init {
+    reloadAdditionalData()
+  }
 
   //var sdkId: SdkId = entityId
 
@@ -48,7 +53,7 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
   }
 
   override fun getSdkModificator(): SdkModificator {
-    return SdkModificatorBridgeImpl(sdkEntityBuilder)
+    return SdkModificatorBridgeImpl(sdkEntityBuilder, this)
   }
 
   override fun getRootProvider(): RootProvider = this
@@ -82,12 +87,12 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
     dispatcher.multicaster.rootSetChanged(this)
   }
 
-  override fun getSdkAdditionalData(): SdkAdditionalData? {
-    val additionalData = sdkEntityBuilder.additionalData
-    if (additionalData.isBlank()) return null
-    val additionalDataElement = JDOMUtil.load(additionalData)
-    return sdkEntityBuilder.getSdkType().loadAdditionalData(this, additionalDataElement)
-  }
+  override fun getSdkAdditionalData(): SdkAdditionalData? = additionalData
+  //  val additionalData = sdkEntityBuilder.additionalData
+  //  if (additionalData.isBlank()) return null
+  //  val additionalDataElement = JDOMUtil.load(additionalData)
+  //  return sdkEntityBuilder.getSdkType().loadAdditionalData(this, additionalDataElement)
+  //}
 
   override fun clone(): Any {
     // Called from com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.reset
@@ -97,12 +102,23 @@ class SdkBridgeImpl(private var sdkEntityBuilder: SdkMainEntity.Builder) : UserD
     return SdkBridgeImpl(sdkEntityClone)
   }
 
+  internal fun getRawSdkAdditionalData(): String = sdkEntityBuilder.additionalData
+
   internal fun applyChangesFrom(sdkBridge: SdkBridgeImpl) {
     val modifiableEntity = sdkEntityBuilder as ModifiableWorkspaceEntityBase<*, *>
     if (modifiableEntity.diff != null && !modifiableEntity.modifiable.get()) {
       sdkEntityBuilder = SdkTableBridgeImpl.createEmptySdkEntity("", "", "")
     }
     sdkEntityBuilder.applyChangesFrom(sdkBridge.sdkEntityBuilder)
+    reloadAdditionalData()
+  }
+
+  internal fun reloadAdditionalData() {
+    val rawAdditionalData = sdkEntityBuilder.additionalData
+    if (rawAdditionalData.isNotBlank()) {
+      val additionalDataElement = JDOMUtil.load(rawAdditionalData)
+      additionalData = sdkEntityBuilder.getSdkType().loadAdditionalData(this, additionalDataElement)
+    }
   }
 
   internal fun applyChangesTo(sdkEntity: SdkMainEntity.Builder) {
