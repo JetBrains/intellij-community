@@ -4,14 +4,26 @@ package org.jetbrains.plugins.terminal.exp
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.RangeMarkerImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 
-class TerminalOutputModel(editor: EditorEx) {
+class TerminalOutputModel(private val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = mutableListOf()
+  private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
 
   private val document: Document = editor.document
 
-  fun addBlock(command: String?) {
+  fun createBlock(command: String?): CommandBlock {
+    val lastBlock = getLastBlock()
+    // restrict previous block expansion
+    if (lastBlock != null) {
+      val decoration = decorations[lastBlock]!!
+      lastBlock.range.isGreedyToRight = false
+      decoration.highlighter.isGreedyToRight = false
+      (decoration.bottomInlay as RangeMarkerImpl).isStickingToRight = false
+    }
+
     val textLength = document.textLength
     val startOffset = if (textLength != 0) {
       document.insertString(textLength, "\n")
@@ -20,34 +32,38 @@ class TerminalOutputModel(editor: EditorEx) {
     else 0
     val marker = document.createRangeMarker(startOffset, startOffset)
     marker.isGreedyToRight = true
-    blocks.add(CommandBlock(command, marker))
-    addDecorations(marker)
+    val block = CommandBlock(command, marker)
+    blocks.add(block)
+    return block
   }
 
   fun removeBlock(block: CommandBlock) {
     document.deleteString(block.startOffset, block.endOffset)
-    block.dispose()
+
+    val decoration = decorations[block]!!
+    Disposer.dispose(decoration.topInlay)
+    Disposer.dispose(decoration.bottomInlay)
+    editor.markupModel.removeHighlighter(decoration.highlighter)
+    block.range.dispose()
+
     blocks.remove(block)
+    decorations.remove(block)
   }
 
   fun getLastBlock(): CommandBlock? {
     return blocks.lastOrNull()
   }
 
-  private fun addDecorations(range: RangeMarker) {
-    // todo: add inlays and highlighters to create visual block
+  fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
+    decorations[block] = decoration
   }
 }
 
-data class CommandBlock(val command: String?, private val range: RangeMarker) {
+data class CommandBlock(val command: String?, val range: RangeMarker) {
   val startOffset: Int
     get() = range.startOffset
   val endOffset: Int
     get() = range.endOffset
   val textRange: TextRange
     get() = range.textRange
-
-  fun dispose() {
-    range.dispose()
-  }
 }

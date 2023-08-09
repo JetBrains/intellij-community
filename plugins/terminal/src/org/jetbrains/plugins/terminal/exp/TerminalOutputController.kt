@@ -18,13 +18,16 @@ class TerminalOutputController(private val editor: EditorEx,
                                private val settings: JBTerminalSystemSettingsProviderBase) {
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   private val terminalModel: TerminalModel = session.model
+  private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(editor)
 
   var isFocused: Boolean = false
 
   private var runningListenersDisposable: Disposable? = null
 
   fun startCommandBlock(command: String?) {
-    outputModel.addBlock(command)
+    val block = outputModel.createBlock(command)
+    val decoration = blocksDecorator.installDecoration(block)
+    outputModel.putDecoration(block, decoration)
 
     val disposable = Disposer.newDisposable().also { Disposer.register(session, it) }
     runningListenersDisposable = disposable

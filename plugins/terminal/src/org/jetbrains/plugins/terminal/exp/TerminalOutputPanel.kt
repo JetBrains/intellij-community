@@ -60,6 +60,7 @@ class TerminalOutputPanel(
     editor.scrollPane.border = JBUI.Borders.empty()
     editor.scrollPane.horizontalScrollBarPolicy = JScrollPane.HORIZONTAL_SCROLLBAR_NEVER
     editor.gutterComponentEx.isPaintBackground = false
+    editor.gutterComponentEx.setRightFreePaintersAreaWidth(0)
 
     editor.settings.apply {
       isUseSoftWraps = true
