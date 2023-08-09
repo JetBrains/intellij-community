@@ -408,6 +408,16 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveNestedClass/innerToTopLevelWithThis/innerToTopLevelWithThis.test");
     }
 
+    @TestMetadata("kotlin/moveNestedClass/nameClashes/nestedToAnotherClassNoConflicts/nestedToAnotherClassNoConflicts.test")
+    public void testKotlin_moveNestedClass_nameClashes_nestedToAnotherClassNoConflicts_NestedToAnotherClassNoConflicts() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveNestedClass/nameClashes/nestedToAnotherClassNoConflicts/nestedToAnotherClassNoConflicts.test");
+    }
+
+    @TestMetadata("kotlin/moveNestedClass/nameClashes/nestedToTopLevelConflicts/nestedToTopLevelConflicts.test")
+    public void testKotlin_moveNestedClass_nameClashes_nestedToTopLevelConflicts_NestedToTopLevelConflicts() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveNestedClass/nameClashes/nestedToTopLevelConflicts/nestedToTopLevelConflicts.test");
+    }
+
     @TestMetadata("kotlin/moveNestedClass/nonInnerToOuterClass1/nonInnerToOuterClass1.test")
     public void testKotlin_moveNestedClass_nonInnerToOuterClass1_NonInnerToOuterClass1() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveNestedClass/nonInnerToOuterClass1/nonInnerToOuterClass1.test");

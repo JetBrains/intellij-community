@@ -611,6 +611,7 @@ class K1MoveConflictCheckerSupport : KotlinMoveConflictCheckerSupport {
                             .filter { equivalent(it, declaration) }
                             .forEach { report(it, currentScopeDeclaration) }
                     }
+                    return
                 }
 
             }
