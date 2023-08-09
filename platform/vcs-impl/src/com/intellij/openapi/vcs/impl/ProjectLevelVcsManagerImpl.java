@@ -162,18 +162,17 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @NotNull @NlsSafe String getShortNameForVcsRoot(@Nullable VirtualFile root) {
-    VirtualFile projectDir = myProject.getBaseDir();
+  public @NotNull @NlsSafe String getShortNameForVcsRoot(@NotNull VirtualFile root) {
+    String shortName = myMappings.getShortNameFor(root);
+    if (shortName != null) return shortName;
 
-    String repositoryPath = root.getPresentableUrl();
-    if (projectDir != null) {
-      String relativePath = VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar);
-      if (relativePath != null) {
-        repositoryPath = relativePath;
-      }
+    VirtualFile projectDir = myProject.getBaseDir();
+    String relativePath = projectDir != null ? VfsUtilCore.getRelativePath(root, projectDir, File.separatorChar) : null;
+    if (relativePath != null) {
+      return relativePath.isEmpty() ? root.getName() : relativePath;
     }
 
-    return repositoryPath.isEmpty() ? root.getName() : repositoryPath;
+    return root.getPresentableUrl();
   }
 
   @Override
