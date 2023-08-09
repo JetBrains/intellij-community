@@ -26,11 +26,6 @@ import com.intellij.platform.feedback.kafka.dialog.KafkaConsumerFeedbackDialog
 import com.intellij.platform.feedback.kafka.dialog.KafkaProducerFeedbackDialog
 import com.intellij.platform.feedback.kafka.state.KafkaConsumerProducerFeedbackService
 import com.intellij.platform.feedback.kafka.state.KafkaConsumerProducerInfoState
-import com.intellij.platform.feedback.new_ui.CancelFeedbackNotification
-import com.intellij.platform.feedback.new_ui.bundle.NewUIFeedbackBundle
-import com.intellij.platform.feedback.new_ui.dialog.NewUIFeedbackDialog
-import com.intellij.platform.feedback.new_ui.state.NewUIInfoService
-import com.intellij.platform.feedback.new_ui.state.NewUIInfoState
 import com.intellij.platform.feedback.pycharmUi.bundle.PyCharmUIFeedbackBundle
 import com.intellij.platform.feedback.pycharmUi.dialog.PyCharmUIFeedbackDialog
 import com.intellij.platform.feedback.pycharmUi.state.PyCharmUIInfoService
@@ -41,80 +36,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 
 enum class IdleFeedbackTypes {
-  NEW_UI_FEEDBACK {
-    override val fusFeedbackId: String = "new_ui_feedback"
-    override val suitableIdeVersion: String = "2022.3"
-    private val lastDayCollectFeedback = LocalDate(2022, 12, 6)
-    private val maxNumberNotificationShowed = 1
-    private val minNumberDaysElapsed = 5
-
-    override fun isSuitable(): Boolean {
-      val newUIInfoState = NewUIInfoService.getInstance().state
-
-      return checkIdeIsSuitable() &&
-             checkIsNoDeadline() &&
-             checkIdeVersionIsSuitable() &&
-             checkFeedbackNotSent(newUIInfoState) &&
-             checkNewUIHasBeenEnabled(newUIInfoState) &&
-             checkNotificationNumberNotExceeded(newUIInfoState)
-    }
-
-    private fun checkIdeIsSuitable(): Boolean {
-      return !PlatformUtils.isRider()
-    }
-
-    private fun checkIsNoDeadline(): Boolean {
-      return Clock.System.todayIn(TimeZone.currentSystemDefault()) < lastDayCollectFeedback
-    }
-
-    private fun checkFeedbackNotSent(state: NewUIInfoState): Boolean {
-      return !state.feedbackSent
-    }
-
-    private fun checkNewUIHasBeenEnabled(state: NewUIInfoState): Boolean {
-      val enableNewUIDate = state.enableNewUIDate
-      if (enableNewUIDate == null) {
-        return false
-      }
-
-      return Duration.between(enableNewUIDate.toJavaLocalDateTime(), LocalDateTime.now()).toDays() >= minNumberDaysElapsed
-    }
-
-    private fun checkNotificationNumberNotExceeded(state: NewUIInfoState): Boolean {
-      return state.numberNotificationShowed < maxNumberNotificationShowed
-    }
-
-    override fun createNotification(forTest: Boolean): Notification {
-      return RequestFeedbackNotification(
-        "Feedback In IDE",
-        NewUIFeedbackBundle.message("notification.request.feedback.title"),
-        NewUIFeedbackBundle.message("notification.request.feedback.content"))
-    }
-
-    override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return NewUIFeedbackDialog(project, forTest)
-    }
-
-    override fun updateStateAfterNotificationShowed() {
-      NewUIInfoService.getInstance().state.numberNotificationShowed += 1
-    }
-
-    override fun updateStateAfterDialogClosedOk() {
-      NewUIInfoService.getInstance().state.feedbackSent = true
-    }
-
-    override fun getGiveFeedbackNotificationLabel(): String {
-      return NewUIFeedbackBundle.getMessage("notification.request.feedback.give_feedback")
-    }
-
-    override fun getCancelFeedbackNotificationLabel(): String {
-      return NewUIFeedbackBundle.getMessage("notification.request.feedback.cancel.feedback")
-    }
-
-    override fun getNotificationOnCancelAction(project: Project?): () -> Unit {
-      return { CancelFeedbackNotification().notify(project) }
-    }
-  },
   PYCHARM_UI_FEEDBACK {
     override val fusFeedbackId: String = "pycharm_ui_feedback"
     override val suitableIdeVersion: String = "2023.1"

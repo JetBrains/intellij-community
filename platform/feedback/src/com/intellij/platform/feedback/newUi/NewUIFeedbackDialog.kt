@@ -1,5 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.platform.feedback.new_ui.dialog
+package com.intellij.platform.feedback.newUi
 
 import com.intellij.openapi.project.Project
 import com.intellij.platform.feedback.dialog.BlockBasedFeedbackDialogWithEmail
@@ -7,9 +7,6 @@ import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.SystemDataJsonSerializable
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.platform.feedback.dialog.uiBlocks.*
-import com.intellij.platform.feedback.new_ui.CancelFeedbackNotification
-import com.intellij.platform.feedback.new_ui.bundle.NewUIFeedbackBundle
-import com.intellij.platform.feedback.new_ui.state.NewUIInfoService
 import com.intellij.ui.NewUiValue
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.Serializable

@@ -52,9 +52,6 @@
       <action id="com.intellij.platform.feedback.pycharmUi.TestShowNewUIFeedbackAction"
               class="com.intellij.platform.feedback.pycharmUi.TestShowNewUIFeedbackAction"
               internal="true"/>
-      <action id="com.intellij.platform.feedback.new_ui.TestShowNewUIFeedbackAction"
-              class="com.intellij.platform.feedback.new_ui.TestShowNewUIFeedbackAction"
-              internal="true"/>
       <action id="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               class="com.intellij.platform.feedback.localization.dialog.ShowLocalizationFeedbackDialog"
               internal="true"/>
