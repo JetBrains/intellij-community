@@ -3,6 +3,7 @@ package com.intellij.platform.feedback.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.PlatformUtils
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.JSON_CONTENT_TYPE
 import kotlinx.serialization.json.JsonObject
@@ -18,6 +19,9 @@ private const val PRODUCTION_FEEDBACK_URL = "https://forms-service.jetbrains.com
 private const val FEEDBACK_FORM_ID_ONLY_DATA = "feedback/ide"
 private const val FEEDBACK_FORM_ID_WITH_DETAILED_ANSWER = "feedback/ide_with_detailed_answer"
 
+/** Should be used inside JSON top-level keys to distinguish reports without any external information */
+const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
+
 private const val FEEDBACK_FROM_ID_KEY = "formid"
 private const val FEEDBACK_INTELLIJ_PRODUCT_KEY = "intellij_product"
 private const val FEEDBACK_TYPE_KEY = "feedback_type"
@@ -28,7 +32,7 @@ private const val FEEDBACK_EMAIL_KEY = "email"
 private const val FEEDBACK_SUBJECT_KEY = "subject"
 private const val FEEDBACK_COMMENT_KEY = "comment"
 
-internal const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
+const val DEFAULT_FEEDBACK_CONSENT_ID = "rsch.statistics.feedback.common"
 
 private const val REQUEST_ID_KEY = "Request-Id"
 
@@ -145,5 +149,33 @@ private fun sendFeedback(feedbackUrl: String,
     LOG.info("Failed to submit feedback. Feedback data:\n$requestData\nError message:\n${e.message}")
     onError()
     return
+  }
+}
+
+enum class FeedbackRequestType {
+  NO_REQUEST, // can be used during feedback UI/statistics development and debug
+  TEST_REQUEST,
+  PRODUCTION_REQUEST
+}
+
+/**
+ * @return product tag.
+ * @see <a href="https://youtrack.jetbrains.com/issue/ZEN-1460#focus=Comments-27-5692479.0-0">ZEN-1460</a> for more information
+ */
+internal fun getProductTag(): String {
+  return when {
+    PlatformUtils.isIntelliJ() -> "ij_idea"
+    PlatformUtils.isPhpStorm() -> "ij_phpstorm"
+    PlatformUtils.isWebStorm() -> "ij_webstorm"
+    PlatformUtils.isPyCharm() -> "ij_pycharm"
+    PlatformUtils.isRubyMine() -> "ij_rubymine"
+    PlatformUtils.isAppCode() -> "ij_appcode"
+    PlatformUtils.isCLion() -> "ij_clion"
+    PlatformUtils.isDataGrip() -> "ij_datagrip"
+    PlatformUtils.isPyCharmEducational() -> "ij_pycharm_edu"
+    PlatformUtils.isGoIde() -> "ij_goland"
+    PlatformUtils.isJetBrainsClient() -> "ij_code_with_me"
+    PlatformUtils.isDataSpell() -> "ij_dataspell"
+    else -> "undefined"
   }
 }

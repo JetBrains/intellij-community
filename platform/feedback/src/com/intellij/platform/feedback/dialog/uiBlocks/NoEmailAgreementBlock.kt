@@ -2,8 +2,8 @@
 package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.project.Project
+import com.intellij.platform.feedback.dialog.feedbackAgreement
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
-import com.intellij.platform.feedback.impl.feedbackAgreement
 import com.intellij.ui.dsl.builder.Panel
 
 class NoEmailAgreementBlock(private val myProject: Project?,

@@ -17,12 +17,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
-import com.intellij.platform.feedback.impl.FEEDBACK_REPORT_ID_KEY
-import com.intellij.platform.feedback.impl.FeedbackRequestType
 import com.intellij.platform.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.platform.feedback.dialog.CommonFeedbackSystemData
 import com.intellij.platform.feedback.dialog.showFeedbackSystemInfoDialog
-import com.intellij.platform.feedback.impl.submitGeneralFeedback
+import com.intellij.platform.feedback.impl.*
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.JBColor
@@ -33,7 +31,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.*
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.*
 import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil
@@ -236,10 +233,16 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     }
 
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
-    submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
-                          onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
-                          feedbackRequestType = getFeedbackRequestType()
+    val feedbackData = FeedbackRequestDataWithDetailedAnswer(
+      (if (emailCheckBox.isSelected) emailTextField.text else ""),
+      onboardingFeedbackData.reportTitle,
+      description,
+      DEFAULT_FEEDBACK_CONSENT_ID,
+      onboardingFeedbackData.feedbackReportId,
+      collectedData
     )
+
+    submitFeedback(feedbackData, {}, {}, getFeedbackRequestType())
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
     place = getFeedbackEntryPlace(project),
