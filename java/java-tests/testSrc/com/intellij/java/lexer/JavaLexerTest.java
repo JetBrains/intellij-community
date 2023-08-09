@@ -256,6 +256,7 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\"\"\"\n \\u005C\"\"\"\n \"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n \\u005C\"\"\"\\n \"\"\"')"); // unicode escaped backslash '\'
 
     doTest("\"\"\"\n\\{}\"\"\"", "TEXT_BLOCK_LITERAL ('\"\"\"\\n\\{}\"\"\"')");
+    doTest("\"\"\"\n ...\n\"\" \"\"\" ", "TEXT_BLOCK_LITERAL ('\"\"\"\\n ...\\n\"\" \"\"\"')\nWHITE_SPACE (' ')");
   }
 
   public void testStringTemplatesJDK21_Preview() {
@@ -390,6 +391,13 @@ public class JavaLexerTest extends LexerTestCase {
              STRING_TEMPLATE_END ('}"')
              WHITE_SPACE ('\\n')
              """);
+    doTest("""
+             ""\"
+                   "\\{}""\"""",
+           """
+             TEXT_BLOCK_TEMPLATE_BEGIN ('""\"\\n      "\\{')
+             TEXT_BLOCK_TEMPLATE_END ('}""\"')
+             """);
   }
 
   public void testStringLiterals() {
@@ -397,6 +405,7 @@ public class JavaLexerTest extends LexerTestCase {
     doTest("\" ", "STRING_LITERAL ('\" ')");
     doTest("\"\"", "STRING_LITERAL ('\"\"')");
     doTest("\"\" ", "STRING_LITERAL ('\"\"')\nWHITE_SPACE (' ')");
+    doTest("\"x\n ", "STRING_LITERAL ('\"x')\nWHITE_SPACE ('\\n ')");
     doTest("\"\\\"\" ", "STRING_LITERAL ('\"\\\"\"')\nWHITE_SPACE (' ')");
     doTest("\"\\", "STRING_LITERAL ('\"\\')");
     doTest("\"\\u", "STRING_LITERAL ('\"\\u')");
