@@ -9,7 +9,6 @@ import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import com.intellij.ui.dsl.listCellRenderer.*
-import com.intellij.ui.dsl.listCellRenderer.RenderContext
 import com.intellij.ui.popup.list.SelectablePanel
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
@@ -19,6 +18,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Component
 import javax.swing.*
+import javax.swing.plaf.basic.BasicComboPopup
 
 private const val HORIZONTAL_GAP = 4
 
@@ -107,13 +107,26 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     if (ExperimentalUI.isNewUI()) {
       // Update height/insets every time, so IDE scaling is applied
       selectablePanel.apply {
-        selectionArc = 8
-        selectionInsets = JBInsets.create(0, 12)
-        border = JBUI.Borders.empty(0, 20)
-        preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+        if (isComboBox(list) && index == -1) {
+          // Renderer for selected item in ComboBox component
+          selectablePanel.isOpaque = false
+          selectionArc = 0
+          selectionInsets = JBInsets.emptyInsets()
+          border = null
+          preferredHeight = null
 
-        background = list.background
-        selectionColor = bg
+          background = null
+          selectionColor = null
+        } else {
+          selectablePanel.isOpaque = true
+          selectionArc = 8
+          selectionInsets = JBInsets.create(0, 12)
+          border = JBUI.Borders.empty(0, 20)
+          preferredHeight = JBUI.CurrentTheme.List.rowHeight()
+
+          background = list.background
+          selectionColor = bg
+        }
       }
     }
     else {
@@ -133,6 +146,10 @@ internal class LcrRowImpl<T> : LcrRow<T>, ListCellRenderer<T> {
     selectablePanel.accessibleContext.accessibleName = getAccessibleName()
 
     return selectablePanel
+  }
+
+  private fun isComboBox(list: JList<*>): Boolean {
+    return UIUtil.getParentOfType(BasicComboPopup::class.java, list) != null
   }
 
   @Nls
