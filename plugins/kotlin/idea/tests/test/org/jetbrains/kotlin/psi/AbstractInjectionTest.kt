@@ -102,7 +102,7 @@ abstract class AbstractInjectionTest : KotlinLightCodeInsightFixtureTestCase() {
         )
     }
 
-    protected fun doRemoveInjectionTest(@Language("kotlin") before: String, @Language("kotlin") after: String) {
+    protected open fun doRemoveInjectionTest(@Language("kotlin") before: String, @Language("kotlin") after: String) {
         myFixture.setCaresAboutInjection(false)
 
         myFixture.configureByText("${getTestName(true)}.kt", before.trimIndent())
