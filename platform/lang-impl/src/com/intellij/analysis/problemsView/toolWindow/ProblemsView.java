@@ -154,7 +154,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
           CompletableFuture<Void> future = new CompletableFuture<>();
           ((HighlightingPanel)panel).updateSelectedFile()
             .onError(throwable -> future.completeExceptionally(throwable))
-            .onSuccess(o->future.complete(o));
+            .onSuccess(__->future.complete(null));
           result = result.thenCompose(__->future);
         }
       }

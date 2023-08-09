@@ -87,7 +87,7 @@ class HighlightingPanel(project: Project, state: ProblemsViewState)
     }
   }
   
-  fun updateSelectedFile(): CancellablePromise<Void> {
+  fun updateSelectedFile(): CancellablePromise<*> {
     return ReadAction.nonBlocking {
       if (!myDisposed) {
         ClientId.withClientId(myClientId) {
