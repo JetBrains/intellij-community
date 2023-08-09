@@ -3,6 +3,8 @@ package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
 import com.intellij.build.BuildContentManager
+import com.intellij.concurrency.currentThreadContext
+import com.intellij.concurrency.installThreadContext
 import com.intellij.execution.*
 import com.intellij.execution.configuration.CompatibilityAwareRunProfile
 import com.intellij.execution.configurations.RunConfiguration
@@ -30,10 +32,12 @@ import com.intellij.execution.ui.RunContentManager
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.logger
@@ -44,7 +48,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.*
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -57,6 +64,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
@@ -68,7 +76,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Consumer
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
-
+import kotlin.coroutines.CoroutineContext
 
 class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
   companion object {
@@ -76,6 +84,18 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
 
     internal val DELEGATED_RUN_PROFILE_KEY = Key.create<RunProfile>("DELEGATED_RUN_PROFILE_KEY")
+
+    @Internal
+    @JvmStatic
+    fun getEnvironmentDataContext(): DataContext? {
+      return currentThreadContext()[EnvDataContextElement]?.dataContext
+    }
+
+    private class EnvDataContextElement(val dataContext: DataContext?) : CoroutineContext.Element {
+      companion object : CoroutineContext.Key<EnvDataContextElement>
+
+      override val key: CoroutineContext.Key<*> = EnvDataContextElement
+    }
 
     @JvmField
     val EXECUTION_SESSION_ID_KEY = ExecutionManager.EXECUTION_SESSION_ID_KEY
@@ -434,12 +454,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       return
     }
 
-    // important! Do not use DumbService.smartInvokeLater here because it depends on modality state
-    // and execution of startRunnable could be skipped if modality state check fails
-
-    SwingUtilities.invokeLater {
+    runInEdt(ModalityState.any()) {
       if (project.isDisposed) {
-        return@invokeLater
+        return@runInEdt
       }
 
       val settings = environment.runnerAndConfigurationSettings
@@ -666,49 +683,56 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 
   @ApiStatus.Internal
   fun executeConfiguration(environment: ExecutionEnvironment, showSettings: Boolean, assignNewId: Boolean = true) {
-    val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
-    val project = environment.project
-    var runner = environment.runner
-    if (runnerAndConfigurationSettings != null) {
-      val targetManager = ExecutionTargetManager.getInstance(project)
-      if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
-        ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage( environment.runProfile, environment.executionTarget)))
-        processNotStarted(environment, null)
-        return
-      }
-
-      if (!DumbService.isDumb(project)) {
-        if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
-          if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
-            processNotStarted(environment, null)
-            return
-          }
-          editConfigurationUntilSuccess(environment, assignNewId)
+    val context = currentThreadContext()
+    installThreadContext(context + EnvDataContextElement(environment.dataContext), true).use {
+      val runnerAndConfigurationSettings = environment.runnerAndConfigurationSettings
+      val project = environment.project
+      val runner = environment.runner
+      if (runnerAndConfigurationSettings != null) {
+        val targetManager = ExecutionTargetManager.getInstance(project)
+        if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
+          ExecutionUtil.handleExecutionError(environment, ExecutionException(
+            ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
+          processNotStarted(environment, null)
+          return
         }
-        else {
-          inProgress.add(InProgressEntry(environment.executor.id, environment.runner.runnerId))
-          ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
-            .finishOnUiThread(ModalityState.nonModal()) { canRun ->
-              inProgress.remove(InProgressEntry(environment.executor.id, environment.runner.runnerId))
-              if (canRun) {
-                executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
-                return@finishOnUiThread
-              }
 
-              if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
-                processNotStarted(environment, null)
-                return@finishOnUiThread
-              }
-              editConfigurationUntilSuccess(environment, assignNewId)
+        if (!DumbService.isDumb(project)) {
+          if (showSettings && runnerAndConfigurationSettings.isEditBeforeRun) {
+            if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+              processNotStarted(environment, null)
+              return
             }
-            .expireWith(this)
-            .submit(AppExecutorUtil.getAppExecutorService())
-        }
-        return
-      }
-    }
+            editConfigurationUntilSuccess(environment, assignNewId)
+          }
+          else {
+            inProgress.add(InProgressEntry(environment.executor.id, environment.runner.runnerId))
+            ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
+              .finishOnUiThread(ModalityState.nonModal()) { canRun ->
+                inProgress.remove(InProgressEntry(environment.executor.id, environment.runner.runnerId))
+                if (canRun) {
 
-    executeConfiguration(environment, runner, assignNewId, project, runnerAndConfigurationSettings)
+                  executeConfiguration(environment, environment.runner, assignNewId, this.project,
+                                       environment.runnerAndConfigurationSettings)
+
+                  return@finishOnUiThread
+                }
+
+                if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
+                  processNotStarted(environment, null)
+                  return@finishOnUiThread
+                }
+                editConfigurationUntilSuccess(environment, assignNewId)
+              }
+              .expireWith(this)
+              .submit(AppExecutorUtil.getAppExecutorService())
+          }
+          return
+        }
+      }
+
+      executeConfiguration(environment, runner, assignNewId, project, runnerAndConfigurationSettings)
+    }
   }
 
   private fun editConfigurationUntilSuccess(environment: ExecutionEnvironment, assignNewId: Boolean) {

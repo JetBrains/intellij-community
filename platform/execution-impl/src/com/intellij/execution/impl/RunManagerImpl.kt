@@ -97,11 +97,9 @@ open class RunManagerImpl @NonInjectable constructor(val project: Project, share
     fun getInstanceImpl(project: Project): RunManagerImpl = getInstance(project) as RunManagerImpl
 
     fun canRunConfiguration(environment: ExecutionEnvironment): Boolean {
-      return ExecutionUtil.computeWithDataContext(environment) {
-        environment.runnerAndConfigurationSettings?.let {
-          canRunConfiguration(it, environment.executor)
-        } ?: false
-      }
+      return environment.runnerAndConfigurationSettings?.let {
+        canRunConfiguration(it, environment.executor)
+      } ?: false
     }
 
     @JvmStatic

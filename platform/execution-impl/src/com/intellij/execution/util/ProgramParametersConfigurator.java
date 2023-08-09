@@ -8,7 +8,7 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
 import com.intellij.execution.envFile.EnvFileParserKt;
-import com.intellij.execution.runners.ExecutionUtil;
+import com.intellij.execution.impl.ExecutionManagerImpl;
 import com.intellij.ide.macro.Macro;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacroWithParams;
@@ -56,7 +56,6 @@ public class ProgramParametersConfigurator {
   public static final String MODULE_WORKING_DIR = "%MODULE_WORKING_DIR%";
   private static final DataKey<Boolean> VALIDATION_MODE = DataKey.create("validation.mode");
   private boolean myValidation;
-  private @Nullable DataContext myDataContext;
 
   public void configureConfiguration(@NotNull SimpleProgramParameters parameters, @NotNull CommonProgramRunConfigurationParameters configuration) {
     Project project = configuration.getProject();
@@ -103,7 +102,7 @@ public class ProgramParametersConfigurator {
   public @Nullable String expandPathAndMacros(String s, @Nullable Module module, @NotNull Project project) {
     String path = s;
     if (path != null) path = expandPath(path, module, project);
-    if (path != null) path = expandMacros(path, myDataContext, projectContext(project, module), false);
+    if (path != null) path = expandMacros(path, projectContext(project, module, myValidation), false);
     return path;
   }
 
@@ -111,17 +110,13 @@ public class ProgramParametersConfigurator {
     myValidation = validation;
   }
 
-  public void setDataContext(@Nullable DataContext dataContext) {
-    myDataContext = dataContext;
-  }
-
-  private DataContext projectContext(Project project, Module module) {
+  private static @NotNull DataContext projectContext(@NotNull Project project, @Nullable Module module, @Nullable Boolean validationMode) {
     return dataId -> {
       if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) return project.getBaseDir();
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
       if (PlatformCoreDataKeys.PROJECT_FILE_DIRECTORY.is(dataId)) return project.getBaseDir();
       if (PlatformCoreDataKeys.MODULE.is(dataId) || LangDataKeys.MODULE_CONTEXT.is(dataId)) return module;
-      if (VALIDATION_MODE.is(dataId)) return myValidation;
+      if (VALIDATION_MODE.is(dataId)) return validationMode;
       return null;
     };
   }
@@ -134,25 +129,39 @@ public class ProgramParametersConfigurator {
    * @see #expandPathAndMacros For paths: working directory, input file, etc.
    */
   public static String expandMacros(@Nullable String path) {
-    return !StringUtil.isEmpty(path) ? expandMacros(path, null, DataContext.EMPTY_CONTEXT, false) : path;
+    return !StringUtil.isEmpty(path) ? expandMacros(path, DataContext.EMPTY_CONTEXT, false) : path;
   }
 
   public static @NotNull List<String> expandMacrosAndParseParameters(@Nullable String parametersStringWithMacros) {
     if (StringUtil.isEmpty(parametersStringWithMacros)) {
       return Collections.emptyList();
     }
-    String expandedParametersString = expandMacros(parametersStringWithMacros, null, DataContext.EMPTY_CONTEXT, true);
+    String expandedParametersString = expandMacros(parametersStringWithMacros, DataContext.EMPTY_CONTEXT, true);
     return ParametersListUtil.parse(expandedParametersString);
   }
 
-  private static String expandMacros(@NotNull String path,
-                                     @Nullable DataContext primaryDataContext,
-                                     @NotNull DataContext fallbackDataContext,
-                                     boolean applyParameterEscaping) {
+  private static String expandMacros(@NotNull String path, @NotNull DataContext fallbackDataContext, boolean applyParameterEscaping) {
     if (!Registry.is("allow.macros.for.run.configurations")) {
       return path;
     }
-    DataContext context = getDataContext(primaryDataContext, fallbackDataContext);
+
+    DataContext envContext = ExecutionManagerImpl.getEnvironmentDataContext();
+    if (fallbackDataContext == DataContext.EMPTY_CONTEXT && envContext != null) {
+      Project project = CommonDataKeys.PROJECT.getData(envContext);
+      Module module = PlatformCoreDataKeys.MODULE.getData(envContext);
+      if (project != null) {
+        fallbackDataContext = projectContext(project, module, null);
+      }
+    }
+
+    DataContext finalFallbackDataContext = fallbackDataContext;
+    DataContext context = envContext == null ? fallbackDataContext : new DataContext() {
+      @Override
+      public @Nullable Object getData(@NotNull String dataId) {
+        Object data = envContext.getData(dataId);
+        return data != null ? data : finalFallbackDataContext.getData(dataId);
+      }
+    };
     for (Macro macro : MacroManager.getInstance().getMacros()) {
       boolean paramsMacro = macro instanceof MacroWithParams;
       String template = "$" + macro.getName() + (paramsMacro ? "(" : "$");
@@ -186,18 +195,6 @@ public class ProgramParametersConfigurator {
       }
     }
     return path;
-  }
-
-  private static @NotNull DataContext getDataContext(@Nullable DataContext primaryDataContext, @NotNull DataContext fallbackDataContext) {
-    if (primaryDataContext != null) return primaryDataContext;
-    DataContext threadContext = ExecutionUtil.getThreadContext();
-    return threadContext == null ? fallbackDataContext : new DataContext() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        Object data = threadContext.getData(dataId);
-        return data != null ? data : fallbackDataContext.getData(dataId);
-      }
-    };
   }
 
   private static @Nullable String previewOrExpandMacro(Macro macro, DataContext dataContext, String @NotNull ... args) {
