@@ -95,8 +95,10 @@ class SdkTableBridgeImpl: SdkTableImplementationDelegate {
 
   override fun removeSdk(sdk: Sdk) {
     val globalWorkspaceModel = GlobalWorkspaceModel.getInstance()
-    val sdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk as SdkBridgeImpl)
-                    ?: error("Can't find entity for SDK: $sdk")
+
+    // It's absolutely OK if we try to remove what does not yet exist in `ProjectJdkTable` SDK
+    // E.g. org.jetbrains.idea.maven.actions.AddMavenDependencyQuickFixTest
+    val sdkEntity = globalWorkspaceModel.currentSnapshot.sdkMap.getFirstEntity(sdk as SdkBridgeImpl) ?: return
     globalWorkspaceModel.updateModel("Removing SDK: ${sdk.name} ${sdk.sdkType}") {
       it.removeEntity(sdkEntity)
     }
