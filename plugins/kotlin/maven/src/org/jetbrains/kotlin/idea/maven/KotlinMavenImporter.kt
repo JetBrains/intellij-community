@@ -14,6 +14,7 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -187,7 +188,9 @@ class KotlinMavenImporter : MavenImporter(KOTLIN_PLUGIN_GROUP_ID, KOTLIN_PLUGIN_
         if (toBeDownloaded.isNotEmpty()) {
             val manager = MavenProjectsManager.getInstance(module.project)
             ApplicationManager.getApplication().executeOnPooledThread {
-                manager.downloadArtifactsSync(listOf(mavenProject), toBeDownloaded, true, false)
+                runBlockingMaybeCancellable {
+                    manager.downloadArtifacts(listOf(mavenProject), toBeDownloaded, true, false)
+                }
             }
         }
     }
