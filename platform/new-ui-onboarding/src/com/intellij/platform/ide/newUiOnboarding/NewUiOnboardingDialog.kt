@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUiOnboarding
 
-import com.intellij.ide.ui.experimental.meetNewUi.MeetNewUIAction
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -31,7 +30,7 @@ class NewUiOnboardingDialog(project: Project)
 
   override fun createCenterPanel(): JComponent {
     // todo: replace with separate banner when it will be ready
-    val banner = IconLoader.getIcon("expui/meetNewUi/banner.png", MeetNewUIAction::class.java.classLoader)
+    val banner = IconLoader.getIcon("newUiOnboarding/banner.png", NewUiOnboardingDialog::class.java.classLoader)
     val contentGaps = UnscaledGaps(28, 32, 22, 32)
 
     val panel = panel {
