@@ -56,7 +56,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
   public SearchEverywhereCommand(@NotNull String text, int line) {
     super(text, line);
-    Args.parse(myOptions, extractCommandArgument(PREFIX).split("\\|")[0].split(" "));
+    getArgs();
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
@@ -65,9 +65,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
     final ActionCallback actionCallback = new ActionCallbackProfilerStopper();
     Project project = context.getProject();
 
-    String input = extractCommandArgument(PREFIX);
-    String[] args = input.split("\\|");
-    Args.parse(myOptions, args[0].split(" "));
+    String[] args = getArgs();
     final String tab = myOptions.tab;
     final String insertText = args.length > 1 ? args[1] : "";
 
@@ -81,6 +79,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       case "all" -> tabId.set(SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID);
       default -> throw new RuntimeException("Tab is not set");
     }
+    LOG.info(tabId.get());
 
     int numberOfPermits;
     if(insertText.isEmpty() && myOptions.typingText.isEmpty()){
@@ -109,7 +108,9 @@ public class SearchEverywhereCommand extends AbstractCommand {
             actionCallback.reject("Project is null, SE requires project to show any tab except actions.");
           }
           TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, "searchEverywhere_dialog_shown", dialogSpan -> {
-            SearchEverywhereManager.getInstance(project).show(tabId.get(), "", actionEvent);
+            var manager = SearchEverywhereManager.getInstance(project);
+            manager.show(tabId.get(), "", actionEvent);
+            attachSearchListeners(manager.getCurrentlyShownUI());
           });
           if (!insertText.isEmpty()) {
             insertText(context.getProject(), insertText, typingSemaphore);
@@ -143,6 +144,19 @@ public class SearchEverywhereCommand extends AbstractCommand {
     });
 
     return Promises.toPromise(actionCallback);
+  }
+
+  @NotNull
+  protected String[] getArgs() {
+    return getArgs(PREFIX);
+  }
+
+  @NotNull
+  protected String[] getArgs(String prefix) {
+    String input = extractCommandArgument(prefix);
+    String[] args = input.split("\\|");
+    Args.parse(myOptions, args[0].split(" "));
+    return args;
   }
 
   @SuppressWarnings("BlockingMethodInNonBlockingContext")
@@ -226,6 +240,8 @@ public class SearchEverywhereCommand extends AbstractCommand {
       }));
     }
   }
+
+  protected void attachSearchListeners(@NotNull SearchEverywhereUI ui){}
 
   static class Options {
     @Argument
