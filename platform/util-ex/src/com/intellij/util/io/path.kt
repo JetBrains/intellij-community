@@ -17,8 +17,10 @@ import kotlin.io.path.exists
 import kotlin.io.path.inputStream
 import kotlin.io.path.isDirectory
 
+/** See [NioFiles.createDirectories]. */
 fun Path.createDirectories(): Path = NioFiles.createDirectories(this)
 
+/** See [NioFiles.createParentDirectories] */
 fun Path.createParentDirectories(): Path = NioFiles.createParentDirectories(this)
 
 /**
@@ -72,12 +74,6 @@ fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   }
 
   return true
-}
-
-fun Path.deleteChildrenStartingWith(prefix: String) {
-  directoryStreamIfExists({ it.fileName.toString().startsWith(prefix) }) { it.toList() }?.forEach {
-    it.delete()
-  }
 }
 
 val Path.systemIndependentPath: String
