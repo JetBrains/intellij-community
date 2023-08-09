@@ -515,7 +515,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return traverse().toStream();
   }
 
-  interface NodeWithFilePath {
+  public interface NodeWithFilePath {
     @NotNull
     FilePath getNodeFilePath();
   }
