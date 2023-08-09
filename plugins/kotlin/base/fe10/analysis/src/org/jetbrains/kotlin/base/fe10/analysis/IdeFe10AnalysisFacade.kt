@@ -8,8 +8,14 @@ import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisFacade.Analysis
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.idea.FrontendInternals
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.CallResolver
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
@@ -51,7 +57,7 @@ internal class IdeFe10AnalysisFacade(private val project: Project): Fe10Analysis
     }
 
     override fun analyze(elements: List<KtElement>, mode: AnalysisMode): BindingContext {
-        val resolutionFacade = KotlinCacheService.getInstance(project).getResolutionFacade(elements)
+        val resolutionFacade = getResolutionFacade(elements) ?: return BindingContext.EMPTY
 
         if (mode == AnalysisMode.ALL_COMPILER_CHECKS) {
             return resolutionFacade.analyzeWithAllCompilerChecks(elements).bindingContext
@@ -66,6 +72,44 @@ internal class IdeFe10AnalysisFacade(private val project: Project): Fe10Analysis
         }
 
         return resolutionFacade.analyze(elements, bodyResolveMode)
+    }
+
+    private fun getResolutionFacade(elements: List<KtElement>): ResolutionFacade? {
+        val kotlinCacheService = KotlinCacheService.getInstance(project)
+
+        if (elements.size == 1) {
+            kotlinCacheService.getResolutionFacade(elements.single())
+        }
+
+        val files = elements
+            .asSequence()
+            .mapNotNull { it.containingFile }
+            .mapNotNull { if (it is KtCodeFragment) it.context?.containingFile else it }
+            .filterIsInstance<KtFile>()
+            .distinct()
+            .toList()
+
+        if (files.isEmpty()) {
+            return null
+        }
+
+        val scriptFiles = files.filter { it.isScript() }
+        if (!scriptFiles.isEmpty()) {
+            return kotlinCacheService.getResolutionFacade(scriptFiles)
+        }
+
+        // The following logic is taken from 'KotlinCacheServiceImpl.filterNotInProjectSource()'
+        val moduleInfo = files.first().moduleInfo
+        val specialFiles = files
+            .filterNot { RootKindFilter.projectSources.matches(it) && moduleInfo.contentScope.contains(it.virtualFile) }
+
+        if (specialFiles.isNotEmpty()) {
+            // 'KotlinCacheServiceImpl' is bad in getting a resolution facade for multiple files outside the so-called 'main' module root.
+            // Here we artificially choose the facade for the first element. It's not quite correct, still it's better than nothing.
+            return kotlinCacheService.getResolutionFacade(specialFiles.first())
+        }
+
+        return kotlinCacheService.getResolutionFacade(files)
     }
 
     override fun getOrigin(file: VirtualFile): KtSymbolOrigin {
