@@ -123,12 +123,7 @@ public class SourceSetCachedFinder {
   }
 
   private static Object maybeUnwrapIncludedBuildInternal(IncludedBuild includedBuild) {
-    Class<?> includedBuildInternalClass = null;
-    try {
-      includedBuildInternalClass = Class.forName("org.gradle.internal.composite.IncludedBuildInternal");
-    }
-    catch (ClassNotFoundException ignored) {
-    }
+    Class<?> includedBuildInternalClass = ReflectionUtil.findClassForName("org.gradle.internal.composite.IncludedBuildInternal");
     if (includedBuildInternalClass != null && includedBuildInternalClass.isAssignableFrom(includedBuild.getClass())) {
       return ReflectionUtil.reflectiveCall(includedBuild, "getTarget", Object.class);
     }

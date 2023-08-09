@@ -27,15 +27,21 @@ public final class ReflectionUtil {
   }
 
   public static boolean dynamicCheckInstanceOf(Object object, String... classNames) {
-    boolean result = false;
     for (String className : classNames) {
-      try {
-        Class clazz = Class.forName(className);
-        result = result || clazz.isInstance(object);
-      }
-      catch (ClassNotFoundException ignore) {
+      Class<?> clazz = findClassForName(className);
+      if (clazz != null && clazz.isInstance(object)) {
+        return true;
       }
     }
-    return result;
+    return false;
+  }
+
+  public static Class<?> findClassForName(String className) {
+    try {
+      return Class.forName(className);
+    }
+    catch (ClassNotFoundException __) {
+      return null;
+    }
   }
 }
