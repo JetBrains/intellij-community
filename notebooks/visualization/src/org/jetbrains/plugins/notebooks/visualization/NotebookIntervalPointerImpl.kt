@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.EventDispatcher
+import com.intellij.util.concurrency.ThreadingAssertions
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointersEvent.*
 
@@ -73,14 +74,14 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
     get() = field?.takeIf { !project.isDisposed }
 
   override fun create(interval: NotebookCellLines.Interval): NotebookIntervalPointer {
-    ApplicationManager.getApplication().assertReadAccessAllowed()
+    ThreadingAssertions.softAssertReadAccess()
     return pointers[interval.ordinal].also {
       require(it.interval == interval)
     }
   }
 
   override fun modifyPointers(changes: Iterable<NotebookIntervalPointerFactory.Change>) {
-    ApplicationManager.getApplication()?.assertWriteAccessAllowed()
+    ThreadingAssertions.assertWriteAccess()
 
     val eventChanges = NotebookIntervalPointersEventChanges()
     applyChanges(changes, eventChanges)
@@ -104,6 +105,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 
   override fun documentChanged(event: NotebookCellLinesEvent) {
+    ThreadingAssertions.assertWriteAccess()
     try {
       val pointersEvent = when (val context = changesContext) {
         is DocumentChangedContext -> documentChangedByAction(event, context)
@@ -123,6 +125,7 @@ class NotebookIntervalPointerFactoryImpl(private val notebookCellLines: Notebook
   }
 
   override fun beforeDocumentChange(event: NotebookCellLinesEventBeforeChange) {
+    ThreadingAssertions.assertWriteAccess()
     val undoManager = validUndoManager
     if (undoManager == null || undoManager.isUndoOrRedoInProgress) return
     val context = DocumentChangedContext()
