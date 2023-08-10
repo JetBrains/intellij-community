@@ -8,20 +8,24 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.tree.IElementType
 
-internal data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
+data class HighlightingInfo(val startOffset: Int, val endOffset: Int, val textAttributes: TextAttributes)
 
-internal class TerminalHighlighter(private val highlightings: List<HighlightingInfo>) : EditorHighlighter {
+class TerminalTextHighlighter private constructor(private val getHighlightings: () -> List<HighlightingInfo>) : EditorHighlighter {
   private var editor: HighlighterClient? = null
 
+  constructor(model: TerminalOutputModel) : this({ model.getAllHighlightings() })
+  constructor(highlightings: List<HighlightingInfo>) : this({ highlightings })
+
   override fun createIterator(startOffset: Int): HighlighterIterator {
-    return MyHighlighterIterator()
+    return MyHighlighterIterator(editor?.document, getHighlightings())
   }
 
   override fun setEditor(editor: HighlighterClient) {
     this.editor = editor
   }
 
-  private inner class MyHighlighterIterator : HighlighterIterator {
+  private class MyHighlighterIterator(private val document: Document?,
+                                      private val highlightings: List<HighlightingInfo>) : HighlighterIterator {
     private var curInd = 0
 
     override fun getStart(): Int = highlightings[curInd].startOffset
@@ -42,8 +46,6 @@ internal class TerminalHighlighter(private val highlightings: List<HighlightingI
 
     override fun atEnd(): Boolean = curInd < 0 || curInd >= highlightings.size
 
-    override fun getDocument(): Document? {
-      return editor?.document
-    }
+    override fun getDocument(): Document? = document
   }
 }

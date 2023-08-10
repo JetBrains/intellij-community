@@ -6,12 +6,19 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.ScrollType
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
+import com.intellij.terminal.TerminalUiSettingsManager
 import com.jediterm.terminal.StyledTextConsumer
 import com.jediterm.terminal.TextStyle
+import com.jediterm.terminal.emulator.ColorPalette
 import com.jediterm.terminal.model.CharBuffer
+import com.jediterm.terminal.ui.AwtTransformers
+import java.awt.Color
+import java.awt.Font
 
 class TerminalOutputController(private val editor: EditorEx,
                                private val session: TerminalSession,
@@ -19,10 +26,18 @@ class TerminalOutputController(private val editor: EditorEx,
   private val outputModel: TerminalOutputModel = TerminalOutputModel(editor)
   private val terminalModel: TerminalModel = session.model
   private val blocksDecorator: TerminalBlocksDecorator = TerminalBlocksDecorator(editor)
+  private val textHighlighter: TerminalTextHighlighter = TerminalTextHighlighter(outputModel)
+
+  private val palette: ColorPalette
+    get() = settings.terminalColorPalette
 
   var isFocused: Boolean = false
 
   private var runningListenersDisposable: Disposable? = null
+
+  init {
+    editor.highlighter = textHighlighter
+  }
 
   fun startCommandBlock(command: String?) {
     val block = outputModel.createBlock(command)
@@ -50,6 +65,10 @@ class TerminalOutputController(private val editor: EditorEx,
         // remove also the line break if it is not the first block
         val removeOffset = lastLineStart - if (lastLineStart > 0) 1 else 0
         document.deleteString(removeOffset, block.endOffset)
+        outputModel.getHighlightings(block)?.let { current ->
+          val updated = current.filter { it.endOffset <= block.endOffset }
+          outputModel.putHighlightings(block, updated)
+        }
       }
       if (document.getText(block.textRange).isBlank()) {
         outputModel.removeBlock(block)
@@ -76,16 +95,20 @@ class TerminalOutputController(private val editor: EditorEx,
     }
   }
 
-  private fun computeTerminalContent(): String {
-    // todo: collect info about highlighting
+  private fun computeTerminalContent(): TerminalContent {
+    val baseOffset = outputModel.getLastBlock()!!.startOffset
     val builder = StringBuilder()
+    val highlightings = mutableListOf<HighlightingInfo>()
     val consumer = object : StyledTextConsumer {
       override fun consume(x: Int,
                            y: Int,
                            style: TextStyle,
                            characters: CharBuffer,
                            startRow: Int) {
+        val startOffset = baseOffset + builder.length
         builder.append(characters.toString())
+        val attributes = style.toTextAttributes()
+        highlightings.add(HighlightingInfo(startOffset, baseOffset + builder.length, attributes))
       }
 
       override fun consumeNul(x: Int,
@@ -94,13 +117,17 @@ class TerminalOutputController(private val editor: EditorEx,
                               style: TextStyle,
                               characters: CharBuffer,
                               startRow: Int) {
+        val startOffset = baseOffset + builder.length
         repeat(characters.buf.size) {
           builder.append(' ')
         }
+        highlightings.add(HighlightingInfo(startOffset, baseOffset + builder.length, TextStyle.EMPTY.toTextAttributes()))
       }
 
       override fun consumeQueue(x: Int, y: Int, nulIndex: Int, startRow: Int) {
+        val startOffset = baseOffset + builder.length
         builder.append("\n")
+        highlightings.add(HighlightingInfo(startOffset, startOffset + 1, TextStyle.EMPTY.toTextAttributes()))
       }
     }
 
@@ -115,13 +142,15 @@ class TerminalOutputController(private val editor: EditorEx,
 
     while (builder.lastOrNull() == '\n') {
       builder.deleteCharAt(builder.lastIndex)
+      highlightings.removeLast()
     }
-    return builder.toString()
+    return TerminalContent(builder.toString(), highlightings)
   }
 
-  private fun updateEditor(content: String) {
+  private fun updateEditor(content: TerminalContent) {
     val block = outputModel.getLastBlock() ?: error("No active block")
-    editor.document.replaceString(block.startOffset, block.endOffset, content)
+    editor.document.replaceString(block.startOffset, block.endOffset, content.text)
+    outputModel.putHighlightings(block, content.highlightings)
     if (terminalModel.useAlternateBuffer) {
       editor.setCaretEnabled(false)
     }
@@ -131,4 +160,40 @@ class TerminalOutputController(private val editor: EditorEx,
       editor.scrollingModel.scrollToCaret(ScrollType.CENTER_DOWN)
     }
   }
+
+  private fun TextStyle.toTextAttributes(): TextAttributes {
+    return TextAttributes().also { attr ->
+      val background = palette.getBackground(terminalModel.styleState.getBackground(backgroundForRun))
+      val defaultBackground = AwtTransformers.fromAwtColor(TerminalUiSettingsManager.getInstance().getDefaultBackground())
+      // todo: it is a hack to not set default background, because it is different from the block background.
+      //  They should match to remove this hack.
+      if (background != defaultBackground) {
+        attr.backgroundColor = AwtTransformers.toAwtColor(background)
+      }
+      attr.foregroundColor = getStyleForeground(this)
+      if (hasOption(TextStyle.Option.BOLD)) {
+        attr.fontType = attr.fontType or Font.BOLD
+      }
+      if (hasOption(TextStyle.Option.ITALIC)) {
+        attr.fontType = attr.fontType or Font.ITALIC
+      }
+      if (hasOption(TextStyle.Option.UNDERLINED)) {
+        attr.withAdditionalEffect(EffectType.LINE_UNDERSCORE, attr.foregroundColor)
+      }
+    }
+  }
+
+  private fun getStyleForeground(style: TextStyle): Color {
+    val foreground = palette.getForeground(terminalModel.styleState.getForeground(style.foregroundForRun))
+    return if (style.hasOption(TextStyle.Option.DIM)) {
+      val background = palette.getBackground(terminalModel.styleState.getBackground(style.backgroundForRun))
+      Color((foreground.red + background.red) / 2,
+            (foreground.green + background.green) / 2,
+            (foreground.blue + background.blue) / 2,
+            foreground.alpha)
+    }
+    else AwtTransformers.toAwtColor(foreground)!!
+  }
+
+  private data class TerminalContent(val text: String, val highlightings: List<HighlightingInfo>)
 }

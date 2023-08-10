@@ -149,7 +149,7 @@ class TerminalPanel(project: Project,
 
   private fun updateEditor(content: TerminalContent) {
     document.setText(content.text)
-    editor.highlighter = TerminalHighlighter(content.highlightings)
+    editor.highlighter = TerminalTextHighlighter(content.highlightings)
     if (model.useAlternateBuffer) {
       editor.setCaretEnabled(false)
     }

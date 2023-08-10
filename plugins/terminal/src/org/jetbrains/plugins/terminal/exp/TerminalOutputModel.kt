@@ -11,6 +11,7 @@ import com.intellij.openapi.util.TextRange
 class TerminalOutputModel(private val editor: EditorEx) {
   private val blocks: MutableList<CommandBlock> = mutableListOf()
   private val decorations: MutableMap<CommandBlock, BlockDecoration> = HashMap()
+  private val highlightings: MutableMap<CommandBlock, List<HighlightingInfo>> = LinkedHashMap()  // order matters
 
   private val document: Document = editor.document
 
@@ -48,6 +49,7 @@ class TerminalOutputModel(private val editor: EditorEx) {
 
     blocks.remove(block)
     decorations.remove(block)
+    highlightings.remove(block)
   }
 
   fun getLastBlock(): CommandBlock? {
@@ -56,6 +58,18 @@ class TerminalOutputModel(private val editor: EditorEx) {
 
   fun putDecoration(block: CommandBlock, decoration: BlockDecoration) {
     decorations[block] = decoration
+  }
+
+  fun getAllHighlightings(): List<HighlightingInfo> {
+    return highlightings.flatMap { it.value }
+  }
+
+  fun getHighlightings(block: CommandBlock): List<HighlightingInfo>? {
+    return highlightings[block]
+  }
+
+  fun putHighlightings(block: CommandBlock, highlightings: List<HighlightingInfo>) {
+    this.highlightings[block] = highlightings
   }
 }
 
