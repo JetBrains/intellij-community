@@ -30,6 +30,7 @@ public class SourceSetCachedFinder {
 
   private static final @NotNull GradleVersion gradleBaseVersion = GradleVersion.current().getBaseVersion();
   private static final boolean is51OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("5.1")) >= 0;
+  private static final boolean is73OrBetter = gradleBaseVersion.compareTo(GradleVersion.version("7.3")) >= 0;
 
   private static final @NotNull DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER =
     (gradle, ___) -> createArtifactsMap(gradle);
@@ -115,8 +116,13 @@ public class SourceSetCachedFinder {
       Object unwrapped = maybeUnwrapIncludedBuildInternal(includedBuild);
       if (unwrapped instanceof DefaultIncludedBuild) {
         DefaultIncludedBuild build = (DefaultIncludedBuild)unwrapped;
+        if (is73OrBetter) {
+          build.ensureProjectsConfigured();
+        }
         if (is51OrBetter) {
-          result.addAll(build.withState(it -> it.getRootProject().getAllprojects()));
+          result.addAll(build.withState(
+            it -> it.getRootProject().getAllprojects()
+          ));
         } else {
           result.addAll(getProjectsWithReflection(build));
         }
