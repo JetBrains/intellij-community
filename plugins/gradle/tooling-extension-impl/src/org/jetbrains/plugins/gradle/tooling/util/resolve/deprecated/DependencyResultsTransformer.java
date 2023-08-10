@@ -29,7 +29,6 @@ import java.lang.reflect.Method;
 import java.util.*;
 
 import static org.jetbrains.plugins.gradle.tooling.util.ReflectionUtil.reflectiveCall;
-import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.findArtifactSources;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.toComponentIdentifier;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver.*;
 
@@ -268,7 +267,7 @@ public class DependencyResultsTransformer {
             files.add(resolvedArtifact.getFile());
           }
           dDep.setProjectDependencyArtifacts(files);
-          dDep.setProjectDependencyArtifactsSources(findArtifactSources(files, mySourceSetFinder));
+          dDep.setProjectDependencyArtifactsSources(mySourceSetFinder.findArtifactSources(files));
           resolvedDepsFiles.addAll(dDep.getProjectDependencyArtifacts());
         }
         else {
@@ -412,7 +411,7 @@ public class DependencyResultsTransformer {
     dependency.setConfigurationName(it.getName());
     Set<File> artifactsFiles = new LinkedHashSet<>(it.getAllArtifacts().getFiles().getFiles());
     dependency.setProjectDependencyArtifacts(artifactsFiles);
-    dependency.setProjectDependencyArtifactsSources(findArtifactSources(artifactsFiles, mySourceSetFinder));
+    dependency.setProjectDependencyArtifactsSources(mySourceSetFinder.findArtifactSources(artifactsFiles));
 
     if (it.getArtifacts().size() == 1) {
       PublishArtifact publishArtifact = it.getAllArtifacts().iterator().next();

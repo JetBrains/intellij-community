@@ -23,7 +23,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import static java.util.Collections.unmodifiableMap;
 import static org.jetbrains.plugins.gradle.tooling.ModelBuilderContext.DataProvider;
 import static org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl.isIsNewDependencyResolutionApplicable;
 
@@ -46,7 +45,15 @@ public class SourceSetCachedFinder {
     mySourcesMap = context.getData(SOURCES_DATA_KEY);
   }
 
-  public @Nullable Set<File> findSourcesByArtifact(@NotNull String path) {
+  public @NotNull List<File> findArtifactSources(Collection<? extends File> artifactFiles) {
+    List<File> artifactSources = new ArrayList<>();
+    for (File artifactFile : artifactFiles) {
+      artifactSources.addAll(findSourcesByArtifact(artifactFile.getPath()));
+    }
+    return artifactSources;
+  }
+
+  private @NotNull Set<File> findSourcesByArtifact(@NotNull String path) {
     if (!mySourcesMap.containsKey(path)) {
       SourceSet sourceSet = myArtifactsMap.myArtifactsMap.get(path);
       if (sourceSet != null) {
@@ -55,7 +62,7 @@ public class SourceSetCachedFinder {
         return calculatedSources != null ? calculatedSources : sources;
       }
     }
-    return null;
+    return Collections.emptySet();
   }
 
   public @Nullable SourceSet findByArtifact(@NotNull String artifactPath) {
@@ -137,8 +144,8 @@ public class SourceSetCachedFinder {
     public final @NotNull Map<String, String> mySourceSetOutputDirsToArtifactsMap;
 
     ArtifactsMap(@NotNull Map<String, SourceSet> artifactsMap, @NotNull Map<String, String> sourceSetOutputDirsToArtifactsMap) {
-      myArtifactsMap = unmodifiableMap(artifactsMap);
-      mySourceSetOutputDirsToArtifactsMap = unmodifiableMap(sourceSetOutputDirsToArtifactsMap);
+      myArtifactsMap = Collections.unmodifiableMap(artifactsMap);
+      mySourceSetOutputDirsToArtifactsMap = Collections.unmodifiableMap(sourceSetOutputDirsToArtifactsMap);
     }
   }
 }

@@ -743,7 +743,7 @@ public class DeprecatedDependencyResolver implements DependencyResolver {
           Set<File> artifacts = new LinkedHashSet<>(targetConfiguration == null ? Collections.emptySet() :
                                                     targetConfiguration.getAllArtifacts().getFiles().getFiles());
           projectDependency.setProjectDependencyArtifacts(artifacts);
-          projectDependency.setProjectDependencyArtifactsSources(findArtifactSources(artifacts, mySourceSetFinder));
+          projectDependency.setProjectDependencyArtifactsSources(mySourceSetFinder.findArtifactSources(artifacts));
 
           result.add(projectDependency);
         } else if (it != null) {
