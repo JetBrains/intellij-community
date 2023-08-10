@@ -51,7 +51,15 @@ class MetricsEvaluator private constructor(private val evaluationType: String) {
 
   fun result(): List<MetricInfo> {
     return metrics.map {
-      MetricInfo(it.name, it.description, it.value, it.confidenceInterval(), evaluationType, it.valueType, it.showByDefault)
+      MetricInfo(
+        name = it.name,
+        description = it.description,
+        value = it.value,
+        confidenceInterval = if (it.shouldComputeIntervals) it.confidenceInterval() else null,
+        evaluationType = evaluationType,
+        valueType = it.valueType,
+        showByDefault = it.showByDefault
+      )
     }
   }
 }

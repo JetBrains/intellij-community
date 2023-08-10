@@ -18,4 +18,7 @@ interface Metric {
 
   val showByDefault: Boolean
     get() = true
+
+  val shouldComputeIntervals: Boolean
+    get() = false
 }
