@@ -41,8 +41,9 @@ interface WorkspaceFileIndex {
    * Return the root file of a file set of [content][WorkspaceFileKind.isContent] kind containing [file]. 
    * If [file] doesn't belong to such a file set, `null` is returned.
    * 
-   * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes custom file sets as 
-   * well, not only content roots of the project's modules.
+   * This function is similar to [com.intellij.openapi.roots.ProjectFileIndex.getContentRootForFile], but it processes all file sets of
+   * [content][WorkspaceFileKind.isContent] type, not only content roots of the project's modules, so for example, if [file] is located 
+   * under a source root, it'll return that source root, and it may return a root of a custom file set. 
    * @param honorExclusion determines whether exclusions should be taken into account when searching for the file set.
    */
   @RequiresReadLock
