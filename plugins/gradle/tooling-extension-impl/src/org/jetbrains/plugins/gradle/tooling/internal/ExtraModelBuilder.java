@@ -160,17 +160,11 @@ public class ExtraModelBuilder implements ToolingModelBuilder {
 
   private static final class MyModelBuilderContext implements ModelBuilderContext {
 
-    private final Map<DataProvider, Object> myMap = new IdentityHashMap<>();
+    private final Map<DataProvider<?>, Object> myMap = new IdentityHashMap<>();
     private final Gradle myGradle;
 
     private MyModelBuilderContext(Gradle gradle) {
       myGradle = gradle;
-    }
-
-    @NotNull
-    @Override
-    public Gradle getRootGradle() {
-      return myGradle;
     }
 
     @NotNull
