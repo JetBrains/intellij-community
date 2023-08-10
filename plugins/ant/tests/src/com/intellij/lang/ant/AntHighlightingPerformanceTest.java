@@ -33,6 +33,7 @@ public class AntHighlightingPerformanceTest extends DaemonAnalyzerTestCase {
   @NotNull
   @Override
   protected List<HighlightInfo> doHighlighting() {
+    super.doHighlighting();
     return Collections.emptyList();
   }
 }
