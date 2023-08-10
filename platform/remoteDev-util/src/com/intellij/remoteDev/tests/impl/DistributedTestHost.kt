@@ -212,6 +212,10 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
               LOG.warn(msg, ex)
               if (!app.isHeadlessEnvironment) {
                 makeScreenshot(actionTitle)
+                runBlockingCancellable {
+                  lifetime.launch(Dispatchers.EDT + ModalityState.any().asContextElement()) { // even if there is a modal window opened
+                    makeScreenshot(actionTitle)
+                  }
               }
               return RdTask.faulted(AssertionError(msg, ex))
             }
@@ -339,23 +343,22 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       return File(PathManager.getLogPath()).resolve(fileName)
     }
 
-    val result = CompletableFuture<Boolean>()
-    ApplicationManager.getApplication().invokeLater {
-      fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
-        LOG.info("Making screenshot of ${component}")
-        val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
-        component.printAll(img.createGraphics())
-        ApplicationManager.getApplication().executeOnPooledThread {
-          try {
-            ImageIO.write(img, "png", screenshotFile)
-            LOG.info("Screenshot is saved at: $screenshotFile")
-          }
-          catch (t: Throwable) {
-            LOG.warn("Exception while writing screenshot image to file", t)
-          }
+    fun makeScreenshotOfComponent(screenshotFile: File, component: Component) {
+      LOG.info("Making screenshot of ${component}")
+      val img = ImageUtil.createImage(component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+      component.printAll(img.createGraphics())
+      ApplicationManager.getApplication().executeOnPooledThread {
+        try {
+          ImageIO.write(img, "png", screenshotFile)
+          LOG.info("Screenshot is saved at: $screenshotFile")
+        }
+        catch (t: Throwable) {
+          LOG.warn("Exception while writing screenshot image to file", t)
         }
       }
+    }
 
+    try {
       val windows = Window.getWindows().filter { it.height != 0 && it.width != 0 }.filter { it.isShowing }
       windows.forEachIndexed { index, window ->
         val screenshotFile = if (window.isFocusAncestor()) {
@@ -366,13 +369,6 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
         makeScreenshotOfComponent(screenshotFile, window)
       }
-      result.complete(true)
-    }
-
-    IdeEventQueue.getInstance().flushQueue()
-
-    try {
-      result[45, TimeUnit.SECONDS]
     }
     catch (e: Throwable) {
       when (e) {
@@ -383,7 +379,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
         }
       }
     }
-    return result.get()
+    return true
   }
 }
 
