@@ -63,7 +63,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
-  private String myWelcomeScreenDialog;
   private String myProductUrl;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
@@ -158,11 +157,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
         case "welcome-screen": {
           myWelcomeScreenLogoUrl = child.getAttributeValue("logo-url");
-        }
-        break;
-
-        case "welcome-wizard": {
-          myWelcomeScreenDialog = getAttributeValue(child, "dialog");
         }
         break;
 
@@ -458,9 +452,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   public @Nullable String getWelcomeScreenLogoUrl() {
     return myWelcomeScreenLogoUrl;
   }
-
-  @Override
-  public @Nullable String getWelcomeWizardDialog() { return myWelcomeScreenDialog; }
 
   @Override
   public boolean isEAP() {

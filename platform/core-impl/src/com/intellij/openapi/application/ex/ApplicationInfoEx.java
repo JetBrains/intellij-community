@@ -102,8 +102,6 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract boolean isEssentialPlugin(@NotNull PluginId pluginId);
 
-  public abstract @Nullable String getWelcomeWizardDialog();
-
   public abstract String getSubscriptionFormId();
 
   public abstract boolean areSubscriptionTipsAvailable();

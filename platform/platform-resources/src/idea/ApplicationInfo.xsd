@@ -31,7 +31,13 @@
             <xs:documentation>deprecated</xs:documentation>
           </xs:annotation>
         </xs:element>
-        <xs:element type="welcome-wizardType" name="welcome-wizard" minOccurs="0"/>
+        <xs:element type="welcome-wizardType" name="welcome-wizard" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated and no longer used since 2023.2.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="pluginsPageType" name="plugins-page" minOccurs="0" maxOccurs="unbounded">
           <xs:annotation>
             <xs:documentation>
