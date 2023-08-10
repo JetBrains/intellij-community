@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.codeInspection.groovy
 
 import com.intellij.codeInspection.ProblemHighlightType
@@ -42,7 +42,8 @@ class GroovyIncorrectDependencyNotationArgumentInspectionVisitor(val holder: Pro
       for (argument in argumentsToCheck) {
         val type = argument.type
         val providerComponentType = extractComponentType(argument, type, GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER)
-        val iterableComponentType = extractComponentType(argument, providerComponentType, CommonClassNames.JAVA_LANG_ITERABLE)
+        val providerConvertibleType = extractComponentType(argument, providerComponentType, GradleCommonClassNames.GRADLE_API_PROVIDER_PROVIDER_CONVERTIBLE)
+        val iterableComponentType = extractComponentType(argument, providerConvertibleType, CommonClassNames.JAVA_LANG_ITERABLE)
         checkArgument(argument, iterableComponentType, holder)
       }
     }
