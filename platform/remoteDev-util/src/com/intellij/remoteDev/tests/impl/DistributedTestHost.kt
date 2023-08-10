@@ -147,7 +147,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Tell test we are running it inside an agent
           val agentInfo = AgentInfo(session.agentInfo, session.testClassName, session.testMethodName)
-          val queue = testClassObject.initAgent(agentInfo)
+          val (queue, bgQueue) = testClassObject.initAgent(agentInfo)
 
           // Play test method
           val testMethod = testClass.getMethod(session.testMethodName)
@@ -224,8 +224,7 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
 
           // Special handler to be used in
           session.runNextActionBackground.set(SynchronousScheduler, SynchronousScheduler) { _, _ ->
-            val (action, expectBlockedDispatchThread) = queue.remove()
-            runAction(action, expectIsDispatchThread = false, expectBlockedDispatchThread)
+            runAction(bgQueue.remove())
           }
         }
 
