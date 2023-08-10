@@ -106,15 +106,7 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getSubscriptionFormId();
 
-  public abstract String getSubscriptionNewsKey();
-
-  public abstract String getSubscriptionNewsValue();
-
-  public abstract String getSubscriptionTipsKey();
-
   public abstract boolean areSubscriptionTipsAvailable();
-
-  public abstract @Nullable String getSubscriptionAdditionalFormData();
 
   /**
    * @return {@code true} if the product's vendor is JetBrains

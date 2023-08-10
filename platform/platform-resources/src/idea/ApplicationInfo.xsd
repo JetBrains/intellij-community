@@ -409,11 +409,39 @@
   </xs:complexType>
   <xs:complexType name="subscriptionsType">
     <xs:attribute type="xs:string" name="formid"/>
-    <xs:attribute type="xs:string" name="news-key"/>
-    <xs:attribute type="xs:string" name="news-value"/>
-    <xs:attribute type="xs:string" name="tips-key"/>
+    <xs:attribute type="xs:string" name="news-key">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE since 2021.2.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="news-value">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE since 2021.2.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="tips-key">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE since 2021.2.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
     <xs:attribute type="xs:boolean" name="tips-available"/>
-    <xs:attribute type="xs:string" name="additional-form-data"/>
+    <xs:attribute type="xs:string" name="additional-form-data">
+      <xs:annotation>
+        <xs:documentation>
+          Deprecated: is not used by the IDE since 2021.2.
+        </xs:documentation>
+        <xs:documentation>deprecated</xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="pluginsPageType">
     <xs:attribute type="xs:string" name="title" use="required"/>

@@ -88,11 +88,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myJetBrainsTvUrl;
 
   private String mySubscriptionFormId;
-  private String mySubscriptionNewsKey;
-  private String mySubscriptionNewsValue;
-  private String mySubscriptionTipsKey;
   private boolean mySubscriptionTipsAvailable;
-  private String mySubscriptionAdditionalFormData;
   private XmlElement myFeedbackForm;
 
   private String myDefaultLightLaf;
@@ -256,11 +252,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         case "subscriptions": {
           //noinspection SpellCheckingInspection
           mySubscriptionFormId = child.getAttributeValue("formid");
-          mySubscriptionNewsKey = child.getAttributeValue("news-key");
-          mySubscriptionNewsValue = child.getAttributeValue("news-value", "yes");
-          mySubscriptionTipsKey = child.getAttributeValue("tips-key");
           mySubscriptionTipsAvailable = Boolean.parseBoolean(child.getAttributeValue("tips-available"));
-          mySubscriptionAdditionalFormData = child.getAttributeValue("additional-form-data");
         }
         break;
 
@@ -605,28 +597,8 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
   }
 
   @Override
-  public String getSubscriptionNewsKey() {
-    return mySubscriptionNewsKey;
-  }
-
-  @Override
-  public String getSubscriptionNewsValue() {
-    return mySubscriptionNewsValue;
-  }
-
-  @Override
-  public String getSubscriptionTipsKey() {
-    return mySubscriptionTipsKey;
-  }
-
-  @Override
   public boolean areSubscriptionTipsAvailable() {
     return mySubscriptionTipsAvailable;
-  }
-
-  @Override
-  public @Nullable String getSubscriptionAdditionalFormData() {
-    return mySubscriptionAdditionalFormData;
   }
 
   public @NotNull @NlsSafe String getPluginsCompatibleBuild() {
