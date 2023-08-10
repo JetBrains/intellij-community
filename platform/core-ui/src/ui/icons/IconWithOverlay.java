@@ -23,18 +23,15 @@ public abstract class IconWithOverlay extends LayeredIcon {
 
   public abstract @Nullable Shape getOverlayShape(int x, int y);
 
-  @NotNull
-  public Icon getMainIcon() {
+  public @NotNull Icon getMainIcon() {
     return getScaled(0);
   }
 
-  @NotNull
-  public Icon getOverlayIcon() {
+  public @NotNull Icon getOverlayIcon() {
     return getScaled(1);
   }
 
-  @NotNull
-  private Icon getScaled(int layer) {
+  private @NotNull Icon getScaled(int layer) {
     Icon icon = getIcon(layer);
     assert icon != null;
     float scale = getScale();

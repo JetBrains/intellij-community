@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.IconLoader;
@@ -54,9 +54,8 @@ public class RowIcon extends JBCachingScalableIcon<RowIcon> implements com.intel
     myScaledIcons = null;
   }
 
-  @NotNull
   @Override
-  public RowIcon replaceBy(@NotNull IconReplacer replacer) {
+  public @NotNull RowIcon replaceBy(@NotNull IconReplacer replacer) {
     RowIcon icon = new RowIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
       icon.myIcons[i] = icon.myIcons[i] != null ? replacer.replaceIcon(icon.myIcons[i]) : null;

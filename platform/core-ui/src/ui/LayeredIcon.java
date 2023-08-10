@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -75,9 +75,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     myHeight = icon.myHeight;
   }
 
-  @NotNull
   @Override
-  public LayeredIcon replaceBy(@NotNull IconReplacer replacer) {
+  public @NotNull LayeredIcon replaceBy(@NotNull IconReplacer replacer) {
     LayeredIcon result = new LayeredIcon(this);
     for (int i = 0; i < result.myIcons.length; i++) {
       result.myIcons[i] = replacer.replaceIcon(result.myIcons[i]);
@@ -85,15 +84,13 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return result;
   }
 
-  @NotNull
   @Override
-  public LayeredIcon copy() {
+  public @NotNull LayeredIcon copy() {
     return new LayeredIcon(this);
   }
 
-  @NotNull
   @Override
-  public LayeredIcon deepCopy() {
+  public @NotNull LayeredIcon deepCopy() {
     LayeredIcon icon = new LayeredIcon(this);
     for (int i = 0; i < icon.myIcons.length; i++) {
       icon.myIcons[i] = icon.myIcons[i] == null ? null : IconUtil.copy(icon.myIcons[i], null);
@@ -108,9 +105,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return myScaledIcons = RowIcon.scaleIcons(myIcons, getScale());
   }
 
-  @NotNull
   @Override
-  public LayeredIcon withIconPreScaled(boolean preScaled) {
+  public @NotNull LayeredIcon withIconPreScaled(boolean preScaled) {
     super.withIconPreScaled(preScaled);
     updateSize();
     return this;
@@ -227,7 +223,9 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   private void checkIHaventIconInsideMe(Icon icon) {
     LOG.assertTrue(icon != this);
     for (Icon child : myIcons) {
-      if (child instanceof LayeredIcon) ((LayeredIcon)child).checkIHaventIconInsideMe(icon);
+      if (child instanceof LayeredIcon) {
+        ((LayeredIcon)child).checkIHaventIconInsideMe(icon);
+      }
     }
   }
 
@@ -306,9 +304,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     }
   }
 
-  @NotNull
   @Override
-  public Icon getDarkIcon(boolean isDark) {
+  public @NotNull Icon getDarkIcon(boolean isDark) {
     LayeredIcon newIcon = copy();
     for (int i=0; i<newIcon.myIcons.length; i++) {
       newIcon.myIcons[i] = newIcon.myIcons[i] == null ? null : IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
@@ -316,8 +313,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return newIcon;
   }
 
-  public static Icon create(final Icon backgroundIcon, final Icon foregroundIcon) {
-    final LayeredIcon layeredIcon = new LayeredIcon(2);
+  public static @NotNull Icon create(Icon backgroundIcon, Icon foregroundIcon) {
+    LayeredIcon layeredIcon = new LayeredIcon(2);
     layeredIcon.setIcon(backgroundIcon, 0);
     layeredIcon.setIcon(foregroundIcon, 1);
     return layeredIcon;
@@ -333,8 +330,7 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
     return combineIconTooltips(myIcons);
   }
 
-  @Nullable
-  static @NlsContexts.Tooltip String combineIconTooltips(Icon[] icons) {
+  static @Nullable @NlsContexts.Tooltip String combineIconTooltips(Icon[] icons) {
     // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not a composite one.
     Icon singleIcon = null;
     for (Icon icon : icons) {
@@ -364,8 +360,8 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
       else if (icon instanceof IconWithToolTip) {
         String toolTip = ((IconWithToolTip)icon).getToolTip(true);
         if (toolTip != null && seenTooltips.add(toolTip)) {
-          if (result.length() > 0) {
-            result.append(" ");
+          if (!result.isEmpty()) {
+            result.append(' ');
           }
           result.append(toolTip);
         }
